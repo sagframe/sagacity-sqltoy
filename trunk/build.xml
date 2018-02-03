@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="sagacity-sqltoy" default="jar">
+	<!--打包参数信息-->
+	<target name="init">
+		<property name="project.home" value="." />
+		<property name="project.lib" value="${project.home}/lib" />
+		<property name="project.name" value="sagacity-sqltoy" />
+		<property name="project.version" value="4.0.9" />
+		<property name="project.src" value="${project.home}/src" />
+		<property name="project.misc" value="${project.home}/misc" />
+		<property name="project.java" value="${project.src}/main/java" />
+		<property name="project.config" value="${project.src}/main/resources" />
+		<property name="project.build.target" value="${project.home}/target" />
+		<property name="project.classes" value="${project.build.target}/classes" />
+		<path id="classpath">
+			<fileset dir="${project.lib}">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+	</target>
+
+	<!--清除编译完的相关文件-->
+	<target name="clean" depends="init">
+		<mkdir dir="${project.build.target}" />
+		<delete includeemptydirs="true">
+			<fileset dir="${project.build.target}" includes="**/*.*" />
+		</delete>
+	</target>
+
+	<!--编译java源代码-->
+	<target name="compile" depends="clean,init">
+		<echo>compile java source file</echo>
+		<mkdir dir="${project.classes}" />
+		<javac srcdir="${project.java}" destdir="${project.classes}" classpathref="classpath" encoding="UTF-8" includeantruntime="on">
+			<include name="org/sagacity/sqltoy/**/*.java" />
+			<exclude name="**/.svn/**" />
+		</javac>
+		<copy todir="${project.classes}/">
+			<fileset dir="${project.java}/">
+				<include name="org/sagacity/sqltoy/**/*.xml" />
+				<include name="org/sagacity/sqltoy/**/*.properties" />
+				<include name="org/sagacity/sqltoy/**/*.licence" />
+				<exclude name="**/.svn/**" />
+			</fileset>
+		</copy>
+		<copy todir="${project.classes}/META-INF">
+			<fileset dir="${project.config}/META-INF">
+				<include name="schema/**/*.xsd" />
+				<exclude name="**/.svn/**" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jar" depends="clean,compile">
+		<jar jarfile="${project.build.target}/${project.name}-${project.version}.jar" basedir="${project.classes}/">
+			<include name="org/sagacity/sqltoy/**/*.*" />
+			<include name="META-INF/**/*.*" />
+			<exclude name="**/.svn/**" />
+		</jar>
+	</target>
+</project>
