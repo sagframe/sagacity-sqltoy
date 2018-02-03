@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="sagacity-quickvo" default="quickvo">
+	<!--打包参数信息-->
+	<target name="init">
+		<property name="project.version" value="4.0.6" />
+		<property name="project.home" value="." />
+		<property name="project.lib" value="${project.home}/lib" />
+		<property name="project.name" value="sagacity" />
+		<property name="project.src" value="${project.home}/src" />
+		<property name="project.java" value="${project.src}/main/java" />
+		<property name="project.config" value="${project.src}/main/resources" />
+		<property name="project.build.target" value="${project.home}/target" />
+		<property name="project.classes" value="${project.build.target}/classes" />
+		<path id="classpath">
+			<fileset dir="${project.lib}">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+	</target>
+
+	<!--清除编译完的相关文件-->
+	<target name="clean" depends="init">
+		<mkdir dir="${project.build.target}" />
+		<delete dir="${project.build.target}" includeemptydirs="true" deleteonexit="true" />
+	</target>
+
+
+	<!--编译java源代码-->
+	<target name="compile" depends="clean,init">
+		<echo>compile java source file</echo>
+		<mkdir dir="${project.classes}" />
+		<javac srcdir="${project.java}" destdir="${project.classes}" classpathref="classpath" encoding="UTF-8" includeantruntime="on">
+			<include name="org/sagacity/**/*.java" />
+			<exclude name="**/.svn/**" />
+		</javac>
+		<copy todir="${project.classes}/">
+			<fileset dir="${project.java}/">
+				<include name="org/sagacity/**/*.xml" />
+				<include name="org/sagacity/**/*.ftl" />
+				<include name="org/sagacity/**/*.properties" />
+				<include name="org/sagacity/**/*.licence" />
+				<exclude name="**/.svn/**" />
+			</fileset>
+		</copy>
+		<copy todir="${project.classes}/META-INF">
+			<fileset dir="${project.config}/META-INF">
+				<include name="schema/**/*.xsd" />
+				<exclude name="**/.svn/**" />
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- 快速通过数据库生成vo、vofactory的工具-->
+	<target name="quickvo" depends="compile">
+		<property name="tools.quickvo.package" value="org.sagacity.quickvo" />
+		<property name="tools.quickvo.package.path" value="org/sagacity/quickvo" />
+		<property name="tools.quickvo.release.name" value="sagacity-quickvo" />
+		<echo message="开始打包quickvo-{project.version}.jar" />
+		<jar jarfile="${project.build.target}/${tools.quickvo.release.name}.jar" basedir="${project.classes}/">
+			<include name="org/sagacity/quickvo/**/*.*" />
+			<include name="org/sagacity/quickvo/**/*.*" />
+			<include name="META-INF/schema/**/*.xsd" />
+			<manifest>
+				<attribute name="Manifest-Version" value="${project.version}" />
+				<attribute name="Built-By" value="1.8 (Sun Microsystems Inc.)" />
+				<attribute name="Main-class" value="org.sagacity.quickvo.QuickVOStart" />
+			</manifest>
+			<zipfileset src="${project.lib}/dom4j-2.1.0.jar" />
+			<zipfileset src="${project.lib}/freemarker-2.3.26.jar" />
+			<zipfileset src="${project.lib}/log4j-api-2.10.0.jar" />
+			<zipfileset src="${project.lib}/log4j-core-2.10.0.jar" />
+		</jar>
+	</target>
+</project>
