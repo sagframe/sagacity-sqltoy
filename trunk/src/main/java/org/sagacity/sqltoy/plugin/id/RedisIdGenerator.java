@@ -7,6 +7,10 @@ import java.util.Date;
 
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -26,6 +30,17 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	private String redisUrl;
 
+	private RedisTemplate redisTemplate;
+
+	/**
+	 * @param redisTemplate
+	 *            the redisTemplate to set
+	 */
+	@Autowired(required = false)
+	public void setRedisTemplate(RedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -33,11 +48,19 @@ public class RedisIdGenerator implements IdGenerator {
 	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override
-	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length) {
+	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
+			throws Exception {
 		String key = (signature == null ? "" : signature)
 				+ ((relatedColValue == null) ? "" : relatedColValue.toString())
 				+ (dateFormat == null ? "" : DateUtil.parse(new Date(), dateFormat));
-		return null;
+		int increment = 1;
+		Long result = generate(key, increment);
+		return key + StringUtil.addLeftZero2Len("" + result, length - key.length());
+	}
+
+	private long generate(String key, int increment) {
+		RedisAtomicLong counter = new RedisAtomicLong(key, redisTemplate.getConnectionFactory());
+		return counter.addAndGet(increment);
 	}
 
 	/**

@@ -31,7 +31,8 @@ public class UUIDGenerator implements IdGenerator {
 	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override
-	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length) {
+	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
+			throws Exception {
 		return IdUtil.getUUID();
 	}
 
