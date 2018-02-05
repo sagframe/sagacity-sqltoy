@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.TranslateManager;
+import org.sagacity.sqltoy.config.model.ElasticConfig;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -94,6 +95,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * sharding策略
 	 */
 	private HashMap<String, ShardingStrategy> shardingStrategys = new HashMap<String, ShardingStrategy>();
+
+	/**
+	 * es的地址配置
+	 */
+	private HashMap<String, ElasticConfig> elasticConfigs = new HashMap<String, ElasticConfig>();
 
 	/**
 	 * 登记sqltoy所需要访问的DataSource
@@ -651,4 +657,25 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.mongoFactoryName = mongoFactoryName;
 	}
 
+	/**
+	 * @param elasticConfigs
+	 *            the elasticConfigs to set
+	 */
+	public void setElasticConfigs(List<ElasticConfig> elasticConfigList) {
+		if (elasticConfigList != null) {
+			for (ElasticConfig config : elasticConfigList) {
+				elasticConfigs.put(config.getId().toLowerCase(), config);
+			}
+		}
+	}
+
+	public ElasticConfig getElasticConfig(String id) {
+		if (id == null && elasticConfigs.size() == 1)
+			return elasticConfigs.values().iterator().next();
+		ElasticConfig result = elasticConfigs.get(id.toLowerCase());
+		if (result == null)
+			return new ElasticConfig(id);
+		else
+			return result;
+	}
 }
