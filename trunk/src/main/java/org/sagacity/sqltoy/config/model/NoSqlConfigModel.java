@@ -44,6 +44,11 @@ public class NoSqlConfigModel implements Serializable {
 
 	// 连接超时时间为10秒
 	private int connectTimeout = 10000;
+	
+	/**
+	 * 整个请求超时时长,3分钟
+	 */
+	private int socketTimeout=180000;
 
 	/**
 	 * url请求是字符集类型
@@ -230,6 +235,20 @@ public class NoSqlConfigModel implements Serializable {
 	 */
 	public void setSqlMode(boolean sqlMode) {
 		this.sqlMode = sqlMode;
+	}
+
+	/**
+	 * @return the socketTimeout
+	 */
+	public int getSocketTimeout() {
+		return socketTimeout;
+	}
+
+	/**
+	 * @param socketTimeout the socketTimeout to set
+	 */
+	public void setSocketTimeout(int socketTimeout) {
+		this.socketTimeout = socketTimeout;
 	}
 
 }
