@@ -162,8 +162,8 @@ public class MongoElasticUtils {
 				// sql中存在逻辑判断
 				if (start > -1) {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					// 增加一个空格确保正则表达式匹配正确
-					String evalStr = BLANK + markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
+					String evalStr = BLANK
+							.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
 					int logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
 					// update 2017-4-14 增加@if()简单逻辑判断
 					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
@@ -324,7 +324,7 @@ public class MongoElasticUtils {
 		int index = 0;
 		Object value;
 		while (m.find()) {
-			// +1 补偿\\W\\:前面\\W字符被额外切取
+			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
 			realMql.append(sql.substring(start, m.start() + 1));
 			start = m.end();
 			value = paramValues[index];
@@ -350,7 +350,7 @@ public class MongoElasticUtils {
 			}
 			index++;
 		}
-		// 切取尾部sql
+		// 切去尾部sql
 		realMql.append(sql.substring(start));
 		return realMql.toString();
 	}

@@ -5,15 +5,20 @@ package org.sagacity.sqltoy.utils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ElasticConfig;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 
 import com.alibaba.fastjson.JSON;
@@ -30,7 +35,7 @@ public class HttpClientUtils {
 	 * 请求配置
 	 */
 	private final static RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(30000)
-			.setConnectTimeout(10000).build();
+			.setConnectTimeout(10000).setSocketTimeout(180000).build();
 
 	/**
 	 * 定义全局日志
@@ -54,28 +59,38 @@ public class HttpClientUtils {
 	 */
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
 			throws Exception {
-		String realUrl = wrapUrl(nosqlConfig);
+		ElasticConfig esConfig = sqltoyContext.getElasticConfig(nosqlConfig.getUrl());
+		String realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
 		HttpPost httpPost = new HttpPost(realUrl);
-		CloseableHttpClient client = HttpClients.createDefault();
-		String valueStr = nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue);
 		if (sqltoyContext.isDebug())
-			logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, valueStr);
+			logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
-
-		HttpEntity httpEntity = new StringEntity(valueStr, charset);
+		HttpEntity httpEntity = new StringEntity(
+				nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue), charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
-
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		httpPost.setEntity(httpEntity);
 
 		// 设置connection是否自动关闭
 		httpPost.setHeader("Connection", "close");
 		// 自定义超时
-		if (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000) {
+		if (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
+				|| nosqlConfig.getSocketTimeout() != 180000) {
 			httpPost.setConfig(RequestConfig.custom().setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
-					.setConnectTimeout(nosqlConfig.getConnectTimeout()).build());
+					.setConnectTimeout(nosqlConfig.getConnectTimeout()).setSocketTimeout(nosqlConfig.getSocketTimeout())
+					.build());
 		} else
 			httpPost.setConfig(requestConfig);
+		CloseableHttpClient client = null;
+		if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
+			// 凭据提供器
+			CredentialsProvider credsProvider = new BasicCredentialsProvider();
+			credsProvider.setCredentials(AuthScope.ANY,
+					// 认证用户名和密码
+					new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
+			client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+		} else
+			client = HttpClients.createDefault();
 		HttpResponse response = client.execute(httpPost);
 		HttpEntity reponseEntity = response.getEntity();
 		String result = null;
@@ -102,8 +117,7 @@ public class HttpClientUtils {
 	 * @param nosqlConfig
 	 * @return
 	 */
-	private static String wrapUrl(NoSqlConfigModel nosqlConfig) {
-		String url = nosqlConfig.getUrl();
+	private static String wrapUrl(String url, NoSqlConfigModel nosqlConfig) {
 		if (nosqlConfig.isSqlMode()) {
 			url = url.concat(url.endsWith("/") ? "_sql" : "/_sql");
 		} else {
