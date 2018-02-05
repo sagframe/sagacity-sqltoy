@@ -21,17 +21,12 @@ import org.springframework.data.redis.support.atomic.RedisAtomicLong;
  * @version id:RedisIdGenerator.java,Revision:v1.0,Date:2018年1月30日
  */
 public class RedisIdGenerator implements IdGenerator {
-	public final static Pattern DF_REGEX = Pattern.compile("(?i)\\@(date|day|df)\\([\\w|\\W]*\\)");
+	private final static Pattern DF_REGEX = Pattern.compile("(?i)\\@(date|day|df)\\([\\w|\\W]*\\)");
 
 	/**
 	 * 日期格式
 	 */
 	private String dateFormat;
-
-	/**
-	 * url地址
-	 */
-	private String redisUrl;
 
 	private RedisTemplate redisTemplate;
 
@@ -111,32 +106,10 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @return the dateFormat
-	 */
-	public String getDateFormat() {
-		return dateFormat;
-	}
-
-	/**
 	 * @param dateFormat
 	 *            the dateFormat to set
 	 */
 	public void setDateFormat(String dateFormat) {
 		this.dateFormat = dateFormat;
-	}
-
-	/**
-	 * @return the redisUrl
-	 */
-	public String getRedisUrl() {
-		return redisUrl;
-	}
-
-	/**
-	 * @param redisUrl
-	 *            the redisUrl to set
-	 */
-	public void setRedisUrl(String redisUrl) {
-		this.redisUrl = redisUrl;
 	}
 }
