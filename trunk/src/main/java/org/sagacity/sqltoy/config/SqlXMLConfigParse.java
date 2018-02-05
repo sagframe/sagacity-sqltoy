@@ -336,6 +336,10 @@ public class SqlXMLConfigParse {
 		if (sqlElt.attribute("connection-timeout") != null)
 			noSqlConfig.setConnectTimeout(Integer.parseInt(sqlElt.attributeValue("connection-timeout")));
 
+		// 整个请求超时时长(毫秒)
+		if (sqlElt.attribute("socket-timeout") != null)
+			noSqlConfig.setSocketTimeout(Integer.parseInt(sqlElt.attributeValue("socket-timeout")));
+
 		// url请求字符集类型
 		if (sqlElt.attribute("charset") != null)
 			noSqlConfig.setCharset(sqlElt.attributeValue("charset"));
