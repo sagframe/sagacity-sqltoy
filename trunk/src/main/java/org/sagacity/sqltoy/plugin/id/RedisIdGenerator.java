@@ -55,15 +55,17 @@ public class RedisIdGenerator implements IdGenerator {
 			throws Exception {
 		String key = (signature == null ? "" : signature)
 				.concat(((relatedColValue == null) ? "" : relatedColValue.toString()));
-		Matcher m = DF_REGEX.matcher(key);
 		String realKey = key;
-		if (m.find()) {
-			String df = m.group();
-			df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
-			if (df.equals(""))
-				df = "yyMMdd";
-			realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(new Date(), df))
-					.concat(key.substring(m.end()));
+		if (key.indexOf("@") > 0) {
+			Matcher m = DF_REGEX.matcher(key);
+			if (m.find()) {
+				String df = m.group();
+				df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
+				if (df.equals(""))
+					df = "yyMMdd";
+				realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(new Date(), df))
+						.concat(key.substring(m.end()));
+			}
 		} else if (dateFormat != null)
 			realKey = key.concat(DateUtil.formatDate(new Date(), dateFormat));
 		Long result = generate(realKey);
