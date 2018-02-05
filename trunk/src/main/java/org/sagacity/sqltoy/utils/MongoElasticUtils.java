@@ -60,19 +60,8 @@ public class MongoElasticUtils {
 			fullNames = SqlConfigParseUtils.getSqlParamsName(mql, false);
 		else
 			fullNames = SqlConfigParseUtils.getNoSqlParamsName(mql, false);
-
-		List<String> list = new ArrayList<String>();
-		for (String str : paramNames) {
-			if (!list.contains(str)) {
-				list.add(str);
-			}
-		}
-		String[] names = new String[list.size()];
-		list.toArray(names);
 		// 提取参数值
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
-		// 过滤提取最终的参数值
-		fullParamValues = ParamFilterUtils.filterValue(names, fullParamValues, sqlToyConfig.getFilters());
 		return processNullConditions(mql, fullParamValues, sqlToyConfig.getNoSqlConfigModel().isSqlMode());
 	}
 
@@ -173,7 +162,8 @@ public class MongoElasticUtils {
 				// sql中存在逻辑判断
 				if (start > -1) {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
+					// 增加一个空格确保正则表达式匹配正确
+					String evalStr = BLANK + markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
 					int logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
 					// update 2017-4-14 增加@if()简单逻辑判断
 					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
@@ -334,8 +324,8 @@ public class MongoElasticUtils {
 		int index = 0;
 		Object value;
 		while (m.find()) {
-			//+1 补偿\\W\\:前面\\W字符被额外切取
-			realMql.append(sql.substring(start, m.start()+1));
+			// +1 补偿\\W\\:前面\\W字符被额外切取
+			realMql.append(sql.substring(start, m.start() + 1));
 			start = m.end();
 			value = paramValues[index];
 			Object[] ary = null;
@@ -360,7 +350,7 @@ public class MongoElasticUtils {
 			}
 			index++;
 		}
-		//切取尾部sql
+		// 切取尾部sql
 		realMql.append(sql.substring(start));
 		return realMql.toString();
 	}

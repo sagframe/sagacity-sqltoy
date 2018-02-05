@@ -22,5 +22,6 @@ public interface IdGenerator {
 	 * @param length
 	 * @return
 	 */
-	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length);
+	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
+			throws Exception;
 }

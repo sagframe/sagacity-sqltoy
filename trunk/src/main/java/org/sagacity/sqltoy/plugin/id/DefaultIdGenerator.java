@@ -28,10 +28,13 @@ public class DefaultIdGenerator implements IdGenerator {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.sagacity.sqltoy.plugin.IdGenerator#getId(java.lang.String, java.lang.String, java.lang.Object[], int)
+	 * 
+	 * @see org.sagacity.sqltoy.plugin.IdGenerator#getId(java.lang.String,
+	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override
-	public Object getId(String tableName, String signature, Object relatedColsValue, int jdbcType,int length) {
+	public Object getId(String tableName, String signature, Object relatedColsValue, int jdbcType, int length)
+			throws Exception {
 		return SqlUtil.convertIdValueType(IdUtil.getShortNanoTimeId(SqlToyConstants.SERVER_ID), jdbcType);
 	}
 }

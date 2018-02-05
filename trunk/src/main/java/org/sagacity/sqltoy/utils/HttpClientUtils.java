@@ -57,13 +57,14 @@ public class HttpClientUtils {
 		String realUrl = wrapUrl(nosqlConfig);
 		HttpPost httpPost = new HttpPost(realUrl);
 		CloseableHttpClient client = HttpClients.createDefault();
+		String valueStr = nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue);
 		if (sqltoyContext.isDebug())
-			logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));
+			logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, valueStr);
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 
-		HttpEntity httpEntity = new StringEntity(
-				nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue), charset);
+		HttpEntity httpEntity = new StringEntity(valueStr, charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
+
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		httpPost.setEntity(httpEntity);
 
