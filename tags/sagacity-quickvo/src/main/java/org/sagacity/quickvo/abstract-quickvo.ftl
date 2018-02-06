@@ -7,6 +7,10 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
+<#if (quickVO.swaggerModel)>
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+</#if>
 <#if (quickVO.hasBusinessId==true)>
 import org.sagacity.sqltoy.config.annotation.BusinessId;
 </#if>
@@ -30,6 +34,9 @@ import ${quickVO.voPackage}.${exportTable.pkRefTableJavaName?cap_first};
  * @version <#if (quickVO.version?exists)>${quickVO.version}</#if>
  * Table: ${quickVO.tableName}<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,Remark:${quickVO.tableRemark}</#if>   
  */
+<#if (quickVO.swaggerModel)>
+@ApiModel(value="${quickVO.voName}"<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,description="${quickVO.tableRemark}"</#if>)
+</#if>
 @Entity(tableName="${quickVO.tableName}"<#if (quickVO.pkConstraint?exists)>,pk_constraint="${quickVO.pkConstraint}"</#if><#if (quickVO.schema?exists && quickVO.schema!='')>,schema="${quickVO.schema}"</#if>)
 public abstract class Abstract${quickVO.voName} implements Serializable,
 	java.lang.Cloneable {
@@ -51,6 +58,9 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	 * ${column.colRemark}
 	 */
 </#if>
+	<#if (quickVO.swaggerModel)>
+	@ApiModelProperty(value="${column.colRemark}")
+	</#if>
 	<#if (column.pkFlag?exists && column.pkFlag=='1')>
 	@Id<#if (column.businessIdConfig?exists)><#else><#if (quickVO.singlePk=='1')>(strategy="${column.strategy}"<#if (column.sequence?exists && column.sequence!='')>,sequence="${column.sequence}"</#if><#if (column.generator?exists && column.generator!='')>,generator="${column.generator}"</#if>)</#if></#if>
 	</#if>

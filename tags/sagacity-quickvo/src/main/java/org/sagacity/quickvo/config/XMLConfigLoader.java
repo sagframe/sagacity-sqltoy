@@ -104,7 +104,8 @@ public class XMLConfigLoader {
 					quickModel.setDataSource(quickvo.attributeValue("datasource"));
 				else if (quickvo.attribute("dataSource") != null)
 					quickModel.setDataSource(quickvo.attributeValue("dataSource"));
-
+				if (quickvo.attribute("swagger-model") != null)
+					quickModel.setSwaggerApi(Boolean.parseBoolean(quickvo.attributeValue("swagger-model")));
 				vo = quickvo.element("vo");
 				dao = quickvo.element("dao");
 				if (quickvo.attribute("include") != null) {

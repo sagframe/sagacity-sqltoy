@@ -141,6 +141,11 @@ public class QuickVO implements Serializable {
 	 * 需要导入的类
 	 */
 	private List imports;
+	
+	/**
+	 * 支持swaggerApi
+	 */
+	private boolean swaggerModel=false;
 
 	/**
 	 * @return the tableRemark
@@ -537,6 +542,20 @@ public class QuickVO implements Serializable {
 	 */
 	public void setHasBusinessId(boolean hasBusinessId) {
 		this.hasBusinessId = hasBusinessId;
+	}
+
+	/**
+	 * @return the swaggerModel
+	 */
+	public boolean isSwaggerModel() {
+		return swaggerModel;
+	}
+
+	/**
+	 * @param swaggerModel the swaggerModel to set
+	 */
+	public void setSwaggerModel(boolean swaggerModel) {
+		this.swaggerModel = swaggerModel;
 	}
 
 	

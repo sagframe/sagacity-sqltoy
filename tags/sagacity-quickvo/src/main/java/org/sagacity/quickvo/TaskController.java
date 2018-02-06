@@ -180,6 +180,7 @@ public class TaskController {
 			logger.info("正在处理表:" + tableName);
 			entityName = StringUtil.toHumpStr(tableName, true);
 			quickVO = new QuickVO();
+			quickVO.setSwaggerModel(quickModel.isSwaggerApi());
 			quickVO.setAbstractPath(configModel.getAbstractPath());
 			quickVO.setVersion(QuickVOConstants.getPropertyValue("project.version"));
 			quickVO.setProjectName(QuickVOConstants.getPropertyValue("project.name"));

@@ -33,6 +33,8 @@ public class QuickModel implements Serializable {
 	
 	private String dataSource;
 	
+	private boolean swaggerApi=false;
+	
 	/**
 	 * 作者，主要针对Dao层提供任务责任人
 	 */
@@ -260,6 +262,20 @@ public class QuickModel implements Serializable {
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
+	}
+
+	/**
+	 * @return the swaggerApi
+	 */
+	public boolean isSwaggerApi() {
+		return swaggerApi;
+	}
+
+	/**
+	 * @param swaggerApi the swaggerApi to set
+	 */
+	public void setSwaggerApi(boolean swaggerApi) {
+		this.swaggerApi = swaggerApi;
 	}
 
 	
