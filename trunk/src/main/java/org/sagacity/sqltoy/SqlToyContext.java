@@ -670,7 +670,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	public ElasticConfig getElasticConfig(String id) {
-		if (id == null && elasticConfigs.size() == 1)
+		if (StringUtil.isBlank(id) && elasticConfigs.size() == 1)
 			return elasticConfigs.values().iterator().next();
 		ElasticConfig result = elasticConfigs.get(id.toLowerCase());
 		if (result == null)

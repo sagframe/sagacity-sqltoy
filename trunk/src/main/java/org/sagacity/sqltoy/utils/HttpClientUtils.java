@@ -60,6 +60,8 @@ public class HttpClientUtils {
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
 			throws Exception {
 		ElasticConfig esConfig = sqltoyContext.getElasticConfig(nosqlConfig.getUrl());
+		if (esConfig.getUrl() == null)
+			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 		String realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
 		HttpPost httpPost = new HttpPost(realUrl);
 		if (sqltoyContext.isDebug())
