@@ -215,7 +215,7 @@ public class MongoElasticUtils {
 				if (sqlMode)
 					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, tailSql);
 				else
-					queryStr = preSql.concat(markContentSql).concat(tailSql);
+					queryStr = preSql.concat(BLANK).concat(markContentSql).concat(BLANK).concat(tailSql);
 			}
 			pseudoMarkStart = queryStr.indexOf(startMark);
 		}
@@ -303,6 +303,7 @@ public class MongoElasticUtils {
 					realMql.append("]");
 			}
 			index++;
+			//realMql.append(BLANK);
 		}
 		realMql.append(sql.substring(start));
 		return realMql.toString();
@@ -349,6 +350,7 @@ public class MongoElasticUtils {
 				i++;
 			}
 			index++;
+			realMql.append(BLANK);
 		}
 		// 切去尾部sql
 		realMql.append(sql.substring(start));
