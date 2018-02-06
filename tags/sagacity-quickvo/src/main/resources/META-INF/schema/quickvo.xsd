@@ -64,6 +64,7 @@
 									<xsd:attribute name="datasource" type="xsd:string" />
 									<xsd:attribute name="active" type="xsd:boolean"
 										use="required" />
+									<xsd:attribute name="swagger-model" type="xsd:boolean"/>
 									<xsd:attribute name="author" type="xsd:string" />
 									<xsd:attribute name="include" type="xsd:string"
 										use="required" />
