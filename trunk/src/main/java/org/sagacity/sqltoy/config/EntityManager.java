@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.plugin.id.DefaultIdGenerator;
 import org.sagacity.sqltoy.plugin.id.NanoTimeIdGenerator;
+import org.sagacity.sqltoy.plugin.id.RedisIdGenerator;
 import org.sagacity.sqltoy.plugin.id.SnowflakeIdGenerator;
 import org.sagacity.sqltoy.plugin.id.UUIDGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -445,12 +446,14 @@ public class EntityManager {
 							idGenerators.put(idGenerator, SnowflakeIdGenerator.getInstance());
 						else if (idGenerator.equals("org.sagacity.sqltoy.plugin.UUIDGenerator"))
 							idGenerators.put(idGenerator, UUIDGenerator.getInstance());
+						else if (idGenerator.equals("org.sagacity.sqltoy.plugin.RedisIdGenerator"))
+							idGenerators.put(idGenerator, RedisIdGenerator.getInstance(sqlToyContext));
 						// 以spring 定义的bean模式注入id生成策略,格式:@bean(idGenerator)
 						else if (idGenerator.toLowerCase().startsWith("@bean(")) {
 							int start = idGenerator.indexOf("(");
 							int end = idGenerator.indexOf(")");
 							String beanName = idGenerator.substring(start + 1, end).replaceAll("\"|\'", "").trim();
-							idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getIdGenerator(beanName));
+							idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
 						} else
 							idGenerators.put(idGenerator, (IdGenerator) Class.forName(idGenerator).newInstance());
 					}
@@ -480,7 +483,7 @@ public class EntityManager {
 					int start = bizGenerator.indexOf("(");
 					int end = bizGenerator.indexOf(")");
 					String beanName = bizGenerator.substring(start + 1, end).replaceAll("\"|\'", "").trim();
-					idGenerators.put(bizGenerator, (IdGenerator) sqlToyContext.getIdGenerator(beanName));
+					idGenerators.put(bizGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
 				} else
 					idGenerators.put(bizGenerator, (IdGenerator) Class.forName(bizGenerator).newInstance());
 				// 如果是业务主键跟ID重叠,则ID以业务主键策略生成

@@ -303,7 +303,7 @@ public class Mongo extends BaseLink {
 			resultSet.add(rowData);
 		}
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet, realFields);
-		
+
 		DataSetResult dataSetResult = new DataSetResult();
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(fields);
@@ -319,6 +319,6 @@ public class Mongo extends BaseLink {
 	private MongoDbFactory getMongoDbFactory() {
 		if (this.mongoDbFactory != null)
 			return mongoDbFactory;
-		return (MongoDbFactory) sqlToyContext.getMongoDbFactory();
+		return (MongoDbFactory) sqlToyContext.getBean(sqlToyContext.getMongoFactoryName());
 	}
 }

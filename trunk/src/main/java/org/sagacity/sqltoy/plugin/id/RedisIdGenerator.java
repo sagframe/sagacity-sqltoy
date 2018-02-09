@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -21,7 +22,22 @@ import org.springframework.data.redis.support.atomic.RedisAtomicLong;
  * @version id:RedisIdGenerator.java,Revision:v1.0,Date:2018年1月30日
  */
 public class RedisIdGenerator implements IdGenerator {
+	private static RedisIdGenerator me = new RedisIdGenerator();
+
 	private final static Pattern DF_REGEX = Pattern.compile("(?i)\\@(date|day|df)\\([\\w|\\W]*\\)");
+
+	/**
+	 * 获取对象单例
+	 * 
+	 * @return
+	 */
+	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
+		if (me.getRedisTemplate() == null) {
+			RedisTemplate redisTemplate = (RedisTemplate) sqlToyContext.getBean("redisTemplate");
+			me.setRedisTemplate(redisTemplate);
+		}
+		return me;
+	}
 
 	/**
 	 * 日期格式
@@ -37,6 +53,13 @@ public class RedisIdGenerator implements IdGenerator {
 	@Autowired(required = false)
 	public void setRedisTemplate(RedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
+	}
+
+	/**
+	 * @return the redisTemplate
+	 */
+	public RedisTemplate getRedisTemplate() {
+		return redisTemplate;
 	}
 
 	/*

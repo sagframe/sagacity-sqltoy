@@ -24,7 +24,6 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.plugin.ShardingStrategy;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
@@ -248,6 +247,23 @@ public class SqlToyContext implements ApplicationContextAware {
 		return null;
 	}
 
+	/**
+	 * @todo 获取bean
+	 * @param beanName
+	 * @return
+	 */
+	public Object getBean(Object beanName) {
+		if (beanName instanceof String)
+			return applicationContext.getBean(beanName.toString());
+		else
+			return applicationContext.getBean((Class) beanName);
+	}
+
+	/**
+	 * @todo 获取数据源
+	 * @param dataSourceName
+	 * @return
+	 */
 	public DataSource getDataSource(String dataSourceName) {
 		if (StringUtil.isBlank(dataSourceName))
 			return null;
@@ -255,19 +271,6 @@ public class SqlToyContext implements ApplicationContextAware {
 			return dataSourcesMap.get(dataSourceName);
 		else
 			return (DataSource) applicationContext.getBean(dataSourceName);
-	}
-
-	public IdGenerator getIdGenerator(String beanName) {
-		if (StringUtil.isBlank(beanName))
-			return null;
-		return (IdGenerator) applicationContext.getBean(beanName);
-	}
-
-	public Object getMongoDbFactory() {
-		if (this.mongoFactoryName != null)
-			return applicationContext.getBean(this.mongoFactoryName);
-		else
-			return null;
 	}
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey) {
@@ -655,6 +658,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setMongoFactoryName(String mongoFactoryName) {
 		this.mongoFactoryName = mongoFactoryName;
+	}
+
+	/**
+	 * @return the mongoFactoryName
+	 */
+	public String getMongoFactoryName() {
+		return mongoFactoryName;
 	}
 
 	/**

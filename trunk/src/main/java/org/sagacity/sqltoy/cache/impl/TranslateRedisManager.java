@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.sagacity.sqltoy.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.config.model.CacheConfig;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
 /**
@@ -100,6 +101,7 @@ public class TranslateRedisManager implements TranslateCacheManager {
 	 * @param redisTemplate
 	 *            the redisTemplate to set
 	 */
+	@Autowired(required = false)
 	public void setRedisTemplate(RedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
