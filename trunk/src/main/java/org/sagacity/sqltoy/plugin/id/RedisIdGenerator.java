@@ -33,8 +33,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
 		if (me.getRedisTemplate() == null) {
-			RedisTemplate redisTemplate = (RedisTemplate) sqlToyContext.getBean("redisTemplate");
-			me.setRedisTemplate(redisTemplate);
+			me.setRedisTemplate((RedisTemplate) sqlToyContext.getBean("redisTemplate"));
 		}
 		return me;
 	}
