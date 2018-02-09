@@ -643,6 +643,7 @@ public class EntityMeta implements Serializable {
 	 * @return the bizIdLength
 	 */
 	public Integer getBizIdLength() {
+		//默认26位nanotime主键策略
 		if (bizIdLength == null)
 			return 26;
 		return bizIdLength;
