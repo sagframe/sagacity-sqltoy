@@ -643,6 +643,8 @@ public class EntityMeta implements Serializable {
 	 * @return the bizIdLength
 	 */
 	public Integer getBizIdLength() {
+		if (bizIdLength == null)
+			return 26;
 		return bizIdLength;
 	}
 
