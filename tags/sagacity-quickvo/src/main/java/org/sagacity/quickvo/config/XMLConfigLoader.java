@@ -282,6 +282,8 @@ public class XMLConfigLoader {
 				bizIdConfig.setTableName(tableElt.attributeValue("name"));
 				bizIdConfig.setColumn(tableElt.attributeValue("column"));
 				bizIdConfig.setGenerator(tableElt.attributeValue("generator"));
+				if (bizIdConfig.getGenerator() != null && bizIdConfig.getGenerator().equalsIgnoreCase("redis"))
+					bizIdConfig.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
 				if (tableElt.attribute("related-column") != null) {
 					String relatedColumn = tableElt.attributeValue("related-column");
 					// 统一分割符

@@ -100,6 +100,7 @@
 												<xsd:enumeration value="UUID" />
 												<xsd:enumeration value="snowflake" />
 												<xsd:enumeration value="nanotime" />
+												<xsd:enumeration value="redis" />
 											</xsd:restriction>
 										</xsd:simpleType>
 									</xsd:attribute>
