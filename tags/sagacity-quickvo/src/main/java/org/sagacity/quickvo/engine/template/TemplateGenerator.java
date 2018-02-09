@@ -24,7 +24,7 @@ import freemarker.template.Template;
  * @project sagacity-quickvo
  * @description 基于freemarker的模版工具引擎，提供日常项目中模版和数据对象的结合处理
  * @author zhongxuchen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:TemplateGenerator.java,Revision:v1.0,Date:2008-11-24 $
+ * @version id:TemplateGenerator.java,Revision:v1.0,Date:2008-11-24
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TemplateGenerator {
