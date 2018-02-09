@@ -557,7 +557,7 @@ public class SqlXMLConfigParse {
 		}
 		// 当没有特定配置时，默认将所有空白当做null处理
 		if (!hasBlank && blankToNull == -1)
-			filterModels.add(new ParamFilterModel("blank", new String[] { "*" }));
+			filterModels.add(0, new ParamFilterModel("blank", new String[] { "*" }));
 		if (filterModels.isEmpty())
 			return null;
 		ParamFilterModel[] result = new ParamFilterModel[filterModels.size()];
