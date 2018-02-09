@@ -242,6 +242,8 @@ public class ElasticSearchUtils {
 				result.add(processRow((JSONObject) tmp, realFields));
 			}
 		}
+		if (result != null)
+			resultModel.setTotalCount(Long.valueOf(result.size()));
 		resultModel.setRows(result);
 		resultModel.setLabelNames(fields);
 		return resultModel;
