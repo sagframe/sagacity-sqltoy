@@ -304,6 +304,9 @@ public class TaskController {
 												else if (generator.equalsIgnoreCase("nanotime"))
 													quickColMeta
 															.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
+												// 基于redis的主键策略
+												else if (generator.equalsIgnoreCase("redis"))
+													quickColMeta.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
 											}
 										} else
 											throw new Exception("please check primaryKey Strategy for table of "

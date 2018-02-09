@@ -90,6 +90,11 @@ public class QuickVOConstants implements Serializable {
 	 */
 	public static String PK_NANOTIME_ID_GENERATOR = "org.sagacity.sqltoy.plugin.id.NanoTimeIdGenerator";
 
+	/**
+	 * 基于redis产生id
+	 */
+	public static String PK_REDIS_ID_GENERATOR = "org.sagacity.sqltoy.plugin.id.RedisIdGenerator";
+
 	public static String constructorBegin = "/*---begin-constructor-area---don't-update-this-area--*/";
 	public static String constructorEnd = "/*---end-constructor-area---don't-update-this-area--*/";
 	public static String pkStructRegs = "\\/[\\*]{1,2}\\s*pk\\s+constructor\\s*\\*\\/";
