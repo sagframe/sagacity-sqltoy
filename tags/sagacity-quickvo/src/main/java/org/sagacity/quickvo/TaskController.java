@@ -249,16 +249,22 @@ public class TaskController {
 					String pkCol;
 					QuickColMeta quickColMeta;
 					List pkList = new ArrayList();
+					for (int m = 0; m < colList.size(); m++) {
+						quickColMeta = (QuickColMeta) colList.get(m);
+						// 判断是否是业务主键字段
+						if (businessIdConfig != null) {
+							if (quickColMeta.getColName().replaceAll("\\_|\\-", "")
+									.equalsIgnoreCase(businessIdConfig.getColumn().replaceAll("\\_|\\-", ""))) {
+								quickColMeta.setBusinessIdConfig(businessIdConfig);
+								quickVO.setHasBusinessId(true);
+								break;
+							}
+						}
+					}
 					for (int y = 0; y < pks.size(); y++) {
 						pkCol = (String) pks.get(y);
 						for (int m = 0; m < colList.size(); m++) {
 							quickColMeta = (QuickColMeta) colList.get(m);
-							// 判断是否是业务主键字段
-							if (businessIdConfig != null && quickColMeta.getColName().replaceAll("\\_|\\-", "")
-									.equalsIgnoreCase(businessIdConfig.getColumn().replaceAll("\\_|\\-", ""))) {
-								quickColMeta.setBusinessIdConfig(businessIdConfig);
-								quickVO.setHasBusinessId(true);
-							}
 							// 是主键
 							if (pkCol.equalsIgnoreCase(quickColMeta.getColName())) {
 								quickColMeta.setPkFlag("1");

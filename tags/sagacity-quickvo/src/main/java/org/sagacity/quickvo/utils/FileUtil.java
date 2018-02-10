@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
@@ -326,8 +327,25 @@ public class FileUtil {
 	 * @return
 	 */
 	public static InputStream getResourceAsStream(String reasource) {
-		return Thread.currentThread().getContextClassLoader()
-				.getResourceAsStream((reasource.charAt(0) == '/') ? reasource.substring(1) : reasource);
+		String realRes = (reasource.charAt(0) == '/') ? reasource.substring(1) : reasource;
+		InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realRes);
+		if (result == null) {
+			try {
+				Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realRes);
+				if (urls != null) {
+					URL url;
+					while (urls.hasMoreElements()) {
+						url = urls.nextElement();
+						result = new FileInputStream(url.getFile());
+						if (result != null)
+							break;
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
 	}
 
 	/**
