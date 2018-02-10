@@ -86,7 +86,7 @@ public class RedisIdGenerator implements IdGenerator {
 		} else if (dateFormat != null)
 			realKey = key.concat(DateUtil.formatDate(new Date(), dateFormat));
 		Long result = generate(realKey);
-		return realKey + StringUtil.addLeftZero2Len("" + result, length - key.length());
+		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 	}
 
 	/**
