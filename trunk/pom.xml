@@ -236,7 +236,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.2</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
