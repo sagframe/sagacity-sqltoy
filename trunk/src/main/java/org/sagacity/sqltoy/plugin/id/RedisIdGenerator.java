@@ -90,8 +90,7 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * 根据key获取+1后的key值
-	 * 
+	 * @todo 根据key获取+1后的key值
 	 * @param key
 	 * @return
 	 */
@@ -110,8 +109,7 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * 批量获取key值,并指定过期时间
-	 * 
+	 * @todo 批量获取key值,并指定过期时间
 	 * @param key
 	 * @param increment
 	 * @param expireTime
@@ -119,8 +117,10 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	public long generate(String key, int increment, Date expireTime) {
 		RedisAtomicLong counter = new RedisAtomicLong(key, redisTemplate.getConnectionFactory());
+		//设置过期时间
 		if (expireTime != null)
 			counter.expireAt(expireTime);
+		//设置提取多个数量
 		if (increment > 1)
 			return counter.addAndGet(increment);
 		else
