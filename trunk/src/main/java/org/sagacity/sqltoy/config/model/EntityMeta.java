@@ -657,4 +657,11 @@ public class EntityMeta implements Serializable {
 		this.bizIdLength = bizIdLength;
 	}
 
+	/**
+	 * @param bizIdSignature the bizIdSignature to set
+	 */
+	public void setBizIdSignature(String bizIdSignature) {
+		this.bizIdSignature = bizIdSignature;
+	}
+
 }
