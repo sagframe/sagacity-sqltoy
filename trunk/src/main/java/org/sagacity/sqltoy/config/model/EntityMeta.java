@@ -312,7 +312,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public int getFieldIndex(String fieldName) {
-		return fieldIndexs.get(fieldName);
+		return fieldIndexs.get(fieldName.replaceAll("\\_", "").toLowerCase());
 	}
 
 	/**
@@ -643,7 +643,7 @@ public class EntityMeta implements Serializable {
 	 * @return the bizIdLength
 	 */
 	public Integer getBizIdLength() {
-		//默认26位nanotime主键策略
+		// 默认26位nanotime主键策略
 		if (bizIdLength == null)
 			return 26;
 		return bizIdLength;
