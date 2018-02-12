@@ -232,20 +232,23 @@ public class TaskController {
 				quickVO.setFullNotNull("1");
 			// 表
 			if (isTable) {
-				quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
 				pks = DBHelper.getTablePrimaryKeys(tableName);
 				// 主键字段长度等于表字段长度，设置所有字段为主键标志为1
 				if (pks.size() == colList.size())
 					quickVO.setPkIsAllColumn("1");
 				if (pks != null && notNullCnt == pks.size())
 					quickVO.setPkSizeEqualNotNullSize("1");
-				if (pks.size() == 1)
+				//单主键
+				if (pks.size() == 1) {
 					quickVO.setSinglePk("1");
+				}
 				// 无主键
 				if (pks == null || pks.size() == 0) {
 					quickVO.setSinglePk("-1");
-					logger.info("======表" + tableName + "无主键!请检查数据库配置是否正确!");
+					logger.warn("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
+					//设置主键约束配置,对postgresql 有意义
+					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
 					String pkCol;
 					QuickColMeta quickColMeta;
 					List pkList = new ArrayList();
