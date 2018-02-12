@@ -241,14 +241,14 @@ public class TaskController {
 				//单主键
 				if (pks.size() == 1) {
 					quickVO.setSinglePk("1");
-					//设置主键约束配置,对postgresql 有意义
-					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
 				}
 				// 无主键
 				if (pks == null || pks.size() == 0) {
 					quickVO.setSinglePk("-1");
 					logger.warn("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
+					//设置主键约束配置,对postgresql 有意义
+					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
 					String pkCol;
 					QuickColMeta quickColMeta;
 					List pkList = new ArrayList();
