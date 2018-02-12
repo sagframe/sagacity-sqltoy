@@ -247,7 +247,7 @@ public class TaskController {
 				// 无主键
 				if (pks == null || pks.size() == 0) {
 					quickVO.setSinglePk("-1");
-					logger.info("======表" + tableName + "无主键!请检查数据库配置是否正确!");
+					logger.warn("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
 					String pkCol;
 					QuickColMeta quickColMeta;
