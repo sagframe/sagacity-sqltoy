@@ -118,7 +118,8 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @return
 	 */
 	public long generate(String key, int increment, Date expireTime) {
-		RedisAtomicLong counter = new RedisAtomicLong(key, redisTemplate.getConnectionFactory());
+		//增加特殊规定的前缀,确保不跟其他业务场景key冲突
+		RedisAtomicLong counter = new RedisAtomicLong("sqltoy_global_id_".concat(key), redisTemplate.getConnectionFactory());
 		//设置过期时间
 		if (expireTime != null)
 			counter.expireAt(expireTime);
