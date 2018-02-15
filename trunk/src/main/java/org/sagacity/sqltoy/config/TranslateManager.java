@@ -307,8 +307,7 @@ public class TranslateManager {
 					dataSourceName = getDefaultDataSource();
 				List cacheResult = null;
 				// 缓存sql来源于不同数据库
-				if (sqlToyConfig.getDataSourceShardingStragety() != null
-						|| StringUtil.isNotBlank(dataSourceName)) {
+				if (sqlToyConfig.getDataSourceShardingStragety() != null || StringUtil.isNotBlank(dataSourceName)) {
 					DataSource dataBase = null;
 					if (StringUtil.isNotBlank(dataSourceName))
 						dataBase = sqlToyContext.getDataSource(dataSourceName);
@@ -346,8 +345,14 @@ public class TranslateManager {
 				}
 			} else {
 				// 通过spring 调用具体的bean 方法获取数据，必须返回的是HashMap结果
-				result = (HashMap<String, Object[]>) sqlToyContext.getServiceData(cacheModel.getService(),
-						cacheModel.getServiceMethod(), args);
+				try {
+					result = (HashMap<String, Object[]>) sqlToyContext.getServiceData(cacheModel.getService(),
+							cacheModel.getServiceMethod(), args);
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.error("缓存翻译通过接口服务:{}.{} 返回的结果必须是HashMap<key, Object[]{key,name1,..,nameX}> 类型的数据格式!", cacheModel.getService(),
+							cacheModel.getServiceMethod());
+				}
 			}
 			// 放入缓存
 			if (result != null && !result.isEmpty()) {
