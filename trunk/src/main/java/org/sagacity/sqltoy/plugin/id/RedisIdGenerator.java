@@ -24,7 +24,15 @@ import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 public class RedisIdGenerator implements IdGenerator {
 	private static RedisIdGenerator me = new RedisIdGenerator();
 
+	/**
+	 * 嵌入的日期匹配表达式
+	 */
 	private final static Pattern DF_REGEX = Pattern.compile("(?i)\\@(date|day|df)\\([\\w|\\W]*\\)");
+
+	/**
+	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
+	 */
+	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID_";
 
 	/**
 	 * 获取对象单例
@@ -73,13 +81,13 @@ public class RedisIdGenerator implements IdGenerator {
 		String key = (signature == null ? "" : signature)
 				.concat(((relatedColValue == null) ? "" : relatedColValue.toString()));
 		String realKey = key;
-		//key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式
+		// key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式
 		if (key.indexOf("@") > 0) {
 			Matcher m = DF_REGEX.matcher(key);
 			if (m.find()) {
 				String df = m.group();
 				df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
-				//PO@day()格式,日期采用默认的2位年模式
+				// PO@day()格式,日期采用默认的2位年模式
 				if (df.equals(""))
 					df = "yyMMdd";
 				realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(new Date(), df))
@@ -118,12 +126,12 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @return
 	 */
 	public long generate(String key, int increment, Date expireTime) {
-		//增加特殊规定的前缀,确保不跟其他业务场景key冲突
-		RedisAtomicLong counter = new RedisAtomicLong("sqltoy_global_id_".concat(key), redisTemplate.getConnectionFactory());
-		//设置过期时间
+		RedisAtomicLong counter = new RedisAtomicLong(GLOBAL_ID_PREFIX.concat(key),
+				redisTemplate.getConnectionFactory());
+		// 设置过期时间
 		if (expireTime != null)
 			counter.expireAt(expireTime);
-		//设置提取多个数量
+		// 设置提取多个数量
 		if (increment > 1)
 			return counter.addAndGet(increment);
 		else
