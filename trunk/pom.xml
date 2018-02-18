@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.0.18</version>
+	<version>4.1.0</version>
 	<name>sqltoy-orm</name>
 	<description>sqltoy-orm</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -15,13 +15,16 @@
 		<ehcache.version>2.10.4</ehcache.version>
 		<httpclient.version>4.5.5</httpclient.version>
 	</properties>
-	<repositories>
+	<distributionManagement>
 		<repository>
-			<id>nexus-aliyun</id>
-			<name>Nexus aliyun</name>
-			<url>http://maven.aliyun.com/nexus/content/groups/public</url>
+			<id>sagframe-release</id>
+			<url>http://47.97.117.75:8081/repository/sagframe</url>
 		</repository>
-	</repositories>
+		<!-- <snapshotRepository>
+			<id>sagframe-snapshot</id>
+			<url>http://47.97.117.75:8081/repository/sagframe</url>
+		</snapshotRepository> -->
+	</distributionManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
 		<dependency>
@@ -210,20 +213,6 @@
 				</excludes>
 			</resource>
 		</resources>
-		<testResources>
-			<testResource>
-				<directory>src/test/java</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</testResource>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</testResource>
-		</testResources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -236,6 +225,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -244,6 +234,14 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.20.1</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

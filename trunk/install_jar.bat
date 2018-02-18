@@ -1,1 +1,0 @@
-mvn install:install-file -Dfile=D:\workspace\personal\projects\project\trunk\sagacity-sqltoy\lib\ojdbc7.jar -DgroupId=ojdbc -DartifactId=ojdbc -Dversion=7 -Dpackaging=jar
