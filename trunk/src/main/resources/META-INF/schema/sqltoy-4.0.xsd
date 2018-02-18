@@ -139,9 +139,9 @@
 			<xsd:element name="fields" type="xsd:string" />
 		</xsd:choice>
 		<xsd:attribute name="id" type="xsd:string" use="required" />
-		<xsd:attribute name="blank-to-null" default="true"
-			type="xsd:boolean" />
-		<xsd:attribute name="collection" use="required" />
+		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
+		<xsd:attribute name="collection" type="xsd:string" use="required" />
+		<xsd:attribute name="mongo-factory" type="xsd:string" />
 		<xsd:attribute name="is-aggregate" type="xsd:boolean"
 			default="false" />
 		<xsd:attribute name="fields" use="required" />
