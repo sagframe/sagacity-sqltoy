@@ -202,46 +202,46 @@
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="eq" minOccurs="0">
+			<xsd:element name="eq" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="gt" minOccurs="0">
+			<xsd:element name="gt" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="gte" minOccurs="0">
+			<xsd:element name="gte" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="date-format" minOccurs="0">
+			<xsd:element name="date-format" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="format" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="lt" minOccurs="0">
+			<xsd:element name="lt" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 
-			<xsd:element name="lte" minOccurs="0">
+			<xsd:element name="lte" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 
-			<xsd:element name="between" minOccurs="0">
+			<xsd:element name="between" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="start-value" type="xsd:decimal"
@@ -257,7 +257,7 @@
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-number" minOccurs="0">
+			<xsd:element name="to-number" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="data-type" use="required">
@@ -273,7 +273,7 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-array" minOccurs="0">
+			<xsd:element name="to-array" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="data-type" use="required">
@@ -290,7 +290,7 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-date" minOccurs="0">
+			<xsd:element name="to-date" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="format" default="yyyy-MM-dd">
@@ -310,13 +310,13 @@
 					<xsd:attribute name="increment-days" type="xsd:integer" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="neq" minOccurs="0">
+			<xsd:element name="neq" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="split" minOccurs="0">
+			<xsd:element name="split" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="split-sign" default="," />
@@ -334,7 +334,7 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="replace" minOccurs="0">
+			<xsd:element name="replace" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="regex" type="xsd:string" use="required" />
@@ -343,7 +343,7 @@
 						default="false" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="exclusive" minOccurs="0">
+			<xsd:element name="exclusive" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="set-params" type="xsd:string"
