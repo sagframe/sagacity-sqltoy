@@ -134,11 +134,11 @@ public class Mongo extends BaseLink {
 				queryExecutor.getParamsValue(sqlToyConfig));
 		// 聚合查询
 		if (noSqlModel.isHasAggs())
-			return aggregate(new MongoTemplate(getMongoDbFactory()), sqlToyConfig, realMql,
+			return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, realMql,
 					queryExecutor.getResultType().getTypeName());
 		else
-			return findTop(new MongoTemplate(getMongoDbFactory()), sqlToyConfig, null, realMql,
-					queryExecutor.getResultType().getTypeName());
+			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
+					realMql, queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
@@ -157,8 +157,8 @@ public class Mongo extends BaseLink {
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyConfig));
-		return findTop(new MongoTemplate(getMongoDbFactory()), sqlToyConfig, topSize, realMql,
-				queryExecutor.getResultType().getTypeName());
+		return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
+				realMql, queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
@@ -177,8 +177,8 @@ public class Mongo extends BaseLink {
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyConfig));
-		return findPage(new MongoTemplate(getMongoDbFactory()), sqlToyConfig, pageModel, realMql,
-				queryExecutor.getResultType().getTypeName());
+		return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
+				realMql, queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
@@ -314,9 +314,12 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @return the mongoDbFactory
+	 * @param mongoFactory
+	 * @return
 	 */
-	private MongoDbFactory getMongoDbFactory() {
+	private MongoDbFactory getMongoDbFactory(String mongoFactory) {
+		if (StringUtil.isNotBlank(mongoFactory))
+			return (MongoDbFactory) sqlToyContext.getBean(mongoFactory);
 		if (this.mongoDbFactory != null)
 			return mongoDbFactory;
 		return (MongoDbFactory) sqlToyContext.getBean(sqlToyContext.getMongoFactoryName());

@@ -320,6 +320,8 @@ public class SqlXMLConfigParse {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
 		if (sqlElt.attribute("collection") != null)
 			noSqlConfig.setCollection(sqlElt.attributeValue("collection"));
+		if (sqlElt.attribute("mongo-factory") != null)
+			noSqlConfig.setMongoFactory(sqlElt.attributeValue("mongo-factory"));
 		// url应该是一个变量如:${es_url}
 		if (sqlElt.attribute("url") != null)
 			noSqlConfig.setUrl(SqlToyConstants.replaceParams(sqlElt.attributeValue("url")));

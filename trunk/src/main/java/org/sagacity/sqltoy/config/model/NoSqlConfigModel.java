@@ -21,6 +21,11 @@ public class NoSqlConfigModel implements Serializable {
 	 * mongo的集合
 	 */
 	private String collection;
+	
+	/**
+	 * mongo对应的连接工厂类
+	 */
+	private String mongoFactory;
 
 	/**
 	 * es的url地址
@@ -249,6 +254,20 @@ public class NoSqlConfigModel implements Serializable {
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
+	}
+
+	/**
+	 * @return the mongoFactory
+	 */
+	public String getMongoFactory() {
+		return mongoFactory;
+	}
+
+	/**
+	 * @param mongoFactory the mongoFactory to set
+	 */
+	public void setMongoFactory(String mongoFactory) {
+		this.mongoFactory = mongoFactory;
 	}
 
 }
