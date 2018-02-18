@@ -35,6 +35,11 @@ public class SqlScriptLoader {
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
+	// 提供默认函数配置
+	private final static String[] functions = { "org.sagacity.sqltoy.config.function.impl.SubStr",
+			"org.sagacity.sqltoy.config.function.impl.Trim", "org.sagacity.sqltoy.config.function.impl.Instr",
+			"org.sagacity.sqltoy.config.function.impl.Concat", "org.sagacity.sqltoy.config.function.impl.Nvl" };
+
 	/**
 	 * sql资源配置路径
 	 */
@@ -182,6 +187,11 @@ public class SqlScriptLoader {
 					functionName = functionName.replace("org.sagacity.sqltoy.config.function.impl",
 							"org.sagacity.sqltoy.plugin.function");
 					converts.add((IFunction) (Class.forName(functionName).newInstance()));
+				}
+			} // 为null时启用默认配置
+			else {
+				for (String convert : functions) {
+					converts.add((IFunction) (Class.forName(convert).newInstance()));
 				}
 			}
 		} catch (Exception e) {
