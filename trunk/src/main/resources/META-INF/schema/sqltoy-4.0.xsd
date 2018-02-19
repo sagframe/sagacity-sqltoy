@@ -29,7 +29,6 @@
 						<xsd:field xpath="@id" />
 					</xsd:unique>
 				</xsd:element>
-
 			</xsd:choice>
 		</xsd:complexType>
 	</xsd:element>
