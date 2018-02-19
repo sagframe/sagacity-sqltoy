@@ -36,9 +36,9 @@ public class SqlScriptLoader {
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
 	// 提供默认函数配置
-	private final static String[] functions = { "org.sagacity.sqltoy.config.function.impl.SubStr",
-			"org.sagacity.sqltoy.config.function.impl.Trim", "org.sagacity.sqltoy.config.function.impl.Instr",
-			"org.sagacity.sqltoy.config.function.impl.Concat", "org.sagacity.sqltoy.config.function.impl.Nvl" };
+	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.SubStr",
+			"org.sagacity.sqltoy.plugin.function.Trim", "org.sagacity.sqltoy.plugin.function.Instr",
+			"org.sagacity.sqltoy.plugin.function.Concat", "org.sagacity.sqltoy.plugin.function.Nvl" };
 
 	/**
 	 * sql资源配置路径
