@@ -186,7 +186,14 @@ public class SqlScriptLoader {
 					// 修正调整后的包路径,保持兼容
 					functionName = functionName.replace("org.sagacity.sqltoy.config.function.impl",
 							"org.sagacity.sqltoy.plugin.function");
-					converts.add((IFunction) (Class.forName(functionName).newInstance()));
+					// 只是属性名称
+					if (functionName.indexOf(".") == -1) {
+						converts.add((IFunction) (Class
+								.forName("org.sagacity.sqltoy.config.function.impl.".concat(functionName))
+								.newInstance()));
+					} else {
+						converts.add((IFunction) (Class.forName(functionName).newInstance()));
+					}
 				}
 			} // 为null时启用默认配置
 			else {

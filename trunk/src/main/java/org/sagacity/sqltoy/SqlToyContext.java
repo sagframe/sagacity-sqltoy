@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -551,8 +552,18 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param functionConverts
 	 *            the functionConverts to set
 	 */
-	public void setFunctionConverts(List<String> functionConverts) {
-		scriptLoader.setFunctionConverts(functionConverts);
+	public void setFunctionConverts(Object functionConverts) {
+		if (functionConverts == null)
+			return;
+		if (functionConverts instanceof List)
+			scriptLoader.setFunctionConverts((List<String>) functionConverts);
+		else if (functionConverts instanceof String) {
+			String converts = (String) functionConverts;
+			if (StringUtil.isBlank(converts) || converts.equals("default"))
+				scriptLoader.setFunctionConverts(null);
+			else
+				scriptLoader.setFunctionConverts(Arrays.asList(converts.split(",")));
+		}
 	}
 
 	/**
