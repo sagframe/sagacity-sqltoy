@@ -111,7 +111,7 @@
 					</xsd:complexType>
 				</xsd:element>
 				<!-- 业务主键策略 -->
-				<xsd:element name="business-primary-key">
+				<xsd:element name="business-primary-key" maxOccurs="1">
 					<xsd:complexType>
 						<xsd:choice maxOccurs="unbounded">
 							<xsd:element name="table">
