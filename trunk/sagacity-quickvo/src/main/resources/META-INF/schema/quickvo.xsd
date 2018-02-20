@@ -5,7 +5,7 @@
 	elementFormDefault="qualified">
 	<xsd:element name="quickvo">
 		<xsd:complexType>
-			<xsd:sequence maxOccurs="unbounded">
+			<xsd:choice maxOccurs="unbounded">
 				<xsd:element name="property" maxOccurs="unbounded">
 					<xsd:complexType>
 						<xsd:attribute name="file" type="xsd:string" />
@@ -183,7 +183,7 @@
 						</xsd:sequence>
 					</xsd:complexType>
 				</xsd:element>
-			</xsd:sequence>
+			</xsd:choice>
 		</xsd:complexType>
 	</xsd:element>
 </xsd:schema>
