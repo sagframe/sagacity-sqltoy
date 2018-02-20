@@ -56,15 +56,15 @@ public class ElasticSearchPlugin {
 		jsonQuery.fluentRemove("SIZE");
 		jsonQuery.fluentPut("from", (pageModel.getPageNo() - 1) * pageModel.getPageSize());
 		jsonQuery.fluentPut("size", pageModel.getPageSize());
-		
+
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={"+jsonQuery.toJSONString()+"}");
+			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				queryExecutor.getResultType().getTypeName());
+				(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -93,10 +93,10 @@ public class ElasticSearchPlugin {
 			jsonQuery.fluentPut("size", topSize);
 		}
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={"+jsonQuery.toJSONString()+"}");
+			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				queryExecutor.getResultType().getTypeName());
+				(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 		return result.getRows();
 	}
 

@@ -135,10 +135,11 @@ public class Mongo extends BaseLink {
 		// 聚合查询
 		if (noSqlModel.isHasAggs())
 			return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, realMql,
-					queryExecutor.getResultType().getTypeName());
+					(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 		else
 			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-					realMql, queryExecutor.getResultType().getTypeName());
+					realMql,
+					(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
@@ -158,7 +159,7 @@ public class Mongo extends BaseLink {
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyConfig));
 		return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-				realMql, queryExecutor.getResultType().getTypeName());
+				realMql, (queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
@@ -178,7 +179,7 @@ public class Mongo extends BaseLink {
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyConfig));
 		return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-				realMql, queryExecutor.getResultType().getTypeName());
+				realMql, (queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
 	}
 
 	/**
