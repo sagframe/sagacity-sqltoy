@@ -18,12 +18,8 @@
 	<distributionManagement>
 		<repository>
 			<id>sagframe-release</id>
-			<url>http://47.97.117.75:8081/repository/sagframe</url>
+			<url>http://www.sagframe.com:8081/repository/sagframe</url>
 		</repository>
-		<!-- <snapshotRepository>
-			<id>sagframe-snapshot</id>
-			<url>http://47.97.117.75:8081/repository/sagframe</url>
-		</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
