@@ -28,6 +28,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 * 嵌入的日期匹配表达式
 	 */
 	private final static Pattern DF_REGEX = Pattern.compile("(?i)\\@(date|day|df)\\([\\w|\\W]*\\)");
+	private final static Pattern DF_REGEX_1 = Pattern.compile("(?i)\\$(date|day|df)\\([\\w|\\W]*\\)");
 
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
@@ -84,6 +85,17 @@ public class RedisIdGenerator implements IdGenerator {
 		// key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式
 		if (key.indexOf("@") > 0) {
 			Matcher m = DF_REGEX.matcher(key);
+			if (m.find()) {
+				String df = m.group();
+				df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
+				// PO@day()格式,日期采用默认的2位年模式
+				if (df.equals(""))
+					df = "yyMMdd";
+				realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(new Date(), df))
+						.concat(key.substring(m.end()));
+			}
+		} else if (key.indexOf("$") > 0) {
+			Matcher m = DF_REGEX_1.matcher(key);
 			if (m.find()) {
 				String df = m.group();
 				df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
