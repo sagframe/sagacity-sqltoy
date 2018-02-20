@@ -173,7 +173,7 @@
 		<xsd:attribute name="id" type="xsd:string" use="required" />
 		<xsd:attribute name="blank-to-null" default="true"
 			type="xsd:boolean" />
-		<xsd:attribute name="url" type="xsd:string" use="required" />
+		<xsd:attribute name="url" type="xsd:string" />
 		<xsd:attribute name="index" />
 		<xsd:attribute name="type" />
 		<xsd:attribute name="fields" />
