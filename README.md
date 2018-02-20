@@ -74,7 +74,8 @@ sqltoy-orm 主要分以下几个部分：
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
 		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
 		<!-- 针对不同数据库函数进行转换,非必须属性 -->
-		<property name="functionConverts">
+		<!--<property name="functionConverts" value="default"/>-->
+		<property name="functionConverts" value="default">
 			<list>
 				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
 				<value>org.sagacity.sqltoy.plugin.function.Trim</value>
@@ -90,9 +91,37 @@ sqltoy-orm 主要分以下几个部分：
 				<value>sqltoy.showcase.system.vo</value>
 			</list>
 		</property>
-		<!-- 缓存翻译管理器,非必须属性 -->
+		<!-- elasticsearch支持,可以配置多个集群地址 -->
+		<property name="elasticConfigs">
+			<list>
+				<bean class="org.sagacity.sqltoy.config.model.ElasticConfig">
+					<!-- 指定url地址 -->
+					<constructor-arg value="${elastic.url}"/>
+					<property name="id" value="${elastic.id}"/>
+					<property name="username" value="${elastic.username}"/>
+					<property name="password" value="${elastic.password}"/>
+				</bean>
+			</list>
+		</property>
+        <!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<property name="cacheManager" ref="cacheManager" />
+		<!-- 支持多种缓存翻译,ehcache和redis -->
+		<property name="translateCacheManagers">
+			<map>
+				<!--redis的支持-->
+				<entry key="redisTranslateManager">
+					<bean class="org.sagacity.sqltoy.cache.impl.TranslateRedisManager">
+						<property name="redisTemplate" ref="redisTemplate" />
+					</bean>
+				</entry>
+                <!--ehcache 的支持-->
+                <entry key="ehcacheTranslateManager">
+					<bean class="org.sagacity.sqltoy.cache.impl.TranslateEhcacheManager">
+						<property name="cacheManager" ref="cacheManager" />
+					</bean>
+				</entry>
+			</map>
+		</property>
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
 		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
@@ -173,11 +202,16 @@ sqltoy-orm 主要分以下几个部分：
 	<property name="project.package" value="sqltoy.showcase" />
 	<property name="include.schema" value="false" />
 	<!-- oracle支持schema,mysql\DB2:catalog -->
-	<datasource url="${jdbc.connection.url}" driver="${jdbc.connection.driver_class}"  
+    <!-- 通过name支持多数据库模式 -->
+	<datasource name="sagframe" url="${jdbc.connection.url}" driver="${jdbc.connection.driver_class}"  
 	     catalog="${jdbc.connection.catalog}"
 		username="${jdbc.connection.username}" password="${jdbc.connection.password}" />
 	<tasks dist="../../src/main/java" encoding="UTF-8">
-		<task active="true" author="zhongxuchen" include="^SAG_\w+">
+        <!-- 
+           增加了swagger-mode 便于VO生成swagger的modeApi 
+           增加datasource属性关联具体datasouce 的name
+        -->
+		<task active="true" author="zhongxuchen" include="^SAG_\w+" swagger-model="true" >
 			<vo package="${project.package}.sagacity.vo" substr="Sag" name="#{subName}VO" />
 			<dao package="${project.package}.sagacity.dao" name="#{subName}Dao"
 				active="true" />
@@ -199,6 +233,13 @@ sqltoy-orm 主要分以下几个部分：
 		<!-- <table name="xxxTABLE" strategy="sequence" sequence="SEQ_XXXX"/> -->
 		<!--<table name="sys_staff_info" strategy="generator" generator="snowflake"/>-->
 	</primary-key>
+	
+    <!-- 业务主键定义,column 为主键列，则主键策略以业务主键策略为准，signature 支持特定前缀和日期格式组合
+        length定义主键总长度(限制的是最小长度,超出则以实际为准)
+     -->
+	<business-primary-key>
+		<table name="xxxTable" column="xxColumn" signature="PO@df('yyyyMMdd')" length="16" generator="redis"/>
+	</business-primary-key>
 
 	<!-- 主子表的级联关系 update-cascade:delete 表示对存量数据进行先做删除然后再插入,
 	也可以写成:ENABLED=0(sql片段,置状态为无效) -->
