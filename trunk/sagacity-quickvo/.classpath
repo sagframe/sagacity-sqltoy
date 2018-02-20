@@ -16,13 +16,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/commons-beanutils-1.9.3.jar"/>
-	<classpathentry kind="lib" path="lib/ojdbc7.jar"/>
-	<classpathentry kind="lib" path="lib/mysql-connector-java-6.0.6.jar"/>
-	<classpathentry kind="lib" path="lib/freemarker-2.3.26.jar"/>
-	<classpathentry kind="lib" path="lib/dom4j-2.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-api-2.10.0.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-core-2.10.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
