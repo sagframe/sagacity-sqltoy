@@ -179,7 +179,7 @@ public class Mongo extends BaseLink {
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyConfig));
 		return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-				realMql,queryExecutor.getResultTypeName());
+				realMql, queryExecutor.getResultTypeName());
 	}
 
 	/**

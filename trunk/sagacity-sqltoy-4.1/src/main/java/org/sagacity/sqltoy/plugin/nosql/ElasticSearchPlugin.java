@@ -63,8 +63,7 @@ public class ElasticSearchPlugin {
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				queryExecutor.getResultTypeName());
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, queryExecutor.getResultTypeName());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -95,8 +94,7 @@ public class ElasticSearchPlugin {
 		if (sqlToyContext.isDebug()) {
 			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				queryExecutor.getResultTypeName());
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, queryExecutor.getResultTypeName());
 		return result.getRows();
 	}
 
