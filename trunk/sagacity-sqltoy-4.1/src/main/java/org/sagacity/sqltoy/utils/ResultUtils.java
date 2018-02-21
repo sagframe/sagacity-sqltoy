@@ -854,7 +854,7 @@ public class ResultUtils {
 					realLabelName = realLabelName.substring(0, realLabelName.indexOf(":")).trim();
 				labelIndexMap.put(realLabelName, i);
 			}
-			
+
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
 				// 数据旋转
@@ -920,8 +920,8 @@ public class ResultUtils {
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getResultType();
 		boolean hump = true;
-		if ((resultType.equals(HashMap.class) || resultType.equals(Map.class) || resultType.equals(LinkedHashMap.class))
-				&& !queryExecutor.isHumpMapLabel()) {
+		if (null != resultType && (resultType.equals(HashMap.class) || resultType.equals(Map.class)
+				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.isHumpMapLabel()) {
 			hump = false;
 		}
 		if (hump) {

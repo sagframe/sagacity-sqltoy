@@ -52,16 +52,15 @@ public class QueryExecutor implements Serializable {
 	private String sql;
 
 	/**
-	 * jdbc 查询时默认加载到内存中的记录数量
-	 * -1表示不设置，采用数据库默认的值
+	 * jdbc 查询时默认加载到内存中的记录数量 -1表示不设置，采用数据库默认的值
 	 */
 	private int fetchSize = -1;
-	
+
 	/**
 	 * jdbc查询最大返回记录数量
 	 */
-	private int maxRows=-1;
-	
+	private int maxRows = -1;
+
 	/**
 	 * 结果集反调处理(已经极少极少使用,可以废弃)
 	 */
@@ -120,12 +119,12 @@ public class QueryExecutor implements Serializable {
 		this.resultType = resultType;
 		return this;
 	}
-	
+
 	public QueryExecutor fetchSize(int fetchSize) {
 		this.fetchSize = fetchSize;
 		return this;
 	}
-	
+
 	public QueryExecutor maxRows(int maxRows) {
 		this.maxRows = maxRows;
 		return this;
@@ -217,7 +216,6 @@ public class QueryExecutor implements Serializable {
 		return paramsValue;
 	}
 
-	
 	/**
 	 * @return the fetchSize
 	 */
@@ -304,6 +302,13 @@ public class QueryExecutor implements Serializable {
 	 */
 	public Type getResultType() {
 		return resultType;
+	}
+
+	public String getResultTypeName() {
+		if (null != resultType)
+			return resultType.getTypeName();
+		else
+			return null;
 	}
 
 	/**

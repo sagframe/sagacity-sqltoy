@@ -64,7 +64,7 @@ public class ElasticSearchPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
+				queryExecutor.getResultTypeName());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -96,7 +96,7 @@ public class ElasticSearchPlugin {
 			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(queryExecutor.getResultType() == null) ? null : queryExecutor.getResultType().getTypeName());
+				queryExecutor.getResultTypeName());
 		return result.getRows();
 	}
 
