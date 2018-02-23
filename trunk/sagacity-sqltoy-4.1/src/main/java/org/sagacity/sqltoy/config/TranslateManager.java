@@ -299,6 +299,8 @@ public class TranslateManager {
 			// sql 查询模式
 			if (StringUtil.isNotBlank(cacheModel.getSql())) {
 				final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search);
+				// 避免sql中有:name 参数名称
+				String realSql = SqlConfigParseUtils.processNamedParamsQuery(sqlToyConfig.getSql()).getSql();
 				String dataSourceName = cacheModel.getDataSource();
 				if (dataSourceName == null)
 					dataSourceName = sqlToyConfig.getDataSource();
@@ -322,13 +324,13 @@ public class TranslateManager {
 								public void doConnection(Connection conn, Integer dbType, String dialect)
 										throws Exception {
 									this.setResult(DialectUtils.findBySql(sqlToyContext, sqlToyConfig,
-											sqlToyContext.convertFunctions(sqlToyConfig.getSql(), dialect), args, null,
-											conn, 0, -1, -1).getRows());
+											sqlToyContext.convertFunctions(realSql, dialect), args, null, conn, 0, -1,
+											-1).getRows());
 								}
 							});
 				} else {
 					cacheResult = DialectUtils.findBySql(sqlToyContext, sqlToyConfig,
-							sqlToyContext.convertFunctions(sqlToyConfig.getSql(),
+							sqlToyContext.convertFunctions(realSql,
 									DataSourceUtils.getDialect(DataSourceUtils.getDbType(conn))),
 							args, null, conn, 0, -1, -1).getRows();
 				}
@@ -350,8 +352,8 @@ public class TranslateManager {
 							cacheModel.getServiceMethod(), args);
 				} catch (Exception e) {
 					e.printStackTrace();
-					logger.error("缓存翻译通过接口服务:{}.{} 返回的结果必须是HashMap<key, Object[]{key,name1,..,nameX}> 类型的数据格式!", cacheModel.getService(),
-							cacheModel.getServiceMethod());
+					logger.error("缓存翻译通过接口服务:{}.{} 返回的结果必须是HashMap<key, Object[]{key,name1,..,nameX}> 类型的数据格式!",
+							cacheModel.getService(), cacheModel.getServiceMethod());
 				}
 			}
 			// 放入缓存
