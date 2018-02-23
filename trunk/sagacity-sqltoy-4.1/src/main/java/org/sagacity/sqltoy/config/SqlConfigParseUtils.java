@@ -156,7 +156,7 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean isNamedQuery(String queryStr) {
-		if (queryStr == null)
+		if (StringUtil.isBlank(queryStr))
 			return false;
 		// 强制约定sqlId key必须没有空格、回车、tab和换行符号
 		String tmp = queryStr.trim();
@@ -768,8 +768,8 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static String convertFunctions(List<IFunction> functionConverts, String dialect, String sqlContent) {
-		if (null == functionConverts || functionConverts.isEmpty() || StringUtil.isBlank(dialect)
-				|| null == sqlContent || sqlContent.trim().equals(""))
+		if (null == functionConverts || functionConverts.isEmpty() || StringUtil.isBlank(dialect) || null == sqlContent
+				|| sqlContent.trim().equals(""))
 			return sqlContent;
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
