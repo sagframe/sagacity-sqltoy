@@ -115,7 +115,7 @@
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[全局类型 mongodb查询使用]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:choice maxOccurs="unbounded">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
@@ -150,7 +150,7 @@
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[全局类型 elasticsearch使用]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:choice maxOccurs="unbounded">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
