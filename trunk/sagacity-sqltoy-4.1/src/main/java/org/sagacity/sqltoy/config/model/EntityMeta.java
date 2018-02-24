@@ -24,6 +24,8 @@ public class EntityMeta implements Serializable {
 	 */
 	private static final long serialVersionUID = -1723897636996281118L;
 
+	private Class entityClass;
+
 	/**
 	 * 获取所有记录sql
 	 */
@@ -658,10 +660,25 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdSignature the bizIdSignature to set
+	 * @param bizIdSignature
+	 *            the bizIdSignature to set
 	 */
 	public void setBizIdSignature(String bizIdSignature) {
 		this.bizIdSignature = bizIdSignature;
+	}
+
+	/**
+	 * @return the entityClass
+	 */
+	public Class getEntityClass() {
+		return entityClass;
+	}
+
+	/**
+	 * @param entityClass the entityClass to set
+	 */
+	public void setEntityClass(Class entityClass) {
+		this.entityClass = entityClass;
 	}
 
 }

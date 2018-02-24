@@ -7,7 +7,10 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -22,6 +25,10 @@ import org.springframework.data.redis.support.atomic.RedisAtomicLong;
  * @version id:RedisIdGenerator.java,Revision:v1.0,Date:2018年1月30日
  */
 public class RedisIdGenerator implements IdGenerator {
+	/**
+	 * 定义全局日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(RedisIdGenerator.class);
 	private static RedisIdGenerator me = new RedisIdGenerator();
 
 	/**
@@ -43,7 +50,10 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
 		if (me.getRedisTemplate() == null) {
-			me.setRedisTemplate((RedisTemplate) sqlToyContext.getBean("redisTemplate"));
+			if (sqlToyContext.getBean("redisTemplate") == null)
+				logger.error("RedisIdGenerator 未定义基于spring 的redisTemplate 对象!");
+			else
+				me.setRedisTemplate((RedisTemplate) sqlToyContext.getBean("redisTemplate"));
 		}
 		return me;
 	}

@@ -167,6 +167,7 @@ public class EntityManager {
 			// 判断是否是实体类
 			if (isEntity) {
 				entityMeta = new EntityMeta();
+				entityMeta.setEntityClass(realEntityClass);
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
@@ -433,7 +434,7 @@ public class EntityManager {
 				entityMeta.setSequence(id.sequence());
 				String idGenerator = id.generator();
 				if (StringUtil.isNotBlank(idGenerator)) {
-					processIdGenerator(sqlToyContext, idGenerator);
+					processIdGenerator(sqlToyContext, entityMeta, idGenerator);
 					entityMeta.setIdGenerator(idGenerators.get(idGenerator));
 				}
 				if (loadNamedWhereSql.length() > 1) {
@@ -457,7 +458,7 @@ public class EntityManager {
 				// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
 				if (bizId.relatedColumn() != null)
 					entityMeta.setBizIdRelatedColumn(bizId.relatedColumn());
-				processIdGenerator(sqlToyContext, bizGenerator);
+				processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
 				// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 				if (id != null) {
 					entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
@@ -475,7 +476,8 @@ public class EntityManager {
 	 * @param idGenerator
 	 * @throws Exception
 	 */
-	private void processIdGenerator(SqlToyContext sqlToyContext, String idGenerator) throws Exception {
+	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
+			throws Exception {
 		if (StringUtil.isNotBlank(idGenerator)) {
 			if (!idGenerators.containsKey(idGenerator)) {
 				// 做一些兼容性处理,同时进行单例化
@@ -490,8 +492,13 @@ public class EntityManager {
 					idGenerators.put(idGenerator, SnowflakeIdGenerator.getInstance());
 				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.UUIDGenerator"))
 					idGenerators.put(idGenerator, UUIDGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.id.RedisIdGenerator"))
-					idGenerators.put(idGenerator, RedisIdGenerator.getInstance(sqlToyContext));
+				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.id.RedisIdGenerator")) {
+					RedisIdGenerator generator = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
+					if (generator == null || generator.getRedisTemplate() == null)
+						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
+								entityMeta.getEntityClass().getName());
+					idGenerators.put(idGenerator, generator);
+				}
 				// 以spring 定义的bean模式注入id生成策略,格式:@bean(idGenerator)
 				else if (idGenerator.toLowerCase().startsWith("@bean(")) {
 					int start = idGenerator.indexOf("(");
