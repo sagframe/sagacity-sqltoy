@@ -33,7 +33,7 @@
 		</xsd:complexType>
 	</xsd:element>
 
-	<xsd:complexType name="sqlToySqlType">
+	<xsd:complexType name="sqlToySqlType" mixed="true">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
@@ -111,13 +111,13 @@
 			</xsd:simpleType>
 		</xsd:attribute>
 	</xsd:complexType>
-	<xsd:complexType name="sqlToyMqlType">
+	<xsd:complexType name="sqlToyMqlType" mixed="true">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[全局类型 mongodb查询使用]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
-				type="sqltoyFiltersType" />
+				type="sqltoyFiltersType"/>
 			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
 				type="sqltoyTranslateType" />
 			<xsd:element name="secure-mask" minOccurs="0" maxOccurs="unbounded"
@@ -146,7 +146,7 @@
 		<xsd:attribute name="fields" use="required" />
 
 	</xsd:complexType>
-	<xsd:complexType name="sqlToyEqlType">
+	<xsd:complexType name="sqlToyEqlType" mixed="true">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[全局类型 elasticsearch使用]]></xsd:documentation>
 		</xsd:annotation>
