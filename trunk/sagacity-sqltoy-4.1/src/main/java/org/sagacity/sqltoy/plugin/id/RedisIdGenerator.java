@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
