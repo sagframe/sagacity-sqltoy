@@ -699,6 +699,7 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public ElasticConfig getElasticConfig(String id) {
 		ElasticConfig result = elasticConfigs.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
+		//取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
 		if (result == null)
 			return new ElasticConfig(id);
 		else
