@@ -102,6 +102,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private HashMap<String, ElasticConfig> elasticConfigs = new HashMap<String, ElasticConfig>();
 
 	/**
+	 * 默认为default
+	 */
+	private String defaultElastic="default";
+
+	/**
 	 * 登记sqltoy所需要访问的DataSource
 	 */
 	private HashMap<String, DataSource> dataSourcesMap = new HashMap<String, DataSource>();
@@ -683,7 +688,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 *            the elasticConfigs to set
 	 */
 	public void setElasticConfigs(List<ElasticConfig> elasticConfigList) {
-		if (elasticConfigList != null) {
+		if (elasticConfigList != null && !elasticConfigList.isEmpty()) {
+			//第一个作为默认值
+			defaultElastic = elasticConfigList.get(0).getId();
 			for (ElasticConfig config : elasticConfigList) {
 				elasticConfigs.put(config.getId().toLowerCase(), config);
 			}
@@ -691,9 +698,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	public ElasticConfig getElasticConfig(String id) {
-		if (StringUtil.isBlank(id) && elasticConfigs.size() == 1)
-			return elasticConfigs.values().iterator().next();
-		ElasticConfig result = elasticConfigs.get(id.toLowerCase());
+		ElasticConfig result = elasticConfigs.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
 		if (result == null)
 			return new ElasticConfig(id);
 		else
