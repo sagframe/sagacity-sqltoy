@@ -62,7 +62,7 @@ public class ElasticSearchUtils {
 
 		// 不支持指定查询集合的行列转换
 		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
-		
+
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(
 				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
@@ -235,11 +235,11 @@ public class ElasticSearchUtils {
 		}
 		List result = new ArrayList();
 		if (root instanceof JSONObject) {
-			result.add(processRow((JSONObject) root, realFields));
+			processRow(result, (JSONObject) root, realFields);
 		} else if (root instanceof JSONArray) {
 			JSONArray array = (JSONArray) root;
 			for (Object tmp : array) {
-				result.add(processRow((JSONObject) tmp, realFields));
+				processRow(result, (JSONObject) tmp, realFields);
 			}
 		}
 		if (result != null)
@@ -249,16 +249,77 @@ public class ElasticSearchUtils {
 		return resultModel;
 	}
 
-	private static List processRow(JSONObject rowJson, String[] realFields) {
-		Object cell;
-		List row = new ArrayList();
-		for (String str : realFields) {
-			cell = rowJson.get(str);
-			if (cell instanceof JSONObject) {
-				row.add(((JSONObject) cell).get("value"));
-			} else
-				row.add(cell);
+	/**
+	 * 数据集合提取
+	 * 
+	 * @param result
+	 * @param rowJson
+	 * @param realFields
+	 */
+	private static void processRow(List result, JSONObject rowJson, String[] realFields) {
+		Object root = getRealJSONObject(rowJson);
+		if (root instanceof JSONObject) {
+			JSONObject json = (JSONObject) root;
+			if ((json.containsKey("key") && json.containsKey("doc_count"))) {
+				processRow(result, json, realFields);
+			} else {
+				Object cell;
+				List row = new ArrayList();
+				for (String str : realFields) {
+					cell = json.get(str);
+					if (cell instanceof JSONObject) {
+						row.add(((JSONObject) cell).get("value"));
+					} else
+						row.add(cell);
+				}
+				result.add(row);
+			}
+		} else if (root instanceof JSONArray) {
+			JSONArray array = (JSONArray) root;
+			for (Object tmp : array) {
+				processRow(result, (JSONObject) tmp, realFields);
+			}
 		}
-		return row;
+	}
+
+	/**
+	 * @todo 提取实际json对象
+	 * @param rowJson
+	 * @return
+	 */
+	private static Object getRealJSONObject(JSONObject rowJson) {
+		Object result = rowJson.get("_source");
+		if (result != null && result instanceof JSONObject)
+			return result;
+		result = rowJson.get("buckets");
+		if (result != null) {
+			if (result instanceof JSONArray)
+				return result;
+			else if (result instanceof JSONObject)
+				return getRealJSONObject((JSONObject) result);
+		}
+		result = rowJson.get("hits");
+		if (result != null) {
+			if (result instanceof JSONArray)
+				return result;
+			else if (result instanceof JSONObject)
+				return getRealJSONObject((JSONObject) result);
+		}
+		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
+			Object[] keys = rowJson.keySet().toArray();
+			for (Object key : keys) {
+				if (!key.equals("key") && !key.equals("doc_count")) {
+					result = rowJson.get(key.toString());
+					if (result instanceof JSONObject)
+						return getRealJSONObject((JSONObject) result);
+					return result;
+				}
+			}
+		} else if (rowJson.keySet().size() == 1) {
+			result = rowJson.values().iterator().next();
+			if (result instanceof JSONObject)
+				return getRealJSONObject((JSONObject) result);
+		}
+		return rowJson;
 	}
 }
