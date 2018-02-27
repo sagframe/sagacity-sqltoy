@@ -301,6 +301,7 @@ public class ElasticSearchUtils {
 		}
 		if (mapCnt == 0)
 			return false;
+		// 增强兼容性
 		if (mapCnt == realFields.length || mapCnt > 1)
 			return true;
 		return false;
