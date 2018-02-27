@@ -294,10 +294,16 @@ public class ElasticSearchUtils {
 	 * @return
 	 */
 	private static boolean isRoot(JSONObject json, String[] realFields) {
-		boolean isRoot = true;
-		for (String key : realFields)
-			isRoot = isRoot && json.containsKey(key);
-		return isRoot;
+		int mapCnt = 0;
+		for (String key : realFields) {
+			if (json.containsKey(key))
+				mapCnt = mapCnt + 1;
+		}
+		if (mapCnt == 0)
+			return false;
+		if (mapCnt == realFields.length || mapCnt > 1)
+			return true;
+		return false;
 	}
 
 	/**
