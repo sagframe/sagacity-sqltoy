@@ -108,12 +108,16 @@ public class ElasticSearchUtils {
 			return resultModel;
 
 		String[] realFields = new String[fields.length];
+		String[] translateFields = new String[fields.length];
 		System.arraycopy(fields, 0, realFields, 0, fields.length);
+		System.arraycopy(fields, 0, translateFields, 0, fields.length);
 		int aliasIndex = 0;
 		for (int i = 0; i < realFields.length; i++) {
 			aliasIndex = realFields[i].indexOf(":");
-			if (aliasIndex != -1)
+			if (aliasIndex != -1) {
 				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
+				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+			}
 		}
 		boolean assignField = (nosqlConfig.getFields() == null) ? false : true;
 		HashMap<String, String[]> realFieldsMap = new HashMap<String, String[]>();
@@ -161,7 +165,7 @@ public class ElasticSearchUtils {
 			String s;
 			String[] aliasNames;
 			for (int i = 0; i < resultFields.length; i++) {
-				s = resultFields[i];
+				s = realFields[i];
 				aliasNames = realFieldsMap.get(s);
 				if (aliasNames != null && aliasNames.length == 1) {
 					resultFields[i] = aliasNames[0];
@@ -170,7 +174,7 @@ public class ElasticSearchUtils {
 			}
 			resultModel.setLabelNames(resultFields);
 		} else
-			resultModel.setLabelNames(fields);
+			resultModel.setLabelNames(translateFields);
 		return resultModel;
 	}
 
@@ -187,12 +191,16 @@ public class ElasticSearchUtils {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
 		String[] realFields = new String[fields.length];
+		String[] translateFields = new String[fields.length];
 		int index = 0;
 		for (String field : fields) {
-			if (field.indexOf(":") != -1)
-				realFields[index] = field.substring(0, field.indexOf(":"));
-			else
+			if (field.indexOf(":") != -1) {
+				realFields[index] = field.substring(0, field.indexOf(":")).trim();
+				translateFields[index] = field.substring(field.indexOf(":") + 1).trim();
+			} else {
 				realFields[index] = field;
+				translateFields[index] = field;
+			}
 			index++;
 		}
 		// 获取json对象的根
@@ -248,7 +256,7 @@ public class ElasticSearchUtils {
 		if (result != null)
 			resultModel.setTotalCount(Long.valueOf(result.size()));
 		resultModel.setRows(result);
-		resultModel.setLabelNames(fields);
+		resultModel.setLabelNames(translateFields);
 		return resultModel;
 	}
 
