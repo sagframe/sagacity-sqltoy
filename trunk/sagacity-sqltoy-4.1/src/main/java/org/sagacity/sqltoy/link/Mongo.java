@@ -138,8 +138,7 @@ public class Mongo extends BaseLink {
 					queryExecutor.getResultTypeName());
 		else
 			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-					realMql,
-					queryExecutor.getResultTypeName());
+					realMql, queryExecutor.getResultTypeName());
 	}
 
 	/**
@@ -223,6 +222,8 @@ public class Mongo extends BaseLink {
 			query.skip((pageModel.getPageNo() - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
+		if (rs == null || rs.isEmpty())
+			return result;
 		result.setRows(extractFieldValues(sqlToyConfig, rs.iterator(), resultClass));
 		return result;
 	}
@@ -251,6 +252,8 @@ public class Mongo extends BaseLink {
 		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
+		if (rs == null || rs.isEmpty())
+			return null;
 		return extractFieldValues(sqlToyConfig, rs.iterator(), resultClass);
 	}
 
@@ -278,6 +281,8 @@ public class Mongo extends BaseLink {
 		}
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
+		if (out == null)
+			return null;
 		return extractFieldValues(sqlToyConfig, out.iterator(), resultClass);
 	}
 

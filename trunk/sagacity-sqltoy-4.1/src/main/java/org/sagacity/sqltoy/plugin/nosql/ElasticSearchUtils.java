@@ -50,6 +50,9 @@ public class ElasticSearchUtils {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		// 执行请求并返回json结果
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, sql);
+		if (json == null || json.isEmpty()) {
+			return new DataSetResult();
+		}
 		String[] fields = noSqlModel.getFields();
 		if (fields == null && resultClass != null) {
 			if (!CollectionUtil.any(resultClass.toLowerCase(),
@@ -257,22 +260,16 @@ public class ElasticSearchUtils {
 	 * @param realFields
 	 */
 	private static void processRow(List result, JSONObject rowJson, String[] realFields) {
-		Object root = getRealJSONObject(rowJson);
+		Object root = getRealJSONObject(rowJson, realFields);
 		if (root instanceof JSONObject) {
 			JSONObject json = (JSONObject) root;
 			if ((json.containsKey("key") && json.containsKey("doc_count"))) {
-				processRow(result, json, realFields);
+				if (isRoot(json, realFields)) {
+					addRow(result, json, realFields);
+				} else
+					processRow(result, json, realFields);
 			} else {
-				Object cell;
-				List row = new ArrayList();
-				for (String str : realFields) {
-					cell = json.get(str);
-					if (cell instanceof JSONObject) {
-						row.add(((JSONObject) cell).get("value"));
-					} else
-						row.add(cell);
-				}
-				result.add(row);
+				addRow(result, json, realFields);
 			}
 		} else if (root instanceof JSONArray) {
 			JSONArray array = (JSONArray) root;
@@ -283,11 +280,44 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取实际json对象
-	 * @param rowJson
+	 * @todo 判断是否包含所有字段
+	 * @param json
+	 * @param realFields
 	 * @return
 	 */
-	private static Object getRealJSONObject(JSONObject rowJson) {
+	private static boolean isRoot(JSONObject json, String[] realFields) {
+		boolean isRoot = true;
+		for (String key : realFields)
+			isRoot = isRoot && json.containsKey(key);
+		return isRoot;
+	}
+
+	/**
+	 * @todo 提取数据加入集合
+	 * @param result
+	 * @param rowJson
+	 * @param realFields
+	 */
+	private static void addRow(List result, JSONObject rowJson, String[] realFields) {
+		Object cell;
+		List row = new ArrayList();
+		for (String str : realFields) {
+			cell = rowJson.get(str);
+			if (cell instanceof JSONObject) {
+				row.add(((JSONObject) cell).get("value"));
+			} else
+				row.add(cell);
+		}
+		result.add(row);
+	}
+
+	/**
+	 * @todo 提取实际json对象
+	 * @param rowJson
+	 * @param realFields
+	 * @return
+	 */
+	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields) {
 		Object result = rowJson.get("_source");
 		if (result != null && result instanceof JSONObject)
 			return result;
@@ -296,29 +326,31 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONArray)
 				return result;
 			else if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result);
+				return getRealJSONObject((JSONObject) result, realFields);
 		}
 		result = rowJson.get("hits");
 		if (result != null) {
 			if (result instanceof JSONArray)
 				return result;
 			else if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result);
+				return getRealJSONObject((JSONObject) result, realFields);
 		}
 		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
+			if (isRoot(rowJson, realFields))
+				return rowJson;
 			Object[] keys = rowJson.keySet().toArray();
 			for (Object key : keys) {
 				if (!key.equals("key") && !key.equals("doc_count")) {
 					result = rowJson.get(key.toString());
 					if (result instanceof JSONObject)
-						return getRealJSONObject((JSONObject) result);
+						return getRealJSONObject((JSONObject) result, realFields);
 					return result;
 				}
 			}
 		} else if (rowJson.keySet().size() == 1) {
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result);
+				return getRealJSONObject((JSONObject) result, realFields);
 		}
 		return rowJson;
 	}

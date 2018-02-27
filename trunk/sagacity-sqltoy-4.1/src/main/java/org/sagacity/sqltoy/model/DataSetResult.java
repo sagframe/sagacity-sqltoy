@@ -37,7 +37,7 @@ public class DataSetResult implements Serializable {
 	/**
 	 * 总记录数量
 	 */
-	private Long totalCount;
+	private Long totalCount = 0L;
 
 	/**
 	 * @return the labelNames
