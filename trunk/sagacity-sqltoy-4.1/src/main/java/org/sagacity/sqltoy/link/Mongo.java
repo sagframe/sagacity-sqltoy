@@ -293,12 +293,16 @@ public class Mongo extends BaseLink {
 		String[] fields = sqlToyConfig.getNoSqlConfigModel().getFields();
 		// 解决field采用name:aliasName形式
 		String[] realFields = new String[fields.length];
+		String[] translateFields = new String[fields.length];
 		System.arraycopy(fields, 0, realFields, 0, fields.length);
+		System.arraycopy(fields, 0, translateFields, 0, fields.length);
 		int aliasIndex = 0;
 		for (int i = 0; i < realFields.length; i++) {
 			aliasIndex = realFields[i].indexOf(":");
-			if (aliasIndex != -1)
+			if (aliasIndex != -1) {
 				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
+				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+			}
 		}
 		while (iter.hasNext()) {
 			row = iter.next();
@@ -308,14 +312,14 @@ public class Mongo extends BaseLink {
 			}
 			resultSet.add(rowData);
 		}
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet, realFields);
+		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet, translateFields);
 
 		DataSetResult dataSetResult = new DataSetResult();
 		dataSetResult.setRows(resultSet);
-		dataSetResult.setLabelNames(fields);
+		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
 		ResultUtils.calculate(sqlToyConfig, dataSetResult, null, sqlToyContext.isDebug());
-		MongoElasticUtils.wrapResultClass(resultSet, fields, resultClass);
+		MongoElasticUtils.wrapResultClass(resultSet, translateFields, resultClass);
 		return resultSet;
 	}
 

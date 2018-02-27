@@ -303,7 +303,7 @@ public class MongoElasticUtils {
 					realMql.append("]");
 			}
 			index++;
-			//realMql.append(BLANK);
+			// realMql.append(BLANK);
 		}
 		realMql.append(sql.substring(start));
 		return realMql.toString();

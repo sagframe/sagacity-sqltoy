@@ -144,12 +144,13 @@ public class ElasticSearchPlugin {
 		if (json == null || json.isEmpty())
 			return new DataSetResult();
 		DataSetResult resultSet = ElasticSearchUtils.extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
-		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), fields);
+		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
 		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(MongoElasticUtils.wrapResultClass(resultSet.getRows(), fields, resultClass));
+		resultSet.setRows(
+				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
 		return resultSet;
 	}
 
