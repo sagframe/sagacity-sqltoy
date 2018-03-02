@@ -24,15 +24,17 @@ public @interface BusinessId {
 	 * @return
 	 */
 	String signature() default "";
-	
+
 	/**
 	 * 默认长度
+	 * 
 	 * @return
 	 */
 	int length() default 16;
 
 	/**
 	 * 关联字段
+	 * 
 	 * @return
 	 */
 	String relatedColumn() default "";
@@ -43,6 +45,11 @@ public @interface BusinessId {
 	 * @return
 	 */
 	String generator();
-	
-	
+
+	/**
+	 * 初始值
+	 * 
+	 * @return
+	 */
+	long start() default 1;
 }
