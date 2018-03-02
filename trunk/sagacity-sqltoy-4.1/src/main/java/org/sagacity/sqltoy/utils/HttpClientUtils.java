@@ -77,7 +77,8 @@ public class HttpClientUtils {
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig.getPath(), nosqlConfig);
 			if (sqltoyContext.isDebug())
-				logger.debug("URL:[{}],Path:{},执行的JSON:[{}]", esConfig.getUrl(), realUrl, JSON.toJSONString(postValue));
+				logger.debug("esRestClient执行:URL=[{}],Path={},执行的JSON=[{}]", esConfig.getUrl(), realUrl,
+						JSON.toJSONString(postValue));
 			// 默认采用post请求
 			Response response = esConfig.getRestClient().performRequest("POST", realUrl,
 					Collections.<String, String>emptyMap(), httpEntity);
@@ -86,7 +87,7 @@ public class HttpClientUtils {
 			realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug())
-				logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));
+				logger.debug("httpClient执行URL=[{}],执行的JSON=[{}]", realUrl, JSON.toJSONString(postValue));
 			httpPost.setEntity(httpEntity);
 
 			// 设置connection是否自动关闭
