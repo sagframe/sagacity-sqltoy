@@ -71,16 +71,19 @@ public class HttpClientUtils {
 				nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue), charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
-
+		String realUrl;
 		// 返回结果
 		HttpEntity reponseEntity = null;
 		if (esConfig.getRestClient() != null) {
-			//默认采用post请求
-			Response response = esConfig.getRestClient().performRequest("POST", esConfig.getPath(),
+			realUrl = wrapUrl(esConfig.getPath(), nosqlConfig);
+			if (sqltoyContext.isDebug())
+				logger.debug("URL:[{}],Path:{},执行的JSON:[{}]", esConfig.getUrl(), realUrl, JSON.toJSONString(postValue));
+			// 默认采用post请求
+			Response response = esConfig.getRestClient().performRequest("POST", realUrl,
 					Collections.<String, String>emptyMap(), httpEntity);
 			reponseEntity = response.getEntity();
 		} else {
-			String realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
+			realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug())
 				logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));

@@ -6,10 +6,18 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -267,7 +275,32 @@ public class ElasticConfig implements Serializable {
 				}
 			}
 			if (!hosts.isEmpty()) {
-				RestClientBuilder builder = RestClient.builder((HttpHost[]) hosts.toArray());
+				HttpHost[] hostAry = new HttpHost[hosts.size()];
+				hosts.toArray(hostAry);
+				RestClientBuilder builder = RestClient.builder(hostAry);
+				final ConnectionConfig connectionConfig = ConnectionConfig.custom()
+						.setCharset(Charset.forName(this.charset == null ? "UTF-8" : this.charset)).build();
+				RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(this.requestTimeout)
+						.setConnectTimeout(this.connectTimeout).setSocketTimeout(this.socketTimeout).build();
+				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
+						&& StringUtil.isNotBlank(getPassword())) ? true : false;
+				// 凭据提供器
+				if (hasCrede) {
+					credsProvider.setCredentials(AuthScope.ANY,
+							// 认证用户名和密码
+							new UsernamePasswordCredentials(getUsername(), getPassword()));
+				}
+				builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+					@Override
+					public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+						httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
+								.setDefaultRequestConfig(requestConfig);
+						if (hasCrede)
+							httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+						return httpClientBuilder;
+					}
+				});
 				restClient = builder.build();
 			}
 		}
