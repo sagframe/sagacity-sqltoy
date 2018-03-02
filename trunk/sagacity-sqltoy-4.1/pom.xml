@@ -21,18 +21,14 @@
 		<jedis.version>2.9.0</jedis.version>
 	</properties>
 	<distributionManagement>
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/sagframe</url> 
-			</repository> -->
 		<repository>
-			<id>renturbo</id>
-			<name>3rd party</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url>
+			<id>sagframe-release</id>
+			<url>http://www.sagframe.com:8081/repository/sagframe</url>
 		</repository>
-		<snapshotRepository>
-			<id>renturbo</id>
-			<name>Department Repository</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
+		<!-- <repository> <id>renturbo</id> <name>3rd party</name> <url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url> 
+			</repository> <snapshotRepository> <id>renturbo</id> <name>Department Repository</name> 
+			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url> 
+			</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
@@ -55,7 +51,7 @@
 			<artifactId>ojdbc8</artifactId>
 			<version>12.2.0.1</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/org.dom4j/dom4j -->
 		<dependency>
 			<groupId>org.dom4j</groupId>
