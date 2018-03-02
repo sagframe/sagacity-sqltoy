@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.util.Collections;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -17,6 +19,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.Response;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticConfig;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -62,39 +65,50 @@ public class HttpClientUtils {
 		ElasticConfig esConfig = sqltoyContext.getElasticConfig(nosqlConfig.getUrl());
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
-		String realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
-		HttpPost httpPost = new HttpPost(realUrl);
-		if (sqltoyContext.isDebug())
-			logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));
+
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = new StringEntity(
 				nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue), charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
-		httpPost.setEntity(httpEntity);
 
-		// 设置connection是否自动关闭
-		httpPost.setHeader("Connection", "close");
-		// 自定义超时
-		if (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
-				|| nosqlConfig.getSocketTimeout() != 180000) {
-			httpPost.setConfig(RequestConfig.custom().setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
-					.setConnectTimeout(nosqlConfig.getConnectTimeout()).setSocketTimeout(nosqlConfig.getSocketTimeout())
-					.build());
-		} else
-			httpPost.setConfig(requestConfig);
-		CloseableHttpClient client = null;
-		if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
-			// 凭据提供器
-			CredentialsProvider credsProvider = new BasicCredentialsProvider();
-			credsProvider.setCredentials(AuthScope.ANY,
-					// 认证用户名和密码
-					new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
-			client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-		} else
-			client = HttpClients.createDefault();
-		HttpResponse response = client.execute(httpPost);
-		HttpEntity reponseEntity = response.getEntity();
+		// 返回结果
+		HttpEntity reponseEntity = null;
+		if (esConfig.getRestClient() != null) {
+			//默认采用post请求
+			Response response = esConfig.getRestClient().performRequest("POST", esConfig.getPath(),
+					Collections.<String, String>emptyMap(), httpEntity);
+			reponseEntity = response.getEntity();
+		} else {
+			String realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
+			HttpPost httpPost = new HttpPost(realUrl);
+			if (sqltoyContext.isDebug())
+				logger.debug("URL:[{}],执行的JSON:[{}]", realUrl, JSON.toJSONString(postValue));
+			httpPost.setEntity(httpEntity);
+
+			// 设置connection是否自动关闭
+			httpPost.setHeader("Connection", "close");
+			// 自定义超时
+			if (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
+					|| nosqlConfig.getSocketTimeout() != 180000) {
+				httpPost.setConfig(RequestConfig.custom().setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
+						.setConnectTimeout(nosqlConfig.getConnectTimeout())
+						.setSocketTimeout(nosqlConfig.getSocketTimeout()).build());
+			} else
+				httpPost.setConfig(requestConfig);
+			CloseableHttpClient client = null;
+			if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
+				// 凭据提供器
+				CredentialsProvider credsProvider = new BasicCredentialsProvider();
+				credsProvider.setCredentials(AuthScope.ANY,
+						// 认证用户名和密码
+						new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
+				client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+			} else
+				client = HttpClients.createDefault();
+			HttpResponse response = client.execute(httpPost);
+			reponseEntity = response.getEntity();
+		}
 		String result = null;
 		if (reponseEntity != null) {
 			result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());

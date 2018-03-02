@@ -692,6 +692,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			//第一个作为默认值
 			defaultElastic = elasticConfigList.get(0).getId();
 			for (ElasticConfig config : elasticConfigList) {
+				//初始化restClient
+				config.initRestClient();
 				elasticConfigs.put(config.getId().toLowerCase(), config);
 			}
 		}
