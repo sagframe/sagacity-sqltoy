@@ -4,6 +4,15 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -18,9 +27,16 @@ public class ElasticConfig implements Serializable {
 	 */
 	private static final long serialVersionUID = 7850474153384016421L;
 
+	private RestClient restClient;
+
 	public ElasticConfig(String url) {
 		this.url = url;
 	}
+
+	/**
+	 * 请求路径(默认为根路径)
+	 */
+	private String path = "/";
 
 	/**
 	 * 配置名称
@@ -66,6 +82,21 @@ public class ElasticConfig implements Serializable {
 	 * 整个连接超时时长,默认3分钟
 	 */
 	private int socketTimeout = 180000;
+
+	/**
+	 * @return the path
+	 */
+	public String getPath() {
+		return path;
+	}
+
+	/**
+	 * @param path
+	 *            the path to set
+	 */
+	public void setPath(String path) {
+		this.path = path;
+	}
 
 	/**
 	 * @return the url
@@ -150,7 +181,8 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @param charset the charset to set
+	 * @param charset
+	 *            the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
@@ -164,7 +196,8 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @param requestTimeout the requestTimeout to set
+	 * @param requestTimeout
+	 *            the requestTimeout to set
 	 */
 	public void setRequestTimeout(int requestTimeout) {
 		this.requestTimeout = requestTimeout;
@@ -178,7 +211,8 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @param connectTimeout the connectTimeout to set
+	 * @param connectTimeout
+	 *            the connectTimeout to set
 	 */
 	public void setConnectTimeout(int connectTimeout) {
 		this.connectTimeout = connectTimeout;
@@ -192,10 +226,63 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @param socketTimeout the socketTimeout to set
+	 * @param socketTimeout
+	 *            the socketTimeout to set
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
 	}
 
+	/**
+	 * @return the restClient
+	 */
+	public RestClient getRestClient() {
+		return restClient;
+	}
+
+	/**
+	 * @param restClient
+	 *            the restClient to set
+	 */
+	public void initRestClient() {
+		if (StringUtil.isBlank(this.getUrl()))
+			return;
+		if (restClient == null) {
+			String splitSign = ";";
+			if (this.getUrl().indexOf(";") == -1)
+				splitSign = ",";
+			String[] urls = this.getUrl().split(splitSign);
+			// 当为单一地址时使用httpclient直接调用
+			if (urls.length < 2)
+				return;
+			List<HttpHost> hosts = new ArrayList<HttpHost>();
+			for (String urlStr : urls) {
+				try {
+					if (StringUtil.isNotBlank(urlStr)) {
+						URL url = new java.net.URL(urlStr.trim());
+						hosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
+					}
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}
+			}
+			if (!hosts.isEmpty()) {
+				RestClientBuilder builder = RestClient.builder((HttpHost[]) hosts.toArray());
+				restClient = builder.build();
+			}
+		}
+	}
+
+	public static void main(String args[]) {
+		String urlStr = "http://192.168.56.1:9200";
+		try {
+			URL url = new java.net.URL(urlStr);
+			System.err.println("protocol=" + url.getProtocol());
+			System.err.println("host=" + url.getHost());
+			System.err.println("port=" + url.getPort());
+			System.err.println("path=" + url.getPath());
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+	}
 }
