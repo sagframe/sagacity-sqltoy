@@ -19,6 +19,7 @@
 		<mongo.version>3.6.3</mongo.version>
 		<dom4j.version>2.1.0</dom4j.version>
 		<jedis.version>2.9.0</jedis.version>
+		<spring-boot.version>2.0.0.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
 		<repository>
@@ -31,6 +32,19 @@
 			</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot</artifactId>
+			<version>${spring-boot.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<version>${spring-boot.version}</version>
+			<optional>true</optional>
+		</dependency>
+		
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
 		<dependency>
 			<groupId>junit</groupId>
