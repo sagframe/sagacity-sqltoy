@@ -89,7 +89,7 @@ public class RedisIdGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
 			throws Exception {
-		String key = (signature == null ? tableName : signature)
+		String key = (signature == null ? "" : signature)
 				.concat(((relatedColValue == null) ? "" : relatedColValue.toString()));
 		String realKey = key;
 		// key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
@@ -104,7 +104,7 @@ public class RedisIdGenerator implements IdGenerator {
 					.concat(key.substring(m.end()));
 		} else if (dateFormat != null)
 			realKey = key.concat(DateUtil.formatDate(new Date(), dateFormat));
-		Long result = generate(realKey);
+		Long result = generate(realKey.equals("") ? tableName : realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 	}
 
