@@ -92,6 +92,11 @@ public class Query extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * @todo 设置sql语句
+	 * @param sql
+	 * @return
+	 */
 	public Query sql(String sql) {
 		this.sql = sql;
 		return this;
@@ -102,16 +107,31 @@ public class Query extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * @todo sql语句中的参数名称
+	 * @param names
+	 * @return
+	 */
 	public Query names(String... names) {
 		this.names = names;
 		return this;
 	}
 
+	/**
+	 * @todo sql语句中的参数对应的值
+	 * @param values
+	 * @return
+	 */
 	public Query values(Object... values) {
 		this.values = values;
 		return this;
 	}
 
+	/**
+	 * @todo 通过对象传递参数(对象属性名跟sql中的参数别名对应)
+	 * @param entityVO
+	 * @return
+	 */
 	public Query entity(Serializable entityVO) {
 		this.entity = entityVO;
 		return this;
@@ -128,8 +148,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 获取单值
-	 * 
+	 * @todo 获取单值
 	 * @return
 	 * @throws Exception
 	 */
@@ -143,8 +162,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 获取一条记录
-	 * 
+	 * @todo 获取一条记录
 	 * @return
 	 * @throws Exception
 	 */
@@ -158,8 +176,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 查询结果
-	 * 
+	 * @todo 查询结果
 	 * @return
 	 * @throws Exception
 	 */
@@ -169,8 +186,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 查询结果
-	 * 
+	 * @todo 查询结果
 	 * @return
 	 * @throws Exception
 	 */
@@ -181,8 +197,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 取前多少条记录
-	 * 
+	 * @todo 取前多少条记录
 	 * @param topSize
 	 * @return
 	 * @throws Exception
@@ -194,8 +209,7 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * 随机取记录
-	 * 
+	 * @todo 随机取记录
 	 * @param randomSize
 	 * @return
 	 * @throws Exception

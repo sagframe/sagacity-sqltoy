@@ -32,8 +32,15 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	protected SaveMode IGNORE = SaveMode.IGNORE;
 
 	/**
-	 * 删除操作集合
-	 * 
+	 * @todo 对象加载操作集合
+	 * @return
+	 */
+	protected Load load() {
+		return new Load(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
+	 * @todo 删除操作集合
 	 * @return
 	 */
 	protected Delete delete() {
@@ -41,17 +48,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 分页操作集合
-	 * 
-	 * @return
-	 */
-	protected Page page() {
-		return new Page(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 修改操作集合
-	 * 
+	 * @todo 修改操作集合
 	 * @return
 	 */
 	protected Update update() {
@@ -59,17 +56,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 存储过程操作集合
-	 * 
-	 * @return
-	 */
-	protected Store store() {
-		return new Store(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 保存操作集合
-	 * 
+	 * @todo 保存操作集合
 	 * @return
 	 */
 	protected Save save() {
@@ -77,8 +64,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 查询操作集合
-	 * 
+	 * @todo 查询操作集合
 	 * @return
 	 */
 	protected Query query() {
@@ -86,12 +72,19 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 对象加载操作集合
-	 * 
+	 * @todo 分页操作集合
 	 * @return
 	 */
-	protected Load load() {
-		return new Load(sqlToyContext, getDataSource(dataSource));
+	protected Page page() {
+		return new Page(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
+	 * @todo 存储过程操作集合
+	 * @return
+	 */
+	protected Store store() {
+		return new Store(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
@@ -113,8 +106,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * sql语句直接执行修改数据库操作集合
-	 * 
+	 * @todo sql语句直接执行修改数据库操作集合
 	 * @return
 	 */
 	protected Execute execute() {
@@ -122,8 +114,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 批量执行操作集合
-	 * 
+	 * @todo 批量执行操作集合
 	 * @return
 	 */
 	protected Batch batch() {
@@ -131,8 +122,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 提供基于ES的查询(仅针对查询部分)
-	 * 
+	 * @todo 提供基于ES的查询(仅针对查询部分)
 	 * @return
 	 */
 	protected Elastic elastic() {
@@ -140,8 +130,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 提供基于mongo的查询(仅针对查询部分)
-	 * 
+	 * @todo 提供基于mongo的查询(仅针对查询部分)
 	 * @return
 	 */
 	protected Mongo mongo() {

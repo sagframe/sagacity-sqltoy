@@ -37,8 +37,7 @@ public class Load extends BaseLink {
 	}
 
 	/**
-	 * 额外指定数据源
-	 * 
+	 * @todo 额外指定数据源
 	 * @param dataSource
 	 * @return
 	 */
@@ -48,8 +47,7 @@ public class Load extends BaseLink {
 	}
 
 	/**
-	 * 级联加载的对象
-	 * 
+	 * @todo 级联加载的对象
 	 * @param cascadeTypes
 	 * @return
 	 */
@@ -59,8 +57,7 @@ public class Load extends BaseLink {
 	}
 
 	/**
-	 * 锁表策略
-	 * 
+	 * @todo 锁表策略
 	 * @param lockMode
 	 * @return
 	 */
@@ -70,8 +67,7 @@ public class Load extends BaseLink {
 	}
 
 	/**
-	 * 单对象加载
-	 * 
+	 * @todo 单对象加载
 	 * @param entity
 	 * @return
 	 * @throws Exception
@@ -83,8 +79,7 @@ public class Load extends BaseLink {
 	}
 
 	/**
-	 * 批量加载
-	 * 
+	 * @todo 批量加载
 	 * @param entities
 	 * @return
 	 * @throws Exception
