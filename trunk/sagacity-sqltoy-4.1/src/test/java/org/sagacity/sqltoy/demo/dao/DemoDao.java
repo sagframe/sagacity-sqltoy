@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.demo.dao;
 
 
-import org.sagacity.sqltoy.criteria.Criteria;
 import org.sagacity.sqltoy.demo.vo.DictTypeVO;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.support.BaseDaoSupport;
