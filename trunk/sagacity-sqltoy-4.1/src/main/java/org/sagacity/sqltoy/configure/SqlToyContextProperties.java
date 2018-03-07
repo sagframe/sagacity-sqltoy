@@ -10,7 +10,13 @@ import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "sqltoy.context.config")
+/**
+ * @project sagacity-sqltoy4.1
+ * @description 基于springboot 的sqltoy配置属性加载模式
+ * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:SqlToyContextProperties.java,Revision:v1.0,Date:2018年3月7日
+ */
+@ConfigurationProperties(prefix = "sqltoy.context")
 public class SqlToyContextProperties {
 
 	/**
@@ -33,8 +39,14 @@ public class SqlToyContextProperties {
 	 */
 	private String[] packagesToScan;
 
+	/**
+	 * elasticsearch的连接配置
+	 */
 	private List<ElasticConfig> elasticConfigs = new ArrayList<ElasticConfig>();
 
+	/**
+	 * 缓存管理器配置
+	 */
 	private List<TranslateCacheManager> translateCacheManagers = new ArrayList<TranslateCacheManager>();
 
 	/**
@@ -42,8 +54,15 @@ public class SqlToyContextProperties {
 	 */
 	private String cacheManager;
 
-	private String debug;
-	private int batchSize;
+	/**
+	 * 是否debug模式
+	 */
+	private boolean debug = false;
+
+	/**
+	 * 批量操作时每批数量
+	 */
+	private int batchSize = 50;
 
 	/**
 	 * 统一字段处理器
@@ -98,7 +117,7 @@ public class SqlToyContextProperties {
 	/**
 	 * @return the debug
 	 */
-	public String getDebug() {
+	public boolean getDebug() {
 		return debug;
 	}
 
@@ -106,7 +125,7 @@ public class SqlToyContextProperties {
 	 * @param debug
 	 *            the debug to set
 	 */
-	public void setDebug(String debug) {
+	public void setDebug(boolean debug) {
 		this.debug = debug;
 	}
 
