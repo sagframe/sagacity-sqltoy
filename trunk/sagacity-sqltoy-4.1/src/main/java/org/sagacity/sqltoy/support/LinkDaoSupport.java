@@ -69,64 +69,9 @@ public class LinkDaoSupport {
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
-
+	
 	/**
-	 * 删除操作集合
-	 * 
-	 * @return
-	 */
-	protected Delete delete() {
-		return new Delete(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 分页操作集合
-	 * 
-	 * @return
-	 */
-	protected Page page() {
-		return new Page(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 修改操作集合
-	 * 
-	 * @return
-	 */
-	protected Update update() {
-		return new Update(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 存储过程操作集合
-	 * 
-	 * @return
-	 */
-	protected Store store() {
-		return new Store(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 保存操作集合
-	 * 
-	 * @return
-	 */
-	protected Save save() {
-		return new Save(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 查询操作集合
-	 * 
-	 * @return
-	 */
-	protected Query query() {
-		return new Query(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * 对象加载操作集合
-	 * 
+	 * @todo 对象加载操作集合
 	 * @return
 	 */
 	protected Load load() {
@@ -134,17 +79,63 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * 唯一性验证操作集合
-	 * 
+	 * @todo 保存操作集合
+	 * @return
+	 */
+	protected Save save() {
+		return new Save(sqlToyContext, getDataSource(dataSource));
+	}
+	
+	/**
+	 * @todo 修改操作集合
+	 * @return
+	 */
+	protected Update update() {
+		return new Update(sqlToyContext, getDataSource(dataSource));
+	}
+	
+	/**
+	 * @todo 删除操作集合
+	 * @return
+	 */
+	protected Delete delete() {
+		return new Delete(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
+	 * @todo 查询操作集合
+	 * @return
+	 */
+	protected Query query() {
+		return new Query(sqlToyContext, getDataSource(dataSource));
+	}
+	
+	/**
+	 * @todo 分页操作集合
+	 * @return
+	 */
+	protected Page page() {
+		return new Page(sqlToyContext, getDataSource(dataSource));
+	}
+
+	/**
+	 * @todo 唯一性验证操作集合
 	 * @return
 	 */
 	protected Unique unique() {
 		return new Unique(sqlToyContext, getDataSource(dataSource));
 	}
+	
+	/**
+	 * @todo 存储过程操作集合
+	 * @return
+	 */
+	protected Store store() {
+		return new Store(sqlToyContext, getDataSource(dataSource));
+	}
 
 	/**
-	 * 树形表结构封装操作集合
-	 * 
+	 * @todo 树形表结构封装操作集合
 	 * @return
 	 */
 	protected TreeTable treeTable() {
@@ -152,8 +143,7 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * sql语句直接执行修改数据库操作集合
-	 * 
+	 * @todo sql语句直接执行修改数据库操作集合
 	 * @return
 	 */
 	protected Execute execute() {
@@ -161,8 +151,7 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * 批量执行操作集合
-	 * 
+	 * @todo 批量执行操作集合
 	 * @return
 	 */
 	protected Batch batch() {
@@ -170,8 +159,7 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * 提供基于ES的查询(仅针对查询部分)
-	 * 
+	 * @todo 提供基于ES的查询(仅针对查询部分)
 	 * @return
 	 */
 	protected Elastic elastic() {
@@ -179,8 +167,7 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * 提供基于mongo的查询(仅针对查询部分)
-	 * 
+	 * @todo 提供基于mongo的查询(仅针对查询部分)
 	 * @return
 	 */
 	protected Mongo mongo() {

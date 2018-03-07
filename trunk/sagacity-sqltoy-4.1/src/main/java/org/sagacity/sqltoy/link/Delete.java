@@ -37,8 +37,7 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * 设置数据源
-	 * 
+	 * @todo 设置数据源
 	 * @param dataSource
 	 * @return
 	 */
@@ -58,8 +57,7 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * 删除单条对象记录
-	 * 
+	 * @todo 删除单条对象记录
 	 * @param entity
 	 * @throws Exception
 	 */
@@ -70,8 +68,7 @@ public class Delete extends BaseLink {
 	}
 
 	/**
-	 * 批量删除对象记录
-	 * 
+	 * @todo 批量删除对象记录
 	 * @param entities
 	 * @throws Exception
 	 */

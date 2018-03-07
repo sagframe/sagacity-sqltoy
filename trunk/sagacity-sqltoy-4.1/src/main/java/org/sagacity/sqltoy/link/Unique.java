@@ -51,8 +51,7 @@ public class Unique extends BaseLink {
 	}
 
 	/**
-	 * 提交执行返回结果
-	 * 
+	 * @todo 提交执行返回结果
 	 * @return
 	 * @throws Exception
 	 */

@@ -74,8 +74,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 设置是否深度修改
-	 * 
+	 * @todo 设置是否深度修改
 	 * @param deeply
 	 * @return
 	 */
@@ -85,8 +84,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 设置是否深度修改
-	 * 
+	 * @todo 设置是否深度修改
 	 * @param deeply
 	 * @return
 	 */
@@ -96,8 +94,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 级联修改的对象
-	 * 
+	 * @todo 级联修改的对象
 	 * @param forceCascadeClasses
 	 * @return
 	 */
@@ -107,8 +104,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 级联修改对象需要强制修改的属性
-	 * 
+	 * @todo 级联修改对象需要强制修改的属性
 	 * @param subTableForceUpdateProps
 	 * @return
 	 */
@@ -123,8 +119,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 设置强制修改的属性
-	 * 
+	 * @todo 设置强制修改的属性
 	 * @param forceUpdateProps
 	 * @return
 	 */
@@ -134,8 +129,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 单个对象修改
-	 * 
+	 * @todo 单个对象修改
 	 * @param entity
 	 * @throws Exception
 	 */
@@ -155,8 +149,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * 批量修改(批量不做级联)
-	 * 
+	 * @todo 批量修改(批量不做级联)
 	 * @param entities
 	 * @throws Exception
 	 */

@@ -106,8 +106,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * 获取单条记录
-	 * 
+	 * @todo 获取单条记录
 	 * @return
 	 */
 	public Object getOne() throws Exception {
@@ -118,8 +117,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * 集合记录查询
-	 * 
+	 * @todo 集合记录查询
 	 * @return
 	 * @throws Exception
 	 */
@@ -142,8 +140,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * 查询前多少条记录
-	 * 
+	 * @todo 查询前多少条记录
 	 * @param topSize
 	 * @return
 	 * @throws Exception
@@ -162,8 +159,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * 分页查询
-	 * 
+	 * @todo 分页查询
 	 * @param pageModel
 	 * @return
 	 * @throws Exception
@@ -182,8 +178,7 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * 构造统一的查询条件
-	 * 
+	 * @todo 构造统一的查询条件
 	 * @return
 	 */
 	private QueryExecutor build() {

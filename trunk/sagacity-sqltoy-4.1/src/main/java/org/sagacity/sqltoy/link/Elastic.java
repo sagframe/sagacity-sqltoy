@@ -61,7 +61,7 @@ public class Elastic extends BaseLink {
 		this.sql = sql;
 		return this;
 	}
-	
+
 	public Elastic names(String... names) {
 		this.names = names;
 		return this;
@@ -95,8 +95,7 @@ public class Elastic extends BaseLink {
 	}
 
 	/**
-	 * 集合记录查询
-	 * 
+	 * @todo 集合记录查询
 	 * @return
 	 * @throws Exception
 	 */
@@ -111,8 +110,7 @@ public class Elastic extends BaseLink {
 	}
 
 	/**
-	 * 查询前多少条记录
-	 * 
+	 * @todo 查询前多少条记录
 	 * @param topSize
 	 * @return
 	 * @throws Exception
@@ -128,8 +126,7 @@ public class Elastic extends BaseLink {
 	}
 
 	/**
-	 * 分页查询
-	 * 
+	 * @todo 分页查询
 	 * @param pageModel
 	 * @return
 	 * @throws Exception
@@ -145,8 +142,7 @@ public class Elastic extends BaseLink {
 	}
 
 	/**
-	 * 构造统一的查询条件
-	 * 
+	 * @todo 构造统一的查询条件
 	 * @return
 	 */
 	private QueryExecutor build() {

@@ -46,8 +46,7 @@ public class Store extends BaseLink {
 	}
 
 	/**
-	 * 设置数据源
-	 * 
+	 * @todo 设置数据源
 	 * @param dataSource
 	 * @return
 	 */

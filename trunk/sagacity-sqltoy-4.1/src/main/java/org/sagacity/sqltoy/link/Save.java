@@ -71,8 +71,7 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * 设置数据源
-	 * 
+	 * @todo 设置数据源
 	 * @param dataSource
 	 * @return
 	 */
@@ -97,8 +96,7 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * 保存模式
-	 * 
+	 * @todo 保存模式
 	 * @param existMode
 	 * @return
 	 */
@@ -108,8 +106,7 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * 保存单条记录
-	 * 
+	 * @todo 保存单条记录
 	 * @param entity
 	 * @return
 	 * @throws Exception
@@ -125,8 +122,7 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * 批量保存
-	 * 
+	 * @todo 批量保存
 	 * @param entities
 	 * @throws Exception
 	 */

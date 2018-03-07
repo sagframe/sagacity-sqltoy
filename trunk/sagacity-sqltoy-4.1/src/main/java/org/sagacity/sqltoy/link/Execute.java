@@ -94,8 +94,7 @@ public class Execute extends BaseLink {
 	}
 
 	/**
-	 * 执行并返回修改的记录数量
-	 * 
+	 * @todo 执行并返回修改的记录数量
 	 * @return
 	 * @throws Exception
 	 */

@@ -88,8 +88,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 唯一性验证操作集合
-	 * 
+	 * @todo 唯一性验证操作集合
 	 * @return
 	 */
 	protected Unique unique() {
@@ -97,8 +96,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	}
 
 	/**
-	 * 树形表结构封装操作集合
-	 * 
+	 * @todo 树形表结构封装操作集合
 	 * @return
 	 */
 	protected TreeTable treeTable() {
