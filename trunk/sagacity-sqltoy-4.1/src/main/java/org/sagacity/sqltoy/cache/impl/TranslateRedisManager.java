@@ -10,6 +10,7 @@ import org.sagacity.sqltoy.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.config.model.CacheConfig;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 
 /**
@@ -19,7 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
  * @version id:TranslateRedisManager.java,Revision:v1.0,Date:2018年1月3日
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class TranslateRedisManager implements TranslateCacheManager {
+public class TranslateRedisManager extends TranslateCacheManager {
 	/**
 	 * 基于spring-data的redis管理器
 	 */
@@ -102,6 +103,7 @@ public class TranslateRedisManager implements TranslateCacheManager {
 	 *            the redisTemplate to set
 	 */
 	@Autowired(required = false)
+	@Qualifier(value = "redisTemplate")
 	public void setRedisTemplate(RedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}

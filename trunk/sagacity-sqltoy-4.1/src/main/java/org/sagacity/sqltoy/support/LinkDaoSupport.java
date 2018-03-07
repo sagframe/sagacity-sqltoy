@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.support;
 
 import java.sql.Connection;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -26,6 +25,8 @@ import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.SaveMode;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @project sagacity-sqltoy
@@ -53,7 +54,8 @@ public class LinkDaoSupport {
 	 * @param sqlToyContext
 	 *            the sqlToyContext to set
 	 */
-	@Resource(name = "sqlToyContext")
+	@Autowired
+	@Qualifier(value = "sqlToyContext")
 	public void setSqlToyContext(SqlToyContext sqlToyContext) {
 		this.sqlToyContext = sqlToyContext;
 	}
@@ -62,7 +64,8 @@ public class LinkDaoSupport {
 	 * @param dataSource
 	 *            the dataSource to set
 	 */
-	@Resource(name = "dataSource")
+	@Autowired(required = false)
+	@Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}

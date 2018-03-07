@@ -40,7 +40,6 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 
 /**
- * 
  * @project sqltoy-orm
  * @description 提供一个便捷的dao实现,供开发过程中直接通过service调用,避免大量的自定义Dao中仅仅是一些简单的中转调用
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>

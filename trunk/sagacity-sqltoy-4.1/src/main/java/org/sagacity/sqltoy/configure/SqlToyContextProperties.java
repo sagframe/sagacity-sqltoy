@@ -1,7 +1,13 @@
 package org.sagacity.sqltoy.configure;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.cache.TranslateCacheManager;
+import org.sagacity.sqltoy.config.model.ElasticConfig;
+import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "sqltoy.context.config")
@@ -11,7 +17,7 @@ public class SqlToyContextProperties {
 	 * 指定sql.xml 文件的路径实现目录的递归查找,非必须属性
 	 */
 	private String sqlResourcesDir;
-	
+
 	/**
 	 * 
 	 */
@@ -27,6 +33,10 @@ public class SqlToyContextProperties {
 	 */
 	private String[] packagesToScan;
 
+	private List<ElasticConfig> elasticConfigs = new ArrayList<ElasticConfig>();
+
+	private List<TranslateCacheManager> translateCacheManagers = new ArrayList<TranslateCacheManager>();
+
 	/**
 	 * 缓存管理器
 	 */
@@ -34,6 +44,11 @@ public class SqlToyContextProperties {
 
 	private String debug;
 	private int batchSize;
+
+	/**
+	 * 统一字段处理器
+	 */
+	private String unifyFieldsHandler;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -138,6 +153,63 @@ public class SqlToyContextProperties {
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
+	}
+
+	/**
+	 * @return the unifyFieldsHandler
+	 */
+	public IUnifyFieldsHandler getUnifyFieldsHandler() {
+		try {
+			if (StringUtil.isNotBlank(unifyFieldsHandler))
+				return (IUnifyFieldsHandler) Class.forName(unifyFieldsHandler).newInstance();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * @param unifyFieldsHandler
+	 *            the unifyFieldsHandler to set
+	 */
+	public void setUnifyFieldsHandler(String unifyFieldsHandler) {
+		this.unifyFieldsHandler = unifyFieldsHandler;
+	}
+
+	/**
+	 * @return the elasticConfigs
+	 */
+	public List<ElasticConfig> getElasticConfigs() {
+		return elasticConfigs;
+	}
+
+	/**
+	 * @param elasticConfigs
+	 *            the elasticConfigs to set
+	 */
+	public void setElasticConfigs(List<ElasticConfig> elasticConfigs) {
+		this.elasticConfigs = elasticConfigs;
+	}
+
+	/**
+	 * @return the translateCacheManagers
+	 */
+	public HashMap<String, TranslateCacheManager> getTranslateCacheManagers() {
+		HashMap<String, TranslateCacheManager> trans = new HashMap<String, TranslateCacheManager>();
+		if (translateCacheManagers == null || translateCacheManagers.isEmpty()) {
+			for (TranslateCacheManager translateCacheManager : translateCacheManagers) {
+				trans.put(translateCacheManager.getName(), translateCacheManager);
+			}
+		}
+		return trans;
+	}
+
+	/**
+	 * @param translateCacheManagers
+	 *            the translateCacheManagers to set
+	 */
+	public void setTranslateCacheManagers(List<TranslateCacheManager> translateCacheManagers) {
+		this.translateCacheManagers = translateCacheManagers;
 	}
 
 }

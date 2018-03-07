@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +32,8 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -77,7 +78,8 @@ public class SqlToyDaoSupport {
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
 
-	@Resource(name = "dataSource")
+	@Autowired(required = false)
+	@Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
@@ -100,7 +102,8 @@ public class SqlToyDaoSupport {
 	 * @param sqlToyContext
 	 *            the sqlToyContext to set
 	 */
-	@Resource(name = "sqlToyContext")
+	@Autowired
+	@Qualifier(value = "sqlToyContext")
 	public void setSqlToyContext(SqlToyContext sqlToyContext) {
 		this.sqlToyContext = sqlToyContext;
 	}

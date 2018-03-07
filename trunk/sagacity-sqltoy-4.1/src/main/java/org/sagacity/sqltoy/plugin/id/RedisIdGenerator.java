@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 
@@ -69,6 +70,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 *            the redisTemplate to set
 	 */
 	@Autowired(required = false)
+	@Qualifier(value = "redisTemplate")
 	public void setRedisTemplate(RedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}

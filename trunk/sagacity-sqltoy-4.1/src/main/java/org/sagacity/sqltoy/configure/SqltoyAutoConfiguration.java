@@ -3,7 +3,6 @@ package org.sagacity.sqltoy.configure;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
-import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.springframework.beans.BeanUtils;
@@ -16,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * sqltoy 自动配置类
+ * 
  * @author wolf
  *
  */
@@ -23,13 +23,13 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnClass(SqlToyLazyDaoImpl.class)
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
-	
+
 	@Autowired
 	SqlToyContextProperties properties;
-	
-	@Bean(name="sqlToyContext")
+
+	@Bean(name = "sqlToyContext")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext(){
+	SqlToyContext sqlToyContext() {
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		BeanUtils.copyProperties(properties, sqlToyContext);
 		sqlToyContext.setCacheManager(properties.getCacheManager());
@@ -37,8 +37,9 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
 		sqlToyContext.setBatchSize(properties.getBatchSize());
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
-		//sqlToyContext.setUnifyFieldsHandler(unifyFieldsHandler);
-		
+		sqlToyContext.setUnifyFieldsHandler(properties.getUnifyFieldsHandler());
+		sqlToyContext.setElasticConfigs(properties.getElasticConfigs());
+		sqlToyContext.setTranslateCacheManagers(properties.getTranslateCacheManagers());
 		try {
 			sqlToyContext.initialize();
 		} catch (Exception e) {
@@ -47,25 +48,24 @@ public class SqltoyAutoConfiguration {
 		return sqlToyContext;
 	}
 
-	
 	/**
 	 * 
 	 * @return 返回预定义的通用Dao实例
 	 */
-	@Bean(name="sqlToyLazyDao")
+	@Bean(name = "sqlToyLazyDao")
 	@ConditionalOnMissingBean
-	SqlToyLazyDao sqlToyLazyDao(){
+	SqlToyLazyDao sqlToyLazyDao() {
 		return new SqlToyLazyDaoImpl();
 	}
-	
+
 	/**
 	 * 
 	 * @return 返回预定义的通用CRUD service实例
 	 */
-	@Bean(name="sqlToyCRUDService")
+	@Bean(name = "sqlToyCRUDService")
 	@ConditionalOnMissingBean
-	SqlToyCRUDService sqlToyCRUDService(){
+	SqlToyCRUDService sqlToyCRUDService() {
 		return new SqlToyCRUDServiceImpl();
 	}
-	
+
 }

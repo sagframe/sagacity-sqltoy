@@ -20,7 +20,7 @@ import net.sf.ehcache.Element;
  * @version id:TranslateEhcacheManager.java,Revision:v1.0,Date:2013-4-14
  */
 @SuppressWarnings("unchecked")
-public class TranslateEhcacheManager implements TranslateCacheManager {
+public class TranslateEhcacheManager extends TranslateCacheManager {
 	private CacheManager cacheManager;
 
 	/**
@@ -53,8 +53,7 @@ public class TranslateEhcacheManager implements TranslateCacheManager {
 			cacheManager.addCache(cache);
 		}
 		// 放入缓存
-		cache.put(
-				new net.sf.ehcache.Element(StringUtil.isNotBlank(cacheKey) ? cacheKey : cacheName, cacheValue));
+		cache.put(new net.sf.ehcache.Element(StringUtil.isNotBlank(cacheKey) ? cacheKey : cacheName, cacheValue));
 	}
 
 	/**
