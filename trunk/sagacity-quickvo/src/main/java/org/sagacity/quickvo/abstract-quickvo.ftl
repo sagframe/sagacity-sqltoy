@@ -59,7 +59,7 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	 */
 </#if>
 	<#if (quickVO.swaggerModel)>
-	@ApiModelProperty(value="${column.colRemark}")
+	@ApiModelProperty(value="${column.colRemark}"<#if (column.nullable=='0')>,allowEmptyValue=false<#else>,allowEmptyValue=true</#if>)
 	</#if>
 	<#if (column.pkFlag?exists && column.pkFlag=='1')>
 	@Id<#if (column.businessIdConfig?exists)><#else><#if (quickVO.singlePk=='1')>(strategy="${column.strategy}"<#if (column.sequence?exists && column.sequence!='')>,sequence="${column.sequence}"</#if><#if (column.generator?exists && column.generator!='')>,generator="${column.generator}"</#if>)</#if></#if>
