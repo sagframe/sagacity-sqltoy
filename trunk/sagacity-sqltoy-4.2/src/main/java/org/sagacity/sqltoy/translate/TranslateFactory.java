@@ -266,37 +266,41 @@ public class TranslateFactory {
 			return (HashMap<String, Object[]>) target;
 		HashMap<String, Object[]> result = new HashMap<String, Object[]>();
 		if (target instanceof HashMap) {
-			if (((HashMap) target).values().iterator().next() instanceof List) {
-				Iterator<Map.Entry<String, List>> iter = ((HashMap<String, List>) target).entrySet().iterator();
-				while (iter.hasNext()) {
-					Map.Entry<String, List> entry = iter.next();
-					Object[] row = new Object[entry.getValue().size()];
-					entry.getValue().toArray(row);
-					result.put(entry.getKey(), row);
-				}
-			} else {
-				Iterator<Map.Entry<String, Object>> iter = ((HashMap<String, Object>) target).entrySet().iterator();
-				while (iter.hasNext()) {
-					Map.Entry<String, Object> entry = iter.next();
-					result.put(entry.getKey(), new Object[] { entry.getKey(), entry.getValue() });
+			if (!((HashMap) target).isEmpty()) {
+				if (((HashMap) target).values().iterator().next() instanceof List) {
+					Iterator<Map.Entry<String, List>> iter = ((HashMap<String, List>) target).entrySet().iterator();
+					while (iter.hasNext()) {
+						Map.Entry<String, List> entry = iter.next();
+						Object[] row = new Object[entry.getValue().size()];
+						entry.getValue().toArray(row);
+						result.put(entry.getKey(), row);
+					}
+				} else {
+					Iterator<Map.Entry<String, Object>> iter = ((HashMap<String, Object>) target).entrySet().iterator();
+					while (iter.hasNext()) {
+						Map.Entry<String, Object> entry = iter.next();
+						result.put(entry.getKey(), new Object[] { entry.getKey(), entry.getValue() });
+					}
 				}
 			}
 		} else if (target instanceof List) {
 			List tempList = (List) target;
-			int cacheIndex = cacheModel.getKeyIndex();
-			if (tempList.get(0) instanceof List) {
-				List row;
-				for (int i = 0, n = tempList.size(); i < n; i++) {
-					row = (List) tempList.get(i);
-					Object[] rowAry = new Object[row.size()];
-					row.toArray(rowAry);
-					result.put(rowAry[cacheIndex].toString(), rowAry);
-				}
-			} else if (tempList.get(0) instanceof Object[]) {
-				Object[] row;
-				for (int i = 0, n = tempList.size(); i < n; i++) {
-					row = (Object[]) tempList.get(i);
-					result.put(row[cacheIndex].toString(), row);
+			if (!tempList.isEmpty()) {
+				int cacheIndex = cacheModel.getKeyIndex();
+				if (tempList.get(0) instanceof List) {
+					List row;
+					for (int i = 0, n = tempList.size(); i < n; i++) {
+						row = (List) tempList.get(i);
+						Object[] rowAry = new Object[row.size()];
+						row.toArray(rowAry);
+						result.put(rowAry[cacheIndex].toString(), rowAry);
+					}
+				} else if (tempList.get(0) instanceof Object[]) {
+					Object[] row;
+					for (int i = 0, n = tempList.size(); i < n; i++) {
+						row = (Object[]) tempList.get(i);
+						result.put(row[cacheIndex].toString(), row);
+					}
 				}
 			}
 		}
