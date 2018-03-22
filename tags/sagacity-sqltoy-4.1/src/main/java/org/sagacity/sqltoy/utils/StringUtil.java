@@ -63,6 +63,8 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String clearMistyChars(String source, String target) {
+		if (source == null)
+			return null;
 		return source.replaceAll("\r", target).replaceAll("\t", target).replaceAll("\n", target);
 	}
 
@@ -479,7 +481,8 @@ public class StringUtil {
 	public static String toHumpStr(String source, boolean firstIsUpperCase) {
 		if (StringUtil.isBlank(source))
 			return source;
-		String[] humpAry = source.split("\\_");
+		// update 2018-3-22 将-复活统一成_
+		String[] humpAry = source.trim().replace("-", "_").split("\\_");
 		String cell;
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < humpAry.length; i++) {
