@@ -89,11 +89,12 @@ public class RedisIdGenerator implements IdGenerator {
 	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override
-	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
-			throws Exception {
+	public Object getId(String tableName, String signature, Object relatedColValue, Date bizDate, int jdbcType,
+			int length) throws Exception {
 		String key = (signature == null ? "" : signature)
 				.concat(((relatedColValue == null) ? "" : relatedColValue.toString()));
 		String realKey = key;
+		Date realBizDate = (bizDate == null ? new Date() : bizDate);
 		// key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
 		Matcher m = DF_REGEX.matcher(key);
 		if (m.find()) {
@@ -102,10 +103,10 @@ public class RedisIdGenerator implements IdGenerator {
 			// PO@day()格式,日期采用默认的2位年模式
 			if (df.equals(""))
 				df = "yyMMdd";
-			realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(new Date(), df))
+			realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(realBizDate, df))
 					.concat(key.substring(m.end()));
 		} else if (dateFormat != null)
-			realKey = key.concat(DateUtil.formatDate(new Date(), dateFormat));
+			realKey = key.concat(DateUtil.formatDate(realBizDate, dateFormat));
 		Long result = generate(realKey.equals("") ? tableName : realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 	}

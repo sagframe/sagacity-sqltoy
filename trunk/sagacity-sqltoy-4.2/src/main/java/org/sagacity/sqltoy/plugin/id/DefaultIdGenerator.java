@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugin.id;
 
+import java.util.Date;
+
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.utils.IdUtil;
@@ -33,8 +35,8 @@ public class DefaultIdGenerator implements IdGenerator {
 	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override
-	public Object getId(String tableName, String signature, Object relatedColsValue, int jdbcType, int length)
-			throws Exception {
+	public Object getId(String tableName, String signature, Object relatedColsValue, Date bizDate, int jdbcType,
+			int length) throws Exception {
 		return SqlUtil.convertIdValueType(IdUtil.getShortNanoTimeId(SqlToyConstants.SERVER_ID), jdbcType);
 	}
 }

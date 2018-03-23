@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugin;
 
+import java.util.Date;
+
 /**
  * @project sqltoy-orm
  * @description 定义主键产生器接口,自定义产生器必须实现getId()方法
@@ -18,10 +20,11 @@ public interface IdGenerator {
 	 *            识别符号
 	 * @param relatedColValue
 	 *            关联字段的值
+	 * @param bizDate     
 	 * @param jdbcType
 	 * @param length
 	 * @return
 	 */
-	public Object getId(String tableName, String signature, Object relatedColValue, int jdbcType, int length)
-			throws Exception;
+	public Object getId(String tableName, String signature, Object relatedColValue, Date bizDate, int jdbcType,
+			int length) throws Exception;
 }
