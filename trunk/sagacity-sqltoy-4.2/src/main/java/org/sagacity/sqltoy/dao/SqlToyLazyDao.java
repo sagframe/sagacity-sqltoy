@@ -6,6 +6,7 @@
 package org.sagacity.sqltoy.dao;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -527,5 +528,23 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public DataSource getDataSource();
+
+	/**
+	 * @todo 获取业务ID
+	 * @param signature
+	 * @param increment
+	 * @return
+	 * @throws Exception
+	 */
+	public long generateBizId(String signature, int increment) throws Exception;
+
+	/**
+	 * @todo 根据对象类型以及通过对象配置的业务主键策略产生ID
+	 * @param entityClass
+	 * @param bizDate
+	 * @return
+	 * @throws Exception
+	 */
+	public String generateBizId(Class entityClass, Date bizDate) throws Exception;
 
 }

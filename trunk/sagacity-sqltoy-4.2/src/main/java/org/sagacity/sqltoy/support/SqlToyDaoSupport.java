@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugin.id.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -1022,13 +1023,16 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生业务ID
-	 * @param entityClass
+	 * @todo 产生ID(可以指定增量范围)
+	 * @param signature
+	 * @param increment
 	 * @return
 	 * @throws Exception
 	 */
-	protected Object generateBizId(Class entityClass) throws Exception {
-		return generateBizId(entityClass, null, 1)[0];
+	protected long generateBizId(String signature, int increment) throws Exception {
+		if (StringUtil.isBlank(signature))
+			throw new Exception("signature 必须不能为空,请正确指定业务标志符号!");
+		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
 	}
 
 	/**
@@ -1038,25 +1042,12 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Object generateBizId(Class entityClass, Date bizDate) throws Exception {
-		return generateBizId(entityClass, bizDate, 1)[0];
-	}
-
-	/**
-	 * @todo 批量产生业务id
-	 * @param entityClass
-	 * @param bizDate
-	 * @param size
-	 * @return
-	 * @throws Exception
-	 */
-	protected Object[] generateBizId(Class entityClass, Date bizDate, int size) throws Exception {
+	protected String generateBizId(Class entityClass, Date bizDate) throws Exception {
 		EntityMeta entityMeta = this.getEntityMeta(entityClass);
-		if (entityMeta.getBusinessIdGenerator() == null)
+		if (entityMeta == null || entityMeta.getBusinessIdGenerator() == null)
 			throw new Exception(StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entityClass.getName()));
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
-		Object result = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-				entityMeta.getBizIdSignature(), null, bizDate, businessIdType, entityMeta.getBizIdLength());
-		return new Object[] { result };
+		return entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
+				null, bizDate, businessIdType, entityMeta.getBizIdLength()).toString();
 	}
 }

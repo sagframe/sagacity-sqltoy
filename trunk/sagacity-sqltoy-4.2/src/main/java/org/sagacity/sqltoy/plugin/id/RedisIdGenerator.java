@@ -35,8 +35,6 @@ public class RedisIdGenerator implements IdGenerator {
 	 * 嵌入的日期匹配表达式
 	 */
 	private final static Pattern DF_REGEX = Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
-	// private final static Pattern DF_REGEX_1 =
-	// Pattern.compile("(?i)\\$(date|day|df)\\([\\w|\\W]*\\)");
 
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
@@ -44,8 +42,8 @@ public class RedisIdGenerator implements IdGenerator {
 	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID_";
 
 	/**
-	 * 获取对象单例
-	 * 
+	 * @todo 获取对象单例
+	 * @param sqlToyContext
 	 * @return
 	 */
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
@@ -107,7 +105,7 @@ public class RedisIdGenerator implements IdGenerator {
 					.concat(key.substring(m.end()));
 		} else if (dateFormat != null)
 			realKey = key.concat(DateUtil.formatDate(realBizDate, dateFormat));
-		Long result = generate(realKey.equals("") ? tableName : realKey);
+		Long result = generateId(realKey.equals("") ? tableName : realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 	}
 
@@ -116,8 +114,8 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @param key
 	 * @return
 	 */
-	public long generate(String key) {
-		return generate(key, 1, null);
+	public long generateId(String key) {
+		return generateId(key, 1, null);
 	}
 
 	/**
@@ -126,8 +124,8 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @param increment
 	 * @return
 	 */
-	public long generate(String key, int increment) {
-		return generate(key, increment, null);
+	public long generateId(String key, int increment) {
+		return generateId(key, increment, null);
 	}
 
 	/**
@@ -137,7 +135,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @param expireTime
 	 * @return
 	 */
-	public long generate(String key, int increment, Date expireTime) {
+	public long generateId(String key, int increment, Date expireTime) {
 		RedisAtomicLong counter = new RedisAtomicLong(GLOBAL_ID_PREFIX.concat(key),
 				redisTemplate.getConnectionFactory());
 		// 设置过期时间

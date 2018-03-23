@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.service.impl;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -565,6 +566,40 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 			return sqlToyLazyDao.getRandomResult(
 					StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(),
 					entity, randomCount);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BaseException(e);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.service.SqlToyCRUDService#generateBizId(java.lang.String,
+	 * int)
+	 */
+	@Override
+	public long generateBizId(String signature, int increment) throws BaseException {
+		try {
+			return sqlToyLazyDao.generateBizId(signature, increment);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BaseException(e);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.service.SqlToyCRUDService#generateBizId(java.lang.Class,
+	 * java.util.Date)
+	 */
+	@Override
+	public String generateBizId(Class entityClass, Date bizDate) throws BaseException {
+		try {
+			return sqlToyLazyDao.generateBizId(entityClass, bizDate);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BaseException(e);

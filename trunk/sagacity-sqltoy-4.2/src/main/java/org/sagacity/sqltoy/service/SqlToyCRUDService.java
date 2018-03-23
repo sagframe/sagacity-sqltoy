@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -149,13 +150,14 @@ public interface SqlToyCRUDService {
 	 * @throws Exception
 	 */
 	public Long deleteAll(List<?> entities) throws BaseException;
-	
+
 	/**
 	 * 清除表的记录
+	 * 
 	 * @param entityClass
 	 * @throws BaseException
 	 */
-	public void truncate(final Class entityClass)throws BaseException;
+	public void truncate(final Class entityClass) throws BaseException;
 
 	/**
 	 * @todo 判断是否唯一
@@ -242,4 +244,21 @@ public interface SqlToyCRUDService {
 	 */
 	public List getRandomFrom(Serializable entity, double randomCount) throws BaseException;
 
+	/**
+	 * @todo 获取业务ID
+	 * @param signature
+	 * @param increment
+	 * @return
+	 * @throws Exception
+	 */
+	public long generateBizId(String signature, int increment) throws BaseException;
+
+	/**
+	 * @todo 根据对象类型以及通过对象配置的业务主键策略产生ID
+	 * @param entityClass
+	 * @param bizDate
+	 * @return
+	 * @throws Exception
+	 */
+	public String generateBizId(Class entityClass, Date bizDate) throws BaseException;
 }

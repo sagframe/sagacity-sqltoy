@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.dao.impl;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -823,6 +824,30 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public Mongo mongo() {
 		return super.mongo();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.support.SqlToyDaoSupport#generateBizId(java.lang.String,
+	 * int)
+	 */
+	@Override
+	public long generateBizId(String signature, int increment) throws Exception {
+		return super.generateBizId(signature, increment);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.support.SqlToyDaoSupport#generateBizId(java.lang.Class,
+	 * java.util.Date)
+	 */
+	@Override
+	public String generateBizId(Class entityClass, Date bizDate) throws Exception {
+		return super.generateBizId(entityClass, bizDate);
 	}
 
 }
