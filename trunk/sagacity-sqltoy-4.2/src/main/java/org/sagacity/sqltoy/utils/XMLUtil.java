@@ -295,7 +295,7 @@ public class XMLUtil {
 	 * @param entity
 	 * @param mapped
 	 */
-	public static void setAttributes(Element elt, Serializable entity, String... keyValues) {
+	public static void setAttributes(Element elt, Serializable entity, String... keyValues) throws Exception {
 		if (elt == null)
 			return;
 		HashMap<String, String> realMap = asMap(keyValues);
@@ -316,7 +316,7 @@ public class XMLUtil {
 			else if (realMap.containsKey(name.toUpperCase()))
 				properties[index] = realMap.get(name.toUpperCase());
 			else
-				properties[index] = StringUtil.toHumpStr(name,false);
+				properties[index] = StringUtil.toHumpStr(name, false);
 			values[index] = value;
 			index++;
 		}
@@ -329,7 +329,7 @@ public class XMLUtil {
 		else if (realMap.containsKey(name.toUpperCase()))
 			properties[index] = realMap.get(name.toUpperCase());
 		else
-			properties[index] = StringUtil.toHumpStr(name,false);
+			properties[index] = StringUtil.toHumpStr(name, false);
 		values[index] = elt.getText();
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
@@ -393,6 +393,7 @@ public class XMLUtil {
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
+						throw e;
 					}
 				}
 			}
@@ -404,7 +405,7 @@ public class XMLUtil {
 	 * @param elt
 	 * @param entity
 	 */
-	public static void setAttributes(Element elt, Serializable entity) {
+	public static void setAttributes(Element elt, Serializable entity) throws Exception {
 		setAttributes(elt, entity, null);
 	}
 }
