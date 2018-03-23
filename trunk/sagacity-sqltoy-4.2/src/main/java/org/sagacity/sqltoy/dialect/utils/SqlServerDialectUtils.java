@@ -515,7 +515,7 @@ public class SqlServerDialectUtils {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		final boolean isSequence = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
-		
+
 		String insertSql = generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull", "@mySeqVariable",
 				isIdentity ? false : true);
 		if (isSequence)
@@ -532,7 +532,7 @@ public class SqlServerDialectUtils {
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
-		
+
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
@@ -548,12 +548,12 @@ public class SqlServerDialectUtils {
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
-						relatedColValue, entityMeta.getIdType(),idLength);
+						relatedColValue, null, entityMeta.getIdType(), idLength);
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, relatedColValue, businessIdType,bizIdLength);
+						signature, relatedColValue, null, businessIdType, bizIdLength);
 				// 回写业务主键值
 				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -703,7 +703,7 @@ public class SqlServerDialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
-	
+
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
 		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
 			int idLength = entityMeta.getIdLength();
@@ -722,11 +722,11 @@ public class SqlServerDialectUtils {
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, idJdbcType,idLength);
+							relatedColValue, null, idJdbcType, idLength);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, businessIdType,bizIdLength);
+							signature, relatedColValue, null, businessIdType, bizIdLength);
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}

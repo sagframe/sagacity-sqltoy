@@ -72,7 +72,7 @@ public class SapIQDialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		
+
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
 		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
 			int idLength = entityMeta.getIdLength();
@@ -85,12 +85,12 @@ public class SapIQDialectUtils {
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
-						relatedColValue, entityMeta.getIdType(),idLength);
+						relatedColValue, null, entityMeta.getIdType(), idLength);
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, relatedColValue, businessIdType,bizIdLength);
+						signature, relatedColValue, null, businessIdType, bizIdLength);
 				// 回写业务主键值
 				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -232,12 +232,12 @@ public class SapIQDialectUtils {
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, idJdbcType,idLength);
+							relatedColValue, null, idJdbcType, idLength);
 				}
 
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, businessIdType,bizIdLength);
+							signature, relatedColValue, null, businessIdType, bizIdLength);
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
