@@ -17,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.ThreadContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -931,31 +930,12 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 警告性日志记录,凡是单次获取超过一定规模数据的操作记录日志
-	 * 
+	 * @todo 警告性日志记录,凡是单次获取超过一定规模数据的操作记录日志
 	 * @param sqlToyConfig
 	 * @param totalCount
 	 */
 	private static void warnLog(SqlToyConfig sqlToyConfig, int totalCount) {
 		logger.warn("Large Result:totalCount={},sqlId={},sql={}", totalCount, sqlToyConfig.getId(),
 				sqlToyConfig.getSql());
-		Map<String, Object> threadMap = ThreadContext.getMap();
-		if (threadMap != null) {
-			StringBuilder loggerInfo = new StringBuilder();
-			for (String key : threadMap.keySet()) {
-				loggerInfo.append(key).append("=").append(threadMap.get(key)).append(";");
-			}
-			logger.warn("thread info:[{}]", loggerInfo);
-		}
 	}
-
-	// public static void main(String[] args) {
-	// SecureMask mask = new SecureMask();
-	// mask.setType("bank-card");
-	// mask.setMaskRate(60);
-	// mask.setMaskCode("***");
-	// String value = "234243243445334";
-	// String result = maskStr(mask, value);
-	// System.err.println(result);
-	// }
 }

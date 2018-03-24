@@ -131,9 +131,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String printSqlMode = "error";
 
 	/**
-	 * 超时打印
+	 * 超时打印sql(毫秒,默认30秒)
 	 */
-	private int printSqlTimeout = 30000;
+	private int printSqlMillis = 30000;
 
 	/**
 	 * 数据库类型
@@ -654,18 +654,19 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @return the printSqlTimeout
+	 * @return the printSqlMillis
 	 */
-	public int getPrintSqlTimeout() {
-		return printSqlTimeout;
+	public int getPrintSqlMillis() {
+		return printSqlMillis;
 	}
 
 	/**
-	 * @param printSqlTimeout
-	 *            the printSqlTimeout to set
+	 * @param printSqlMillis the printSqlMillis to set
 	 */
-	public void setPrintSqlTimeout(int printSqlTimeout) {
-		this.printSqlTimeout = printSqlTimeout;
+	public void setPrintSqlMillis(int printSqlMillis) {
+		this.printSqlMillis = printSqlMillis;
 	}
+
+	
 
 }
