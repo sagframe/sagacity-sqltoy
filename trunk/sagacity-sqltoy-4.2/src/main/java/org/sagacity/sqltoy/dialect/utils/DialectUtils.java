@@ -24,6 +24,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
@@ -162,31 +163,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 显示执行的sql
-	 * @param sqlToyContext
-	 * @param sqlToyConfig
-	 * @param sql
-	 * @param paramValues
-	 */
-	public static void showSql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues) {
-		showSql(null, sqlToyContext, sqlToyConfig, sql, paramValues);
-	}
-
-	private static void showSql(String label, SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues) {
-		if (sqlToyContext.isDebug()) {
-			if (sqlToyConfig != null && sqlToyConfig.getId() != null)
-				out.println("=======begin output sql,sqlId=".concat(sqlToyConfig.getId()).concat("========"));
-			out.println((label == null ? "last execute sql" : label) + "=" + sql);
-			if (paramValues != null) {
-				for (int i = 0; i < paramValues.length; i++)
-					out.println("paramValues[" + i + "]:" + paramValues[i] + ",");
-			}
-		}
-	}
-
-	/**
 	 * @todo 实现普通的sql语句查询
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
@@ -203,7 +179,6 @@ public class DialectUtils {
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final Connection conn, final int startIndex, final int fetchSize, final int maxRows) throws Exception {
-		showSql(sqlToyContext, sqlToyConfig, sql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
 				ResultSet.CONCUR_READ_ONLY);
 		if (fetchSize > 0)
@@ -236,7 +211,8 @@ public class DialectUtils {
 	public static QueryResult updateFetchBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final UpdateRowHandler updateRowHandler,
 			final Connection conn, final int startIndex) throws Exception {
-		showSql(sqlToyContext, sqlToyConfig, sql, paramsValue);
+		// 打印sql
+		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = null;
 		if (updateRowHandler == null)
 			pst = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -326,7 +302,8 @@ public class DialectUtils {
 							paramsValue.length - paramCntFin - withParamCntFin);
 		}
 		final Object[] realParams = realParamsTemp;
-		showSql("count sql", sqlToyContext, null, lastCountSql, realParams);
+		// 打印sql
+		SqlExecuteStat.showSql(lastCountSql, realParams);
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -1043,7 +1020,7 @@ public class DialectUtils {
 						"load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
 		// 显示sql
-		showSql(sqlToyContext, null, sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), null, conn, 0, -1, -1);
 		List rows = queryResult.getRows();
@@ -1113,7 +1090,7 @@ public class DialectUtils {
 			for (int j = 0; j < idSize; j++) {
 				value = rowList.get(j);
 				if (null == value)
-					throw new Exception("loadAll method must assign value for pk,row：" + i + " pk field:"
+					throw new Exception("loadAll method must assign value for pk,row:" + i + " pk field:"
 							+ entityMeta.getIdArray()[j]);
 				if (!idValues[j].contains(value)) {
 					idValues[j].add(value);
@@ -1122,7 +1099,7 @@ public class DialectUtils {
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), idValues);
 
-		showSql(sqlToyContext, null, sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), entityClass,
 				null, conn);
@@ -1144,7 +1121,7 @@ public class DialectUtils {
 					}
 					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), entityMeta.getIdArray(),
 							idValues);
-					showSql(sqlToyContext, null, subToyResult.getSql(), subToyResult.getParamsValue());
+					SqlExecuteStat.showSql(subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(subToyResult.getSql(), subToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn);
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
@@ -1685,6 +1662,7 @@ public class DialectUtils {
 				return true;
 			else if (recordCnt > 1)
 				return false;
+			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn);
 			if (result.size() == 0)
 				return true;
@@ -1847,13 +1825,6 @@ public class DialectUtils {
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn)
 			throws Exception {
-		if (sqlToyContext.isDebug()) {
-			out.println("===================最后执行的存储过程语句==============");
-			out.println(" store sql:" + storeSql);
-			DebugUtil.printAry(inParamValues, null, ";", false);
-			out.println("======================================================");
-		}
-
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {

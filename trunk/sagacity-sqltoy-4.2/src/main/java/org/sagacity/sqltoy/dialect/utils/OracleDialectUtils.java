@@ -179,13 +179,6 @@ public class OracleDialectUtils {
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn)
 			throws Exception {
-		if (logger.isDebugEnabled()) {
-			out.println("===================最后执行的存储过程语句==============");
-			out.println(" store sql:" + storeSql);
-			DebugUtil.printAry(inParamValues, null, ";", false);
-			out.println("======================================================");
-		}
-
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {

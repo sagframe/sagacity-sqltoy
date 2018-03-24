@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
@@ -59,11 +60,14 @@ public class DialectExecutor implements Callable<ShardingResult> {
 		try {
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));
 		} catch (Exception e) {
+			SqlExecuteStat.error(e);
 			e.printStackTrace();
 			result.setSuccess(false);
 			result.setMessage(
 					"分库分表执行,DataSource节点:" + dataSourceName + ",table=" + tableName + " 发生异常:" + e.getMessage());
 			logger.error("分库分表执行,DataSource节点:{},table={} 发生异常:{}", dataSourceName, tableName, e.getMessage());
+		} finally {
+			SqlExecuteStat.destroy();
 		}
 		return result;
 	}

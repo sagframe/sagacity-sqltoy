@@ -4,6 +4,10 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -17,8 +21,9 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
-	public SqlExecuteTrace(String id) {
+	public SqlExecuteTrace(String id, String type) {
 		this.id = id;
+		this.type = type;
 		this.start = System.currentTimeMillis();
 	}
 
@@ -33,14 +38,19 @@ public class SqlExecuteTrace implements Serializable {
 	private String id;
 
 	/**
-	 * 执行的sql
+	 * sql执行的类别(分页查询\普通查询\修改操作)
 	 */
-	private String sqlScript;
+	private String type;
+	
+	/**
+	 * 是否发生异常
+	 */
+	private boolean error=false;
 
 	/**
-	 * 执行参数
+	 * 执行的sql和参数
 	 */
-	private Object[] params;
+	private List<SqlToyResult> sqlToyResults = new ArrayList<SqlToyResult>();
 
 	/**
 	 * @return the start
@@ -71,33 +81,47 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @return the sqlScript
+	 * @return the type
 	 */
-	public String getSqlScript() {
-		return sqlScript;
+	public String getType() {
+		return type;
 	}
 
 	/**
-	 * @param sqlScript
-	 *            the sqlScript to set
+	 * @param type
+	 *            the type to set
 	 */
-	public void setSqlScript(String sqlScript) {
-		this.sqlScript = sqlScript;
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	/**
-	 * @return the params
+	 * @return the sqlToyResults
 	 */
-	public Object[] getParams() {
-		return params;
+	public List<SqlToyResult> getSqlToyResults() {
+		return sqlToyResults;
 	}
 
 	/**
-	 * @param params
-	 *            the params to set
+	 * @param sqlToyResults
+	 *            the sqlToyResults to set
 	 */
-	public void setParams(Object[] params) {
-		this.params = params;
+	public void addSqlToyResult(String sql, Object[] paramsValue) {
+		sqlToyResults.add(new SqlToyResult(sql, paramsValue));
+	}
+
+	/**
+	 * @return the error
+	 */
+	public boolean isError() {
+		return error;
+	}
+
+	/**
+	 * @param error the error to set
+	 */
+	public void setError(boolean error) {
+		this.error = error;
 	}
 
 }
