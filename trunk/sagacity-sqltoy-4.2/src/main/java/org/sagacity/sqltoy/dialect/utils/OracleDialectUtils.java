@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import static java.lang.System.out;
-
 import java.io.Serializable;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -23,7 +21,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DebugUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
