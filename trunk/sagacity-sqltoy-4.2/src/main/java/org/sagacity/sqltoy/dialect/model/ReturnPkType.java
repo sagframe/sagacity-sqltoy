@@ -5,9 +5,7 @@ package org.sagacity.sqltoy.dialect.model;
 
 /**
  * @project sqltoy-orm
- * @description <p>
- *              主键返回策略
- *              </p>
+ * @description 主键返回策略
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ReturnPkType.java,Revision:v1.0,Date:2015年3月19日
  */
