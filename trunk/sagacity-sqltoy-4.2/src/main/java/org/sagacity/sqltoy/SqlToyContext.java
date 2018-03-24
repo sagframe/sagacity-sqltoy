@@ -128,12 +128,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * debug\error
 	 */
-	private String printSqlMode = "error";
+	private String printSqlStrategy = "error";
 
 	/**
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
-	private int printSqlMillis = 30000;
+	private int printSqlTimeoutMillis = 30000;
 
 	/**
 	 * 数据库类型
@@ -187,8 +187,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private ApplicationContext applicationContext;
 
 	/**
-	 * 初始化
-	 * 
+	 * @todo 初始化
 	 * @throws Exception
 	 */
 	public void initialize() throws Exception {
@@ -213,6 +212,13 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化翻译器
 		 */
 		translateManager.initialize(this);
+
+		/**
+		 * 初始化sql执行统计的基本参数
+		 */
+		SqlExecuteStat.setDebug(this.debug);
+		SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
+		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 	}
 
 	/**
@@ -639,34 +645,33 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @return the printSqlMode
+	 * @return the printSqlStrategy
 	 */
-	public String getPrintSqlMode() {
-		return printSqlMode;
+	public String getPrintSqlStrategy() {
+		return printSqlStrategy;
 	}
 
 	/**
-	 * @param printSqlMode
-	 *            the printSqlMode to set
+	 * @param printSqlStrategy
+	 *            the printSqlStrategy to set
 	 */
-	public void setPrintSqlMode(String printSqlMode) {
-		this.printSqlMode = printSqlMode;
+	public void setPrintSqlStrategy(String printSqlStrategy) {
+		this.printSqlStrategy = printSqlStrategy;
 	}
 
 	/**
-	 * @return the printSqlMillis
+	 * @return the printSqlTimeoutMillis
 	 */
-	public int getPrintSqlMillis() {
-		return printSqlMillis;
+	public int getPrintSqlTimeoutMillis() {
+		return printSqlTimeoutMillis;
 	}
 
 	/**
-	 * @param printSqlMillis the printSqlMillis to set
+	 * @param printSqlTimeoutMillis
+	 *            the printSqlTimeoutMillis to set
 	 */
-	public void setPrintSqlMillis(int printSqlMillis) {
-		this.printSqlMillis = printSqlMillis;
+	public void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
+		this.printSqlTimeoutMillis = printSqlTimeoutMillis;
 	}
-
-	
 
 }
