@@ -107,7 +107,8 @@ public class SqlExecuteTrace implements Serializable {
 	 *            the sqlToyResults to set
 	 */
 	public void addSqlToyResult(String sql, Object[] paramsValue) {
-		sqlToyResults.add(new SqlToyResult(sql, paramsValue));
+		//逆序存放
+		sqlToyResults.add(0,new SqlToyResult(sql, paramsValue));
 	}
 
 	/**

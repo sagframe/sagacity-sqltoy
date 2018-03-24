@@ -120,6 +120,9 @@ public class SqlExecuteStat {
 		}
 	}
 
+	/**
+	 * 清理线程中的数据
+	 */
 	public static void destroy() {
 		loggerSql();
 		threadLocal.remove();
