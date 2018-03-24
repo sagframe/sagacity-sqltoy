@@ -3,7 +3,7 @@ package org.sagacity.sqltoy.configure;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sagacity.sqltoy.config.model.ElasticConfig;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -31,7 +31,7 @@ public class SqlToyContextProperties {
 	 */
 	private String[] packagesToScan;
 
-	private List<ElasticConfig> elasticConfigs = new ArrayList<ElasticConfig>();
+	private List<ElasticEndpoint> elasticConfigs = new ArrayList<ElasticEndpoint>();
 
 	/**
 	 * 缓存管理器
@@ -175,7 +175,7 @@ public class SqlToyContextProperties {
 	/**
 	 * @return the elasticConfigs
 	 */
-	public List<ElasticConfig> getElasticConfigs() {
+	public List<ElasticEndpoint> getElasticConfigs() {
 		return elasticConfigs;
 	}
 
@@ -183,7 +183,7 @@ public class SqlToyContextProperties {
 	 * @param elasticConfigs
 	 *            the elasticConfigs to set
 	 */
-	public void setElasticConfigs(List<ElasticConfig> elasticConfigs) {
+	public void setElasticConfigs(List<ElasticEndpoint> elasticConfigs) {
 		this.elasticConfigs = elasticConfigs;
 	}
 }

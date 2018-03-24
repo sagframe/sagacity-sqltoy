@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.config.model.ElasticConfig;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 
 import com.alibaba.fastjson.JSON;
@@ -107,7 +107,7 @@ public class HttpClientUtils {
 	 */
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
 			throws Exception {
-		ElasticConfig esConfig = sqltoyContext.getElasticConfig(nosqlConfig.getUrl());
+		ElasticEndpoint esConfig = sqltoyContext.getElasticEndpoint(nosqlConfig.getUrl());
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
