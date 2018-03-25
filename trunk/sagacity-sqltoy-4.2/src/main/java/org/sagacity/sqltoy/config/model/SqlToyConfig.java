@@ -149,6 +149,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 15分钟
 	 */
 	private int pageAliveSeconds = 900;
+	
+	/**
+	 * debug模式下是否打印
+	 */
+	private boolean showSql=true;
 
 	/**
 	 * 查询结果处理器
@@ -612,6 +617,20 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 */
 	public void setNoSqlConfigModel(NoSqlConfigModel noSqlConfigModel) {
 		this.noSqlConfigModel = noSqlConfigModel;
+	}
+
+	/**
+	 * @return the showSql
+	 */
+	public boolean isShowSql() {
+		return showSql;
+	}
+
+	/**
+	 * @param showSql the showSql to set
+	 */
+	public void setShowSql(boolean showSql) {
+		this.showSql = showSql;
 	}
 
 	public SqlToyConfig clone() {

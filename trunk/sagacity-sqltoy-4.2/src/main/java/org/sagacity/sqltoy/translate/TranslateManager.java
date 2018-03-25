@@ -86,7 +86,7 @@ public class TranslateManager {
 			if (translateCacheManager == null)
 				translateCacheManager = new TranslateEhcacheManager();
 			// 加载和解析缓存翻译的配置
-			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(translateMap, updateCheckers,
+			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext,translateMap, updateCheckers,
 					translateConfig, charset);
 			if (!StringUtil.isBlank(defaultConfig.getDiskStorePath()))
 				((TranslateEhcacheManager) translateCacheManager).setDiskStorePath(defaultConfig.getDiskStorePath());

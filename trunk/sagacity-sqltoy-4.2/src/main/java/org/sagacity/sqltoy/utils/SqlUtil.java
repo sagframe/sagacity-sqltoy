@@ -533,7 +533,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 
 	 * @todo 剔除sql中的注释(提供三种形态的注释剔除)
 	 * @param sql
 	 * @return
@@ -580,7 +579,8 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
 			markIndex = sql.indexOf("<!--");
 		}
-		return sql;
+		//剔除全角
+		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
 
 	/**
@@ -1078,20 +1078,6 @@ public class SqlUtil {
 		if (setAuto)
 			conn.setAutoCommit(true);
 	}
-
-//	/**
-//	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
-//	 * @param labelNames
-//	 * @return
-//	 */
-//	private static String[] processFieldNames(String[] labelNames) {
-//		if (labelNames == null)
-//			return null;
-//		String[] result = new String[labelNames.length];
-//		for (int i = 0, n = labelNames.length; i < n; i++)
-//			result[i] = StringUtil.toHumpStr(labelNames[i], false);
-//		return result;
-//	}
 
 	/**
 	 * 

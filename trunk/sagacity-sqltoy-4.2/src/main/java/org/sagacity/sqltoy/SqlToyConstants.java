@@ -120,6 +120,11 @@ public class SqlToyConstants {
 			.compile("\\$\\{\\s*\\_?[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	/**
+	 * 不输出sql的表达式
+	 */
+	public final static Pattern NOT_PRINT_REGEX = Pattern.compile("(?i)\\#not\\_(print|debug)\\#");
+
+	/**
 	 * @todo 解析模板中的参数
 	 * @param template
 	 * @return

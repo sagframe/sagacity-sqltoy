@@ -192,7 +192,7 @@ public class DialectFactory {
 			throws Exception {
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 				public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 					String realSql = sqlToyContext.convertFunctions(sqlToyConfig.getSql(), dialect);
@@ -236,7 +236,7 @@ public class DialectFactory {
 			final Object[] paramsValue, final Boolean autoCommit, final DataSource dataSource) throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "update");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "update", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 							new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue), dataSource),
@@ -278,7 +278,7 @@ public class DialectFactory {
 		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(), false,
 				dataSource);
 		try {
-			SqlExecuteStat.start(uniqueExecutor.getEntity().getClass().getName(), "isUnique");
+			SqlExecuteStat.start(uniqueExecutor.getEntity().getClass().getName(), "isUnique", null);
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -309,7 +309,7 @@ public class DialectFactory {
 			throw new Exception("getRandomResult operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -446,7 +446,7 @@ public class DialectFactory {
 			throw new Exception("findPage operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -547,7 +547,7 @@ public class DialectFactory {
 			throw new Exception("findTop operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -608,7 +608,7 @@ public class DialectFactory {
 			throw new Exception("findByQuery operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "query");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -660,7 +660,7 @@ public class DialectFactory {
 			throw new Exception("getCountBySql operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "count");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -749,7 +749,7 @@ public class DialectFactory {
 			return new Long(0);
 		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 		try {
-			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate");
+			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -782,7 +782,7 @@ public class DialectFactory {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll");
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					new ParallelCallbackHandler() {
 						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
@@ -833,7 +833,7 @@ public class DialectFactory {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist");
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					new ParallelCallbackHandler() {
 						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
@@ -886,7 +886,7 @@ public class DialectFactory {
 		// 单记录操作返回对应的库和表配置
 		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 		try {
-			SqlExecuteStat.start(entity.getClass().getName(), "load");
+			SqlExecuteStat.start(entity.getClass().getName(), "load", null);
 			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -918,7 +918,7 @@ public class DialectFactory {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll");
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll", null);
 			// 分库分表并行执行,并返回结果
 			return ParallelUtils.execute(sqlToyContext, entities, false, dataSource, new ParallelCallbackHandler() {
 				public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel) throws Exception {
@@ -1201,7 +1201,7 @@ public class DialectFactory {
 			final UpdateRowHandler updateRowHandler, final DataSource dataSource) throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1238,7 +1238,7 @@ public class DialectFactory {
 			throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1276,7 +1276,7 @@ public class DialectFactory {
 			throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -1322,7 +1322,7 @@ public class DialectFactory {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
 			final DataSource dataSource) throws Exception {
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "callStore");
+			SqlExecuteStat.start(sqlToyConfig.getId(), "callStore", sqlToyConfig.isShowSql());
 			return (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {

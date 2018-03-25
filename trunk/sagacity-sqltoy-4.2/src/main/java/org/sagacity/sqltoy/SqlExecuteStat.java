@@ -42,13 +42,13 @@ public class SqlExecuteStat {
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
 
 	/**
-	 * 登记开始执行
-	 * 
+	 * @todo 登记开始执行
 	 * @param sqlId
 	 * @param type
+	 * @param isPrint
 	 */
-	public static void start(String sqlId, String type) {
-		threadLocal.set(new SqlExecuteTrace(sqlId, type));
+	public static void start(String sqlId, String type, Boolean debugPrint) {
+		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? true : debugPrint.booleanValue()));
 	}
 
 	/**
@@ -63,6 +63,8 @@ public class SqlExecuteStat {
 		try {
 			// debug模式直接输出
 			if (debug && printSqlStrategy.equals("debug")) {
+				if (threadLocal.get() != null && threadLocal.get().isPrint() == false)
+					return;
 				printSql(sql, paramValues, false);
 			} else if (threadLocal.get() != null)
 				threadLocal.get().addSqlToyResult(sql, paramValues);
