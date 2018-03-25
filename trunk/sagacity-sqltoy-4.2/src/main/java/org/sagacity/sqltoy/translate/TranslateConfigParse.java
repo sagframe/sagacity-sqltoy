@@ -10,12 +10,15 @@ import java.util.List;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
 
@@ -38,8 +41,9 @@ public class TranslateConfigParse {
 	 * @param charset
 	 * @throws Exception
 	 */
-	public static DefaultConfig parseTranslateConfig(final HashMap<String, TranslateConfigModel> translateMap,
-			final List<CheckerConfigModel> checker, String translateConfig, String charset) throws Exception {
+	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
+			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
+			String translateConfig, String charset) throws Exception {
 		return (DefaultConfig) XMLUtil.readXML(translateConfig, charset, false, new XMLCallbackHandler() {
 			@Override
 			public Object process(Document doc, Element root) throws Exception {
@@ -52,17 +56,23 @@ public class TranslateConfigParse {
 				for (String translateType : TRANSLATE_TYPES) {
 					elts = node.elements(translateType.concat(TRANSLATE_SUFFIX));
 					if (elts != null && !elts.isEmpty()) {
+						int index = 1;
 						for (Element elt : elts) {
 							TranslateConfigModel translateCacheModel = new TranslateConfigModel();
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
-									if (elt.element("sql") != null)
-										translateCacheModel.setSql(elt.elementText("sql"));
-									else
-										translateCacheModel.setSql(elt.getText());
+									String sql=(elt.element("sql") != null)?elt.elementText("sql"):elt.getText();
+									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + index;
+									boolean isShowSql = sql.matches(SqlToyConstants.NOT_PRINT_REGEX);
+									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
+											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
+									sqlToyConfig.setShowSql(isShowSql);
+									sqlToyContext.putSqlToyConfig(sqlToyConfig);
+									translateCacheModel.setSql(sqlId);
 								}
+								index++;
 							}
 							// 过期时长
 							if (translateCacheModel.getKeepAlive() <= 0)
@@ -77,17 +87,24 @@ public class TranslateConfigParse {
 					for (String translateType : TRANSLATE_TYPES) {
 						elts = node.elements(translateType.concat(CHECKER_SUFFIX));
 						if (elts != null && !elts.isEmpty()) {
+							int index = 1;
 							for (Element elt : elts) {
 								CheckerConfigModel checherConfigModel = new CheckerConfigModel();
 								XMLUtil.setAttributes(elt, checherConfigModel);
 								checherConfigModel.setType(translateType);
 								if (translateType.equals("sql")) {
 									if (StringUtil.isBlank(checherConfigModel.getSql())) {
-										if (elt.element("sql") != null) {
-											checherConfigModel.setSql(elt.elementText("sql"));
-										} else
-											checherConfigModel.setSql(elt.getText());
+										String sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + index;
+										String sql = (elt.element("sql") != null) ? elt.elementText("sql")
+												: elt.getText();
+										boolean isShowSql = sql.matches(SqlToyConstants.NOT_PRINT_REGEX);
+										SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
+												StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
+										sqlToyConfig.setShowSql(isShowSql);
+										sqlToyContext.putSqlToyConfig(sqlToyConfig);
+										checherConfigModel.setSql(sqlId);
 									}
+									index++;
 								}
 								// 剔除tab\回车等特殊字符
 								String frequency = StringUtil.clearMistyChars(checherConfigModel.getCheckFrequency(),

@@ -21,10 +21,11 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	private static final long serialVersionUID = 6050450953137017285L;
 
-	public SqlExecuteTrace(String id, String type) {
+	public SqlExecuteTrace(String id, String type, boolean isPrint) {
 		this.id = id;
 		this.type = type;
 		this.start = System.currentTimeMillis();
+		this.isPrint = isPrint;
 	}
 
 	/**
@@ -36,6 +37,18 @@ public class SqlExecuteTrace implements Serializable {
 	 * sqlid
 	 */
 	private String id;
+
+	/**
+	 * 是否输出
+	 */
+	private boolean isPrint = true;
+
+	/**
+	 * @return the isPrint
+	 */
+	public boolean isPrint() {
+		return isPrint;
+	}
 
 	/**
 	 * sql执行的类别(分页查询\普通查询\修改操作)
