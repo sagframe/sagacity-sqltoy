@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
@@ -26,10 +27,6 @@
 			<id>sagframe-release</id>
 			<url>http://www.sagframe.com:8081/repository/sagframe</url>
 		</repository>
-		<!-- <repository> <id>renturbo</id> <name>3rd party</name> <url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url> 
-			</repository> <snapshotRepository> <id>renturbo</id> <name>Department Repository</name> 
-			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url> 
-			</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
 		<dependency>
