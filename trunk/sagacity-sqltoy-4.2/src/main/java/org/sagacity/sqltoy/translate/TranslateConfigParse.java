@@ -68,7 +68,7 @@ public class TranslateConfigParse {
 									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
-									sqlToyConfig.setShowSql(isShowSql);
+									sqlToyConfig.setShowSql(!isShowSql);
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									translateCacheModel.setSql(sqlId);
 								}
@@ -100,7 +100,7 @@ public class TranslateConfigParse {
 										boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 										SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 												StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
-										sqlToyConfig.setShowSql(isShowSql);
+										sqlToyConfig.setShowSql(!isShowSql);
 										sqlToyContext.putSqlToyConfig(sqlToyConfig);
 										checherConfigModel.setSql(sqlId);
 									}
