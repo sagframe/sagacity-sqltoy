@@ -114,7 +114,8 @@ public class TranslateConfigParse {
 								if (StringUtil.isNotBlank(frequency)) {
 									// 统一格式,去除全角字符,去除空白
 									frequency = frequency.replaceAll("\\;", ",").replaceAll("\\？", "?")
-											.replaceAll("\\。", ".").replaceAll("\\，", ",").trim();
+											.replaceAll("\\．", ".").replaceAll("\\。", ".").replaceAll("\\，", ",")
+											.trim();
 									// 0~24点 统一的检测频率
 									// 可以是单个频率值,表示0到24小时采用统一的频率
 									if (CommonUtils.isInteger(frequency)) {
