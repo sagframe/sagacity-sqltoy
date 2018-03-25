@@ -63,6 +63,8 @@ public class SqlExecuteStat {
 		try {
 			// debug模式直接输出
 			if (debug && printSqlStrategy.equals("debug")) {
+				if (threadLocal.get() != null && threadLocal.get().isPrint() == false)
+					return;
 				printSql(sql, paramValues, false);
 			} else if (threadLocal.get() != null)
 				threadLocal.get().addSqlToyResult(sql, paramValues);
