@@ -111,7 +111,8 @@ public class SqlExecuteStat {
 				return;
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			if (overTime >= 0 && sqlTrace.getStart() != null)
-				logger.warn("类型:{}的sql执行超出阀值:{} 共:{} 毫秒,请优化!", printSqlTimeoutMillis, sqlTrace.getType(), overTime);
+				logger.warn("类型:{}的sql执行超出:{}毫秒的阀值, 共执行:{} 毫秒,请优化!", sqlTrace.getType(), printSqlTimeoutMillis,
+						overTime + printSqlTimeoutMillis);
 			else if (!sqlTrace.isError())
 				return;
 			List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
