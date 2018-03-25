@@ -179,6 +179,8 @@ public class DialectUtils {
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final Connection conn, final int startIndex, final int fetchSize, final int maxRows) throws Exception {
+		// 打印sql
+		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
 				ResultSet.CONCUR_READ_ONLY);
 		if (fetchSize > 0)
