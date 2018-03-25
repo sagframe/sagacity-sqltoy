@@ -580,7 +580,7 @@ public class SqlUtil {
 			markIndex = sql.indexOf("<!--");
 		}
 		//剔除全角
-		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=");
+		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
 
 	/**

@@ -122,7 +122,7 @@ public class SqlToyConstants {
 	/**
 	 * 不输出sql的表达式
 	 */
-	public final static String NOT_PRINT_REGEX = "(?i)\\#not\\_print\\#";
+	public final static Pattern NOT_PRINT_REGEX = Pattern.compile("(?i)\\#not\\_(print|debug)\\#");
 
 	/**
 	 * @todo 解析模板中的参数

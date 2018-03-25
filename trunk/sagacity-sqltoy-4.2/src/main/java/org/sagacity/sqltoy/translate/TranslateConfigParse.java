@@ -63,9 +63,9 @@ public class TranslateConfigParse {
 							translateCacheModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
-									String sql=(elt.element("sql") != null)?elt.elementText("sql"):elt.getText();
+									String sql = (elt.element("sql") != null) ? elt.elementText("sql") : elt.getText();
 									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + index;
-									boolean isShowSql = sql.matches(SqlToyConstants.NOT_PRINT_REGEX);
+									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(isShowSql);
@@ -97,7 +97,7 @@ public class TranslateConfigParse {
 										String sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + index;
 										String sql = (elt.element("sql") != null) ? elt.elementText("sql")
 												: elt.getText();
-										boolean isShowSql = sql.matches(SqlToyConstants.NOT_PRINT_REGEX);
+										boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 										SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 												StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 										sqlToyConfig.setShowSql(isShowSql);
