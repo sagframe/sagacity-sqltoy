@@ -64,15 +64,7 @@
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
 		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
 		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-		<property name="functionConverts">
-			<list>
-				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Trim</value>
-				<value>org.sagacity.sqltoy.plugin.function.Instr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Concat</value>
-				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
-			</list>
-		</property>
+		<property name="functionConverts" value="default"/>
 
 		<!-- 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
@@ -80,21 +72,10 @@
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<property name="cacheManager" ref="cacheManager" />
-		<!-- 支持多种缓存翻译,ehcache和redis -->
-		<property name="translateCacheManagers">
-			<map>
-				<entry key="redisTranslateManager">
-					<bean class="org.sagacity.sqltoy.cache.impl.TranslateRedisManager">
-						<property name="redisTemplate" ref="redisTemplate" />
-					</bean>
-				</entry>
-			</map>
-		</property>
 		<!-- 集成elasticsearch,可以配置多个地址 -->
-		<property name="elasticConfigs">
+		<property name="elasticEndpoints">
 			<list>
-				<bean class="org.sagacity.sqltoy.config.model.ElasticConfig">
+				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
 					<constructor-arg value="${es.default.url}" />
 					<property name="id" value="default" />
 					<!-- <property name="username" value="" />

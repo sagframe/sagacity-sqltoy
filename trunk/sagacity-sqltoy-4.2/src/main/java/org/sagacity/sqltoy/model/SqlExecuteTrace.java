@@ -41,11 +41,11 @@ public class SqlExecuteTrace implements Serializable {
 	 * sql执行的类别(分页查询\普通查询\修改操作)
 	 */
 	private String type;
-	
+
 	/**
 	 * 是否发生异常
 	 */
-	private boolean error=false;
+	private boolean error = false;
 
 	/**
 	 * 执行的sql和参数
@@ -107,8 +107,7 @@ public class SqlExecuteTrace implements Serializable {
 	 *            the sqlToyResults to set
 	 */
 	public void addSqlToyResult(String sql, Object[] paramsValue) {
-		//逆序存放
-		sqlToyResults.add(0,new SqlToyResult(sql, paramsValue));
+		sqlToyResults.add(new SqlToyResult(sql, paramsValue));
 	}
 
 	/**
@@ -119,7 +118,8 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param error the error to set
+	 * @param error
+	 *            the error to set
 	 */
 	public void setError(boolean error) {
 		this.error = error;
