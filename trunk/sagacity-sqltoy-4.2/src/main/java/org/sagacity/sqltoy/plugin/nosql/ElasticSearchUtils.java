@@ -80,7 +80,8 @@ public class ElasticSearchUtils {
 	 */
 	public static DataSetResult extractFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			JSONObject json, String[] fields) {
-		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs())
+		//聚合数据提取
+		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs() || json.getJSONObject("aggregations") != null)
 			return extractAggsFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		DataSetResult resultModel = new DataSetResult();
 		// 设置总记录数量
