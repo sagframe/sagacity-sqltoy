@@ -86,7 +86,7 @@ public class TranslateManager {
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, translateConfig, charset);
-			//配置了缓存翻译
+			// 配置了缓存翻译
 			if (defaultConfig != null) {
 				if (translateCacheManager == null)
 					translateCacheManager = new TranslateEhcacheManager();
@@ -121,22 +121,22 @@ public class TranslateManager {
 			HashMap<String, SqlTranslate> translates) throws Exception {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
 		SqlTranslate translate;
-		String cacheName;
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
 		for (Map.Entry<String, SqlTranslate> entry : translates.entrySet()) {
 			translate = entry.getValue();
 			if (translateMap.containsKey(translate.getCache())) {
 				cacheModel = translateMap.get(translate.getCache());
-				cacheName = cacheModel.getCache();
-				cache = getCacheData(sqlToyContext, cacheName, translate.getDictType());
+				cache = getCacheData(sqlToyContext, cacheModel, translate.getDictType());
 				if (cache != null)
 					result.put(translate.getColumn(), cache);
 				else {
 					result.put(translate.getColumn(), new HashMap<String, Object[]>());
-					logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!", cacheName,
-							translate.getDictType(), translate.getColumn());
+					logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
+							cacheModel.getCache(), translate.getDictType(), translate.getColumn());
 				}
+			} else {
+				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", translate.getCache());
 			}
 		}
 		return result;
@@ -151,19 +151,14 @@ public class TranslateManager {
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, String cacheName, String cacheType)
-			throws Exception {
-		// 获取缓存翻译的管理器
-		TranslateConfigModel cacheModel = translateMap.get(cacheName);
-		if (cacheModel == null) {
-			return null;
-		}
-		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheName, cacheType);
+	private HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
+			String cacheType) throws Exception {
+		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), cacheType);
 		if (result == null || result.isEmpty()) {
 			result = TranslateFactory.getCacheData(sqlToyContext, cacheModel, cacheType);
 			// 放入缓存
 			if (result != null && !result.isEmpty()) {
-				translateCacheManager.put(cacheModel, cacheName, cacheType, result);
+				translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, result);
 			}
 		}
 		return result;
