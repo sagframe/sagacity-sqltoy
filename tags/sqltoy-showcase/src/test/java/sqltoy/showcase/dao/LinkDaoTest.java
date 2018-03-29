@@ -86,6 +86,18 @@ public class LinkDaoTest {
 	}
 
 	@Test
+	public void findES() throws Exception {
+		OrganInfoVO organInfoVO = new OrganInfoVO();
+		organInfoVO.setOperateDate(DateUtil.parse("2018-03-29 09:19:17", "yyyy-MM-dd HH:mm:ss"));
+		// organInfoVO.setStaffName("李");
+		List<OrganInfoVO> result = staffInfoDao.findES(organInfoVO);
+		for (OrganInfoVO organ : result) {
+			System.err.println(organ.getCount());
+		}
+
+	}
+
+	@Test
 	public void findESPage() throws Exception {
 		OrganInfoVO organInfoVO = new OrganInfoVO();
 		// organInfoVO.setStaffName("李");
@@ -99,7 +111,7 @@ public class LinkDaoTest {
 
 	@Test
 	public void findESBySqlPage() throws Exception {
-		GoodsParam goodsParam=new GoodsParam();
+		GoodsParam goodsParam = new GoodsParam();
 		goodsParam.setGoodsCateId("1515376757743370152561");
 		List<String> goodsCateIds = new ArrayList<>();
 		goodsCateIds.add("1515376757743370152561");
@@ -107,9 +119,9 @@ public class LinkDaoTest {
 		goodsParam.setPage(paginationModel);
 		goodsParam.setGoodsCateIds(goodsCateIds);
 		goodsParam.setKeyword("资源");
-		PaginationModel pageModel=new PaginationModel();
+		PaginationModel pageModel = new PaginationModel();
 		PaginationModel pageGoods = staffInfoDao.findESPageBySql(pageModel, goodsParam);
-		List<Goods> goodsResults =  pageGoods.getRows();
+		List<Goods> goodsResults = pageGoods.getRows();
 		System.out.println(JSON.toJSONString(goodsResults));
 
 	}
