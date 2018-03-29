@@ -89,9 +89,6 @@ public class HttpClientUtils {
 			}
 		} catch (Exception e) {
 			throw e;
-		} finally {
-			if (client != null)
-				client.close();
 		}
 		return null;
 	}
@@ -170,9 +167,6 @@ public class HttpClientUtils {
 				reponseEntity = response.getEntity();
 			} catch (Exception e) {
 				throw e;
-			} finally {
-				if (client != null)
-					client.close();
 			}
 		}
 		String result = null;
