@@ -83,21 +83,25 @@ public class TranslateManager {
 			return;
 		logger.debug("开始加载sqltoy的translate缓存翻译配置文件..........................");
 		try {
-			if (translateCacheManager == null)
-				translateCacheManager = new TranslateEhcacheManager();
 			// 加载和解析缓存翻译的配置
-			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext,translateMap, updateCheckers,
-					translateConfig, charset);
-			if (!StringUtil.isBlank(defaultConfig.getDiskStorePath()))
-				((TranslateEhcacheManager) translateCacheManager).setDiskStorePath(defaultConfig.getDiskStorePath());
-			translateCacheManager.init();
-			initialized = true;
-			if (timer == null)
-				timer = new Timer();
-			/**
-			 * 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,这种检查都是高效率的空转不影响性能
-			 */
-			timer.schedule(new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers), 20000, 1000);
+			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
+					updateCheckers, translateConfig, charset);
+			//配置了缓存翻译
+			if (defaultConfig != null) {
+				if (translateCacheManager == null)
+					translateCacheManager = new TranslateEhcacheManager();
+				if (!StringUtil.isBlank(defaultConfig.getDiskStorePath()))
+					((TranslateEhcacheManager) translateCacheManager)
+							.setDiskStorePath(defaultConfig.getDiskStorePath());
+				translateCacheManager.init();
+				initialized = true;
+				if (timer == null)
+					timer = new Timer();
+				/**
+				 * 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,这种检查都是高效率的空转不影响性能
+				 */
+				timer.schedule(new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers), 20000, 1000);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("加载和解析xml过程发生异常!{}", e.getMessage(), e);
