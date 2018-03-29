@@ -177,7 +177,7 @@
 		<xsd:attribute name="value-root" type="xsd:string"/>
 		<xsd:attribute name="index" />
 		<xsd:attribute name="type" />
-		<xsd:attribute name="fields" />
+		<xsd:attribute name="fields" use="required"/>
 		<!-- es语法模式 -->
 		<xsd:attribute name="mode">
 			<xsd:simpleType>
