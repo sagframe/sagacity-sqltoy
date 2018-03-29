@@ -19,7 +19,7 @@ import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.TranslateManager;
-import org.sagacity.sqltoy.config.model.ElasticConfig;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -99,12 +99,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * es的地址配置
 	 */
-	private HashMap<String, ElasticConfig> elasticConfigs = new HashMap<String, ElasticConfig>();
+	private HashMap<String, ElasticEndpoint> elasticEndpoints = new HashMap<String, ElasticEndpoint>();
 
 	/**
 	 * 默认为default
 	 */
-	private String defaultElastic="default";
+	private String defaultElastic = "default";
 
 	/**
 	 * 登记sqltoy所需要访问的DataSource
@@ -687,23 +687,23 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param elasticConfigs
 	 *            the elasticConfigs to set
 	 */
-	public void setElasticConfigs(List<ElasticConfig> elasticConfigList) {
-		if (elasticConfigList != null && !elasticConfigList.isEmpty()) {
-			//第一个作为默认值
-			defaultElastic = elasticConfigList.get(0).getId();
-			for (ElasticConfig config : elasticConfigList) {
-				//初始化restClient
+	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpointList) {
+		if (elasticEndpointList != null && !elasticEndpointList.isEmpty()) {
+			// 第一个作为默认值
+			defaultElastic = elasticEndpointList.get(0).getId();
+			for (ElasticEndpoint config : elasticEndpointList) {
+				// 初始化restClient
 				config.initRestClient();
-				elasticConfigs.put(config.getId().toLowerCase(), config);
+				elasticEndpoints.put(config.getId().toLowerCase(), config);
 			}
 		}
 	}
 
-	public ElasticConfig getElasticConfig(String id) {
-		ElasticConfig result = elasticConfigs.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
-		//取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
+	public ElasticEndpoint getElasticConfig(String id) {
+		ElasticEndpoint result = elasticEndpoints.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
+		// 取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
 		if (result == null)
-			return new ElasticConfig(id);
+			return new ElasticEndpoint(id);
 		else
 			return result;
 	}

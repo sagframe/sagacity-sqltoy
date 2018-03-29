@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.cache.TranslateCacheManager;
-import org.sagacity.sqltoy.config.model.ElasticConfig;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,7 +42,7 @@ public class SqlToyContextProperties {
 	/**
 	 * elasticsearch的连接配置
 	 */
-	private List<ElasticConfig> elasticConfigs = new ArrayList<ElasticConfig>();
+	private List<ElasticEndpoint> elasticEndpoints = new ArrayList<ElasticEndpoint>();
 
 	/**
 	 * 缓存管理器配置
@@ -198,16 +198,16 @@ public class SqlToyContextProperties {
 	/**
 	 * @return the elasticConfigs
 	 */
-	public List<ElasticConfig> getElasticConfigs() {
-		return elasticConfigs;
+	public List<ElasticEndpoint> getElasticEndpoints() {
+		return elasticEndpoints;
 	}
 
 	/**
 	 * @param elasticConfigs
 	 *            the elasticConfigs to set
 	 */
-	public void setElasticConfigs(List<ElasticConfig> elasticConfigs) {
-		this.elasticConfigs = elasticConfigs;
+	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpoints) {
+		this.elasticEndpoints = elasticEndpoints;
 	}
 
 	/**

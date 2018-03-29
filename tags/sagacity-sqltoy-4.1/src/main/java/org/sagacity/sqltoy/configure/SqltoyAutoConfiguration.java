@@ -38,7 +38,7 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setBatchSize(properties.getBatchSize());
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		sqlToyContext.setUnifyFieldsHandler(properties.getUnifyFieldsHandler());
-		sqlToyContext.setElasticConfigs(properties.getElasticConfigs());
+		sqlToyContext.setElasticEndpoints(properties.getElasticEndpoints());
 		sqlToyContext.setTranslateCacheManagers(properties.getTranslateCacheManagers());
 		try {
 			sqlToyContext.initialize();
