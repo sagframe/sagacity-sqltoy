@@ -661,7 +661,7 @@ public class SqlConfigParseUtils {
 		// 清理sql中的一些注释、以及特殊的符号
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 替换全角特殊字符
-		originalSql = originalSql.replaceAll("：", ":").replaceAll("＝", "=");
+		originalSql = originalSql.replaceAll("\\：", ":").replaceAll("\\＝", "=");
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = convertFunctions(functionConverts, dialect, originalSql);
 		// 判定是否有with查询模式
