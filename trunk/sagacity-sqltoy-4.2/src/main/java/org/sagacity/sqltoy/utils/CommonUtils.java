@@ -195,7 +195,8 @@ public class CommonUtils {
 						break;
 					}
 				}
-				compareValue = express.split(splitStr)[1];
+				//update 2018-3-29,去除空格增强容错性
+				compareValue = express.split(splitStr)[1].trim();
 				// 计算单个比较的结果
 				expressResult[i] = compare(value, splitStr, compareValue);
 			}
