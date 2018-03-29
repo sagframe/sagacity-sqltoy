@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.plugin.nosql;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +17,6 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -102,11 +100,9 @@ public class ElasticSearchUtils {
 			else
 				return resultModel;
 		}
-
-		JSONArray array = root.getJSONArray(lastKey);
-		if (array.isEmpty())
+		Object realRoot = root.get(lastKey);
+		if (realRoot == null)
 			return resultModel;
-
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
 		System.arraycopy(fields, 0, realFields, 0, fields.length);
@@ -119,62 +115,20 @@ public class ElasticSearchUtils {
 				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
 			}
 		}
-		boolean assignField = (nosqlConfig.getFields() == null) ? false : true;
-		HashMap<String, String[]> realFieldsMap = new HashMap<String, String[]>();
-		if (!assignField) {
-			for (String field : realFields) {
-				realFieldsMap.put(field,
-						new String[] { field, field.toLowerCase(), field.toUpperCase(),
-								StringUtil.humpToSplitStr(field, "_").toLowerCase(),
-								StringUtil.humpToSplitStr(field, "_").toUpperCase() });
-			}
-		}
 		JSONObject rowJson, sourceData;
-		Object value = null;
-		String[] tmpFields;
-		for (int i = 0; i < array.size(); i++) {
-			rowJson = (JSONObject) array.get(i);
-			// 非聚合,数据取_source
-			sourceData = rowJson.getJSONObject("_source");
-			List row = new ArrayList();
-			for (String field : realFields) {
-				if (assignField)
-					row.add(sourceData.getString(field));
-				else {
-					tmpFields = realFieldsMap.get(field);
-					if (tmpFields != null) {
-						for (String s : tmpFields) {
-							value = sourceData.getString(s);
-							// 字段匹配
-							if (value != null) {
-								realFieldsMap.put(field, new String[] { s });
-								break;
-							}
-						}
-						row.add(value);
-					} else
-						row.add(null);
-				}
+		if (realRoot instanceof JSONArray) {
+			JSONArray array = (JSONArray) realRoot;
+			for (int i = 0; i < array.size(); i++) {
+				rowJson = (JSONObject) array.get(i);
+				// 非聚合,数据取_source
+				sourceData = rowJson.getJSONObject("_source");
+				addRow(result, sourceData, realFields);
 			}
-			result.add(row);
+		} else if (realRoot instanceof JSONObject) {
+			addRow(result, (JSONObject) realRoot, realFields);
 		}
 		resultModel.setRows(result);
-
-		if (!assignField) {
-			String[] resultFields = new String[realFields.length];
-			String s;
-			String[] aliasNames;
-			for (int i = 0; i < resultFields.length; i++) {
-				s = realFields[i];
-				aliasNames = realFieldsMap.get(s);
-				if (aliasNames != null && aliasNames.length == 1) {
-					resultFields[i] = aliasNames[0];
-				} else
-					resultFields[i] = s;
-			}
-			resultModel.setLabelNames(resultFields);
-		} else
-			resultModel.setLabelNames(translateFields);
+		resultModel.setLabelNames(translateFields);
 		return resultModel;
 	}
 
@@ -363,6 +317,9 @@ public class ElasticSearchUtils {
 				}
 			}
 		} else if (rowJson.keySet().size() == 1) {
+			// 单一取值
+			if (rowJson.keySet().iterator().next().equalsIgnoreCase(realFields[0]) && realFields.length == 1)
+				return rowJson;
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject)
 				return getRealJSONObject((JSONObject) result, realFields);
