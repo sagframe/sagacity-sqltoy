@@ -11,7 +11,7 @@
 		<spring.version>5.0.3.RELEASE</spring.version>
 		<log4j.version>2.10.0</log4j.version>
 		<druid.version>1.1.6</druid.version>
-		<sagacity-sqltoy.version>4.2.1</sagacity-sqltoy.version>
+		<sagacity-sqltoy.version>4.2.2</sagacity-sqltoy.version>
 	</properties>
 	<repositories>
 		<repository>
