@@ -363,14 +363,14 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.attributeValue("aggregate")));
 			} else {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(), ES_AGGS_PATTERN));
-				// 判断查询语句的模式是否sql模式
-				if (StringUtil.matches(sqlToyConfig.getSql(), "(?i)\\s*select\\s*")
-						&& sqlToyConfig.getSql().toLowerCase().indexOf("from") > 0) {
-					noSqlConfig.setSqlMode(true);
-					// 存在group by 则判定为聚合查询
-					if (StringUtil.matches(sqlToyConfig.getSql(), GROUP_BY_PATTERN))
-						noSqlConfig.setHasAggs(true);
-				}
+			}
+			// 判断查询语句的模式是否sql模式
+			if (StringUtil.matches(sqlToyConfig.getSql(), "(?i)\\s*select\\s*")
+					&& sqlToyConfig.getSql().toLowerCase().indexOf("from") > 0) {
+				noSqlConfig.setSqlMode(true);
+				// sql模式下存在group by 则判定为聚合查询
+				if (StringUtil.matches(sqlToyConfig.getSql(), GROUP_BY_PATTERN))
+					noSqlConfig.setHasAggs(true);
 			}
 		} else if (sqlElt.getName().equalsIgnoreCase("mql")) {
 			if (sqlElt.attribute("aggregate") != null) {
