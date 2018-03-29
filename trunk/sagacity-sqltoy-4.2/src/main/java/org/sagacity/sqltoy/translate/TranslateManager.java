@@ -145,7 +145,7 @@ public class TranslateManager {
 	/**
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
-	 * @param cacheName
+	 * @param cacheModel
 	 * @param cacheType
 	 *            一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
@@ -162,6 +162,24 @@ public class TranslateManager {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 提供对外的访问
+	 * @param sqlToyContext
+	 * @param cacheName
+	 * @param cacheType
+	 * @return
+	 * @throws Exception
+	 */
+	public HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, String cacheName, String cacheType)
+			throws Exception {
+		TranslateConfigModel cacheModel = translateMap.get(cacheName);
+		if (cacheModel == null) {
+			logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
+			return null;
+		}
+		return getCacheData(sqlToyContext, cacheModel, cacheType);
 	}
 
 	/**
