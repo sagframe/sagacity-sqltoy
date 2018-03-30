@@ -104,13 +104,13 @@ public class SqlScriptLoader {
 				if (this.debug) {
 					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
 					err.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
-					Object file;
+					Object sqlFile;
 					for (int i = 0; i < realSqlList.size(); i++) {
-						file = realSqlList.get(i);
-						if (file instanceof File)
-							out.println("第:[" + i + "]个文件:" + ((File) file).getName());
+						sqlFile = realSqlList.get(i);
+						if (sqlFile instanceof File)
+							out.println("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
 						else
-							out.println("第:[" + i + "]个文件:" + file.toString());
+							out.println("第:[" + i + "]个文件:" + sqlFile.toString());
 					}
 					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
 				}
