@@ -3,6 +3,9 @@
  */
 package org.sagacity.sqltoy.config;
 
+import static java.lang.System.out;
+import static java.lang.System.err;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,10 +100,27 @@ public class SqlScriptLoader {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				for (int i = 0; i < realSqlList.size(); i++)
+				// 此处提供大量提升信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				if (this.debug) {
+					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
+					err.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+					Object file;
+					for (int i = 0; i < realSqlList.size(); i++) {
+						file = realSqlList.get(i);
+						if (file instanceof File)
+							out.println("第:[" + i + "]个文件:" + ((File) file).getName());
+						else
+							out.println("第:[" + i + "]个文件:" + file.toString());
+					}
+					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
+				}
+				for (int i = 0; i < realSqlList.size(); i++) {
 					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect);
-			} else
-				logger.warn("sqltoy 没有检查到相应的.sql.xml文件,请检查!");
+				}
+			} else {
+				err.println("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir是否正确,或文件没有在编译路径下(bin、classes等)!");
+				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir是否正确,或文件没有在编译路径下(bin、classes等)!");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("加载和解析xml过程发生异常!" + e.getMessage(), e);
