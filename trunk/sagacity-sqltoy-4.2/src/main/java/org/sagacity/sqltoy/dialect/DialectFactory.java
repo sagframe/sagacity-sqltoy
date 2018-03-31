@@ -501,7 +501,7 @@ public class DialectFactory {
 									queryResult.setPageSize(new Long(totalRecord).intValue());
 									queryResult.setRecordCount(totalRecord);
 								} else {
-									// 实际开始页(页数据超出总记录,则从第一页重新开始)
+									// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 									long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
 									queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 											realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn);
