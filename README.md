@@ -27,7 +27,7 @@
        
 # 2. sqltoy框架介绍
 
-![image](D:/sqltoy-orm-struts.jpg)
+![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
 
 sqltoy-orm 主要分以下几个部分：
   
