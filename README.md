@@ -128,7 +128,6 @@ sqltoy-orm 主要分以下几个部分：
 		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<property name="cacheManager" ref="cacheManager" />
 		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
 		<property name="dialect" value="${sqltoy.dialect}" />
 	</bean>
