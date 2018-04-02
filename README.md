@@ -75,15 +75,7 @@ sqltoy-orm 主要分以下几个部分：
 		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
 		<!-- 针对不同数据库函数进行转换,非必须属性 -->
 		<!--<property name="functionConverts" value="default"/>-->
-		<property name="functionConverts" value="default">
-			<list>
-				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Trim</value>
-				<value>org.sagacity.sqltoy.plugin.function.Instr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Concat</value>
-				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
-			</list>
-		</property>
+		<property name="functionConverts" value="default"/>
 		<!-- pojo 包路径(可以写一个高层包路径),非必须属性,sqltoy4.0.1之后会在调用VO操作时动态解析 -->
 		<property name="packagesToScan">
 			<list>
@@ -92,9 +84,9 @@ sqltoy-orm 主要分以下几个部分：
 			</list>
 		</property>
 		<!-- elasticsearch支持,可以配置多个集群地址 -->
-		<property name="elasticConfigs">
+		<property name="elasticEndpoints">
 			<list>
-				<bean class="org.sagacity.sqltoy.config.model.ElasticConfig">
+				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
 					<!-- 指定url地址 -->
 					<constructor-arg value="${elastic.url}"/>
 					<property name="id" value="${elastic.id}"/>
@@ -105,23 +97,6 @@ sqltoy-orm 主要分以下几个部分：
 		</property>
         <!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<!-- 支持多种缓存翻译,ehcache和redis -->
-		<property name="translateCacheManagers">
-			<map>
-				<!--redis的支持-->
-				<entry key="redisTranslateManager">
-					<bean class="org.sagacity.sqltoy.cache.impl.TranslateRedisManager">
-						<property name="redisTemplate" ref="redisTemplate" />
-					</bean>
-				</entry>
-                <!--ehcache 的支持-->
-                <entry key="ehcacheTranslateManager">
-					<bean class="org.sagacity.sqltoy.cache.impl.TranslateEhcacheManager">
-						<property name="cacheManager" ref="cacheManager" />
-					</bean>
-				</entry>
-			</map>
-		</property>
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
 		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
