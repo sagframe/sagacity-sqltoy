@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<quickvo xmlns="http://www.sagframe.com/schema/quickvo"	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<quickvo xmlns="http://www.sagframe.com/schema/quickvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+      xsi:schemaLocation="http://www.sagframe.com/schema/quickvo http://www.sagframe.com/schema/sqltoy/quickvo.xsd">
 	<property file="../../src/main/resources/system.properties" />
 	<!-- 最大小数位长度,避免个别数据库NUMBER(m,0)的情况下获取出来的默认小数位长度都很长 -->
 	<property name="max.scale.length" value="3" />
