@@ -23,7 +23,7 @@
     
     - 2015~2017:优化完善:随着sqltoy应用范围的扩展，深感有必要将其推广开让更多人摆脱数据库交互的一些困难，为此设定对标mybatis和hibernate，利用业余时间对代码进行了一次彻底的重构，并增加了sharding功能、分页优化器、链式交互等特性，同时吸收很多使用者的反馈简化了配置模式（增强默认特性）、支持springboot等。
     
-       经过这些发展历程，sqltoy已经非常完善和稳定，在此分享给大家！
+    经过这些发展历程，sqltoy已经非常完善和稳定，在此分享给大家！
        
 # 2. sqltoy框架介绍
 
@@ -54,7 +54,7 @@ sqltoy-orm 主要分以下几个部分：
  
 # 3. sqltoy-orm项目环境搭建
 
-  ## 3.1 环境准备,配置eclipse或ide的sqltoy schema。这里以eclipse为例
+  ## 3.1 环境准备,配置eclipse或ide的sqltoy schema。这里以eclipse为例(4.2.2 版本无需配置,参见xml文件头部的改变)
   
     从sqltoy release目录下面提取quickvo.xsd\sqltoy-4.0.xsd 放于eclipse 安装路径下。
     点击:eclipse window--> Prefences-->XML-->XML Catalog -->Add,如下图:
@@ -165,8 +165,8 @@ sqltoy-orm 主要分以下几个部分：
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
-<quickvo xmlns="http://www.sagframe.com/schema/quickvo"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<quickvo xmlns="http://www.sagframe.com/schema/quickvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+      xsi:schemaLocation="http://www.sagframe.com/schema/quickvo http://www.sagframe.com/schema/sqltoy/quickvo.xsd">
 	<!-- 可以不引入properties文件(目的是跟项目的properties一致),相关配置固化 -->
 	<property file="../../src/main/resources/system.properties" />
 	<!-- 最大小数位长度,避免个别数据库NUMBER(m,0)的情况下获取出来的默认小数位长度都很长 -->
@@ -439,7 +439,8 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
  
 ```
 <?xml version="1.0" encoding="utf-8"?>
-<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+      xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
 	<sql id="show_case">
 		<filters>
 			<!-- 空白转为null -->
@@ -576,72 +577,94 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
     
 ```
 <?xml version="1.0" encoding="UTF-8"?>
-<sagacity>
-	<!-- translate 配置属性说明:
-	   cache:对应ehcache中定义的缓存(如果未定义sqltoy会自动创建)
-	   service:对应spring服务名称
-	   method:对应spring服务的方法
-	   sql:在sql文件中定义的sqlId(也可以在translate内容体中直接写sql语句)
-	   datasource:对应数据源(非必填)
-	 -->
-	<!-- sql模式 -->
-	<translate cache="dictKeyNameCache">
-	<![CDATA[
-		select t.DICT_KEY,t.DICT_NAME,t.SEGMENT,t.comments
-		from sag_dict_detail t
-        where t.DICT_TYPE_CODE=:dictTypeCode
-        order by t.SHOW_INDEX
-	]]>
-	</translate>
-	
-	<!-- spring service 定义模式,开发者自行定义service
-	<translate cache="xxxxCache" service="springBeanName" method="beanMethod" />
-	-->
-	<!-- 员工ID和姓名的缓存 -->
-	<translate cache="staffIdNameCache" sql="sys_staffIdNameCache" />
-	
-	<!-- 机构号和机构名称的缓存 -->
-	<translate cache="organIdNameCache">
-	<![CDATA[
-		select ORGAN_ID,ORGAN_NAME from sys_organ_info
-	]]>
-	</translate>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<cache-translates disk-store-path="./sinochem-oms/translateCaches">
+		<sql-translate cache="dictKeyName"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.SEGMENT
+				from sag_dict_detail t
+		        where t.DICT_TYPE_CODE=?
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+		<!-- 机构缓存，翻译使用 -->
+		<sql-translate cache="organIdName"
+			sql="sys_organIdNameCache" datasource="dataSource" />
+		<!-- 人员缓存，翻译使用 -->
+		<sql-translate cache="staffIdName"
+			sql="sys_staffIdNameCache" datasource="dataSource" />
+
+		<!-- 国家地区翻译 -->
+		<sql-translate cache="areaIdName"
+			datasource="dataSource">
+			<sql><![CDATA[
+			select area_id,area_name,city_code,city_name,province_code,province_name,full_name from sys_area_info 
+		]]></sql>
+		</sql-translate>
+		<!-- 销售组织机构翻译 -->
+		<sql-translate cache="salesOrganizationIdName"
+			datasource="dataSource">
+			<sql><![CDATA[
+			select org_id,org_name from UC_SALES_ORGANIZATION 
+		]]></sql>
+		</sql-translate>
+
+		<!-- 资质类别翻译 -->
+		<sql-translate cache="qualificationTypeIdName"
+			datasource="dataSource">
+			<sql><![CDATA[
+			select QUALIFICATION_CODE,QUALIFICATION_NAME from UC_QUALIFICATION_TYPE
+		]]></sql>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存刷新检测 -->
+	<cache-update-checkers>
+		<!-- 基于sql的缓存更新检测 -->
+		<sql-checker
+			check-frequency="0..8:30?3000,8:30..20?120,20..24?3600"
+			datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			-- 机构缓存更新检测
+			select distinct 'organIdName' cacheName,null cache_type
+			from sys_organ_info t
+			where t.UPDATE_TIME >=:lastUpdateTime
+			-- 员工工号姓名缓存检测
+			union all 
+			select distinct 'staffIdName' cacheName,null cache_type
+			from sys_staff_info t1
+			where t1.UPDATE_TIME >=:lastUpdateTime
+			-- 数据字典key和name缓存检测
+			union all 
+			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE_CODE cache_type
+			from sag_dict_detail t2
+			where t2.UPDATE_TIME >=:lastUpdateTime
+			-- 资质类别翻译
+			union all 
+			select distinct 'qualificationTypeIdName' cacheName,null cache_type 
+			from UC_QUALIFICATION_TYPE tuc
+			where tuc.UPDATE_TIME >=:lastUpdateTime
+			-- 国家地区翻译
+			union all 
+			select distinct 'areaIdName' cacheName,null cache_type 
+			from sys_area_info area
+			where area.UPDATE_TIME >=:lastUpdateTime
+			-- 销售组织机构
+			union all 
+			select distinct 'salesOrganizationIdName' cacheName,null cache_type 
+			from UC_SALES_ORGANIZATION sales
+			where sales.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-checker>
+	</cache-update-checkers>
 </sagacity>
-```
-
- - ehcache配置，参见sqltoy-showcase/src/main/resources 目前下面的ehcache.xml 配置
- 
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<ehcache updateCheck="false">
-	<diskStore path="./cache/sqltoy-showcase" />
-	<defaultCache maxElementsInMemory="1000" eternal="false"
-		timeToIdleSeconds="3600" timeToLiveSeconds="3600" overflowToDisk="true"
-		maxElementsOnDisk="1000" diskPersistent="false"
-		diskExpiryThreadIntervalSeconds="3600" memoryStoreEvictionPolicy="LRU" />
-	<!-- 数据字典key和名称映射缓存 -->
-	<cache name="dictKeyNameCache" timeToIdleSeconds="600"
-		timeToLiveSeconds="600" maxElementsInMemory="400" eternal="false"
-		overflowToDisk="true" />
-		
-	<!-- 机构编号和名称映射缓存 -->
-	<cache name="organIdNameCache" timeToIdleSeconds="3600"
-		timeToLiveSeconds="3600" maxElementsInMemory="400" eternal="false"
-		overflowToDisk="true" />
-
-	<!-- 员工的id和名称映射 -->
-	<cache name="staffIdNameCache" timeToIdleSeconds="600"
-		timeToLiveSeconds="600" maxElementsInMemory="100" eternal="false"
-		overflowToDisk="true" />
-</ehcache>
-
-    同时在spring中配置CacheManager：
-    <!-- EhCache Manager -->
-	<bean id="cacheManager" name="cacheManager"
-		class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
-		<property name="configLocation" value="classpath:ehcache.xml" />
-	</bean>
-	
 ```
  - sqltoy配置缓存翻译,参见sqltoy-showcase 项目中src/main/resources 目录下spring-sqltoy.xml配置,片段截取如下:
  
@@ -653,7 +676,6 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<property name="cacheManager" ref="cacheManager" />
 	</bean>
 ```
 
