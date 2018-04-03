@@ -102,8 +102,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 对字段进行安全脱敏
-	 * 
+	 * @todo 对字段进行安全脱敏
 	 * @param result
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
@@ -128,8 +127,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 对字符串脱敏
-	 * 
+	 * @todo 对字符串脱敏
 	 * @param mask
 	 * @param value
 	 * @return
@@ -556,8 +554,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 分组排序
-	 * 
+	 * @todo 分组排序
 	 * @param sortList
 	 * @param groupCol
 	 * @param orderCol
@@ -587,8 +584,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 对二维数据进行排序
-	 * 
+	 * @todo 对二维数据进行排序
 	 * @param sortList
 	 * @param orderCol
 	 * @param dataType

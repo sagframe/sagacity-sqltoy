@@ -1080,7 +1080,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 
 	 * @todo <b>判断sql语句中是否有order by排序</b>
 	 * @param sql
 	 * @param judgeUpcase
@@ -1169,8 +1168,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 转换主键数据类型
-	 * 
+	 * @todo 转换主键数据类型
 	 * @param idValue
 	 * @param jdbcType
 	 * @return
@@ -1199,8 +1197,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 * 
+	 * @todo 关闭一个或多个流对象
 	 * @param closeables
 	 *            可关闭的流对象列表
 	 * @throws IOException
@@ -1216,8 +1213,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 * 
+	 * @todo 关闭一个或多个流对象
 	 * @param closeables
 	 *            可关闭的流对象列表
 	 */
