@@ -148,7 +148,7 @@
 	</sql>
 
 	<!-- elasticSearch-sql插件模式 -->
-	<eql id="sys_elastic_test" fields="chineseName,price,trademarkId">
+	<eql id="sys_elastic_test" fields="chineseName,price,trademarkId" >
 		<value>
 		<![CDATA[
 			select * from goods_index
@@ -214,7 +214,7 @@
 	</eql>
 
 	<!-- elastic 原生查询模式 -->
-	<eql id="sys_elastic_test_json">
+	<eql id="sys_elastic_test_json" fields="organ_id,organ_name,create_time">
 		<value>
 		<![CDATA[
 			{
