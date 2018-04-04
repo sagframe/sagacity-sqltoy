@@ -324,7 +324,11 @@ public class SqlXMLConfigParse {
 			noSqlConfig.setMongoFactory(sqlElt.attributeValue("mongo-factory"));
 		// url应该是一个变量如:${es_url}
 		if (sqlElt.attribute("url") != null)
-			noSqlConfig.setUrl(SqlToyConstants.replaceParams(sqlElt.attributeValue("url")));
+			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.attributeValue("url")));
+		else if (sqlElt.attribute("end-point") != null)
+			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.attributeValue("end-point")));
+		else if (sqlElt.attribute("endpoint") != null)
+			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.attributeValue("endpoint")));
 		// 索引
 		if (sqlElt.attribute("index") != null)
 			noSqlConfig.setIndex(sqlElt.attributeValue("index"));

@@ -21,7 +21,7 @@ public class NoSqlConfigModel implements Serializable {
 	 * mongo的集合
 	 */
 	private String collection;
-	
+
 	/**
 	 * mongo对应的连接工厂类
 	 */
@@ -30,7 +30,7 @@ public class NoSqlConfigModel implements Serializable {
 	/**
 	 * es的url地址
 	 */
-	private String url;
+	private String endpoint;
 
 	/**
 	 * es的索引类型(相当于表)
@@ -49,11 +49,11 @@ public class NoSqlConfigModel implements Serializable {
 
 	// 连接超时时间为10秒
 	private int connectTimeout = 10000;
-	
+
 	/**
 	 * 整个请求超时时长,3分钟
 	 */
-	private int socketTimeout=180000;
+	private int socketTimeout = 180000;
 
 	/**
 	 * url请求是字符集类型
@@ -93,18 +93,17 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @return the url
+	 * @return the endpoint
 	 */
-	public String getUrl() {
-		return url;
+	public String getEndpoint() {
+		return endpoint;
 	}
 
 	/**
-	 * @param url
-	 *            the url to set
+	 * @param endpoint the endpoint to set
 	 */
-	public void setUrl(String url) {
-		this.url = url;
+	public void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
 	}
 
 	/**
@@ -250,7 +249,8 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param socketTimeout the socketTimeout to set
+	 * @param socketTimeout
+	 *            the socketTimeout to set
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
@@ -264,7 +264,8 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param mongoFactory the mongoFactory to set
+	 * @param mongoFactory
+	 *            the mongoFactory to set
 	 */
 	public void setMongoFactory(String mongoFactory) {
 		this.mongoFactory = mongoFactory;

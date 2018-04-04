@@ -104,7 +104,7 @@ public class HttpClientUtils {
 	 */
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
 			throws Exception {
-		ElasticEndpoint esConfig = sqltoyContext.getElasticEndpoint(nosqlConfig.getUrl());
+		ElasticEndpoint esConfig = sqltoyContext.getElasticEndpoint(nosqlConfig.getEndpoint());
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
@@ -182,7 +182,7 @@ public class HttpClientUtils {
 		// 存在错误
 		if (json.containsKey("error")) {
 			String errorMessage = JSON.toJSONString(json.getJSONObject("error").getJSONArray("root_cause").get(0));
-			logger.error("elastic查询失败,URL:[{}],错误信息:[{}]", nosqlConfig.getUrl(), errorMessage);
+			logger.error("elastic查询失败,endpoint:[{}],错误信息:[{}]", nosqlConfig.getEndpoint(), errorMessage);
 			throw new Exception("ElasticSearch查询失败,错误信息:" + errorMessage);
 		}
 		return json;
