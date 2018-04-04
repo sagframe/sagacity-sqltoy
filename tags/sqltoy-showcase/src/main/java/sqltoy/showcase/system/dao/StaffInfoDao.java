@@ -16,10 +16,7 @@ import sqltoy.showcase.system.vo.StaffInfoVO;
 
 /**
  * @project sqltoy-showcase
- * @description
- *              <p>
- *              员工信息操作
- *              </p>
+ * @description 员工信息操作
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:StaffInfoDao.java,Revision:v1.0,Date:2017年11月8日
  */
