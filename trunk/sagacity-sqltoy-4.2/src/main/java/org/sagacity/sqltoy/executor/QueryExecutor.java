@@ -96,11 +96,20 @@ public class QueryExecutor implements Serializable {
 		this.sql = sql;
 	}
 
-	public QueryExecutor(String sql, Serializable entity) {
+	/**
+	 * update 2018-4-10 很对开发者将entity传入Class类别然后抱怨sqltoy有bug,
+	 * @param sql
+	 * @param entity
+	 * @throws Exception
+	 */
+	public QueryExecutor(String sql, Serializable entity) throws Exception {
 		this.sql = sql;
 		this.entity = entity;
-		if (entity != null)
+		if (entity != null) {
 			this.resultType = entity.getClass();
+			if (this.resultType.equals("".getClass().getClass()))
+				throw new Exception("查询参数是要求传递对象的实例,不是传递对象的class类别!");
+		}
 	}
 
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
