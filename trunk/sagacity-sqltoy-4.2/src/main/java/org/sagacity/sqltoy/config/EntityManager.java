@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.config;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -89,10 +88,9 @@ public class EntityManager {
 	 * @param entityClass
 	 * @return
 	 */
-	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class serializable) throws Exception {
-		if (serializable == null)
+	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) throws Exception {
+		if (entityClass == null)
 			return null;
-		Class entityClass = (serializable instanceof Type) ? (Class) serializable : serializable.getClass();
 		EntityMeta entityMeta = entitysMetaMap.get(entityClass);
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,让sqltoy可以不用配置packagesToScan和annotatedClasses
