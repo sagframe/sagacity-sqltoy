@@ -407,7 +407,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager;
 	}
 
-	public EntityMeta getEntityMeta(Serializable entityClass) throws Exception {
+	public EntityMeta getEntityMeta(Class<?> entityClass) throws Exception {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
