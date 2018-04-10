@@ -3,7 +3,6 @@
  */
 package org.sagacity.sqltoy;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -397,7 +396,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager;
 	}
 
-	public EntityMeta getEntityMeta(Serializable entityClass) throws Exception {
+	public EntityMeta getEntityMeta(Class<?> entityClass) throws Exception {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
