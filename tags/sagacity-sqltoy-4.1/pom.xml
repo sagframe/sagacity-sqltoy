@@ -9,8 +9,8 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.4.RELEASE</spring.version>
-		<spring-data.version>2.0.4.RELEASE</spring-data.version>
+		<spring.version>5.0.5.RELEASE</spring.version>
+		<spring-data.version>2.0.5.RELEASE</spring-data.version>
 		<log4j.version>2.10.0</log4j.version>
 		<mysql.version>5.1.46</mysql.version>
 		<ehcache.version>2.10.4</ehcache.version>
