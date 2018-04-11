@@ -181,7 +181,7 @@ public class Mongo extends BaseLink {
 	 * @todo 构造统一的查询条件
 	 * @return
 	 */
-	private QueryExecutor build() {
+	private QueryExecutor build() throws Exception {
 		QueryExecutor queryExecutor = null;
 		if (entity != null)
 			queryExecutor = new QueryExecutor(sql, entity);

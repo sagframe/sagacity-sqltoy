@@ -221,7 +221,7 @@ public class Query extends BaseLink {
 		return result.getRows();
 	}
 
-	private QueryExecutor build() {
+	private QueryExecutor build() throws Exception {
 		QueryExecutor queryExecutor = null;
 		if (entity != null)
 			queryExecutor = new QueryExecutor(sql, entity);

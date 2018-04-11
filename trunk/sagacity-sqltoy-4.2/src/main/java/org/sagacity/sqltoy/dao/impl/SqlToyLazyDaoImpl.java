@@ -258,7 +258,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#getEntityMeta(java.io.Serializable)
 	 */
 	@Override
-	public EntityMeta getEntityMeta(Serializable entityClass) throws Exception {
+	public EntityMeta getEntityMeta(Class entityClass) throws Exception {
 		return super.getEntityMeta(entityClass);
 	}
 

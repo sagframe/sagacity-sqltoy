@@ -56,7 +56,7 @@ public interface SqlToyLazyDao {
 	 * @param entityClass
 	 * @return EntityMeta
 	 */
-	public EntityMeta getEntityMeta(Serializable entityClass) throws Exception;
+	public EntityMeta getEntityMeta(Class<?> entityClass) throws Exception;
 
 	/**
 	 * @todo 判断对象属性在数据库中是否唯一
@@ -527,7 +527,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Elastic elastic();
-	
+
 	/**
 	 * mongo操作
 	 * 

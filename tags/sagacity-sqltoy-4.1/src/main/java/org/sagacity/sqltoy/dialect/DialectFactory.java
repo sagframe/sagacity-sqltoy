@@ -355,7 +355,7 @@ public class DialectFactory {
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
 			final DataSource dataSource) throws Exception {
 		if (null != treeModel.getEntity()) {
-			EntityMeta entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity());
+			EntityMeta entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
 			HashMap<String, String> columnMap = new HashMap<String, String>();
 			for (FieldMeta column : entityMeta.getFieldsMeta().values())
 				columnMap.put(column.getColumnName().toUpperCase(), "");

@@ -1003,7 +1003,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected EntityMeta getEntityMeta(Serializable entityClass) throws Exception {
+	protected EntityMeta getEntityMeta(Class<?> entityClass) throws Exception {
 		return sqlToyContext.getEntityMeta(entityClass);
 	}
 
