@@ -49,11 +49,12 @@ public class StringUtil {
 	}
 
 	public static boolean isBlank(Object str) {
-		if (null == str || str.toString().trim().equals("")) {
+		if (null == str)
 			return true;
-		} else {
-			return false;
+		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
+			return true;
 		}
+		return false;
 	}
 
 	/**
