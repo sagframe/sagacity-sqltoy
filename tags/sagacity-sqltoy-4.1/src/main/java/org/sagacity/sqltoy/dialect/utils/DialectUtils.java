@@ -278,9 +278,19 @@ public class DialectUtils {
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
-			// 剔除order by 语句
-			if (orderByIndex > lastBracketIndex)
-				query_tmp = query_tmp.substring(0, orderByIndex + 1);
+			if (orderByIndex > 0) {
+				// 剔除order by 语句
+				if (orderByIndex > lastBracketIndex)
+					query_tmp = query_tmp.substring(0, orderByIndex + 1);
+				else {
+					// 剔除掉order by 后面语句对称的() 内容
+					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
+					// 在order by 不在子查询内,说明可以整体切除掉order by
+					if (orderJudgeSql.indexOf(")") == -1) {
+						query_tmp = query_tmp.substring(0, orderByIndex + 1);
+					}
+				}
+			}
 			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN);
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
@@ -1208,12 +1218,12 @@ public class DialectUtils {
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
-						relatedColValue, entityMeta.getIdType(),idLength);
+						relatedColValue, entityMeta.getIdType(), idLength);
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, relatedColValue, businessIdType,bizIdLength);
+						signature, relatedColValue, businessIdType, bizIdLength);
 				// 回写业务主键值
 				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -1350,11 +1360,11 @@ public class DialectUtils {
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, idJdbcType,idLength);
+							relatedColValue, idJdbcType, idLength);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, businessIdType,bizIdLength);
+							signature, relatedColValue, businessIdType, bizIdLength);
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
