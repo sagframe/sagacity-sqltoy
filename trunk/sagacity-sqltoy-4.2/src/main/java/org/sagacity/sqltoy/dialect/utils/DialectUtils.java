@@ -232,6 +232,8 @@ public class DialectUtils {
 	}
 
 	/**
+	 * 注:需要改进一下，order by 的判断逻辑,是否在括号
+	 * 
 	 * @todo 通用的查询记录总数
 	 * @param sqlToyContext
 	 * @param sql
@@ -256,9 +258,20 @@ public class DialectUtils {
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
-			// 剔除order by 语句
-			if (orderByIndex > lastBracketIndex)
-				query_tmp = query_tmp.substring(0, orderByIndex + 1);
+			if (orderByIndex > 0) {
+				// 剔除order by 语句
+				if (orderByIndex > lastBracketIndex)
+					query_tmp = query_tmp.substring(0, orderByIndex + 1);
+				else {
+					//剔除掉order by 后面语句对称的() 内容
+					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
+					// 在order by 不在子查询内,说明可以整体切除掉order by
+					if (orderJudgeSql.indexOf(")") == -1) {
+						query_tmp = query_tmp.substring(0, orderByIndex + 1);
+					}
+				}
+			}
+
 			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN);
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
