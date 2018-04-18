@@ -94,5 +94,6 @@
 		<property name="pageFetchSizeLimit" value="50000" />
 		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
 		<property name="defaultDataSource" ref="dataSource" />
+		<property name="printSqlStrategy" value="debug"/>
 	</bean>
 </beans>
