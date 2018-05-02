@@ -195,7 +195,7 @@ public class CommonUtils {
 						break;
 					}
 				}
-				//update 2018-3-29,去除空格增强容错性
+				// update 2018-3-29,去除空格增强容错性
 				compareValue = express.split(splitStr)[1].trim();
 				// 计算单个比较的结果
 				expressResult[i] = compare(value, splitStr, compareValue);
@@ -226,6 +226,13 @@ public class CommonUtils {
 	private static boolean compare(Object value, String compareType, String compareValue) {
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
+		// 剔除首尾字符串标志符号
+		if (compareValue.startsWith("'") && compareValue.endsWith("'")) {
+			compareValue = compareValue.substring(1, compareValue.length() - 1);
+		} else if (compareValue.startsWith("\"") && compareValue.endsWith("\"")) {
+			compareValue = compareValue.substring(1, compareValue.length() - 1);
+		}
+		//判断是否有加减运算
 		for (String calculate : calculateStr) {
 			if (compareValue.indexOf(calculate) > 0) {
 				String[] tmpAry = compareValue.split(calculate.equals("+") ? "\\+" : "\\-");
@@ -248,8 +255,6 @@ public class CommonUtils {
 			compareValue = DateUtil.formatDate(DateUtil.addSecond(new Date(), Double.parseDouble(append)), dayFmt);
 			type = "date";
 		}
-
-		// 替换掉单引号和双引号
 		compareValue = compareValue.replaceAll("\'", "").replaceAll("\"", "");
 		String realValue = value.toString();
 		if (type.equals("time")) {
@@ -362,7 +367,7 @@ public class CommonUtils {
 		} else
 			return valueStr.compareTo(compare) < 0;
 	}
-	
+
 	/**
 	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
 	 * @param labelNames
