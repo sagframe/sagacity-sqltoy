@@ -80,16 +80,23 @@ public class ElasticSearchPlugin {
 	 */
 	public static List findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
-		String realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyConfig)).trim();
-		JSONObject jsonQuery = JSON.parseObject(realMql);
-		if (topSize != null) {
-			jsonQuery.fluentRemove("from");
-			jsonQuery.fluentRemove("FROM");
-			jsonQuery.fluentRemove("size");
-			jsonQuery.fluentRemove("SIZE");
-			jsonQuery.fluentPut("from", 0);
-			jsonQuery.fluentPut("size", topSize);
+		JSONObject jsonQuery = null;
+		String realMql = "";
+		try {
+			realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+					queryExecutor.getParamsValue(sqlToyConfig)).trim();
+			jsonQuery = JSON.parseObject(realMql);
+			if (topSize != null) {
+				jsonQuery.fluentRemove("from");
+				jsonQuery.fluentRemove("FROM");
+				jsonQuery.fluentRemove("size");
+				jsonQuery.fluentRemove("SIZE");
+				jsonQuery.fluentPut("from", 0);
+				jsonQuery.fluentPut("size", topSize);
+			}
+		} catch (Exception e) {
+			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
+			throw e;
 		}
 		if (sqlToyContext.isDebug()) {
 			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
