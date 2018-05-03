@@ -129,7 +129,6 @@ public class CommonUtils {
 
 	/**
 	 * @todo 简单逻辑判断,只支持2个逻辑,update 2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性
-	 * 
 	 * @param sql
 	 * @param paramValues
 	 * @param preCount
@@ -224,18 +223,20 @@ public class CommonUtils {
 	 * @return
 	 */
 	private static boolean compare(Object value, String compareType, String compareValue) {
-		String append = "0";
-		String[] calculateStr = { "+", "-" };
 		// 剔除首尾字符串标志符号
 		if (compareValue.startsWith("'") && compareValue.endsWith("'")) {
 			compareValue = compareValue.substring(1, compareValue.length() - 1);
 		} else if (compareValue.startsWith("\"") && compareValue.endsWith("\"")) {
 			compareValue = compareValue.substring(1, compareValue.length() - 1);
 		}
-		//判断是否有加减运算
+		// 只支持加减运算
+		String append = "0";
+		String[] calculateStr = { "+", "-" };
+		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
-			if (compareValue.indexOf(calculate) > 0) {
+			if (compareValue.trim().indexOf(calculate) > 0) {
 				String[] tmpAry = compareValue.split(calculate.equals("+") ? "\\+" : "\\-");
+				// 正负数字
 				append = calculate + tmpAry[1].trim();
 				compareValue = tmpAry[0].trim();
 				break;
