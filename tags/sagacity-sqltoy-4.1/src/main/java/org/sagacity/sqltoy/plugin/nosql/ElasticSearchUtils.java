@@ -393,6 +393,8 @@ public class ElasticSearchUtils {
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject)
 				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			else if (result instanceof JSONArray)
+				return result;
 		}
 		return rowJson;
 	}
