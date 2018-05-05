@@ -103,16 +103,8 @@ public class TestMain {
 	}
 
 	public static void main(String[] args) throws Exception {
-		JSONObject json = JSON.parseObject(FileUtil.readAsString(new File("D:/es_result.json")));
-		String[] path = { "aggregations", "state" };
-		// System.err.println(json.get("aggregations"));
-		String[] fields = new String[] { "key:province", "min_balance", "total_balance", "max_balance", "avg_balance" };
-		NoSqlConfigModel noSqlConfigModel = new NoSqlConfigModel();
-		noSqlConfigModel.setFields(fields);
-
-		List<List> result = parse(json, noSqlConfigModel, fields);
-		for (List row : result) {
-			System.err.println(row);
-		}
+		String compareValue="15+4";
+		
+		System.err.println(Double.parseDouble(compareValue));
 	}
 }

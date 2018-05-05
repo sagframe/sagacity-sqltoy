@@ -136,4 +136,15 @@ public class LinkDaoTest {
 		}
 
 	}
+
+	@Test
+	public void findESSuggest() throws Exception {
+		OrganInfoVO organInfoVO = new OrganInfoVO();
+		// organInfoVO.setStaffName("李");
+		List<OrganInfoVO> result = staffInfoDao.findESSuggest(new PaginationModel(), organInfoVO);
+		for (OrganInfoVO organ : result) {
+			System.err.println(organ.getOrganId() + " keywords:=" + organ.getKeywords());
+		}
+
+	}
 }

@@ -73,6 +73,11 @@ public class OrganInfoVO extends AbstractOrganInfoVO implements Serializable {
 	private int count;
 	
 	/**
+	 * 
+	 */
+	private String keywords;
+	
+	/**
 	 * @return the count
 	 */
 	public int getCount() {
@@ -99,6 +104,20 @@ public class OrganInfoVO extends AbstractOrganInfoVO implements Serializable {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * @return the keywords
+	 */
+	public String getKeywords() {
+		return keywords;
+	}
+
+	/**
+	 * @param keywords the keywords to set
+	 */
+	public void setKeywords(String keywords) {
+		this.keywords = keywords;
 	}
 	
 }

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-      xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+
 	<!-- 列转行测试 -->
 	<sql id="sys_unpvoitSearch">
 		<value>
@@ -79,6 +81,12 @@
 	    where t.STAFF_NAME like :staffName
 		]]>
 		</value>
+		<!-- 自定义计算总记录数的sql语句(默认sqltoy会智能优化提取count sql,无需自定义), 在极端性能优化场景下给开发者留一个口子 -->
+		<count-sql>
+		<![CDATA[
+		select 1 from sys_staff_info where STAFF_NAME like :staffName
+		]]>
+		</count-sql>
 	</sql>
 
 	<!-- 分表分库查询 -->
@@ -148,7 +156,7 @@
 	</sql>
 
 	<!-- elasticSearch-sql插件模式 -->
-	<eql id="sys_elastic_test" fields="chineseName,price,trademarkId" >
+	<eql id="sys_elastic_test" fields="chineseName,price,trademarkId">
 		<value>
 		<![CDATA[
 			select * from goods_index
@@ -214,7 +222,8 @@
 	</eql>
 
 	<!-- elastic 原生查询模式 -->
-	<eql id="sys_elastic_test_json" fields="organ_id,organ_name,create_time">
+	<eql id="sys_elastic_test_json"
+		fields="organ_id,organ_name,create_time">
 		<value>
 		<![CDATA[
 			{
@@ -277,11 +286,32 @@
 		</value>
 	</eql>
 	<!--根据分类id查询供应商 -->
-	<eql id="find_goods_count" fields="count" aggregate="true">
+	<eql id="find_goods_count" fields="count" aggregate="true"
+		value-root="suggest,blog-suggest,options">
 		<value><![CDATA[
        select  count(*) count  from index_goods_resource_list  where
        upstatus=1
        and effecttime>=:operateDate
  ]]></value>
+	</eql>
+
+	<!-- 查询热搜 -->
+	<eql id="query_hot_search" fields="keywords">
+		<value><![CDATA[
+		  { 
+
+			  "suggest": {
+			    "blog-suggest": {
+			      "prefix": "LDPE",
+			      "completion": {
+			        "field": "keywords",
+			        "size": 9 
+			      }
+			    }
+			  },
+			   "_source": ["keywords"]
+			}
+
+		]]></value>
 	</eql>
 </sqltoy>

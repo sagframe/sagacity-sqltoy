@@ -63,4 +63,8 @@ public class StaffInfoDao extends BaseDaoSupport {
 	public List findESAggs(PaginationModel pageModel, OrganInfoVO organInfoVO) throws Exception {
 		return elastic().sql("sys_elastic_test_aggs").entity(organInfoVO).find();
 	}
+	
+	public List findESSuggest(PaginationModel pageModel, OrganInfoVO organInfoVO) throws Exception {
+		return elastic().sql("query_hot_search").entity(organInfoVO).find();
+	}
 }
