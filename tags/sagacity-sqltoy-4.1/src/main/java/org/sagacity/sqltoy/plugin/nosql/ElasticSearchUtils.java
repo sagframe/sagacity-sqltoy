@@ -83,6 +83,9 @@ public class ElasticSearchUtils {
 		// 聚合数据提取
 		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs() || json.getJSONObject("aggregations") != null)
 			return extractAggsFieldValue(sqlToyContext, sqlToyConfig, json, fields);
+		else if (json.containsKey("suggest")) {
+			return extractSuggestFieldValue(sqlToyContext, sqlToyConfig, json, fields);
+		}
 		DataSetResult resultModel = new DataSetResult();
 		// 设置总记录数量
 		if (json.getJSONObject("hits") != null) {
@@ -128,6 +131,61 @@ public class ElasticSearchUtils {
 		} else if (realRoot instanceof JSONObject) {
 			addRow(result, (JSONObject) realRoot, realFields);
 		}
+		resultModel.setRows(result);
+		resultModel.setLabelNames(translateFields);
+		return resultModel;
+	}
+
+	/**
+	 * @todo 提取聚合数据
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param json
+	 * @param fields
+	 * @return
+	 */
+	private static DataSetResult extractSuggestFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			JSONObject json, String[] fields) {
+		DataSetResult resultModel = new DataSetResult();
+		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
+		String[] realFields = new String[fields.length];
+		String[] translateFields = new String[fields.length];
+		int index = 0;
+		for (String field : fields) {
+			if (field.indexOf(":") != -1) {
+				realFields[index] = field.substring(0, field.indexOf(":")).trim();
+				translateFields[index] = field.substring(field.indexOf(":") + 1).trim();
+			} else {
+				realFields[index] = field;
+				translateFields[index] = field;
+			}
+			index++;
+		}
+		// 获取json对象的根
+		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null) ? new String[] { "suggest" }
+				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
+		Object root = json;
+		// 确保第一个路径是聚合统一的名词
+		if (!rootPath[0].equalsIgnoreCase("suggest"))
+			root = ((JSONObject) root).get("suggest");
+		for (String str : rootPath) {
+			root = ((JSONObject) root).get(str);
+		}
+		if (root == null) {
+			logger.error("请正确配置es聚合查询,包括:fields配置是否匹配等!");
+			return resultModel;
+		}
+		List result = new ArrayList();
+		if (root instanceof JSONObject) {
+			processRow(result, (JSONObject) root, realFields, true);
+		} else if (root instanceof JSONArray) {
+			JSONArray array = (JSONArray) root;
+			for (Object tmp : array) {
+				processRow(result, (JSONObject) tmp, realFields, true);
+			}
+		}
+		if (result != null)
+			resultModel.setTotalCount(Long.valueOf(result.size()));
 		resultModel.setRows(result);
 		resultModel.setLabelNames(translateFields);
 		return resultModel;
@@ -201,11 +259,11 @@ public class ElasticSearchUtils {
 		}
 		List result = new ArrayList();
 		if (root instanceof JSONObject) {
-			processRow(result, (JSONObject) root, realFields);
+			processRow(result, (JSONObject) root, realFields, false);
 		} else if (root instanceof JSONArray) {
 			JSONArray array = (JSONArray) root;
 			for (Object tmp : array) {
-				processRow(result, (JSONObject) tmp, realFields);
+				processRow(result, (JSONObject) tmp, realFields, false);
 			}
 		}
 		if (result != null)
@@ -222,22 +280,22 @@ public class ElasticSearchUtils {
 	 * @param rowJson
 	 * @param realFields
 	 */
-	private static void processRow(List result, JSONObject rowJson, String[] realFields) {
-		Object root = getRealJSONObject(rowJson, realFields);
+	private static void processRow(List result, JSONObject rowJson, String[] realFields, boolean isSuggest) {
+		Object root = getRealJSONObject(rowJson, realFields, isSuggest);
 		if (root instanceof JSONObject) {
 			JSONObject json = (JSONObject) root;
 			if ((json.containsKey("key") && json.containsKey("doc_count"))) {
 				if (isRoot(json, realFields)) {
 					addRow(result, json, realFields);
 				} else
-					processRow(result, json, realFields);
+					processRow(result, json, realFields, isSuggest);
 			} else {
 				addRow(result, json, realFields);
 			}
 		} else if (root instanceof JSONArray) {
 			JSONArray array = (JSONArray) root;
 			for (Object tmp : array) {
-				processRow(result, (JSONObject) tmp, realFields);
+				processRow(result, (JSONObject) tmp, realFields, isSuggest);
 			}
 		}
 	}
@@ -287,7 +345,7 @@ public class ElasticSearchUtils {
 	 * @param realFields
 	 * @return
 	 */
-	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields) {
+	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {
 		Object result = rowJson.get("_source");
 		if (result != null && result instanceof JSONObject)
 			return result;
@@ -296,14 +354,25 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONArray)
 				return result;
 			else if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result, realFields);
+				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
 		}
 		result = rowJson.get("hits");
 		if (result != null) {
 			if (result instanceof JSONArray)
 				return result;
 			else if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result, realFields);
+				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+		}
+
+		// suggest模式
+		if (isSuggest) {
+			result = rowJson.get("options");
+			if (result != null) {
+				if (result instanceof JSONArray)
+					return result;
+				else if (result instanceof JSONObject)
+					return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			}
 		}
 		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
 			if (isRoot(rowJson, realFields))
@@ -313,7 +382,7 @@ public class ElasticSearchUtils {
 				if (!key.equals("key") && !key.equals("doc_count")) {
 					result = rowJson.get(key.toString());
 					if (result instanceof JSONObject)
-						return getRealJSONObject((JSONObject) result, realFields);
+						return getRealJSONObject((JSONObject) result, realFields, isSuggest);
 					return result;
 				}
 			}
@@ -323,7 +392,7 @@ public class ElasticSearchUtils {
 				return rowJson;
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject)
-				return getRealJSONObject((JSONObject) result, realFields);
+				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
 		}
 		return rowJson;
 	}
