@@ -8,10 +8,11 @@
 	<artifactId>sqltoy-showcase</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.3.RELEASE</spring.version>
+		<spring.version>5.0.5.RELEASE</spring.version>
 		<log4j.version>2.10.0</log4j.version>
-		<druid.version>1.1.8</druid.version>
-		<sagacity-sqltoy.version>4.2.2</sagacity-sqltoy.version>
+		<druid.version>1.1.9</druid.version>
+		<sagacity-sqltoy.version>4.2.4</sagacity-sqltoy.version>
+		<elastic.version>6.2.3</elastic.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -104,9 +105,9 @@
 			<version>1.7.25</version>
 		</dependency>
 		<dependency>
-			<groupId>net.sf.ehcache</groupId>
+			<groupId>org.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
-			<version>2.10.4</version>
+			<version>3.5.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -192,28 +193,35 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.6.1</version>
+			<version>3.6.3</version>
 		</dependency>
 		<!-- httpclient begin -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5.4</version>
+			<version>4.5.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
-			<version>4.5.4</version>
+			<version>4.5.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
-			<version>4.4.8</version>
+			<version>4.4.9</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.45</version>
+			<version>1.2.47</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-client -->
+		<dependency>
+			<groupId>org.elasticsearch.client</groupId>
+			<artifactId>elasticsearch-rest-client</artifactId>
+			<version>${elastic.version}</version>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>
