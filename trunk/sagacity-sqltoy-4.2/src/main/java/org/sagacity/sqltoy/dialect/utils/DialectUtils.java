@@ -256,14 +256,19 @@ public class DialectUtils {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 			String query_tmp = sqlWith.getRejectWithSql();
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
+			int sql_from_index = 0;
+			// sql不以from开头，截取from 后的部分语句
+			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0)
+				sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", query_tmp, 0);
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
-			if (orderByIndex > 0) {
+			//order by 在from 之后
+			if (orderByIndex > sql_from_index) {
 				// 剔除order by 语句
 				if (orderByIndex > lastBracketIndex)
 					query_tmp = query_tmp.substring(0, orderByIndex + 1);
 				else {
-					//剔除掉order by 后面语句对称的() 内容
+					// 剔除掉order by 后面语句对称的() 内容
 					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
 					// 在order by 不在子查询内,说明可以整体切除掉order by
 					if (orderJudgeSql.indexOf(")") == -1) {
@@ -285,10 +290,6 @@ public class DialectUtils {
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
-				int sql_from_index = 0;
-				// sql不以from开头，截取from 后的部分语句
-				if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0)
-					sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", query_tmp, 0);
 				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(0, sql_from_index).toLowerCase();
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN))
