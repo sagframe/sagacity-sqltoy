@@ -1796,7 +1796,7 @@ public class DialectUtils {
 	 * @param sql
 	 * @return
 	 */
-	private static String clearDisturbSql(String sql) {
+	public static String clearDisturbSql(String sql) {
 		StringBuilder lastSql = new StringBuilder(sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkIndex("select ", " from", sql.toLowerCase(), 0);
