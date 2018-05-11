@@ -898,7 +898,8 @@ public class SqlUtil {
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
 			int dbType = DataSourceUtils.getDbType(conn);
-			if (dbType == DataSourceUtils.DBType.MYSQL) {
+			//支持mysql8.0 update 2018-5-11
+			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL8) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
@@ -1079,19 +1080,19 @@ public class SqlUtil {
 			conn.setAutoCommit(true);
 	}
 
-//	/**
-//	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
-//	 * @param labelNames
-//	 * @return
-//	 */
-//	private static String[] processFieldNames(String[] labelNames) {
-//		if (labelNames == null)
-//			return null;
-//		String[] result = new String[labelNames.length];
-//		for (int i = 0, n = labelNames.length; i < n; i++)
-//			result[i] = StringUtil.toHumpStr(labelNames[i], false);
-//		return result;
-//	}
+	// /**
+	// * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
+	// * @param labelNames
+	// * @return
+	// */
+	// private static String[] processFieldNames(String[] labelNames) {
+	// if (labelNames == null)
+	// return null;
+	// String[] result = new String[labelNames.length];
+	// for (int i = 0, n = labelNames.length; i < n; i++)
+	// result[i] = StringUtil.toHumpStr(labelNames[i], false);
+	// return result;
+	// }
 
 	/**
 	 * 
