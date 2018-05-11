@@ -579,7 +579,7 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
 			markIndex = sql.indexOf("<!--");
 		}
-		//剔除全角
+		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
 
@@ -898,7 +898,8 @@ public class SqlUtil {
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
 			int dbType = DataSourceUtils.getDbType(conn);
-			if (dbType == DataSourceUtils.DBType.MYSQL) {
+			//支持mysql8 update 2018-5-11
+			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL8) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
