@@ -103,8 +103,7 @@ public class IdUtil {
 	}
 
 	/**
-	 * 获取本机的IP地址，并从末尾截取指定长度的数字
-	 * 
+	 * @todo 获取本机的IP地址，并从末尾截取指定长度的数字
 	 * @param size
 	 * @return
 	 */
