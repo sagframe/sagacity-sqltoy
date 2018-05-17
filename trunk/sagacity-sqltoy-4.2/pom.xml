@@ -3,31 +3,31 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.2.4</version>
+	<version>4.2.5</version>
 	<name>sqltoy-orm</name>
 	<description>sqltoy-orm</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.5.RELEASE</spring.version>
-		<spring-data.version>2.0.5.RELEASE</spring-data.version>
+		<spring.version>5.0.6.RELEASE</spring.version>
+		<spring-data.version>2.0.7.RELEASE</spring-data.version>
 		<log4j.version>2.11.0</log4j.version>
 		<mysql.version>5.1.46</mysql.version>
 		<ehcache.version>3.5.2</ehcache.version>
 		<httpclient.version>4.5.5</httpclient.version>
-		<elastic.version>6.2.3</elastic.version>
+		<elastic.version>6.2.4</elastic.version>
 		<fastjson.version>1.2.47</fastjson.version>
-		<mongo.version>3.6.3</mongo.version>
+		<mongo.version>3.7.0</mongo.version>
 		<dom4j.version>2.1.0</dom4j.version>
 		<jedis.version>2.9.0</jedis.version>
-		<spring-boot.version>2.0.0.RELEASE</spring-boot.version>
+		<spring-boot.version>2.0.1.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
-		<repository>
+		<!-- <repository>
 			<id>sagframe-release</id>
 			<url>http://www.sagframe.com:8081/repository/sagframe</url>
-		</repository>
-		<!-- <repository>
+		</repository> -->
+		<repository>
 			<id>renturbo</id>
 			<name>3rd party</name>
 			<url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url>
@@ -36,7 +36,7 @@
 			<id>renturbo</id>
 			<name>Department Repository</name>
 			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository> -->
+		</snapshotRepository>
 	</distributionManagement>
 	<dependencies>
 		<dependency>
