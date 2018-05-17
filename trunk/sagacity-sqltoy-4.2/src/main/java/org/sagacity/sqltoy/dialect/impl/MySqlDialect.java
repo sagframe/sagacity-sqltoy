@@ -38,6 +38,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description mysql数据库方言的不同操作实现 (针对mysql 的with as 兼容问题因mysql
  *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
+ *              mysql8.x版本开始已经支持with as语法。
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MySqlDialect.java,Revision:v1.0,Date:2013-3-21
  */
