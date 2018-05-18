@@ -58,7 +58,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private TranslateManager translateManager = new TranslateManager();
 
 	/**
-	 * 统一公共字段赋值处理(如修改时,为修改人和修改时间进行统一赋值;创建时:为创建人、创建时间、修改人、修改时间进行统一赋值)
+	 * 统一公共字段赋值处理;
+	 * 如修改时,为修改人和修改时间进行统一赋值;
+	 * 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
 

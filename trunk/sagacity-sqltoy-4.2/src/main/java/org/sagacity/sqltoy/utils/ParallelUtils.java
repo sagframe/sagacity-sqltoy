@@ -59,6 +59,8 @@ public class ParallelUtils {
 		List results = new ArrayList();
 		// 并行线程数量
 		int threads = shardingGroups.size();
+		// 是否全局异常回滚
+		boolean globalRollback = shardingConfig.isGlobalRollback();
 		// 如果额外策略配置了线程数量,则按照指定的线程数量执行
 		if (threads > shardingConfig.getMaxConcurrents() && shardingConfig.getMaxConcurrents() > 1)
 			threads = shardingConfig.getMaxConcurrents();

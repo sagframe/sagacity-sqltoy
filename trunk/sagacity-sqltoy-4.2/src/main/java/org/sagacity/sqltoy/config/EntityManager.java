@@ -291,6 +291,8 @@ public class EntityManager {
 			shardingConfig.setMaxConcurrents(sharding.maxConcurrents());
 			// 最大执行时长(秒)
 			shardingConfig.setMaxWaitSeconds(sharding.maxWaitSeconds());
+			// 异常处理策略(是否全局回滚)
+			shardingConfig.setGlobalRollback(sharding.is_global_rollback());
 			Strategy shardingDB = sharding.db();
 			String strategy = shardingDB.name();
 			// 分库策略

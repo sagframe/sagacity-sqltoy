@@ -62,7 +62,7 @@ public class SqlExecuteStat {
 	public static void showSql(String sql, Object[] paramValues) {
 		try {
 			// debug模式直接输出
-			if (debug && printSqlStrategy.equals("debug")) {
+			if (debug || printSqlStrategy.equals("debug")) {
 				if (threadLocal.get() != null && threadLocal.get().isPrint() == false)
 					return;
 				printSql(sql, paramValues, false);

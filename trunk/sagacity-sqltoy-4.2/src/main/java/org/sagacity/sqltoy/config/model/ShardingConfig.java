@@ -39,6 +39,11 @@ public class ShardingConfig implements Serializable {
 	private int maxConcurrents;
 
 	/**
+	 * 数据库操作异常做全局异常回滚
+	 */
+	private boolean globalRollback = true;
+
+	/**
 	 * @return the shardingDBStrategy
 	 */
 	public ShardingStrategyConfig getShardingDBStrategy() {
@@ -96,6 +101,20 @@ public class ShardingConfig implements Serializable {
 	 */
 	public void setMaxConcurrents(int maxConcurrents) {
 		this.maxConcurrents = maxConcurrents;
+	}
+
+	/**
+	 * @return the globalRollback
+	 */
+	public boolean isGlobalRollback() {
+		return globalRollback;
+	}
+
+	/**
+	 * @param globalRollback the globalRollback to set
+	 */
+	public void setGlobalRollback(boolean globalRollback) {
+		this.globalRollback = globalRollback;
 	}
 
 }
