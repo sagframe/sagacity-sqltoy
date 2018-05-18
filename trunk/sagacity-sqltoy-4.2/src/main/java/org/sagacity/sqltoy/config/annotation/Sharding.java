@@ -29,4 +29,6 @@ public @interface Sharding {
 
 	Strategy table() default @Strategy();
 
+	//在增加、修改、删除操作是个别节点发生异常，事务回滚策略是整体还是局部
+	boolean is_global_rollback() default true;
 }
