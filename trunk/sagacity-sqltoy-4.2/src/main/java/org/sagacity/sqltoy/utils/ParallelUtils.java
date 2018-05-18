@@ -78,6 +78,10 @@ public class ParallelUtils {
 		try {
 			for (Future<ShardingResult> future : futureResult) {
 				ShardingResult item = future.get();
+				//全局异常则抛出,让事务进行全部回滚。
+				if (item != null && !item.isSuccess() && globalRollback) {
+					throw new Exception(item.getMessage());
+				}
 				if (item != null && item.getRows() != null && !item.getRows().isEmpty())
 					results.addAll(item.getRows());
 			}
