@@ -249,7 +249,7 @@ public class PostgreSqlDialect implements Dialect {
 			String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*

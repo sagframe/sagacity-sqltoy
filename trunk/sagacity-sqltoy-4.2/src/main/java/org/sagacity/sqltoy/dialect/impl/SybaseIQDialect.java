@@ -285,8 +285,8 @@ public class SybaseIQDialect implements Dialect {
 		if (isOpenIdentity)
 			DialectUtils.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null,
 					null, conn, true);
-		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
+		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
+				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DialectUtils.getSaveOrUpdateSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
@@ -318,13 +318,14 @@ public class SybaseIQDialect implements Dialect {
 		if (isOpenIdentity)
 			DialectUtils.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null,
 					null, conn, true);
-		Long updateCount=DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				return DialectUtils.getSaveIgnoreExistSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
-						null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
-						isAssignPKValue(entityMeta.getIdStrategy()), tableName);
-			}
-		}, reflectPropertyHandler, conn, autoCommit);
+		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						return DialectUtils.getSaveIgnoreExistSql(DBType.SYBASE_IQ, entityMeta,
+								entityMeta.getIdStrategy(), null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
+								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
 		if (isOpenIdentity)
 			DialectUtils.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, true);
 		return updateCount;
@@ -474,7 +475,7 @@ public class SybaseIQDialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*

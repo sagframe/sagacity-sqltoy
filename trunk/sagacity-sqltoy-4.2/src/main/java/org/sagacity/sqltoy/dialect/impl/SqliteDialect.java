@@ -227,11 +227,12 @@ public class SqliteDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
 			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				return SqliteDialectUtils.getSaveIgnoreExistSql(DBType.SQLITE, entityMeta, tableName);
-			}
-		}, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						return SqliteDialectUtils.getSaveIgnoreExistSql(DBType.SQLITE, entityMeta, tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
 
 	}
 
@@ -341,8 +342,8 @@ public class SqliteDialect implements Dialect {
 		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils.generateInsertSql(DBType.SQLITE, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -378,7 +379,7 @@ public class SqliteDialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*
