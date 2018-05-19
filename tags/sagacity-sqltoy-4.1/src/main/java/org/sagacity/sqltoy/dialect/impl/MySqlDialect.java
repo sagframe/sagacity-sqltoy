@@ -40,6 +40,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MySqlDialect.java,Revision:v1.0,Date:2013-3-21
+ * @modify {Date:2018-5-19,修复mysql on duplicate key update 非空字段修改报错}
  */
 @SuppressWarnings({ "rawtypes" })
 public class MySqlDialect implements Dialect {
@@ -210,14 +211,28 @@ public class MySqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields,
-								tableName);
-					}
-				}, reflectPropertyHandler, conn, autoCommit);
+		// EntityMeta entityMeta =
+		// sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize,
+		// entityMeta, forceUpdateFields,
+		// new GenerateSqlHandler() {
+		// public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields)
+		// {
+		// return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta,
+		// forceUpdateFields,
+		// tableName);
+		// }
+		// }, reflectPropertyHandler, conn, autoCommit);
+		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+		logger.debug("修改记录数为:{}", updateCnt);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size())
+			return updateCnt;
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+				autoCommit, tableName);
+		logger.debug("新建记录数为:{}", saveCnt);
+		return updateCnt + saveCnt;
 	}
 
 	/*
@@ -239,8 +254,8 @@ public class MySqlDialect implements Dialect {
 				.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -327,8 +342,8 @@ public class MySqlDialect implements Dialect {
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
 				insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						return DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta,
-								entityMeta.getIdStrategy(), NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+						return DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
+								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
@@ -355,8 +370,8 @@ public class MySqlDialect implements Dialect {
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -374,8 +389,7 @@ public class MySqlDialect implements Dialect {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields,
-								null);
+						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, tableName);
 	}
@@ -392,7 +406,7 @@ public class MySqlDialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*

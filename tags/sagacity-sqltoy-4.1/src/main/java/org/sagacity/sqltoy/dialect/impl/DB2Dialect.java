@@ -183,8 +183,8 @@ public class DB2Dialect implements Dialect {
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils.generateInsertSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -222,7 +222,7 @@ public class DB2Dialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*
@@ -380,13 +380,14 @@ public class DB2Dialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
 			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				return DB2DialectUtils.getSaveIgnoreExistSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
-						VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-						isAssignPKValue(entityMeta.getIdStrategy()), tableName);
-			}
-		}, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						return DB2DialectUtils.getSaveIgnoreExistSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
+								VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
 
 	}
 

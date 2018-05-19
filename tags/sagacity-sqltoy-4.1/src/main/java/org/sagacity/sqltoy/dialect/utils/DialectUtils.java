@@ -1503,7 +1503,7 @@ public class DialectUtils {
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, String nullFunction,
-			Connection conn, final Boolean autoCommit, String tableName) throws Exception {
+			Connection conn, final Boolean autoCommit, String tableName, boolean skipNull) throws Exception {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -1519,10 +1519,20 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
+		// 累计多少行为空
+		int count = 0;
 		for (Object[] rowValues : paramsValues) {
 			for (int i = pkIndex; i < end; i++) {
-				if (rowValues[i] == null)
-					throw new Exception("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+				if (rowValues[i] == null) {
+					// 跳过主键值为空的
+					if (skipNull) {
+						paramsValues.remove(index - count);
+						count++;
+						break;
+					} else {
+						throw new Exception("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+					}
+				}
 			}
 			index++;
 		}

@@ -223,18 +223,19 @@ public class Oracle12Dialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				PKStrategy pkStrategy = entityMeta.getIdStrategy();
-				String sequence = entityMeta.getSequence() + ".nextval";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-				}
-				return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE12, entityMeta, pkStrategy, "dual",
-						NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
-			}
-		}, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = entityMeta.getSequence() + ".nextval";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							pkStrategy = PKStrategy.SEQUENCE;
+							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+						}
+						return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE12, entityMeta, pkStrategy, "dual",
+								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -288,8 +289,8 @@ public class Oracle12Dialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.generateInsertSql(DBType.ORACLE12, entityMeta, pkStrategy,
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.generateInsertSql(DBType.ORACLE12, entityMeta, pkStrategy, NVL_FUNCTION,
+								sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					public SavePKStrategy generate(EntityMeta entityMeta) {
@@ -323,8 +324,8 @@ public class Oracle12Dialect implements Dialect {
 		}
 		String insertSql = DialectUtils.generateInsertSql(DBType.ORACLE12, entityMeta, pkStrategy, NVL_FUNCTION,
 				sequence, isAssignPKValue(pkStrategy), tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, autoCommit);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*
@@ -366,7 +367,7 @@ public class Oracle12Dialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName);
+				NVL_FUNCTION, conn, autoCommit, tableName, false);
 	}
 
 	/*
