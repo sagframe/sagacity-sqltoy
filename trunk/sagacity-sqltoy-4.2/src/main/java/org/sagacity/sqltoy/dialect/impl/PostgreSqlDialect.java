@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -36,6 +38,11 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 @SuppressWarnings({ "rawtypes" })
 public class PostgreSqlDialect implements Dialect {
+	/**
+	 * 定义日志
+	 */
+	protected final Logger logger = LogManager.getLogger(getClass());
+	
 	/**
 	 * 判定为null的函数
 	 */
@@ -280,6 +287,17 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
+		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+		logger.debug("修改记录数为:{}", updateCnt);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size())
+			return updateCnt;
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+				autoCommit, tableName);
+		logger.debug("新建记录数为:{}", saveCnt);
+		return updateCnt + saveCnt;
+		/*
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -296,6 +314,7 @@ public class PostgreSqlDialect implements Dialect {
 								sequence, forceUpdateFields, tableName);
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
+				*/
 	}
 
 	/*
