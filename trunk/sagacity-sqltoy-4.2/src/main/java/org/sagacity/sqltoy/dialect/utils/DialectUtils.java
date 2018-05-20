@@ -1481,6 +1481,8 @@ public class DialectUtils {
 	 * @param conn
 	 * @param autoCommit
 	 * @param tableName
+	 * @param skipNull
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
