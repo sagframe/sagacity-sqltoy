@@ -65,6 +65,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
  * @Modification {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
  * @Modification {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
+ * @Modification {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -232,8 +233,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * 注:需要改进一下，order by 的判断逻辑,是否在括号
-	 * 
 	 * @todo 通用的查询记录总数
 	 * @param sqlToyContext
 	 * @param sql
