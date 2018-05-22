@@ -96,29 +96,36 @@ public interface SqlToyCRUDService {
 	 */
 	public Long updateAllDeeply(List<?> entities) throws Exception;
 
-	public Long saveOrUpdate(Serializable entity) throws BaseException;
-
-	/**
-	 * @todo 修改或保存单条记录
-	 * @param entity
-	 * @param forceUpdateProps
-	 * @throws BaseException
-	 */
-	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws BaseException;
-
-	public Long saveOrUpdateAll(List<?> entities) throws BaseException;
-
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws BaseException;
-
-	/**
-	 * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
-	 * @param entities
-	 * @param forceUpdateProps
-	 * @param reflectPropertyHandler
-	 * @throws BaseException
-	 */
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) throws BaseException;
+	// @Deprecated
+	// public Long saveOrUpdate(Serializable entity) throws BaseException;
+	//
+	// /**
+	// * @todo 修改或保存单条记录
+	// * @param entity
+	// * @param forceUpdateProps
+	// * @throws BaseException
+	// */
+	// @Deprecated
+	// public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps)
+	// throws BaseException;
+	//
+	// @Deprecated
+	// public Long saveOrUpdateAll(List<?> entities) throws BaseException;
+	//
+	// @Deprecated
+	// public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps)
+	// throws BaseException;
+	//
+	// /**
+	// * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
+	// * @param entities
+	// * @param forceUpdateProps
+	// * @param reflectPropertyHandler
+	// * @throws BaseException
+	// */
+	// @Deprecated
+	// public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+	// ReflectPropertyHandler reflectPropertyHandler) throws BaseException;
 
 	/**
 	 * @todo 获取对象数据
@@ -149,13 +156,14 @@ public interface SqlToyCRUDService {
 	 * @throws Exception
 	 */
 	public Long deleteAll(List<?> entities) throws BaseException;
-	
+
 	/**
 	 * 清除表的记录
+	 * 
 	 * @param entityClass
 	 * @throws BaseException
 	 */
-	public void truncate(final Class entityClass)throws BaseException;
+	public void truncate(final Class entityClass) throws BaseException;
 
 	/**
 	 * @todo 判断是否唯一

@@ -217,91 +217,91 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
-	 * .Serializable)
-	 */
-	@Override
-	public Long saveOrUpdate(Serializable entity) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.saveOrUpdate(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
-	 * .Serializable, java.lang.String[])
-	 */
-	@Override
-	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
-	 * .io.Serializable)
-	 */
-	@Override
-	public Long saveOrUpdateAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
-	 * .io.Serializable, java.lang.String[])
-	 */
-	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
-	 * .io.Serializable, java.lang.String[],
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
+//	 * .Serializable)
+//	 */
+//	@Override
+//	public Long saveOrUpdate(Serializable entity) throws BaseException {
+//		try {
+//			if (null == entity)
+//				throw new BaseException("数据对象为null!");
+//			return sqlToyLazyDao.saveOrUpdate(entity);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new BaseException(e);
+//		}
+//	}
+//
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
+//	 * .Serializable, java.lang.String[])
+//	 */
+//	@Override
+//	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws BaseException {
+//		try {
+//			if (null == entity)
+//				throw new BaseException("数据对象为null!");
+//			return sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new BaseException(e);
+//		}
+//	}
+//
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
+//	 * .io.Serializable)
+//	 */
+//	@Override
+//	public Long saveOrUpdateAll(List<?> entities) throws BaseException {
+//		try {
+//			return sqlToyLazyDao.saveOrUpdateAll(entities);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new BaseException(e);
+//		}
+//	}
+//
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
+//	 * .io.Serializable, java.lang.String[])
+//	 */
+//	@Override
+//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws BaseException {
+//		try {
+//			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new BaseException(e);
+//		}
+//	}
+//
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
+//	 * .io.Serializable, java.lang.String[],
+//	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+//	 */
+//	@Override
+//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+//			ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
+//		try {
+//			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new BaseException(e);
+//		}
+//	}
 
 	/*
 	 * (non-Javadoc)
