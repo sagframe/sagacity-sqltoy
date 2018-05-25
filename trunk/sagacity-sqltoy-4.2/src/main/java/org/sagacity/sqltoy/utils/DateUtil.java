@@ -322,7 +322,12 @@ public class DateUtil {
 	public static String formatDate(Object dt, String fmt, String locale) {
 		if (dt == null)
 			return null;
-		if (fmt.equalsIgnoreCase("MM"))
+		if (fmt.equalsIgnoreCase("YY")) {
+			String year = Integer.toString(getYear(dt));
+			return year.substring(year.length() - 2);
+		} else if (fmt.equalsIgnoreCase("YYYY")) {
+			return Integer.toString(getYear(dt));
+		} else if (fmt.equalsIgnoreCase("MM"))
 			return Integer.toString(getMonth(dt));
 		else if (fmt.equalsIgnoreCase("dd"))
 			return Integer.toString(getDay(dt));
