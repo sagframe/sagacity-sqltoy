@@ -27,11 +27,13 @@ public class DateFormat extends AbstractMacro {
 	public String execute(String[] params, HashMap<String, Object> keyValues) {
 		Object dateValue = new Date();
 		String fmt = "yyMMdd";
-		if (params.length == 1) {
-			fmt = params[0];
-		} else if (params.length > 1) {
-			dateValue = keyValues.get(params[0].toLowerCase());
-			fmt = params[1];
+		if (params != null) {
+			if (params.length == 1) {
+				fmt = params[0];
+			} else if (params.length > 1) {
+				dateValue = keyValues.get(params[0].toLowerCase());
+				fmt = params[1];
+			}
 		}
 		return DateUtil.formatDate(dateValue, fmt);
 	}

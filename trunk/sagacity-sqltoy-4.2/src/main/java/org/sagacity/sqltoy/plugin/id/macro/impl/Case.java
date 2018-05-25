@@ -24,8 +24,10 @@ public class Case extends AbstractMacro {
 	 */
 	@Override
 	public String execute(String[] params, HashMap<String, Object> keyValues) {
+		if (params == null)
+			return "";
 		int paramSize = params.length;
-		//小于3不符合decode运算模式
+		// 小于3不符合decode运算模式
 		if (paramSize < 3)
 			return "";
 		String baseParam = params[0].trim();
