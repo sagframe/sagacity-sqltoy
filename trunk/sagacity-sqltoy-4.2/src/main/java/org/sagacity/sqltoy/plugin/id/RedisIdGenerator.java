@@ -4,13 +4,14 @@
 package org.sagacity.sqltoy.plugin.id;
 
 import java.util.Date;
-import java.util.regex.Matcher;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugin.IdGenerator;
+import org.sagacity.sqltoy.plugin.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,24 +90,43 @@ public class RedisIdGenerator implements IdGenerator {
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, int jdbcType, int length) throws Exception {
-		String key = (signature == null ? "" : signature)
-				.concat(((relatedColValue == null) ? "" : relatedColValue.toString()));
-		String realKey = key;
-		Date realBizDate = (bizDate == null ? new Date() : bizDate);
-		// key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
-		Matcher m = DF_REGEX.matcher(key);
-		if (m.find()) {
-			String df = m.group();
-			df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"", "").trim();
-			// PO@day()格式,日期采用默认的2位年模式
-			if (df.equals(""))
-				df = "yyMMdd";
-			realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(realBizDate, df))
-					.concat(key.substring(m.end()));
-		} else if (dateFormat != null)
-			realKey = key.concat(DateUtil.formatDate(realBizDate, dateFormat));
+		String key = (signature == null ? "" : signature);
+		//主键生成依赖业务的相关字段值
+		HashMap<String, Object> keyValueMap = new HashMap<String, Object>();
+		if (relatedColumns != null && relatedColumns.length > 0) {
+			for (int i = 0; i < relatedColumns.length; i++) {
+				keyValueMap.put(relatedColumns[i].toLowerCase(), relatedColValue[i]);
+			}
+		}
+		//替换signature中的@df() 和@case()等宏表达式
+		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
+		//没有宏
+		if (realKey.equals(key)) {
+			Date realBizDate = (bizDate == null ? new Date() : bizDate);
+			if (!keyValueMap.isEmpty()) {
+				realKey = MacroUtils.replaceParams(realKey, keyValueMap);
+			}
+			realKey = realKey.concat(DateUtil.formatDate(realBizDate, dateFormat));
+		}
+		//结合redis计数取末尾几位顺序数
 		Long result = generateId(realKey.equals("") ? tableName : realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
+		// // $case(columnName,a,a1,b,b1,c,c1,other)
+		// // key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
+		// Matcher m = DF_REGEX.matcher(key);
+		// if (m.find()) {
+		// String df = m.group();
+		// df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"",
+		// "").trim();
+		// // PO@day()格式,日期采用默认的2位年模式
+		// if (df.equals(""))
+		// df = "yyMMdd";
+		// realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(realBizDate,
+		// df))
+		// .concat(key.substring(m.end()));
+		// } else if (dateFormat != null)
+		// realKey = key.concat(DateUtil.formatDate(realBizDate, dateFormat));
+
 	}
 
 	/**
