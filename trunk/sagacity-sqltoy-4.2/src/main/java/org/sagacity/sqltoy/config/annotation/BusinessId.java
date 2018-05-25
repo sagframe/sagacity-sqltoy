@@ -37,7 +37,7 @@ public @interface BusinessId {
 	 * 
 	 * @return
 	 */
-	String relatedColumn() default "";
+	String[] relatedColumn() default {};
 
 	/**
 	 * 主键生成策略

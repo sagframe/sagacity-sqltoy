@@ -104,12 +104,12 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 业务主键生成时依赖的几个字段
 	 */
-	private String bizIdRelatedColumn = null;
+	private String[] bizIdRelatedColumns = null;
 
 	/**
 	 * 业务主键依赖的字段在整个表字段中的排列顺序(对象解析完后组织赋值)
 	 */
-	private Integer bizIdRelatedColIndex = null;
+	private Integer[] bizIdRelatedColIndex = null;
 
 	/**
 	 * 业务ID的长度
@@ -300,8 +300,12 @@ public class EntityMeta implements Serializable {
 			fieldIndexs.put(fieldsArray[i].replaceAll("\\_", "").toLowerCase(), i);
 		}
 
-		if (this.bizIdRelatedColumn != null) {
-			this.bizIdRelatedColIndex = fieldIndexs.get(bizIdRelatedColumn.replaceAll("\\_", "").toLowerCase());
+		if (this.bizIdRelatedColumns != null) {
+			this.bizIdRelatedColIndex = new Integer[bizIdRelatedColumns.length];
+			for (int i = 0; i < bizIdRelatedColumns.length; i++) {
+				this.bizIdRelatedColIndex[i] = fieldIndexs
+						.get(bizIdRelatedColumns[i].replaceAll("\\_", "").toLowerCase());
+			}
 		}
 	}
 
@@ -309,8 +313,15 @@ public class EntityMeta implements Serializable {
 	 * @param bizIdRelatedColumns
 	 *            the bizIdRelatedColumns to set
 	 */
-	public void setBizIdRelatedColumn(String bizIdRelatedColumn) {
-		this.bizIdRelatedColumn = bizIdRelatedColumn;
+	public void setBizIdRelatedColumns(String[] bizIdRelatedColumns) {
+		this.bizIdRelatedColumns = bizIdRelatedColumns;
+	}
+
+	/**
+	 * @return the bizIdRelatedColumn
+	 */
+	public String[] getBizIdRelatedColumns() {
+		return bizIdRelatedColumns;
 	}
 
 	public int getFieldIndex(String fieldName) {
@@ -327,7 +338,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the bizIdRelatedColIndexs
 	 */
-	public Integer getBizIdRelatedColIndex() {
+	public Integer[] getBizIdRelatedColIndex() {
 		return bizIdRelatedColIndex;
 	}
 
@@ -675,7 +686,8 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param entityClass the entityClass to set
+	 * @param entityClass
+	 *            the entityClass to set
 	 */
 	public void setEntityClass(Class entityClass) {
 		this.entityClass = entityClass;

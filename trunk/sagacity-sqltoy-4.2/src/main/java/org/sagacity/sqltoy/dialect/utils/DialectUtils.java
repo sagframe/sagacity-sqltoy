@@ -480,29 +480,34 @@ public class DialectUtils {
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
-		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		// 无主键以及多主键以及assign或通过generator方式产生主键策略
 		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
-			Object relatedColValue = null;
+			Object[] relatedColValue = null;
 			int idJdbcType = entityMeta.getIdType();
 			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
 			for (int i = 0; i < paramValues.size(); i++) {
 				rowData = (Object[]) paramValues.get(i);
+				// 获取主键策略关联字段的值
 				if (relatedColumn != null) {
-					relatedColValue = rowData[relatedColumn];
+					relatedColValue = new Object[relatedColumn.length];
+					for (int meter = 0; meter < relatedColumn.length; meter++) {
+						relatedColValue[meter] = rowData[relatedColumn[meter]];
+					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, null, businessIdType, bizIdLength);
+							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+							bizIdLength);
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
@@ -540,30 +545,34 @@ public class DialectUtils {
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
-		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		// 无主键以及多主键以及assign或通过generator方式产生主键策略
 		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
-			Object relatedColValue = null;
+			Object[] relatedColValue = null;
 			int idJdbcType = entityMeta.getIdType();
 			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
 			for (int i = 0; i < paramValues.size(); i++) {
 				rowData = (Object[]) paramValues.get(i);
 				// 关联字段赋值
 				if (relatedColumn != null) {
-					relatedColValue = rowData[relatedColumn];
+					relatedColValue = new Object[relatedColumn.length];
+					for (int meter = 0; meter < relatedColumn.length; meter++) {
+						relatedColValue[meter] = rowData[relatedColumn[meter]];
+					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, null, businessIdType, bizIdLength);
+							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+							bizIdLength);
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
@@ -1187,25 +1196,29 @@ public class DialectUtils {
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
-		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
 		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
-			Object relatedColValue = null;
+			Object[] relatedColValue = null;
 			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
 			if (relatedColumn != null) {
-				relatedColValue = fullParamValues[relatedColumn];
+				relatedColValue = new Object[relatedColumn.length];
+				for (int meter = 0; meter < relatedColumn.length; meter++) {
+					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
-						relatedColValue, null, entityMeta.getIdType(), idLength);
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength);
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-						signature, relatedColValue, null, businessIdType, bizIdLength);
+						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+						bizIdLength);
 				// 回写业务主键值
 				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -1323,7 +1336,7 @@ public class DialectUtils {
 		int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
-		Integer relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
 		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -1331,22 +1344,26 @@ public class DialectUtils {
 			Object[] rowData;
 			boolean isAssigned = true;
 			int idJdbcType = entityMeta.getIdType();
-			Object relatedColValue = null;
+			Object[] relatedColValue = null;
 			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
 			List<Object[]> idSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
 				if (relatedColumn != null) {
-					relatedColValue = rowData[relatedColumn];
+					relatedColValue = new Object[relatedColumn.length];
+					for (int meter = 0; meter < relatedColumn.length; meter++) {
+						relatedColValue[meter] = rowData[relatedColumn[meter]];
+					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
-							signature, relatedColValue, null, businessIdType, bizIdLength);
+							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+							bizIdLength);
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
@@ -1502,7 +1519,7 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
-		//累计多少行为空
+		// 累计多少行为空
 		int count = 0;
 		for (Object[] rowValues : paramsValues) {
 			for (int i = pkIndex; i < end; i++) {

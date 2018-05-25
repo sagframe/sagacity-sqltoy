@@ -20,11 +20,11 @@ public interface IdGenerator {
 	 *            识别符号
 	 * @param relatedColValue
 	 *            关联字段的值
-	 * @param bizDate     
+	 * @param bizDate
 	 * @param jdbcType
 	 * @param length
 	 * @return
 	 */
-	public Object getId(String tableName, String signature, Object relatedColValue, Date bizDate, int jdbcType,
-			int length) throws Exception;
+	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
+			Date bizDate, int jdbcType, int length) throws Exception;
 }

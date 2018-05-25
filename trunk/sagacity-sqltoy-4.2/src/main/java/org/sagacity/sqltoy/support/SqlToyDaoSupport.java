@@ -1048,6 +1048,6 @@ public class SqlToyDaoSupport {
 			throw new Exception(StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entityClass.getName()));
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
 		return entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
-				null, bizDate, businessIdType, entityMeta.getBizIdLength()).toString();
+				null, null, bizDate, businessIdType, entityMeta.getBizIdLength()).toString();
 	}
 }

@@ -480,7 +480,7 @@ public class ShardingUtils {
 				// 主键值未赋予,则自动赋予
 				if (pkValue == null || pkValue.toString().trim().equals("")) {
 					PropertyUtils.setProperty(entities.get(i), pks[0],
-							idGenerator.getId(table, null, null, null, idType, idLength));
+							idGenerator.getId(table, null, null, null, null, idType, idLength));
 				}
 			}
 		}
