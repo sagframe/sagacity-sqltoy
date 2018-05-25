@@ -456,8 +456,8 @@ public class EntityManager {
 				entityMeta.setBizIdLength(bizId.length());
 				entityMeta.setBizIdSignature(bizId.signature());
 				// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
-				if (bizId.relatedColumn() != null && bizId.relatedColumn().length > 0)
-					entityMeta.setBizIdRelatedColumns(bizId.relatedColumn());
+				if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0)
+					entityMeta.setBizIdRelatedColumns(bizId.relatedColumns());
 				processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
 				// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 				if (id != null) {
