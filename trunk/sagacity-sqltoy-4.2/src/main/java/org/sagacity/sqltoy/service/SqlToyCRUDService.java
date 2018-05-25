@@ -262,5 +262,11 @@ public interface SqlToyCRUDService {
 	 */
 	public String generateBizId(Class entityClass, Date bizDate) throws BaseException;
 	
+	/**
+	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
+	 * @param entity
+	 * @return
+	 * @throws Exception
+	 */
 	public String generateBizId(Serializable entity) throws Exception;
 }
