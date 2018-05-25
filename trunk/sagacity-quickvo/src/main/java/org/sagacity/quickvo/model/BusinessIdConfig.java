@@ -31,16 +31,16 @@ public class BusinessIdConfig implements Serializable {
 	 * 识别符
 	 */
 	private String signature;
-	
+
 	/**
 	 * 长度
 	 */
-	private  int length;
+	private int length;
 
 	/**
 	 * 关联字段
 	 */
-	private String relatedColumn;
+	private String relatedColumns;
 
 	/**
 	 * 主键生成策略
@@ -56,7 +56,8 @@ public class BusinessIdConfig implements Serializable {
 	}
 
 	/**
-	 * @param tableName the tableName to set
+	 * @param tableName
+	 *            the tableName to set
 	 */
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
@@ -70,7 +71,8 @@ public class BusinessIdConfig implements Serializable {
 	}
 
 	/**
-	 * @param column the column to set
+	 * @param column
+	 *            the column to set
 	 */
 	public void setColumn(String column) {
 		this.column = column;
@@ -84,7 +86,8 @@ public class BusinessIdConfig implements Serializable {
 	}
 
 	/**
-	 * @param signature the signature to set
+	 * @param signature
+	 *            the signature to set
 	 */
 	public void setSignature(String signature) {
 		this.signature = signature;
@@ -98,7 +101,8 @@ public class BusinessIdConfig implements Serializable {
 	}
 
 	/**
-	 * @param length the length to set
+	 * @param length
+	 *            the length to set
 	 */
 	public void setLength(int length) {
 		this.length = length;
@@ -107,15 +111,16 @@ public class BusinessIdConfig implements Serializable {
 	/**
 	 * @return the relatedColumn
 	 */
-	public String getRelatedColumn() {
-		return relatedColumn;
+	public String getRelatedColumns() {
+		return relatedColumns;
 	}
 
 	/**
-	 * @param relatedColumn the relatedColumn to set
+	 * @param relatedColumn
+	 *            the relatedColumn to set
 	 */
-	public void setRelatedColumn(String relatedColumn) {
-		this.relatedColumn = relatedColumn;
+	public void setRelatedColumns(String relatedColumns) {
+		this.relatedColumns = relatedColumns;
 	}
 
 	/**
@@ -126,11 +131,11 @@ public class BusinessIdConfig implements Serializable {
 	}
 
 	/**
-	 * @param generator the generator to set
+	 * @param generator
+	 *            the generator to set
 	 */
 	public void setGenerator(String generator) {
 		this.generator = generator;
 	}
-	
-	
+
 }
