@@ -102,10 +102,11 @@ public class RedisIdGenerator implements IdGenerator {
 		//没有宏
 		if (realKey.equals(key)) {
 			Date realBizDate = (bizDate == null ? new Date() : bizDate);
-			if (!keyValueMap.isEmpty()) {
-				realKey = MacroUtils.replaceParams(realKey, keyValueMap);
-			}
 			realKey = realKey.concat(DateUtil.formatDate(realBizDate, dateFormat));
+		}
+		//参数替换
+		if (!keyValueMap.isEmpty()) {
+			realKey = MacroUtils.replaceParams(realKey, keyValueMap);
 		}
 		//结合redis计数取末尾几位顺序数
 		Long result = generateId(realKey.equals("") ? tableName : realKey);
