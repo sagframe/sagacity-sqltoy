@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.plugin.id;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +34,7 @@ public class RedisIdGenerator implements IdGenerator {
 	/**
 	 * 嵌入的日期匹配表达式
 	 */
-	private final static Pattern DF_REGEX = Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
+	//private final static Pattern DF_REGEX = Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
 
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
