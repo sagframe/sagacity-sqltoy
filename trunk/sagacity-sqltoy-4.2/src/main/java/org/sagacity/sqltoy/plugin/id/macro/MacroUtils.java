@@ -49,9 +49,8 @@ public class MacroUtils {
 
 	static {
 		macros.put("@df", new DateFormat());
-		macros.put("$df", new DateFormat());
+		macros.put("@day", new DateFormat());
 		macros.put("@case", new Case());
-		macros.put("$case", new Case());
 	}
 
 	/**
