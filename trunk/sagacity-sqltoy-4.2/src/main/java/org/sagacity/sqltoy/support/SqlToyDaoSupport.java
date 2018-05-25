@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugin.id.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1049,5 +1050,33 @@ public class SqlToyDaoSupport {
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
 		return entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
 				null, null, bizDate, businessIdType, entityMeta.getBizIdLength()).toString();
+	}
+
+	/**
+	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
+	 * @param entity
+	 * @return
+	 * @throws Exception
+	 */
+	protected String generateBizId(Serializable entity) throws Exception {
+		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
+		if (entityMeta == null || entityMeta.getBusinessIdGenerator() == null)
+			throw new Exception(
+					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
+		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
+		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
+		//提取关联属性的值
+		Object[] relatedColValue = null;
+		if (relatedColumn != null) {
+			relatedColValue = new Object[relatedColumn.length];
+			for (int meter = 0; meter < relatedColumn.length; meter++) {
+				relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+			}
+		}
+		return entityMeta.getBusinessIdGenerator()
+				.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(),
+						relatedColValue, new Date(), businessIdType, entityMeta.getBizIdLength())
+				.toString();
 	}
 }

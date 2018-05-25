@@ -547,4 +547,6 @@ public interface SqlToyLazyDao {
 	 */
 	public String generateBizId(Class entityClass, Date bizDate) throws Exception;
 
+	public String generateBizId(Serializable entity) throws Exception;
+
 }

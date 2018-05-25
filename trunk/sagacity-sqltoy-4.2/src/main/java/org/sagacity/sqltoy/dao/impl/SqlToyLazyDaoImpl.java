@@ -850,4 +850,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.generateBizId(entityClass, bizDate);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#generateBizId(java.io.Serializable)
+	 */
+	@Override
+	public String generateBizId(Serializable entity) throws Exception {
+		return super.generateBizId(entity);
+	}
+
 }

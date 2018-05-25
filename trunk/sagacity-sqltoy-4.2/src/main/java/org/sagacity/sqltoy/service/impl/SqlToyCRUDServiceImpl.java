@@ -606,4 +606,20 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#generateBizId(java.io.
+	 * Serializable)
+	 */
+	@Override
+	public String generateBizId(Serializable entity) throws Exception {
+		try {
+			return sqlToyLazyDao.generateBizId(entity);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BaseException(e);
+		}
+	}
+
 }

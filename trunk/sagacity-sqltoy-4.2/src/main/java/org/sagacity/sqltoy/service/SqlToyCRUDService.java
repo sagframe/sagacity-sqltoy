@@ -261,4 +261,6 @@ public interface SqlToyCRUDService {
 	 * @throws Exception
 	 */
 	public String generateBizId(Class entityClass, Date bizDate) throws BaseException;
+	
+	public String generateBizId(Serializable entity) throws Exception;
 }
