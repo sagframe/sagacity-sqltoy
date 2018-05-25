@@ -126,7 +126,7 @@
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
-									<xsd:attribute name="related-column" type="xsd:string">
+									<xsd:attribute name="related-columns" type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>
 											<![CDATA[关联字段,用来组合业务主键的相关字段,可以是多个]]>
