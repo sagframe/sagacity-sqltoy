@@ -25,13 +25,11 @@ public class DateFormat extends AbstractMacro {
 	 */
 	@Override
 	public String execute(String[] params, HashMap<String, Object> keyValues) {
-		if (params.length == 0)
-			return "";
 		Object dateValue = new Date();
 		String fmt = "yyMMdd";
-		if (params.length == 1)
+		if (params.length == 1) {
 			fmt = params[0];
-		if (params.length > 1) {
+		} else if (params.length > 1) {
 			dateValue = keyValues.get(params[0].toLowerCase());
 			fmt = params[1];
 		}
