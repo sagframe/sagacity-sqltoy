@@ -683,6 +683,10 @@ public class SqlXMLConfigParse {
 			String uncachedTemplate;
 			// 为mongo和elastic模式提供备用
 			String[] aliasNames;
+			// 分隔表达式
+			String splitRegex = null;
+			// 对应split重新连接的字符
+			String linkSign = ",";
 			for (Element translate : translates) {
 				cacheName = translate.attributeValue("cache");
 				// 具体的缓存子分类，如数据字典类别
@@ -699,6 +703,18 @@ public class SqlXMLConfigParse {
 					uncachedTemplate = translate.attributeValue("uncached-template");
 				else if (translate.attribute("uncached") != null)
 					uncachedTemplate = translate.attributeValue("uncached");
+
+				if (translate.attribute("split-regex") != null) {
+					splitRegex = translate.attributeValue("split-regex");
+					// 正则转化
+					if (splitRegex.equals(",") || splitRegex.equals("，"))
+						splitRegex = "\\,";
+					else if (splitRegex.equals(";") || splitRegex.equals("；"))
+						splitRegex = "\\;";
+					if (translate.attribute("link-sign") != null) {
+						linkSign = translate.attributeValue("link-sign");
+					}
+				}
 				// 使用alias时只能针对单列处理
 				if (translate.attribute("alias-name") != null)
 					aliasNames = trimParams(translate.attributeValue("alias-name").toLowerCase().split(","));
@@ -718,6 +734,8 @@ public class SqlXMLConfigParse {
 						translateModel.setColumn(columns[i]);
 						translateModel.setAlias(aliasNames == null ? columns[i] : aliasNames[i]);
 						translateModel.setDictType(cacheType);
+						translateModel.setSplitRegex(splitRegex);
+						translateModel.setLinkSign(linkSign);
 						if (uncachedTemplate != null) {
 							if (uncachedTemplate.trim().equals(""))
 								translateModel.setUncached(null);

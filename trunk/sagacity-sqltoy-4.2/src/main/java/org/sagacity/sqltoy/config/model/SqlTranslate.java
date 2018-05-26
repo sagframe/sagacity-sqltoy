@@ -40,16 +40,26 @@ public class SqlTranslate implements Serializable {
 	 * 默认第二列为value，第一列为key
 	 */
 	private int index = 1;
-	
+
 	/**
 	 * 别名(预留使用)
 	 */
 	private String alias;
-	
+
+	/**
+	 * 分隔表达式
+	 */
+	private String splitRegex;
+
+	/**
+	 * 重新连接的字符
+	 */
+	private String linkSign = ",";
+
 	/**
 	 * 未被缓存的模板
 	 */
-	private String uncached=SqlToyConstants.UNCACHED_KEY_RESULT;
+	private String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
 
 	/**
 	 * @return the column
@@ -89,7 +99,8 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param cache the cache to set
+	 * @param cache
+	 *            the cache to set
 	 */
 	public void setCache(String cache) {
 		this.cache = cache;
@@ -118,7 +129,8 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param alias the alias to set
+	 * @param alias
+	 *            the alias to set
 	 */
 	public void setAlias(String alias) {
 		this.alias = alias;
@@ -132,10 +144,41 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param uncached the uncached to set
+	 * @param uncached
+	 *            the uncached to set
 	 */
 	public void setUncached(String uncached) {
 		this.uncached = uncached;
+	}
+
+	/**
+	 * @return the splitRegex
+	 */
+	public String getSplitRegex() {
+		return splitRegex;
+	}
+
+	/**
+	 * @param splitRegex
+	 *            the splitRegex to set
+	 */
+	public void setSplitRegex(String splitRegex) {
+		this.splitRegex = splitRegex;
+	}
+
+	/**
+	 * @return the linkSign
+	 */
+	public String getLinkSign() {
+		return linkSign;
+	}
+
+	/**
+	 * @param linkSign
+	 *            the linkSign to set
+	 */
+	public void setLinkSign(String linkSign) {
+		this.linkSign = linkSign;
 	}
 
 }

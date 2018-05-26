@@ -755,9 +755,9 @@ public class ResultUtils {
 		Object fieldValue;
 		SqlTranslate translate;
 		String label;
-		Object[] cacheValues;
+		//Object[] cacheValues;
 		String keyIndex;
-		boolean isDebug = logger.isDebugEnabled();
+		//boolean isDebug = logger.isDebugEnabled();
 		// String uncachedKeyResult = SqlToyConstants.UNCACHED_KEY_RESULT;
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
@@ -771,7 +771,8 @@ public class ResultUtils {
 					translate = translateMap.get(label);
 					if (translate == null)
 						translate = translateMap.get(keyIndex);
-					cacheValues = translateCaches.get(translate.getColumn()).get(fieldValue.toString());
+					fieldValue=translateKey(translate,translateCaches.get(translate.getColumn()),fieldValue);
+					/*cacheValues = translateCaches.get(translate.getColumn()).get(fieldValue.toString());
 					if (cacheValues == null) {
 						if (translate.getUncached() != null)
 							fieldValue = translate.getUncached().replace("${value}", fieldValue.toString());
@@ -780,12 +781,57 @@ public class ResultUtils {
 						if (isDebug)
 							logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), fieldValue);
 					} else
-						fieldValue = cacheValues[translate.getIndex()];
+						fieldValue = cacheValues[translate.getIndex()];*/
 				}
 			}
 			rowData.add(fieldValue);
 		}
 		return rowData;
+	}
+
+	/**
+	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
+	 * @todo 统一对key进行缓存翻译
+	 * @param translate
+	 * @param translateKeyMap
+	 * @param fieldValue
+	 * @return
+	 */
+	private static Object translateKey(SqlTranslate translate, HashMap<String, Object[]> translateKeyMap,
+			Object fieldValue) {
+		String fieldStr = fieldValue.toString();
+		if (translate.getSplitRegex() == null) {
+			Object[] cacheValues = translateKeyMap.get(fieldStr);
+			if (cacheValues == null) {
+				if (translate.getUncached() != null)
+					fieldValue = translate.getUncached().replace("${value}", fieldStr);
+				else
+					fieldValue = fieldValue.toString();
+				logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), fieldValue);
+			} else
+				fieldValue = cacheValues[translate.getIndex()];
+			return fieldValue;
+		} else {
+			String[] keys = fieldStr.split(translate.getSplitRegex());
+			String linkSign = translate.getLinkSign();
+			StringBuilder result = new StringBuilder();
+			int index = 0;
+			for (String key : keys) {
+				if (index > 0)
+					result.append(linkSign);
+				Object[] cacheValues = translateKeyMap.get(key.trim());
+				if (cacheValues == null) {
+					if (translate.getUncached() != null)
+						result.append(translate.getUncached().replace("${value}", key));
+					else
+						result.append(key);
+					logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), key);
+				} else
+					result.append(cacheValues[translate.getIndex()]);
+				index++;
+			}
+			return result.toString();
+		}
 	}
 
 	/**
