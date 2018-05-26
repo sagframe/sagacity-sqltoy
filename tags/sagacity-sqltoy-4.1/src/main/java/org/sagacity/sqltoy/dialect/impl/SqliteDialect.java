@@ -204,6 +204,17 @@ public class SqliteDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
+		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+		logger.debug("修改记录数为:{}", updateCnt);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size())
+			return updateCnt;
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+				autoCommit, tableName);
+		logger.debug("新建记录数为:{}", saveCnt);
+		return updateCnt + saveCnt;
+		/*
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -211,7 +222,7 @@ public class SqliteDialect implements Dialect {
 						return SqliteDialectUtils.getSaveOrUpdateSql(DBType.SQLITE, entityMeta, forceUpdateFields,
 								tableName);
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
+				}, reflectPropertyHandler, conn, autoCommit);*/
 	}
 
 	/*
