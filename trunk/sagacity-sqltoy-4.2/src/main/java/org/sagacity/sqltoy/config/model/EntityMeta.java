@@ -182,6 +182,11 @@ public class EntityMeta implements Serializable {
 	private Class[] cascadeTypes;
 
 	private int idJdbcType = -1;
+	
+	/**
+	 * 是否存在业务id配置策略
+	 */
+	private boolean hasBizIdConfig=false;
 
 	/**
 	 * @return the loadAllSql
@@ -691,6 +696,20 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setEntityClass(Class entityClass) {
 		this.entityClass = entityClass;
+	}
+
+	/**
+	 * @return the hasBizIdConfig
+	 */
+	public boolean isHasBizIdConfig() {
+		return hasBizIdConfig;
+	}
+
+	/**
+	 * @param hasBizIdConfig the hasBizIdConfig to set
+	 */
+	public void setHasBizIdConfig(boolean hasBizIdConfig) {
+		this.hasBizIdConfig = hasBizIdConfig;
 	}
 
 }

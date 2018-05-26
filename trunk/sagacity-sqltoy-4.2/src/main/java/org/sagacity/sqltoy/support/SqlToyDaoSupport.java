@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.plugin.id.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -1037,22 +1038,6 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生业务ID
-	 * @param entityClass
-	 * @param bizDate
-	 * @return
-	 * @throws Exception
-	 */
-	protected String generateBizId(Class entityClass, Date bizDate) throws Exception {
-		EntityMeta entityMeta = this.getEntityMeta(entityClass);
-		if (entityMeta == null || entityMeta.getBusinessIdGenerator() == null)
-			throw new Exception(StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entityClass.getName()));
-		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
-		return entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
-				null, null, bizDate, businessIdType, entityMeta.getBizIdLength()).toString();
-	}
-
-	/**
 	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
 	 * @param entity
 	 * @return
@@ -1060,13 +1045,13 @@ public class SqlToyDaoSupport {
 	 */
 	protected String generateBizId(Serializable entity) throws Exception {
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
-		if (entityMeta == null || entityMeta.getBusinessIdGenerator() == null)
+		if (entityMeta == null || !entityMeta.isHasBizIdConfig())
 			throw new Exception(
 					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
-		//提取关联属性的值
+		// 提取关联属性的值
 		Object[] relatedColValue = null;
 		if (relatedColumn != null) {
 			relatedColValue = new Object[relatedColumn.length];
@@ -1074,7 +1059,9 @@ public class SqlToyDaoSupport {
 				relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 			}
 		}
-		return entityMeta.getBusinessIdGenerator()
+		IdGenerator idGenerator = (entityMeta.getBusinessIdGenerator() == null) ? entityMeta.getIdGenerator()
+				: entityMeta.getBusinessIdGenerator();
+		return idGenerator
 				.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(),
 						relatedColValue, new Date(), businessIdType, entityMeta.getBizIdLength())
 				.toString();

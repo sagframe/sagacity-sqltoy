@@ -455,6 +455,8 @@ public class EntityManager {
 				String bizGenerator = bizId.generator();
 				entityMeta.setBizIdLength(bizId.length());
 				entityMeta.setBizIdSignature(bizId.signature());
+				entityMeta.setHasBizIdConfig(true);
+				entityMeta.setBusinessIdField(field.getName());
 				// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
 				if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0)
 					entityMeta.setBizIdRelatedColumns(bizId.relatedColumns());
@@ -463,7 +465,6 @@ public class EntityManager {
 				if (id != null) {
 					entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
 				} else {
-					entityMeta.setBusinessIdField(field.getName());
 					entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
 				}
 			}

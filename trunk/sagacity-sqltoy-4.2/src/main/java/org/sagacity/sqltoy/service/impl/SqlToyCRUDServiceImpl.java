@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.service.impl;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -583,23 +582,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public long generateBizId(String signature, int increment) throws BaseException {
 		try {
 			return sqlToyLazyDao.generateBizId(signature, increment);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.sagacity.sqltoy.service.SqlToyCRUDService#generateBizId(java.lang.Class,
-	 * java.util.Date)
-	 */
-	@Override
-	public String generateBizId(Class entityClass, Date bizDate) throws BaseException {
-		try {
-			return sqlToyLazyDao.generateBizId(entityClass, bizDate);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BaseException(e);

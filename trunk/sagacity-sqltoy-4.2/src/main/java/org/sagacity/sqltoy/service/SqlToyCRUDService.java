@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -253,15 +252,6 @@ public interface SqlToyCRUDService {
 	 */
 	public long generateBizId(String signature, int increment) throws BaseException;
 
-	/**
-	 * @todo 根据对象类型以及通过对象配置的业务主键策略产生ID
-	 * @param entityClass
-	 * @param bizDate
-	 * @return
-	 * @throws Exception
-	 */
-	public String generateBizId(Class entityClass, Date bizDate) throws BaseException;
-	
 	/**
 	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
 	 * @param entity
