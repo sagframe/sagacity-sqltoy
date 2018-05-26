@@ -442,6 +442,11 @@
 				<xsd:documentation><![CDATA[F,M这种多代码翻译的分隔符号]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="link-sign" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[对应split-regex进行重新拼接的字符]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="cache-indexs" type="xsd:string" />
 		<xsd:attribute name="uncached-template"
 			type="xsd:string" />
