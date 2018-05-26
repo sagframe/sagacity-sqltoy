@@ -74,6 +74,7 @@
 	</sql>
 	
 	<sql id="show_case">
+		<translate cache="xxxCache" columns="SEX_TYPE" split-regex="\\," link-sign=","/>
 		<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME from 
