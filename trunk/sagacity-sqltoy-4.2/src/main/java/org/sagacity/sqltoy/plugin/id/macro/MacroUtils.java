@@ -95,16 +95,16 @@ public class MacroUtils {
 			int sysMarkIndex = StringUtil.getSymMarkIndex("(", ")", matchedMacro, 0);
 			// 得到最后一个转换器中的参数
 			String macroParam = matchedMacro.substring(matchedMacro.indexOf("(") + 1, sysMarkIndex);
-			String MacroName = matchedMacro.substring(1, matchedMacro.indexOf("("));
-			String MacroStr = matchedMacro.substring(0, sysMarkIndex + 1);
+			String macroName = matchedMacro.substring(0, matchedMacro.indexOf("("));
+			String macroStr = matchedMacro.substring(0, sysMarkIndex + 1);
 			// 调用转换器进行计算
-			AbstractMacro macro = macros.get(MacroName);
+			AbstractMacro macro = macros.get(macroName);
 			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues);
 			// 最外层是转换器，则将转结果直接以对象方式返回
-			if (hasMacroStr.trim().equals(MacroStr.trim()))
+			if (hasMacroStr.trim().equals(macroStr.trim()))
 				return result;
 			String macroResult = (result == null) ? "" : result;
-			hasMacroStr = replaceStr(hasMacroStr, MacroStr, macroResult, subIndexCount - 1);
+			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
 			return replaceMacros(hasMacroStr, keyValues, isOuter);
 		} else
 			return hasMacroStr;

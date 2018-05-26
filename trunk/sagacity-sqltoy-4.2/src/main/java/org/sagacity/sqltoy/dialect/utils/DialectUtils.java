@@ -561,6 +561,9 @@ public class DialectUtils {
 					relatedColValue = new Object[relatedColumn.length];
 					for (int meter = 0; meter < relatedColumn.length; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
+						if (relatedColValue[meter] == null)
+							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+									+ relatedColumn[meter] + " 值为null!");
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
@@ -1207,6 +1210,9 @@ public class DialectUtils {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+					if (relatedColValue[meter] == null)
+						throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+								+ relatedColumn[meter] + " 值为null!");
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -1353,6 +1359,9 @@ public class DialectUtils {
 					relatedColValue = new Object[relatedColumn.length];
 					for (int meter = 0; meter < relatedColumn.length; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
+						if (relatedColValue[meter] == null)
+							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+									+ relatedColumn[meter] + " 值为null!");
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {

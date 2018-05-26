@@ -34,7 +34,8 @@ public class RedisIdGenerator implements IdGenerator {
 	/**
 	 * 嵌入的日期匹配表达式
 	 */
-	//private final static Pattern DF_REGEX = Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
+	// private final static Pattern DF_REGEX =
+	// Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
 
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
@@ -90,25 +91,25 @@ public class RedisIdGenerator implements IdGenerator {
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
 			Date bizDate, int jdbcType, int length) throws Exception {
 		String key = (signature == null ? "" : signature);
-		//主键生成依赖业务的相关字段值
+		// 主键生成依赖业务的相关字段值
 		HashMap<String, Object> keyValueMap = new HashMap<String, Object>();
 		if (relatedColumns != null && relatedColumns.length > 0) {
 			for (int i = 0; i < relatedColumns.length; i++) {
 				keyValueMap.put(relatedColumns[i].toLowerCase(), relatedColValue[i]);
 			}
 		}
-		//替换signature中的@df() 和@case()等宏表达式
+		// 替换signature中的@df() 和@case()等宏表达式
 		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
-		//没有宏
+		// 没有宏
 		if (realKey.equals(key)) {
 			Date realBizDate = (bizDate == null ? new Date() : bizDate);
-			realKey = realKey.concat(DateUtil.formatDate(realBizDate, dateFormat));
+			realKey = realKey.concat(DateUtil.formatDate(realBizDate, (dateFormat == null) ? "yyMMdd" : dateFormat));
 		}
-		//参数替换
+		// 参数替换
 		if (!keyValueMap.isEmpty()) {
 			realKey = MacroUtils.replaceParams(realKey, keyValueMap);
 		}
-		//结合redis计数取末尾几位顺序数
+		// 结合redis计数取末尾几位顺序数
 		Long result = generateId(realKey.equals("") ? tableName : realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 		// // $case(columnName,a,a1,b,b1,c,c1,other)
