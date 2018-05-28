@@ -389,35 +389,35 @@ public class ParamFilterUtils {
 	 */
 	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel) {
 		Object result;
+		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
 		// 取当前月份的第一天
-		if (paramFilterModel.getFormat().equalsIgnoreCase("first_day")) {
+		if (format.equalsIgnoreCase("first_day")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的第一天
-		else if (paramFilterModel.getFormat().equalsIgnoreCase("first_year_day")) {
+		else if (format.equalsIgnoreCase("first_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-01-01";
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取当前月份的最后一天
-		else if (paramFilterModel.getFormat().equalsIgnoreCase("last_day")) {
+		else if (format.equalsIgnoreCase("last_day")) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的最后一天
-		else if (paramFilterModel.getFormat().equalsIgnoreCase("last_year_day")) {
+		else if (format.equalsIgnoreCase("last_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-12-31";
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} else {
 			result = DateUtil.addDay(paramValue, paramFilterModel.getIncrementDays());
-			if (paramFilterModel.getFormat() != null)
-				result = DateUtil.parse(DateUtil.formatDate(result, paramFilterModel.getFormat()),
-						paramFilterModel.getFormat());
+			if (StringUtil.isNotBlank(format))
+				result = DateUtil.parse(DateUtil.formatDate(result, format), format);
 		}
 		return result;
 	}
@@ -439,8 +439,9 @@ public class ParamFilterUtils {
 
 		// 只要有一个对比值相等表示成立，返回null
 		for (String contrast : contrasts) {
-			if (type == 1 && DateUtil.convertDateObject(param).compareTo(contrast.equalsIgnoreCase("sysdate")
-					? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT) : DateUtil.convertDateObject(contrast)) == 0)
+			if (type == 1 && DateUtil.convertDateObject(param)
+					.compareTo(contrast.equalsIgnoreCase("sysdate") ? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+							: DateUtil.convertDateObject(contrast)) == 0)
 				return null;
 			else if (type == 2 && Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
 				return null;
@@ -468,8 +469,9 @@ public class ParamFilterUtils {
 			type = 2;
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
 		for (String contrast : contrasts) {
-			if (type == 1 && DateUtil.convertDateObject(param).compareTo(contrast.equalsIgnoreCase("sysdate")
-					? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT) : DateUtil.convertDateObject(contrast)) == 0)
+			if (type == 1 && DateUtil.convertDateObject(param)
+					.compareTo(contrast.equalsIgnoreCase("sysdate") ? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+							: DateUtil.convertDateObject(contrast)) == 0)
 				return param;
 			else if (type == 2 && Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
 				return param;
