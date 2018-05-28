@@ -687,7 +687,9 @@ public class SqlXMLConfigParse {
 			String splitRegex = null;
 			// 对应split重新连接的字符
 			String linkSign = ",";
+			boolean hasLink = false;
 			for (Element translate : translates) {
+				hasLink = false;
 				cacheName = translate.attributeValue("cache");
 				// 具体的缓存子分类，如数据字典类别
 				if (translate.attribute("cache-type") != null)
@@ -706,13 +708,23 @@ public class SqlXMLConfigParse {
 
 				if (translate.attribute("split-regex") != null) {
 					splitRegex = translate.attributeValue("split-regex");
-					// 正则转化
-					if (splitRegex.equals(",") || splitRegex.equals("，"))
-						splitRegex = "\\,";
-					else if (splitRegex.equals(";") || splitRegex.equals("；"))
-						splitRegex = "\\;";
 					if (translate.attribute("link-sign") != null) {
 						linkSign = translate.attributeValue("link-sign");
+						hasLink = true;
+					}
+					// 正则转化
+					if (splitRegex.equals(",") || splitRegex.equals("，")) {
+						splitRegex = "\\,";
+					} else if (splitRegex.equals(";") || splitRegex.equals("；")) {
+						splitRegex = "\\;";
+						if (!hasLink)
+							linkSign = ";";
+					} else if (splitRegex.equals("、")) {
+						splitRegex = "\\、";
+					} else if (splitRegex.equals("->")) {
+						splitRegex = "\\-\\>";
+						if (!hasLink)
+							linkSign = "->";
 					}
 				}
 				// 使用alias时只能针对单列处理
