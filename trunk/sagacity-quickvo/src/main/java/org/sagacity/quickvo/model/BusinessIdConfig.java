@@ -40,7 +40,7 @@ public class BusinessIdConfig implements Serializable {
 	/**
 	 * 关联字段
 	 */
-	private String relatedColumns;
+	private String[] relatedColumns;
 
 	/**
 	 * 主键生成策略
@@ -111,7 +111,7 @@ public class BusinessIdConfig implements Serializable {
 	/**
 	 * @return the relatedColumn
 	 */
-	public String getRelatedColumns() {
+	public String[] getRelatedColumns() {
 		return relatedColumns;
 	}
 
@@ -119,7 +119,7 @@ public class BusinessIdConfig implements Serializable {
 	 * @param relatedColumn
 	 *            the relatedColumn to set
 	 */
-	public void setRelatedColumns(String relatedColumns) {
+	public void setRelatedColumns(String[] relatedColumns) {
 		this.relatedColumns = relatedColumns;
 	}
 

@@ -287,11 +287,13 @@ public class XMLConfigLoader {
 				if (tableElt.attribute("related-column") != null) {
 					String relatedColumn = tableElt.attributeValue("related-column");
 					// 统一分割符
-					bizIdConfig.setRelatedColumns(relatedColumn.replaceAll("\\;", ",").replaceAll("\\，", ","));
+					bizIdConfig.setRelatedColumns(
+							relatedColumn.replaceAll("\\;", ",").replaceAll("\\，", ",").split("\\,"));
 				} else if (tableElt.attribute("related-columns") != null) {
 					String relatedColumns = tableElt.attributeValue("related-columns");
 					// 统一分割符
-					bizIdConfig.setRelatedColumns(relatedColumns.replaceAll("\\;", ",").replaceAll("\\，", ","));
+					bizIdConfig.setRelatedColumns(
+							relatedColumns.replaceAll("\\;", ",").replaceAll("\\，", ",").split("\\,"));
 				}
 				if (tableElt.attribute("signature") != null)
 					bizIdConfig.setSignature(tableElt.attributeValue("signature"));
