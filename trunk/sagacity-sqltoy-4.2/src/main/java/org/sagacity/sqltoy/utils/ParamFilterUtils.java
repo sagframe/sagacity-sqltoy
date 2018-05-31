@@ -390,6 +390,7 @@ public class ParamFilterUtils {
 	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel) {
 		Object result;
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
+		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
 		if (format.equalsIgnoreCase("first_day")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
