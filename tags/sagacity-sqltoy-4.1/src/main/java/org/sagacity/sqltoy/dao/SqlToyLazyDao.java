@@ -158,34 +158,29 @@ public interface SqlToyLazyDao {
 
 	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws Exception;
 
-//	@Deprecated
-//	public Long saveOrUpdate(Serializable serializableVO) throws Exception;
-//
-//	/**
-//	 * @todo 保存或修改数据
-//	 * @param serializableVO
-//	 * @param forceUpdateProps
-//	 * @throws Exception
-//	 */
-//	@Deprecated
-//	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps) throws Exception;
-//
-//	@Deprecated
-//	public Long saveOrUpdateAll(List<?> entities) throws Exception;
-//
-//	@Deprecated
-//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception;
-//
-//	/**
-//	 * @todo 批量修改或保存数据
-//	 * @param entities
-//	 * @param forceUpdateProps
-//	 * @param reflectPropertyHandler
-//	 * @throws Exception
-//	 */
-//	@Deprecated
-//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-//			ReflectPropertyHandler reflectPropertyHandler) throws Exception;
+	public Long saveOrUpdate(Serializable serializableVO) throws Exception;
+
+	/**
+	 * @todo 保存或修改数据
+	 * @param serializableVO
+	 * @param forceUpdateProps
+	 * @throws Exception
+	 */
+	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps) throws Exception;
+
+	public Long saveOrUpdateAll(List<?> entities) throws Exception;
+
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception;
+
+	/**
+	 * @todo 批量修改或保存数据
+	 * @param entities
+	 * @param forceUpdateProps
+	 * @param reflectPropertyHandler
+	 * @throws Exception
+	 */
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler) throws Exception;
 
 	/**
 	 * @todo 删除单条对象

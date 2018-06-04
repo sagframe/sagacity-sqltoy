@@ -431,61 +431,61 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateAllDeeply(entities, reflectPropertyHandler);
 	}
 
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdate(java.io.
-//	 * Serializable)
-//	 */
-//	@Override
-//	public Long saveOrUpdate(Serializable entity) throws Exception {
-//		return super.saveOrUpdate(entity);
-//	}
-//
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdate(java.io.Serializable,
-//	 * java.lang.String[])
-//	 */
-//	@Override
-//	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws Exception {
-//		return super.saveOrUpdate(entity, forceUpdateProps);
-//	}
-//
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdateAll(java.util
-//	 * .List)
-//	 */
-//	@Override
-//	public Long saveOrUpdateAll(List<?> entities) throws Exception {
-//		return super.saveOrUpdateAll(entities);
-//	}
-//
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdateAll(java.util
-//	 * .List, java.lang.String[])
-//	 */
-//	@Override
-//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception {
-//		return super.saveOrUpdateAll(entities, forceUpdateProps);
-//	}
-//
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdateAll(java.util.List,
-//	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
-//	 */
-//	@Override
-//	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-//			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
-//		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
-//	}
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdate(java.io.
+	 * Serializable)
+	 */
+	@Override
+	public Long saveOrUpdate(Serializable entity) throws Exception {
+		return super.saveOrUpdate(entity);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdate(java.io.Serializable,
+	 * java.lang.String[])
+	 */
+	@Override
+	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws Exception {
+		return super.saveOrUpdate(entity, forceUpdateProps);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdateAll(java.util
+	 * .List)
+	 */
+	@Override
+	public Long saveOrUpdateAll(List<?> entities) throws Exception {
+		return super.saveOrUpdateAll(entities);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#saveOrUpdateAll(java.util
+	 * .List, java.lang.String[])
+	 */
+	@Override
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception {
+		return super.saveOrUpdateAll(entities, forceUpdateProps);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdateAll(java.util.List,
+	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 */
+	@Override
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
+	}
 
 	/*
 	 * (non-Javadoc)
