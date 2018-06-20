@@ -437,6 +437,9 @@ public class TaskController {
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
 			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
+			//是否关键词
+			if(QuickVOConstants.isKeyword(colMeta.getColName()))
+				quickColMeta.setKeyword("true");
 			quickColMeta.setJdbcType(colMeta.getTypeName());
 			quickColMeta.setPrecision(colMeta.getPrecision());
 			quickColMeta.setScale(colMeta.getScale());

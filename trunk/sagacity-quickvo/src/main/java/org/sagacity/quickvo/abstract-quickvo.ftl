@@ -68,7 +68,7 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	<#assign businessId=column.businessIdConfig/>
 	@BusinessId(generator="${businessId.generator}"<#if (businessId.signature?exists)>,signature="${businessId.signature}"</#if><#if (businessId.relatedColumns?exists)>,relatedColumns={<#list businessId.relatedColumns as relatedCol><#if (relatedCol_index>0)>,</#if>"${relatedCol}"</#list>}</#if><#if (businessId.length?exists)>,length=${businessId.length}</#if>)
 	</#if>
-	@Column(name="${column.colName}"<#if (column.precision?exists)>,length=${column.precision?c}L</#if><#if (column.defaultValue?exists)>,defaultValue="${column.defaultValue}"</#if>,type=java.sql.Types.<#if (column.dataType?upper_case=='INT')>INTEGER<#else>${column.dataType?upper_case}</#if>,nullable=<#if (column.nullable=='0')>false<#else>true</#if><#if column.autoIncrement=='true'>,autoIncrement=true</#if>)
+	@Column(name="${column.colName}"<#if (column.precision?exists)>,length=${column.precision?c}L</#if><#if (column.defaultValue?exists)>,defaultValue="${column.defaultValue}"</#if>,type=java.sql.Types.<#if (column.dataType?upper_case=='INT')>INTEGER<#else>${column.dataType?upper_case}</#if>,nullable=<#if (column.nullable=='0')>false<#else>true</#if><#if column.autoIncrement=='true'>,autoIncrement=true</#if><#if column.keyword=='true'>,keyword=true</#if>)
 	protected ${column.resultType} ${column.colJavaName?uncap_first};
 	
 </#list>

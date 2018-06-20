@@ -60,6 +60,11 @@ public class XMLConfigLoader {
 		// 加载常量信息
 		QuickVOConstants.loadProperties(root.elements("property"));
 
+		// 关键词
+		if (root.element("field-keywords") != null) {
+			QuickVOConstants.setKeywords(root.attributeValue("field-keywords"));
+		}
+
 		// 任务设置
 		Element tasks = root.element("tasks");
 

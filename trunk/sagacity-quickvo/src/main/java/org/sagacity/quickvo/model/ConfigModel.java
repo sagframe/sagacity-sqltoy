@@ -10,10 +10,7 @@ import java.util.List;
 
 /**
  * @project sagacity-quickvo
- * @description
- *              <p>
- *              任务配置数据模型
- *              </p>
+ * @description 任务配置数据模型
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:ConfigModel.java,Revision:v1.0,Date:2010-7-21 下午02:19:13 $
  */
