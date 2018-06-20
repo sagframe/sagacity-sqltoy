@@ -35,6 +35,9 @@ public @interface Column {
 	// 小数位长度
 	int scale() default 0;
 
+	//是否是关键词
+	boolean keyword() default false;
+
 	// 默认值
 	String defaultValue() default "";
 

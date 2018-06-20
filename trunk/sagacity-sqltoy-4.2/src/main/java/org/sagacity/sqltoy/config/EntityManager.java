@@ -419,7 +419,8 @@ public class EntityManager {
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
 				StringUtil.isNotBlank(column.defaultValue()) ? column.defaultValue() : null, column.type(),
-				column.nullable(), Long.valueOf(column.length()).intValue(), column.precision(), column.scale());
+				column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(), column.precision(),
+				column.scale());
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		entityMeta.addFieldMeta(fieldMeta);

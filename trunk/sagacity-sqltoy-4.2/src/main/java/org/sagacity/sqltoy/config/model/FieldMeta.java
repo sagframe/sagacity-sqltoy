@@ -22,21 +22,25 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param name
+	 * @param filedName
+	 * @param columnName
+	 * @param defaultValue
 	 * @param type
 	 * @param nullable
+	 * @param keyword
 	 * @param length
 	 * @param precision
 	 * @param scale
 	 */
-	public FieldMeta(String filedName, String columnName, String defaultValue, int type, boolean nullable, int length,
-			int precision, int scale) {
+	public FieldMeta(String filedName, String columnName, String defaultValue, int type, boolean nullable,
+			boolean keyword, int length, int precision, int scale) {
 		super();
 		this.fieldName = filedName;
 		this.columnName = columnName;
 		this.defaultValue = defaultValue;
 		this.type = type;
 		this.nullable = nullable;
+		this.keyword = keyword;
 		this.length = length;
 		this.precision = precision;
 		this.scale = scale;
@@ -53,6 +57,11 @@ public class FieldMeta implements Serializable {
 
 	// 是否为空
 	private boolean nullable;
+
+	/**
+	 * 字段是否是关键词
+	 */
+	private boolean keyword = false;
 
 	// 长度
 	private int length;
@@ -128,6 +137,13 @@ public class FieldMeta implements Serializable {
 	 */
 	public String getColumnName() {
 		return columnName;
+	}
+
+	public String getColumnOptName() {
+		if (keyword)
+			return "`".concat(columnName).concat("`");
+		else
+			return columnName;
 	}
 
 	/**
@@ -219,6 +235,21 @@ public class FieldMeta implements Serializable {
 	 */
 	public void setDefaultValue(String defaultValue) {
 		this.defaultValue = defaultValue;
+	}
+
+	/**
+	 * @return the keyword
+	 */
+	public boolean isKeyword() {
+		return keyword;
+	}
+
+	/**
+	 * @param keyword
+	 *            the keyword to set
+	 */
+	public void setKeyword(boolean keyword) {
+		this.keyword = keyword;
 	}
 
 }

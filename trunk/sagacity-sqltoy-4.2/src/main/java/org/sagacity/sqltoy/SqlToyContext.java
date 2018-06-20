@@ -58,9 +58,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	private TranslateManager translateManager = new TranslateManager();
 
 	/**
-	 * 统一公共字段赋值处理;
-	 * 如修改时,为修改人和修改时间进行统一赋值;
-	 * 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
+	 * 数据库表关键词标记符号(创建数据库时建议规避用关键词命名,本处理机制非推荐用法)
+	 */
+	private String keywordSign = "'";
+
+	/**
+	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
 
@@ -675,4 +678,19 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.printSqlTimeoutMillis = printSqlTimeoutMillis;
 	}
 
+	/**
+	 * @return the keywordSign
+	 */
+	public String getKeywordSign() {
+		return keywordSign;
+	}
+
+	/**
+	 * @param keywordSign the keywordSign to set
+	 */
+	public void setKeywordSign(String keywordSign) {
+		this.keywordSign = keywordSign;
+	}
+
+	
 }
