@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns="http://www.sagframe.com/schema/quickvo"
-	xmlns:tns="http://www.sagframe.com/schema/quickvo" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:tns="http://www.sagframe.com/schema/quickvo"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	targetNamespace="http://www.sagframe.com/schema/quickvo"
 	elementFormDefault="qualified">
 	<xsd:element name="quickvo">
 		<xsd:complexType>
 			<xsd:choice maxOccurs="unbounded">
+				<xsd:element name="field-keywords" maxOccurs="1" minOccurs="0">
+					<xsd:annotation>
+						<xsd:documentation><![CDATA[字段命名关键词,用逗号分隔]]></xsd:documentation>
+					</xsd:annotation>
+					<xsd:complexType>
+						<xsd:attribute name="value" type="xsd:string"
+							use="required" />
+					</xsd:complexType>
+				</xsd:element>
 				<xsd:element name="property" maxOccurs="unbounded">
 					<xsd:complexType>
 						<xsd:attribute name="file" type="xsd:string" />
@@ -13,12 +23,15 @@
 						<xsd:attribute name="value" type="xsd:string" />
 					</xsd:complexType>
 				</xsd:element>
-				<xsd:element name="datasource" minOccurs="1" maxOccurs="unbounded">
+				<xsd:element name="datasource" minOccurs="1"
+					maxOccurs="unbounded">
 					<xsd:complexType>
 						<xsd:attribute name="name" type="xsd:string"
 							default="0" />
-						<xsd:attribute name="url" type="xsd:string" use="required" />
-						<xsd:attribute name="driver" type="xsd:string" use="required" />
+						<xsd:attribute name="url" type="xsd:string"
+							use="required" />
+						<xsd:attribute name="driver" type="xsd:string"
+							use="required" />
 						<xsd:attribute name="username" type="xsd:string"
 							use="required" />
 						<xsd:attribute name="password" type="xsd:string"
@@ -43,8 +56,8 @@
 									<xsd:sequence maxOccurs="unbounded">
 										<xsd:element name="vo" minOccurs="0">
 											<xsd:complexType>
-												<xsd:attribute name="package" type="xsd:string"
-													use="required" />
+												<xsd:attribute name="package"
+													type="xsd:string" use="required" />
 												<xsd:attribute name="substr" type="xsd:string"
 													use="required" />
 												<xsd:attribute name="name" type="xsd:string"
@@ -53,18 +66,21 @@
 										</xsd:element>
 										<xsd:element name="dao" minOccurs="0">
 											<xsd:complexType>
-												<xsd:attribute name="package" type="xsd:string"
-													use="required" />
+												<xsd:attribute name="package"
+													type="xsd:string" use="required" />
 												<xsd:attribute name="name" type="xsd:string"
 													use="required" />
-												<xsd:attribute name="active" type="xsd:boolean" />
+												<xsd:attribute name="active"
+													type="xsd:boolean" />
 											</xsd:complexType>
 										</xsd:element>
 									</xsd:sequence>
-									<xsd:attribute name="datasource" type="xsd:string" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
 									<xsd:attribute name="active" type="xsd:boolean"
 										use="required" />
-									<xsd:attribute name="swagger-model" type="xsd:boolean"/>
+									<xsd:attribute name="swagger-model"
+										type="xsd:boolean" />
 									<xsd:attribute name="author" type="xsd:string" />
 									<xsd:attribute name="include" type="xsd:string"
 										use="required" />
@@ -81,7 +97,8 @@
 				<xsd:element name="primary-key" maxOccurs="1">
 					<xsd:complexType>
 						<xsd:sequence minOccurs="0" maxOccurs="unbounded">
-							<xsd:element name="table" minOccurs="0" maxOccurs="unbounded">
+							<xsd:element name="table" minOccurs="0"
+								maxOccurs="unbounded">
 								<xsd:complexType>
 									<xsd:attribute name="name" type="xsd:string" />
 									<xsd:attribute name="strategy" use="required">
@@ -116,9 +133,11 @@
 						<xsd:choice maxOccurs="unbounded">
 							<xsd:element name="table">
 								<xsd:complexType>
-									<xsd:attribute name="name" use="required" type="xsd:string" />
-									<xsd:attribute name="column" use="required" type="xsd:string" />
-									<xsd:attribute name="length" type="xsd:int"/>
+									<xsd:attribute name="name" use="required"
+										type="xsd:string" />
+									<xsd:attribute name="column" use="required"
+										type="xsd:string" />
+									<xsd:attribute name="length" type="xsd:int" />
 									<xsd:attribute name="signature" type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>
@@ -126,14 +145,16 @@
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
-									<xsd:attribute name="related-columns" type="xsd:string">
+									<xsd:attribute name="related-columns"
+										type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>
 											<![CDATA[关联字段,用来组合业务主键的相关字段,可以是多个]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
-									<xsd:attribute name="generator" use="required" type="xsd:string">
+									<xsd:attribute name="generator" use="required"
+										type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>
 											<![CDATA[example:redis、snowflake or like as @bean(beanName) ]]>
@@ -154,10 +175,12 @@
 					</xsd:annotation>
 					<xsd:complexType>
 						<xsd:sequence minOccurs="0" maxOccurs="unbounded">
-							<xsd:element name="table" minOccurs="0" maxOccurs="unbounded">
+							<xsd:element name="table" minOccurs="0"
+								maxOccurs="unbounded">
 								<xsd:complexType>
 									<xsd:attribute name="name" type="xsd:string" />
-									<xsd:attribute name="update-cascade" type="xsd:string" />
+									<xsd:attribute name="update-cascade"
+										type="xsd:string" />
 									<xsd:attribute name="load" type="xsd:string"
 										default="default" />
 								</xsd:complexType>
@@ -176,8 +199,8 @@
 						<xsd:sequence maxOccurs="unbounded">
 							<xsd:element name="sql-type" maxOccurs="unbounded">
 								<xsd:complexType>
-									<xsd:attribute name="native-types" type="xsd:string"
-										use="required" />
+									<xsd:attribute name="native-types"
+										type="xsd:string" use="required" />
 									<xsd:attribute name="precision" type="xsd:string" />
 									<xsd:attribute name="scale" type="xsd:string" />
 									<xsd:attribute name="jdbc-type" type="xsd:string" />
