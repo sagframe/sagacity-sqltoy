@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sqltoy-orm
  * @description 数据库表字段的描述信息
@@ -140,9 +142,10 @@ public class FieldMeta implements Serializable {
 	}
 
 	public String getColumnOptName() {
-		if (keyword)
-			return "`".concat(columnName).concat("`");
-		else
+		if (keyword) {
+			String sign = SqlToyConstants.keywordSign;
+			return sign.concat(columnName).concat(sign);
+		} else
 			return columnName;
 	}
 

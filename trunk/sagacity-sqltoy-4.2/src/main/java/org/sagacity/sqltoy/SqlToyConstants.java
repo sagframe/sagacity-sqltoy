@@ -113,6 +113,8 @@ public class SqlToyConstants {
 	 */
 	public static String SERVER_ID;
 
+	public static String keywordSign = "'";
+
 	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
@@ -326,4 +328,19 @@ public class SqlToyConstants {
 		}
 		return result;
 	}
+
+//	/**
+//	 * @return the keywordSign
+//	 */
+//	public static String getKeywordSign() {
+//		return keywordSign;
+//	}
+//
+//	/**
+//	 * @param keywordSign the keywordSign to set
+//	 */
+//	public static void setKeywordSign(String keywordSign) {
+//		SqlToyConstants.keywordSign = keywordSign;
+//	}
+	
 }
