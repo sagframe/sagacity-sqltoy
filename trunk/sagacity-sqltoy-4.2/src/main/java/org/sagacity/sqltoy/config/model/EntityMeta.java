@@ -182,11 +182,11 @@ public class EntityMeta implements Serializable {
 	private Class[] cascadeTypes;
 
 	private int idJdbcType = -1;
-	
+
 	/**
 	 * 是否存在业务id配置策略
 	 */
-	private boolean hasBizIdConfig=false;
+	private boolean hasBizIdConfig = false;
 
 	/**
 	 * @return the loadAllSql
@@ -398,6 +398,19 @@ public class EntityMeta implements Serializable {
 			return null;
 		else
 			return fieldMeta.getColumnName();
+	}
+
+	/**
+	 * @todo 针对字段采用数据库关键词命名的字段,增加相应的符合兼容
+	 * @param fieldName
+	 * @return
+	 */
+	public String getColumnOptName(String fieldName) {
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		if (fieldMeta == null)
+			return null;
+		else
+			return fieldMeta.getColumnOptName();
 	}
 
 	public int getColumnType(String fieldName) {
@@ -706,7 +719,8 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param hasBizIdConfig the hasBizIdConfig to set
+	 * @param hasBizIdConfig
+	 *            the hasBizIdConfig to set
 	 */
 	public void setHasBizIdConfig(boolean hasBizIdConfig) {
 		this.hasBizIdConfig = hasBizIdConfig;
