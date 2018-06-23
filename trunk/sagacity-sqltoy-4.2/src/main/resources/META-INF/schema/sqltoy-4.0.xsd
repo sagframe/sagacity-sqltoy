@@ -52,6 +52,40 @@
 				type="sqltoyUnpivotType" />
 			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
 				type="sqltoySummaryType" />
+			<xsd:element name="dateFormat" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" type="xsd:string"
+						use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="yyyy-MM-dd" />
+								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+								<xsd:enumeration value="yyyy-MM" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="numberFormat" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="format" type="xsd:string"
+						use="required">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="#,###.00" />
+								<xsd:enumeration value="china" />
+								<xsd:enumeration value="china-money" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="link" minOccurs="0" maxOccurs="1">
 				<xsd:complexType>
 					<xsd:attribute name="id-column" type="xsd:string" />
