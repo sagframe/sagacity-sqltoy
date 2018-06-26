@@ -213,7 +213,8 @@ public class DBHelper {
 		ResultSet rs;
 		// sybase or sqlserver
 		String tableComment = null;
-		if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012) {
+		if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012 || dbType == DbType.SQLSERVER2014
+				|| dbType == DbType.SQLSERVER2016) {
 			StringBuilder queryStr = new StringBuilder();
 			queryStr.append("select cast(isnull(f.value,'') as varchar(1000)) COMMENTS");
 			queryStr.append(" from syscolumns a");
@@ -292,7 +293,7 @@ public class DBHelper {
 					while (rs.next()) {
 						TableColumnMeta colMeta;
 						if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012
-								|| dbType == DbType.SQLSERVER2014) {
+								|| dbType == DbType.SQLSERVER2014 || dbType == DbType.SQLSERVER2016) {
 							if (metaMap == null) {
 								colMeta = new TableColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
