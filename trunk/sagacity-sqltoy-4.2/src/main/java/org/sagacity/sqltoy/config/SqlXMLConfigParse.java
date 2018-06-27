@@ -797,7 +797,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析Link 查询
+	 * @todo 解析日期或数字格式化
 	 * @param sqlToyConfig
 	 * @param link
 	 */
