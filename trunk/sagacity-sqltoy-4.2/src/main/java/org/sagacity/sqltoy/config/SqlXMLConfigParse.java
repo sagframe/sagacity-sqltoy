@@ -22,6 +22,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -273,6 +274,7 @@ public class SqlXMLConfigParse {
 		// 解析sql对应的table的sharding配置
 		parseShardingTables(sqlToyConfig, sqlElt.elements("sharding-table"));
 
+		//parseFormat(sqlToyConfig, 0, sqlElt.elements("dateFormat"));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
 		if (sqlElt.attribute("blank-to-null") != null)
@@ -792,6 +794,24 @@ public class SqlXMLConfigParse {
 			linkModel.setDecorateSize(Integer.parseInt(decorateElt.attributeValue("size")));
 		}
 		sqlToyConfig.setLinkModel(linkModel);
+	}
+
+	/**
+	 * @todo 解析日期或数字格式化
+	 * @param sqlToyConfig
+	 * @param link
+	 */
+	private static void parseFormat(SqlToyConfig sqlToyConfig, int type, Element fmtElt) {
+		if (fmtElt == null)
+			return;
+		String[] columns = fmtElt.attributeValue("columns").split("\\,");
+		for (String col : columns) {
+			FormatModel formatModel = new FormatModel();
+			formatModel.setType(type);
+			if (fmtElt.attribute("format") != null)
+				formatModel.setFormat(fmtElt.attributeValue("format"));
+		}
+		// sqlToyConfig.setLinkModel(formatModel);
 	}
 
 	/**

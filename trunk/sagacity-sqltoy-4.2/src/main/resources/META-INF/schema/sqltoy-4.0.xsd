@@ -57,12 +57,12 @@
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="format" type="xsd:string"
-						use="required">
+					<xsd:attribute name="format" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
 								<xsd:enumeration value="yyyy-MM-dd" />
 								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
+								<xsd:enumeration value="yyyyMMdd" />
 								<xsd:enumeration value="yyyy-MM" />
 							</xsd:restriction>
 						</xsd:simpleType>
@@ -74,13 +74,12 @@
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="format" type="xsd:string"
-						use="required">
+					<xsd:attribute name="format" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
 								<xsd:enumeration value="#,###.00" />
-								<xsd:enumeration value="china" />
-								<xsd:enumeration value="china-money" />
+								<xsd:enumeration value="capital" />
+								<xsd:enumeration value="capital-rmb" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>

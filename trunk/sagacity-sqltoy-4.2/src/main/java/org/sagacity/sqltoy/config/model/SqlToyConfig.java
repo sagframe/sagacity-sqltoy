@@ -36,6 +36,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private SecureMask[] secureMasks = null;
 
 	/**
+	 * 格式化定义
+	 */
+	private FormatModel[] formatModels = null;
+
+	/**
 	 * sql特定使用的dataSource(一般在项目跨多个数据库且是查询语句时使用)
 	 */
 	private String dataSource;
@@ -149,11 +154,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 15分钟
 	 */
 	private int pageAliveSeconds = 900;
-	
+
 	/**
 	 * debug模式下是否打印
 	 */
-	private boolean showSql=true;
+	private boolean showSql = true;
 
 	/**
 	 * 查询结果处理器
@@ -627,10 +632,25 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param showSql the showSql to set
+	 * @param showSql
+	 *            the showSql to set
 	 */
 	public void setShowSql(boolean showSql) {
 		this.showSql = showSql;
+	}
+
+	/**
+	 * @return the formatModels
+	 */
+	public FormatModel[] getFormatModels() {
+		return formatModels;
+	}
+
+	/**
+	 * @param formatModels the formatModels to set
+	 */
+	public void setFormatModels(FormatModel[] formatModels) {
+		this.formatModels = formatModels;
 	}
 
 	public SqlToyConfig clone() {
