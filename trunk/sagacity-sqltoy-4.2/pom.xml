@@ -9,18 +9,18 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.6.RELEASE</spring.version>
-		<spring-data.version>2.0.7.RELEASE</spring-data.version>
+		<spring.version>5.0.7.RELEASE</spring.version>
+		<spring-data.version>2.0.8.RELEASE</spring-data.version>
 		<log4j.version>2.11.0</log4j.version>
-		<mysql.version>5.1.46</mysql.version>
+		<mysql.version>8.0.11</mysql.version>
 		<ehcache.version>3.5.2</ehcache.version>
 		<httpclient.version>4.5.5</httpclient.version>
-		<elastic.version>6.2.4</elastic.version>
+		<elastic.version>6.3.0</elastic.version>
 		<fastjson.version>1.2.47</fastjson.version>
-		<mongo.version>3.7.0</mongo.version>
+		<mongo.version>3.7.1</mongo.version>
 		<dom4j.version>2.1.0</dom4j.version>
 		<jedis.version>2.9.0</jedis.version>
-		<spring-boot.version>2.0.1.RELEASE</spring-boot.version>
+		<spring-boot.version>2.0.3.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
 		<!-- <repository>
