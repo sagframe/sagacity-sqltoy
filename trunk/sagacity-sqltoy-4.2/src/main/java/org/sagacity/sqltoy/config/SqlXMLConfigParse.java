@@ -274,7 +274,7 @@ public class SqlXMLConfigParse {
 		// 解析sql对应的table的sharding配置
 		parseShardingTables(sqlToyConfig, sqlElt.elements("sharding-table"));
 
-		//parseFormat(sqlToyConfig, 0, sqlElt.elements("dateFormat"));
+		parseFormat(sqlToyConfig, sqlElt.elements("dateFormat"), sqlElt.elements("numberFormat"));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
 		if (sqlElt.attribute("blank-to-null") != null)
@@ -797,20 +797,22 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析日期或数字格式化
+	 * 
+	 * @todo 填写改方法的说明
 	 * @param sqlToyConfig
-	 * @param link
+	 * @param dfElts
+	 * @param nfElts
 	 */
-	private static void parseFormat(SqlToyConfig sqlToyConfig, int type, Element fmtElt) {
-		if (fmtElt == null)
+	private static void parseFormat(SqlToyConfig sqlToyConfig, List<Element> dfElts, List<Element> nfElts) {
+		if ((dfElts == null || dfElts.isEmpty()) && (nfElts == null || nfElts.isEmpty()))
 			return;
-		String[] columns = fmtElt.attributeValue("columns").split("\\,");
+		/*String[] columns = dfElts.attributeValue("columns").split("\\,");
 		for (String col : columns) {
 			FormatModel formatModel = new FormatModel();
 			formatModel.setType(type);
 			if (fmtElt.attribute("format") != null)
 				formatModel.setFormat(fmtElt.attributeValue("format"));
-		}
+		}*/
 		// sqlToyConfig.setLinkModel(formatModel);
 	}
 
