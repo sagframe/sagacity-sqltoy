@@ -407,7 +407,7 @@ public class SqlXMLConfigParse {
 				// 兼容老版本
 				if (tmp == null)
 					tmp = getAttrValue(elt, "column");
-				String[] columns = tmp.split("\\,");
+				String[] columns = tmp.toLowerCase().split("\\,");
 				String type = getAttrValue(elt, "type").toLowerCase();
 				String maskCode = getAttrValue(elt, "mask-code");
 				String headSize = getAttrValue(elt, "head-size");
@@ -813,7 +813,7 @@ public class SqlXMLConfigParse {
 		List<FormatModel> formatModels = new ArrayList<FormatModel>();
 		if (dfElts != null && !dfElts.isEmpty()) {
 			for (Element df : dfElts) {
-				String[] columns = df.attributeValue("columns").split("\\,");
+				String[] columns = df.attributeValue("columns").toLowerCase().split("\\,");
 				String format = (df.attribute("format") == null) ? "yyyy-MM-dd" : df.attributeValue("format");
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
@@ -826,7 +826,7 @@ public class SqlXMLConfigParse {
 		}
 		if (nfElts != null && !nfElts.isEmpty()) {
 			for (Element nf : nfElts) {
-				String[] columns = nf.attributeValue("columns").split("\\,");
+				String[] columns = nf.attributeValue("columns").toLowerCase().split("\\,");
 				String format = (nf.attribute("format") == null) ? "capital" : nf.attributeValue("format");
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();

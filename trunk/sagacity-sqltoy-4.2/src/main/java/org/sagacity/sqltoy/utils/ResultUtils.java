@@ -121,7 +121,7 @@ public class ResultUtils {
 		Integer index;
 		Object value;
 		for (SecureMask mask : masks) {
-			index = labelIndexMap.get(mask.getColumn().toLowerCase());
+			index = labelIndexMap.get(mask.getColumn());
 			if (index != null) {
 				int column = index.intValue();
 				for (List row : rows) {
@@ -146,16 +146,16 @@ public class ResultUtils {
 		Integer index;
 		Object value;
 		for (FormatModel fmt : formats) {
-			index = labelIndexMap.get(fmt.getColumn().toLowerCase());
+			index = labelIndexMap.get(fmt.getColumn());
 			if (index != null) {
 				int column = index.intValue();
 				for (List row : rows) {
 					value = row.get(column);
 					if (value != null) {
-						//日期格式
+						// 日期格式
 						if (fmt.getType() == 1)
 							row.set(column, DateUtil.formatDate(value, fmt.getFormat()));
-						//数字格式化
+						// 数字格式化
 						else
 							row.set(column, NumberUtil.format(value, fmt.getFormat()));
 					}
