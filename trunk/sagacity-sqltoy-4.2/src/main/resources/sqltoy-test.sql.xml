@@ -98,4 +98,22 @@
 		<!-- 数字格式化 -->
 		<number-format columns="xxx" format="capital-rmb"/>
 	</sql>
+	
+	<sql id="companyTrans">
+		<value>
+			<![CDATA[
+			select company_id,account_code,link_tel,total_amt,trans_date	from company_trans
+			]]>
+		</value>
+		
+		<!-- 敏感数据安全脱敏 -->
+		<secure-mask columns="account_code" type="public-account"/>
+		<secure-mask columns="link_tel" type="tel"/>
+		
+		<!-- 日期格式化 -->
+		<date-format columns="trans_date" format="yyyy-MM-dd"/>
+		
+		<!-- 数字格式化,分:#,###.00 、capital、capital-rmb 等形式 -->
+		<number-format columns="total_amt" format="capital-rmb"/>
+	</sql>
 </sqltoy>
