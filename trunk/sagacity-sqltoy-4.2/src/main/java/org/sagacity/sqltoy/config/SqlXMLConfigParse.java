@@ -439,7 +439,9 @@ public class SqlXMLConfigParse {
 					secureMasks.add(secureMask);
 				}
 			}
-			sqlToyConfig.setSecureMasks((SecureMask[]) secureMasks.toArray());
+			SecureMask[] masks = new SecureMask[secureMasks.size()];
+			secureMasks.toArray(masks);
+			sqlToyConfig.setSecureMasks(masks);
 		}
 	}
 
@@ -633,7 +635,8 @@ public class SqlXMLConfigParse {
 		if (filter.attribute("set-params") != null)
 			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split("\\,")));
 		else if (filter.attribute("exclusive-params") != null)
-			filterModel.setUpdateParams(trimParams(filter.attributeValue("exclusive-params").toLowerCase().split("\\,")));
+			filterModel
+					.setUpdateParams(trimParams(filter.attributeValue("exclusive-params").toLowerCase().split("\\,")));
 
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.attribute("set-value") != null)
@@ -837,8 +840,11 @@ public class SqlXMLConfigParse {
 				}
 			}
 		}
-		if (!formatModels.isEmpty())
-			sqlToyConfig.setFormatModels((FormatModel[]) formatModels.toArray());
+		if (!formatModels.isEmpty()) {
+			FormatModel[] formats = new FormatModel[formatModels.size()];
+			formatModels.toArray(formats);
+			sqlToyConfig.setFormatModels(formats);
+		}
 	}
 
 	/**
