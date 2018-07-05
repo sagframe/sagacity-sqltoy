@@ -273,7 +273,7 @@ public class SqlXMLConfigParse {
 
 		// 解析sql对应的table的sharding配置
 		parseShardingTables(sqlToyConfig, sqlElt.elements("sharding-table"));
-
+		// 解析格式化
 		parseFormat(sqlToyConfig, sqlElt.elements("dateFormat"), sqlElt.elements("numberFormat"));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
@@ -305,7 +305,7 @@ public class SqlXMLConfigParse {
 		parseCalculator(sqlToyConfig, sqlElt);
 
 		// 解析安全脱敏配置
-		sqlToyConfig.setSecureMasks(parseSecureMask(sqlElt.elements("secure-mask")));
+		parseSecureMask(sqlToyConfig, sqlElt.elements("secure-mask"));
 		// mongo/elastic查询语法
 		if (isNoSql) {
 			parseNoSql(sqlToyConfig, sqlElt);
@@ -354,15 +354,15 @@ public class SqlXMLConfigParse {
 		// fields
 		if (sqlElt.attribute("fields") != null) {
 			if (StringUtil.isNotBlank(sqlElt.attributeValue("fields")))
-				noSqlConfig.setFields(trimParams(sqlElt.attributeValue("fields").split(",")));
+				noSqlConfig.setFields(trimParams(sqlElt.attributeValue("fields").split("\\,")));
 		} else if (sqlElt.element("fields") != null)
-			noSqlConfig.setFields(trimParams(sqlElt.elementTextTrim("fields").split(",")));
+			noSqlConfig.setFields(trimParams(sqlElt.elementTextTrim("fields").split("\\,")));
 
 		// valueRoot
 		if (sqlElt.attribute("value-root") != null)
-			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-root").split(",")));
+			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-root").split("\\,")));
 		else if (sqlElt.attribute("value-path") != null)
-			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-path").split(",")));
+			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-path").split("\\,")));
 		// 是否有聚合查询
 		if (sqlElt.getName().equalsIgnoreCase("eql")) {
 			if (sqlElt.attribute("aggregate") != null) {
@@ -393,47 +393,54 @@ public class SqlXMLConfigParse {
 
 	/**
 	 * @todo 解析安全脱敏配置
+	 * @param sqlToyConfig
 	 * @param maskElts
-	 * @return
 	 */
-	public static SecureMask[] parseSecureMask(List<Element> maskElts) {
+	public static void parseSecureMask(SqlToyConfig sqlToyConfig, List<Element> maskElts) {
 		if (maskElts != null && !maskElts.isEmpty()) {
-			// <secure-mask column="" type="name" head-size="" tail-size=""
+			// <secure-mask columns="" type="name" head-size="" tail-size=""
 			// mask-code="*****" mask-rate="50%"/>
-			SecureMask[] secureMasks = new SecureMask[maskElts.size()];
-			int index = 0;
+			List<SecureMask> secureMasks = new ArrayList<SecureMask>();
+			String tmp;
 			for (Element elt : maskElts) {
-				SecureMask secureMask = new SecureMask();
-				secureMask.setColumn(getAttrValue(elt, "column"));
-				secureMask.setType(getAttrValue(elt, "type").toLowerCase());
-				secureMask.setMaskCode(getAttrValue(elt, "mask-code"));
-				if (secureMask.getMaskCode() == null) {
-					if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
-							|| secureMask.getType().equals("email") || secureMask.getType().equals("address")
-							|| secureMask.getType().equals("address")) {
-						secureMask.setMaskCode("******");
-					} else if (secureMask.getType().equals("name")) {
-						secureMask.setMaskCode("**");
-					} else
-						secureMask.setMaskCode("****");
-				}
+				tmp = getAttrValue(elt, "columns");
+				// 兼容老版本
+				if (tmp == null)
+					tmp = getAttrValue(elt, "column");
+				String[] columns = tmp.split("\\,");
+				String type = getAttrValue(elt, "type").toLowerCase();
+				String maskCode = getAttrValue(elt, "mask-code");
 				String headSize = getAttrValue(elt, "head-size");
 				String tailSize = getAttrValue(elt, "tail-size");
 				String maskRate = getAttrValue(elt, "mask-rate");
 				if (maskRate == null)
 					maskRate = getAttrValue(elt, "mask-percent");
-				if (StringUtil.isNotBlank(headSize))
-					secureMask.setHeadSize(Integer.parseInt(headSize));
-				if (StringUtil.isNotBlank(tailSize))
-					secureMask.setTailSize(Integer.parseInt(tailSize));
-				if (StringUtil.isNotBlank(maskRate))
-					secureMask.setMaskRate(Integer.parseInt(maskRate.replace("%", "")));
-				secureMasks[index] = secureMask;
-				index++;
+				for (String col : columns) {
+					SecureMask secureMask = new SecureMask();
+					secureMask.setColumn(col);
+					secureMask.setType(type);
+					secureMask.setMaskCode(maskCode);
+					if (secureMask.getMaskCode() == null) {
+						if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
+								|| secureMask.getType().equals("email") || secureMask.getType().equals("address")
+								|| secureMask.getType().equals("address")) {
+							secureMask.setMaskCode("******");
+						} else if (secureMask.getType().equals("name")) {
+							secureMask.setMaskCode("**");
+						} else
+							secureMask.setMaskCode("****");
+					}
+					if (StringUtil.isNotBlank(headSize))
+						secureMask.setHeadSize(Integer.parseInt(headSize));
+					if (StringUtil.isNotBlank(tailSize))
+						secureMask.setTailSize(Integer.parseInt(tailSize));
+					if (StringUtil.isNotBlank(maskRate))
+						secureMask.setMaskRate(Integer.parseInt(maskRate.replace("%", "")));
+					secureMasks.add(secureMask);
+				}
 			}
-			return secureMasks;
+			sqlToyConfig.setSecureMasks((SecureMask[]) secureMasks.toArray());
 		}
-		return null;
 	}
 
 	private static String getAttrValue(Element elt, String attrName) {
@@ -456,12 +463,12 @@ public class SqlXMLConfigParse {
 		}
 		if (shardingDataSource.attribute("params") != null) {
 			sqlToyConfig.setDataSourceShardingParams(
-					shardingDataSource.attributeValue("params").replace(";", ",").toLowerCase().split(","));
+					shardingDataSource.attributeValue("params").replace(";", ",").toLowerCase().split("\\,"));
 			int size = sqlToyConfig.getDataSourceShardingParams().length;
 			String[] paramsAlias = new String[size];
 			String[] paramName;
 			for (int i = 0; i < size; i++) {
-				paramName = sqlToyConfig.getDataSourceShardingParams()[i].split(":");
+				paramName = sqlToyConfig.getDataSourceShardingParams()[i].split("\\:");
 				sqlToyConfig.getDataSourceShardingParams()[i] = paramName[0].trim();
 				paramsAlias[i] = paramName[paramName.length - 1].trim();
 			}
@@ -490,11 +497,11 @@ public class SqlXMLConfigParse {
 				shardingModel.setTables(elt.attributeValue("tables").split(","));
 				if (elt.attribute("params") != null) {
 					// params="a:a1,b:b1";params为{a:a1, b:b1}
-					shardingModel.setParams(elt.attributeValue("params").replace(";", ",").toLowerCase().split(","));
+					shardingModel.setParams(elt.attributeValue("params").replace(";", ",").toLowerCase().split("\\,"));
 					size = shardingModel.getParams().length;
 					paramsAlias = new String[size];
 					for (int i = 0; i < size; i++) {
-						paramName = shardingModel.getParams()[i].split(":");
+						paramName = shardingModel.getParams()[i].split("\\:");
 						// 重置params数组值
 						shardingModel.getParams()[i] = paramName[0].trim();
 						params.add(shardingModel.getParams()[i]);
@@ -583,7 +590,7 @@ public class SqlXMLConfigParse {
 		if (filter.attribute("params") == null) {
 			filterModel.setParams(new String[] { "*" });
 		} else
-			filterModel.setParams(trimParams(filter.attributeValue("params").toLowerCase().split(",")));
+			filterModel.setParams(trimParams(filter.attributeValue("params").toLowerCase().split("\\,")));
 		// equals\any\not-any等类型
 		if (filter.attribute("value") != null) {
 			filterModel.setValues(
@@ -611,7 +618,7 @@ public class SqlXMLConfigParse {
 
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.attribute("excludes") != null) {
-			String[] excludeParams = filter.attributeValue("excludes").toLowerCase().split(",");
+			String[] excludeParams = filter.attributeValue("excludes").toLowerCase().split("\\,");
 			HashMap<String, String> excludeMaps = new HashMap<String, String>();
 			for (String excludeParam : excludeParams)
 				excludeMaps.put(excludeParam.trim(), "1");
@@ -624,9 +631,9 @@ public class SqlXMLConfigParse {
 
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.attribute("set-params") != null)
-			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split(",")));
+			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split("\\,")));
 		else if (filter.attribute("exclusive-params") != null)
-			filterModel.setUpdateParams(trimParams(filter.attributeValue("exclusive-params").toLowerCase().split(",")));
+			filterModel.setUpdateParams(trimParams(filter.attributeValue("exclusive-params").toLowerCase().split("\\,")));
 
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.attribute("set-value") != null)
@@ -658,9 +665,9 @@ public class SqlXMLConfigParse {
 		if (filter.attribute("compare-values") != null) {
 			String compareValue = filter.attributeValue("compare-values");
 			if (compareValue.indexOf(";") != -1)
-				filterModel.setCompareValues(compareValue.split(";"));
+				filterModel.setCompareValues(compareValue.split("\\;"));
 			else
-				filterModel.setCompareValues(compareValue.split(","));
+				filterModel.setCompareValues(compareValue.split("\\,"));
 		}
 
 		// 数据类型
@@ -698,7 +705,7 @@ public class SqlXMLConfigParse {
 					cacheType = translate.attributeValue("cache-type");
 				else
 					cacheType = null;
-				columns = trimParams(translate.attributeValue("columns").toLowerCase().split(","));
+				columns = trimParams(translate.attributeValue("columns").toLowerCase().split("\\,"));
 				aliasNames = null;
 				uncachedTemplate = null;
 				if (translate.attribute("undefine-template") != null)
@@ -731,11 +738,11 @@ public class SqlXMLConfigParse {
 				}
 				// 使用alias时只能针对单列处理
 				if (translate.attribute("alias-name") != null)
-					aliasNames = trimParams(translate.attributeValue("alias-name").toLowerCase().split(","));
+					aliasNames = trimParams(translate.attributeValue("alias-name").toLowerCase().split("\\,"));
 				// 翻译key对应value的在缓存数组中对应的列
 				cacheIndexs = null;
 				if (translate.attribute("cache-indexs") != null) {
-					cacheIndexStr = trimParams(translate.attributeValue("cache-indexs").split(","));
+					cacheIndexStr = trimParams(translate.attributeValue("cache-indexs").split("\\,"));
 					cacheIndexs = new Integer[cacheIndexStr.length];
 					for (int i = 0; i < cacheIndexStr.length; i++) {
 						cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
@@ -797,23 +804,41 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * 
-	 * @todo 填写改方法的说明
+	 * @todo 解析列格式化
 	 * @param sqlToyConfig
 	 * @param dfElts
 	 * @param nfElts
 	 */
 	private static void parseFormat(SqlToyConfig sqlToyConfig, List<Element> dfElts, List<Element> nfElts) {
-		if ((dfElts == null || dfElts.isEmpty()) && (nfElts == null || nfElts.isEmpty()))
-			return;
-		/*String[] columns = dfElts.attributeValue("columns").split("\\,");
-		for (String col : columns) {
-			FormatModel formatModel = new FormatModel();
-			formatModel.setType(type);
-			if (fmtElt.attribute("format") != null)
-				formatModel.setFormat(fmtElt.attributeValue("format"));
-		}*/
-		// sqlToyConfig.setLinkModel(formatModel);
+		List<FormatModel> formatModels = new ArrayList<FormatModel>();
+		if (dfElts != null && !dfElts.isEmpty()) {
+			for (Element df : dfElts) {
+				String[] columns = df.attributeValue("columns").split("\\,");
+				String format = (df.attribute("format") == null) ? "yyyy-MM-dd" : df.attributeValue("format");
+				for (String col : columns) {
+					FormatModel formatModel = new FormatModel();
+					formatModel.setColumn(col);
+					formatModel.setType(1);
+					formatModel.setFormat(format);
+					formatModels.add(formatModel);
+				}
+			}
+		}
+		if (nfElts != null && !nfElts.isEmpty()) {
+			for (Element nf : nfElts) {
+				String[] columns = nf.attributeValue("columns").split("\\,");
+				String format = (nf.attribute("format") == null) ? "capital" : nf.attributeValue("format");
+				for (String col : columns) {
+					FormatModel formatModel = new FormatModel();
+					formatModel.setColumn(col);
+					formatModel.setType(2);
+					formatModel.setFormat(format);
+					formatModels.add(formatModel);
+				}
+			}
+		}
+		if (!formatModels.isEmpty())
+			sqlToyConfig.setFormatModels((FormatModel[]) formatModels.toArray());
 	}
 
 	/**
@@ -833,10 +858,10 @@ public class SqlXMLConfigParse {
 			if (eltName.equals("pivot")) {
 				PivotModel pivotModel = new PivotModel();
 				if (elt.attribute("group-columns") != null)
-					pivotModel.setGroupCols(trimParams(elt.attributeValue("group-columns").toLowerCase().split(",")));
+					pivotModel.setGroupCols(trimParams(elt.attributeValue("group-columns").toLowerCase().split("\\,")));
 				if (elt.attribute("category-columns") != null)
 					pivotModel.setCategoryCols(
-							trimParams(elt.attributeValue("category-columns").toLowerCase().split(",")));
+							trimParams(elt.attributeValue("category-columns").toLowerCase().split("\\,")));
 				if (elt.attribute("category-sql") != null)
 					pivotModel.setCategorySql(elt.attributeValue("category-sql"));
 				String[] pivotCols = new String[2];
@@ -863,7 +888,7 @@ public class SqlXMLConfigParse {
 			else if (eltName.equals("unpivot")) {
 				if (elt.attribute("columns") != null && elt.attribute("values-as-column") != null) {
 					UnpivotModel unpivotModel = new UnpivotModel();
-					String[] columns = elt.attributeValue("columns").split(",");
+					String[] columns = elt.attributeValue("columns").split("\\,");
 					String[] realCols = new String[columns.length];
 					String[] colsAlias = new String[columns.length];
 					int index = 0;

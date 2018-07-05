@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
@@ -94,6 +95,12 @@ public class ResultUtils {
 			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
 				secureMask(result, sqlToyConfig, labelIndexMap);
 			}
+
+			// 自动格式化
+			if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
+				formatColumn(result, sqlToyConfig, labelIndexMap);
+			}
+
 		}
 		// 填充记录数
 		if (result.getRows() != null)
@@ -121,6 +128,37 @@ public class ResultUtils {
 					value = row.get(column);
 					if (value != null)
 						row.set(column, maskStr(mask, value));
+				}
+			}
+		}
+	}
+
+	/**
+	 * @todo 对字段进行格式化
+	 * @param result
+	 * @param sqlToyConfig
+	 * @param labelIndexMap
+	 */
+	private static void formatColumn(QueryResult result, SqlToyConfig sqlToyConfig,
+			HashMap<String, Integer> labelIndexMap) {
+		List<List> rows = result.getRows();
+		FormatModel[] formats = sqlToyConfig.getFormatModels();
+		Integer index;
+		Object value;
+		for (FormatModel fmt : formats) {
+			index = labelIndexMap.get(fmt.getColumn().toLowerCase());
+			if (index != null) {
+				int column = index.intValue();
+				for (List row : rows) {
+					value = row.get(column);
+					if (value != null) {
+						//日期格式
+						if (fmt.getType() == 1)
+							row.set(column, DateUtil.formatDate(value, fmt.getFormat()));
+						//数字格式化
+						else
+							row.set(column, NumberUtil.format(value, fmt.getFormat()));
+					}
 				}
 			}
 		}
@@ -755,10 +793,7 @@ public class ResultUtils {
 		Object fieldValue;
 		SqlTranslate translate;
 		String label;
-		//Object[] cacheValues;
 		String keyIndex;
-		//boolean isDebug = logger.isDebugEnabled();
-		// String uncachedKeyResult = SqlToyConstants.UNCACHED_KEY_RESULT;
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
 			fieldValue = rs.getObject(label);
@@ -771,17 +806,7 @@ public class ResultUtils {
 					translate = translateMap.get(label);
 					if (translate == null)
 						translate = translateMap.get(keyIndex);
-					fieldValue=translateKey(translate,translateCaches.get(translate.getColumn()),fieldValue);
-					/*cacheValues = translateCaches.get(translate.getColumn()).get(fieldValue.toString());
-					if (cacheValues == null) {
-						if (translate.getUncached() != null)
-							fieldValue = translate.getUncached().replace("${value}", fieldValue.toString());
-						else
-							fieldValue = fieldValue.toString();
-						if (isDebug)
-							logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), fieldValue);
-					} else
-						fieldValue = cacheValues[translate.getIndex()];*/
+					fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
 				}
 			}
 			rowData.add(fieldValue);

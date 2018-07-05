@@ -21,7 +21,7 @@ public class FormatModel implements Serializable {
 	/**
 	 * 列名
 	 */
-	private String[] columns;
+	private String column;
 	
 	/**
 	 * 0:date,1:number
@@ -36,15 +36,15 @@ public class FormatModel implements Serializable {
 	/**
 	 * @return the column
 	 */
-	public String[] getColumns() {
-		return columns;
+	public String getColumn() {
+		return column;
 	}
 
 	/**
 	 * @param column the column to set
 	 */
-	public void setColumns(String[] columns) {
-		this.columns = columns;
+	public void setColumn(String column) {
+		this.column = column;
 	}
 
 	/**
