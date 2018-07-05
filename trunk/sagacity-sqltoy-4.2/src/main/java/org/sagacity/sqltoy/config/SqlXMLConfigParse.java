@@ -274,7 +274,7 @@ public class SqlXMLConfigParse {
 		// 解析sql对应的table的sharding配置
 		parseShardingTables(sqlToyConfig, sqlElt.elements("sharding-table"));
 		// 解析格式化
-		parseFormat(sqlToyConfig, sqlElt.elements("dateFormat"), sqlElt.elements("numberFormat"));
+		parseFormat(sqlToyConfig, sqlElt.elements("date-format"), sqlElt.elements("number-format"));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
 		if (sqlElt.attribute("blank-to-null") != null)

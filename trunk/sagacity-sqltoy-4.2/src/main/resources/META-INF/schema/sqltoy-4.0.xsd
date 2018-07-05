@@ -52,7 +52,7 @@
 				type="sqltoyUnpivotType" />
 			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
 				type="sqltoySummaryType" />
-			<xsd:element name="dateFormat" minOccurs="0"
+			<xsd:element name="date-format" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
@@ -69,7 +69,7 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="numberFormat" minOccurs="0"
+			<xsd:element name="number-format" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
