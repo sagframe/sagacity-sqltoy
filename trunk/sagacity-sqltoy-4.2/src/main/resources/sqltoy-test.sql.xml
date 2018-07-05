@@ -44,6 +44,10 @@
 		<sharding-table tables="" strategy="" params="" />
 		<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
 		<page-optimize alive-max="100" alive-seconds="600" />
+		<!-- 日期格式化 -->
+		<dateFormat columns="" format=""/>
+		<!-- 数字格式 -->
+		<numberFormat columns="" format=""/>
 		<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME from 
@@ -74,7 +78,7 @@
 	</sql>
 	
 	<sql id="show_case">
-		<translate cache="xxxCache" columns="SEX_TYPE" split-regex="\\," link-sign=","/>
+		<translate cache="dictKeyNameCache" columns="SEX_TYPE" split-regex="\\," link-sign=","/>
 		<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME from 
@@ -88,6 +92,7 @@
 	    where t1.ORGAN_ID=t2.ORGAN_ID
 		]]>	
 		</value>
-
+		<dateFormat columns="" format="yyyy-MM-dd"/>
+		<numberFormat columns="" format="#,###.00"/>
 	</sql>
 </sqltoy>
