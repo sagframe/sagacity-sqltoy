@@ -489,8 +489,12 @@
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[安全掩码,对字段值进行脱敏]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:attribute name="column" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="columns" type="xsd:string"
+			use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[逗号分隔表示对对个字段进行脱敏]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="type" use="required">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
