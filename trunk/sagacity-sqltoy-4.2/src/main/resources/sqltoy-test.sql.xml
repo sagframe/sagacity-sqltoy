@@ -92,7 +92,10 @@
 	    where t1.ORGAN_ID=t2.ORGAN_ID
 		]]>	
 		</value>
-		<dateFormat columns="" format="yyyy-MM-dd"/>
-		<numberFormat columns="" format="#,###.00"/>
+		<!-- 日期格式化 -->
+		<date-format columns="" format="yyyy-MM-dd"/>
+		
+		<!-- 数字格式化 -->
+		<number-format columns="xxx" format="capital-rmb"/>
 	</sql>
 </sqltoy>
