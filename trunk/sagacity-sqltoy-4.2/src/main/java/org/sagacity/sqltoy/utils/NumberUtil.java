@@ -55,7 +55,7 @@ public class NumberUtil {
 	public final static class Pattern {
 		public final static String CAPITAL = "capital";
 		public final static String CAPITAL_MONEY = "capitalMoney";
-		public final static String CAPITAL_RMB = "capital_rmb";
+		public final static String CAPITAL_RMB = "capital-rmb";
 	}
 
 	/**
