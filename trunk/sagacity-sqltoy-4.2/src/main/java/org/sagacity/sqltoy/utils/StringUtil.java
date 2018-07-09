@@ -384,18 +384,18 @@ public class StringUtil {
 	/**
 	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
 	 * @param source
-	 * @param splitSign
+	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
 	 * @param filter
 	 * @return
 	 */
-	public static String[] splitExcludeSymMark(String source, String regex, HashMap filter) {
+	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filter) {
 		if (source == null)
 			return null;
-		int regsIndex = source.indexOf(regex);
-		if (regsIndex == -1)
+		int splitIndex = source.indexOf(splitSign);
+		if (splitIndex == -1)
 			return new String[] { source };
 		if (filter == null || filter.isEmpty())
-			return source.split(regex);
+			return source.split(splitSign);
 		else {
 			String[][] filters = new String[filter.size()][2];
 			Iterator iter = filter.entrySet().iterator();
@@ -417,18 +417,18 @@ public class StringUtil {
 			}
 			// 没有对称符合过滤则直接返回分割结果
 			if (count == 0)
-				return source.split(regex);
+				return source.split(splitSign);
 
 			ArrayList splitResults = new ArrayList();
-			int preRegsIndex = 0;
-			int regexLength = regex.length();
+			int preSplitIndex = 0;
+			int splitSignLength = splitSign.length();
 			int symBeginIndex = 0;
 			int symEndIndex = 0;
 			int skipIndex = 0;
 			int minBegin = -1;
 			int minEndIndex = -1;
 			int meter = 0;
-			while (regsIndex != -1) {
+			while (splitIndex != -1) {
 				// 寻找最前的对称符号
 				minBegin = -1;
 				minEndIndex = -1;
@@ -444,25 +444,25 @@ public class StringUtil {
 
 				}
 				// 在中间
-				if (minBegin < regsIndex && minEndIndex > regsIndex) {
+				if (minBegin < splitIndex && minEndIndex > splitIndex) {
 					skipIndex = minEndIndex + 1;
-					regsIndex = source.indexOf(regex, minEndIndex + 1);
+					splitIndex = source.indexOf(splitSign, minEndIndex + 1);
 				} else {
 					// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
-					if (minBegin > regsIndex || minBegin == -1) {
+					if (minBegin > splitIndex || minBegin == -1) {
 						splitResults
-								.add(source.substring(preRegsIndex + (preRegsIndex == 0 ? 0 : regexLength), regsIndex));
-						preRegsIndex = regsIndex;
-						skipIndex = preRegsIndex + 1;
-						regsIndex = source.indexOf(regex, preRegsIndex + 1);
+								.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
+						preSplitIndex = splitIndex;
+						skipIndex = preSplitIndex + 1;
+						splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
 					} // 对称截止符号在分割符前面，向下继续寻找
 					else {
 						skipIndex = minEndIndex + 1;
 					}
 				}
 				// 找不到下一个分隔符号
-				if (regsIndex == -1) {
-					splitResults.add(source.substring(preRegsIndex + (preRegsIndex == 0 ? 0 : regexLength)));
+				if (splitIndex == -1) {
+					splitResults.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength)));
 					break;
 				}
 			}
