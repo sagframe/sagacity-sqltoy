@@ -90,6 +90,11 @@ public class ElasticEndpoint implements Serializable {
 	 * 整个连接超时时长,默认3分钟
 	 */
 	private int socketTimeout = 180000;
+	
+	/**
+	 * _xpack sql(6.3.x 版本开始支持sql)
+	 */
+	private boolean enableSql=false;
 
 	/**
 	 * @return the path
@@ -304,6 +309,20 @@ public class ElasticEndpoint implements Serializable {
 				restClient = builder.build();
 			}
 		}
+	}
+
+	/**
+	 * @return the enableSql
+	 */
+	public boolean isEnableSql() {
+		return enableSql;
+	}
+
+	/**
+	 * @param enableSql the enableSql to set
+	 */
+	public void setEnableSql(boolean enableSql) {
+		this.enableSql = enableSql;
 	}
 
 	public static void main(String args[]) {
