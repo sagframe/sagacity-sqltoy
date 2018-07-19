@@ -626,9 +626,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (elasticEndpointList != null && !elasticEndpointList.isEmpty()) {
 			// 第一个作为默认值
 			defaultElastic = elasticEndpointList.get(0).getId();
+			boolean esEnableSql = Boolean
+					.parseBoolean(SqlToyConstants.getKeyValue("elasticsearch.enable.sql", "false"));
 			for (ElasticEndpoint config : elasticEndpointList) {
 				// 初始化restClient
 				config.initRestClient();
+				config.setEnableSql(esEnableSql);
 				elasticEndpoints.put(config.getId().toLowerCase(), config);
 			}
 		}
