@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
@@ -8,11 +9,11 @@
 	<artifactId>sqltoy-showcase</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.5.RELEASE</spring.version>
-		<log4j.version>2.10.0</log4j.version>
-		<druid.version>1.1.9</druid.version>
-		<sagacity-sqltoy.version>4.2.4</sagacity-sqltoy.version>
-		<elastic.version>6.2.3</elastic.version>
+		<spring.version>5.0.7.RELEASE</spring.version>
+		<log4j.version>2.11.0</log4j.version>
+		<druid.version>1.1.10</druid.version>
+		<sagacity-sqltoy.version>4.2.8</sagacity-sqltoy.version>
+		<elastic.version>6.3.1</elastic.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -44,7 +45,7 @@
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
-			<version>1.8.13</version>
+			<version>1.9.1</version>
 		</dependency>
 
 		<dependency>
@@ -56,7 +57,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>6.0.6</version>
+			<version>8.0.11</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
@@ -115,13 +116,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc7 -->
+		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc8 -->
 		<dependency>
 			<groupId>com.github.noraui</groupId>
-			<artifactId>ojdbc7</artifactId>
-			<version>12.1.0.2</version>
+			<artifactId>ojdbc8</artifactId>
+			<version>12.2.0.1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
@@ -168,13 +168,13 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-commons</artifactId>
-			<version>2.0.2.RELEASE</version>
+			<version>2.0.8.RELEASE</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-mongodb -->
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
-			<version>2.0.2.RELEASE</version>
+			<version>2.0.8.RELEASE</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/redis.clients/jedis -->
@@ -187,29 +187,29 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
-			<version>2.0.2.RELEASE</version>
+			<version>2.0.8.RELEASE</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.6.3</version>
+			<version>3.8.0</version>
 		</dependency>
 		<!-- httpclient begin -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5.5</version>
+			<version>4.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
-			<version>4.5.5</version>
+			<version>4.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
-			<version>4.4.9</version>
+			<version>4.4.10</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
