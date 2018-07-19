@@ -5,7 +5,9 @@ package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -109,15 +111,25 @@ public class HttpClientUtils {
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
-		HttpEntity httpEntity = new StringEntity(
-				nosqlConfig.isSqlMode() ? postValue.toString() : JSON.toJSONString(postValue), charset);
+		HttpEntity httpEntity = null;
+		//sql 模式
+		if (nosqlConfig.isSqlMode()) {
+			//6.3.x 版本支持xpack sql查询
+			if (esConfig.isEnableSql()) {
+				Map<String, String> map = new HashMap<String, String>();
+				map.put("query", postValue.toString());
+				httpEntity = new StringEntity(JSON.toJSONString(map), charset);
+			} else
+				httpEntity = new StringEntity(postValue.toString(), charset);
+		} else
+			httpEntity = new StringEntity(JSON.toJSONString(postValue), charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		String realUrl;
 		// 返回结果
 		HttpEntity reponseEntity = null;
 		if (esConfig.getRestClient() != null) {
-			realUrl = wrapUrl(esConfig.getPath(), nosqlConfig);
+			realUrl = wrapUrl(esConfig.getPath(), esConfig.isEnableSql(), nosqlConfig);
 			if (sqltoyContext.isDebug())
 				logger.debug("esRestClient执行:URL=[{}],Path={},执行的JSON=[{}]", esConfig.getUrl(), realUrl,
 						JSON.toJSONString(postValue));
@@ -135,7 +147,7 @@ public class HttpClientUtils {
 					restClient.close();
 			}
 		} else {
-			realUrl = wrapUrl(esConfig.getUrl(), nosqlConfig);
+			realUrl = wrapUrl(esConfig.getUrl(), esConfig.isEnableSql(), nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug())
 				logger.debug("httpClient执行URL=[{}],执行的JSON=[{}]", realUrl, JSON.toJSONString(postValue));
@@ -190,12 +202,22 @@ public class HttpClientUtils {
 
 	/**
 	 * @todo 重新组织url
+	 * @param url
+	 * @param enableSql
 	 * @param nosqlConfig
 	 * @return
 	 */
-	private static String wrapUrl(String url, NoSqlConfigModel nosqlConfig) {
+	private static String wrapUrl(String url, boolean enableSql, NoSqlConfigModel nosqlConfig) {
 		if (nosqlConfig.isSqlMode()) {
-			url = url.concat(url.endsWith("/") ? "_sql" : "/_sql");
+			// elasticsearch6.3.x 通过xpack支持sql查询
+			if (enableSql) {
+				// 判断url中是否已经包含相应路径
+				if (!url.toLowerCase().contains("/_xpack/sql"))
+					url = url.concat(url.endsWith("/") ? "_xpack/sql" : "/_xpack/sql");
+			} else {
+				if (!url.toLowerCase().contains("/_sql"))
+					url = url.concat(url.endsWith("/") ? "_sql" : "/_sql");
+			}
 		} else {
 			if (StringUtil.isNotBlank(nosqlConfig.getIndex()))
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getIndex());

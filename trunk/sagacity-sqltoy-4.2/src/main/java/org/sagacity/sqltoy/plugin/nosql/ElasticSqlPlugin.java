@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.utils.MongoElasticUtils;
 
 /**
  * @project sagacity-sqltoy4.1
- * @description elasticSearch的插件
+ * @description elasticsearch-sql 或elasticsearch6.3.x 版本支持xpack sql查询
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ElasticSqlPlugin.java,Revision:v1.0,Date:2018年1月3日
  */
