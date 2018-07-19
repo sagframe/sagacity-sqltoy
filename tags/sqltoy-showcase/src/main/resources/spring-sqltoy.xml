@@ -59,31 +59,35 @@
 	</bean>
 
 	<!-- 配置sqltoy框架的上下文 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
+	<bean id="sqlToyContext" name="sqlToyContext"
+		class="org.sagacity.sqltoy.SqlToyContext" init-method="initialize">
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
+		<property name="sqlResourcesDir"
+			value="classpath:sqltoy/showcase/" />
 		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-		<property name="functionConverts" value="default"/>
+		<property name="functionConverts" value="default" />
 
 		<!-- 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
 			<bean class="sqltoy.showcase.SqlToyShowCaseUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
+		<property name="translateConfig"
+			value="classpath:sqltoy-translate.xml" />
 		<!-- 集成elasticsearch,可以配置多个地址 -->
 		<property name="elasticEndpoints">
 			<list>
 				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
 					<constructor-arg value="${es.default.url}" />
 					<property name="id" value="default" />
-					<!-- <property name="username" value="" />
-					<property name="password" value="" /> -->
+					<!-- 6.3.x 版本支持xpack sql查询
+					<property name="enableSql" value="true" />-->
+					<!-- <property name="username" value="" /> <property name="password" 
+						value="" /> -->
 				</bean>
 			</list>
 		</property>
-		
+
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
 		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
@@ -94,6 +98,10 @@
 		<property name="pageFetchSizeLimit" value="50000" />
 		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
 		<property name="defaultDataSource" ref="dataSource" />
-		<property name="printSqlStrategy" value="debug"/>
+		<property name="printSqlStrategy" value="debug" />
 	</bean>
+	<bean id="sqlToyLazyDao" name="sqlToyLazyDao"
+		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl" />
+	<bean id="sqlToyCRUDService" name="sqlToyCRUDService"
+		class="org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl" />
 </beans>
