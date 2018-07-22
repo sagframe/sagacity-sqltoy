@@ -104,17 +104,16 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
-			throws Exception {
-		ElasticEndpoint esConfig = sqltoyContext.getElasticEndpoint(nosqlConfig.getEndpoint());
+	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
+			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = null;
-		//sql 模式
+		// sql 模式
 		if (nosqlConfig.isSqlMode()) {
-			//6.3.x 版本支持xpack sql查询
+			// 6.3.x 版本支持xpack sql查询
 			if (esConfig.isEnableSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
@@ -212,8 +211,8 @@ public class HttpClientUtils {
 			// elasticsearch6.3.x 通过xpack支持sql查询
 			if (enableSql) {
 				// 判断url中是否已经包含相应路径
-				if (!url.toLowerCase().contains("/_xpack/sql"))
-					url = url.concat(url.endsWith("/") ? "_xpack/sql" : "/_xpack/sql");
+				if (!url.toLowerCase().contains("/_xpack/sql/translate"))
+					url = url.concat(url.endsWith("/") ? "_xpack/sql/translate" : "/_xpack/sql/translate");
 			} else {
 				if (!url.toLowerCase().contains("/_sql"))
 					url = url.concat(url.endsWith("/") ? "_sql" : "/_sql");

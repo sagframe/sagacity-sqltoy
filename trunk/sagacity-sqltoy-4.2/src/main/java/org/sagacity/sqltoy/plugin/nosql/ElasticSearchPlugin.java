@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -152,8 +153,9 @@ public class ElasticSearchPlugin {
 				&& !resultClass.equalsIgnoreCase("linkedMap")) {
 			fields = BeanUtil.matchSetMethodNames(Class.forName(resultClass));
 		}
+		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		// 执行请求
-		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, jsonQuery);
+		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
 		if (json == null || json.isEmpty())
 			return new DataSetResult();
 		DataSetResult resultSet = ElasticSearchUtils.extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
