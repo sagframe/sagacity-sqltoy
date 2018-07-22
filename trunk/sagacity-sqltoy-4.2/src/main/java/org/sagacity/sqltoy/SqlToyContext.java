@@ -631,7 +631,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			for (ElasticEndpoint config : elasticEndpointList) {
 				// 初始化restClient
 				config.initRestClient();
-				config.setEnableSql(esEnableSql);
+				if (!config.isEnableSql())
+					config.setEnableSql(esEnableSql);
 				elasticEndpoints.put(config.getId().toLowerCase(), config);
 			}
 		}
