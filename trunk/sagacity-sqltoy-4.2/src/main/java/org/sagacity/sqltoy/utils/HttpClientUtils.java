@@ -104,9 +104,8 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, Object postValue)
+	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,Object postValue)
 			throws Exception {
-		ElasticEndpoint esConfig = sqltoyContext.getElasticEndpoint(nosqlConfig.getEndpoint());
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
