@@ -48,6 +48,7 @@ public class ElasticSearchUtils {
 			String resultClass) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
+		boolean esSql = (esConfig.isEnableSql() && noSqlModel.isSqlMode());
 		// 执行请求并返回json结果
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
 		if (json == null || json.isEmpty()) {
@@ -60,7 +61,22 @@ public class ElasticSearchUtils {
 				fields = BeanUtil.matchSetMethodNames(Class.forName(resultClass));
 			}
 		}
-		DataSetResult resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
+
+		if (fields == null && esSql) {
+			JSONArray cols = json.getJSONArray("columns");
+			fields = new String[cols.size()];
+			int index = 0;
+			for (Object col : cols) {
+				fields[index] = ((JSONObject) col).getString("name");
+				index++;
+			}
+		}
+
+		DataSetResult resultSet = null;
+		if (esSql)
+			resultSet = extractSqlFieldValue(sqlToyContext, sqlToyConfig, json, fields);
+		else
+			resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
@@ -70,6 +86,48 @@ public class ElasticSearchUtils {
 		resultSet.setRows(
 				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
 		return resultSet;
+	}
+
+	/**
+	 * @todo elasticsearch6.3 sql
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param json
+	 * @param fields
+	 * @return
+	 */
+	private static DataSetResult extractSqlFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			JSONObject json, String[] fields) {
+		DataSetResult resultModel = new DataSetResult();
+		Object realRoot = json.get("rows");
+		if (realRoot == null)
+			return resultModel;
+		String[] realFields = new String[fields.length];
+		String[] translateFields = new String[fields.length];
+		System.arraycopy(fields, 0, realFields, 0, fields.length);
+		System.arraycopy(fields, 0, translateFields, 0, fields.length);
+		int aliasIndex = 0;
+		for (int i = 0; i < realFields.length; i++) {
+			aliasIndex = realFields[i].indexOf(":");
+			if (aliasIndex != -1) {
+				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
+				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+			}
+		}
+		JSONArray rows = (JSONArray) realRoot;
+		JSONArray item;
+		List resultSet = new ArrayList();
+		for (Object row : rows) {
+			item = (JSONArray) row;
+			List result = new ArrayList();
+			for (Object cel : item) {
+				result.add(cel);
+			}
+			resultSet.add(result);
+		}
+		resultModel.setRows(resultSet);
+		resultModel.setLabelNames(translateFields);
+		return resultModel;
 	}
 
 	/**
