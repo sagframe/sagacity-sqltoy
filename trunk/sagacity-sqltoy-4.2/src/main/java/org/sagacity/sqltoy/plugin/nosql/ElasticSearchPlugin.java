@@ -124,6 +124,7 @@ public class ElasticSearchPlugin {
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			JSONObject jsonQuery, String resultClass) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
+		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
 		// 是否设置了fields
 		boolean hasFields = false;
@@ -153,7 +154,6 @@ public class ElasticSearchPlugin {
 				&& !resultClass.equalsIgnoreCase("linkedMap")) {
 			fields = BeanUtil.matchSetMethodNames(Class.forName(resultClass));
 		}
-		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		// 执行请求
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
 		if (json == null || json.isEmpty())
