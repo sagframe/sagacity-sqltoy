@@ -1768,6 +1768,7 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static boolean isComplexPageQuery(String queryStr) {
+		//清除不必要的字符并转小写
 		String tmpQuery = StringUtil.clearMistyChars(queryStr.toLowerCase(), " ");
 		boolean isComplexQuery = hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
