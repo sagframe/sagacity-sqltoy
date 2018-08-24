@@ -258,7 +258,7 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0)
-				sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "\\s+from[\\(|\\s+]", query_tmp, 0);
+				sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", query_tmp, 0);
 				//sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", query_tmp, 0);
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);

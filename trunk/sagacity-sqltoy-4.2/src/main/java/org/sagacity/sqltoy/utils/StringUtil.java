@@ -628,10 +628,9 @@ public class StringUtil {
 
 	public static void main(String[] args) {
 		String tmp = "select xxx from_days() from table ";
-		System.err.println("select".substring(5));
 
 		// String tmp = "select a,(select a1 from table) as b from table ";
-		System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
+		//System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
 
 		System.err.println(StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", tmp, 0));
 	}
