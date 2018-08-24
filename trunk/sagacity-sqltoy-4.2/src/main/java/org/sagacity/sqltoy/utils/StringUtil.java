@@ -257,6 +257,42 @@ public class StringUtil {
 	}
 
 	/**
+	 * @todo 查询对称标记符号的位置
+	 * @param beginMarkSign
+	 * @param endMarkSign
+	 * @param source
+	 * @param startIndex
+	 * @return
+	 */
+	public static int getSymMarkMatchIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
+		// 判断对称符号是否相等
+		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
+		Pattern startP = Pattern.compile(beginMarkSign);
+		Pattern endP = Pattern.compile(endMarkSign);
+		int beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
+		int endIndex = -1;
+		if (beginSignIndex == -1)
+			return StringUtil.matchIndex(source, endP, startIndex);
+		else
+			endIndex = StringUtil.matchIndex(source, endP, beginSignIndex + 1);
+		int tmpIndex = 0;
+		while (endIndex > beginSignIndex) {
+			// 寻找下一个开始符号
+			beginSignIndex = StringUtil.matchIndex(source, startP, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
+			// 找不到或则下一个开始符号位置大于截止符号则返回
+			if (beginSignIndex == -1 || beginSignIndex > endIndex)
+				return endIndex;
+			tmpIndex = endIndex;
+			// 开始符号在截止符号前则寻找下一个截止符号
+			endIndex = StringUtil.matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
+			// 找不到则返回
+			if (endIndex == -1)
+				return tmpIndex;
+		}
+		return endIndex;
+	}
+
+	/**
 	 * @todo 通过正则表达式判断是否匹配
 	 * @param source
 	 * @param regex
@@ -286,10 +322,22 @@ public class StringUtil {
 		return matchIndex(source, Pattern.compile(regex));
 	}
 
+	public static int matchIndex(String source, String regex, int start) {
+		return matchIndex(source, Pattern.compile(regex), start);
+	}
+
 	public static int matchIndex(String source, Pattern p) {
 		Matcher m = p.matcher(source);
 		if (m.find())
 			return m.start();
+		else
+			return -1;
+	}
+
+	public static int matchIndex(String source, Pattern p, int start) {
+		Matcher m = p.matcher(source.substring(start));
+		if (m.find())
+			return m.start() + start;
 		else
 			return -1;
 	}
@@ -384,7 +432,8 @@ public class StringUtil {
 	/**
 	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
 	 * @param source
-	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
+	 * @param splitSign
+	 *            如逗号、分号、冒号或具体字符串,非正则表达式
 	 * @param filter
 	 * @return
 	 */
@@ -450,8 +499,8 @@ public class StringUtil {
 				} else {
 					// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
 					if (minBegin > splitIndex || minBegin == -1) {
-						splitResults
-								.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
+						splitResults.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength),
+								splitIndex));
 						preSplitIndex = splitIndex;
 						skipIndex = preSplitIndex + 1;
 						splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
@@ -573,5 +622,13 @@ public class StringUtil {
 			template = template.replaceFirst("\\$?\\{\\s*\\}", arg == null ? "null" : arg.toString());
 		}
 		return template;
+	}
+
+	public static void main(String[] args) {
+		// String tmp = "select xxx from_days() from table ";
+		String tmp = "select a,select a1 from table) as b from table ";
+		System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
+		
+		System.err.println(StringUtil.getSymMarkMatchIndex("(?i)select ", "(?i)\\s+from[\\(|\\s+]",tmp, 0));
 	}
 }
