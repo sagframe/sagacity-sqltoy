@@ -335,6 +335,8 @@ public class StringUtil {
 	}
 
 	public static int matchIndex(String source, Pattern p, int start) {
+		if (source.length() <= start)
+			return -1;
 		Matcher m = p.matcher(source.substring(start));
 		if (m.find())
 			return m.start() + start;
@@ -625,10 +627,12 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		// String tmp = "select xxx from_days() from table ";
-		String tmp = "select a,select a1 from table) as b from table ";
+		String tmp = "select xxx from_days() from table ";
+		System.err.println("select".substring(5));
+
+		// String tmp = "select a,(select a1 from table) as b from table ";
 		System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
-		
-		System.err.println(StringUtil.getSymMarkMatchIndex("(?i)select ", "(?i)\\s+from[\\(|\\s+]",tmp, 0));
+
+		System.err.println(StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", tmp, 0));
 	}
 }
