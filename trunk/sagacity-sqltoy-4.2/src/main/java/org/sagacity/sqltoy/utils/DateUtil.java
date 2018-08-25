@@ -327,10 +327,13 @@ public class DateUtil {
 			return year.substring(year.length() - 2);
 		} else if (fmt.equalsIgnoreCase("YYYY")) {
 			return Integer.toString(getYear(dt));
-		} else if (fmt.equalsIgnoreCase("MM"))
-			return Integer.toString(getMonth(dt));
-		else if (fmt.equalsIgnoreCase("dd"))
-			return Integer.toString(getDay(dt));
+		} else if (fmt.equalsIgnoreCase("MM")) {
+			int month = getMonth(dt);
+			return (month < 10 ? "0" : "").concat(Integer.toString(month));
+		} else if (fmt.equalsIgnoreCase("dd")) {
+			int day = getDay(dt);
+			return (day < 10 ? "0" : "").concat(Integer.toString(day));
+		}
 		DateFormat df = StringUtil.isBlank(locale) ? new SimpleDateFormat(fmt)
 				: new SimpleDateFormat(fmt, new Locale(locale));
 		Date tmp = convertDateObject(dt, null, locale);

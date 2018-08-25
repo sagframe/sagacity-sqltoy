@@ -258,7 +258,10 @@ public class DialectUtils {
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
 			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0)
-				sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", query_tmp, 0);
+				sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", query_tmp,
+						0);
+			// sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from",
+			// query_tmp, 0);
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
 			// order by 在from 之后
@@ -1765,12 +1768,17 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static boolean isComplexPageQuery(String queryStr) {
+		//清除不必要的字符并转小写
 		String tmpQuery = StringUtil.clearMistyChars(queryStr.toLowerCase(), " ");
 		boolean isComplexQuery = hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
 		if (!isComplexQuery) {
-			int fromIndex = StringUtil.getSymMarkIndex("select ", " from", tmpQuery, 0);
-			int fromWhereIndex = StringUtil.getSymMarkIndex(" from", " where", tmpQuery, fromIndex - 1);
+			// int fromIndex = StringUtil.getSymMarkIndex("select ", " from", tmpQuery, 0);
+			int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", tmpQuery, 0);
+			// int fromWhereIndex = StringUtil.getSymMarkIndex(" from", " where", tmpQuery,
+			// fromIndex - 1);
+			int fromWhereIndex = StringUtil.getSymMarkMatchIndex("\\s+from[\\(|\\s+]", "\\s+where[\\(|\\s+]", tmpQuery,
+					fromIndex - 1);
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
 			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1 || fromLastStr.indexOf("(") != -1)
@@ -1797,7 +1805,9 @@ public class DialectUtils {
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
 		StringBuilder lastSql = new StringBuilder(clearMistyChar ? StringUtil.clearMistyChars(sql, " ") : sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		int fromIndex = StringUtil.getSymMarkIndex("select ", " from", sql.toLowerCase(), 0);
+		// int fromIndex = StringUtil.getSymMarkIndex("select ", " from",
+		// sql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", sql.toLowerCase(), 0);
 		if (fromIndex != -1)
 			lastSql.delete(0, fromIndex);
 		// 删除所有对称的括号中的内容
@@ -1836,7 +1846,9 @@ public class DialectUtils {
 	public static String clearDisturbSql(String sql) {
 		StringBuilder lastSql = new StringBuilder(sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		int fromIndex = StringUtil.getSymMarkIndex("select ", " from", sql.toLowerCase(), 0);
+		// int fromIndex = StringUtil.getSymMarkIndex("select ", " from",
+		// sql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", sql.toLowerCase(), 0);
 		if (fromIndex != -1)
 			lastSql.delete(0, fromIndex);
 		// 删除所有对称的括号中的内容

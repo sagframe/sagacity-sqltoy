@@ -717,7 +717,7 @@ public class DialectFactory {
 				int sql_from_index;
 				int unionSqlSize = unionSqls.length;
 				for (int i = 0; i < unionSqlSize; i++) {
-					sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", unionSqls[i], 0);
+					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", unionSqls[i], 0);
 					countSql.append(" select count(1) row_count ")
 							.append((sql_from_index != -1 ? unionSqls[i].substring(sql_from_index) : unionSqls[i]));
 					if (i < unionSqlSize - 1)
