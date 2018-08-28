@@ -269,27 +269,28 @@ public class StringUtil {
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
 		Pattern startP = Pattern.compile(beginMarkSign);
 		Pattern endP = Pattern.compile(endMarkSign);
-		int beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
-		int endIndex = -1;
-		if (beginSignIndex == -1)
-			return StringUtil.matchIndex(source, endP, startIndex);
+		int[] beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
+		int[] endIndex = { -1, -1 };
+		if (beginSignIndex[0] == -1)
+			return StringUtil.matchIndex(source, endP, startIndex)[0];
 		else
-			endIndex = StringUtil.matchIndex(source, endP, beginSignIndex + 1);
-		int tmpIndex = 0;
-		while (endIndex > beginSignIndex) {
+			endIndex = StringUtil.matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] tmpIndex = { 0, 0 };
+		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
-			beginSignIndex = StringUtil.matchIndex(source, startP, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
+			beginSignIndex = StringUtil.matchIndex(source, startP,
+					(symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
 			// 找不到或则下一个开始符号位置大于截止符号则返回
-			if (beginSignIndex == -1 || beginSignIndex > endIndex)
-				return endIndex;
+			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0])
+				return endIndex[0];
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = StringUtil.matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
+			endIndex = StringUtil.matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
 			// 找不到则返回
-			if (endIndex == -1)
-				return tmpIndex;
+			if (endIndex[0] == -1)
+				return tmpIndex[0];
 		}
-		return endIndex;
+		return endIndex[0];
 	}
 
 	/**
@@ -322,7 +323,7 @@ public class StringUtil {
 		return matchIndex(source, Pattern.compile(regex));
 	}
 
-	public static int matchIndex(String source, String regex, int start) {
+	public static int[] matchIndex(String source, String regex, int start) {
 		return matchIndex(source, Pattern.compile(regex), start);
 	}
 
@@ -334,14 +335,14 @@ public class StringUtil {
 			return -1;
 	}
 
-	public static int matchIndex(String source, Pattern p, int start) {
+	public static int[] matchIndex(String source, Pattern p, int start) {
 		if (source.length() <= start)
-			return -1;
+			return new int[] { -1, -1 };
 		Matcher m = p.matcher(source.substring(start));
 		if (m.find())
-			return m.start() + start;
+			return new int[] { m.start() + start, m.end() + start };
 		else
-			return -1;
+			return new int[] { -1, -1 };
 	}
 
 	public static int matchLastIndex(String source, String regex) {
@@ -627,11 +628,14 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp = "select xxx from_days() from table ";
+		String tmp = "select a,(select b from table1) as c from table ";
 
 		// String tmp = "select a,(select a1 from table) as b from table ";
-		//System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
+		// System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
+		// String sql = readLineAsString(new File("D:/test.txt"), "UTF-8");
+		// int index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+",
+		// "(?i)\\s+from[\\(|\\s+]", sql, 0);
+		// System.err.println(index);
 
-		System.err.println(StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", tmp, 0));
 	}
 }

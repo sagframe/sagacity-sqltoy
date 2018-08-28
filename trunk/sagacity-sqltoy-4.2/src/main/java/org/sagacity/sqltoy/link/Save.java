@@ -96,8 +96,8 @@ public class Save extends BaseLink {
 	}
 
 	/**
-	 * @todo 保存模式
-	 * @param existMode
+	 * @todo 批量值
+	 * @param batchSize
 	 * @return
 	 */
 	public Save batchSize(int batchSize) {
