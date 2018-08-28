@@ -120,9 +120,11 @@ public class TemplateGenerator {
 			StringTemplateLoader templateLoader = new StringTemplateLoader();
 			templateLoader.putTemplate("template", templateStr);
 			cfg.setTemplateLoader(templateLoader);
-			Template template = cfg.getTemplate("template");
+			Template template = null;
 			if (StringUtil.isNotNullAndBlank(this.encoding))
-				template.setEncoding(this.encoding);
+				template = cfg.getTemplate("template", this.encoding);
+			else
+				template = cfg.getTemplate("template");
 			Map root = new HashMap();
 			for (int i = 0; i < keys.length; i++) {
 				root.put(keys[i], templateData[i]);
@@ -167,7 +169,7 @@ public class TemplateGenerator {
 
 	public void init() {
 		if (cfg == null) {
-			cfg = new Configuration();
+			cfg = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
 			if (StringUtil.isNotNullAndBlank(this.encoding))
 				cfg.setDefaultEncoding(this.encoding);
 		}
