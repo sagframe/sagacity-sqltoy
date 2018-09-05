@@ -465,6 +465,7 @@ public class EntityManager {
 				// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 				if (id != null) {
 					entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
+					fieldMeta.setLength(bizId.length());
 				} else {
 					entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
 				}
