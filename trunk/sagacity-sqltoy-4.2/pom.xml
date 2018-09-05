@@ -3,24 +3,24 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.2.10</version>
+	<version>4.2.12</version>
 	<name>sqltoy-orm</name>
 	<description>sqltoy-orm</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.7.RELEASE</spring.version>
-		<spring-data.version>2.0.8.RELEASE</spring-data.version>
-		<log4j.version>2.11.0</log4j.version>
-		<mysql.version>8.0.11</mysql.version>
-		<ehcache.version>3.5.2</ehcache.version>
+		<spring.version>5.0.8.RELEASE</spring.version>
+		<spring-data.version>2.0.9.RELEASE</spring-data.version>
+		<log4j.version>2.11.1</log4j.version>
+		<mysql.version>8.0.12</mysql.version>
+		<ehcache.version>3.6.0</ehcache.version>
 		<httpclient.version>4.5.6</httpclient.version>
-		<elastic.version>6.3.1</elastic.version>
-		<fastjson.version>1.2.47</fastjson.version>
-		<mongo.version>3.8.0</mongo.version>
-		<dom4j.version>2.1.0</dom4j.version>
+		<elastic.version>6.4.0</elastic.version>
+		<fastjson.version>1.2.49</fastjson.version>
+		<mongo.version>3.8.1</mongo.version>
+		<dom4j.version>2.1.1</dom4j.version>
 		<jedis.version>2.9.0</jedis.version>
-		<spring-boot.version>2.0.3.RELEASE</spring-boot.version>
+		<spring-boot.version>2.0.4.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
 		<repository>
