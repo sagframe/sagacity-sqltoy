@@ -11,6 +11,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring.version>5.0.8.RELEASE</spring.version>
 		<log4j.version>2.11.1</log4j.version>
+		<spring.version>5.0.8.RELEASE</spring.version>
+		<log4j.version>2.11.1</log4j.version>
 		<druid.version>1.1.10</druid.version>
 		<sagacity-sqltoy.version>4.2.12</sagacity-sqltoy.version>
 		<elastic.version>6.4.0</elastic.version>
@@ -57,6 +59,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
+
 			<version>8.0.12</version>
 		</dependency>
 		<dependency>
