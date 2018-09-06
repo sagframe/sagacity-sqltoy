@@ -189,6 +189,11 @@ public class EntityMeta implements Serializable {
 	private boolean hasBizIdConfig = false;
 
 	/**
+	 * 业务主键同时也是数据库主键
+	 */
+	private boolean bizIdEqPK = false;
+
+	/**
 	 * @return the loadAllSql
 	 */
 	public String getLoadAllSql() {
@@ -726,4 +731,19 @@ public class EntityMeta implements Serializable {
 		this.hasBizIdConfig = hasBizIdConfig;
 	}
 
+	/**
+	 * @return the bizIdEqPK
+	 */
+	public boolean isBizIdEqPK() {
+		return bizIdEqPK;
+	}
+
+	/**
+	 * @param bizIdEqPK the bizIdEqPK to set
+	 */
+	public void setBizIdEqPK(boolean bizIdEqPK) {
+		this.bizIdEqPK = bizIdEqPK;
+	}
+
+	
 }
