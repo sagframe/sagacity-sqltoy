@@ -481,19 +481,20 @@ public class ShardingUtils {
 			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null, false, 0);
 			Object pkValue;
 			Object[] relatedColValue = null;
+			Object[] fullParamValues;
 			for (int i = 0; i < entities.size(); i++) {
 				pkValue = ids.get(i)[0];
 				// 主键值未赋予,则自动赋予
 				if (pkValue == null || pkValue.toString().trim().equals("")) {
 					if (entityMeta.isBizIdEqPK()) {
-						Object[] fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns, null, null);
+						fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns, null, null);
 						if (relatedColumnIndex != null) {
 							relatedColValue = new Object[relatedColumnIndex.length];
 							for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
 								relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
 								if (relatedColValue[meter] == null)
-									throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-											+ relatedColumnIndex[meter] + " 值为null!");
+									throw new Exception("对象:" + entityMeta.getEntityClass().getName()
+											+ " 生成业务主键依赖的关联字段:" + relatedColumnIndex[meter] + " 值为null!");
 							}
 						}
 					}
