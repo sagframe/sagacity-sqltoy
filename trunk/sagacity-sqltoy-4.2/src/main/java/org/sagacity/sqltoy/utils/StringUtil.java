@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -52,6 +53,10 @@ public class StringUtil {
 		if (null == str)
 			return true;
 		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
+			return true;
+		} else if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
+			return true;
+		} else if ((str instanceof Map) && ((Map) str).isEmpty()) {
 			return true;
 		}
 		return false;
