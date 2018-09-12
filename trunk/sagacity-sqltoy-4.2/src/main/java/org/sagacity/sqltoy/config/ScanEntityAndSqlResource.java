@@ -190,67 +190,70 @@ public class ScanEntityAndSqlResource {
 		URL url;
 		boolean hasDialectSql = false;
 		File file;
-		String dialectXML = StringUtil.isNotBlank(dialect) ? ".".concat(dialect).concat(SQLTOY_SQL_FILE_SUFFIX)
-				: null;
+		String dialectXML = StringUtil.isNotBlank(dialect) ? ".".concat(dialect).concat(SQLTOY_SQL_FILE_SUFFIX) : null;
 		boolean startClasspath = false;
 		if (StringUtil.isNotBlank(resourceDir)) {
-			realRes = resourceDir.trim();
-			startClasspath = false;
-			if (realRes.toLowerCase().startsWith("classpath:")) {
-				realRes = realRes.substring(10).trim();
-				startClasspath = true;
-			}
-			urls = getResourceUrls(realRes, startClasspath);
-			if (urls != null) {
-				while (urls.hasMoreElements()) {
-					url = urls.nextElement();
-					if (url.getProtocol().equals("jar")) {
-						if (realRes.charAt(0) == '/')
-							realRes = realRes.substring(1);
-						JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
-						Enumeration<JarEntry> entries = jar.entries();
-						// 同样的进行循环迭代
-						JarEntry entry;
-						String name;
-						hasDialectSql = false;
-						while (entries.hasMoreElements()) {
-							// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-							entry = entries.nextElement();
-							name = entry.getName();
-							if (name.startsWith(realRes) && name.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
-									&& !entry.isDirectory()) {
-								if (!hasDialectSql && dialectXML != null && name.endsWith(dialectXML))
-									hasDialectSql = true;
-								result.add(name);
-							}
-						}
-						// 移除非以dialect结尾的sql配置文件
-						if (hasDialectSql) {
-							for (int i = 0; i < result.size(); i++) {
-								name = result.get(i).toString();
-								if (!name.endsWith(dialectXML)) {
-									result.remove(i);
-									i--;
-								}
-							}
-						}
-					} else {
-						getPathFiles(new File(url.toURI()), result);
-						if (null != dialectXML) {
-							for (int i = 0; i < result.size(); i++) {
-								file = (File) result.get(i);
-								if (file.getName().endsWith(dialectXML)) {
-									hasDialectSql = true;
-									break;
+			//统一全角半角，用逗号分隔
+			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\;", ",").split("\\,");
+			for (String dir : dirSet) {
+				realRes = dir.trim();
+				startClasspath = false;
+				if (realRes.toLowerCase().startsWith("classpath:")) {
+					realRes = realRes.substring(10).trim();
+					startClasspath = true;
+				}
+				urls = getResourceUrls(realRes, startClasspath);
+				if (urls != null) {
+					while (urls.hasMoreElements()) {
+						url = urls.nextElement();
+						if (url.getProtocol().equals("jar")) {
+							if (realRes.charAt(0) == '/')
+								realRes = realRes.substring(1);
+							JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
+							Enumeration<JarEntry> entries = jar.entries();
+							// 同样的进行循环迭代
+							JarEntry entry;
+							String name;
+							hasDialectSql = false;
+							while (entries.hasMoreElements()) {
+								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+								entry = entries.nextElement();
+								name = entry.getName();
+								if (name.startsWith(realRes) && name.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+										&& !entry.isDirectory()) {
+									if (!hasDialectSql && dialectXML != null && name.endsWith(dialectXML))
+										hasDialectSql = true;
+									result.add(name);
 								}
 							}
 							// 移除非以dialect结尾的sql配置文件
 							if (hasDialectSql) {
 								for (int i = 0; i < result.size(); i++) {
-									file = (File) result.get(i);
-									if (!file.getName().endsWith(dialectXML)) {
+									name = result.get(i).toString();
+									if (!name.endsWith(dialectXML)) {
 										result.remove(i);
 										i--;
+									}
+								}
+							}
+						} else {
+							getPathFiles(new File(url.toURI()), result);
+							if (null != dialectXML) {
+								for (int i = 0; i < result.size(); i++) {
+									file = (File) result.get(i);
+									if (file.getName().endsWith(dialectXML)) {
+										hasDialectSql = true;
+										break;
+									}
+								}
+								// 移除非以dialect结尾的sql配置文件
+								if (hasDialectSql) {
+									for (int i = 0; i < result.size(); i++) {
+										file = (File) result.get(i);
+										if (!file.getName().endsWith(dialectXML)) {
+											result.remove(i);
+											i--;
+										}
 									}
 								}
 							}
@@ -302,6 +305,8 @@ public class ScanEntityAndSqlResource {
 	 */
 	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
+		if(StringUtil.isBlank(resource))
+			return urls;
 		if (!startClasspath) {
 			File file = new File(resource);
 			if (file.exists()) {

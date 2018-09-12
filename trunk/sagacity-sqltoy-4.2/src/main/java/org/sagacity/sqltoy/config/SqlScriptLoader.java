@@ -119,8 +119,10 @@ public class SqlScriptLoader {
 					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect);
 				}
 			} else {
-				err.println("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir是否正确,或文件没有在编译路径下(bin、classes等)!");
-				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir是否正确,或文件没有在编译路径下(bin、classes等)!");
+				err.println("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
+						+ "是否正确,或文件没有在编译路径下(bin、classes等)!");
+				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
+						sqlResourcesDir);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
