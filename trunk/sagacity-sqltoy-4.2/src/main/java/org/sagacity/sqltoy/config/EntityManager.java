@@ -46,6 +46,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version id:EntityManager.java,Revision:v1.0,Date:2012-6-1 下午4:23:26
  * @Modification {Date:2017-10-13,分解之前的parseEntityMeta大方法,进行代码优化}
  * @Modification {Date:2018-1-22,增加业务主键配置策略}
+ * @Modification {Date:2018-9-6,增加业务主键配置策略}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -466,6 +467,7 @@ public class EntityManager {
 				if (id != null) {
 					entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
 					fieldMeta.setLength(bizId.length());
+					entityMeta.setBizIdEqPK(true);
 				} else {
 					entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
 				}

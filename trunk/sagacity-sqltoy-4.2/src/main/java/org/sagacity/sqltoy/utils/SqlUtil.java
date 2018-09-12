@@ -903,6 +903,7 @@ public class SqlUtil {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
+				// set field=value
 				updateTrunkLeafSql.append(" inner join (select ");
 				updateTrunkLeafSql.append(treeTableModel.getPidField());
 				updateTrunkLeafSql.append(" from ").append(treeTableModel.getTableName());
