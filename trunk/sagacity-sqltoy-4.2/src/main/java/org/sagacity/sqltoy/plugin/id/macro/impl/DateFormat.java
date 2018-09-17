@@ -35,6 +35,9 @@ public class DateFormat extends AbstractMacro {
 				fmt = params[1];
 			}
 		}
+		String emptyFmt = fmt.replaceAll("\"", "").replaceAll("\\'", "");
+		if (emptyFmt.equals("") || emptyFmt.equalsIgnoreCase("null"))
+			return "";
 		return DateUtil.formatDate(dateValue, fmt);
 	}
 
