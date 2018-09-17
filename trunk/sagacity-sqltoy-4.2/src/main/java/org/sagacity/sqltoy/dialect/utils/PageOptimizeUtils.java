@@ -3,8 +3,10 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -134,6 +136,18 @@ public class PageOptimizeUtils {
 			// 长度超阀值,移除最早进入的
 			while (map.size() > aliveMax) {
 				map.remove(map.keySet().iterator().next());
+			}
+
+			// 剔除过期数据
+			Iterator<Map.Entry<String, Object[]>> iter = map.entrySet().iterator();
+			Map.Entry<String, Object[]> entry;
+			while (iter.hasNext()) {
+				entry = iter.next();
+				// 当前时间已经大于过期时间
+				if (nowTime >= ((Long) entry.getValue()[0]))
+					iter.remove();
+				else
+					break;
 			}
 		}
 	}
