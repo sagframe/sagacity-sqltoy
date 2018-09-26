@@ -54,6 +54,7 @@ public class TranslateConfigParse {
 		//判断缓存翻译的配置文件是否存在
 		if (CommonUtils.getFileInputStream(translateConfig) == null) {
 			logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性!", translateConfig);
+			return null;
 		}
 		return (DefaultConfig) XMLUtil.readXML(translateConfig, charset, false, new XMLCallbackHandler() {
 			@Override
