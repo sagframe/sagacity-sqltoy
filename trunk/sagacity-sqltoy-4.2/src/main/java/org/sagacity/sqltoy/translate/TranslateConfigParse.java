@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -29,6 +31,11 @@ import org.sagacity.sqltoy.utils.XMLUtil;
  * @version id:TranslateConfigParse.java,Revision:v1.0,Date:2018年3月8日
  */
 public class TranslateConfigParse {
+	/**
+	 * 定义全局日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(TranslateConfigParse.class);
+
 	private final static String TRANSLATE_SUFFIX = "-translate";
 	private final static String CHECKER_SUFFIX = "-checker";
 	private final static String[] TRANSLATE_TYPES = new String[] { "sql", "service", "rest" };
@@ -44,6 +51,10 @@ public class TranslateConfigParse {
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
 			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
 			String translateConfig, String charset) throws Exception {
+		//判断缓存翻译的配置文件是否存在
+		if (CommonUtils.getFileInputStream(translateConfig) == null) {
+			logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性!", translateConfig);
+		}
 		return (DefaultConfig) XMLUtil.readXML(translateConfig, charset, false, new XMLCallbackHandler() {
 			@Override
 			public Object process(Document doc, Element root) throws Exception {
