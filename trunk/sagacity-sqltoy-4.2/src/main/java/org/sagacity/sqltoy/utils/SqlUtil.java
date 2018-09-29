@@ -540,19 +540,18 @@ public class SqlUtil {
 	public static String clearMark(String sql) {
 		if (StringUtil.isBlank(sql))
 			return sql;
-		int markIndex = sql.indexOf("--");
 		int endMarkIndex;
-		// 剔除单行注释
+		// 剔除<!-- -->形式的多行注释
+		int markIndex = sql.indexOf("<!--");
 		while (markIndex != -1) {
-			// 换行符号
-			endMarkIndex = sql.indexOf("\n", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 1) {
+			endMarkIndex = sql.indexOf("-->", markIndex);
+			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 3) {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else
-				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
-			markIndex = sql.indexOf("--");
+				// update 2017-6-5
+				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
+			markIndex = sql.indexOf("<!--");
 		}
 		// 剔除/* */形式的多行注释(如果是/*+ALL_ROWS*/ 或 /*! ALL_ROWS*/形式的诸如oracle hint的用法不看作是注释)
 		markIndex = StringUtil.matchIndex(sql, maskPattern);
@@ -566,18 +565,18 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
-
-		// 剔除<!-- -->形式的多行注释
-		markIndex = sql.indexOf("<!--");
+		// 剔除单行注释
+		markIndex = sql.indexOf("--");
 		while (markIndex != -1) {
-			endMarkIndex = sql.indexOf("-->", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 3) {
+			// 换行符号
+			endMarkIndex = sql.indexOf("\n", markIndex);
+			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 1) {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else
-				// update 2017-6-5
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
-			markIndex = sql.indexOf("<!--");
+				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
+				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
+			markIndex = sql.indexOf("--");
 		}
 		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
@@ -898,7 +897,7 @@ public class SqlUtil {
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
 			int dbType = DataSourceUtils.getDbType(conn);
-			//支持mysql8 update 2018-5-11
+			// 支持mysql8 update 2018-5-11
 			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL8) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
