@@ -138,8 +138,8 @@ public class DialectUtils {
 				realParamValue[paramLength + 1] = endIndex;
 			}
 		} else {
-			int preSqlParamCnt = SqlUtil.getParamsCount(sqlToyConfig.getFastPreSql(), false);
-			int tailSqlParamCnt = SqlUtil.getParamsCount(sqlToyConfig.getFastTailSql(), false);
+			int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql());
+			int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql());
 			paramLength = (paramsValue == null) ? 0 : paramsValue.length;
 			realParamValue = new Object[paramLength + extendSize];
 			if (sqlToyConfig.isHasFast()) {
@@ -305,8 +305,8 @@ public class DialectUtils {
 				countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
 			}
 
-			paramCnt = SqlUtil.getParamsCount(countQueryStr.toString(), false);
-			withParamCnt = SqlUtil.getParamsCount(sqlWith.getWithSql(), false);
+			paramCnt = getParamsCount(countQueryStr.toString());
+			withParamCnt = getParamsCount(sqlWith.getWithSql());
 			countQueryStr.insert(0, sqlWith.getWithSql() + " ");
 			lastCountSql = countQueryStr.toString();
 		}
@@ -2043,5 +2043,25 @@ public class DialectUtils {
 			}
 		};
 		return handler;
+	}
+	
+	/**
+	 * @todo 提取sql中参数的个数
+	 * @param queryStr
+	 * @return
+	 */
+	private static int getParamsCount(String queryStr) {
+		int paramCnt = 0;
+		if (StringUtil.isBlank(queryStr))
+			return paramCnt;
+		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
+		String sign = "?";
+		if (queryStr.indexOf("?") == -1)
+			sign = ":";
+		int index = 0;
+		while ((index = queryStr.indexOf(sign, index + 1)) != -1) {
+			paramCnt++;
+		}
+		return paramCnt;
 	}
 }
