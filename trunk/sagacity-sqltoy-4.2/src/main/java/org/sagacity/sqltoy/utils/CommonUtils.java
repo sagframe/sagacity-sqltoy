@@ -116,7 +116,6 @@ public class CommonUtils {
 				if (new File(realFile).exists())
 					return new FileInputStream(realFile);
 				else {
-
 					if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
 						realFile = realFile.trim().substring(10).trim();
 					if (realFile.charAt(0) == '/')
