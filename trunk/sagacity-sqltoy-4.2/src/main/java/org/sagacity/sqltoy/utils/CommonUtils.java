@@ -109,11 +109,14 @@ public class CommonUtils {
 			if (file instanceof File)
 				return new FileInputStream((File) file);
 			else {
+				String realFile = (String) file;
+				if (StringUtil.isBlank(realFile))
+					return null;
 				// 文件路径
-				if (new File((String) file).exists())
-					return new FileInputStream((String) file);
+				if (new File(realFile).exists())
+					return new FileInputStream(realFile);
 				else {
-					String realFile = (String) file;
+
 					if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
 						realFile = realFile.trim().substring(10).trim();
 					if (realFile.charAt(0) == '/')
