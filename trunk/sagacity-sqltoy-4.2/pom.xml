@@ -4,23 +4,25 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<version>4.2.16</version>
-	<name>sqltoy-orm</name>
-	<description>sqltoy-orm</description>
+	<name>sagacity-sqltoy</name>
+	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.9.RELEASE</spring.version>
-		<spring-data.version>2.0.10.RELEASE</spring-data.version>
+		<spring.version>5.1.0.RELEASE</spring.version>
+		<spring-data.version>2.1.0.RELEASE</spring-data.version>
 		<log4j.version>2.11.1</log4j.version>
 		<mysql.version>8.0.12</mysql.version>
-		<ehcache.version>3.6.0</ehcache.version>
+		<ehcache.version>3.6.1</ehcache.version>
 		<httpclient.version>4.5.6</httpclient.version>
 		<httpclient-core.version>4.4.10</httpclient-core.version>
-		<elastic.version>6.4.1</elastic.version>
-		<fastjson.version>1.2.49</fastjson.version>
-		<mongo.version>3.8.1</mongo.version>
+		<elastic.version>6.4.2</elastic.version>
+		<fastjson.version>1.2.51</fastjson.version>
+		<mongo.version>3.8.2</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<jedis.version>2.9.0</jedis.version>
+		<junit.version>4.12</junit.version>
+		<beanutils.version>1.9.3</beanutils.version>
 		<spring-boot.version>2.0.5.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
@@ -57,7 +59,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -90,7 +92,7 @@
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
-			<version>1.9.3</version>
+			<version>${beanutils.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-logging</groupId>

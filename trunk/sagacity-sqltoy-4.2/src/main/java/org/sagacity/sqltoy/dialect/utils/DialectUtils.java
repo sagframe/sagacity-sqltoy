@@ -66,6 +66,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
  * @Modification {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
  * @Modification {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
+ * @Modification {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建selec count(1) from错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -99,6 +100,18 @@ public class DialectUtils {
 	 */
 	public static final Pattern STAT_PATTERN = Pattern
 			.compile("\\W(sum|avg|min|max|first|last|first_value|last_value)\\(");
+
+	/**
+	 * 查询select 匹配
+	 */
+	private static final String SELECT_REGEX = "select\\s+";
+
+	/**
+	 * 查询from 匹配
+	 */
+	private static final String FROM_REGEX = "\\s+from[\\(|\\s+]";
+
+	private static final String WHERE_REGEX = "\\s+where[\\(|\\s+]";
 
 	/**
 	 * @todo 处理分页sql的参数
@@ -138,8 +151,8 @@ public class DialectUtils {
 				realParamValue[paramLength + 1] = endIndex;
 			}
 		} else {
-			int preSqlParamCnt = SqlUtil.getParamsCount(sqlToyConfig.getFastPreSql(), false);
-			int tailSqlParamCnt = SqlUtil.getParamsCount(sqlToyConfig.getFastTailSql(), false);
+			int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql());
+			int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql());
 			paramLength = (paramsValue == null) ? 0 : paramsValue.length;
 			realParamValue = new Object[paramLength + extendSize];
 			if (sqlToyConfig.isHasFast()) {
@@ -257,11 +270,9 @@ public class DialectUtils {
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
-			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0)
-				sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", query_tmp,
-						0);
-			// sql_from_index = StringUtil.getSymMarkIndexIgnoreCase("select ", " from",
-			// query_tmp, 0);
+			if (StringUtil.indexOfIgnoreCase(query_tmp, "from") != 0) {
+				sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, query_tmp.toLowerCase(), 0);
+			}
 			// 剔除order提高运行效率
 			int orderByIndex = StringUtil.matchLastIndex(query_tmp, ORDER_BY_PATTERN);
 			// order by 在from 之后
@@ -305,8 +316,8 @@ public class DialectUtils {
 				countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
 			}
 
-			paramCnt = SqlUtil.getParamsCount(countQueryStr.toString(), false);
-			withParamCnt = SqlUtil.getParamsCount(sqlWith.getWithSql(), false);
+			paramCnt = getParamsCount(countQueryStr.toString());
+			withParamCnt = getParamsCount(sqlWith.getWithSql());
 			countQueryStr.insert(0, sqlWith.getWithSql() + " ");
 			lastCountSql = countQueryStr.toString();
 		}
@@ -1768,17 +1779,13 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static boolean isComplexPageQuery(String queryStr) {
-		//清除不必要的字符并转小写
+		// 清除不必要的字符并转小写
 		String tmpQuery = StringUtil.clearMistyChars(queryStr.toLowerCase(), " ");
 		boolean isComplexQuery = hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
 		if (!isComplexQuery) {
-			// int fromIndex = StringUtil.getSymMarkIndex("select ", " from", tmpQuery, 0);
-			int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", tmpQuery, 0);
-			// int fromWhereIndex = StringUtil.getSymMarkIndex(" from", " where", tmpQuery,
-			// fromIndex - 1);
-			int fromWhereIndex = StringUtil.getSymMarkMatchIndex("\\s+from[\\(|\\s+]", "\\s+where[\\(|\\s+]", tmpQuery,
-					fromIndex - 1);
+			int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpQuery, 0);
+			int fromWhereIndex = StringUtil.getSymMarkMatchIndex(FROM_REGEX, WHERE_REGEX, tmpQuery, fromIndex - 1);
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
 			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1 || fromLastStr.indexOf("(") != -1)
@@ -1805,9 +1812,7 @@ public class DialectUtils {
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
 		StringBuilder lastSql = new StringBuilder(clearMistyChar ? StringUtil.clearMistyChars(sql, " ") : sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		// int fromIndex = StringUtil.getSymMarkIndex("select ", " from",
-		// sql.toLowerCase(), 0);
-		int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", sql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
 		if (fromIndex != -1)
 			lastSql.delete(0, fromIndex);
 		// 删除所有对称的括号中的内容
@@ -1846,9 +1851,7 @@ public class DialectUtils {
 	public static String clearDisturbSql(String sql) {
 		StringBuilder lastSql = new StringBuilder(sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		// int fromIndex = StringUtil.getSymMarkIndex("select ", " from",
-		// sql.toLowerCase(), 0);
-		int fromIndex = StringUtil.getSymMarkMatchIndex("select\\s+", "\\s+from[\\(|\\s+]", sql.toLowerCase(), 0);
+		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
 		if (fromIndex != -1)
 			lastSql.delete(0, fromIndex);
 		// 删除所有对称的括号中的内容
@@ -2043,5 +2046,25 @@ public class DialectUtils {
 			}
 		};
 		return handler;
+	}
+
+	/**
+	 * @todo 提取sql中参数的个数
+	 * @param queryStr
+	 * @return
+	 */
+	private static int getParamsCount(String queryStr) {
+		int paramCnt = 0;
+		if (StringUtil.isBlank(queryStr))
+			return paramCnt;
+		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
+		String sign = "?";
+		if (queryStr.indexOf("?") == -1)
+			sign = ":";
+		int index = 0;
+		while ((index = queryStr.indexOf(sign, index + 1)) != -1) {
+			paramCnt++;
+		}
+		return paramCnt;
 	}
 }

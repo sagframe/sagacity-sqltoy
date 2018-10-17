@@ -325,35 +325,6 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 获取查询sql语句中参数的个数
-	 * @param queryStr
-	 * @param skipField
-	 *            是否跳过from前的字段中的参数，如:select ? from
-	 * @return
-	 */
-	public static int getParamsCount(String queryStr, boolean skipField) {
-		int paramCnt = 0;
-		if (StringUtil.isBlank(queryStr))
-			return paramCnt;
-		// 将回车、换行、tab换成空白
-		String tmpStr = StringUtil.clearMistyChars(queryStr, " ");
-		int fromIndex = StringUtil.indexOfIgnoreCase(tmpStr, " from ");
-		// 是否跳过from前的field
-		if (skipField && fromIndex != -1) {
-			tmpStr = tmpStr.substring(fromIndex);
-		}
-		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
-		String sign = "?";
-		if (tmpStr.indexOf("?") == -1)
-			sign = ":";
-		int index = 0;
-		while ((index = tmpStr.indexOf(sign, index + 1)) != -1) {
-			paramCnt++;
-		}
-		return paramCnt;
-	}
-
-	/**
 	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
 	 * @param rs
 	 * @param voClass

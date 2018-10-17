@@ -1,9 +1,86 @@
-3.2.2 (2017-2-28)
+v4.2.15 2018-9-30
+1、修复不使用缓存翻译时，未对文件是否存在进行判断。
+2、修复sql语句中进行注释时，先剔除-- xx -- 行注释，导致注释模式被剔除中间部分导致失效
+
+v4.2.14 2018-9-17
+1、支持多个sql配置路径<property name="sqlResourcesDir" value="classpath:com/sinochem;classpath:sqltoy" />
+
+v4.2.13 2018-9-6
+1、修复业务主键跟数据库主键属于同一个字段时的长度控制问题
+2、修复业务主键跟数据库主键同一个字段批量保存时的生成参数未指定正确问题
+
+v4.2.10 2018-8-24
+1、修复分页查询组合count sql时：select a,from_days() days from table 取from位置bug
+
+v4.2.8 2018-6-5
+1、增加日期格式化和数字格式化、
+           <sql id="companyTrans">
+                <!-- 敏感数据安全脱敏 -->
+	<secure-mask columns="account_code" type="public-account"/>
+	<secure-mask columns="link_tel" type="tel"/>
+	<!-- 日期格式化 -->
+	<date-format columns="trans_date" format="yyyy-MM-dd"/>
+	<!-- 数字格式化,分:#,###.00 、capital、capital-rmb 等形式 -->
+	<number-format columns="total_amt" format="capital-rmb"/>
+         </sql>
+
+v4.2.7 2018-5-28
+1、业务主键策略可以根据多个字段组合形成。quickvo业务主键配置：
+    1),signature 增加${}引用related-columns 设置相关的列的值，@case() 进行类似oracle的decode函数处理，@df(${xxx},fmt) 对日期进行格式化，第一个参数缺省表示当天，第二个参数缺省为:yyMMdd。
+    2)，related-columns可以维护多个数据库字段，用逗号分隔。
+   <business-primary-key >
+       <table name="OD_CONTRACT_INFO" column="CONTRACT_ID" 
+          signature="${periodType}@case(${orderType},P,PO,S,SO,BN)${tradeType}@df(yyMMdd)" 
+         related-columns="periodType,orderType,tradeType" length="12" generator="redis" />
+   </business-primary-key>
+2、缓存翻译可以一组代码进行同时翻译。如:某个字段结构是A,B,C这种格式，翻译结果为:A名称,B名称,C名称：
+     <translate cache="dictKeyNameCache" columns="SEX_TYPE" split-regex="," link-sign=","/>
+
+v4.2.6 2018-5-19 
+1、修复mysql、postgresql 执行saveOrUpdate时报：发生SQL 错误 [1048] [23000]: Column 'NAME' cannot be null
+
+v4.2.5 2018-5-12
+1、修复mysql8.0 树形表设置节点路径时报sql错误的问题。
+
+v4.2.4 2018-5-3
+1、修复@if（:param=='value' && :param1=='-1'）带单双引号后面紧跟+_符号的逻辑处理。
+2、优化原生elasticsearch json语法解析错误提醒。
+3、修复 elastic suggest 场景查询无法处理的问题
+4、修复分页查询count语句优化处理时，在select from 之间有order by语句时处理异常问题。
+
+v4.2.3 2018-4-12
+1、优化pom依赖,避免每次依赖oracle和其它一下特定需求情况下的依赖。
+2、优化查询传参数验证提醒。
+3、优化分页查询取count记录数时sql判断order by 并剔除的判断逻辑，确保剔除的精准。
+
+v4.2.2 2018-3-31
+优化：
+1、缓存翻译全部改为ehcache3.5.2版本，无需再定义cacheManager和ehcache.xml等，大幅减少配置。
+2、缓存翻译采用了新的xml schema，支持sql、rest、service等策略。
+3、缓存翻译增加了主动侦测数据是否发生变化，然后清空缓存的功能，且配置灵活，支持不同时间不同频率。
+bug修复：
+1、sql语句@if(a== 'xxx' )逻辑判断，等号后面对比数据有空格时判断错误问题。
+2、修复elasticsearch Sql查询时select count(*) count from xxxxx 没有group 时没有判断为聚合查询的bug。
+
+v4.1.0 2018-2-20
+1、正式支持elasticsearch（两种模式:1、通过elasticsearch-sql模式和json原生模式）,已经经过项目应用。
+2、正式支持redis集中式主键策略，已经正式项目应用通过。
+3、正式支持redis缓存翻译，已经可以同时支持ehcache和redis
+4、修复sql参数过滤的一个bug，将默认blank处理作为第一处理顺序。
+5、对schema xsd文件进行了调整优化
+6、quickvo 支持swagger api
+
+v4.0.9 2018-2-3
+1、支持elasticsearch以及elasticsearch-sql插件
+
+v3.2.2 (2017-2-28)
 1、优化取总记录数查询sql分析,排除统计性查询用分页形式查询产生的记录数量错误
 2、更新依赖包
-3.2.1 2016-12-1
+
+v3.2.1 2016-12-1
 1、修复pivot行转列的参照category列排序问题
-3.2版本(2016年11月25日发布)
+
+v3.2版本(2016年11月25日发布)
 1、增加unpivot 列转行功能
 2、修改了存储过程调用模式，剔除掉存储过程分页查询，修复oracle存储过程返回结果的执行错误
 3、删除StoreUtils类
