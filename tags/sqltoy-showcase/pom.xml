@@ -9,11 +9,11 @@
 	<artifactId>sqltoy-showcase</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.0.7.RELEASE</spring.version>
-		<log4j.version>2.11.0</log4j.version>
-		<druid.version>1.1.10</druid.version>
-		<sagacity-sqltoy.version>4.2.11</sagacity-sqltoy.version>
-		<elastic.version>6.3.1</elastic.version>
+		<spring.version>5.1.1.RELEASE</spring.version>
+		<log4j.version>2.11.1</log4j.version>
+		<druid.version>1.1.12</druid.version>
+		<sagacity-sqltoy.version>4.2.16</sagacity-sqltoy.version>
+		<elastic.version>6.4.2</elastic.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.11</version>
+			<version>8.0.12</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
@@ -78,7 +78,7 @@
 		<dependency>
 			<groupId>org.dom4j</groupId>
 			<artifactId>dom4j</artifactId>
-			<version>2.1.0</version>
+			<version>2.1.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>xml-apis</groupId>
@@ -108,7 +108,7 @@
 		<dependency>
 			<groupId>org.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
-			<version>3.5.2</version>
+			<version>3.6.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -168,13 +168,13 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-commons</artifactId>
-			<version>2.0.8.RELEASE</version>
+			<version>2.1.1.RELEASE</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-mongodb -->
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
-			<version>2.0.8.RELEASE</version>
+			<version>2.1.1.RELEASE</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/redis.clients/jedis -->
@@ -187,13 +187,13 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
-			<version>2.0.8.RELEASE</version>
+			<version>2.1.1.RELEASE</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.8.0</version>
+			<version>3.8.2</version>
 		</dependency>
 		<!-- httpclient begin -->
 		<dependency>
@@ -214,7 +214,7 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.47</version>
+			<version>1.2.51</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-client -->
 		<dependency>
