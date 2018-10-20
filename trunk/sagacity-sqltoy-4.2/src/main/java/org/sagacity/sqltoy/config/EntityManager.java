@@ -106,6 +106,7 @@ public class EntityManager {
 
 	/**
 	 * @todo 初始化加载扫描entity类，解析实体类跟数据库之间的关系，并生成相应的数据库操作信息
+	 * @param sqlToyContext
 	 * @throws Exception
 	 */
 	public void initialize(SqlToyContext sqlToyContext) throws Exception {
