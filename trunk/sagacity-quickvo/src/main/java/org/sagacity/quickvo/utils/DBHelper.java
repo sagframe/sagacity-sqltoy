@@ -70,7 +70,7 @@ public class DBHelper {
 			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("driver")));
 			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("username")));
 			dbModel.setPassword(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("password")));
-			dbMaps.put(StringUtil.isNullOrBlank(name) ? ("" + index) : name, dbModel);
+			dbMaps.put(StringUtil.isBlank(name) ? ("" + index) : name, dbModel);
 			index++;
 		}
 	}
@@ -82,8 +82,8 @@ public class DBHelper {
 	 * @throws Exception
 	 */
 	public static boolean getConnection(String dbName) throws Exception {
-		dbConfig = dbMaps.get(StringUtil.isNullOrBlank(dbName) ? "0" : dbName);
-		if (dbConfig == null && dbMaps.size() == 1 && StringUtil.isNullOrBlank(dbName)) {
+		dbConfig = dbMaps.get(StringUtil.isBlank(dbName) ? "0" : dbName);
+		if (dbConfig == null && dbMaps.size() == 1 && StringUtil.isBlank(dbName)) {
 			dbConfig = dbMaps.values().iterator().next();
 		}
 		if (dbConfig != null) {

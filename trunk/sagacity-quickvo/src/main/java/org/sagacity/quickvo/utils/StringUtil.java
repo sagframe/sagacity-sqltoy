@@ -23,11 +23,11 @@ public class StringUtil {
 	 * @param str
 	 * @return
 	 */
-	public static boolean isNotNullAndBlank(Object str) {
-		return !isNullOrBlank(str);
+	public static boolean isNotBlank(Object str) {
+		return !isBlank(str);
 	}
 
-	public static boolean isNullOrBlank(Object str) {
+	public static boolean isBlank(Object str) {
 		if (null == str || str.toString().trim().equals("")) {
 			return true;
 		} else {
@@ -57,7 +57,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperCase(String sourceStr) {
-		if (isNullOrBlank(sourceStr))
+		if (isBlank(sourceStr))
 			return sourceStr;
 		if (sourceStr.length() == 1)
 			return sourceStr.toUpperCase();
@@ -70,7 +70,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToLowerCase(String sourceStr) {
-		if (isNullOrBlank(sourceStr))
+		if (isBlank(sourceStr))
 			return sourceStr;
 		if (sourceStr.length() == 1)
 			return sourceStr.toUpperCase();
@@ -83,7 +83,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperOtherToLower(String sourceStr) {
-		if (isNullOrBlank(sourceStr))
+		if (isBlank(sourceStr))
 			return sourceStr;
 		if (sourceStr.length() == 1)
 			return sourceStr.toUpperCase();
@@ -179,7 +179,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase) {
-		if (StringUtil.isNullOrBlank(source))
+		if (StringUtil.isBlank(source))
 			return source;
 		String[] humpAry = source.split("\\_");
 		String cell;

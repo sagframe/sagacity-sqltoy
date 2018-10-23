@@ -38,7 +38,7 @@ public class FileUtil {
 	 */
 	public static String readAsString(File file, String charset) throws IOException {
 		byte[] fileBytes = readAsByteArray(file);
-		if (StringUtil.isNullOrBlank(charset))
+		if (StringUtil.isBlank(charset))
 			return new String(fileBytes);
 		else
 			return new String(fileBytes, charset);
@@ -237,9 +237,9 @@ public class FileUtil {
 			return lowPath;
 		String firstPath = "";
 		String secondPath = "";
-		if (StringUtil.isNotNullAndBlank(topPath))
+		if (StringUtil.isNotBlank(topPath))
 			firstPath = topPath;
-		if (StringUtil.isNotNullAndBlank(lowPath))
+		if (StringUtil.isNotBlank(lowPath))
 			secondPath = lowPath;
 		if (firstPath.concat(secondPath).trim().equals(""))
 			return "";

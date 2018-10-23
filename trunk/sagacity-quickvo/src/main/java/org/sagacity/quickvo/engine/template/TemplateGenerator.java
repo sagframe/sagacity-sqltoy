@@ -75,7 +75,7 @@ public class TemplateGenerator {
 			templateLoader.putTemplate("string_template", templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotNullAndBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding))
 				template = cfg.getTemplate("string_template", this.encoding);
 			else
 				template = cfg.getTemplate("string_template");
@@ -121,7 +121,7 @@ public class TemplateGenerator {
 			templateLoader.putTemplate("template", templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotNullAndBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding))
 				template = cfg.getTemplate("template", this.encoding);
 			else
 				template = cfg.getTemplate("template");
@@ -132,7 +132,7 @@ public class TemplateGenerator {
 
 			out = new FileOutputStream(distFile);
 
-			if (StringUtil.isNotNullAndBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding))
 				writer = new BufferedWriter(new OutputStreamWriter(out, this.encoding));
 			else
 				writer = new BufferedWriter(new OutputStreamWriter(out));
@@ -170,7 +170,7 @@ public class TemplateGenerator {
 	public void init() {
 		if (cfg == null) {
 			cfg = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-			if (StringUtil.isNotNullAndBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding))
 				cfg.setDefaultEncoding(this.encoding);
 		}
 	}

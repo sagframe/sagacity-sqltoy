@@ -206,7 +206,7 @@ public class XMLConfigLoader {
 						colTypeMapping.setJdbcType(type.attributeValue("jdbc-type"));
 
 					if (type.attribute("precision") != null) {
-						if (StringUtil.isNotNullAndBlank(type.attributeValue("precision"))) {
+						if (StringUtil.isNotBlank(type.attributeValue("precision"))) {
 							precision = type.attributeValue("precision").split("\\..");
 							if (precision.length >= 2) {
 								colTypeMapping.setPrecisionMin(Integer.valueOf(precision[0].trim()));
@@ -220,7 +220,7 @@ public class XMLConfigLoader {
 
 					// 小数位
 					if (type.attribute("scale") != null) {
-						if (StringUtil.isNotNullAndBlank(type.attributeValue("scale"))) {
+						if (StringUtil.isNotBlank(type.attributeValue("scale"))) {
 							scale = type.attributeValue("scale").split("\\..");
 							if (scale.length >= 2) {
 								colTypeMapping.setScaleMin(Integer.valueOf(scale[0].trim()));

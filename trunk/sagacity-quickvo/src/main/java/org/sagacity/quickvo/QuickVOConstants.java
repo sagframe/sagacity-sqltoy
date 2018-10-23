@@ -211,7 +211,7 @@ public class QuickVOConstants implements Serializable {
 	 * @throws IOException
 	 */
 	private static void loadPropertyFile(String propertyFile) throws Exception {
-		if (StringUtil.isNotNullAndBlank(propertyFile)) {
+		if (StringUtil.isNotBlank(propertyFile)) {
 			File propFile;
 			// 判断根路径
 			if (FileUtil.isRootPath(propertyFile))
@@ -238,7 +238,7 @@ public class QuickVOConstants implements Serializable {
 	 * @return
 	 */
 	public static String getPropertyValue(String key) {
-		if (StringUtil.isNullOrBlank(key))
+		if (StringUtil.isBlank(key))
 			return key;
 		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w|\\.]+\\}$"))
 			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
@@ -255,7 +255,7 @@ public class QuickVOConstants implements Serializable {
 	 * @return
 	 */
 	public static String getKeyValue(String key) {
-		if (StringUtil.isNullOrBlank(key))
+		if (StringUtil.isBlank(key))
 			return key;
 		String value = (String) constantMap.get(key);
 		if (null == value)
@@ -275,7 +275,7 @@ public class QuickVOConstants implements Serializable {
 	 *            the keywords to set
 	 */
 	public static void setKeywords(String keywordStr) {
-		if (StringUtil.isNotNullAndBlank(keywordStr)) {
+		if (StringUtil.isNotBlank(keywordStr)) {
 			String[] keys = keywordStr.split(",");
 			for (String key : keys) {
 				keywords.put(key.toUpperCase(), "1");

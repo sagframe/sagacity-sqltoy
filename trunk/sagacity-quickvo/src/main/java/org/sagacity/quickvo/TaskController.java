@@ -110,7 +110,7 @@ public class TaskController {
 		// 初始化模板的内容
 		init();
 		// 设置编码格式
-		if (StringUtil.isNullOrBlank(configModel.getEncoding()))
+		if (StringUtil.isBlank(configModel.getEncoding()))
 			TemplateGenerator.getInstance().setEncoding(configModel.getEncoding());
 		// 循环执行任务
 		QuickModel quickModel;
@@ -192,7 +192,7 @@ public class TaskController {
 					|| !QuickVOConstants.getKeyValue("include.schema").equalsIgnoreCase("true"))
 				quickVO.setSchema(null);
 			// 针对sqlserver
-			if (StringUtil.isNullOrBlank(tableMeta.getTableRemark())) {
+			if (StringUtil.isBlank(tableMeta.getTableRemark())) {
 				quickVO.setTableRemark(DBHelper.getTableRemark(tableName));
 			} else
 				quickVO.setTableRemark(tableMeta.getTableRemark());
@@ -290,17 +290,17 @@ public class TaskController {
 												|| strategy.equalsIgnoreCase("sequence")) {
 											quickColMeta.setStrategy(strategy);
 											if (strategy.equalsIgnoreCase("sequence")) {
-												if (StringUtil.isNullOrBlank(sequence))
+												if (StringUtil.isBlank(sequence))
 													throw new Exception("please give a sequence for" + tableName
 															+ " where primary key strategy is sequence!");
 												else
 													quickColMeta.setSequence(sequence);
 											}
 											if (strategy.equalsIgnoreCase("generator")) {
-												if (StringUtil.isNotNullAndBlank(generator))
+												if (StringUtil.isNotBlank(generator))
 													quickColMeta.setGenerator(generator);
 												// 设置default generator
-												if (StringUtil.isNullOrBlank(generator)
+												if (StringUtil.isBlank(generator)
 														|| generator.equalsIgnoreCase("default"))
 													quickColMeta.setGenerator(QuickVOConstants.PK_DEFAULT_GENERATOR);
 												// uuid
@@ -396,9 +396,9 @@ public class TaskController {
 
 			// 创建dao文件
 			if (daoPackageDir != null) {
-				if ((StringUtil.isNullOrBlank(quickModel.getDaoInclude())
+				if ((StringUtil.isBlank(quickModel.getDaoInclude())
 						|| StringUtil.matches(quickModel.getDaoInclude(), quickVO.getTableName()))
-						&& (StringUtil.isNullOrBlank(quickModel.getDaoExclude())
+						&& (StringUtil.isBlank(quickModel.getDaoExclude())
 								|| !StringUtil.matches(quickModel.getDaoExclude(), quickVO.getTableName())))
 					generateDao(daoPackageDir + File.separator + quickVO.getDaoName() + ".java", daoTemplate, quickVO,
 							configModel.getEncoding());
@@ -471,7 +471,7 @@ public class TaskController {
 					if ((jdbcTypeMap.length == 4 && dbType.equals(jdbcTypeMap[3])) || jdbcTypeMap.length == 3) {
 						quickColMeta.setResultType(jdbcTypeMap[1]);
 						// vo中需要import的类
-						if (StringUtil.isNotNullAndBlank(jdbcTypeMap[2])) {
+						if (StringUtil.isNotBlank(jdbcTypeMap[2])) {
 							importType = jdbcTypeMap[2];
 						}
 						break;
@@ -888,7 +888,7 @@ public class TaskController {
 		StringBuilder buffer = new StringBuilder();
 		BufferedReader in = null;
 		try {
-			if (StringUtil.isNotNullAndBlank(encoding))
+			if (StringUtil.isNotBlank(encoding))
 				in = new BufferedReader(new InputStreamReader(is, encoding));
 			else
 				in = new BufferedReader(new InputStreamReader(is));
