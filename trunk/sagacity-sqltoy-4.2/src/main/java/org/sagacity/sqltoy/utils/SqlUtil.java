@@ -549,6 +549,9 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
 			markIndex = sql.indexOf("--");
 		}
+		//剔除sql末尾的分号(开发过程中容易忽视)
+		if(sql.endsWith(";"))
+			sql=sql.substring(0,sql.length()-1);
 		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
