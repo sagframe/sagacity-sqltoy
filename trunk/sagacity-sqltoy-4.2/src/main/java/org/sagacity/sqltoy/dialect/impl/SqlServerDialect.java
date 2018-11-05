@@ -220,7 +220,7 @@ public class SqlServerDialect implements Dialect {
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql("SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
+			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
 					true);
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -236,7 +236,7 @@ public class SqlServerDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql("SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
+			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
 					true);
 		return updateCount;
 	}

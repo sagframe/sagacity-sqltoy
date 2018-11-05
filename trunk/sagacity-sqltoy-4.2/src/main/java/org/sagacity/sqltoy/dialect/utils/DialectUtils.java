@@ -1436,7 +1436,7 @@ public class DialectUtils {
 			throw new Exception("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
 			out.println("update last execute sql:" + updateSql);
-		return executeSql(updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
+		return executeSql(sqlToyContext,updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
 	}
 
 	/**
@@ -1489,7 +1489,7 @@ public class DialectUtils {
 					// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
+					executeSql(sqlToyContext,sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -1605,13 +1605,13 @@ public class DialectUtils {
 				if (oneToMany.isDelete()) {
 					if (sqlToyContext.isDebug())
 						out.println("cascade delete sub table sql：".concat(oneToMany.getDeleteSubTableSql()));
-					executeSql(oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
+					executeSql(sqlToyContext,oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
 			out.println(entityMeta.getDeleteByIdsSql(tableName));
-		return executeSql(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
+		return executeSql(sqlToyContext,entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
 	}
 
 	/**
@@ -1868,9 +1868,9 @@ public class DialectUtils {
 		return lastSql.toString();
 	}
 
-	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
+	public static Long executeSql(final SqlToyContext sqlToyContext,final String executeSql, final Object[] params, final Integer[] paramsType,
 			final Connection conn, final Boolean autoCommit) throws Exception {
-		if (logger.isDebugEnabled()) {
+		if (sqlToyContext.isDebug()) {
 			out.println("=================executeSql执行的语句==============");
 			out.println(" execute sql:" + executeSql);
 			DebugUtil.printAry(params, null, ";", false);

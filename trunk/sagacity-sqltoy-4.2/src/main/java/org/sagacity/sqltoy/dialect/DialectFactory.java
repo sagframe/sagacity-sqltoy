@@ -251,7 +251,7 @@ public class DialectFactory {
 									paramsNamed, paramsValue);
 							// debug 显示sql
 							SqlExecuteStat.showSql(executeSql, queryParam.getParamsValue());
-							this.setResult(DialectUtils.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
+							this.setResult(DialectUtils.executeSql(sqlToyContext,executeSql, queryParam.getParamsValue(), null, conn,
 									autoCommit));
 						}
 					});
