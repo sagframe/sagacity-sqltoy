@@ -1300,6 +1300,7 @@ public class DialectUtils {
 				EntityMeta subTableEntityMeta;
 				String insertSubTableSql;
 				SavePKStrategy savePkStrategy;
+				logger.info("执行save操作的级联子表批量保存!");
 				for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 					final String[] mappedFields = oneToMany.getMappedFields();
 					subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
