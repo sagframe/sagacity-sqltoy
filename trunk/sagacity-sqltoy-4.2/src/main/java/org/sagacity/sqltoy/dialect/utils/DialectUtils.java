@@ -1217,6 +1217,7 @@ public class DialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
 		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -1224,8 +1225,8 @@ public class DialectUtils {
 			Object[] relatedColValue = null;
 			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
 			if (relatedColumn != null) {
-				relatedColValue = new Object[relatedColumn.length];
-				for (int meter = 0; meter < relatedColumn.length; meter++) {
+				relatedColValue = new Object[relatedColumnSize];
+				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
 						throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
@@ -1361,6 +1362,7 @@ public class DialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
 		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -1374,8 +1376,8 @@ public class DialectUtils {
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
 				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumn.length];
-					for (int meter = 0; meter < relatedColumn.length; meter++) {
+					relatedColValue = new Object[relatedColumnSize];
+					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
 							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
