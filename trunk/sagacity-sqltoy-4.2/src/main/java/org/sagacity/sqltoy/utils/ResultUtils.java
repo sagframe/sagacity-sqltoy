@@ -773,19 +773,30 @@ public class ResultUtils {
 		}
 	}
 
+	/**
+	 * @todo 处理ResultSet的单行数据
+	 * @param rs
+	 * @param startColIndex
+	 * @param rowCnt
+	 * @return
+	 * @throws Exception
+	 */
 	private static List processResultRow(ResultSet rs, int startColIndex, int rowCnt) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
+		//单行所有字段结果为null
 		boolean allNull = true;
 		for (int i = startColIndex; i < rowCnt; i++) {
 			fieldValue = rs.getObject(i + 1);
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob)
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				//有一个非null
 				allNull = false;
 			}
 			rowData.add(fieldValue);
 		}
+		//全null返回null结果，外围判断结果为null则不加入结果集合
 		if (allNull)
 			return null;
 		return rowData;
