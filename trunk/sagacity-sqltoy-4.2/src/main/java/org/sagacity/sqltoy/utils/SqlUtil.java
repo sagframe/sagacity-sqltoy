@@ -349,8 +349,11 @@ public class SqlUtil {
 		List matchedFields = getPropertiesAndResultSetMatch(rs.getMetaData(), pds);
 		int index = 0;
 		// 循环通过java reflection将rs中的值映射到VO中
+		Object rowTemp;
 		while (rs.next()) {
-			resultList.add(reflectResultRowToVOClass(rs, matchedFields, pds, voClass));
+			rowTemp = reflectResultRowToVOClass(rs, matchedFields, pds, voClass);
+			if (rowTemp != null)
+				resultList.add(rowTemp);
 			index++;
 			// 存在超出25000条数据的查询
 			if (index == warnThresholds) {
@@ -389,17 +392,23 @@ public class SqlUtil {
 		TableColumnMeta colMeta;
 		Object bean = voClass.newInstance();
 		Object fieldValue;
+		boolean allNull = true;
 		for (int i = 0, n = matchedFields.size(); i < n; i++) {
 			colMeta = (TableColumnMeta) matchedFields.get(i);
 			if (colMeta.getDataType() == java.sql.Types.CLOB)
 				fieldValue = rs.getString(colMeta.getColName());
 			else
 				fieldValue = rs.getObject(colMeta.getColName());
-			// java 反射调用
-			pds[colMeta.getColIndex()].getWriteMethod().invoke(bean,
-					// rs对象类型转java对象类型
-					BeanUtil.convertType(fieldValue, colMeta.getTypeName()));
+			if (null != fieldValue) {
+				allNull = false;
+				// java 反射调用
+				pds[colMeta.getColIndex()].getWriteMethod().invoke(bean,
+						// rs对象类型转java对象类型
+						BeanUtil.convertType(fieldValue, colMeta.getTypeName()));
+			}
 		}
+		if (allNull)
+			return null;
 		return bean;
 	}
 
@@ -549,9 +558,9 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
 			markIndex = sql.indexOf("--");
 		}
-		//剔除sql末尾的分号逗号(开发过程中容易忽视)
-		if(sql.endsWith(";")||sql.endsWith(","))
-			sql=sql.substring(0,sql.length()-1);
+		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
+		if (sql.endsWith(";") || sql.endsWith(","))
+			sql = sql.substring(0, sql.length() - 1);
 		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
@@ -652,17 +661,22 @@ public class SqlUtil {
 			int rowCnt = rs.getMetaData().getColumnCount();
 			List items = new ArrayList();
 			Object fieldValue = null;
+			boolean allNull = true;
 			while (rs.next()) {
+				allNull = true;
 				List rowData = new ArrayList();
 				for (int i = startColIndex; i < rowCnt; i++) {
 					// 处理clob
 					fieldValue = rs.getObject(i + 1);
-					if (fieldValue != null && fieldValue instanceof java.sql.Clob) {
-						fieldValue = clobToString((java.sql.Clob) fieldValue);
+					if (fieldValue != null) {
+						allNull = false;
+						if (fieldValue instanceof java.sql.Clob)
+							fieldValue = clobToString((java.sql.Clob) fieldValue);
 					}
 					rowData.add(fieldValue);
 				}
-				items.add(rowData);
+				if (!allNull)
+					items.add(rowData);
 				index++;
 				// 超出预警阀值
 				if (index == warnThresholds)

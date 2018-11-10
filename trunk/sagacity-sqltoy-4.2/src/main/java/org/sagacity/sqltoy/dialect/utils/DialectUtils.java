@@ -66,7 +66,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
  * @Modification {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
  * @Modification {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
- * @Modification {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建selec count(1) from错误}
+ * @Modification {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建selec
+ *               count(1) from错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -495,6 +496,7 @@ public class DialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		// 无主键以及多主键以及assign或通过generator方式产生主键策略
 		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -507,8 +509,8 @@ public class DialectUtils {
 				rowData = (Object[]) paramValues.get(i);
 				// 获取主键策略关联字段的值
 				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumn.length];
-					for (int meter = 0; meter < relatedColumn.length; meter++) {
+					relatedColValue = new Object[relatedColumnSize];
+					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 					}
 				}
@@ -560,6 +562,7 @@ public class DialectUtils {
 		// 标识符
 		String signature = entityMeta.getBizIdSignature();
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		// 无主键以及多主键以及assign或通过generator方式产生主键策略
 		if (null != entityMeta.getIdStrategy() && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
@@ -572,8 +575,8 @@ public class DialectUtils {
 				rowData = (Object[]) paramValues.get(i);
 				// 关联字段赋值
 				if (relatedColumn != null) {
-					relatedColValue = new Object[relatedColumn.length];
-					for (int meter = 0; meter < relatedColumn.length; meter++) {
+					relatedColValue = new Object[relatedColumnSize];
+					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
 							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
@@ -1086,7 +1089,7 @@ public class DialectUtils {
 						out.println("auto load sub table dataSet sql:".concat(sqlToyResult.getSql()));
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn);
-					if (null != pkRefDetails)
+					if (null != pkRefDetails && !pkRefDetails.isEmpty())
 						BeanUtils.setProperty(result, oneToMany.getProperty(), pkRefDetails);
 				}
 			}
@@ -1437,7 +1440,7 @@ public class DialectUtils {
 			throw new Exception("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
 			out.println("update last execute sql:" + updateSql);
-		return executeSql(sqlToyContext,updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
+		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
 	}
 
 	/**
@@ -1490,7 +1493,7 @@ public class DialectUtils {
 					// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					executeSql(sqlToyContext,sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
+					executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -1606,13 +1609,13 @@ public class DialectUtils {
 				if (oneToMany.isDelete()) {
 					if (sqlToyContext.isDebug())
 						out.println("cascade delete sub table sql：".concat(oneToMany.getDeleteSubTableSql()));
-					executeSql(sqlToyContext,oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
+					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
 			out.println(entityMeta.getDeleteByIdsSql(tableName));
-		return executeSql(sqlToyContext,entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
+		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
 	}
 
 	/**
@@ -1869,8 +1872,8 @@ public class DialectUtils {
 		return lastSql.toString();
 	}
 
-	public static Long executeSql(final SqlToyContext sqlToyContext,final String executeSql, final Object[] params, final Integer[] paramsType,
-			final Connection conn, final Boolean autoCommit) throws Exception {
+	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
+			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
 		if (sqlToyContext.isDebug()) {
 			out.println("=================executeSql执行的语句==============");
 			out.println(" execute sql:" + executeSql);

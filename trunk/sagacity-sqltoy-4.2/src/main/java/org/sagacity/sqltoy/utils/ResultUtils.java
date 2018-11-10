@@ -265,7 +265,7 @@ public class ResultUtils {
 		// 最大值要大于等于警告阀值
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
 			maxThresholds = warnThresholds;
-
+		List rowTemp;
 		if (linkModel != null) {
 			Object identity = null;
 			int linkIndex = labelIndexMap.get(linkModel.getColumn().toLowerCase());
@@ -294,19 +294,21 @@ public class ResultUtils {
 			while (rs.next()) {
 				isLastProcess = false;
 				linkValue = rs.getObject(linkModel.getColumn());
-				if (linkValue == null)
+				if (linkValue == null) {
 					linkStr = "";
-				else if (translateLink) {
-					cacheValues = linkTranslateMap.get(linkValue.toString());
-					if (cacheValues == null) {
-						linkStr = "";
-						if (isDebug)
-							logger.debug("translate cache:" + translateModel.getCache() + " 对应的key:" + linkValue
-									+ " 没有设置相应的value!");
+				} else {
+					if (translateLink) {
+						cacheValues = linkTranslateMap.get(linkValue.toString());
+						if (cacheValues == null) {
+							linkStr = "";
+							if (isDebug)
+								logger.debug("translate cache:" + translateModel.getCache() + " 对应的key:" + linkValue
+										+ " 没有设置相应的value!");
+						} else
+							linkStr = cacheValues[linkTranslateIndex];
 					} else
-						linkStr = cacheValues[linkTranslateIndex];
-				} else
-					linkStr = linkValue.toString();
+						linkStr = linkValue.toString();
+				}
 				identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
@@ -315,11 +317,14 @@ public class ResultUtils {
 						linkBuffer.delete(0, linkBuffer.length());
 					}
 					linkBuffer.append(linkStr);
-					if (hasTranslate)
-						items.add(processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
-								columnSize));
-					else
-						items.add(processResultRow(rs, startColIndex, rowCnt));
+					if (hasTranslate) {
+						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
+								columnSize);
+					} else {
+						rowTemp = processResultRow(rs, startColIndex, rowCnt);
+					}
+					if (rowTemp != null)
+						items.add(rowTemp);
 					preIdentity = identity;
 				} else {
 					if (linkBuffer.length() > 0)
@@ -356,7 +361,9 @@ public class ResultUtils {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
 					}
-					items.add(processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize));
+					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize);
+					if (rowTemp != null)
+						items.add(rowTemp);
 					index++;
 					// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
 					if (index == warnThresholds) {
@@ -374,7 +381,9 @@ public class ResultUtils {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
 					}
-					items.add(processResultRow(rs, startColIndex, rowCnt));
+					rowTemp = processResultRow(rs, startColIndex, rowCnt);
+					if (rowTemp != null)
+						items.add(rowTemp);
 					index++;
 					// 存在超出警告规模级的数据查询
 					if (index == warnThresholds) {
@@ -767,12 +776,18 @@ public class ResultUtils {
 	private static List processResultRow(ResultSet rs, int startColIndex, int rowCnt) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
+		boolean allNull = true;
 		for (int i = startColIndex; i < rowCnt; i++) {
 			fieldValue = rs.getObject(i + 1);
-			if (fieldValue != null && fieldValue instanceof java.sql.Clob)
-				fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+			if (null != fieldValue) {
+				if (fieldValue instanceof java.sql.Clob)
+					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				allNull = false;
+			}
 			rowData.add(fieldValue);
 		}
+		if (allNull)
+			return null;
 		return rowData;
 	}
 
@@ -794,12 +809,14 @@ public class ResultUtils {
 		SqlTranslate translate;
 		String label;
 		String keyIndex;
+		boolean allNull = true;
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
 			fieldValue = rs.getObject(label);
 			label = label.toLowerCase();
 			keyIndex = Integer.toString(i);
 			if (null != fieldValue) {
+				allNull = false;
 				if (fieldValue instanceof java.sql.Clob)
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
@@ -811,6 +828,8 @@ public class ResultUtils {
 			}
 			rowData.add(fieldValue);
 		}
+		if (allNull)
+			return null;
 		return rowData;
 	}
 
