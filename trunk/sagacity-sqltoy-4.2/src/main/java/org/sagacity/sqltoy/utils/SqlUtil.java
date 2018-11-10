@@ -330,7 +330,8 @@ public class SqlUtil {
 	 * @param voClass
 	 * @return
 	 */
-	private static List reflectResultToValueObject(ResultSet rs, Class voClass) throws Exception {
+	private static List reflectResultToValueObject(ResultSet rs, Class voClass, boolean ignoreAllEmptySet)
+			throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -351,7 +352,7 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowTemp;
 		while (rs.next()) {
-			rowTemp = reflectResultRowToVOClass(rs, matchedFields, pds, voClass);
+			rowTemp = reflectResultRowToVOClass(rs, matchedFields, pds, voClass, ignoreAllEmptySet);
 			if (rowTemp != null)
 				resultList.add(rowTemp);
 			index++;
@@ -377,17 +378,17 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param rs
 	 * @param matchedFields
 	 * @param pds
 	 * @param voClass
+	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
 	private static Object reflectResultRowToVOClass(ResultSet rs, List matchedFields, PropertyDescriptor[] pds,
-			Class voClass) throws Exception {
+			Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		TableColumnMeta colMeta;
 		Object bean = voClass.newInstance();
@@ -407,7 +408,7 @@ public class SqlUtil {
 						BeanUtil.convertType(fieldValue, colMeta.getTypeName()));
 			}
 		}
-		if (allNull)
+		if (allNull && ignoreAllEmptySet)
 			return null;
 		return bean;
 	}
@@ -576,8 +577,9 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	public static Object loadByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn) throws Exception {
-		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn);
+			final RowCallbackHandler rowCallbackHandler, final Connection conn, final boolean ignoreAllEmptySet)
+			throws Exception {
+		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn, ignoreAllEmptySet);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1)
 				throw new Exception("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -597,7 +599,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	public static List findByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn) throws Exception {
+			final RowCallbackHandler rowCallbackHandler, final Connection conn, final boolean ignoreAllEmptySet)
+			throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_SCROLL_INSENSITIVE,
 				ResultSet.CONCUR_READ_ONLY);
@@ -605,7 +608,7 @@ public class SqlUtil {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(conn, pst, params, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(processResultSet(rs, voClass, rowCallbackHandler, 0));
+				this.setResult(processResultSet(rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet));
 			}
 		});
 		// 为null返回一个空集合
@@ -615,18 +618,17 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 
 	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据
 	 * @param rs
-	 *            ResultSet
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param startColIndex
+	 * @param ignoreAllEmptySet
 	 * @return
-	 * @throws SQLException
+	 * @throws Exception
 	 */
 	public static List processResultSet(ResultSet rs, Class voClass, RowCallbackHandler rowCallbackHandler,
-			int startColIndex) throws Exception {
+			int startColIndex, boolean ignoreAllEmptySet) throws Exception {
 		// 记录行记数器
 		int index = 0;
 		// 提取数据预警阈值
@@ -641,7 +643,7 @@ public class SqlUtil {
 			maxThresholds = warnThresholds;
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(rs, voClass);
+			result = reflectResultToValueObject(rs, voClass, ignoreAllEmptySet);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -675,7 +677,7 @@ public class SqlUtil {
 					}
 					rowData.add(fieldValue);
 				}
-				if (!allNull)
+				if (!(allNull && ignoreAllEmptySet))
 					items.add(rowData);
 				index++;
 				// 超出预警阀值
@@ -829,7 +831,7 @@ public class SqlUtil {
 				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(idInfoSql, null, null, null, conn);
+			List idInfo = findByJdbcQuery(idInfoSql, null, null, null, conn, false);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -860,10 +862,10 @@ public class SqlUtil {
 					firstNextNodeQuery.append(" and ").append(treeTableModel.getConditions());
 				}
 				ids = findByJdbcQuery(firstNextNodeQuery.toString(), new Object[] { treeTableModel.getIdValue() }, null,
-						null, conn);
+						null, conn, false);
 			} else
 				ids = findByJdbcQuery(nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-						flag + treeTableModel.getRootId() + flag), null, null, null, conn);
+						flag + treeTableModel.getRootId() + flag), null, null, null, conn, false);
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel, pidsMap,
 						ids, nodeLevel + 1, conn);
@@ -1011,7 +1013,8 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 
 			// 获取下一层节点
-			nextIds = findByJdbcQuery(nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null, null, conn);
+			nextIds = findByJdbcQuery(nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null, null, conn,
+					false);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(updateLevelAndRoute, nextNodeQueryStr, treeTableModel,

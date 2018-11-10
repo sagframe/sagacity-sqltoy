@@ -660,6 +660,9 @@ public class SqlConfigParseUtils {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig();
 		//debug模式下面关闭sql打印
 		sqlToyConfig.setShowSql(!StringUtil.matches(querySql,SqlToyConstants.NOT_PRINT_REGEX));
+		
+		//是否忽视空记录
+		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql,SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换

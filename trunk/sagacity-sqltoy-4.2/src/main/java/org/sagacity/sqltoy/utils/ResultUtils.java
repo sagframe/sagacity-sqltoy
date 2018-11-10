@@ -237,7 +237,7 @@ public class ResultUtils {
 			ResultSet rs, UpdateRowHandler updateRowHandler, int rowCnt, HashMap<String, Integer> labelIndexMap,
 			String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
-		LinkModel linkModel = (sqlToyConfig == null) ? null : sqlToyConfig.getLinkModel();
+		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
@@ -262,6 +262,8 @@ public class ResultUtils {
 		// 最大阀值
 		long maxThresholds = SqlToyConstants.getMaxThresholds();
 		boolean maxLimit = false;
+		//是否判断全部为null的行记录
+		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
 		// 最大值要大于等于警告阀值
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
 			maxThresholds = warnThresholds;
@@ -319,9 +321,9 @@ public class ResultUtils {
 					linkBuffer.append(linkStr);
 					if (hasTranslate) {
 						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
-								columnSize);
+								columnSize, ignoreAllEmpty);
 					} else {
-						rowTemp = processResultRow(rs, startColIndex, rowCnt);
+						rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
 					}
 					if (rowTemp != null)
 						items.add(rowTemp);
@@ -361,7 +363,8 @@ public class ResultUtils {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
 					}
-					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize);
+					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
+							ignoreAllEmpty);
 					if (rowTemp != null)
 						items.add(rowTemp);
 					index++;
@@ -381,7 +384,7 @@ public class ResultUtils {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
 					}
-					rowTemp = processResultRow(rs, startColIndex, rowCnt);
+					rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
 					if (rowTemp != null)
 						items.add(rowTemp);
 					index++;
@@ -781,23 +784,24 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List processResultRow(ResultSet rs, int startColIndex, int rowCnt) throws Exception {
+	private static List processResultRow(ResultSet rs, int startColIndex, int rowCnt, boolean ignoreAllEmptySet)
+			throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
-		//单行所有字段结果为null
+		// 单行所有字段结果为null
 		boolean allNull = true;
 		for (int i = startColIndex; i < rowCnt; i++) {
 			fieldValue = rs.getObject(i + 1);
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob)
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
-				//有一个非null
+				// 有一个非null
 				allNull = false;
 			}
 			rowData.add(fieldValue);
 		}
-		//全null返回null结果，外围判断结果为null则不加入结果集合
-		if (allNull)
+		// 全null返回null结果，外围判断结果为null则不加入结果集合
+		if (allNull && ignoreAllEmptySet)
 			return null;
 		return rowData;
 	}
@@ -813,8 +817,8 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List processResultRowWithTranslate(HashMap<String, SqlTranslate> translateMap,
-			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size)
-			throws Exception {
+			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
+			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
 		SqlTranslate translate;
@@ -839,7 +843,7 @@ public class ResultUtils {
 			}
 			rowData.add(fieldValue);
 		}
-		if (allNull)
+		if (allNull && ignoreAllEmptySet)
 			return null;
 		return rowData;
 	}
@@ -917,7 +921,7 @@ public class ResultUtils {
 								queryExecutor.getParamsName(pivotSqlConfig),
 								queryExecutor.getParamsValue(pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
-								pivotSqlToyResult.getParamsValue(), null, null, conn);
+								pivotSqlToyResult.getParamsValue(), null, null, conn, sqlToyConfig.isIgnoreEmpty());
 						// 行转列返回
 						return CollectionUtil.convertColToRow(pivotCategory, null);
 					}

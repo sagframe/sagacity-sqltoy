@@ -161,6 +161,25 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private boolean showSql = true;
 
 	/**
+	 * 忽视空集合
+	 */
+	private boolean ignoreEmpty = false;
+
+	/**
+	 * @return the ignoreEmpty
+	 */
+	public boolean isIgnoreEmpty() {
+		return ignoreEmpty;
+	}
+
+	/**
+	 * @param ignoreEmpty the ignoreEmpty to set
+	 */
+	public void setIgnoreEmpty(boolean ignoreEmpty) {
+		this.ignoreEmpty = ignoreEmpty;
+	}
+
+	/**
 	 * 查询结果处理器
 	 */
 	private List resultProcessor;
@@ -647,7 +666,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param formatModels the formatModels to set
+	 * @param formatModels
+	 *            the formatModels to set
 	 */
 	public void setFormatModels(FormatModel[] formatModels) {
 		this.formatModels = formatModels;

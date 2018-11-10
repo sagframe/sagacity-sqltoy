@@ -43,7 +43,6 @@ public abstract class RowCallbackHandler {
 	 * @param rowData
 	 */
 	public void addRow(Object rowData) {
-		if (null != rowData)
-			result.add(rowData);
+		result.add(rowData);
 	}
 }

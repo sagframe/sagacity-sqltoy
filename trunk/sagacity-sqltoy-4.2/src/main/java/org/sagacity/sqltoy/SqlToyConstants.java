@@ -125,6 +125,11 @@ public class SqlToyConstants {
 	 * 不输出sql的表达式
 	 */
 	public final static Pattern NOT_PRINT_REGEX = Pattern.compile("(?i)\\#not\\_(print|debug)\\#");
+	
+	/**
+	 * 忽视空记录
+	 */
+	public final static Pattern IGNORE_EMPTY_REGEX = Pattern.compile("(?i)\\#ignore_all_null_set\\#");
 
 	/**
 	 * @todo 解析模板中的参数

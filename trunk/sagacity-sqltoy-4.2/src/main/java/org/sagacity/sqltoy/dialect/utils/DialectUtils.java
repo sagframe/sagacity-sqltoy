@@ -1088,7 +1088,7 @@ public class DialectUtils {
 					if (sqlToyContext.isDebug())
 						out.println("auto load sub table dataSet sql:".concat(sqlToyResult.getSql()));
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-							oneToMany.getMappedType(), null, conn);
+							oneToMany.getMappedType(), null, conn, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty())
 						BeanUtils.setProperty(result, oneToMany.getProperty(), pkRefDetails);
 				}
@@ -1146,7 +1146,7 @@ public class DialectUtils {
 		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), entityClass,
-				null, conn);
+				null, conn,false);
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1167,7 +1167,7 @@ public class DialectUtils {
 							idValues);
 					SqlExecuteStat.showSql(subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(subToyResult.getSql(), subToyResult.getParamsValue(),
-							oneToMany.getMappedType(), null, conn);
+							oneToMany.getMappedType(), null, conn,false);
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
 					BeanUtil.invokeMethod(entities.get(0),
 							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
@@ -1736,7 +1736,7 @@ public class DialectUtils {
 			else if (recordCnt > 1)
 				return false;
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
-			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn);
+			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn,false);
 			if (result.size() == 0)
 				return true;
 			else if (result.size() > 1)
