@@ -1074,11 +1074,11 @@ public class SqlToyDaoSupport {
 	 * 
 	 * @todo 获取缓存数据
 	 * @param cacheName
-	 * @param elementId
+	 * @param cacheType
 	 * @return
 	 * @throws Exception
 	 */
-	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
-		return this.sqlToyContext.getTranslateManager().getTranslateCacheManager().getCache(cacheName, elementId);
+	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) throws Exception {
+		return this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext, cacheName, cacheType);
 	}
 }
