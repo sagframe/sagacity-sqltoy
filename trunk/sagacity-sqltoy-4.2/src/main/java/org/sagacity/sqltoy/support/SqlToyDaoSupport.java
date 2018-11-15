@@ -1069,4 +1069,16 @@ public class SqlToyDaoSupport {
 						relatedColValue, new Date(), businessIdType, entityMeta.getBizIdLength())
 				.toString();
 	}
+
+	/**
+	 * 
+	 * @todo 获取缓存数据
+	 * @param cacheName
+	 * @param elementId
+	 * @return
+	 * @throws Exception
+	 */
+	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
+		return this.sqlToyContext.getTranslateManager().getTranslateCacheManager().getCache(cacheName, elementId);
+	}
 }

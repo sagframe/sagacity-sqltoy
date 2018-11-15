@@ -837,12 +837,28 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.generateBizId(signature, increment);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#generateBizId(java.io.Serializable)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#generateBizId(java.io.
+	 * Serializable)
 	 */
 	@Override
 	public String generateBizId(Serializable entity) throws Exception {
 		return super.generateBizId(entity);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.support.SqlToyDaoSupport#getTranslateCache(java.lang.
+	 * String, java.lang.String)
+	 */
+	@Override
+	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
+		// TODO Auto-generated method stub
+		return super.getTranslateCache(cacheName, elementId);
 	}
 
 }

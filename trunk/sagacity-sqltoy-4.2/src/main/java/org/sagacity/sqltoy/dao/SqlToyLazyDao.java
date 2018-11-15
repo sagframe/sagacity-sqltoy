@@ -545,4 +545,14 @@ public interface SqlToyLazyDao {
 	 */
 	public String generateBizId(Serializable entity) throws Exception;
 
+	/**
+	 * @todo 获取sqltoy中用于翻译的缓存
+	 * @todo 填写改方法的说明
+	 * @param cacheName
+	 * @param elementId
+	 * @return
+	 * @throws Exception
+	 */
+	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception;
+
 }
