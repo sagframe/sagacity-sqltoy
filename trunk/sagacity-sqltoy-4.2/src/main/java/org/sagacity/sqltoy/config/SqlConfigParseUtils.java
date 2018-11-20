@@ -97,6 +97,9 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	// add 2018-11-20 by chenrenfei
+	public final static String CACHE_REGEX = "(?i)\\@cacheFilter\\s*\\(\\s*\\?\\s*\\)";
+	public final static Pattern CACHE_PATTERN = Pattern.compile(CACHE_REGEX);
 
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
@@ -188,8 +191,13 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 替换@value(?) 为参数对应的数值
 		processValue(sqlToyResult);
+
+		// 过滤缓存模糊查询
+		//processCacheFilter(sqlToyResult);
+		
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
+
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
 		processIn(sqlToyResult);
@@ -477,6 +485,39 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * @todo 处理缓存过滤器为in ()作为条件:#[@cacheFilter(cacheName,:paramNamed) sql]
+	 * @param sqlToyResult
+	 */
+	public static void processCacheFilter(SqlToyResult sqlToyResult) {
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
+			return;
+		String queryStr = sqlToyResult.getSql().toLowerCase();
+		Matcher m = CACHE_PATTERN.matcher(queryStr);
+		int index = 0;
+		int paramCnt = 0;
+		int valueCnt = 0;
+		List paramValueList = null;
+		Object paramValue = null;
+		while (m.find()) {
+			if (valueCnt == 0)
+				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+			index = m.start();
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
+			// 用参数的值直接覆盖@value(:name)
+			paramValue = paramValueList.get(paramCnt - valueCnt);
+			
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(CACHE_REGEX,
+					(paramValue == null) ? "null" : paramValue.toString()));
+			// 剔除参数@value(?) 对应的参数值
+			paramValueList.remove(paramCnt - valueCnt);
+			valueCnt++;
+		}
+		if (valueCnt > 0) {
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+		}
+	}
+
+	/**
 	 * @todo 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
 	 */
@@ -658,11 +699,11 @@ public class SqlConfigParseUtils {
 	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType,
 			List<IFunction> functionConverts) {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig();
-		//debug模式下面关闭sql打印
-		sqlToyConfig.setShowSql(!StringUtil.matches(querySql,SqlToyConstants.NOT_PRINT_REGEX));
-		
-		//是否忽视空记录
-		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql,SqlToyConstants.IGNORE_EMPTY_REGEX));
+		// debug模式下面关闭sql打印
+		sqlToyConfig.setShowSql(!StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX));
+
+		// 是否忽视空记录
+		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
