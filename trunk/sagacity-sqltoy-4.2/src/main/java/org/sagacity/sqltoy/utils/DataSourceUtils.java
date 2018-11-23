@@ -48,6 +48,7 @@ public class DataSourceUtils {
 
 		public final static String POSTGRESQL = "postgresql";
 		public final static String POSTGRESQL10 = "postgresql10";
+		public final static String POSTGRESQL11 = "postgresql11";
 
 		// 以15.4为基准起始版
 		public final static String SYBASE_IQ = "sybase_iq";
@@ -87,6 +88,7 @@ public class DataSourceUtils {
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 60;
 		public final static int POSTGRESQL10 = 61;
+		public final static int POSTGRESQL11 = 62;
 		public final static int SYBASE_IQ = 80;
 		public final static int SQLITE = 90;
 		public final static int SAP_HANA = 100;
@@ -113,6 +115,7 @@ public class DataSourceUtils {
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.POSTGRESQL10, DBType.POSTGRESQL10);
+		DBNameTypeMap.put(Dialect.POSTGRESQL11, DBType.POSTGRESQL11);
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
@@ -136,6 +139,8 @@ public class DataSourceUtils {
 			return Dialect.POSTGRESQL;
 		case DBType.POSTGRESQL10:
 			return Dialect.POSTGRESQL10;
+		case DBType.POSTGRESQL11:
+			return Dialect.POSTGRESQL11;
 		case DBType.SQLITE:
 			return Dialect.SQLITE;
 		case DBType.SQLSERVER:
@@ -290,7 +295,9 @@ public class DataSourceUtils {
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				dbType = DBType.POSTGRESQL;
 				// 10+版本
-				if (majorVersion >= 10)
+				if (majorVersion >= 11)
+					dbType = DBType.POSTGRESQL11;
+				else if (majorVersion >= 10)
 					dbType = DBType.POSTGRESQL10;
 			}
 			// sybase IQ
@@ -326,6 +333,7 @@ public class DataSourceUtils {
 			return "select 1 from dual";
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL10:
+		case DBType.POSTGRESQL11:
 			return "select version()";
 		default:
 			return "select 1";

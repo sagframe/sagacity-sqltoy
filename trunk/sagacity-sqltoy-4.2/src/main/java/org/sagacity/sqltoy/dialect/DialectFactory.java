@@ -148,6 +148,7 @@ public class DialectFactory {
 			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 			case DBType.POSTGRESQL:
 			case DBType.POSTGRESQL10:
+			case DBType.POSTGRESQL11:
 				dialectSqlWrapper = new PostgreSqlDialect();
 				break;
 			// db2 10.x版本分页支持offset模式
