@@ -97,7 +97,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * update 2018-4-10 很对开发者将entity传入Class类别然后抱怨sqltoy有bug,
+	 * update 2018-4-10 很对开发者将entity传入Class类别,然后抱怨sqltoy有bug进行类型检测,
 	 * 
 	 * @param sql
 	 * @param entity
@@ -108,6 +108,7 @@ public class QueryExecutor implements Serializable {
 		this.entity = entity;
 		if (entity != null) {
 			this.resultType = entity.getClass();
+			//类型检测
 			if (this.resultType.equals("".getClass().getClass()))
 				throw new Exception("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
 		}

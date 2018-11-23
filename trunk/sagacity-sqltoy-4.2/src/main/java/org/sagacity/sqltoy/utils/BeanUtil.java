@@ -916,8 +916,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 判断对象是否是基本数据类型对象
-	 * 
+	 * @todo 判断对象是否是基本数据类型对象
 	 * @param clazz
 	 * @return
 	 * @throws Exception

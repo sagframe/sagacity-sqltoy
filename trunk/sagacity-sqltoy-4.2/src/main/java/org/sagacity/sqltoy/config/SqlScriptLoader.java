@@ -209,7 +209,7 @@ public class SqlScriptLoader {
 					// 修正调整后的包路径,保持兼容
 					functionName = functionName.replace("org.sagacity.sqltoy.config.function.impl",
 							"org.sagacity.sqltoy.plugin.function");
-					// 只是属性名称
+					// 只是不包含包名的类名称
 					if (functionName.indexOf(".") == -1) {
 						converts.add((IFunction) (Class
 								.forName("org.sagacity.sqltoy.config.function.impl.".concat(functionName))

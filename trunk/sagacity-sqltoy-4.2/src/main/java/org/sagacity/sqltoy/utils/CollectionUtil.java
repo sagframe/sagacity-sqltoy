@@ -103,7 +103,7 @@ public class CollectionUtil {
 	 */
 	public static List arrayToDeepList(Object arySource) {
 		if (null == arySource) {
-			System.err.println("arrayToDeepList:the Ary Source is Null");
+			logger.error("arrayToDeepList:the Ary Source is Null");
 			return null;
 		}
 		List resultList = new ArrayList();
@@ -142,7 +142,7 @@ public class CollectionUtil {
 	 */
 	public static List arrayToList(Object arySource) {
 		if (null == arySource) {
-			System.err.println("arrayToList:the Ary Source is Null");
+			logger.error("arrayToList:the Ary Source is Null");
 			return null;
 		}
 		if (arySource instanceof List)
@@ -1038,8 +1038,7 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * 字符串数组按照类型转换
-	 * 
+	 * @todo 字符串数组按照类型转换
 	 * @param values
 	 * @param argType
 	 * @return
