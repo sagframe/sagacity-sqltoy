@@ -298,7 +298,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 提取sql中参数(:paramName)名称组成数组返回
+	 * @todo 提取nosql语句中参数(:paramName)名称组成数组返回
 	 * @param queryStr
 	 * @param distinct
 	 * @return
@@ -358,6 +358,7 @@ public class SqlConfigParseUtils {
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
+				//判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
 				boolean logicValue = true;
 				int start = markContentSql.toLowerCase().indexOf("@if");
 				// sql中存在逻辑判断
@@ -485,6 +486,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * 待实现(4.2.20 版本)
 	 * @todo 处理缓存过滤器为in ()作为条件:#[@cacheFilter(cacheName,:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
@@ -630,7 +632,7 @@ public class SqlConfigParseUtils {
 		String subStr = markContentSql.concat(tailSql);
 		String tmp = subStr.trim();
 		int index = StringUtil.matchIndex(preSql, WHERE_END_PATTERN);
-		// where 结尾，and 或 or 开头的拼接,剔除or 和and
+		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
 			// where 后面拼接的条件语句是空白,增加1=1,避免最终只有一个where
 			if (tmp.equals(""))
