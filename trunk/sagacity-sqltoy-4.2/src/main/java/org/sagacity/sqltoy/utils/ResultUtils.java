@@ -186,30 +186,37 @@ public class ResultUtils {
 					maskCode);
 		}
 		// 按类别处理
+		//电话
 		if ("tel".equals(type)) {
 			if (size >= 11)
 				return StringUtil.secureMask(realStr, 3, 4, maskCode);
 			else
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
-		} else if ("email".equals(type)) {
+		} // 邮件
+		else if ("email".equals(type)) {
 			return realStr.substring(0, 1).concat(maskCode).concat(realStr.substring(realStr.indexOf("@")));
-		} else if ("id-card".equals(type)) {
+		} // 身份证
+		else if ("id-card".equals(type)) {
 			return StringUtil.secureMask(realStr, 0, 4, maskCode);
-		} else if ("bank-card".equals(type)) {
+		} // 银行卡
+		else if ("bank-card".equals(type)) {
 			return StringUtil.secureMask(realStr, 6, 4, maskCode);
-		} else if ("name".equals(type)) {
+		} // 姓名
+		else if ("name".equals(type)) {
 			if (size >= 4)
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
 			else
 				return StringUtil.secureMask(realStr, 1, 0, maskCode);
-		} else if ("address".equals(type)) {
+		} // 地址
+		else if ("address".equals(type)) {
 			if (size >= 12)
 				return StringUtil.secureMask(realStr, 6, 0, maskCode);
 			else if (size >= 8)
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
 			else
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
-		} else if ("public-account".equals(type)) {
+		} // 对公银行账号
+		else if ("public-account".equals(type)) {
 			return StringUtil.secureMask(realStr, 2, 0, maskCode);
 		}
 
