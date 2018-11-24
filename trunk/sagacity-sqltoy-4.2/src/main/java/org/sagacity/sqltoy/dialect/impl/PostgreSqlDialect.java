@@ -42,7 +42,7 @@ public class PostgreSqlDialect implements Dialect {
 	 * 定义日志
 	 */
 	protected final Logger logger = LogManager.getLogger(getClass());
-	
+
 	/**
 	 * 判定为null的函数
 	 */
@@ -128,7 +128,7 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
@@ -156,7 +156,7 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, final String tableName) throws Exception {
+			Connection conn,  final Integer dbType,final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -298,23 +298,20 @@ public class PostgreSqlDialect implements Dialect {
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
 		/*
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
-						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
-								sequence, forceUpdateFields, tableName);
-					}
-				}, reflectPropertyHandler, conn, autoCommit);
-				*/
+		 * EntityMeta entityMeta =
+		 * sqlToyContext.getEntityMeta(entities.get(0).getClass()); return
+		 * DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
+		 * forceUpdateFields, new GenerateSqlHandler() { public String
+		 * generateSql(EntityMeta entityMeta, String[] forceUpdateFields) { PKStrategy
+		 * pkStrategy = entityMeta.getIdStrategy(); String sequence = "nextval('" +
+		 * entityMeta.getSequence() + "')"; if (pkStrategy != null &&
+		 * pkStrategy.equals(PKStrategy.IDENTITY)) { pkStrategy = PKStrategy.SEQUENCE;
+		 * sequence = "nextval(" +
+		 * entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
+		 * + ")"; } return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL,
+		 * entityMeta, pkStrategy, sequence, forceUpdateFields, tableName); } },
+		 * reflectPropertyHandler, conn, autoCommit);
+		 */
 	}
 
 	/*
@@ -382,7 +379,7 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				0);
@@ -398,7 +395,7 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn)
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
 			throws Exception {
 		String realSql = sql + " limit " + topSize + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
@@ -416,7 +413,7 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
 		String realSql = sql + " order by random() limit " + random + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);

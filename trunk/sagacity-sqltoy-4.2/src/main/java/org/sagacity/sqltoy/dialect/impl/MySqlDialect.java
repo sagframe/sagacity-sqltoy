@@ -274,16 +274,19 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
 		String loadSql = sqlToyConfig.getSql();
+		String lockSql = " for update ";
+		if (dbType.equals(DBType.MYSQL8))
+			lockSql = " for update skip locked ";
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql = loadSql + " for update";
+				loadSql = loadSql.concat(lockSql);
 				break;
 			}
 		}
@@ -299,7 +302,7 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -319,11 +322,14 @@ public class MySqlDialect implements Dialect {
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
+		String lockSql = " for update ";
+		if (dbType.equals(DBType.MYSQL8))
+			lockSql = " for update skip locked ";
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql.append(" for update ");
+				loadSql.append(lockSql);
 				break;
 			}
 		}
@@ -451,8 +457,12 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
-		String realSql = sql.concat(" for update");
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
+		String lockSql = " for update ";
+		if (dbType.equals(DBType.MYSQL8))
+			lockSql = " for update skip locked ";
+		String realSql = sql.concat(lockSql);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
 	}
@@ -467,9 +477,12 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn)
-			throws Exception {
-		String realSql = sql + " limit " + topSize + " for update";
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
+		String lockSql = " for update ";
+		if (dbType.equals(DBType.MYSQL8))
+			lockSql = " for update skip locked ";
+		String realSql = sql + " limit " + topSize + lockSql;
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
 	}
@@ -485,7 +498,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by rand() limit " + random
 		// + " for update";

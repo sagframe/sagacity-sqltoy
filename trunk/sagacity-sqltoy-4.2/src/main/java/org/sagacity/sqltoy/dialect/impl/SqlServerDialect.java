@@ -220,8 +220,8 @@ public class SqlServerDialect implements Dialect {
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
+					null, conn, true);
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -236,8 +236,8 @@ public class SqlServerDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
+					null, conn, true);
 		return updateCount;
 	}
 
@@ -249,7 +249,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
@@ -269,7 +269,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -392,7 +392,8 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
 		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
@@ -408,8 +409,8 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn)
-			throws Exception {
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT) + " fetch next " + topSize
 				+ " rows only";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
@@ -427,7 +428,8 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT)
 				+ " order by NEWID() fetch next " + random + " rows only";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,

@@ -246,7 +246,7 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		return OracleDialectUtils.load(sqlToyContext, entity, cascadeTypes, lockMode, conn, tableName);
 	}
 
@@ -258,7 +258,7 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn);
 	}
 
@@ -404,7 +404,8 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
@@ -420,8 +421,8 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn)
-			throws Exception {
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " fetch first " + topSize
 		// + " rows only for update nowait";
@@ -440,7 +441,7 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
 		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by dbms_random.random fetch first "
 		// + random + " rows only for update nowait";

@@ -114,8 +114,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity,
-			final List<Class> cascadeTypes, final LockMode lockMode, final Connection conn, final String tableName)
-			throws Exception;
+			final List<Class> cascadeTypes, final LockMode lockMode, final Connection conn, final Integer dbType,
+			final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量级联查询
@@ -129,7 +129,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, final Connection conn, final String tableName) throws Exception;
+			LockMode lockMode, final Connection conn, final Integer dbType, final String tableName) throws Exception;
 
 	/**
 	 * @todo 保存单条记录
@@ -272,18 +272,18 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn)
-			throws Exception;
+			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
+			final Integer dbType) throws Exception;
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, final Integer topSize, final UpdateRowHandler updateRowHandler, final Connection conn)
-			throws Exception;
+			Object[] paramsValue, final Integer topSize, final UpdateRowHandler updateRowHandler, final Connection conn,
+			final Integer dbType) throws Exception;
 
 	@Deprecated
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, final Integer random, final UpdateRowHandler updateRowHandler, final Connection conn)
-			throws Exception;
+			Object[] paramsValue, final Integer random, final UpdateRowHandler updateRowHandler, final Connection conn,
+			final Integer dbType) throws Exception;
 
 	/**
 	 * @todo 执行存储过程

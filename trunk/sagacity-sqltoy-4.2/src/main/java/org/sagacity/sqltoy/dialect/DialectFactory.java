@@ -252,8 +252,8 @@ public class DialectFactory {
 									paramsNamed, paramsValue);
 							// debug 显示sql
 							SqlExecuteStat.showSql(executeSql, queryParam.getParamsValue());
-							this.setResult(DialectUtils.executeSql(sqlToyContext,executeSql, queryParam.getParamsValue(), null, conn,
-									autoCommit));
+							this.setResult(DialectUtils.executeSql(sqlToyContext, executeSql,
+									queryParam.getParamsValue(), null, conn, autoCommit));
 						}
 					});
 		} catch (Exception e) {
@@ -718,7 +718,8 @@ public class DialectFactory {
 				int sql_from_index;
 				int unionSqlSize = unionSqls.length;
 				for (int i = 0; i < unionSqlSize; i++) {
-					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]", unionSqls[i], 0);
+					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(|\\s+]",
+							unionSqls[i], 0);
 					countSql.append(" select count(1) row_count ")
 							.append((sql_from_index != -1 ? unionSqls[i].substring(sql_from_index) : unionSqls[i]));
 					if (i < unionSqlSize - 1)
@@ -893,7 +894,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
-									conn, shardingModel.getTableName()));
+									conn, dbType, shardingModel.getTableName()));
 						}
 					});
 		} catch (Exception e) {
@@ -931,7 +932,7 @@ public class DialectFactory {
 									this.setResult(getDialectSqlWrapper(dbType).loadAll(sqlToyContext,
 											batchModel.getEntities(),
 											(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes),
-											lockMode, conn, shardingModel.getTableName()));
+											lockMode, conn, dbType, shardingModel.getTableName()));
 								}
 							});
 				}
@@ -1215,7 +1216,7 @@ public class DialectFactory {
 									queryExecutor.getParamsValue(realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									updateRowHandler, conn);
+									updateRowHandler, conn, dbType);
 
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -1253,7 +1254,7 @@ public class DialectFactory {
 									queryExecutor.getParamsValue(realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchTop(sqlToyContext,
 									sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), topSize,
-									updateRowHandler, conn);
+									updateRowHandler, conn, dbType);
 
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -1291,7 +1292,7 @@ public class DialectFactory {
 
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchRandom(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
-									updateRowHandler, conn);
+									updateRowHandler, conn, dbType);
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),

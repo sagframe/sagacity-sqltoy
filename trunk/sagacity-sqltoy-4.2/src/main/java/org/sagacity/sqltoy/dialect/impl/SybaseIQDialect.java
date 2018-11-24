@@ -108,7 +108,7 @@ public class SybaseIQDialect implements Dialect {
 					queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyConfig));
 
 			// 执行sql将记录插入临时表
-			DialectUtils.executeSql(sqlToyContext,queryParam.getSql(), queryParam.getParamsValue(), null, conn, true);
+			DialectUtils.executeSql(sqlToyContext, queryParam.getSql(), queryParam.getParamsValue(), null, conn, true);
 			hasCreateTmp = true;
 			StringBuilder sql = new StringBuilder();
 			sql.append("select ");
@@ -151,7 +151,7 @@ public class SybaseIQDialect implements Dialect {
 		} finally {
 			// 删除临时表
 			if (hasCreateTmp)
-				DialectUtils.executeSql(sqlToyContext,"drop table ".concat(tmpTable), null, null, conn, true);
+				DialectUtils.executeSql(sqlToyContext, "drop table ".concat(tmpTable), null, null, conn, true);
 		}
 		return queryResult;
 	}
@@ -283,8 +283,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null,
-					null, conn, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
+					true);
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -294,7 +295,7 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
 		if (isOpenIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, true);
+			DialectUtils.executeSql(sqlToyContext, "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, true);
 		return updateCount;
 	}
 
@@ -316,8 +317,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null,
-					null, conn, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
+					true);
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -327,7 +329,7 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
 		if (isOpenIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, true);
+			DialectUtils.executeSql(sqlToyContext, "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, true);
 		return updateCount;
 	}
 
@@ -339,7 +341,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
@@ -355,7 +357,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -444,7 +446,8 @@ public class SybaseIQDialect implements Dialect {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					DialectUtils.executeSql(sqlToyContext,sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
+					DialectUtils.executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null,
+							conn, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -512,7 +515,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn, 0);
 	}
 
@@ -526,7 +529,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn)
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
 			throws Exception {
 		String realSql = sql.replaceFirst("(?i)select ", "select top " + topSize + " ");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
@@ -544,7 +547,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
 		// 不支持
 		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
