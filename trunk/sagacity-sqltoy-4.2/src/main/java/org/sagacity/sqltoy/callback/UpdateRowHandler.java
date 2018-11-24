@@ -14,11 +14,10 @@ import java.sql.SQLException;
  */
 public abstract class UpdateRowHandler {
 	/**
-	 *@todo 行处理抽象方法接口定义
-	 *@param rs
-	 *@param index
-	 *@throws SQLException
+	 * @todo 行处理抽象方法接口定义
+	 * @param rs
+	 * @param index
+	 * @throws SQLException
 	 */
-	public abstract void updateRow(ResultSet rs, int index)
-			throws SQLException;
+	public abstract void updateRow(ResultSet rs, int index) throws Exception;
 }
