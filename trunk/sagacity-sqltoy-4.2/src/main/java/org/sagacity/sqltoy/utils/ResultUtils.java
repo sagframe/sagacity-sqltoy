@@ -262,7 +262,7 @@ public class ResultUtils {
 		// 最大阀值
 		long maxThresholds = SqlToyConstants.getMaxThresholds();
 		boolean maxLimit = false;
-		//是否判断全部为null的行记录
+		// 是否判断全部为null的行记录
 		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
 		// 最大值要大于等于警告阀值
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
@@ -304,8 +304,8 @@ public class ResultUtils {
 						if (cacheValues == null) {
 							linkStr = "";
 							if (isDebug)
-								logger.debug("translate cache:" + translateModel.getCache() + " 对应的key:" + linkValue
-										+ " 没有设置相应的value!");
+								logger.debug("translate cache:{} 对应的key:{} 没有设置相应的value!", translateModel.getCache(),
+										linkValue);
 						} else
 							linkStr = cacheValues[linkTranslateIndex];
 					} else
