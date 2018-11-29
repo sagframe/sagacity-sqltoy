@@ -30,16 +30,10 @@
 			<id>sagframe-release</id>
 			<url>http://www.sagframe.com:8081/repository/sagframe</url>
 		</repository> -->
-		<repository>
-			<id>renturbo</id>
-			<name>3rd party</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>renturbo</id>
-			<name>Department Repository</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
+		<repository> <id>renturbo</id> <name>3rd party</name> <url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url> 
+			</repository> <snapshotRepository> <id>renturbo</id> <name>Department Repository</name> 
+			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url> 
+			</snapshotRepository>
 	</distributionManagement>
 	<dependencies>
 		<dependency>
@@ -222,6 +216,20 @@
 			<version>${httpclient-core.version}</version>
 			<optional>true</optional>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore-nio -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore-nio</artifactId>
+			<version>4.4.10</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpasyncclient -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpasyncclient</artifactId>
+			<version>4.1.4</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
