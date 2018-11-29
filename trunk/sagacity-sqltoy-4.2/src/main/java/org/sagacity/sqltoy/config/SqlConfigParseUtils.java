@@ -194,6 +194,7 @@ public class SqlConfigParseUtils {
 
 		// 过滤缓存模糊查询
 		//processCacheFilter(sqlToyResult);
+
 		
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
@@ -486,7 +487,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 待实现(4.2.20 版本)
+	 * 待实现(4.2.21 版本实现）
 	 * @todo 处理缓存过滤器为in ()作为条件:#[@cacheFilter(cacheName,:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
