@@ -102,8 +102,12 @@ public class RedisIdGenerator implements IdGenerator {
 		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
 		// 没有宏
 		if (realKey.equals(key)) {
-			Date realBizDate = (bizDate == null ? new Date() : bizDate);
-			realKey = realKey.concat(DateUtil.formatDate(realBizDate, (dateFormat == null) ? "yyMMdd" : dateFormat));
+			//长度够放下6位日期
+			if (length - realKey.length() > 6) {
+				Date realBizDate = (bizDate == null ? new Date() : bizDate);
+				realKey = realKey
+						.concat(DateUtil.formatDate(realBizDate, (dateFormat == null) ? "yyMMdd" : dateFormat));
+			}
 		}
 		// 参数替换
 		if (!keyValueMap.isEmpty()) {
