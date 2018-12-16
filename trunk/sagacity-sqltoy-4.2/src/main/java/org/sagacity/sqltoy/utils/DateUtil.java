@@ -141,6 +141,8 @@ public class DateUtil {
 	/**
 	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
 	 * @param dateStr
+	 * @param dateFormat
+	 * @param locale
 	 * @return
 	 */
 	public static Date parseString(String dateStr, String dateFormat, String locale) {

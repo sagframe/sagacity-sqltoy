@@ -202,7 +202,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
-		capitalMoney = capitalMoney.replaceAll(" ", "").replaceAll("零", "");
+		capitalMoney = capitalMoney.replaceAll(" ", "").replaceAll("零", "").replaceAll("圆", "元");
 		// 默认小数位长度，默认到厘
 		int scale = 3;
 		if (capitalMoney.endsWith("整")) {
@@ -219,11 +219,11 @@ public class NumberUtil {
 		// 是否包含亿元
 		if (billionIndex != -1) {
 			splitsCapitalMoney[0] = capitalMoney.substring(0, billionIndex);
-			splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, capitalMoney.indexOf("圆"));
-		} else if (capitalMoney.indexOf("圆") != -1)
-			splitsCapitalMoney[1] = capitalMoney.substring(0, capitalMoney.indexOf("圆"));
-		if (capitalMoney.indexOf("圆") != capitalMoney.length() - 1)
-			splitsCapitalMoney[2] = capitalMoney.substring(capitalMoney.indexOf("圆") + 1);
+			splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, capitalMoney.indexOf("元"));
+		} else if (capitalMoney.indexOf("元") != -1)
+			splitsCapitalMoney[1] = capitalMoney.substring(0, capitalMoney.indexOf("元"));
+		if (capitalMoney.indexOf("元") != capitalMoney.length() - 1)
+			splitsCapitalMoney[2] = capitalMoney.substring(capitalMoney.indexOf("元") + 1);
 		// 分段处理合并
 		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(new BigDecimal("100000000"))
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
@@ -241,7 +241,7 @@ public class NumberUtil {
 	public static String toCapitalMoney(BigDecimal money) {
 		BigDecimal realMoney = money.setScale(5, BigDecimal.ROUND_HALF_UP).abs();
 		if (realMoney.compareTo(new BigDecimal(0)) == 0)
-			return "零圆";
+			return "零元";
 		// 绝对值字符串
 		String sourceStr = realMoney.toString();
 
@@ -256,7 +256,7 @@ public class NumberUtil {
 		if (result.startsWith("壹拾"))
 			result = result.substring(1);
 		if (!result.equalsIgnoreCase(""))
-			result += "圆";
+			result += "元";
 
 		// 小于零
 		if (money.compareTo(new BigDecimal("0")) < 0)
