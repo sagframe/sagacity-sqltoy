@@ -440,13 +440,17 @@ public class ParamFilterUtils {
 
 		// 只要有一个对比值相等表示成立，返回null
 		for (String contrast : contrasts) {
-			if (type == 1 && DateUtil.convertDateObject(param)
-					.compareTo(contrast.equalsIgnoreCase("sysdate") ? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-							: DateUtil.convertDateObject(contrast)) == 0)
-				return null;
-			else if (type == 2 && Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
-				return null;
-			else if (param.toString().compareTo(contrast) == 0)
+			if (type == 1) {
+				Date compareDate = contrast.equalsIgnoreCase("sysdate")
+						? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+						: DateUtil.convertDateObject(contrast);
+				if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+					return null;
+			} else if (type == 2) {
+				if (NumberUtil.isNumber(contrast)
+						&& Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
+					return null;
+			} else if (param.toString().compareTo(contrast) == 0)
 				return null;
 		}
 		return param;
@@ -470,13 +474,18 @@ public class ParamFilterUtils {
 			type = 2;
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
 		for (String contrast : contrasts) {
-			if (type == 1 && DateUtil.convertDateObject(param)
-					.compareTo(contrast.equalsIgnoreCase("sysdate") ? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-							: DateUtil.convertDateObject(contrast)) == 0)
-				return param;
-			else if (type == 2 && Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
-				return param;
-			else if (param.toString().compareTo(contrast) == 0)
+			if (type == 1) {
+				Date compareDate = contrast.equalsIgnoreCase("sysdate")
+						? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+						: DateUtil.convertDateObject(contrast);
+				if (compareDate == null || DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+					return param;
+			} else if (type == 2) {
+				//非数字或相等
+				if (!NumberUtil.isNumber(contrast)
+						|| Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
+					return param;
+			} else if (param.toString().compareTo(contrast) == 0)
 				return param;
 		}
 		return null;
