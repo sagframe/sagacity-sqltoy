@@ -8,7 +8,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dom4j.version>2.1.1</dom4j.version>
 		<log4j.version>2.11.1</log4j.version>
-		<mysql.version>8.0.12</mysql.version>
+		<mysql.version>8.0.13</mysql.version>
 		<beanutils.version>1.9.3</beanutils.version>
 		<freemarker.version>2.3.28</freemarker.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
