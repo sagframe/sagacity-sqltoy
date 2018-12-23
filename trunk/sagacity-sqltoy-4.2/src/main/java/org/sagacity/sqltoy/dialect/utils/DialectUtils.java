@@ -1375,6 +1375,7 @@ public class DialectUtils {
 			List<Object[]> idSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
+				//判断主键策略关联的字段是否有值,合法性验证
 				if (relatedColumn != null) {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
@@ -1384,6 +1385,7 @@ public class DialectUtils {
 									+ relatedColumn[meter] + " 值为null!");
 					}
 				}
+				//主键值为null,调用主键生成策略并赋值
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
