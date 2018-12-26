@@ -14,6 +14,7 @@ import org.dom4j.Element;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
@@ -81,6 +82,7 @@ public class TranslateConfigParse {
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);
+									sqlToyConfig.setParamsName(SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									translateCacheModel.setSql(sqlId);
 								}
@@ -113,6 +115,7 @@ public class TranslateConfigParse {
 										SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 												StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 										sqlToyConfig.setShowSql(!isShowSql);
+										sqlToyConfig.setParamsName(SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
 										sqlToyContext.putSqlToyConfig(sqlToyConfig);
 										checherConfigModel.setSql(sqlId);
 									}
