@@ -48,7 +48,7 @@ public class ParamFilterModel implements Serializable {
 
 	/**
 	 * 过滤加工的类型:blank、equals、any、moreThan、moreEquals、lessThan、lessEquals、between、
-	 * not-any、to-date、to-number、primary、to-array、replace,exclusive(排斥性参数)
+	 * not-any、to-date、to-number、primary、to-array、replace,exclusive(排斥性参数),cache-arg 
 	 */
 	private String filterType;
 
@@ -96,6 +96,21 @@ public class ParamFilterModel implements Serializable {
 	 *互斥型filter 对比类型
 	 */
 	private String compareType="==";
+	
+	/**
+	 * 缓存名称
+	 */
+	private String cacheName;
+	
+	/**
+	 * 缓存类型
+	 */
+	private String cacheType;
+	
+	/**
+	 * 转化成新的笔名 
+	 */
+	private String aliasName;
 	
 	/**
 	 * 互斥型filter 对比的值
@@ -328,6 +343,48 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCompareValues(String[] compareValues) {
 		this.compareValues = compareValues;
+	}
+
+	/**
+	 * @return the cacheName
+	 */
+	public String getCacheName() {
+		return cacheName;
+	}
+
+	/**
+	 * @param cacheName the cacheName to set
+	 */
+	public void setCacheName(String cacheName) {
+		this.cacheName = cacheName;
+	}
+
+	/**
+	 * @return the cacheType
+	 */
+	public String getCacheType() {
+		return cacheType;
+	}
+
+	/**
+	 * @param cacheType the cacheType to set
+	 */
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
+	}
+
+	/**
+	 * @return the aliasName
+	 */
+	public String getAliasName() {
+		return aliasName;
+	}
+
+	/**
+	 * @param aliasName the aliasName to set
+	 */
+	public void setAliasName(String aliasName) {
+		this.aliasName = aliasName;
 	}
 
 	
