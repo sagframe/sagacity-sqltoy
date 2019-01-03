@@ -113,6 +113,11 @@ public class ParamFilterModel implements Serializable {
 	private String aliasName;
 	
 	/**
+	 * 缓存匹配列
+	 */
+	private int[] cacheMappingIndexes;
+	
+	/**
 	 * 互斥型filter 对比的值
 	 */
 	private String[] compareValues=null;
@@ -385,6 +390,20 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setAliasName(String aliasName) {
 		this.aliasName = aliasName;
+	}
+
+	/**
+	 * @return the cacheMappingIndexes
+	 */
+	public int[] getCacheMappingIndexes() {
+		return cacheMappingIndexes;
+	}
+
+	/**
+	 * @param cacheMappingIndexes the cacheMappingIndexes to set
+	 */
+	public void setCacheMappingIndexes(int[] cacheMappingIndexes) {
+		this.cacheMappingIndexes = cacheMappingIndexes;
 	}
 
 	
