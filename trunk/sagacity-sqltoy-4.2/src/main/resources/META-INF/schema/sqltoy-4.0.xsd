@@ -140,6 +140,7 @@
 					<xsd:enumeration value="db2" />
 					<xsd:enumeration value="oracle" />
 					<xsd:enumeration value="oracle12" />
+					<xsd:enumeration value="oracle18" />
 					<xsd:enumeration value="sqlserver" />
 					<xsd:enumeration value="sqlserver2014" />
 					<xsd:enumeration value="sqlserver2016" />
@@ -148,6 +149,7 @@
 					<xsd:enumeration value="mysql8" />
 					<xsd:enumeration value="postgresql" />
 					<xsd:enumeration value="postgresql10" />
+					<xsd:enumeration value="postgresql11" />
 					<xsd:enumeration value="sybase_iq" />
 					<xsd:enumeration value="sqlite" />
 				</xsd:restriction>
@@ -442,6 +444,7 @@
 					<xsd:attribute name="cache" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="cache-type" type="xsd:string"/>
+					<xsd:attribute name="cache-mapping-indexes" type="xsd:string"/>
 					<xsd:attribute name="data-type" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
