@@ -112,12 +112,21 @@ public class ParamFilterUtils {
 					: paramIndexMap.get(paramFilterModel.getParam());
 			if (index == -1)
 				return;
+			String aliasName = paramFilterModel.getAliasName();
+			if (StringUtil.isBlank(aliasName))
+				aliasName = paramFilterModel.getParam();
+			if (!paramIndexMap.containsKey(aliasName)) {
+				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
+						aliasName);
+				return;
+			}
 			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager().getCacheData(sqlToyContext,
 					paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
 			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;
 			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
