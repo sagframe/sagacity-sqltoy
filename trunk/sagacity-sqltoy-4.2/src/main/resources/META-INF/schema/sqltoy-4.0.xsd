@@ -441,7 +441,7 @@
 				<xsd:complexType>
 					<xsd:attribute name="param" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="cache" type="xsd:string"
+					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="cache-type" type="xsd:string"/>
 					<xsd:attribute name="cache-mapping-indexes" type="xsd:string"/>
