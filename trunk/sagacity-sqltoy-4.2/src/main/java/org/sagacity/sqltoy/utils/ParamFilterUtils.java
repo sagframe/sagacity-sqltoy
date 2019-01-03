@@ -99,6 +99,32 @@ public class ParamFilterUtils {
 	}
 
 	/**
+	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
+	 * @param sqlToyContext
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
+			ParamFilterModel paramFilterModel, Object[] paramValues) {
+		try {
+			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
+					: paramIndexMap.get(paramFilterModel.getParam());
+			if (index == -1)
+				return;
+			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager().getCacheData(sqlToyContext,
+					paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
+			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
+				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
+				return;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
+		}
+	}
+
+	/**
 	 * @todo 互斥性参数filter
 	 * @param paramIndexMap
 	 * @param paramFilterModel
@@ -639,15 +665,4 @@ public class ParamFilterUtils {
 		return param;
 	}
 
-	/**
-	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
-	 * @param sqlToyContext
-	 * @param paramIndexMap
-	 * @param paramFilterModel
-	 * @param paramValues
-	 */
-	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
-			ParamFilterModel paramFilterModel, Object[] paramValues) {
-
-	}
 }
