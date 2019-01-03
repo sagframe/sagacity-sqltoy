@@ -129,7 +129,7 @@ public class Mongo extends BaseLink {
 			throw new Exception(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyConfig));
+				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		// 聚合查询
 		if (noSqlModel.isHasAggs())
 			return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, realMql,
@@ -153,7 +153,7 @@ public class Mongo extends BaseLink {
 			throw new Exception(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyConfig));
+				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
 		return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
 				realMql, queryExecutor.getResultTypeName());
 	}
@@ -172,7 +172,7 @@ public class Mongo extends BaseLink {
 			throw new Exception(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyConfig));
+				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
 		return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
 				realMql, queryExecutor.getResultTypeName());
 	}

@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -108,7 +109,7 @@ public class QueryExecutor implements Serializable {
 		this.entity = entity;
 		if (entity != null) {
 			this.resultType = entity.getClass();
-			//类型检测
+			// 类型检测
 			if (this.resultType.equals("".getClass().getClass()))
 				throw new Exception("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
 		}
@@ -240,7 +241,7 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Object[] getParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
+	public Object[] getParamsValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig) throws Exception {
 		Object[] realValues = null;
 		// 是否萃取过
 		if (!extracted) {
@@ -254,7 +255,7 @@ public class QueryExecutor implements Serializable {
 			realValues = paramsValue.clone();
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(getParamsName(sqlToyConfig), realValues,
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
 					sqlToyConfig.getFilters());
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null

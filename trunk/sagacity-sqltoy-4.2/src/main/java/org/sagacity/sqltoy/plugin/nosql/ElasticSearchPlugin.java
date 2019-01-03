@@ -52,7 +52,7 @@ public class ElasticSearchPlugin {
 		JSONObject jsonQuery = null;
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyConfig)).trim();
+					queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
 			jsonQuery.fluentRemove("from");
 			jsonQuery.fluentRemove("FROM");
@@ -91,7 +91,7 @@ public class ElasticSearchPlugin {
 		JSONObject jsonQuery = null;
 		try {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyConfig)).trim();
+					queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
 			if (topSize != null) {
 				jsonQuery.fluentRemove("from");

@@ -128,7 +128,7 @@ public class DialectUtils {
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
 		String[] paramsNamed = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyConfig);
+		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig);
 		if (startIndex == null && endIndex == null)
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
 		String[] realParamNamed = null;

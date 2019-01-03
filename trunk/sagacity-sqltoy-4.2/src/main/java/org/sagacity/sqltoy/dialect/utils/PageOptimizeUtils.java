@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -30,19 +31,20 @@ public class PageOptimizeUtils {
 
 	/**
 	 * @todo 根据查询条件组成key
+	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @return
 	 * @throws Exception
 	 */
-	public static String generateOptimizeKey(final SqlToyConfig sqlToyConfig, final QueryExecutor queryExecutor)
-			throws Exception {
+	public static String generateOptimizeKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor) throws Exception {
 		// 没有开放分页优化或sql id为null都不执行优化操作
 		if (!sqlToyConfig.isPageOptimize() || null == sqlToyConfig.getId())
 			return null;
 
 		String[] paramNames = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramValues = queryExecutor.getParamsValue(sqlToyConfig);
+		Object[] paramValues = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
 		if (paramValues == null || paramValues.length == 0)
 			return sqlToyConfig.getId();

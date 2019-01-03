@@ -186,7 +186,7 @@ public class ResultUtils {
 					maskCode);
 		}
 		// 按类别处理
-		//电话
+		// 电话
 		if ("tel".equals(type)) {
 			if (size >= 11)
 				return StringUtil.secureMask(realStr, 3, 4, maskCode);
@@ -926,7 +926,7 @@ public class ResultUtils {
 								queryExecutor, dialect, false);
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(),
 								queryExecutor.getParamsName(pivotSqlConfig),
-								queryExecutor.getParamsValue(pivotSqlConfig));
+								queryExecutor.getParamsValue(sqlToyContext, pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
 								pivotSqlToyResult.getParamsValue(), null, null, conn, sqlToyConfig.isIgnoreEmpty());
 						// 行转列返回

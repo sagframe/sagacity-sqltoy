@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 
 /**
@@ -32,12 +33,14 @@ public class ParamFilterUtils {
 
 	/**
 	 * @todo 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
+	 * @param sqlToyContext
 	 * @param paramsName
 	 * @param values
 	 * @param filters
 	 * @return
 	 */
-	public static Object[] filterValue(String[] paramsName, Object[] values, ParamFilterModel[] filters) {
+	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
+			ParamFilterModel[] filters) {
 		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0)
 			return values;
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
@@ -62,7 +65,7 @@ public class ParamFilterUtils {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
 			} // 缓存中提取精准查询参数作为sql查询条件值
 			else if (paramFilterModel.getFilterType().equals("cache-arg")) {
-				filterCache(paramIndexMap, paramFilterModel, paramValues);
+				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
@@ -638,12 +641,13 @@ public class ParamFilterUtils {
 
 	/**
 	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
+	 * @param sqlToyContext
 	 * @param paramIndexMap
 	 * @param paramFilterModel
 	 * @param paramValues
 	 */
-	private static void filterCache(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
-			Object[] paramValues) {
+	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
+			ParamFilterModel paramFilterModel, Object[] paramValues) {
 
 	}
 }

@@ -88,7 +88,7 @@ public class SqlServerDialectUtils {
 		if (sqlToyConfig.isHasFast())
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
-				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyConfig));
+				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
