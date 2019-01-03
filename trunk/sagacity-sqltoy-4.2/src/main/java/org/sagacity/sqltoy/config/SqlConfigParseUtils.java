@@ -98,7 +98,7 @@ public class SqlConfigParseUtils {
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 	// add 2018-11-20 by chenrenfei
-	public final static String CACHE_REGEX = "(?i)\\@cacheFilter\\s*\\(\\s*\\?\\s*\\)";
+	public final static String CACHE_REGEX = "(?i)\\@cacheFilter|cacheStrFillter\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern CACHE_PATTERN = Pattern.compile(CACHE_REGEX);
 
 	public final static String BLANK = " ";

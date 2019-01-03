@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 
 /**
@@ -20,6 +22,11 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ParamFilterUtils {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(ParamFilterUtils.class);
+
 	// 默认日期格式
 	private static final String DAY_FORMAT = "yyyy-MM-dd";
 
@@ -53,7 +60,11 @@ public class ParamFilterUtils {
 			// 排他性参数(当某些参数值都不为null,则设置其他参数值为null)
 			if (paramFilterModel.getFilterType().equals("exclusive") && paramFilterModel.getUpdateParams() != null) {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
-			} // 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
+			} // 缓存中提取精准查询参数作为sql查询条件值
+			else if (paramFilterModel.getFilterType().equals("cache-arg")) {
+				filterCache(paramIndexMap, paramFilterModel, paramValues);
+			}
+			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
 				retainMap = paramFilterModel.getExcludesMap();
 				index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
@@ -240,6 +251,17 @@ public class ParamFilterUtils {
 			}
 		} else if (filterType.equals("to-array")) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
+		} // 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
+		else if (filterType.equals("to-in-arg")) {
+			if (paramValue instanceof CharSequence) {
+				result = paramValue.toString();
+			} else {
+				try {
+					result = SqlUtil.combineQueryInStr(paramValue, null, null, true);
+				} catch (Exception e) {
+					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
+				}
+			}
 		}
 		return result;
 	}
@@ -481,7 +503,7 @@ public class ParamFilterUtils {
 				if (compareDate == null || DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
 					return param;
 			} else if (type == 2) {
-				//非数字或相等
+				// 非数字或相等
 				if (!NumberUtil.isNumber(contrast)
 						|| Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
 					return param;
@@ -614,4 +636,14 @@ public class ParamFilterUtils {
 		return param;
 	}
 
+	/**
+	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterCache(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
+			Object[] paramValues) {
+
+	}
 }

@@ -630,7 +630,22 @@ public class SqlXMLConfigParse {
 		// exclusive 和primary filter 专用参数
 		if (filter.attribute("param") != null)
 			filterModel.setParam(filter.attributeValue("param").toLowerCase());
-
+		// <cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes=""
+		// data-type="" alias-name=""/>
+		if (filter.attribute("cache-name") != null)
+			filterModel.setCacheName(filter.attributeValue("param-name"));
+		if (filter.attribute("cache-type") != null)
+			filterModel.setCacheType(filter.attributeValue("cache-type"));
+		if (filter.attribute("cache-mapping-indexes") != null) {
+			String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
+			int[] mappingIndexes = new int[cacheIndexes.length];
+			for (int i = 0; i < cacheIndexes.length; i++) {
+				mappingIndexes[i] = Integer.parseInt(cacheIndexes[i]);
+			}
+			filterModel.setCacheMappingIndexes(mappingIndexes);
+		}
+		if (filter.attribute("alias-name") != null)
+			filterModel.setAliasName(filter.attributeValue("alias-name"));
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.attribute("set-params") != null)
 			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split("\\,")));
@@ -746,6 +761,13 @@ public class SqlXMLConfigParse {
 				cacheIndexs = null;
 				if (translate.attribute("cache-indexs") != null) {
 					cacheIndexStr = trimParams(translate.attributeValue("cache-indexs").split("\\,"));
+					cacheIndexs = new Integer[cacheIndexStr.length];
+					for (int i = 0; i < cacheIndexStr.length; i++) {
+						cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
+					}
+				} // 兼容参数命名
+				else if (translate.attribute("cache-indexes") != null) {
+					cacheIndexStr = trimParams(translate.attributeValue("cache-indexes").split("\\,"));
 					cacheIndexs = new Integer[cacheIndexStr.length];
 					for (int i = 0; i < cacheIndexStr.length; i++) {
 						cacheIndexs[i] = Integer.parseInt(cacheIndexStr[i]);
