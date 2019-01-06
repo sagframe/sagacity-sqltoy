@@ -126,7 +126,7 @@ public class ParamFilterUtils {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());
@@ -292,7 +292,29 @@ public class ParamFilterUtils {
 		} // 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
 		else if (filterType.equals("to-in-arg")) {
 			if (paramValue instanceof CharSequence) {
-				result = paramValue.toString();
+				String inArg = paramValue.toString();
+				if (inArg.startsWith("'") && inArg.endsWith("'")) {
+					result = inArg;
+				} else {
+					String[] args = inArg.split("\\,");
+					StringBuilder inStr = new StringBuilder();
+					String tmp;
+					int cnt = 0;
+					for (String arg : args) {
+						tmp = arg.trim();
+						if (!tmp.equals("")) {
+							if (cnt > 0)
+								inStr.append(",");
+							if (!tmp.startsWith("'"))
+								inStr.append("'");
+							inStr.append(tmp);
+							if (!tmp.endsWith("'"))
+								inStr.append("'");
+							cnt++;
+						}
+					}
+					result = inStr.toString();
+				}
 			} else {
 				try {
 					result = SqlUtil.combineQueryInStr(paramValue, null, null, true);
