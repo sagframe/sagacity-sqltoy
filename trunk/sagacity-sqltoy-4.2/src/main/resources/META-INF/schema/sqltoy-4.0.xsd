@@ -445,6 +445,7 @@
 						use="required" />
 					<xsd:attribute name="cache-type" type="xsd:string"/>
 					<xsd:attribute name="cache-mapping-indexes" type="xsd:string"/>
+					<xsd:attribute name="cache-mapping-max" type="xsd:integer"/>
 					<xsd:attribute name="data-type" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">

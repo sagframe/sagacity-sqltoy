@@ -131,6 +131,11 @@ public class ParamFilterModel implements Serializable {
 	 * 增加的天数
 	 */
 	private Double incrementDays = 0d;
+	
+	/**
+	 * 最大匹配数量为500
+	 */
+	private int cacheMappingMax=500;
 
 	public String getFilterType() {
 		return filterType;
@@ -404,6 +409,20 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCacheMappingIndexes(int[] cacheMappingIndexes) {
 		this.cacheMappingIndexes = cacheMappingIndexes;
+	}
+
+	/**
+	 * @return the cacheMappingMax
+	 */
+	public int getCacheMappingMax() {
+		return cacheMappingMax;
+	}
+
+	/**
+	 * @param cacheMappingMax the cacheMappingMax to set
+	 */
+	public void setCacheMappingMax(int cacheMappingMax) {
+		this.cacheMappingMax = cacheMappingMax;
 	}
 
 	
