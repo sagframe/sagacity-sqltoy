@@ -632,26 +632,41 @@ public class SqlXMLConfigParse {
 			filterModel.setParam(filter.attributeValue("param").toLowerCase());
 		// <cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes=""
 		// data-type="" alias-name=""/>
-		if (filter.attribute("cache-name") != null)
-			filterModel.setCacheName(filter.attributeValue("param-name"));
-		if (filter.attribute("cache-type") != null)
-			filterModel.setCacheType(filter.attributeValue("cache-type"));
-		if (filter.attribute("cache-mapping-max") != null) {
-			filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
-			//不能超过1000
-			if (filterModel.getCacheMappingMax() > 999)
-				filterModel.setCacheMappingMax(999);
-		}
-		if (filter.attribute("cache-mapping-indexes") != null) {
-			String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
-			int[] mappingIndexes = new int[cacheIndexes.length];
-			for (int i = 0; i < cacheIndexes.length; i++) {
-				mappingIndexes[i] = Integer.parseInt(cacheIndexes[i]);
+		if (filter.attribute("cache-name") != null) {
+			filterModel.setCacheName(filter.attributeValue("cache-name"));
+			if (filter.attribute("cache-type") != null)
+				filterModel.setCacheType(filter.attributeValue("cache-type"));
+			if (filter.attribute("cache-mapping-max") != null) {
+				filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
+				// 不能超过1000
+				if (filterModel.getCacheMappingMax() > 999)
+					filterModel.setCacheMappingMax(999);
 			}
-			filterModel.setCacheMappingIndexes(mappingIndexes);
+			if (filter.attribute("cache-mapping-indexes") != null) {
+				String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
+				int[] mappingIndexes = new int[cacheIndexes.length];
+				for (int i = 0; i < cacheIndexes.length; i++) {
+					mappingIndexes[i] = Integer.parseInt(cacheIndexes[i]);
+				}
+				filterModel.setCacheMappingIndexes(mappingIndexes);
+			}
+			if (filter.attribute("alias-name") != null)
+				filterModel.setAliasName(filter.attributeValue("alias-name"));
+			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
+			List<Element> cacheFilters = filter.elements("filter");
+			if (cacheFilters != null && !cacheFilters.isEmpty()) {
+				int[] cacheFilterIndexs = new int[cacheFilters.size()];
+				String[] cacheFilterParams = new String[cacheFilters.size()];
+				int meter = 0;
+				for (Element cacheFilter : cacheFilters) {
+					cacheFilterIndexs[meter] = Integer.parseInt(cacheFilter.attributeValue("cache-index"));
+					cacheFilterParams[meter] = cacheFilter.attributeValue("compare-param");
+					meter++;
+				}
+				filterModel.setCacheFilterIndexes(cacheFilterIndexs);
+				filterModel.setCacheFilterParams(cacheFilterParams);
+			}
 		}
-		if (filter.attribute("alias-name") != null)
-			filterModel.setAliasName(filter.attributeValue("alias-name"));
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
 		if (filter.attribute("set-params") != null)
 			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split("\\,")));

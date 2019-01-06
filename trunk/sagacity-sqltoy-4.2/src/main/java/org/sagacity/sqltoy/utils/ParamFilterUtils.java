@@ -141,28 +141,71 @@ public class ParamFilterUtils {
 				}
 				return;
 			}
-
+			boolean hasFilter = (paramFilterModel.getCacheFilterParams() == null) ? false : true;
+			List<List<String>> filterValues = new ArrayList<List<String>>();
+			int[] cachefilterIndexes = paramFilterModel.getCacheFilterIndexes();
+			if (hasFilter) {
+				for (String param : paramFilterModel.getCacheFilterParams()) {
+					Integer i = paramIndexMap.get(param);
+					Object compareValue = param;
+					if (i != null)
+						compareValue = paramValues[i];
+					List<String> tmp = new ArrayList<String>();
+					if (compareValue.getClass().isArray()) {
+						Object[] ary = (Object[]) compareValue;
+						for (Object obj : ary) {
+							tmp.add(obj.toString());
+						}
+					} else if (compareValue instanceof Collection) {
+						for (Iterator iter = ((Collection) compareValue).iterator(); iter.hasNext();) {
+							tmp.add(iter.next().toString());
+						}
+					} else
+						tmp.add(compareValue.toString());
+					filterValues.add(tmp);
+				}
+			}
 			// 匹配数量最大为1000
-			int matchedCnt = 0;
-			int[] matchIndex = paramFilterModel.getCacheMappingIndexes();
+			int matchCnt = 0;
+			// 对比的缓存列(缓存数据以数组形式存储)
+			int[] matchIndexes = paramFilterModel.getCacheMappingIndexes();
+			// 最大允许匹配数量,缓存匹配一般用于in (?,?)形式的查询,in 参数有数量限制
 			int maxLimit = paramFilterModel.getCacheMappingMax();
+			// 匹配的缓存key结果集合
 			List<Object> matchKeys = new ArrayList<Object>();
-			Object[] row;
+
 			// 循环缓存进行匹配,匹配上将key值放入数组
 			Iterator<Object[]> iter = cacheDataMap.values().iterator();
+			Object[] cacheRow;
+			boolean skip = false;
+			int filterIndex = 0;
 			while (iter.hasNext()) {
-				row = iter.next();
-				for (int i : matchIndex) {
-					// 匹配检索
-					if (row[i] != null && row[i].toString().contains(value)) {
-						// 第0列为key
-						matchKeys.add(row[0]);
-						matchedCnt++;
-						break;
+				cacheRow = iter.next();
+				skip = false;
+				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
+				if (hasFilter) {
+					filterIndex = 0;
+					for (int cachefilterIndex : cachefilterIndexes) {
+						if (!filterValues.get(filterIndex).contains(cacheRow[cachefilterIndex].toString())) {
+							skip = true;
+							break;
+						}
+						filterIndex++;
 					}
 				}
-				//超出阈值跳出
-				if (matchedCnt == maxLimit)
+				if (!skip) {
+					for (int matchIndex : matchIndexes) {
+						// 匹配检索
+						if (cacheRow[matchIndex] != null && cacheRow[matchIndex].toString().contains(value)) {
+							// 第0列为key
+							matchKeys.add(cacheRow[0]);
+							matchCnt++;
+							break;
+						}
+					}
+				}
+				// 超出阈值跳出
+				if (matchCnt == maxLimit)
 					break;
 			}
 			if (matchKeys.isEmpty())
