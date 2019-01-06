@@ -4,9 +4,11 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -110,8 +112,9 @@ public class ParamFilterUtils {
 		try {
 			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
 					: paramIndexMap.get(paramFilterModel.getParam());
-			if (index == -1)
+			if (index == -1 || paramValues[index] == null)
 				return;
+			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName))
 				aliasName = paramFilterModel.getParam();
@@ -120,13 +123,59 @@ public class ParamFilterUtils {
 						aliasName);
 				return;
 			}
+			// 获取缓存数据
 			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager().getCacheData(sqlToyContext,
 					paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
 			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;
 			}
+			// 需要转化的值
+			String value = paramValues[index].toString();
+			// 本身就是一个key 代码值,不做处理
+			if (cacheDataMap.containsKey(value)) {
+				// 存在别名,设置别名对应的值
+				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+					paramValues[aliasIndex] = value;
+				}
+				return;
+			}
 
+			// 匹配数量最大为1000
+			int matchedCnt = 0;
+			int[] matchIndex = paramFilterModel.getCacheMappingIndexes();
+			int maxLimit = paramFilterModel.getCacheMappingMax();
+			List<Object> matchKeys = new ArrayList<Object>();
+			Object[] row;
+			// 循环缓存进行匹配,匹配上将key值放入数组
+			Iterator<Object[]> iter = cacheDataMap.values().iterator();
+			while (iter.hasNext()) {
+				row = iter.next();
+				for (int i : matchIndex) {
+					// 匹配检索
+					if (row[i] != null && row[i].toString().contains(value)) {
+						// 第0列为key
+						matchKeys.add(row[0]);
+						matchedCnt++;
+						break;
+					}
+				}
+				//超出阈值跳出
+				if (matchedCnt == maxLimit)
+					break;
+			}
+			if (matchKeys.isEmpty())
+				return;
+			Object[] realMatched = new Object[matchKeys.size()];
+			matchKeys.toArray(realMatched);
+			// 存在别名,设置别名对应的值
+			if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+				paramValues[aliasIndex] = realMatched;
+			} else {
+				paramValues[index] = realMatched;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("通过缓存匹配查询条件key失败:{}", e.getMessage());

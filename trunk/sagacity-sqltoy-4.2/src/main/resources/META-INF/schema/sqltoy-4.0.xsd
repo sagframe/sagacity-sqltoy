@@ -382,12 +382,24 @@
 			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
+					<xsd:choice minOccurs="0" maxOccurs="unbounded">
+						<xsd:element name="filter" minOccurs="0" maxOccurs="unbounded">
+							<xsd:complexType>
+								<xsd:attribute name="cache-index" type="xsd:integer"
+									use="required" />
+								<xsd:attribute name="compare-param" type="xsd:string"
+									use="required" />
+							</xsd:complexType>
+						</xsd:element>
+					</<xsd:choice>
 					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="cache-type" type="xsd:string" />
-					<xsd:attribute name="cache-mapping-indexes" type="xsd:string" default="1"/>
-					<xsd:attribute name="cache-mapping-max" type="xsd:integer" default="500"/>
+					<xsd:attribute name="cache-mapping-indexes" type="xsd:string"
+						default="1" />
+					<xsd:attribute name="cache-mapping-max" type="xsd:integer"
+						default="500" />
 					<xsd:attribute name="data-type">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
