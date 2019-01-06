@@ -53,7 +53,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	}
 
 	@Override
-	public void put(TranslateConfigModel cacheConfig, String cacheName, String cacheKey,
+	public synchronized void put(TranslateConfigModel cacheConfig, String cacheName, String cacheKey,
 			HashMap<String, Object[]> cacheValue) {
 		synchronized (cacheName) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
@@ -90,7 +90,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 * String, java.lang.String)
 	 */
 	@Override
-	public void clear(String cacheName, String cacheKey) {
+	public synchronized void clear(String cacheName, String cacheKey) {
 		synchronized (cacheName) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
