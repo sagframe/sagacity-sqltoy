@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns="http://www.sagframe.com/schema/sqltoy"
-	xmlns:tns="http://www.sagframe.com/schema/sqltoy"
-	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	targetNamespace="http://www.sagframe.com/schema/sqltoy"
 	elementFormDefault="qualified">
 	<xsd:element name="sqltoy">
@@ -38,10 +37,10 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
-			<xsd:element name="translate" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoyTranslateType" />
-			<xsd:element name="secure-mask" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoyTranslateType" />
+			<xsd:element name="secure-mask" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoySecureMaskType" />
 			<xsd:element name="value" type="xsd:string" minOccurs="1"
 				maxOccurs="1" />
 			<xsd:element name="count-sql" type="xsd:string"
@@ -52,11 +51,9 @@
 				type="sqltoyUnpivotType" />
 			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
 				type="sqltoySummaryType" />
-			<xsd:element name="date-format" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="date-format" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="columns" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="columns" type="xsd:string" use="required" />
 					<xsd:attribute name="format" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -72,8 +69,7 @@
 			<xsd:element name="number-format" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="columns" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="columns" type="xsd:string" use="required" />
 					<xsd:attribute name="format" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -88,41 +84,32 @@
 			<xsd:element name="link" minOccurs="0" maxOccurs="1">
 				<xsd:complexType>
 					<xsd:attribute name="id-column" type="xsd:string" />
-					<xsd:attribute name="column" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="sign" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="column" type="xsd:string" use="required" />
+					<xsd:attribute name="sign" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="strategy" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="strategy-value"
-						type="xsd:string" />
+					<xsd:attribute name="strategy" type="xsd:string" use="required" />
+					<xsd:attribute name="strategy-value" type="xsd:string" />
 					<xsd:attribute name="params" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-table" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="tables" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="strategy" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="strategy-value"
-						type="xsd:string" />
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="tables" type="xsd:string" use="required" />
+					<xsd:attribute name="strategy" type="xsd:string" use="required" />
+					<xsd:attribute name="strategy-value" type="xsd:string" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 			<!-- 分页优化 -->
 			<xsd:element name="page-optimize" minOccurs="0"
 				maxOccurs="1" type="sqltoyPageOptimizeType" />
 		</xsd:choice>
-		<xsd:attribute name="id" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="id" type="xsd:string" use="required" />
 		<xsd:attribute name="blank-to-null" default="true"
 			type="xsd:boolean" />
 		<xsd:attribute name="type">
@@ -163,10 +150,10 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
-			<xsd:element name="translate" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoyTranslateType" />
-			<xsd:element name="secure-mask" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoyTranslateType" />
+			<xsd:element name="secure-mask" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoySecureMaskType" />
 			<xsd:element name="value" type="xsd:string" minOccurs="1"
 				maxOccurs="1" />
 			<xsd:element name="count-sql" type="xsd:string"
@@ -182,11 +169,9 @@
 				maxOccurs="1" type="sqltoyPageOptimizeType" />
 			<xsd:element name="fields" type="xsd:string" />
 		</xsd:choice>
-		<xsd:attribute name="id" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="id" type="xsd:string" use="required" />
 		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
-		<xsd:attribute name="collection" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="collection" type="xsd:string" use="required" />
 		<xsd:attribute name="mongo-factory" type="xsd:string" />
 		<xsd:attribute name="is-aggregate" type="xsd:boolean"
 			default="false" />
@@ -200,10 +185,10 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="filters" minOccurs="0" maxOccurs="1"
 				type="sqltoyFiltersType" />
-			<xsd:element name="translate" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoyTranslateType" />
-			<xsd:element name="secure-mask" minOccurs="0"
-				maxOccurs="unbounded" type="sqltoySecureMaskType" />
+			<xsd:element name="translate" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoyTranslateType" />
+			<xsd:element name="secure-mask" minOccurs="0" maxOccurs="unbounded"
+				type="sqltoySecureMaskType" />
 			<xsd:element name="value" type="xsd:string" minOccurs="1"
 				maxOccurs="1" />
 			<xsd:element name="count-sql" type="xsd:string"
@@ -217,8 +202,7 @@
 			<xsd:element name="fields" minOccurs="0" maxOccurs="1"
 				type="xsd:string" />
 		</xsd:choice>
-		<xsd:attribute name="id" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="id" type="xsd:string" use="required" />
 		<xsd:attribute name="blank-to-null" default="true"
 			type="xsd:boolean" />
 		<xsd:attribute name="end-point" type="xsd:string" />
@@ -243,76 +227,55 @@
 			<xsd:documentation><![CDATA[通用filter]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice maxOccurs="unbounded">
-			<xsd:element name="blank" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="blank" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						default="*" />
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="eq" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="eq" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="gt" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="gt" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="gte" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="gte" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="date-format" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="date-format" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="format" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="format" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="lt" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="lt" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 
-			<xsd:element name="lte" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="lte" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
 
-			<xsd:element name="between" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="between" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="start-value" type="xsd:decimal"
 						use="required" />
 					<xsd:attribute name="end-value" type="xsd:decimal"
@@ -322,16 +285,13 @@
 			</xsd:element>
 			<xsd:element name="primary" minOccurs="0">
 				<xsd:complexType>
-					<xsd:attribute name="param" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="excludes" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-number" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="to-number" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="data-type" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -345,11 +305,9 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-array" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="to-array" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="data-type" use="required">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -364,11 +322,9 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-date" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="to-date" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="format" default="yyyy-MM-dd">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
@@ -383,24 +339,18 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="increment-days"
-						type="xsd:integer" />
+					<xsd:attribute name="increment-days" type="xsd:integer" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="neq" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="neq" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="split" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="split" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 					<xsd:attribute name="split-sign" default="," />
 					<xsd:attribute name="data-type" use="required">
 						<xsd:simpleType>
@@ -416,37 +366,29 @@
 					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="replace" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="replace" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="regex" type="xsd:string"
-						use="required" />
-					<xsd:attribute name="value" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
+					<xsd:attribute name="regex" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
 					<xsd:attribute name="is-first" type="xsd:boolean"
 						default="false" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="to-in-arg" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="to-in-arg" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="params" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="params" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="cache-arg" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="cache-arg" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="param" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="cache-type" type="xsd:string"/>
-					<xsd:attribute name="cache-mapping-indexes" type="xsd:string"/>
-					<xsd:attribute name="cache-mapping-max" type="xsd:integer"/>
-					<xsd:attribute name="data-type" use="required">
+					<xsd:attribute name="cache-type" type="xsd:string" />
+					<xsd:attribute name="cache-mapping-indexes" type="xsd:string" default="1"/>
+					<xsd:attribute name="cache-mapping-max" type="xsd:integer" default="500"/>
+					<xsd:attribute name="data-type">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
 								<xsd:enumeration value="string" />
@@ -455,14 +397,12 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="alias-name" type="xsd:string"/>
+					<xsd:attribute name="alias-name" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="exclusive" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="exclusive" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:attribute name="param" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="set-params" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="compare-type" default="eq">
@@ -479,8 +419,7 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="compare-values"
-						type="xsd:string" />
+					<xsd:attribute name="compare-values" type="xsd:string" />
 					<xsd:attribute name="set-value" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
@@ -498,8 +437,7 @@
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
-		<xsd:attribute name="columns" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="columns" type="xsd:string" use="required" />
 		<xsd:attribute name="cache-type" type="xsd:string" />
 		<xsd:attribute name="split-regex" type="xsd:string">
 			<xsd:annotation>
@@ -512,16 +450,14 @@
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="cache-indexs" type="xsd:string" />
-		<xsd:attribute name="uncached-template"
-			type="xsd:string" />
+		<xsd:attribute name="uncached-template" type="xsd:string" />
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoySecureMaskType">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[安全掩码,对字段值进行脱敏]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:attribute name="columns" type="xsd:string"
-			use="required">
+		<xsd:attribute name="columns" type="xsd:string" use="required">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[逗号分隔表示对对个字段进行脱敏]]></xsd:documentation>
 			</xsd:annotation>
@@ -549,11 +485,11 @@
 	<!-- 分页优化 -->
 	<xsd:complexType name="sqltoyPageOptimizeType">
 		<!-- 保留多少个不同查询 -->
-		<xsd:attribute name="alive-max"
-			type="xsd:nonNegativeInteger" default="100" />
+		<xsd:attribute name="alive-max" type="xsd:nonNegativeInteger"
+			default="100" />
 		<!-- 相同查询间隔多久刷新 -->
-		<xsd:attribute name="alive-seconds"
-			type="xsd:nonNegativeInteger" default="600" />
+		<xsd:attribute name="alive-seconds" type="xsd:nonNegativeInteger"
+			default="600" />
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPivotType">
@@ -564,10 +500,8 @@
 		<xsd:attribute name="category-sql" type="xsd:string" />
 		<xsd:attribute name="start-column" type="xsd:string"
 			use="required" />
-		<xsd:attribute name="end-column" type="xsd:string"
-			use="required" />
-		<xsd:attribute name="default-value"
-			type="xsd:anySimpleType" />
+		<xsd:attribute name="end-column" type="xsd:string" use="required" />
+		<xsd:attribute name="default-value" type="xsd:anySimpleType" />
 		<xsd:attribute name="default-type">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
@@ -585,8 +519,7 @@
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyUnpivotType">
-		<xsd:attribute name="columns" type="xsd:string"
-			use="required" />
+		<xsd:attribute name="columns" type="xsd:string" use="required" />
 		<xsd:attribute name="values-as-column" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="labels-as-column" type="xsd:string" />
@@ -605,8 +538,7 @@
 						default="false" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="group" minOccurs="0"
-				maxOccurs="unbounded">
+			<xsd:element name="group" minOccurs="0" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="group-column" type="xsd:string"
 						use="required" />

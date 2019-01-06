@@ -17,16 +17,16 @@ public class ParamFilterModel implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 2608369719903008282L;
-	
+
 	public ParamFilterModel() {
 	}
-	
+
 	/**
 	 * 
 	 * @param filterType
 	 * @param params
 	 */
-	public ParamFilterModel(String filterType,String[] params) {
+	public ParamFilterModel(String filterType, String[] params) {
 		this.filterType = filterType;
 		this.params = params;
 	}
@@ -48,7 +48,7 @@ public class ParamFilterModel implements Serializable {
 
 	/**
 	 * 过滤加工的类型:blank、equals、any、moreThan、moreEquals、lessThan、lessEquals、between、
-	 * not-any、to-date、to-number、primary、to-array、replace,exclusive(排斥性参数),cache-arg 
+	 * not-any、to-date、to-number、primary、to-array、replace,exclusive(排斥性参数),cache-arg
 	 */
 	private String filterType;
 
@@ -66,7 +66,7 @@ public class ParamFilterModel implements Serializable {
 	 * 日期或数字格式
 	 */
 	private String format;
-	
+
 	/**
 	 * replace的表达式
 	 */
@@ -76,52 +76,52 @@ public class ParamFilterModel implements Serializable {
 	 * 分割符
 	 */
 	private String split = ",";
-	
+
 	/**
 	 * 是否替换第一个参数
 	 */
-	private boolean isFirst=false;
-	
+	private boolean isFirst = false;
+
 	/**
 	 * exclusive 排他性参数
 	 */
 	private String[] updateParams;
-	
+
 	/**
 	 * 设置的值(exclusive filter)
 	 */
-	private String updateValue=null;
-	
+	private String updateValue = null;
+
 	/**
-	 *互斥型filter 对比类型
+	 * 互斥型filter 对比类型
 	 */
-	private String compareType="==";
-	
+	private String compareType = "==";
+
 	/**
 	 * 缓存名称
 	 */
 	private String cacheName;
-	
+
 	/**
 	 * 缓存类型
 	 */
 	private String cacheType;
-	
+
 	/**
-	 * 转化成新的笔名 
+	 * 转化成新的笔名
 	 */
 	private String aliasName;
-	
+
 	/**
-	 * 缓存匹配列
+	 * 缓存匹配列(默认为第二列)
 	 */
-	private int[] cacheMappingIndexes;
-	
+	private int[] cacheMappingIndexes = { 1 };
+
 	/**
 	 * 互斥型filter 对比的值
 	 */
-	private String[] compareValues=null;
-	
+	private String[] compareValues = null;
+
 	/**
 	 * 排除的参数
 	 */
@@ -131,11 +131,11 @@ public class ParamFilterModel implements Serializable {
 	 * 增加的天数
 	 */
 	private Double incrementDays = 0d;
-	
+
 	/**
 	 * 最大匹配数量为500
 	 */
-	private int cacheMappingMax=500;
+	private int cacheMappingMax = 500;
 
 	public String getFilterType() {
 		return filterType;
@@ -251,7 +251,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param split the split to set
+	 * @param split
+	 *            the split to set
 	 */
 	public void setSplit(String split) {
 		this.split = split;
@@ -265,7 +266,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param regex the regex to set
+	 * @param regex
+	 *            the regex to set
 	 */
 	public void setRegex(String regex) {
 		this.regex = regex;
@@ -279,7 +281,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param isFirst the isFirst to set
+	 * @param isFirst
+	 *            the isFirst to set
 	 */
 	public void setFirst(boolean isFirst) {
 		this.isFirst = isFirst;
@@ -293,7 +296,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param param the param to set
+	 * @param param
+	 *            the param to set
 	 */
 	public void setParam(String param) {
 		this.param = param;
@@ -307,7 +311,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param updateParams the updateParams to set
+	 * @param updateParams
+	 *            the updateParams to set
 	 */
 	public void setUpdateParams(String[] updateParams) {
 		this.updateParams = updateParams;
@@ -321,7 +326,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param updateValue the updateValue to set
+	 * @param updateValue
+	 *            the updateValue to set
 	 */
 	public void setUpdateValue(String updateValue) {
 		this.updateValue = updateValue;
@@ -335,7 +341,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareType the compareType to set
+	 * @param compareType
+	 *            the compareType to set
 	 */
 	public void setCompareType(String compareType) {
 		this.compareType = compareType;
@@ -349,7 +356,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareValues the compareValues to set
+	 * @param compareValues
+	 *            the compareValues to set
 	 */
 	public void setCompareValues(String[] compareValues) {
 		this.compareValues = compareValues;
@@ -363,7 +371,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheName the cacheName to set
+	 * @param cacheName
+	 *            the cacheName to set
 	 */
 	public void setCacheName(String cacheName) {
 		this.cacheName = cacheName;
@@ -377,7 +386,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheType the cacheType to set
+	 * @param cacheType
+	 *            the cacheType to set
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
@@ -391,7 +401,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param aliasName the aliasName to set
+	 * @param aliasName
+	 *            the aliasName to set
 	 */
 	public void setAliasName(String aliasName) {
 		this.aliasName = aliasName;
@@ -405,7 +416,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheMappingIndexes the cacheMappingIndexes to set
+	 * @param cacheMappingIndexes
+	 *            the cacheMappingIndexes to set
 	 */
 	public void setCacheMappingIndexes(int[] cacheMappingIndexes) {
 		this.cacheMappingIndexes = cacheMappingIndexes;
@@ -419,11 +431,11 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheMappingMax the cacheMappingMax to set
+	 * @param cacheMappingMax
+	 *            the cacheMappingMax to set
 	 */
 	public void setCacheMappingMax(int cacheMappingMax) {
 		this.cacheMappingMax = cacheMappingMax;
 	}
 
-	
 }

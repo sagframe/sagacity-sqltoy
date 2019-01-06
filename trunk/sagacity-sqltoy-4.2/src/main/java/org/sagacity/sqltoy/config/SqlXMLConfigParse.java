@@ -636,8 +636,12 @@ public class SqlXMLConfigParse {
 			filterModel.setCacheName(filter.attributeValue("param-name"));
 		if (filter.attribute("cache-type") != null)
 			filterModel.setCacheType(filter.attributeValue("cache-type"));
-		if (filter.attribute("cache-mapping-max") != null)
+		if (filter.attribute("cache-mapping-max") != null) {
 			filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
+			//不能超过1000
+			if (filterModel.getCacheMappingMax() > 999)
+				filterModel.setCacheMappingMax(999);
+		}
 		if (filter.attribute("cache-mapping-indexes") != null) {
 			String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
 			int[] mappingIndexes = new int[cacheIndexes.length];
