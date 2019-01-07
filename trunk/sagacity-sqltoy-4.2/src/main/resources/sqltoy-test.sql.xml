@@ -30,6 +30,10 @@
 			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
 			<exclusive param="" compare-type="eq" compare-values=""
 				set-params="" set-value="" />
+				
+			<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" data-type="" alias-name=""/>
+			<!-- 将数组转化成in 的参数条件并增加单引号 -->
+			<to-in-arg params=""/>
 		</filters>
 		<!-- 缓存翻译,可以多个 -->
 		<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
@@ -90,6 +94,7 @@
 			        #[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
 			        ) t1,sys_organ_info t2
 	    where t1.ORGAN_ID=t2.ORGAN_ID
+	    and t1.id in (@cacheFilter(staffIdNameCache,:staffName))
 		]]>	
 		</value>
 		<!-- 日期格式化 -->
