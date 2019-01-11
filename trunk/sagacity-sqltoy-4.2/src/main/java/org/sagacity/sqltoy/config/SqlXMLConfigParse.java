@@ -651,7 +651,7 @@ public class SqlXMLConfigParse {
 				filterModel.setCacheMappingIndexes(mappingIndexes);
 			}
 			if (filter.attribute("alias-name") != null)
-				filterModel.setAliasName(filter.attributeValue("alias-name"));
+				filterModel.setAliasName(filter.attributeValue("alias-name").toLowerCase());
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			List<Element> cacheFilters = filter.elements("filter");
 			if (cacheFilters != null && !cacheFilters.isEmpty()) {
@@ -660,7 +660,7 @@ public class SqlXMLConfigParse {
 				int meter = 0;
 				for (Element cacheFilter : cacheFilters) {
 					cacheFilterIndexs[meter] = Integer.parseInt(cacheFilter.attributeValue("cache-index"));
-					cacheFilterParams[meter] = cacheFilter.attributeValue("compare-param");
+					cacheFilterParams[meter] = cacheFilter.attributeValue("compare-param").toLowerCase();
 					meter++;
 				}
 				filterModel.setCacheFilterIndexes(cacheFilterIndexs);
