@@ -31,7 +31,7 @@
 			<exclusive param="" compare-type="eq" compare-values=""
 				set-params="" set-value="" />
 				
-			<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" data-type="" alias-name=""/>
+			<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
 			<!-- 将数组转化成in 的参数条件并增加单引号 -->
 			<to-in-arg params=""/>
 		</filters>

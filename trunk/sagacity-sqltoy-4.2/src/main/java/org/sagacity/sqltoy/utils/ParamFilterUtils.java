@@ -110,15 +110,15 @@ public class ParamFilterUtils {
 	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
 			ParamFilterModel paramFilterModel, Object[] paramValues) {
 		try {
-			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
-					: paramIndexMap.get(paramFilterModel.getParam());
+			int index = (paramIndexMap.get(paramFilterModel.getParam().toLowerCase()) == null) ? -1
+					: paramIndexMap.get(paramFilterModel.getParam().toLowerCase());
 			if (index == -1 || paramValues[index] == null)
 				return;
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName))
 				aliasName = paramFilterModel.getParam();
-			if (!paramIndexMap.containsKey(aliasName)) {
+			if (!paramIndexMap.containsKey(aliasName.toLowerCase())) {
 				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
 						aliasName);
 				return;
@@ -136,7 +136,7 @@ public class ParamFilterUtils {
 			if (cacheDataMap.containsKey(value)) {
 				// 存在别名,设置别名对应的值
 				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
-					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
 					paramValues[aliasIndex] = value;
 				}
 				return;
@@ -149,7 +149,7 @@ public class ParamFilterUtils {
 				Integer cacheFilterIndex;
 				Object compareValue;
 				for (String param : paramFilterModel.getCacheFilterParams()) {
-					cacheFilterIndex = paramIndexMap.get(param);
+					cacheFilterIndex = paramIndexMap.get(param.toLowerCase());
 					compareValue = param;
 					if (cacheFilterIndex != null)
 						compareValue = paramValues[cacheFilterIndex.intValue()];
@@ -219,7 +219,7 @@ public class ParamFilterUtils {
 			matchKeys.toArray(realMatched);
 			// 存在别名,设置别名对应的值
 			if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
-				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
 				paramValues[aliasIndex] = realMatched;
 			} else {
 				paramValues[index] = realMatched;
