@@ -72,8 +72,8 @@ public class ParamFilterUtils {
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
 				retainMap = paramFilterModel.getExcludesMap();
-				index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
-						: paramIndexMap.get(paramFilterModel.getParam());
+				index = (paramIndexMap.get(paramFilterModel.getParam().toLowerCase()) == null) ? -1
+						: paramIndexMap.get(paramFilterModel.getParam().toLowerCase());
 				// 决定性参数值不为null
 				if (index != -1 && paramValues[index] != null) {
 					for (int j = 0; j < paramSize; j++) {
