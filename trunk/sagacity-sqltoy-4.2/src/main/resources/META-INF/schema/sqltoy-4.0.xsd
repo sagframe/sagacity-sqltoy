@@ -72,11 +72,7 @@
 					<xsd:attribute name="columns" type="xsd:string" use="required" />
 					<xsd:attribute name="format" use="required">
 						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="#,###.00" />
-								<xsd:enumeration value="capital" />
-								<xsd:enumeration value="capital-rmb" />
-							</xsd:restriction>
+							<xsd:union memberTypes="numberFormatType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
 				</xsd:complexType>
@@ -577,5 +573,11 @@
 			</xsd:simpleType>
 		</xsd:attribute>
 	</xsd:complexType>
-
+    <xsd:simpleType name="numberFormatType">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="#,###.00" />
+            <xsd:enumeration value="capital" />
+            <xsd:enumeration value="capital-rmb" />
+        </xsd:restriction>
+    </xsd:simpleType>
 </xsd:schema>
