@@ -1039,8 +1039,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * 对split之后参数名称进行trim
-	 * 
+	 * @todo 对split之后参数名称进行trim
 	 * @param paramNames
 	 * @return
 	 */
