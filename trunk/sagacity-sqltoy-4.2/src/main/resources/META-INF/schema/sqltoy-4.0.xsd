@@ -387,7 +387,7 @@
 									use="required" />
 							</xsd:complexType>
 						</xsd:element>
-					</<xsd:choice>
+					</xsd:choice>
 					<xsd:attribute name="param" type="xsd:string" use="required" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
