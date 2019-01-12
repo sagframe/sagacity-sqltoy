@@ -78,7 +78,7 @@ public class TranslateManager {
 		this.translateConfig = translateConfig;
 	}
 
-	public void initialize(SqlToyContext sqlToyContext) throws Exception {
+	public synchronized void initialize(SqlToyContext sqlToyContext) throws Exception {
 		if (initialized)
 			return;
 		logger.debug("开始加载sqltoy的translate缓存翻译配置文件..........................");

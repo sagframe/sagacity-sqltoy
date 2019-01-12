@@ -26,6 +26,8 @@
 										default="400" />
 									<xsd:attribute name="off-heap" type="xsd:integer"
 										default="30" />
+									<xsd:attribute name="disk-size" type="xsd:integer"
+										default="100" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="service-translate" minOccurs="0"
