@@ -785,6 +785,7 @@ public class ParamFilterUtils {
 
 	/**
 	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
+	 * 
 	 * @param param
 	 * @param beginContrast
 	 * @param endContrast
