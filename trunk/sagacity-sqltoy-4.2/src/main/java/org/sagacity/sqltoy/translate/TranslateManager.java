@@ -204,4 +204,5 @@ public class TranslateManager {
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
 	}
+	
 }
