@@ -79,6 +79,11 @@ public class TranslateConfigModel implements Serializable {
 	 * 堆外內存(30M )
 	 */
 	private int offHeap = 30;
+	
+	/**
+	 * 存储磁盘的大小(M)
+	 */
+	private int diskSize=100;
 
 	/**
 	 * @return the keepAlive
@@ -288,6 +293,20 @@ public class TranslateConfigModel implements Serializable {
 	 */
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	/**
+	 * @return the diskSize
+	 */
+	public int getDiskSize() {
+		return diskSize;
+	}
+
+	/**
+	 * @param diskSize the diskSize to set
+	 */
+	public void setDiskSize(int diskSize) {
+		this.diskSize = diskSize;
 	}
 
 }
