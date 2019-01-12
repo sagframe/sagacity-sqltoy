@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +42,8 @@ public class ParamFilterUtils {
 	 * @param filters
 	 * @return
 	 */
-	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
-			ParamFilterModel[] filters) {
+	public static Object[] filterValue(SqlToyContext sqlToyContext, Serializable entity, String[] paramsName,
+			Object[] values, ParamFilterModel[] filters) {
 		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0)
 			return values;
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
@@ -67,7 +68,7 @@ public class ParamFilterUtils {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
 			} // 缓存中提取精准查询参数作为sql查询条件值
 			else if (paramFilterModel.getFilterType().equals("cache-arg")) {
-				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
+				filterCache(sqlToyContext, entity, paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
@@ -103,22 +104,34 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
 	 * @param sqlToyContext
+	 * @param entity
 	 * @param paramIndexMap
 	 * @param paramFilterModel
 	 * @param paramValues
 	 */
-	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
-			ParamFilterModel paramFilterModel, Object[] paramValues) {
+	private static void filterCache(SqlToyContext sqlToyContext, Serializable entity,
+			HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel, Object[] paramValues) {
 		try {
-			int index = (paramIndexMap.get(paramFilterModel.getParam().toLowerCase()) == null) ? -1
-					: paramIndexMap.get(paramFilterModel.getParam().toLowerCase());
-			if (index == -1 || paramValues[index] == null)
+			// 注:param 和 aliasName等参数在SqlXMLConfigParse时已经转小写
+			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
+					: paramIndexMap.get(paramFilterModel.getParam());
+			// 需要转化的值
+			String paramValue = null;
+			if (index >= 0) {
+				paramValue = paramValues[index].toString();
+			} else if (entity != null) {
+				Object[] tmp = BeanUtil.reflectBeanToAry(entity, new String[] { paramFilterModel.getParam() }, null,
+						null);
+				if (tmp != null && tmp.length > 0)
+					paramValue = tmp[0].toString();
+			}
+			if (paramValue == null)
 				return;
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName))
 				aliasName = paramFilterModel.getParam();
-			if (!paramIndexMap.containsKey(aliasName.toLowerCase())) {
+			if (!paramIndexMap.containsKey(aliasName)) {
 				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
 						aliasName);
 				return;
@@ -130,14 +143,13 @@ public class ParamFilterUtils {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;
 			}
-			// 需要转化的值
-			String value = paramValues[index].toString();
+
 			// 本身就是一个key 代码值,不做处理
-			if (cacheDataMap.containsKey(value)) {
+			if (cacheDataMap.containsKey(paramValue)) {
 				// 存在别名,设置别名对应的值
 				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
-					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
-					paramValues[aliasIndex] = value;
+					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+					paramValues[aliasIndex] = paramValue;
 				}
 				return;
 			}
@@ -149,7 +161,7 @@ public class ParamFilterUtils {
 				Integer cacheFilterIndex;
 				Object compareValue;
 				for (String param : paramFilterModel.getCacheFilterParams()) {
-					cacheFilterIndex = paramIndexMap.get(param.toLowerCase());
+					cacheFilterIndex = paramIndexMap.get(param);
 					compareValue = param;
 					if (cacheFilterIndex != null)
 						compareValue = paramValues[cacheFilterIndex.intValue()];
@@ -182,7 +194,8 @@ public class ParamFilterUtils {
 			Object[] cacheRow;
 			boolean skip = false;
 			int filterIndex = 0;
-			String lowMatchStr = value.toLowerCase();
+			//将条件参数值转小写进行统一比较
+			String lowMatchStr = paramValue.toLowerCase();
 			while (iter.hasNext()) {
 				cacheRow = iter.next();
 				skip = false;
@@ -219,7 +232,7 @@ public class ParamFilterUtils {
 			matchKeys.toArray(realMatched);
 			// 存在别名,设置别名对应的值
 			if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
-				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
 				paramValues[aliasIndex] = realMatched;
 			} else {
 				paramValues[index] = realMatched;

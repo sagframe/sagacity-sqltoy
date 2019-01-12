@@ -237,6 +237,7 @@ public class QueryExecutor implements Serializable {
 
 	/**
 	 * @todo 获取sql中参数对应的值
+	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @return
 	 * @throws Exception
@@ -255,7 +256,7 @@ public class QueryExecutor implements Serializable {
 			realValues = paramsValue.clone();
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, entity, getParamsName(sqlToyConfig), realValues,
 					sqlToyConfig.getFilters());
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null
