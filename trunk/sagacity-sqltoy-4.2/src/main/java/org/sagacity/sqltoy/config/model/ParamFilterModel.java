@@ -137,9 +137,8 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private int cacheMappingMax = 500;
 
-	private int[] cacheFilterIndexes;
-
-	private String[] cacheFilterParams;
+	private CacheFilterModel[] cacheFilters;
+	
 
 	public String getFilterType() {
 		return filterType;
@@ -443,31 +442,18 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @return the cacheFilterIndexes
+	 * @return the cacheFilters
 	 */
-	public int[] getCacheFilterIndexes() {
-		return cacheFilterIndexes;
+	public CacheFilterModel[] getCacheFilters() {
+		return cacheFilters;
 	}
 
 	/**
-	 * @param cacheFilterIndexes the cacheFilterIndexes to set
+	 * @param cacheFilters the cacheFilters to set
 	 */
-	public void setCacheFilterIndexes(int[] cacheFilterIndexes) {
-		this.cacheFilterIndexes = cacheFilterIndexes;
+	public void setCacheFilters(CacheFilterModel[] cacheFilters) {
+		this.cacheFilters = cacheFilters;
 	}
 
-	/**
-	 * @return the cacheFilterParams
-	 */
-	public String[] getCacheFilterParams() {
-		return cacheFilterParams;
-	}
-
-	/**
-	 * @param cacheFilterParams the cacheFilterParams to set
-	 */
-	public void setCacheFilterParams(String[] cacheFilterParams) {
-		this.cacheFilterParams = cacheFilterParams;
-	}
-
+	
 }

@@ -16,6 +16,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 
 /**
@@ -153,18 +154,20 @@ public class ParamFilterUtils {
 				}
 				return;
 			}
+			CacheFilterModel[] cacheFilters = paramFilterModel.getCacheFilters();
+			CacheFilterModel cacheFilter;
 			// 是否存在对缓存进行条件过滤
-			boolean hasFilter = (paramFilterModel.getCacheFilterParams() == null) ? false : true;
+			boolean hasFilter = (cacheFilters == null) ? false : true;
 			List<Map<String, String>> filterValues = new ArrayList<Map<String, String>>();
-			int[] cachefilterIndexes = paramFilterModel.getCacheFilterIndexes();
 			if (hasFilter) {
-				Integer cacheFilterIndex;
+				Integer cacheValueIndex;
 				Object compareValue;
-				for (String param : paramFilterModel.getCacheFilterParams()) {
-					cacheFilterIndex = paramIndexMap.get(param);
-					compareValue = param;
-					if (cacheFilterIndex != null)
-						compareValue = paramValues[cacheFilterIndex.intValue()];
+				for (int i = 0; i < cacheFilters.length; i++) {
+					cacheFilter = cacheFilters[i];
+					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam());
+					compareValue = cacheFilter.getCompareParam();
+					if (cacheValueIndex != null)
+						compareValue = paramValues[cacheValueIndex.intValue()];
 					Map<String, String> tmp = new HashMap<String, String>();
 					if (compareValue.getClass().isArray()) {
 						Object[] ary = (Object[]) compareValue;
@@ -193,21 +196,22 @@ public class ParamFilterUtils {
 			Iterator<Object[]> iter = cacheDataMap.values().iterator();
 			Object[] cacheRow;
 			boolean skip = false;
-			int filterIndex = 0;
-			//将条件参数值转小写进行统一比较
+			// 将条件参数值转小写进行统一比较
 			String lowMatchStr = paramValue.toLowerCase();
+			boolean hasEqual = false;
 			while (iter.hasNext()) {
 				cacheRow = iter.next();
 				skip = false;
 				// 对缓存进行过滤(比如过滤本人授权访问机构下面的员工或当期状态为生效的员工)
 				if (hasFilter) {
-					filterIndex = 0;
-					for (int cachefilterIndex : cachefilterIndexes) {
-						if (!filterValues.get(filterIndex).containsKey(cacheRow[cachefilterIndex].toString())) {
+					for (int i = 0; i < cacheFilters.length; i++) {
+						cacheFilter = cacheFilters[i];
+						hasEqual = filterValues.get(i).containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
+						if ((cacheFilter.getCompareType().equals("eq") && !hasEqual)
+								|| (cacheFilter.getCompareType().equals("neq") && hasEqual)) {
 							skip = true;
 							break;
 						}
-						filterIndex++;
 					}
 				}
 				if (!skip) {

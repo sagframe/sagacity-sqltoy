@@ -22,6 +22,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
@@ -655,16 +656,18 @@ public class SqlXMLConfigParse {
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			List<Element> cacheFilters = filter.elements("filter");
 			if (cacheFilters != null && !cacheFilters.isEmpty()) {
-				int[] cacheFilterIndexs = new int[cacheFilters.size()];
-				String[] cacheFilterParams = new String[cacheFilters.size()];
+				CacheFilterModel[] cacheFilterModels = new CacheFilterModel[cacheFilters.size()];
 				int meter = 0;
 				for (Element cacheFilter : cacheFilters) {
-					cacheFilterIndexs[meter] = Integer.parseInt(cacheFilter.attributeValue("cache-index"));
-					cacheFilterParams[meter] = cacheFilter.attributeValue("compare-param").toLowerCase();
+					CacheFilterModel cacheFilterModel = new CacheFilterModel();
+					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.attributeValue("cache-index")));
+					cacheFilterModel.setCompareParam(cacheFilter.attributeValue("compare-param").toLowerCase());
+					if (cacheFilter.attribute("compare-type") != null)
+						cacheFilterModel.setCompareType(cacheFilter.attributeValue("compare-type").toLowerCase());
+					cacheFilterModels[meter] = cacheFilterModel;
 					meter++;
 				}
-				filterModel.setCacheFilterIndexes(cacheFilterIndexs);
-				filterModel.setCacheFilterParams(cacheFilterParams);
+				filterModel.setCacheFilters(cacheFilterModels);
 			}
 		}
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
