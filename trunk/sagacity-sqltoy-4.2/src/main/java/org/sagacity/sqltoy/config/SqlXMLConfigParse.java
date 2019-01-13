@@ -660,7 +660,9 @@ public class SqlXMLConfigParse {
 				int meter = 0;
 				for (Element cacheFilter : cacheFilters) {
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
+					//对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.attributeValue("cache-index")));
+					//对比条件参数
 					cacheFilterModel.setCompareParam(cacheFilter.attributeValue("compare-param").toLowerCase());
 					if (cacheFilter.attribute("compare-type") != null)
 						cacheFilterModel.setCompareType(cacheFilter.attributeValue("compare-type").toLowerCase());
