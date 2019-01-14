@@ -9,8 +9,8 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.1.3.RELEASE</spring-framework.version>
-		<spring-data.version>2.1.3.RELEASE</spring-data.version>
+		<spring-framework.version>5.1.4.RELEASE</spring-framework.version>
+		<spring-data.version>2.1.4.RELEASE</spring-data.version>
 		<log4j.version>2.11.1</log4j.version>
 		<mysql.version>8.0.13</mysql.version>
 		<ehcache.version>3.6.3</ehcache.version>
@@ -23,7 +23,7 @@
 		<jedis.version>3.0.1</jedis.version>
 		<junit.version>4.12</junit.version>
 		<beanutils.version>1.9.3</beanutils.version>
-		<spring-boot.version>2.1.1.RELEASE</spring-boot.version>
+		<spring-boot.version>2.1.2.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
 		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/sagframe</url> 
