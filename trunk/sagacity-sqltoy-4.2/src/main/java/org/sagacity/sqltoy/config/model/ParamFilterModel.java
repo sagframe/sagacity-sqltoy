@@ -11,6 +11,7 @@ import java.util.HashMap;
  * @description sqltoy 查询条件参数值过滤加工配制模型
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ParamFilterModel.java,Revision:v1.0,Date:2013-3-22
+ * @Modification Date:2019-1-15 {增加缓存条件过滤}
  */
 public class ParamFilterModel implements Serializable {
 	/**
