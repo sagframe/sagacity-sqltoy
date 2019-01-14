@@ -407,7 +407,9 @@ public class ParamFilterUtils {
 		else if (filterType.equals("to-in-arg")) {
 			if (paramValue instanceof CharSequence) {
 				String inArg = paramValue.toString();
-				if (inArg.startsWith("'") && inArg.endsWith("'")) {
+				if (!paramFilterModel.isSingleQuote()) {
+					result = inArg;
+				} else if (inArg.startsWith("'") && inArg.endsWith("'")) {
 					result = inArg;
 				} else {
 					String[] args = inArg.split("\\,");
@@ -431,7 +433,7 @@ public class ParamFilterUtils {
 				}
 			} else {
 				try {
-					result = SqlUtil.combineQueryInStr(paramValue, null, null, true);
+					result = SqlUtil.combineQueryInStr(paramValue, null, null, paramFilterModel.isSingleQuote());
 				} catch (Exception e) {
 					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
 				}
@@ -466,12 +468,27 @@ public class ParamFilterUtils {
 	 * @param format
 	 * @return
 	 */
-	private static String dateFormat(Object paramValue, String format) {
+	private static Object dateFormat(Object paramValue, String format) {
 		if (paramValue == null)
 			return null;
 		if (format == null)
-			return paramValue.toString();
-		return DateUtil.formatDate(paramValue, format);
+			return paramValue;
+		Object result;
+		if (paramValue.getClass().isArray()) {
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				arrays[i] = DateUtil.formatDate(arrays[i], format);
+			}
+			result = arrays;
+		} else if (paramValue instanceof List) {
+			List valueList = (List) paramValue;
+			for (int i = 0, n = valueList.size(); i < n; i++) {
+				valueList.set(i, DateUtil.formatDate(valueList.get(i), format));
+			}
+			result = valueList;
+		} else
+			result = DateUtil.formatDate(paramValue, format);
+		return result;
 	}
 
 	/**
