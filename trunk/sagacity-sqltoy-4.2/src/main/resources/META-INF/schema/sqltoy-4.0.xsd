@@ -650,5 +650,4 @@
 			<xsd:enumeration value="capital-rmb" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	
 </xsd:schema>
