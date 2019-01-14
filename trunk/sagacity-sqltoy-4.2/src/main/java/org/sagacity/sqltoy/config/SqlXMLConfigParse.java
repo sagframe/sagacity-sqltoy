@@ -614,7 +614,9 @@ public class SqlXMLConfigParse {
 		// 用于replace 转换器,设置是否是替换首个匹配的字符
 		if (filter.attribute("is-first") != null)
 			filterModel.setFirst(Boolean.parseBoolean(filter.attributeValue("is-first")));
-
+		// 用于to-in-arg
+		if (filter.attribute("single-quote") != null)
+			filterModel.setSingleQuote(Boolean.parseBoolean(filter.attributeValue("single-quote")));
 		// 分割符号
 		if (filter.attribute("split-sign") != null)
 			filterModel.setSplit(filter.attributeValue("split-sign"));
@@ -660,9 +662,9 @@ public class SqlXMLConfigParse {
 				int meter = 0;
 				for (Element cacheFilter : cacheFilters) {
 					CacheFilterModel cacheFilterModel = new CacheFilterModel();
-					//对比列
+					// 对比列
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.attributeValue("cache-index")));
-					//对比条件参数
+					// 对比条件参数
 					cacheFilterModel.setCompareParam(cacheFilter.attributeValue("compare-param").toLowerCase());
 					if (cacheFilter.attribute("compare-type") != null)
 						cacheFilterModel.setCompareType(cacheFilter.attributeValue("compare-type").toLowerCase());

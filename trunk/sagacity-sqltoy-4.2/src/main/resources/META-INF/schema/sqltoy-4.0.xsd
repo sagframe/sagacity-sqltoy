@@ -430,6 +430,8 @@
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
+					<xsd:attribute name="single-quote" type="xsd:boolean" default="true"
+						use="required" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0"
@@ -463,15 +465,6 @@
 						type="xsd:string" default="1" />
 					<xsd:attribute name="cache-mapping-max"
 						type="xsd:integer" default="500" />
-					<xsd:attribute name="data-type">
-						<xsd:simpleType>
-							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="string" />
-								<xsd:enumeration value="number" />
-								<xsd:enumeration value="date" />
-							</xsd:restriction>
-						</xsd:simpleType>
-					</xsd:attribute>
 					<xsd:attribute name="alias-name" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>

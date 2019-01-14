@@ -137,9 +137,16 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private int cacheMappingMax = 500;
 
+	/**
+	 * 缓存条件过滤配置
+	 */
 	private CacheFilterModel[] cacheFilters;
 	
-
+	/**
+	 * to-in-arg 是否增加单引号
+	 */
+	private boolean singleQuote=true;
+	
 	public String getFilterType() {
 		return filterType;
 	}
@@ -453,6 +460,20 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setCacheFilters(CacheFilterModel[] cacheFilters) {
 		this.cacheFilters = cacheFilters;
+	}
+
+	/**
+	 * @return the singleQuote
+	 */
+	public boolean isSingleQuote() {
+		return singleQuote;
+	}
+
+	/**
+	 * @param singleQuote the singleQuote to set
+	 */
+	public void setSingleQuote(boolean singleQuote) {
+		this.singleQuote = singleQuote;
 	}
 
 	
