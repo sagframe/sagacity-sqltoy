@@ -475,6 +475,4 @@ public class ParamFilterModel implements Serializable {
 	public void setSingleQuote(boolean singleQuote) {
 		this.singleQuote = singleQuote;
 	}
-
-	
 }

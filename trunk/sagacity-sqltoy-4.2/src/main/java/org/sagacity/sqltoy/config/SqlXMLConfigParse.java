@@ -641,7 +641,7 @@ public class SqlXMLConfigParse {
 				filterModel.setCacheType(filter.attributeValue("cache-type"));
 			if (filter.attribute("cache-mapping-max") != null) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
-				// 不能超过1000
+				// sql in a参数量不能超过1000
 				if (filterModel.getCacheMappingMax() > 999)
 					filterModel.setCacheMappingMax(999);
 			}
