@@ -119,7 +119,7 @@ public class ParamFilterUtils {
 			// 需要转化的值
 			String paramValue = null;
 			if (index >= 0) {
-				paramValue = paramValues[index].toString();
+				paramValue = (paramValues[index] == null) ? null : paramValues[index].toString();
 			} else if (entity != null) {
 				Object[] tmp = BeanUtil.reflectBeanToAry(entity, new String[] { paramFilterModel.getParam() }, null,
 						null);
