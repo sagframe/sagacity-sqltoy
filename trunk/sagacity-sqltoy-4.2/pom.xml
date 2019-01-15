@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.3.2</version>
+	<version>4.3.3</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -26,9 +26,9 @@
 		<spring-boot.version>2.1.2.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/sagframe</url> 
-			</repository>
-		<!-- <repository>
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/sagframe</url> 
+			</repository> -->
+		<repository>
 			<id>renturbo</id>
 			<name>3rd party</name>
 			<url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url>
@@ -37,7 +37,7 @@
 			<id>renturbo</id>
 			<name>Department Repository</name>
 			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository> -->
+		</snapshotRepository>
 	</distributionManagement>
 	<dependencies>
 		<dependency>
