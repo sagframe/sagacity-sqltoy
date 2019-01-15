@@ -76,13 +76,13 @@ public class CacheCheckTimer extends TimerTask {
 		long interval;
 		long nowInterval;
 		String checker;
-		// 当前检测时间
-		long nowMillis;
 		for (int i = 0; i < updateCheckers.size(); i++) {
 			checker = prefix + i;
 			checkerConfig = updateCheckers.get(i);
+			//最后修改时间
 			lastCheck = lastCheckTime.get(checker);
-			nowMillis = System.currentTimeMillis();
+			// 当前检测时间
+			long nowMillis = System.currentTimeMillis();
 			nowInterval = (nowMillis - lastCheck) / 1000;
 			interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
 			// 间隔大于设定阈值,执行检测
