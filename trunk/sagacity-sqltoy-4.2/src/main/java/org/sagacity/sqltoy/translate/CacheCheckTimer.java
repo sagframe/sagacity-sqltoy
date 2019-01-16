@@ -68,9 +68,6 @@ public class CacheCheckTimer extends TimerTask {
 	public void run() {
 		if (updateCheckers == null || updateCheckers.isEmpty())
 			return;
-		LocalDateTime ldt = LocalDateTime.now();
-		// 当前时间区间格式HHmm
-		int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
 		Long lastCheck;
 		CheckerConfigModel checkerConfig;
 		long interval;
@@ -84,6 +81,9 @@ public class CacheCheckTimer extends TimerTask {
 			// 当前检测时间
 			long nowMillis = System.currentTimeMillis();
 			nowInterval = (nowMillis - lastCheck) / 1000;
+			LocalDateTime ldt = LocalDateTime.now();
+			// 当前时间区间格式HHmm
+			int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
 			interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
 			// 间隔大于设定阈值,执行检测
 			if (nowInterval >= interval) {
