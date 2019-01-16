@@ -68,7 +68,7 @@ public class CacheCheckTimer extends TimerTask {
 	public void run() {
 		if (updateCheckers == null || updateCheckers.isEmpty())
 			return;
-		Long lastCheck;
+		Long preCheck;
 		CheckerConfigModel checkerConfig;
 		long interval;
 		long nowInterval;
@@ -76,11 +76,12 @@ public class CacheCheckTimer extends TimerTask {
 		for (int i = 0; i < updateCheckers.size(); i++) {
 			checker = prefix + i;
 			checkerConfig = updateCheckers.get(i);
-			//最后修改时间
-			lastCheck = lastCheckTime.get(checker);
+			// 上次检测时间
+			preCheck = lastCheckTime.get(checker);
 			// 当前检测时间
 			long nowMillis = System.currentTimeMillis();
-			nowInterval = (nowMillis - lastCheck) / 1000;
+			// 当前的时间间隔
+			nowInterval = (nowMillis - preCheck) / 1000;
 			LocalDateTime ldt = LocalDateTime.now();
 			// 当前时间区间格式HHmm
 			int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
@@ -90,7 +91,7 @@ public class CacheCheckTimer extends TimerTask {
 				// 更新最后检测时间
 				lastCheckTime.put(checker, nowMillis);
 				// 执行检测
-				doCheck(sqlToyContext, checkerConfig, lastCheck);
+				doCheck(sqlToyContext, checkerConfig, preCheck);
 			}
 		}
 	}
