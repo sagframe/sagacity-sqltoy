@@ -81,7 +81,7 @@ public class CacheCheckTimer extends TimerTask {
 			// 当前检测时间
 			long nowMillis = System.currentTimeMillis();
 			// 当前的时间间隔
-			nowInterval = (nowMillis - preCheck) / 1000;
+			nowInterval = (nowMillis - preCheck.longValue()) / 1000;
 			LocalDateTime ldt = LocalDateTime.now();
 			// 当前时间区间格式HHmm
 			int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
@@ -89,7 +89,7 @@ public class CacheCheckTimer extends TimerTask {
 			// 间隔大于设定阈值,执行检测
 			if (nowInterval >= interval) {
 				// 更新最后检测时间
-				lastCheckTime.put(checker, nowMillis);
+				lastCheckTime.put(checker, new Long(nowMillis));
 				// 执行检测
 				doCheck(sqlToyContext, checkerConfig, preCheck);
 			}
