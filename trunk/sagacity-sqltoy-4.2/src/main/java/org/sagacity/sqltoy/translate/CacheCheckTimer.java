@@ -34,7 +34,12 @@ public class CacheCheckTimer extends TimerTask {
 	 */
 	private HashMap<String, Long> lastCheckTime = new HashMap<String, Long>();
 
-	private String prefix = "checker_";
+	private final String prefix = "checker_";
+
+	/**
+	 * 时间格式到秒级别(避免存在时间精度的差异)
+	 */
+	private final String dateFmt = "yyyy-MM-dd HH:mm:ss";
 
 	/**
 	 * 更新检测器
@@ -52,7 +57,7 @@ public class CacheCheckTimer extends TimerTask {
 		this.updateCheckers = updateCheckers;
 		// 初始化检测时间
 		if (updateCheckers != null && !updateCheckers.isEmpty()) {
-			Long checkTime = System.currentTimeMillis();
+			Long checkTime = DateUtil.parse(System.currentTimeMillis(), dateFmt).getTime();
 			for (int i = 0; i < updateCheckers.size(); i++) {
 				lastCheckTime.put(prefix + i, checkTime);
 			}
@@ -89,7 +94,7 @@ public class CacheCheckTimer extends TimerTask {
 			// 间隔大于设定阈值,执行检测
 			if (nowInterval >= interval) {
 				// 更新最后检测时间
-				lastCheckTime.put(checker, new Long(nowMillis));
+				lastCheckTime.put(checker, new Long(DateUtil.parse(nowMillis, dateFmt).getTime()));
 				// 执行检测
 				doCheck(sqlToyContext, checkerConfig, preCheck);
 			}
