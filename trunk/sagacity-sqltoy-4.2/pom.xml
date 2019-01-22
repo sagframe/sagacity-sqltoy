@@ -38,6 +38,7 @@
 			<name>Department Repository</name>
 			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
 		</snapshotRepository> -->
+		
 	</distributionManagement>
 	<dependencies>
 		<dependency>
