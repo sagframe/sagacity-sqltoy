@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
  * @description 定时检测缓存是否更新程序
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:CacheCheckTimer.java,Revision:v1.0,Date:2018年3月11日
+ * @Modification {Date:2019-1-22,修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异}
  */
 public class CacheCheckTimer extends TimerTask {
 	/**
