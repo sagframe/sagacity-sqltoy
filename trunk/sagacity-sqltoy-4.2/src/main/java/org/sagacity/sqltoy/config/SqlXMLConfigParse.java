@@ -114,7 +114,7 @@ public class SqlXMLConfigParse {
 				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
 					filesLastModifyMap.put(fileName, lastModified);
 					logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
-					parseSingleFile(sqlFile, cache, encoding, dialect);
+					parseSingleFile(sqlFile, cache, encoding, dialect, true);
 				}
 			}
 		}
@@ -126,10 +126,11 @@ public class SqlXMLConfigParse {
 	 * @param cache
 	 * @param encoding
 	 * @param dialect
+	 * @param isReload
 	 * @throws Exception
 	 */
 	public static void parseSingleFile(Object xmlFile, ConcurrentHashMap<String, SqlToyConfig> cache, String encoding,
-			String dialect) throws Exception {
+			String dialect, boolean isReload) throws Exception {
 		InputStream fileIS = null;
 		InputStreamReader ir = null;
 		try {
@@ -163,7 +164,7 @@ public class SqlXMLConfigParse {
 					sqlToyConfig = parseSingleSql(iter.next(), dialect);
 					if (sqlToyConfig != null) {
 						// 去除sql中的注释语句并放入缓存
-						if (cache.get(sqlToyConfig.getId()) != null)
+						if (cache.get(sqlToyConfig.getId()) != null && !isReload)
 							logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
 						cache.put(sqlToyConfig.getId(), sqlToyConfig);
 					}

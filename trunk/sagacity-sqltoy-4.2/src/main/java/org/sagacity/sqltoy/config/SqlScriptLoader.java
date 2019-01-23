@@ -116,7 +116,7 @@ public class SqlScriptLoader {
 					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
 				}
 				for (int i = 0; i < realSqlList.size(); i++) {
-					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect);
+					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect,false);
 				}
 			} else {
 				err.println("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
