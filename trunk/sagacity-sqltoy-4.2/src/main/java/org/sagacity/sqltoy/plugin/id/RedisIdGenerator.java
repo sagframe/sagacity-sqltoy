@@ -23,6 +23,7 @@ import org.springframework.data.redis.support.atomic.RedisAtomicLong;
  * @description 基于redis的集中式主键生成策略
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:RedisIdGenerator.java,Revision:v1.0,Date:2018年1月30日
+ * @Modification Date:2019-1-24 {key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索}
  */
 public class RedisIdGenerator implements IdGenerator {
 	/**
@@ -40,7 +41,7 @@ public class RedisIdGenerator implements IdGenerator {
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
 	 */
-	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID_";
+	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID.";
 
 	/**
 	 * @todo 获取对象单例
@@ -102,7 +103,7 @@ public class RedisIdGenerator implements IdGenerator {
 		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
 		// 没有宏
 		if (realKey.equals(key)) {
-			//长度够放下6位日期
+			// 长度够放下6位日期
 			if (length - realKey.length() > 6) {
 				Date realBizDate = (bizDate == null ? new Date() : bizDate);
 				realKey = realKey
@@ -114,7 +115,12 @@ public class RedisIdGenerator implements IdGenerator {
 			realKey = MacroUtils.replaceParams(realKey, keyValueMap);
 		}
 		// 结合redis计数取末尾几位顺序数
-		Long result = generateId(realKey.equals("") ? tableName : realKey);
+		Long result;
+		//update 2019-1-24 key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索
+		if (tableName != null)
+			result = generateId(realKey.equals("") ? tableName : tableName.concat(".").concat(realKey));
+		else
+			result = generateId(realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
 		// // $case(columnName,a,a1,b,b1,c,c1,other)
 		// // key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
