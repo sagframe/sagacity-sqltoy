@@ -116,6 +116,7 @@ public class RedisIdGenerator implements IdGenerator {
 		}
 		// 结合redis计数取末尾几位顺序数
 		Long result;
+		
 		//update 2019-1-24 key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索
 		if (tableName != null)
 			result = generateId(realKey.equals("") ? tableName : tableName.concat(".").concat(realKey));
