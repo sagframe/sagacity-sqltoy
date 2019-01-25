@@ -430,8 +430,7 @@
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="single-quote" type="xsd:boolean" default="true"
-						use="required" />
+					<xsd:attribute name="single-quote" type="xsd:boolean" default="true" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0"
