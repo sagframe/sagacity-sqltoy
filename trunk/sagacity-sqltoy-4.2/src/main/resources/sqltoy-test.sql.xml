@@ -67,6 +67,7 @@
 	    where t1.ORGAN_ID=t2.ORGAN_ID
 		]]>	
 		</value>
+		
 		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
 		<count-sql><![CDATA[]]></count-sql>
 		<!-- 汇总和求平均 -->
