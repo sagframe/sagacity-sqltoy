@@ -1,9 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.3.4.1</version>
+	<version>4.3.5</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -12,12 +11,12 @@
 		<spring-framework.version>5.1.4.RELEASE</spring-framework.version>
 		<spring-data.version>2.1.4.RELEASE</spring-data.version>
 		<log4j.version>2.11.1</log4j.version>
-		<mysql.version>8.0.13</mysql.version>
+		<mysql.version>8.0.14</mysql.version>
 		<ehcache.version>3.6.3</ehcache.version>
-		<httpclient.version>4.5.6</httpclient.version>
-		<httpclient-core.version>4.4.10</httpclient-core.version>
+		<httpclient.version>4.5.7</httpclient.version>
+		<httpclient-core.version>4.4.11</httpclient-core.version>
 		<elastic.version>6.5.4</elastic.version>
-		<fastjson.version>1.2.54</fastjson.version>
+		<fastjson.version>1.2.55</fastjson.version>
 		<mongo.version>3.9.1</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<jedis.version>3.0.1</jedis.version>
@@ -26,19 +25,15 @@
 		<spring-boot.version>2.1.2.RELEASE</spring-boot.version>
 	</properties>
 	<distributionManagement>
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/sagframe</url> 
-			</repository> -->
 		<repository>
-			<id>renturbo</id>
-			<name>3rd party</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url>
+			<id>sagframe-release</id>
+			<url>http://www.sagframe.com:8081/repository/sagframe</url>
 		</repository>
-		<snapshotRepository>
-			<id>renturbo</id>
-			<name>Department Repository</name>
-			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
-		
+		<!-- <repository> <id>renturbo</id> <name>3rd party</name> <url>http://59.110.27.96:9081/nexus/content/repositories/releases/</url> 
+			</repository> <snapshotRepository> <id>renturbo</id> <name>Department Repository</name> 
+			<url>http://59.110.27.96:9081/nexus/content/repositories/snapshots/</url> 
+			</snapshotRepository> -->
+
 	</distributionManagement>
 	<dependencies>
 		<dependency>
@@ -225,7 +220,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore-nio</artifactId>
-			<version>4.4.10</version>
+			<version>4.4.11</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpasyncclient -->
