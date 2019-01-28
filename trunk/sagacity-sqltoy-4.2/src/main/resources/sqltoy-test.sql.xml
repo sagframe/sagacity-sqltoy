@@ -35,9 +35,11 @@
 			<!-- 将数组转化成in 的参数条件并增加单引号 -->
 			<to-in-arg params=""/>
 		</filters>
-		<!-- 缓存翻译,可以多个 -->
+		
+		<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
 		<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
-			cache-indexs="1" />
+			cache-indexs="1" uncached-template=""/>
+			
 		<!-- 安全掩码:tel\姓名\地址\卡号 -->
 		<!--最简单用法: <secure-mask column="" type="tel"/> -->
 		<secure-mask column="" type="name" head-size="" tail-size=""
@@ -65,6 +67,7 @@
 	    where t1.ORGAN_ID=t2.ORGAN_ID
 		]]>	
 		</value>
+		
 		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
 		<count-sql><![CDATA[]]></count-sql>
 		<!-- 汇总和求平均 -->
