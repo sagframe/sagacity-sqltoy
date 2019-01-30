@@ -290,7 +290,7 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setFilters(parseFilters(null, blankToNull));
 
 		// 解析分页优化器
-		// <page-optimize alive-max="100" alive-seconds="600"/>
+		// <page-optimize alive-max="100" alive-seconds="90"/>
 		Element pageOptimize = sqlElt.element("page-optimize");
 		if (pageOptimize != null) {
 			sqlToyConfig.setPageOptimize(true);
