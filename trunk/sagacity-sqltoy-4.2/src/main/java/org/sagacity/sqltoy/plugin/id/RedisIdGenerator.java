@@ -41,7 +41,7 @@ public class RedisIdGenerator implements IdGenerator {
 	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
 	 */
-	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID.";
+	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID:";
 
 	/**
 	 * @todo 获取对象单例
@@ -119,7 +119,7 @@ public class RedisIdGenerator implements IdGenerator {
 		
 		//update 2019-1-24 key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索
 		if (tableName != null)
-			result = generateId(realKey.equals("") ? tableName : tableName.concat(".").concat(realKey));
+			result = generateId(realKey.equals("") ? tableName : tableName.concat(":").concat(realKey));
 		else
 			result = generateId(realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());

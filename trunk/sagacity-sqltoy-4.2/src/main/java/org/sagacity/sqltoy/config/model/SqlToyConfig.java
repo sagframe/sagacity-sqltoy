@@ -12,6 +12,7 @@ import java.util.List;
  * @description 单个sql被解析后的模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyConfig.java,Revision:v1.0,Date:2014年12月9日
+ * 
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlToyConfig implements Serializable, java.lang.Cloneable {
