@@ -138,7 +138,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 快速分页部分的sql引用with as表名的位置，即用到第几个with
 	 */
 	private int fastWithIndex = -1;
-	// <page-optimize alive-max="100" alive-seconds="600"/>
+	// <page-optimize alive-max="100" alive-seconds="90"/>
 
 	/**
 	 * 是否分页优化
@@ -151,9 +151,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private int pageAliveMax = 100;
 
 	/**
-	 * 15分钟
+	 * 1.5分钟
 	 */
-	private int pageAliveSeconds = 900;
+	private int pageAliveSeconds = 90;
 
 	/**
 	 * debug模式下是否打印
