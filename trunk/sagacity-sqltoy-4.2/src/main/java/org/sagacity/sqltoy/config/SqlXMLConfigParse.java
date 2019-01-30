@@ -296,7 +296,7 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setPageOptimize(true);
 			if (pageOptimize.attribute("alive-max") != null)
 				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.attributeValue("alive-max")));
-
+			//不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.attribute("alive-seconds") != null)
 				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.attributeValue("alive-seconds")));
 		}
