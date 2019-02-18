@@ -1876,7 +1876,7 @@ public class DialectUtils {
 		}
 		return lastSql.toString();
 	}
-
+	
 	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
 		if (sqlToyContext.isDebug()) {
