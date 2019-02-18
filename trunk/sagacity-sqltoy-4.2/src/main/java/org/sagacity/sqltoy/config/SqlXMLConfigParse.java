@@ -290,13 +290,13 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setFilters(parseFilters(null, blankToNull));
 
 		// 解析分页优化器
-		// <page-optimize alive-max="100" alive-seconds="600"/>
+		// <page-optimize alive-max="100" alive-seconds="90"/>
 		Element pageOptimize = sqlElt.element("page-optimize");
 		if (pageOptimize != null) {
 			sqlToyConfig.setPageOptimize(true);
 			if (pageOptimize.attribute("alive-max") != null)
 				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.attributeValue("alive-max")));
-
+			//不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.attribute("alive-seconds") != null)
 				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.attributeValue("alive-seconds")));
 		}

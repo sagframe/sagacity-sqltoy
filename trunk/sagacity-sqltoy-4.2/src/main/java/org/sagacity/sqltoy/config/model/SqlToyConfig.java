@@ -12,6 +12,7 @@ import java.util.List;
  * @description 单个sql被解析后的模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyConfig.java,Revision:v1.0,Date:2014年12月9日
+ * 
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlToyConfig implements Serializable, java.lang.Cloneable {
@@ -138,7 +139,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 快速分页部分的sql引用with as表名的位置，即用到第几个with
 	 */
 	private int fastWithIndex = -1;
-	// <page-optimize alive-max="100" alive-seconds="600"/>
+	// <page-optimize alive-max="100" alive-seconds="90"/>
 
 	/**
 	 * 是否分页优化
@@ -151,9 +152,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private int pageAliveMax = 100;
 
 	/**
-	 * 15分钟
+	 * 1.5分钟
 	 */
-	private int pageAliveSeconds = 900;
+	private int pageAliveSeconds = 90;
 
 	/**
 	 * debug模式下是否打印
