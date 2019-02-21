@@ -84,6 +84,7 @@ public class SqlConfigParseUtils {
 	 */
 	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
 
+	
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
 	 */
