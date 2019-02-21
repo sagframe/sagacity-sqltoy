@@ -128,7 +128,7 @@ public class DialectUtils {
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
 		String[] paramsNamed = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig);
+		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
 		if (startIndex == null && endIndex == null)
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
 		String[] realParamNamed = null;
@@ -306,12 +306,13 @@ public class DialectUtils {
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
 				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(0, sql_from_index).toLowerCase();
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
-				if (StringUtil.matches(selectFields, STAT_PATTERN))
+				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
 					countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
-				else
+				} else {
 					// 截取from后的部分
 					countQueryStr.append("select count(1) ")
 							.append((sql_from_index != -1 ? query_tmp.substring(sql_from_index) : query_tmp));
+				}
 			} // 包含distinct 或包含union则直接将查询作为子表(普通做法)
 			else {
 				countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
@@ -1146,7 +1147,7 @@ public class DialectUtils {
 		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), entityClass,
-				null, conn,false);
+				null, conn, false);
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1167,7 +1168,7 @@ public class DialectUtils {
 							idValues);
 					SqlExecuteStat.showSql(subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(subToyResult.getSql(), subToyResult.getParamsValue(),
-							oneToMany.getMappedType(), null, conn,false);
+							oneToMany.getMappedType(), null, conn, false);
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
 					BeanUtil.invokeMethod(entities.get(0),
 							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
@@ -1375,7 +1376,7 @@ public class DialectUtils {
 			List<Object[]> idSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
-				//判断主键策略关联的字段是否有值,合法性验证
+				// 判断主键策略关联的字段是否有值,合法性验证
 				if (relatedColumn != null) {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
@@ -1385,7 +1386,7 @@ public class DialectUtils {
 									+ relatedColumn[meter] + " 值为null!");
 					}
 				}
-				//主键值为null,调用主键生成策略并赋值
+				// 主键值为null,调用主键生成策略并赋值
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
@@ -1738,7 +1739,7 @@ public class DialectUtils {
 			else if (recordCnt > 1)
 				return false;
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
-			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn,false);
+			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, false);
 			if (result.size() == 0)
 				return true;
 			else if (result.size() > 1)
@@ -1858,7 +1859,7 @@ public class DialectUtils {
 	 */
 	public static String clearDisturbSql(String sql) {
 		StringBuilder lastSql = new StringBuilder(sql);
-		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
+		// 找到第一个select 所对称的from位置，排除掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
 		if (fromIndex != -1)
 			lastSql.delete(0, fromIndex);
@@ -1875,7 +1876,7 @@ public class DialectUtils {
 		}
 		return lastSql.toString();
 	}
-
+	
 	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
 		if (sqlToyContext.isDebug()) {
