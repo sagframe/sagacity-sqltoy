@@ -6,9 +6,11 @@ package org.sagacity.sqltoy.dialect;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -76,5 +78,47 @@ public class DBUtils {
 			logger.error("获取数据库失败!" + connectionException.getStackTrace());
 		}
 		return conn;
+	}
+	
+	/**
+	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
+	 * @param sql
+	 * @return
+	 */
+	public static String clearSymSelectFromSql(String sql) {
+		StringBuilder lastSql = new StringBuilder(sql);
+		String SELECT_REGEX = "(?i)\\Wselect\\s+";
+		String FROM_REGEX = "(?i)\\sfrom[\\(|\\s+]";
+		// 删除所有对称的括号中的内容
+		int start = StringUtil.matchIndex(sql, SELECT_REGEX);
+		int symMarkEnd;
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, lastSql.toString(), start);
+			if (symMarkEnd != -1) {
+				lastSql.delete(start+1, symMarkEnd + 5);
+				start = StringUtil.matchIndex(lastSql.toString(), SELECT_REGEX);
+			} else
+				break;
+		}
+		return lastSql.toString();
+	}
+	
+	public static void main(String[] args)
+	{
+		Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*[a-z|A-Z]+\\w+(\\.\\w+)*\\s*");
+		//Pattern NAME_PATTERN = Pattern.compile("\\W\\:\\s*((\\d*[a-z|A-Z]+\\d*)+[\\.|\\_]?(\\d*[a-z|A-Z]+\\d*)?)\\s*");
+		Boolean result= StringUtil.matches("1990-10-05 23:10:45", PARAM_NAME_PATTERN);
+		System.err.println(result);
+		Boolean result1= StringUtil.matches(" :1begin", PARAM_NAME_PATTERN);
+		System.err.println(result1);
+		Boolean result2= StringUtil.matches(" :be23gin", PARAM_NAME_PATTERN);
+		System.err.println(result2);
+		String SELECT_REGEX = "select\\s+";
+		String FROM_REGEX = "\\s+from[\\(|\\s+]";
+		String sql="select (select a    from table) as col,col2,(select b from table1) as col3 from tableA";
+		int sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
+		int selectIndex= StringUtil.matchIndex(sql, SELECT_REGEX);
+		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex+6, sql_from_index).toLowerCase();
+		System.err.println("1="+clearSymSelectFromSql(selectFields));
 	}
 }

@@ -304,7 +304,10 @@ public class DialectUtils {
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
-				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(0, sql_from_index).toLowerCase();
+				int selectIndex= StringUtil.matchIndex(query_tmp, SELECT_REGEX);
+				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(selectIndex+6, sql_from_index).toLowerCase();
+				//剔除子查询语句中select 和 from 之间的内容
+				selectFields = clearSymSelectFromSql(selectFields);
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
 					countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
@@ -1876,7 +1879,30 @@ public class DialectUtils {
 		}
 		return lastSql.toString();
 	}
-	
+
+	/**
+	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
+	 * @param sql
+	 * @return
+	 */
+	private static String clearSymSelectFromSql(String sql) {
+		StringBuilder lastSql = new StringBuilder(sql);
+		String SELECT_REGEX = "(?i)\\Wselect\\s+";
+		String FROM_REGEX = "(?i)\\sfrom[\\(|\\s+]";
+		// 删除所有对称的括号中的内容
+		int start = StringUtil.matchIndex(sql, SELECT_REGEX);
+		int symMarkEnd;
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, lastSql.toString(), start);
+			if (symMarkEnd != -1) {
+				lastSql.delete(start+1, symMarkEnd + 5);
+				start = StringUtil.matchIndex(lastSql.toString(), SELECT_REGEX);
+			} else
+				break;
+		}
+		return lastSql.toString();
+	}
+
 	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
 		if (sqlToyContext.isDebug()) {
