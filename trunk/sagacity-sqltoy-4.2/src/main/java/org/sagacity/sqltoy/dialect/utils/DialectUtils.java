@@ -1855,6 +1855,7 @@ public class DialectUtils {
 		return false;
 	}
 
+	
 	/**
 	 * @todo 去除掉sql中的所有对称的括号中的内容，排除干扰
 	 * @param sql
