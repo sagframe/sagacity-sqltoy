@@ -12,6 +12,7 @@ import java.io.Serializable;
  * @version id:CacheFilterModel.java,Revision:v1.0,Date:2019年1月13日
  */
 public class CacheFilterModel implements Serializable {
+	
 	/**
 	 * 
 	 */
