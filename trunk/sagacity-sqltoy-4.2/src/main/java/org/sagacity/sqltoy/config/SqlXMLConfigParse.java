@@ -53,6 +53,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
+	
 	/**
 	 * 定义全局日志
 	 */
