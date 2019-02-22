@@ -234,8 +234,15 @@ public class ParamFilterUtils {
 				if (matchCnt == maxLimit)
 					break;
 			}
-			if (matchKeys.isEmpty())
+			
+			//没有匹配到具体key,将笔名对应的列值设置为当前条件值
+			if (matchKeys.isEmpty()) {
+				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+					paramValues[aliasIndex] = paramValue;
+				} 
 				return;
+			}
 			Object[] realMatched = new Object[matchKeys.size()];
 			matchKeys.toArray(realMatched);
 			// 存在别名,设置别名对应的值
@@ -251,7 +258,6 @@ public class ParamFilterUtils {
 		}
 	}
 
-	
 	/**
 	 * @todo 互斥性参数filter
 	 * @param paramIndexMap
