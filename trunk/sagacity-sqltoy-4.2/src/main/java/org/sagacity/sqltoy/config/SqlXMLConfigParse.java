@@ -50,7 +50,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
  * @Modification Date:2018-1-1 {增加对es和mongo的查询配置解析支持}
  * @Modification Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
- * 
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
