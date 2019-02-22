@@ -239,11 +239,13 @@ public class ParamFilterUtils {
 			if (matchKeys.isEmpty()) {
 				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
 					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
-					//没有设置未匹配的默认值,直接将当前参数值作为别名值
+					// 没有设置未匹配的默认值,直接将当前参数值作为别名值
 					if (StringUtil.isBlank(paramFilterModel.getCacheNotMatchedValue()))
 						paramValues[aliasIndex] = new String[] { paramValue };
 					else
 						paramValues[aliasIndex] = new String[] { paramFilterModel.getCacheNotMatchedValue() };
+				} else if (StringUtil.isNotBlank(paramFilterModel.getCacheNotMatchedValue())) {
+					paramValues[index] = paramFilterModel.getCacheNotMatchedValue();
 				}
 				return;
 			}
