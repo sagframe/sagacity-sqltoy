@@ -305,8 +305,9 @@ public class DialectUtils {
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
 				int selectIndex= StringUtil.matchIndex(query_tmp, SELECT_REGEX);
+				//截取出select 和from之间的语句
 				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(selectIndex+6, sql_from_index).toLowerCase();
-				//剔除子查询语句中select 和 from 之间的内容
+				//剔除嵌套的子查询语句中select 和 from 之间的内容,便于判断统计函数的作用位置
 				selectFields = clearSymSelectFromSql(selectFields);
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
