@@ -304,7 +304,7 @@ public class DialectUtils {
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
-				int selectIndex= StringUtil.matchIndex(query_tmp, SELECT_REGEX);
+				int selectIndex= StringUtil.matchIndex(query_tmp.toLowerCase(), SELECT_REGEX);
 				//截取出select 和from之间的语句
 				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(selectIndex+6, sql_from_index).toLowerCase();
 				//剔除嵌套的子查询语句中select 和 from 之间的内容,便于判断统计函数的作用位置
@@ -1888,11 +1888,13 @@ public class DialectUtils {
 	 * @return
 	 */
 	private static String clearSymSelectFromSql(String sql) {
-		StringBuilder lastSql = new StringBuilder(sql);
-		String SELECT_REGEX = "(?i)\\Wselect\\s+";
-		String FROM_REGEX = "(?i)\\sfrom[\\(|\\s+]";
+		//先转化为小写
+		String realSql=sql.toLowerCase();
+		StringBuilder lastSql = new StringBuilder(realSql);
+		String SELECT_REGEX = "\\Wselect\\s+";
+		String FROM_REGEX = "\\sfrom[\\(|\\s+]";
 		// 删除所有对称的括号中的内容
-		int start = StringUtil.matchIndex(sql, SELECT_REGEX);
+		int start = StringUtil.matchIndex(realSql, SELECT_REGEX);
 		int symMarkEnd;
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, lastSql.toString(), start);
