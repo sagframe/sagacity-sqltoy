@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.3.6</version>
+	<version>4.3.6.1</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -12,7 +12,7 @@
 		<spring-framework.version>5.1.4.RELEASE</spring-framework.version>
 		<spring-data.version>2.1.4.RELEASE</spring-data.version>
 		<log4j.version>2.11.1</log4j.version>
-		<mysql.version>8.0.14</mysql.version>
+		<mysql.version>8.0.15</mysql.version>
 		<ehcache.version>3.6.3</ehcache.version>
 		<httpclient.version>4.5.7</httpclient.version>
 		<httpclient-core.version>4.4.11</httpclient-core.version>
