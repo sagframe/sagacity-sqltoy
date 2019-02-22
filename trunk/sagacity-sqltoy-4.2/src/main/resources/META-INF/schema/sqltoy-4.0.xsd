@@ -464,6 +464,8 @@
 						type="xsd:string" default="1" />
 					<xsd:attribute name="cache-mapping-max"
 						type="xsd:integer" default="500" />
+					<xsd:attribute name="cache-not-matched-value"
+						type="xsd:string"/>
 					<xsd:attribute name="alias-name" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>

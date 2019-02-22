@@ -658,6 +658,9 @@ public class SqlXMLConfigParse {
 			}
 			if (filter.attribute("alias-name") != null)
 				filterModel.setAliasName(filter.attributeValue("alias-name").toLowerCase());
+			//缓存过滤未匹配上赋予的默认值
+			if (filter.attribute("cache-not-matched-value") != null)
+				filterModel.setCacheNotMatchedValue(filter.attributeValue("cache-not-matched-value"));
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			List<Element> cacheFilters = filter.elements("filter");
 			if (cacheFilters != null && !cacheFilters.isEmpty()) {

@@ -31,7 +31,8 @@ public class CacheFilterModel implements Serializable {
 	 * 对比类型
 	 */
 	private String compareType = "eq";
-
+	
+	
 	/**
 	 * @return the cacheIndex
 	 */
