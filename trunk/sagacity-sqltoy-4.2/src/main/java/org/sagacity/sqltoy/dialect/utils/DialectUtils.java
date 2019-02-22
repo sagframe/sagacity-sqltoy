@@ -1893,6 +1893,7 @@ public class DialectUtils {
 		StringBuilder lastSql = new StringBuilder(realSql);
 		String SELECT_REGEX = "\\Wselect\\s+";
 		String FROM_REGEX = "\\sfrom[\\(|\\s+]";
+		
 		// 删除所有对称的括号中的内容
 		int start = StringUtil.matchIndex(realSql, SELECT_REGEX);
 		int symMarkEnd;
