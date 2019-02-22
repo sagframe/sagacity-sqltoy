@@ -14,7 +14,6 @@ import java.util.HashMap;
  * @modify Date:2019-1-15 {增加缓存条件过滤}
  */
 public class ParamFilterModel implements Serializable {
-	
 	/**
 	 * 
 	 */
