@@ -25,13 +25,16 @@
 			<blank params="*" excludes="staffName" />
 			<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
 			<replace params="" regex="" value="" is-first="false" />
-			<!-- 首要参数，即当某个参数不为null时，excludes指定的参数全部为null -->
-			<primary param="" excludes="*" />
+			
+			<!-- 首要参数，即当某个参数不为null时，excludes是指被排除之外的参数全部为null -->
+			<primary param="orderId" excludes="organIds" />
+			
 			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
 			<exclusive param="" compare-type="eq" compare-values=""
 				set-params="" set-value="" />
 				
 			<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
+			
 			<!-- 将数组转化成in 的参数条件并增加单引号 -->
 			<to-in-arg params=""/>
 		</filters>
