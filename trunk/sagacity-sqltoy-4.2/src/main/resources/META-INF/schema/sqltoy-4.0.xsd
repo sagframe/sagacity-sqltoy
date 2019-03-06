@@ -79,6 +79,16 @@
 							<xsd:union memberTypes="numberFormatType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
+					<xsd:attribute name="roundingMode">
+						<xsd:simpleType>
+							<xsd:restriction>
+								<xsd:enumeration value="HALF_UP"/>
+								<xsd:enumeration value="HALF_DOWN"/>
+								<xsd:enumeration value="ROUND_DOWN"/>
+								<xsd:enumeration value="ROUND_UP"/>
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="link" minOccurs="0" maxOccurs="1">

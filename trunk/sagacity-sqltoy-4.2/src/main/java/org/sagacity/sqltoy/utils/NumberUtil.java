@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -68,16 +69,16 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
-		return format(target, pattern, null);
+		return format(target, pattern, null,null);
 	}
 
-	public static String format(Object target, String pattern, String locale) {
+	public static String format(Object target, String pattern, RoundingMode roundingMode,String locale) {
 		if (target == null)
 			return null;
 		if (pattern == null)
 			return target.toString();
 		try {
-			String tmpStr = target.toString().trim().toLowerCase().replace(",", "");
+			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
 			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan"))
 				return "";
 			BigDecimal tmp = new BigDecimal(tmpStr);
@@ -90,6 +91,8 @@ public class NumberUtil {
 			else {
 				DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
 						: DecimalFormat.getInstance(new Locale(locale)));
+				if (roundingMode != null)
+					df.setRoundingMode(roundingMode);
 				df.applyPattern(pattern);
 				return df.format(tmp);
 			}
@@ -113,7 +116,7 @@ public class NumberUtil {
 		if (pattern == null)
 			return target.toString();
 		try {
-			String tmpStr = target.toString().trim().toLowerCase().replace(",", "");
+			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
 			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan"))
 				return "";
 			BigDecimal tmp = new BigDecimal(tmpStr);

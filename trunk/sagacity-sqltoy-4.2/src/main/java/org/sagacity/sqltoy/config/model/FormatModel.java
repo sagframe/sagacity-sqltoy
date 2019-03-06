@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.math.RoundingMode;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -32,6 +33,11 @@ public class FormatModel implements Serializable {
 	 * 格式
 	 */
 	private String format;
+	
+	/**
+	 * 
+	 */
+	private RoundingMode roundingMode=null;
 
 	/**
 	 * @return the column
@@ -74,7 +80,19 @@ public class FormatModel implements Serializable {
 	public void setType(int type) {
 		this.type = type;
 	}
-	
-	
+
+	/**
+	 * @return the roundingMode
+	 */
+	public RoundingMode getRoundingMode() {
+		return roundingMode;
+	}
+
+	/**
+	 * @param roundingMode the roundingMode to set
+	 */
+	public void setRoundingMode(RoundingMode roundingMode) {
+		this.roundingMode = roundingMode;
+	}
 
 }
