@@ -81,7 +81,7 @@
 					</xsd:attribute>
 					<xsd:attribute name="roundingMode">
 						<xsd:simpleType>
-							<xsd:restriction>
+							<xsd:restriction base="xsd:string">
 								<xsd:enumeration value="HALF_UP"/>
 								<xsd:enumeration value="HALF_DOWN"/>
 								<xsd:enumeration value="ROUND_DOWN"/>
