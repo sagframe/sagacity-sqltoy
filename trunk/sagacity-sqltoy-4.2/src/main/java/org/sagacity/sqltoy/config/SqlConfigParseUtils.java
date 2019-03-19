@@ -51,10 +51,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
  * @Modification {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if()
  *               基于freemarker的复杂逻辑判断代码}
- * 
+ * @Modification {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
+	
 	/**
 	 * 定义全局日志
 	 */
@@ -80,14 +81,15 @@ public class SqlConfigParseUtils {
 	/**
 	 * CTE 即 with as 用法
 	 */
-	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
+	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
 
+	
 	/**
-	 * 定义sql语句中条件参数命名模式的匹配表达式
+	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
 	 */
 	// 提取Named条件参数,like =:paramName
 	// 排除日期函数中存在的named模式，如:to_char(date,'yyyy-MM-dd HH:mm:ss')
-	public final static Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\w+(\\.\\w+)*\\s*");
+	public final static Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-z|A-Z]+\\w+(\\.\\w+)*\\s*");
 	// sql中 in (?)条件
 	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
@@ -122,9 +124,9 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
 
-	// nosql数据库的参数名称匹配
+	// nosql数据库的参数名称匹配(参数必须要有字母)
 	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\w+(\\.\\w+)*\\s*\\)");
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-z|A-Z]+\\w+(\\.\\w+)*\\s*\\)");
 
 	/**
 	 * @todo 判断sql语句中是否存在:named 方式的参数
