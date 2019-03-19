@@ -98,7 +98,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * update 2018-4-10 很对开发者将entity传入Class类别,然后抱怨sqltoy有bug进行类型检测,
+	 * update 2018-4-10 针对开发者将entity传入Class类别产生的bug进行类型检测,
 	 * 
 	 * @param sql
 	 * @param entity

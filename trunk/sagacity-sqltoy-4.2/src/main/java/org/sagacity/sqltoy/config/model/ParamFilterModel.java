@@ -122,6 +122,11 @@ public class ParamFilterModel implements Serializable {
 	 * 互斥型filter 对比的值
 	 */
 	private String[] compareValues = null;
+	
+	/**
+	 * 未被缓存转换匹配上赋予的默认值
+	 */
+	private String cacheNotMatchedValue;
 
 	/**
 	 * 排除的参数
@@ -476,4 +481,20 @@ public class ParamFilterModel implements Serializable {
 	public void setSingleQuote(boolean singleQuote) {
 		this.singleQuote = singleQuote;
 	}
+
+	/**
+	 * @return the cacheNotMatchedValue
+	 */
+	public String getCacheNotMatchedValue() {
+		return cacheNotMatchedValue;
+	}
+
+	/**
+	 * @param cacheNotMatchedValue the cacheNotMatchedValue to set
+	 */
+	public void setCacheNotMatchedValue(String cacheNotMatchedValue) {
+		this.cacheNotMatchedValue = cacheNotMatchedValue;
+	}
+	
+	
 }

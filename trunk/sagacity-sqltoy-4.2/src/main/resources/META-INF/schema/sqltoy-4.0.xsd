@@ -79,6 +79,16 @@
 							<xsd:union memberTypes="numberFormatType xsd:string" />
 						</xsd:simpleType>
 					</xsd:attribute>
+					<xsd:attribute name="roundingMode">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="HALF_UP"/>
+								<xsd:enumeration value="HALF_DOWN"/>
+								<xsd:enumeration value="ROUND_DOWN"/>
+								<xsd:enumeration value="ROUND_UP"/>
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="link" minOccurs="0" maxOccurs="1">
@@ -464,9 +474,12 @@
 						type="xsd:string" default="1" />
 					<xsd:attribute name="cache-mapping-max"
 						type="xsd:integer" default="500" />
+					<xsd:attribute name="cache-not-matched-value"
+						type="xsd:string"/>
 					<xsd:attribute name="alias-name" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
+			
 			<xsd:element name="exclusive" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
