@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,7 +51,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
  * @Modification Date:2018-1-1 {增加对es和mongo的查询配置解析支持}
  * @Modification Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
- * 
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
@@ -296,7 +296,7 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setPageOptimize(true);
 			if (pageOptimize.attribute("alive-max") != null)
 				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.attributeValue("alive-max")));
-			//不同sql条件分页记录数量保存有效时长(默认90秒)
+			// 不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.attribute("alive-seconds") != null)
 				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.attributeValue("alive-seconds")));
 		}
@@ -658,6 +658,9 @@ public class SqlXMLConfigParse {
 			}
 			if (filter.attribute("alias-name") != null)
 				filterModel.setAliasName(filter.attributeValue("alias-name").toLowerCase());
+			// 缓存过滤未匹配上赋予的默认值
+			if (filter.attribute("cache-not-matched-value") != null)
+				filterModel.setCacheNotMatchedValue(filter.attributeValue("cache-not-matched-value"));
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			List<Element> cacheFilters = filter.elements("filter");
 			if (cacheFilters != null && !cacheFilters.isEmpty()) {
@@ -884,9 +887,23 @@ public class SqlXMLConfigParse {
 			for (Element nf : nfElts) {
 				String[] columns = nf.attributeValue("columns").toLowerCase().split("\\,");
 				String format = (nf.attribute("format") == null) ? "capital" : nf.attributeValue("format");
+				String roundStr = (nf.attribute("roundingMode") == null) ? null
+						: nf.attributeValue("roundingMode").toUpperCase();
+				RoundingMode roundMode = null;
+				if (roundStr != null) {
+					if (roundStr.equals("HALF_UP"))
+						roundMode = RoundingMode.HALF_UP;
+					else if (roundStr.equals("HALF_DOWN"))
+						roundMode = RoundingMode.HALF_DOWN;
+					else if (roundStr.equals("ROUND_DOWN"))
+						roundMode = RoundingMode.DOWN;
+					else if (roundStr.equals("ROUND_UP"))
+						roundMode = RoundingMode.UP;
+				}
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
+					formatModel.setRoundingMode(roundMode);
 					formatModel.setType(2);
 					formatModel.setFormat(format);
 					formatModels.add(formatModel);
