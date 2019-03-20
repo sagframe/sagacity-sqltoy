@@ -136,7 +136,7 @@ public class FileUtil {
 	 * @param filter
 	 */
 	public static void getPathFiles(File parentFile, List fileList, String[] filters) {
-		if (parentFile == null)
+		if (parentFile == null || !parentFile.exists())
 			return;
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
