@@ -72,7 +72,7 @@ public class QuickVOStart {
 			logger.error("加载系统参数或解析任务xml文件出错!", e);
 		}
 	}
-
+	
 	/**
 	 * 开始生成文件
 	 * 
