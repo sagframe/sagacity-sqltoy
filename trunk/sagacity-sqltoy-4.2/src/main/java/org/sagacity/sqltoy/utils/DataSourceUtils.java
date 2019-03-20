@@ -39,6 +39,7 @@ public class DataSourceUtils {
 		public final static String SQLSERVER2014 = "sqlserver2014";
 		public final static String SQLSERVER2016 = "sqlserver2016";
 		public final static String SQLSERVER2017 = "sqlserver2017";
+		public final static String SQLSERVER2019 = "sqlserver2019";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
@@ -82,6 +83,7 @@ public class DataSourceUtils {
 		public final static int SQLSERVER2014 = 32;
 		public final static int SQLSERVER2016 = 33;
 		public final static int SQLSERVER2017 = 34;
+		public final static int SQLSERVER2019 = 35;
 		public final static int MYSQL = 40;
 		public final static int MYSQL8 = 42;
 
@@ -107,6 +109,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.SQLSERVER2014, DBType.SQLSERVER2014);
 		DBNameTypeMap.put(Dialect.SQLSERVER2016, DBType.SQLSERVER2016);
 		DBNameTypeMap.put(Dialect.SQLSERVER2017, DBType.SQLSERVER2017);
+		DBNameTypeMap.put(Dialect.SQLSERVER2019, DBType.SQLSERVER2019);
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL8, DBType.MYSQL8);
 		// mariaDB的方言以mysql为基准
@@ -151,6 +154,8 @@ public class DataSourceUtils {
 			return Dialect.SQLSERVER2016;
 		case DBType.SQLSERVER2017:
 			return Dialect.SQLSERVER2017;
+		case DBType.SQLSERVER2019:
+			return Dialect.SQLSERVER2019;
 		case DBType.SYBASE_IQ:
 			return Dialect.SYBASE_IQ;
 		case DBType.SAP_HANA:
@@ -176,7 +181,7 @@ public class DataSourceUtils {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
 			if (dbType == DBType.SYBASE_IQ || dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2017
-					|| dbType == DBType.SQLSERVER2014 || dbType == DBType.SQLSERVER2016)
+					|| dbType == DBType.SQLSERVER2014 || dbType == DBType.SQLSERVER2016|| dbType == DBType.SQLSERVER2019)
 				return " go ";
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -276,7 +281,9 @@ public class DataSourceUtils {
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1) {
 				dbType = DBType.SQLSERVER;
 				// 2012版本,2014版本也归为2012
-				if (majorVersion >= 2017)
+				if (majorVersion >= 2019)
+					dbType = DBType.SQLSERVER2019;
+				else if (majorVersion >= 2017)
 					dbType = DBType.SQLSERVER2017;
 				else if (majorVersion >= 2016)
 					dbType = DBType.SQLSERVER2016;
