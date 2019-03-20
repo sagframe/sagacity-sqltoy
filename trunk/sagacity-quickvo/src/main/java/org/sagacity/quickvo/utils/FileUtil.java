@@ -136,6 +136,7 @@ public class FileUtil {
 	 * @param filter
 	 */
 	public static void getPathFiles(File parentFile, List fileList, String[] filters) {
+		//文件为空或不存在退出处理
 		if (parentFile == null || !parentFile.exists())
 			return;
 		if (parentFile.isDirectory()) {
