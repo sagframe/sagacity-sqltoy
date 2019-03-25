@@ -20,7 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SpringSecurityUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月17日
  */
-public class SpringSecurityUnifyFieldsHandler extends IUnifyFieldsHandler {
+public class SpringSecurityUnifyFieldsHandler implements IUnifyFieldsHandler {
 	// 注:sqltoy会自动判断是否有相关属性,属性不存在则不会进行操作
 	// 针对saveOrUpdate操作,sqltoy则分别调用创建和修改的赋值,同时避免修改时冲掉创建人和创建时间信息
 	/*
