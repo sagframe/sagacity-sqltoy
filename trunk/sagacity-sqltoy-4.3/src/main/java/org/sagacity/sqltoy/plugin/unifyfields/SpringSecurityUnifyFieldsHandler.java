@@ -73,14 +73,15 @@ public class SpringSecurityUnifyFieldsHandler implements IUnifyFieldsHandler {
 	private String getCurrentUserName() {
 		SecurityContext context = SecurityContextHolder.getContext();
 		Authentication authentication = null;
+		String userId = null;
 		if (context != null) {
 			authentication = context.getAuthentication();
 		}
 		if (authentication != null && authentication.getPrincipal() != null) {
-			return authentication.getName();
+			userId = authentication.getName();
 		}
 		// default
-		return defaultUserName;
+		return (userId == null) ? defaultUserName : userId;
 	}
 
 	public String getDefaultUserName() {
@@ -91,5 +92,4 @@ public class SpringSecurityUnifyFieldsHandler implements IUnifyFieldsHandler {
 		this.defaultUserName = defaultUserName;
 	}
 
-	
 }
