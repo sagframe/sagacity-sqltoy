@@ -112,7 +112,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 批处理记录数量,默认为50
 	 */
-	private int batchSize = 50;
+	private int batchSize = 200;
 
 	/**
 	 * 分页单次提取数据长度限制(默认为10万条),防止通过pageNo=-1 进行全表数据级提取 pageFetchSizeLimit=-1 表示不做限制
