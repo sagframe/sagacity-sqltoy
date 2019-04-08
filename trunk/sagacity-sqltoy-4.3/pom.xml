@@ -9,15 +9,15 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.1.5.RELEASE</spring-framework.version>
+		<spring-framework.version>5.1.6.RELEASE</spring-framework.version>
 		<spring-data.version>2.1.5.RELEASE</spring-data.version>
-		<spring-security.version>5.1.4.RELEASE</spring-security.version>
+		<spring-security.version>5.1.5.RELEASE</spring-security.version>
 		<log4j.version>2.11.2</log4j.version>
 		<mysql.version>8.0.15</mysql.version>
 		<ehcache.version>3.7.0</ehcache.version>
-		<httpclient.version>4.5.7</httpclient.version>
+		<httpclient.version>4.5.8</httpclient.version>
 		<httpclient-core.version>4.4.11</httpclient-core.version>
-		<elastic.version>6.7.0</elastic.version>
+		<elastic.version>6.7.1</elastic.version>
 		<fastjson.version>1.2.56</fastjson.version>
 		<mongo.version>3.10.1</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
@@ -41,9 +41,9 @@
 	</repositories>
 	<distributionManagement>
 
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
-			</repository>
-		<!-- <repository>
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+			</repository> -->
+		<repository>
 			<id>renturbo</id>
 			<name>3rd party</name>
 			<url>http://59.110.27.96:9081/repository/maven-releases/</url>
@@ -52,7 +52,7 @@
 			<id>renturbo</id>
 			<name>Department Repository</name>
 			<url>http://59.110.27.96:9081/repository/maven-snapshots/</url>
-		</snapshotRepository> -->
+		</snapshotRepository>
 
 	</distributionManagement>
 	<dependencies>
