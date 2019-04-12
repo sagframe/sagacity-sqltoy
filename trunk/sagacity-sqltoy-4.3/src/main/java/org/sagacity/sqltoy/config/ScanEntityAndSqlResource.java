@@ -229,10 +229,12 @@ public class ScanEntityAndSqlResource {
 							// 移除非以dialect结尾的sql配置文件
 							if (hasDialectSql) {
 								for (int i = 0; i < result.size(); i++) {
-									name = result.get(i).toString();
-									if (!name.endsWith(dialectXML)) {
-										result.remove(i);
-										i--;
+									if (result.get(i) instanceof String) {
+										name = result.get(i).toString();
+										if (!name.endsWith(dialectXML)) {
+											result.remove(i);
+											i--;
+										}
 									}
 								}
 							}
@@ -251,10 +253,12 @@ public class ScanEntityAndSqlResource {
 								// 移除非以dialect结尾的sql配置文件
 								if (hasDialectSql) {
 									for (int i = 0; i < result.size(); i++) {
-										file = (File) result.get(i);
-										if (!file.getName().endsWith(dialectXML)) {
-											result.remove(i);
-											i--;
+										if (result.get(i) instanceof File) {
+											file = (File) result.get(i);
+											if (!file.getName().endsWith(dialectXML)) {
+												result.remove(i);
+												i--;
+											}
 										}
 									}
 								}
