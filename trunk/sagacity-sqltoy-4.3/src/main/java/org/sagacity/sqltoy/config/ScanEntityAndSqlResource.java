@@ -241,6 +241,7 @@ public class ScanEntityAndSqlResource {
 						} else {
 							getPathFiles(new File(url.toURI()), result);
 							if (null != dialectXML) {
+								//判断是否存在dialect 形式的sql文件
 								for (int i = 0; i < result.size(); i++) {
 									if (result.get(i) instanceof File) {
 										file = (File) result.get(i);
