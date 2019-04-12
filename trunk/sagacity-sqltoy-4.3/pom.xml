@@ -11,7 +11,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.1.5.RELEASE</spring-framework.version>
 		<spring-data.version>2.1.5.RELEASE</spring-data.version>
-		<spring-security.version>5.1.4.RELEASE</spring-security.version>
 		<log4j.version>2.11.2</log4j.version>
 		<mysql.version>8.0.15</mysql.version>
 		<ehcache.version>3.7.0</ehcache.version>
@@ -66,13 +65,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
 			<version>${spring-boot.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-core</artifactId>
-			<version>${spring-security.version}</version>
-			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
