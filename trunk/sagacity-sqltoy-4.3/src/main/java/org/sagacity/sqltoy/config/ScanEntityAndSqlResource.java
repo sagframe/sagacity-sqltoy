@@ -193,7 +193,7 @@ public class ScanEntityAndSqlResource {
 		String dialectXML = StringUtil.isNotBlank(dialect) ? ".".concat(dialect).concat(SQLTOY_SQL_FILE_SUFFIX) : null;
 		boolean startClasspath = false;
 		if (StringUtil.isNotBlank(resourceDir)) {
-			//统一全角半角，用逗号分隔
+			// 统一全角半角，用逗号分隔
 			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\;", ",").split("\\,");
 			for (String dir : dirSet) {
 				realRes = dir.trim();
@@ -229,30 +229,37 @@ public class ScanEntityAndSqlResource {
 							// 移除非以dialect结尾的sql配置文件
 							if (hasDialectSql) {
 								for (int i = 0; i < result.size(); i++) {
-									name = result.get(i).toString();
-									if (!name.endsWith(dialectXML)) {
-										result.remove(i);
-										i--;
+									if (result.get(i) instanceof String) {
+										name = result.get(i).toString();
+										if (!name.endsWith(dialectXML)) {
+											result.remove(i);
+											i--;
+										}
 									}
 								}
 							}
 						} else {
 							getPathFiles(new File(url.toURI()), result);
 							if (null != dialectXML) {
+								//判断是否存在dialect 形式的sql文件
 								for (int i = 0; i < result.size(); i++) {
-									file = (File) result.get(i);
-									if (file.getName().endsWith(dialectXML)) {
-										hasDialectSql = true;
-										break;
+									if (result.get(i) instanceof File) {
+										file = (File) result.get(i);
+										if (file.getName().endsWith(dialectXML)) {
+											hasDialectSql = true;
+											break;
+										}
 									}
 								}
 								// 移除非以dialect结尾的sql配置文件
 								if (hasDialectSql) {
 									for (int i = 0; i < result.size(); i++) {
-										file = (File) result.get(i);
-										if (!file.getName().endsWith(dialectXML)) {
-											result.remove(i);
-											i--;
+										if (result.get(i) instanceof File) {
+											file = (File) result.get(i);
+											if (!file.getName().endsWith(dialectXML)) {
+												result.remove(i);
+												i--;
+											}
 										}
 									}
 								}
@@ -305,7 +312,7 @@ public class ScanEntityAndSqlResource {
 	 */
 	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
-		if(StringUtil.isBlank(resource))
+		if (StringUtil.isBlank(resource))
 			return urls;
 		if (!startClasspath) {
 			File file = new File(resource);
