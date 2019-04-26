@@ -3,9 +3,6 @@
  */
 package org.sagacity.sqltoy.config;
 
-import static java.lang.System.err;
-import static java.lang.System.out;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
