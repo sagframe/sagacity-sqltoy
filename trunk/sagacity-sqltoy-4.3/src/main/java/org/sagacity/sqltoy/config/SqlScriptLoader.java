@@ -103,24 +103,22 @@ public class SqlScriptLoader {
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提升信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
 				if (this.debug) {
-					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
-					err.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+					logger.debug("总计加载.sql.xml文件数量为:" + realSqlList.size());
+					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 					Object sqlFile;
 					for (int i = 0; i < realSqlList.size(); i++) {
 						sqlFile = realSqlList.get(i);
 						if (sqlFile instanceof File)
-							out.println("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
+							logger.debug("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
 						else
-							out.println("第:[" + i + "]个文件:" + sqlFile.toString());
+							logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
 					}
-					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
+					logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
 				}
 				for (int i = 0; i < realSqlList.size(); i++) {
-					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect,false);
+					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect, false);
 				}
 			} else {
-				err.println("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
-						+ "是否正确,或文件没有在编译路径下(bin、classes等)!");
 				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
 						sqlResourcesDir);
 			}
