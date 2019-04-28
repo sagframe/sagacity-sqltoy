@@ -80,8 +80,7 @@ public class SqlXMLConfigParse {
 	private static final Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<IFunction> functionConverts) {
 		SqlXMLConfigParse.functionConverts = functionConverts;
@@ -419,6 +418,9 @@ public class SqlXMLConfigParse {
 				String maskRate = getAttrValue(elt, "mask-rate");
 				if (maskRate == null)
 					maskRate = getAttrValue(elt, "mask-percent");
+				//剔除百分号
+				if (maskRate != null)
+					maskRate = maskRate.replace("%", "");
 				for (String col : columns) {
 					SecureMask secureMask = new SecureMask();
 					secureMask.setColumn(col);
@@ -438,8 +440,13 @@ public class SqlXMLConfigParse {
 						secureMask.setHeadSize(Integer.parseInt(headSize));
 					if (StringUtil.isNotBlank(tailSize))
 						secureMask.setTailSize(Integer.parseInt(tailSize));
-					if (StringUtil.isNotBlank(maskRate))
-						secureMask.setMaskRate(Integer.parseInt(maskRate.replace("%", "")));
+					if (StringUtil.isNotBlank(maskRate)) {
+						//小數
+						if (Double.parseDouble(maskRate) < 1)
+							secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
+						else
+							secureMask.setMaskRate(Double.valueOf(maskRate).intValue());
+					}
 					secureMasks.add(secureMask);
 				}
 			}
