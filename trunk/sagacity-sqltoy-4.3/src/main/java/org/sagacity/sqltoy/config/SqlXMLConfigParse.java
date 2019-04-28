@@ -420,7 +420,7 @@ public class SqlXMLConfigParse {
 					maskRate = getAttrValue(elt, "mask-percent");
 				//剔除百分号
 				if (maskRate != null)
-					maskRate = maskRate.replace("%", "");
+					maskRate = maskRate.replace("%", "").trim();
 				for (String col : columns) {
 					SecureMask secureMask = new SecureMask();
 					secureMask.setColumn(col);
