@@ -445,7 +445,7 @@ public class ResultUtils {
 		// update 2016-12-13 提取category后进行了排序
 		List categoryList = (pivotCategorySet == null) ? extractCategory(result, categoryCols) : pivotCategorySet;
 		if (debug) {
-			System.out.println("---------pivot category info--------------------");
+			logger.info("---------pivot category info--------------------");
 			DebugUtil.printAry(categoryList, null, " , ", true);
 		}
 		return CollectionUtil.pivotList(result, categoryList, null, groupCols, categoryCols, pivotCols[0],
