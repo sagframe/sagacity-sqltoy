@@ -366,7 +366,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @return the shardingStrategys
+	 * @todo 返回sharding策略实例
+	 * @param strategyName
+	 * @return
 	 */
 	public ShardingStrategy getShardingStrategy(String strategyName) {
 		// hashMap可以事先不赋值,直接定义spring的bean

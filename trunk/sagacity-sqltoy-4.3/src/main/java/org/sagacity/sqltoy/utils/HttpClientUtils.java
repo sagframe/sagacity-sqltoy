@@ -99,8 +99,8 @@ public class HttpClientUtils {
 	 * @todo 执行post请求
 	 * @param sqltoyContext
 	 * @param nosqlConfig
-	 * @param url
-	 * @param jsonObject
+	 * @param esConfig
+	 * @param postValue
 	 * @return
 	 * @throws Exception
 	 */

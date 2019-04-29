@@ -45,7 +45,7 @@ public class SqlExecuteStat {
 	 * @todo 登记开始执行
 	 * @param sqlId
 	 * @param type
-	 * @param isPrint
+	 * @param debugPrint
 	 */
 	public static void start(String sqlId, String type, Boolean debugPrint) {
 		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? true : debugPrint.booleanValue()));
