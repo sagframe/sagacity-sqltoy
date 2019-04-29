@@ -176,7 +176,6 @@ public class BeanUtil {
 	 * @param bean
 	 * @param methodName
 	 * @param args
-	 *            方法中的参数
 	 * @return
 	 * @throws Exception
 	 */
@@ -404,9 +403,11 @@ public class BeanUtil {
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
 	 * @param datas
 	 * @param properties
+	 * @param reflectPropertyHandler
 	 * @param hasSequence
 	 * @param startSequence
 	 * @return
+	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties,
 			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) throws Exception {

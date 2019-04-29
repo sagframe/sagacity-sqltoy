@@ -310,7 +310,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
 	 * @param pageModel
-	 * @param query
+	 * @param queryExecutor
 	 * @return
 	 * @throws Exception
 	 */
@@ -547,7 +547,6 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 获取sqltoy中用于翻译的缓存
-	 * @todo 填写改方法的说明
 	 * @param cacheName
 	 * @param elementId
 	 * @return

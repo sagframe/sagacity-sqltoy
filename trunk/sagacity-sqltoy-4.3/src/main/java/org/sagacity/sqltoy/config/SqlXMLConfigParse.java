@@ -736,8 +736,8 @@ public class SqlXMLConfigParse {
 
 	/**
 	 * @todo 解析翻译器
+	 * @param sqlToyConfig
 	 * @param translates
-	 * @return
 	 */
 	public static void parseTranslate(SqlToyConfig sqlToyConfig, List<Element> translates) {
 		if (translates != null && !translates.isEmpty()) {
