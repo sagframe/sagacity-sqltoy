@@ -127,6 +127,16 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	public QueryExecutor names(String... paramsName) {
+		this.paramsName = paramsName;
+		return this;
+	}
+
+	public QueryExecutor values(Object... paramsValue) {
+		this.paramsValue = paramsValue;
+		return this;
+	}
+
 	public QueryExecutor resultType(Type resultType) {
 		this.resultType = resultType;
 		return this;
