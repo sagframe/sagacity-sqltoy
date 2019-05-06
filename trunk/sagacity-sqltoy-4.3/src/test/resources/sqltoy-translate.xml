@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sagacity xmlns="http://www.sagframe.com/schema/sqltoy-translate">
+<sagacity xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
 	<cache-translates>
 		<!-- sql模式 -->
 		<sql-translate cache="dictKeyNameCache">
@@ -43,6 +45,4 @@
 		<rest-checker url="" interval-seconds=""
 			username="" password="" />
 	</cache-update-checkers>
-
-
 </sagacity>
