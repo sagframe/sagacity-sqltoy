@@ -60,10 +60,7 @@
 
 	<!-- 事务处理的AOP配置 // -->
 	<aop:config proxy-target-class="true">
-		<aop:pointcut id="txPointcut" expression="
-			   execution(* com.sagframe.portal.modules..*ServiceImpl.*(..))
-			|| execution(* org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl.*(..))
-		" />
+		<aop:pointcut id="txPointcut" expression="execution(* org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl.*(..))" />
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
 	</aop:config>
 
