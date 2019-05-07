@@ -3,21 +3,22 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.3.7.2</version>
+	<version>4.3.7.6</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.1.6.RELEASE</spring-framework.version>
-		<spring-data.version>2.1.5.RELEASE</spring-data.version>
+		<spring-data-redis.version>2.1.6.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>2.1.6.RELEASE</spring-data-mongo.version>
 		<log4j.version>2.11.2</log4j.version>
 		<mysql.version>8.0.16</mysql.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<ehcache.version>3.7.1</ehcache.version>
 		<httpclient.version>4.5.8</httpclient.version>
 		<httpclient-core.version>4.4.11</httpclient-core.version>
-		<elastic.version>7.0.1</elastic.version>
+		<elastic-rest-client.version>7.0.1</elastic-rest-client.version>
 		<fastjson.version>1.2.58</fastjson.version>
 		<mongo.version>3.10.2</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
@@ -162,7 +163,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
-			<version>${spring-data.version}</version>
+			<version>${spring-data-redis.version}</version>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -175,7 +176,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
-			<version>${spring-data.version}</version>
+			<version>${spring-data-mongo.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>*</artifactId>
@@ -217,11 +218,12 @@
 			<version>${fastjson.version}</version>
 			<optional>true</optional>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-client -->
+	
+		<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client -->
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
-			<artifactId>elasticsearch-rest-client</artifactId>
-			<version>${elastic.version}</version>
+			<artifactId>elasticsearch-rest-high-level-client</artifactId>
+			<version>${elastic-rest-client.version}</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -243,7 +245,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.8.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -265,7 +267,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.0</version>
+				<version>2.22.2</version>
 				<configuration>
 					<skip>true</skip>
 				</configuration>
