@@ -26,6 +26,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -58,6 +59,10 @@ public class HttpClientUtils {
 	private final static String SEARCH = "_search";
 
 	private final static String CONTENT_TYPE = "application/json";
+
+	private final static String GET = "GET";
+
+	private final static String POST = "POST";
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
 			String paramName, String paramValue) throws Exception {
@@ -104,16 +109,16 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,Object postValue)
-			throws Exception {
+	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
+			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null)
 			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = null;
-		//sql 模式
+		// sql 模式
 		if (nosqlConfig.isSqlMode()) {
-			//6.3.x 版本支持xpack sql查询
+			// 6.3.x 版本支持xpack sql查询
 			if (esConfig.isEnableSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
@@ -136,8 +141,12 @@ public class HttpClientUtils {
 			RestClient restClient = null;
 			try {
 				restClient = esConfig.getRestClient();
-				Response response = restClient.performRequest("POST", realUrl, Collections.<String, String>emptyMap(),
-						httpEntity);
+				Request request = new Request(POST, realUrl);
+				request.setEntity(httpEntity);
+				Response response = restClient.performRequest(request);
+				// Response response = restClient.performRequest("POST", realUrl,
+				// Collections.<String, String>emptyMap(),
+				// httpEntity);
 				reponseEntity = response.getEntity();
 			} catch (Exception e) {
 				throw e;
