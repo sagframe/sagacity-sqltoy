@@ -178,11 +178,11 @@ public class SqlConfigParseUtils {
 		if (null == paramsValue || paramsValue.length == 0)
 			return new SqlToyResult(queryStr, paramsValue);
 		SqlToyResult sqlToyResult = new SqlToyResult();
-		// 将sql中的问号临时先替换成特殊字符
-		String questionMark = "#sqltoy_qsmark_placeholder#";
 		// 是否:paramName 形式的参数模式
 		boolean isNamedArgs = StringUtil.matches(queryStr, PARAM_NAME_PATTERN);
 		SqlParamsModel sqlParam;
+		// 将sql中的问号临时先替换成特殊字符
+		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs)
 			sqlParam = processNamedParamsQuery(queryStr.replaceAll(ARG_NAME, questionMark));
 		else
