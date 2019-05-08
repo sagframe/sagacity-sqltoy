@@ -55,7 +55,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
-	
+
 	/**
 	 * 定义全局日志
 	 */
@@ -82,7 +82,7 @@ public class SqlConfigParseUtils {
 	 * CTE 即 with as 用法
 	 */
 	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
-	
+
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
 	 */
@@ -179,7 +179,15 @@ public class SqlConfigParseUtils {
 			return new SqlToyResult(queryStr, paramsValue);
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		SqlParamsModel sqlParam = processNamedParamsQuery(queryStr);
+
 		sqlToyResult.setSql(sqlParam.getSql());
+		// 是否:paramName 形式的参数模式
+		boolean isNamedArgs = (sqlParam.getParamsName() != null && sqlParam.getParamsName().length > 0);
+		// 将sql中的问号临时先替换成特殊字符
+		String questionMark = "#sqltoy_qsmark_placeholder#";
+		if (isNamedArgs)
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(ARG_NAME, questionMark));
+
 		// 参数和参数值进行匹配
 		sqlToyResult.setParamsValue(matchNamedParam(sqlParam.getParamsName(), paramsNamed, paramsValue));
 
@@ -189,7 +197,7 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 替换@value(?) 为参数对应的数值
 		processValue(sqlToyResult);
-		
+
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
 
@@ -198,6 +206,10 @@ public class SqlConfigParseUtils {
 		processIn(sqlToyResult);
 		// 参数为null的处理策略(用null直接代替变量)
 		replaceNull(sqlToyResult, 0);
+
+		// 将特殊字符替换会问号
+		if (isNamedArgs)
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
 		return sqlToyResult;
 	}
 
@@ -353,7 +365,7 @@ public class SqlConfigParseUtils {
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
-				//判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
+				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
 				boolean logicValue = true;
 				int start = markContentSql.toLowerCase().indexOf("@if");
 				// sql中存在逻辑判断
