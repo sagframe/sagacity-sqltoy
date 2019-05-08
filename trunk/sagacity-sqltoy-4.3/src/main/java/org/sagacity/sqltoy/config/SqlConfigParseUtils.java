@@ -82,7 +82,6 @@ public class SqlConfigParseUtils {
 	 * CTE 即 with as 用法
 	 */
 	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
-
 	
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
@@ -99,9 +98,6 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
-	// add 2018-11-20 by chenrenfei
-	public final static String CACHE_REGEX = "(?i)\\@cacheFilter|cacheStrFillter\\s*\\(\\s*\\?\\s*\\)";
-	public final static Pattern CACHE_PATTERN = Pattern.compile(CACHE_REGEX);
 
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
@@ -193,10 +189,6 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 替换@value(?) 为参数对应的数值
 		processValue(sqlToyResult);
-
-		// 过滤缓存模糊查询
-		//processCacheFilter(sqlToyResult);
-
 		
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
@@ -478,40 +470,6 @@ public class SqlConfigParseUtils {
 			// 用参数的值直接覆盖@value(:name)
 			paramValue = paramValueList.get(paramCnt - valueCnt);
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
-					(paramValue == null) ? "null" : paramValue.toString()));
-			// 剔除参数@value(?) 对应的参数值
-			paramValueList.remove(paramCnt - valueCnt);
-			valueCnt++;
-		}
-		if (valueCnt > 0) {
-			sqlToyResult.setParamsValue(paramValueList.toArray());
-		}
-	}
-
-	/**
-	 * 待实现(4.2.21 版本实现）
-	 * @todo 处理缓存过滤器为in ()作为条件:#[@cacheFilter(cacheName,:paramNamed) sql]
-	 * @param sqlToyResult
-	 */
-	public static void processCacheFilter(SqlToyResult sqlToyResult) {
-		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
-			return;
-		String queryStr = sqlToyResult.getSql().toLowerCase();
-		Matcher m = CACHE_PATTERN.matcher(queryStr);
-		int index = 0;
-		int paramCnt = 0;
-		int valueCnt = 0;
-		List paramValueList = null;
-		Object paramValue = null;
-		while (m.find()) {
-			if (valueCnt == 0)
-				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
-			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
-			// 用参数的值直接覆盖@value(:name)
-			paramValue = paramValueList.get(paramCnt - valueCnt);
-			
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(CACHE_REGEX,
 					(paramValue == null) ? "null" : paramValue.toString()));
 			// 剔除参数@value(?) 对应的参数值
 			paramValueList.remove(paramCnt - valueCnt);
