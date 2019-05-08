@@ -178,15 +178,17 @@ public class SqlConfigParseUtils {
 		if (null == paramsValue || paramsValue.length == 0)
 			return new SqlToyResult(queryStr, paramsValue);
 		SqlToyResult sqlToyResult = new SqlToyResult();
-		SqlParamsModel sqlParam = processNamedParamsQuery(queryStr);
-
-		sqlToyResult.setSql(sqlParam.getSql());
-		// 是否:paramName 形式的参数模式
-		boolean isNamedArgs = (sqlParam.getParamsName() != null && sqlParam.getParamsName().length > 0);
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
+		// 是否:paramName 形式的参数模式
+		boolean isNamedArgs = StringUtil.matches(queryStr, PARAM_NAME_PATTERN);
+		SqlParamsModel sqlParam;
 		if (isNamedArgs)
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(ARG_NAME, questionMark));
+			sqlParam = processNamedParamsQuery(queryStr.replaceAll(ARG_NAME, questionMark));
+		else
+			sqlParam = processNamedParamsQuery(queryStr);
+
+		sqlToyResult.setSql(sqlParam.getSql());
 
 		// 参数和参数值进行匹配
 		sqlToyResult.setParamsValue(matchNamedParam(sqlParam.getParamsName(), paramsNamed, paramsValue));
@@ -207,7 +209,7 @@ public class SqlConfigParseUtils {
 		// 参数为null的处理策略(用null直接代替变量)
 		replaceNull(sqlToyResult, 0);
 
-		// 将特殊字符替换会问号
+		// 将特殊字符替换回问号
 		if (isNamedArgs)
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
 		return sqlToyResult;
