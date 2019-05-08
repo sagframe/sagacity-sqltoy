@@ -862,20 +862,4 @@ public class SqlConfigParseUtils {
 		result.append(lastFunction);
 		return result.toString();
 	}
-
-//	public static void main(String[] args) {
-//		String queryStr = "select where a='?' and t.name=:tmp";
-//		// 是否:paramName 形式的参数模式
-//		boolean isNamedArgs = StringUtil.matches(queryStr, PARAM_NAME_PATTERN);
-//		// 将sql中的问号临时先替换成特殊字符
-//		String questionMark = "#sqltoy_qsmark_placeholder#";
-//		String questionMarkRegex = "\\#sqltoy_qsmark_placeholder\\#";
-//		if (isNamedArgs)
-//			queryStr = queryStr.replaceAll(ARG_REGEX, questionMark);
-//		System.err.println(queryStr);
-//		// 将特殊字符替换回问号
-//		if (isNamedArgs)
-//			queryStr = queryStr.replaceAll(questionMarkRegex, ARG_NAME);
-//		System.err.println(queryStr);
-//	}
 }
