@@ -52,13 +52,19 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * 登记发生了异常
+	 * @todo 向线程中登记发生了异常,便于最终
+	 * @param e
 	 */
 	public static void error(Exception e) {
 		if (threadLocal.get() != null)
 			threadLocal.get().setError(true);
 	}
 
+	/**
+	 * @todo 在debug模式下,在console端输出sql,便于开发人员查看
+	 * @param sql
+	 * @param paramValues
+	 */
 	public static void showSql(String sql, Object[] paramValues) {
 		try {
 			// debug模式直接输出
@@ -77,9 +83,9 @@ public class SqlExecuteStat {
 	 * @todo 实际执行打印sql和参数
 	 * @param sql
 	 * @param paramValues
-	 * @param isLogger
+	 * @param isErrorOrWarn
 	 */
-	private static void printSql(String sql, Object[] paramValues, boolean isLogger) {
+	private static void printSql(String sql, Object[] paramValues, boolean isErrorOrWarn) {
 		SqlExecuteTrace sqlTrace = threadLocal.get();
 		StringBuilder paramStr = new StringBuilder();
 		if (paramValues != null) {
@@ -90,12 +96,15 @@ public class SqlExecuteStat {
 			}
 		}
 		if (sqlTrace != null) {
-			if (isLogger) {
+			// 异常或超时
+			if (isErrorOrWarn) {
 				logger.error("执行:{} 类型的sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId() + " 发生异常!");
-			} else
+			} // showSql
+			else {
 				out.println("执行:{" + sqlTrace.getType() + "} 类型sql,sqlId=" + sqlTrace.getId());
+			}
 		}
-		if (isLogger) {
+		if (isErrorOrWarn) {
 			logger.error("sqlScript:{}", sql);
 			logger.error("sqlParams:{}", paramStr);
 		} else {
@@ -104,17 +113,23 @@ public class SqlExecuteStat {
 		}
 	}
 
+	/**
+	 * 在执行结尾时记录日志
+	 */
 	private static void loggerSql() {
 		try {
 			SqlExecuteTrace sqlTrace = threadLocal.get();
 			if (sqlTrace == null)
 				return;
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
-			if (overTime >= 0 && sqlTrace.getStart() != null)
+			// sql执行超过阀值记录日志为软件优化提供依据
+			if (overTime >= 0 && sqlTrace.getStart() != null) {
 				logger.warn("类型:{}的sql执行超出:{}毫秒的阀值, 共执行:{} 毫秒,请优化!", sqlTrace.getType(), printSqlTimeoutMillis,
 						overTime + printSqlTimeoutMillis);
+			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError())
 				return;
+			// 记录错误日志
 			List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
 			for (SqlToyResult sqlResult : sqlToyResults)
 				printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
@@ -127,6 +142,7 @@ public class SqlExecuteStat {
 	 * 清理线程中的数据
 	 */
 	public static void destroy() {
+		// 执行完成时打印日志
 		loggerSql();
 		threadLocal.remove();
 		threadLocal.set(null);
