@@ -35,7 +35,7 @@ public enum ReturnPkType {
 
 	/**
 	 * @todo 转换给定字符串为枚举主键策略
-	 * @param strategy
+	 * @param returnPkType
 	 * @return
 	 */
 	public static ReturnPkType getReturnPkType(Integer returnPkType) {
