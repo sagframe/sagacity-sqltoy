@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 扫描classes目录以及jar包中的class文件；以及扫描sql.xml文件
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:ScanEntityAndSqlResource.java,Revision:v1.0,Date:2012-6-10

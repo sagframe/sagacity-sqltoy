@@ -44,7 +44,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 解析sql配置文件
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:SqlXMLConfigParse.java,Revision:v1.0,Date:2009-12-14 上午12:07:03
@@ -870,7 +870,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析列格式化
+	 * @todo 解析列日期、数据格式化配置
 	 * @param sqlToyConfig
 	 * @param dfElts
 	 * @param nfElts
@@ -1056,7 +1056,7 @@ public class SqlXMLConfigParse {
 			}
 		}
 
-		// 加入sqltoyModel
+		// 加入sqlToyConfig
 		if (!resultProcessor.isEmpty()) {
 			sqlToyConfig.setResultProcessor(resultProcessor);
 		}

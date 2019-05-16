@@ -29,7 +29,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供sqlToy 针对sql语句以及查询条件加工处理的通用函数
  * @author chenrf $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
  * @version $id:SqlConfigParseUtils.java,Revision:v1.0,Date:2009-12-14

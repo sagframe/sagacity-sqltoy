@@ -40,7 +40,7 @@ import org.sagacity.sqltoy.plugin.id.UUIDGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 通过注解解析实体对象,得到其跟数据库表的对应关系,并形成相应表增删改查的语句
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:EntityManager.java,Revision:v1.0,Date:2012-6-1 下午4:23:26
@@ -125,7 +125,7 @@ public class EntityManager {
 					if (ScanEntityAndSqlResource.isSqlToyEntity(entityClass))
 						entities.add(entityClass);
 				} catch (ClassNotFoundException e) {
-					// log.error("添加用户自定义视图类错误 找不到此类的.class文件");
+					// log.error("添加用户自定义实体POJO类错误 找不到此类的.class文件");
 					e.printStackTrace();
 				}
 			}
@@ -247,10 +247,11 @@ public class EntityManager {
 			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", entityClass.getName());
 			e.printStackTrace();
 		}
-		if (entityMeta != null)
+		if (entityMeta != null) {
 			entitysMetaMap.put(entityClass, entityMeta);
-		else
+		} else {
 			logger.error("类型检查错误[SqlToy EntityCLass:{}] 注解配置非法,请检查!", entityClass.getName());
+		}
 		return entityMeta;
 	}
 
@@ -479,6 +480,7 @@ public class EntityManager {
 	/**
 	 * @todo 处理id生成器
 	 * @param sqlToyContext
+	 * @param entityMeta
 	 * @param idGenerator
 	 * @throws Exception
 	 */

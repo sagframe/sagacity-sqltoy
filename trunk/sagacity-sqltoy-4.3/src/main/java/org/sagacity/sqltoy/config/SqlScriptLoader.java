@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.plugin.IFunction;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 解析sql配置文件，并放入缓存
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:SqlScriptLoader.java,Revision:v1.0,Date:2009-12-13 下午03:27:53
@@ -137,7 +137,7 @@ public class SqlScriptLoader {
 				SqlXMLConfigParse.parseXML(realSqlList, sqlCache, this.encoding, this.dialect);
 			} catch (Exception e) {
 				e.printStackTrace();
-				logger.error("debug 模式下重新解析SQL对应的xml文件错误!".concat(e.getMessage()), e);
+				logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
 			}
 		}
 		return (SqlToyConfig) sqlCache.get(sqlKey);
@@ -155,13 +155,13 @@ public class SqlScriptLoader {
 
 	/**
 	 * @todo 直接构造SqlToyModel 放入sqltoy 缓存
-	 * @param sqlToyModel
+	 * @param sqlToyConfig
 	 * @throws Exception
 	 */
 	public void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
 			if (sqlCache.get(sqlToyConfig.getId()) != null)
-				logger.warn("发现重复的SQL语句,id=".concat(sqlToyConfig.getId()).concat(",将被覆盖!"));
+				logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
 			sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
 		}
 	}
@@ -201,7 +201,7 @@ public class SqlScriptLoader {
 				String functionName = null;
 				for (int i = 0; i < functionConverts.size(); i++) {
 					functionName = functionConverts.get(i).toString().trim();
-					// 修正调整后的包路径,保持兼容
+					// sql函数包名变更,修正调整后的包路径,保持兼容
 					functionName = functionName.replace("org.sagacity.sqltoy.config.function.impl",
 							"org.sagacity.sqltoy.plugin.function");
 					// 只是不包含包名的类名称
