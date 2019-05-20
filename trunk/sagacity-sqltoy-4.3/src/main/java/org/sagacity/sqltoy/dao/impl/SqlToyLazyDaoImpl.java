@@ -871,7 +871,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String, org.sagacity.sqltoy.plugin.TranslateHandler)
 	 */
 	@Override
-	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) throws Exception {
 		// 数据以及合法性校验
 		if (dataSet == null || dataSet.isEmpty())
@@ -880,8 +880,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 			throw new Exception("缓存名称不能为空!");
 		if (handler == null)
 			throw new Exception("缓存翻译行取key和设置name的反调函数不能为null!");
-		//获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
-		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, dictType);
+		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
+		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, cacheType);
 		if (cache == null || cache.isEmpty())
 			return;
 		Iterator iter = dataSet.iterator();
@@ -889,7 +889,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		Object key;
 		Object name;
 		// 默认名称字段列为1
-		int cacheIndex = (index == null) ? 1 : index.intValue();
+		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
 		// 循环获取行数据
 		while (iter.hasNext()) {
 			row = iter.next();

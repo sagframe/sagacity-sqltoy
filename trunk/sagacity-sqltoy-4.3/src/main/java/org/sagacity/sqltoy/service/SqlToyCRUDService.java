@@ -266,7 +266,7 @@ public interface SqlToyCRUDService {
 	 * @todo 对记录进行翻译
 	 * @param dataSet
 	 * @param cacheName
-	 * @param dictType
+	 * @param cacheType
 	 * @param cacheNameIndex
 	 * @param handler
 	 * @throws Exception
