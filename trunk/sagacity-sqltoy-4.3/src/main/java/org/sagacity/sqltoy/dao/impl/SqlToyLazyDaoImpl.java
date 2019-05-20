@@ -890,7 +890,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 				//反调获取key
 				key = handler.getKey(row);
 				if (key != null) {
-					name = cache.get(key)[cacheIndex];
+					name = cache.get(key.toString())[cacheIndex];
 					//反调设置翻译后的名称
 					handler.setName(row, (name == null) ? "" : name.toString());
 				}

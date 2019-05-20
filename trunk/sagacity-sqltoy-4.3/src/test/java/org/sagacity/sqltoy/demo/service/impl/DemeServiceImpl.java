@@ -5,18 +5,21 @@ package org.sagacity.sqltoy.demo.service.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.demo.service.DemoService;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.plugin.TranslateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
  * @project sqltoy-orm
- * @description <p>
+ * @description
+ *              <p>
  *              请在此说明类的功能
  *              </p>
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
@@ -36,21 +39,21 @@ public class DemeServiceImpl implements DemoService {
 	public List updateFetch() throws Exception {
 		StringBuilder query = new StringBuilder(
 				"SELECT STAFF_ID, STAFF_CODE, ORGAN_ID, STAFF_NAME, ENGLISH_NAME, SEX_TYPE,");
-		query.append("LINK_PHONE, BIRTHDAY, DUTY_DATE, OUT_DUTY_DATE, POST, PHOTO, EMAIL, IS_VIRTUAL, OPERATOR, OPERATE_DATE, ENABLED ");
+		query.append(
+				"LINK_PHONE, BIRTHDAY, DUTY_DATE, OUT_DUTY_DATE, POST, PHOTO, EMAIL, IS_VIRTUAL, OPERATOR, OPERATE_DATE, ENABLED ");
 		query.append(" FROM SYS_STAFF_INFO where SEX_TYPE=:sexType");
 		// String sql =
-		// "select t.TRIGGER_ID, t.MANUAL_END, t.STATUS from cron_trigger t where t.STATUS in (:status) ";
-		QueryExecutor queryExecutor = new QueryExecutor(query.toString(),
-				new String[] { "sexType" }, new Object[] { "F" });
-		List result = sqlToyLazyDao.updateFetch(queryExecutor,
-				new UpdateRowHandler() {
-					@Override
-					public void updateRow(ResultSet rs, int index)
-							throws SQLException {
-						rs.updateString("LINK_PHONE", "13918799460");
-						rs.updateString("ENGLISH_NAME", rs.getString("STAFF_NAME")+"EN");
-					}
-				});
+		// "select t.TRIGGER_ID, t.MANUAL_END, t.STATUS from cron_trigger t where
+		// t.STATUS in (:status) ";
+		QueryExecutor queryExecutor = new QueryExecutor(query.toString(), new String[] { "sexType" },
+				new Object[] { "F" });
+		List result = sqlToyLazyDao.updateFetch(queryExecutor, new UpdateRowHandler() {
+			@Override
+			public void updateRow(ResultSet rs, int index) throws SQLException {
+				rs.updateString("LINK_PHONE", "13918799460");
+				rs.updateString("ENGLISH_NAME", rs.getString("STAFF_NAME") + "EN");
+			}
+		});
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(((List) result.get(i)).get(0));
 			System.err.println(((List) result.get(i)).get(3));
@@ -69,4 +72,20 @@ public class DemeServiceImpl implements DemoService {
 		return result;
 	}
 
+	public void testTranslate() throws Exception {
+		List myDataSet = new ArrayList();
+		myDataSet.add(new Object[] { "001", "" });
+		myDataSet.add(new Object[] { "002", "" });
+		sqlToyLazyDao.translate(myDataSet, "dictKeyCache", "TAX_RATE", 1, new TranslateHandler() {
+			@Override
+			public void setName(Object row, String name) {
+				((Object[]) row)[1] = name;
+			}
+
+			@Override
+			public Object getKey(Object row) {
+				return ((Object[]) row)[0];
+			}
+		});
+	}
 }

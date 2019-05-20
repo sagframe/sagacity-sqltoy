@@ -15,7 +15,7 @@ public abstract class TranslateHandler {
 	 * @param row
 	 * @return
 	 */
-	public abstract String getKey(Object row);
+	public abstract Object getKey(Object row);
 
 	/**
 	 * @todo 设置显示名称
