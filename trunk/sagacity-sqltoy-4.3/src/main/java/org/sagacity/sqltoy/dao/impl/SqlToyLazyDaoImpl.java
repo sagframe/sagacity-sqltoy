@@ -873,8 +873,13 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
 			TranslateHandler handler) throws Exception {
+		// 数据以及合法性校验
 		if (dataSet == null || dataSet.isEmpty())
 			return;
+		if (cacheName == null)
+			throw new Exception("缓存名称不能为空!");
+		if (handler == null)
+			throw new Exception("缓存翻译行取key和设置name的反调函数不能为null!");
 		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, dictType);
 		if (cache == null || cache.isEmpty())
 			return;
@@ -884,14 +889,16 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		Object name;
 		// 默认名称字段列为1
 		int cacheIndex = (index == null) ? 1 : index.intValue();
+		// 循环获取行数据
 		while (iter.hasNext()) {
 			row = iter.next();
 			if (row != null) {
-				//反调获取key
+				// 反调获取需要翻译的key
 				key = handler.getKey(row);
 				if (key != null) {
+					// 从缓存中获取对应的名称
 					name = cache.get(key.toString())[cacheIndex];
-					//反调设置翻译后的名称
+					// 反调设置行数据中具体列或属性翻译后的名称
 					handler.setName(row, (name == null) ? "" : name.toString());
 				}
 			}
