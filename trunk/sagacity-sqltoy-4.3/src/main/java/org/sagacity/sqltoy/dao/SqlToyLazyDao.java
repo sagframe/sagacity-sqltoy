@@ -6,6 +6,7 @@
 package org.sagacity.sqltoy.dao;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugin.TranslateHandler;
 
 /**
  * @project sqltoy-orm
@@ -553,5 +555,16 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception;
+
+	/**
+	 * @todo 对记录进行翻译
+	 * @param dataSet
+	 * @param cacheName
+	 * @param dictType
+	 * @param handler
+	 * @throws Exception
+	 */
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+			TranslateHandler handler) throws Exception;
 
 }

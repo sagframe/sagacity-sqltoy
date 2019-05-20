@@ -4,7 +4,9 @@
 package org.sagacity.sqltoy.dao.impl;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -36,6 +38,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugin.TranslateHandler;
 import org.sagacity.sqltoy.support.BaseDaoSupport;
 import org.springframework.stereotype.Repository;
 
@@ -859,6 +862,40 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
 		// TODO Auto-generated method stub
 		return super.getTranslateCache(cacheName, elementId);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#translate(java.lang.String,
+	 * java.lang.String, org.sagacity.sqltoy.plugin.TranslateHandler)
+	 */
+	@Override
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+			TranslateHandler handler) throws Exception {
+		if (dataSet == null || dataSet.isEmpty())
+			return;
+		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, dictType);
+		if (cache == null || cache.isEmpty())
+			return;
+		Iterator iter = dataSet.iterator();
+		Object row;
+		Object key;
+		Object name;
+		// 默认名称字段列为1
+		int cacheIndex = (index == null) ? 1 : index.intValue();
+		while (iter.hasNext()) {
+			row = iter.next();
+			if (row != null) {
+				//反调获取key
+				key = handler.getKey(row);
+				if (key != null) {
+					name = cache.get(key)[cacheIndex];
+					//反调设置翻译后的名称
+					handler.setName(row, (name == null) ? "" : name.toString());
+				}
+			}
+		}
 	}
 
 }
