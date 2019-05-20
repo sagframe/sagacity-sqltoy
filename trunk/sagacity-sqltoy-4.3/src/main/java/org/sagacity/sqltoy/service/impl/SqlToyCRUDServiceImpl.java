@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.service.impl;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,7 @@ import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugin.TranslateHandler;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -602,6 +604,20 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 			e.printStackTrace();
 			throw new BaseException(e);
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.service.SqlToyCRUDService#translate(java.util.Collection,
+	 * java.lang.String, java.lang.String, java.lang.Integer,
+	 * org.sagacity.sqltoy.plugin.TranslateHandler)
+	 */
+	@Override
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+			TranslateHandler handler) throws Exception {
+		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
 	}
 
 }

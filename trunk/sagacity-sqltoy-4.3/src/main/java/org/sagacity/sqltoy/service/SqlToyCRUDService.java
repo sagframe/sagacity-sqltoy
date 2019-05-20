@@ -4,11 +4,13 @@
 package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.plugin.TranslateHandler;
 
 /**
  * @project sqltoy-orm
@@ -259,4 +261,15 @@ public interface SqlToyCRUDService {
 	 * @throws Exception
 	 */
 	public String generateBizId(Serializable entity) throws Exception;
+	
+	/**
+	 * @todo 对记录进行翻译
+	 * @param dataSet
+	 * @param cacheName
+	 * @param dictType
+	 * @param handler
+	 * @throws Exception
+	 */
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+			TranslateHandler handler) throws Exception;
 }
