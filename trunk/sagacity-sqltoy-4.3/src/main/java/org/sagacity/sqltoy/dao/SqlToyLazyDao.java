@@ -561,10 +561,11 @@ public interface SqlToyLazyDao {
 	 * @param dataSet
 	 * @param cacheName
 	 * @param dictType
+	 * @param cacheNameIndex
 	 * @param handler
 	 * @throws Exception
 	 */
-	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer cacheNameIndex,
 			TranslateHandler handler) throws Exception;
 
 }

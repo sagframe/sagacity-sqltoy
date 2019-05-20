@@ -72,20 +72,34 @@ public class DemeServiceImpl implements DemoService {
 		return result;
 	}
 
+	/**
+	 * @todo 直接调用sqltoy缓存进行集合翻译
+	 * @throws Exception
+	 */
 	public void testTranslate() throws Exception {
 		List myDataSet = new ArrayList();
 		myDataSet.add(new Object[] { "001", "" });
 		myDataSet.add(new Object[] { "002", "" });
+		
+		//通过一个反调,实现自主取需要翻译的代码
+		/*
+		 * 参数说明
+		 * 1、集合;
+		 * 2、缓存名称
+		 * 3、缓存类型(一般针对数据字典,非数据字典传null)
+		 * 4、cacheNameIndex,如果传null 则默认赋值为1
+		 */
 		sqlToyLazyDao.translate(myDataSet, "dictKeyCache", "TAX_RATE", 1, new TranslateHandler() {
-			@Override
-			public void setName(Object row, String name) {
-				((Object[]) row)[1] = name;
-			}
-
-			@Override
+			//获取需要翻译的key
 			public Object getKey(Object row) {
 				return ((Object[]) row)[0];
 			}
+			
+			//提供给框架实现翻译结果名称设置到结合列或属性上去
+			public void setName(Object row, String name) {
+				((Object[]) row)[1] = name;
+			}
+			
 		});
 	}
 }

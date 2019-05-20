@@ -261,15 +261,16 @@ public interface SqlToyCRUDService {
 	 * @throws Exception
 	 */
 	public String generateBizId(Serializable entity) throws Exception;
-	
+
 	/**
 	 * @todo 对记录进行翻译
 	 * @param dataSet
 	 * @param cacheName
 	 * @param dictType
+	 * @param cacheNameIndex
 	 * @param handler
 	 * @throws Exception
 	 */
-	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
+	public void translate(Collection dataSet, String cacheName, String dictType, Integer cacheNameIndex,
 			TranslateHandler handler) throws Exception;
 }
