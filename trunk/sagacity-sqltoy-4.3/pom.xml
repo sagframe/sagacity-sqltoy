@@ -40,17 +40,18 @@
 		</repository>
 	</repositories>
 	<distributionManagement>
-<!-- 
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
 			</repository> -->
-		 <repository>
+		<repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
 		</repository>
 		<snapshotRepository>
 			<id>nexus-snapshots</id>
-			<name>Department Repository</name>
+			<name>Department 
+			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
 		</snapshotRepository>
 
@@ -218,7 +219,7 @@
 			<version>${fastjson.version}</version>
 			<optional>true</optional>
 		</dependency>
-	
+
 		<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client -->
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
