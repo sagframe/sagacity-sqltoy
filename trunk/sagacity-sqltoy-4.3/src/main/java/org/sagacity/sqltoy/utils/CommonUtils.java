@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,10 +52,8 @@ public class CommonUtils {
 
 	/**
 	 * @todo 产生随机数数组
-	 * @param maxValue
-	 *            随机数的最大值
-	 * @param size
-	 *            随机数的个数
+	 * @param maxValue 随机数的最大值
+	 * @param size     随机数的个数
 	 * @return
 	 */
 	public static Object[] randomArray(int maxValue, int size) {
@@ -98,15 +98,16 @@ public class CommonUtils {
 
 	/**
 	 * @todo 获得指定路径的文件
-	 * @param file
-	 *            文件路径like:classpath:xxx.xml或xxx.xml
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
 		if (file == null)
 			return null;
 		try {
-			if (file instanceof File)
+			if (file instanceof InputStream)
+				return (InputStream) file;
+			else if (file instanceof File)
 				return new FileInputStream((File) file);
 			else {
 				String realFile = (String) file;
@@ -120,7 +121,23 @@ public class CommonUtils {
 						realFile = realFile.trim().substring(10).trim();
 					if (realFile.charAt(0) == '/')
 						realFile = realFile.substring(1);
-					return Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+					InputStream result=Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+					if (result == null) {
+						try {
+							Enumeration<URL> urls = Thread.currentThread().getContextClassLoader()
+									.getResources(realFile);
+							URL url;
+							while (urls.hasMoreElements()) {
+								url = urls.nextElement();
+								result = new FileInputStream(url.getFile());
+								if (result != null)
+									break;
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					return result;
 				}
 			}
 		} catch (FileNotFoundException fn) {
