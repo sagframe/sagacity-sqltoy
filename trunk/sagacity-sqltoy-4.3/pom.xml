@@ -18,7 +18,7 @@
 		<ehcache.version>3.7.1</ehcache.version>
 		<httpclient.version>4.5.8</httpclient.version>
 		<httpclient-core.version>4.4.11</httpclient-core.version>
-		<elastic-rest-client.version>7.0.1</elastic-rest-client.version>
+		<elastic-rest-client.version>7.1.1</elastic-rest-client.version>
 		<fastjson.version>1.2.58</fastjson.version>
 		<mongo.version>3.10.2</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
