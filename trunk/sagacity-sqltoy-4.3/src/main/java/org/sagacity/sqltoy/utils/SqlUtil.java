@@ -181,12 +181,15 @@ public class SqlUtil {
 	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params, Integer[] paramsType,
 			int fromIndex) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
-			if (null == paramsType || paramsType.length == 0)
-				for (int i = 0, n = params.length; i < n; i++)
+			if (null == paramsType || paramsType.length == 0) {
+				for (int i = 0, n = params.length; i < n; i++) {
 					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
-			else
-				for (int i = 0, n = params.length; i < n; i++)
+				}
+			} else {
+				for (int i = 0, n = params.length; i < n; i++) {
 					setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
+				}
+			}
 		}
 	}
 
@@ -204,12 +207,15 @@ public class SqlUtil {
 	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params, Integer[] paramsType,
 			int fromIndex, int endIndex) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
-			if (null == paramsType || paramsType.length == 0)
-				for (int i = 0; i < endIndex; i++)
+			if (null == paramsType || paramsType.length == 0) {
+				for (int i = 0; i < endIndex; i++) {
 					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
-			else
-				for (int i = 0; i < endIndex; i++)
+				}
+			} else {
+				for (int i = 0; i < endIndex; i++) {
 					setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
+				}
+			}
 		}
 	}
 
