@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.callback;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * @project sagacity-sqltoy
@@ -17,7 +16,7 @@ public abstract class UpdateRowHandler {
 	 * @todo 行处理抽象方法接口定义
 	 * @param rs
 	 * @param index
-	 * @throws SQLException
+	 * @throws Exception
 	 */
 	public abstract void updateRow(ResultSet rs, int index) throws Exception;
 }
