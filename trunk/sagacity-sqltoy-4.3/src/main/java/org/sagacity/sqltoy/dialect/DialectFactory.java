@@ -276,7 +276,7 @@ public class DialectFactory {
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
 			final DataSource dataSource) throws Exception {
 		if (uniqueExecutor.getEntity() == null)
-			throw new Exception("unique judge entity object is null,please check!");
+			throw new BaseException("unique judge entity object is null,please check!");
 		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(), false,
 				dataSource);
 		try {
@@ -308,7 +308,7 @@ public class DialectFactory {
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Double randomCount, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new Exception("getRandomResult operate sql is null!");
+			throw new BaseException("getRandomResult operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
@@ -391,9 +391,9 @@ public class DialectFactory {
 				columnMap.put(column.getColumnName().toUpperCase(), "");
 			if (null == treeModel.getNodeRouteField()
 					|| !columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
-				throw new Exception("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
+				throw new BaseException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
 			if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
-				throw new Exception("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
+				throw new BaseException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
 
 			FieldMeta IdMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 			// 主键
@@ -445,7 +445,7 @@ public class DialectFactory {
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
 			final Integer pageSize, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new Exception("findPage operate sql is null!");
+			throw new BaseException("findPage operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
@@ -546,7 +546,7 @@ public class DialectFactory {
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final double topSize, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new Exception("findTop operate sql is null!");
+			throw new BaseException("findTop operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
@@ -607,7 +607,7 @@ public class DialectFactory {
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new Exception("findByQuery operate sql is null!");
+			throw new BaseException("findByQuery operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
@@ -659,7 +659,7 @@ public class DialectFactory {
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new Exception("getCountBySql operate sql is null!");
+			throw new BaseException("getCountBySql operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
