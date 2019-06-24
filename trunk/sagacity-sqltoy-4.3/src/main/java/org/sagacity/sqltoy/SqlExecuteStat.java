@@ -98,7 +98,7 @@ public class SqlExecuteStat {
 		if (sqlTrace != null) {
 			// 异常或超时
 			if (isErrorOrWarn) {
-				logger.error("执行:{} 类型的sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId() + " 发生异常!");
+				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
 				out.println("执行:{" + sqlTrace.getType() + "} 类型sql,sqlId=" + sqlTrace.getId());
@@ -124,8 +124,8 @@ public class SqlExecuteStat {
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("类型:{}的sql执行超出:{}毫秒的阀值, 共执行:{} 毫秒,请优化!", sqlTrace.getType(), printSqlTimeoutMillis,
-						overTime + printSqlTimeoutMillis);
+				logger.warn("类型:{}的sql:[{}]执行超出:{}毫秒的阀值, 共执行:{} 毫秒,请优化!", sqlTrace.getType(), sqlTrace.getId(),
+						printSqlTimeoutMillis, overTime + printSqlTimeoutMillis);
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError())
 				return;
@@ -149,24 +149,21 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @param printSqlStrategy
-	 *            the printSqlStrategy to set
+	 * @param printSqlStrategy the printSqlStrategy to set
 	 */
 	public static void setPrintSqlStrategy(String printSqlStrategy) {
 		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
-	 * @param debug
-	 *            the debug to set
+	 * @param debug the debug to set
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis
-	 *            the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;
