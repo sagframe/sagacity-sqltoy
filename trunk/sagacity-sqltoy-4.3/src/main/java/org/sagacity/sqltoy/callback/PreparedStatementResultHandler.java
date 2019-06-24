@@ -14,6 +14,9 @@ import java.sql.ResultSet;
  *          上午11:06:47
  */
 public abstract class PreparedStatementResultHandler {
+	/**
+	 * 结果集
+	 */
 	private Object result;
 
 	/**

@@ -15,7 +15,7 @@ import java.sql.SQLException;
  */
 public abstract class InsertRowCallbackHandler {
 	/**
-	 * @todo <b>批量插入反调</b>
+	 * @todo 批量插入反调
 	 * @param pst
 	 * @param index
 	 * @param rowData

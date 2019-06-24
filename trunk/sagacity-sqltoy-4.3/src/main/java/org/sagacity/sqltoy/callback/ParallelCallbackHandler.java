@@ -15,5 +15,13 @@ import org.sagacity.sqltoy.model.ShardingGroupModel;
  * @version id:ParallelCallbackHandler.java,Revision:v1.0,Date:2017年11月3日
  */
 public abstract class ParallelCallbackHandler {
-	public abstract List<?> execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel) throws Exception;
+	/**
+	 * @todo 并行执行反调计算
+	 * @param sqlToyContext
+	 * @param shardingGroupModel
+	 * @return
+	 * @throws Exception
+	 */
+	public abstract List<?> execute(SqlToyContext sqlToyContext, ShardingGroupModel shardingGroupModel)
+			throws Exception;
 }
