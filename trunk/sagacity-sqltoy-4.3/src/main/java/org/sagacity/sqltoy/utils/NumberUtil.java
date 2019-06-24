@@ -17,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * @project sagacity-core
+ * @project sagacity-sqltoy
  * @description 数据处理工具类
  *              <li>提供数字类型的数据转换成特定格式的字符串</li>
  *              <li>提供转换字符串到数字类型数据</li>
@@ -546,9 +546,5 @@ public class NumberUtil {
 			base = base + probabilities[i];
 		}
 		return 0;
-	}
-
-	public static void main(String[] args) {
-		System.err.println(NumberUtil.toCapitalMoney(new BigDecimal("40400013.108")));
 	}
 }

@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description sql查询参数过滤
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:ParamFilterUtils.java,Revision:v1.0,Date:2013-3-23

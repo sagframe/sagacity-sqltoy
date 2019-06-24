@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提供统一的dataSource管理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DataSourceUtils.java,Revision:v1.0,Date:2015年3月3日

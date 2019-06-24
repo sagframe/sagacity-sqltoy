@@ -37,7 +37,7 @@ import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.QueryResult;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-4-18

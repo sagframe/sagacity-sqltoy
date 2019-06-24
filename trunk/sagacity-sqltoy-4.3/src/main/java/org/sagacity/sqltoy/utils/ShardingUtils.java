@@ -33,7 +33,7 @@ import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.plugin.ShardingStrategy;
 
 /**
- * @project sqltoy-orm
+ * @project sagacity-sqltoy
  * @description 提取sharding表和DataSource
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ShardingUtils.java,Revision:v1.0,Date:2014年12月7日

@@ -862,11 +862,4 @@ public class SqlConfigParseUtils {
 		result.append(lastFunction);
 		return result.toString();
 	}
-
-	public static void main(String[] args) {
-		Pattern pattern = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-z|A-Z]+\\w+(\\.\\w+)*\\s*");
-		Matcher m = pattern.matcher("select * from name=:q )");
-		while (m.find())
-			System.err.print("[" + m.group() + "]");
-	}
 }

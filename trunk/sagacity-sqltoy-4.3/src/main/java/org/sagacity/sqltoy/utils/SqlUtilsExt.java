@@ -76,7 +76,7 @@ public class SqlUtilsExt {
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
 			final int batchSize, final Boolean autoCommit, final Connection conn) throws Exception {
 		if (rowDatas == null) {
-			logger.error("数据为空!");
+			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
 			return new Long(0);
 		}
 		long updateCount = 0;
