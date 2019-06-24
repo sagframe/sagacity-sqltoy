@@ -124,7 +124,7 @@ public class SqlExecuteStat {
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("{}类型的sql执行耗时(毫秒):{} >= {}(阀值),具体sql={}!", sqlTrace.getType(), printSqlTimeoutMillis,
+				logger.warn("SqlToy超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(), printSqlTimeoutMillis,
 						overTime + printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError())
