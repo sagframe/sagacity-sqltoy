@@ -877,9 +877,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		if (dataSet == null || dataSet.isEmpty())
 			return;
 		if (cacheName == null)
-			throw new Exception("缓存名称不能为空!");
+			throw new IllegalArgumentException("缓存名称不能为空!");
 		if (handler == null)
-			throw new Exception("缓存翻译行取key和设置name的反调函数不能为null!");
+			throw new IllegalArgumentException("缓存翻译行取key和设置name的反调函数不能为null!");
 		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
 		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, cacheType);
 		if (cache == null || cache.isEmpty())
