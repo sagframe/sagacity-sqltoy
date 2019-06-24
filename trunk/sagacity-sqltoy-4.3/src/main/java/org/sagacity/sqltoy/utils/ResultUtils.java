@@ -446,7 +446,7 @@ public class ResultUtils {
 		List categoryList = (pivotCategorySet == null) ? extractCategory(result, categoryCols) : pivotCategorySet;
 		if (debug) {
 			logger.info("---------pivot category info--------------------");
-			DebugUtil.printAry(categoryList, null, " , ", true);
+			DebugUtil.printAry(categoryList, " , ", true);
 		}
 		return CollectionUtil.pivotList(result, categoryList, null, groupCols, categoryCols, pivotCols[0],
 				pivotCols[pivotCols.length - 1], pivotModel.getDefaultValue());

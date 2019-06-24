@@ -1913,7 +1913,7 @@ public class DialectUtils {
 		if (sqlToyContext.isDebug()) {
 			out.println("=================executeSql执行的语句==============");
 			out.println(" execute sql:" + executeSql);
-			DebugUtil.printAry(params, null, ";", false);
+			DebugUtil.printAry(params, ";", false);
 			out.println("======================================================");
 		}
 		return SqlUtil.executeSql(executeSql, params, paramsType, conn, autoCommit);

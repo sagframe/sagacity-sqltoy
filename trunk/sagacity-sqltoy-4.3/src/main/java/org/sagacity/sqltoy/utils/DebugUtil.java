@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.PrintHandler;
-
 /**
  * @project sagacity-sqltoy
  * @description 用于debug提供输出工具以及执行时间统计
@@ -36,7 +34,7 @@ public class DebugUtil {
 	 * @param appendStr
 	 * @param newLine
 	 */
-	public static void printAry(Object obj, PrintHandler printHandler, String appendStr, boolean newLine) {
+	public static void printAry(Object obj, String appendStr, boolean newLine) {
 		if (obj == null) {
 			if (newLine)
 				out.println(obj);
@@ -50,13 +48,12 @@ public class DebugUtil {
 					rowData = tmp[i];
 					if (rowData instanceof Collection || rowData instanceof Object[]) {
 						out.println();
-						printAry(rowData, printHandler, appendStr, false);
+						printAry(rowData, appendStr, false);
 					} else {
 						if (newLine)
-							out.println(printHandler == null ? rowData : printHandler.process(rowData));
+							out.println(rowData);
 						else
-							out.print((printHandler == null ? rowData : printHandler.process(rowData))
-									+ ((i == tmp.length - 1) ? "" : appendStr));
+							out.print(rowData + ((i == tmp.length - 1) ? "" : appendStr));
 					}
 				}
 			} else if (obj instanceof Collection) {
@@ -68,13 +65,12 @@ public class DebugUtil {
 					rowData = iter.next();
 					if (rowData instanceof Collection || rowData instanceof Object[]) {
 						out.println();
-						printAry(rowData, printHandler, appendStr, false);
+						printAry(rowData, appendStr, false);
 					} else {
 						if (newLine)
-							out.println(printHandler == null ? rowData : printHandler.process(rowData));
+							out.println(rowData);
 						else
-							out.print((printHandler == null ? rowData : printHandler.process(rowData))
-									+ (index == size ? "" : appendStr));
+							out.print(rowData + (index == size ? "" : appendStr));
 					}
 				}
 			} else if (obj instanceof Set) {
@@ -86,13 +82,12 @@ public class DebugUtil {
 					rowData = iter.next();
 					if (rowData instanceof Collection || rowData instanceof Object[]) {
 						out.println();
-						printAry(rowData, printHandler, appendStr, false);
+						printAry(rowData, appendStr, false);
 					} else {
 						if (newLine) {
-							out.println(printHandler == null ? rowData : printHandler.process(rowData));
+							out.println(rowData);
 						} else
-							out.print((printHandler == null ? rowData : printHandler.process(rowData))
-									+ (index == size ? "" : appendStr));
+							out.print(rowData + (index == size ? "" : appendStr));
 					}
 				}
 			} else
