@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SapIQDialectUtils;
+import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -105,7 +106,8 @@ public class SybaseIQDialect implements Dialect {
 		try {
 			// 通过参数处理最终的sql和参数值
 			SqlToyResult queryParam = SqlConfigParseUtils.processSql(insertTempSql.toString(),
-					queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
+					queryExecutor.getParamsName(sqlToyConfig),
+					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 
 			// 执行sql将记录插入临时表
 			DialectUtils.executeSql(sqlToyContext, queryParam.getSql(), queryParam.getParamsValue(), null, conn, true);
@@ -363,7 +365,7 @@ public class SybaseIQDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray())
-			throw new Exception(
+			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select * from ");
@@ -515,7 +517,8 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn, 0);
 	}
 
@@ -529,8 +532,8 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
-			throws Exception {
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		String realSql = sql.replaceFirst("(?i)select ", "select top " + topSize + " ");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
@@ -547,9 +550,10 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		// 不支持
-		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	/*

@@ -156,13 +156,13 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn,  final Integer dbType,final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray())
-			throw new Exception(
+			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select * from ");
@@ -379,7 +379,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				0);
@@ -395,8 +396,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
-			throws Exception {
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		String realSql = sql + " limit " + topSize + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
@@ -413,7 +414,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		String realSql = sql + " order by random() limit " + random + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);

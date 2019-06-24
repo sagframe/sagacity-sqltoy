@@ -84,7 +84,7 @@ public class SapIQDialectUtils {
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
-						throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
 								+ relatedColumn[meter] + " 值为null!");
 				}
 			}

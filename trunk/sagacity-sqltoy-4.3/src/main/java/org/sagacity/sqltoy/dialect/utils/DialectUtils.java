@@ -1065,7 +1065,7 @@ public class DialectUtils {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		for (int i = 0; i < pkValues.length; i++)
 			if (null == pkValues[i])
-				throw new Exception(
+				throw new IllegalArgumentException(
 						"load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
 		// 显示sql
@@ -1121,7 +1121,7 @@ public class DialectUtils {
 
 		// 没有主键不能进行load相关的查询
 		if (entityMeta.getIdArray() == null) {
-			throw new Exception("表:" + entityMeta.getSchemaTable() + " 没有主键,不符合load或loadAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("表:" + entityMeta.getSchemaTable() + " 没有主键,不符合load或loadAll规则,请检查表设计是否合理!");
 		}
 		// 主键值
 		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
@@ -1139,7 +1139,7 @@ public class DialectUtils {
 			for (int j = 0; j < idSize; j++) {
 				value = rowList.get(j);
 				if (null == value)
-					throw new Exception("loadAll method must assign value for pk,row:" + i + " pk field:"
+					throw new IllegalArgumentException("loadAll method must assign value for pk,row:" + i + " pk field:"
 							+ entityMeta.getIdArray()[j]);
 				if (!idValues[j].contains(value)) {
 					idValues[j].add(value);
@@ -1234,7 +1234,7 @@ public class DialectUtils {
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
-						throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
 								+ relatedColumn[meter] + " 值为null!");
 				}
 			}
@@ -1386,7 +1386,7 @@ public class DialectUtils {
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
-							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
 									+ relatedColumn[meter] + " 值为null!");
 					}
 				}
@@ -1431,7 +1431,7 @@ public class DialectUtils {
 			String nullFunction, String[] forceUpdateFields, Connection conn, String tableName) throws Exception {
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new Exception("表:" + entityMeta.getTableName() + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1441,12 +1441,12 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
 			if (fieldsValues[i] == null)
-				throw new Exception("通过对象进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException("通过对象进行update操作,主键字段必须要赋值!");
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null)
-			throw new Exception("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
 			out.println("update last execute sql:" + updateSql);
 		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
@@ -1545,7 +1545,7 @@ public class DialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new Exception("表:" + entityMeta.getSchemaTable() + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("表:" + entityMeta.getSchemaTable() + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler);
@@ -1566,7 +1566,7 @@ public class DialectUtils {
 						count++;
 						break;
 					} else {
-						throw new Exception("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+						throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
 					}
 				}
 			}
@@ -1575,7 +1575,7 @@ public class DialectUtils {
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null)
-			throw new Exception("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
 			out.println("updateAll last execute sql:" + updateSql);
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
@@ -1596,7 +1596,7 @@ public class DialectUtils {
 			return new Long(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		if (null == entityMeta.getIdArray())
-			throw new Exception("delete 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
 		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		Integer[] parameterTypes = new Integer[idValues.length];
 		boolean validator = true;
@@ -1608,7 +1608,7 @@ public class DialectUtils {
 			}
 		}
 		if (!validator) {
-			throw new IllegalAccessException(
+			throw new IllegalArgumentException(
 					"delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
@@ -1643,7 +1643,7 @@ public class DialectUtils {
 			return new Long(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		if (null == entityMeta.getIdArray())
-			throw new Exception("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
 		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
 				0);
 		// 判断主键值是否存在空
@@ -1652,7 +1652,7 @@ public class DialectUtils {
 			idsValue = idValues.get(i);
 			for (Object obj : idsValue)
 				if (StringUtil.isBlank(obj))
-					throw new Exception("第[" + i + "]行数据主键值存在空,批量删除以主键为依据，主键不能为空!");
+					throw new IllegalArgumentException("第[" + i + "]行数据主键值存在空,批量删除以主键为依据，主键不能为空!");
 		}
 		int idsLength = entityMeta.getIdArray().length;
 		Integer[] parameterTypes = new Integer[idsLength];

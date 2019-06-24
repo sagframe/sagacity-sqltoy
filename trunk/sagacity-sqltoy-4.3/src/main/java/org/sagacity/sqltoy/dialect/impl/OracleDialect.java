@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
+import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -435,7 +436,7 @@ public class OracleDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
 			throws Exception {
-		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// StringBuilder query = new StringBuilder();
 		// query.append("select SAG_Paginationtable.* FROM ( ");
 		// query.append(sql);
@@ -457,7 +458,7 @@ public class OracleDialect implements Dialect {
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
-		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by dbms_random.random fetch first "
 		// + random + " rows only for update nowait";
 		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,

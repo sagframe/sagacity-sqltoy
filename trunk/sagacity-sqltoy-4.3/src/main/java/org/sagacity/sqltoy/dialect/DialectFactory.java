@@ -44,7 +44,6 @@ import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
@@ -276,7 +275,7 @@ public class DialectFactory {
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
 			final DataSource dataSource) throws Exception {
 		if (uniqueExecutor.getEntity() == null)
-			throw new BaseException("unique judge entity object is null,please check!");
+			throw new IllegalArgumentException("unique judge entity object is null,please check!");
 		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(), false,
 				dataSource);
 		try {
@@ -308,7 +307,7 @@ public class DialectFactory {
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Double randomCount, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new BaseException("getRandomResult operate sql is null!");
+			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
@@ -391,9 +390,9 @@ public class DialectFactory {
 				columnMap.put(column.getColumnName().toUpperCase(), "");
 			if (null == treeModel.getNodeRouteField()
 					|| !columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
-				throw new BaseException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
+				throw new IllegalArgumentException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
 			if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
-				throw new BaseException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
+				throw new IllegalArgumentException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
 
 			FieldMeta IdMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 			// 主键
@@ -445,7 +444,7 @@ public class DialectFactory {
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
 			final Integer pageSize, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new BaseException("findPage operate sql is null!");
+			throw new IllegalArgumentException("findPage operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
@@ -546,7 +545,7 @@ public class DialectFactory {
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final double topSize, final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new BaseException("findTop operate sql is null!");
+			throw new IllegalArgumentException("findTop operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
@@ -607,7 +606,7 @@ public class DialectFactory {
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new BaseException("findByQuery operate sql is null!");
+			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
@@ -659,7 +658,7 @@ public class DialectFactory {
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) throws Exception {
 		if (queryExecutor.getSql() == null)
-			throw new BaseException("getCountBySql operate sql is null!");
+			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
@@ -1335,7 +1334,7 @@ public class DialectFactory {
 							int paramCnt = StringUtil.matchCnt(sqlToyConfig.getSql(), ARG_PATTERN);
 							// 处理参数注入
 							if (paramCnt != inCount + outCount)
-								throw new BaseException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
+								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
 
 							SqlToyResult sqlToyResult = new SqlToyResult(sqlToyConfig.getSql(), inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)

@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
+import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -273,7 +274,7 @@ public class Oracle12Dialect implements Dialect {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence() + ".nextval";
+		String sequence = entityMeta.getSequence().concat(".nextval");
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -284,7 +285,7 @@ public class Oracle12Dialect implements Dialect {
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence().concat(".nextval");
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -317,7 +318,7 @@ public class Oracle12Dialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence() + ".nextval";
+		String sequence = entityMeta.getSequence().concat(".nextval");
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -344,7 +345,7 @@ public class Oracle12Dialect implements Dialect {
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
+						String sequence = entityMeta.getSequence().concat(".nextval");
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -406,7 +407,7 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
 			throws Exception {
-		String realSql = sql + " for update nowait";
+		String realSql = sql.concat(" for update nowait");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
 	}
@@ -423,7 +424,7 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " fetch first " + topSize
 		// + " rows only for update nowait";
 		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
@@ -441,8 +442,9 @@ public class Oracle12Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
-		throw new Exception(SqlToyConstants.UN_SUPPORT_MESSAGE);
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
+		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by dbms_random.random fetch first "
 		// + random + " rows only for update nowait";
 		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,

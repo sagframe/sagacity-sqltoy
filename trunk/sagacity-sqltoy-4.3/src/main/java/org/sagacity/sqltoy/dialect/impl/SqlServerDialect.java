@@ -275,7 +275,7 @@ public class SqlServerDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray())
-			throw new Exception(
+			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select * from ");
