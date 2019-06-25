@@ -65,7 +65,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description 根据不同数据库类型提取不同数据库的处理handler,避免2.0之前版本:一个功能不同数据库写在一个方法中的弊端,
- *              每次修改容易导致产生连锁反应,分不同数据库方言虽然代码量多了一些，但可读性和可维护性变得更强
+ *              每次修改容易产生连锁反应,分不同数据库方言虽然代码量多了一些，但可读性和可维护性变得更强
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
  */
