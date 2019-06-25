@@ -45,7 +45,7 @@ public class SqlServerDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(SqlServerDialect.class);
 
 	/**
 	 * 判定为null的函数

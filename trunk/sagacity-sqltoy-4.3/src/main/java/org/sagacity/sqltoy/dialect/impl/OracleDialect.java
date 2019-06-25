@@ -46,7 +46,7 @@ public class OracleDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(OracleDialect.class);
 
 	/**
 	 * 判定为null的函数
@@ -418,7 +418,8 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
+			throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				0);
@@ -434,8 +435,8 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType)
-			throws Exception {
+			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// StringBuilder query = new StringBuilder();
 		// query.append("select SAG_Paginationtable.* FROM ( ");
@@ -457,7 +458,8 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,final Integer dbType) throws Exception {
+			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
+			final Integer dbType) throws Exception {
 		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by dbms_random.random fetch first "
 		// + random + " rows only for update nowait";

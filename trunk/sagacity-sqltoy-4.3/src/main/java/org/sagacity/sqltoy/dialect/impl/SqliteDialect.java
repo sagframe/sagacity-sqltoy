@@ -46,7 +46,7 @@ public class SqliteDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(SqliteDialect.class);
 
 	/**
 	 * 判定为null的函数

@@ -49,7 +49,7 @@ public class MySqlDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(MySqlDialect.class);
 
 	/**
 	 * 判定为null的函数

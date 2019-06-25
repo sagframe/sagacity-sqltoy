@@ -18,6 +18,8 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -32,9 +34,16 @@ import org.sagacity.sqltoy.utils.StringUtil;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
 	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(ScanEntityAndSqlResource.class);
+
+	/**
 	 * 默认的sql定义文件后缀名,便于区分和查找加载
 	 */
 	private static final String SQLTOY_SQL_FILE_SUFFIX = ".sql.xml";
+
+	private static final String CLASSPATH = "classpath:";
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象
@@ -73,7 +82,7 @@ public class ScanEntityAndSqlResource {
 					addEntitiesInPackage(packageName, filePath, recursive, entities);
 				} else if ("jar".equals(protocol)) {
 					// 如果是jar包文件
-					System.out.println("jar类型的扫描,加载sql.xml文件");
+					logger.debug("jar类型的扫描,加载sql.xml文件");
 					// 定义一个JarFile
 					JarFile jar;
 					try {
@@ -198,7 +207,7 @@ public class ScanEntityAndSqlResource {
 			for (String dir : dirSet) {
 				realRes = dir.trim();
 				startClasspath = false;
-				if (realRes.toLowerCase().startsWith("classpath:")) {
+				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 					realRes = realRes.substring(10).trim();
 					startClasspath = true;
 				}
@@ -241,7 +250,7 @@ public class ScanEntityAndSqlResource {
 						} else {
 							getPathFiles(new File(url.toURI()), result);
 							if (null != dialectXML) {
-								//判断是否存在dialect 形式的sql文件
+								// 判断是否存在dialect 形式的sql文件
 								for (int i = 0; i < result.size(); i++) {
 									if (result.get(i) instanceof File) {
 										file = (File) result.get(i);
@@ -275,7 +284,7 @@ public class ScanEntityAndSqlResource {
 				// 必须是以.sql.xml结尾的文件
 				if (realRes.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 					startClasspath = false;
-					if (realRes.toLowerCase().startsWith("classpath:")) {
+					if (realRes.toLowerCase().startsWith(CLASSPATH)) {
 						realRes = realRes.substring(10).trim();
 						startClasspath = true;
 					}
@@ -302,7 +311,6 @@ public class ScanEntityAndSqlResource {
 	}
 
 	/**
-	 * 
 	 * @todo 获取资源的URL
 	 * @param resource
 	 * @param startClasspath

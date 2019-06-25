@@ -47,7 +47,7 @@ public class DB2Dialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(DB2Dialect.class);
 
 	/**
 	 * db2 脏读sql查询语句正则表达式

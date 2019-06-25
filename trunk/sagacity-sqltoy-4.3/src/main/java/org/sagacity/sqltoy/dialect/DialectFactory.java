@@ -74,7 +74,7 @@ public class DialectFactory {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(DialectFactory.class);
 
 	/**
 	 * 不同数据库方言的处理器实例
@@ -458,7 +458,8 @@ public class DialectFactory {
 							QueryResult queryResult = null;
 							Long recordCnt = null;
 							// 通过查询条件构造唯一的key
-							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext,sqlToyConfig, queryExecutor);
+							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
+									queryExecutor);
 							// 需要进行分页查询优化
 							if (null != pageQueryKey) {
 								// 从缓存中提取总记录数
@@ -620,7 +621,7 @@ public class DialectFactory {
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(),
 									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext,realSqlToyConfig));
+									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(),
@@ -731,7 +732,7 @@ public class DialectFactory {
 		}
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
+				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn);
 	}
@@ -1213,7 +1214,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(),
 									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext,realSqlToyConfig));
+									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType);
@@ -1251,7 +1252,7 @@ public class DialectFactory {
 
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(),
 									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext,realSqlToyConfig));
+									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchTop(sqlToyContext,
 									sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), topSize,
 									updateRowHandler, conn, dbType);
@@ -1288,7 +1289,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(),
 									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext,realSqlToyConfig));
+									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchRandom(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
