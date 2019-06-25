@@ -860,7 +860,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
-		// TODO Auto-generated method stub
 		return super.getTranslateCache(cacheName, elementId);
 	}
 

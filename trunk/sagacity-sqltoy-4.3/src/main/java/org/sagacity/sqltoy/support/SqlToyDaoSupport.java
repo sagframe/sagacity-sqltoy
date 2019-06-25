@@ -65,7 +65,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(SqlToyDaoSupport.class);
 
 	/**
 	 * 数据源

@@ -34,7 +34,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/**
 	 * 定义全局日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(SqlToyCRUDServiceImpl.class);
 
 	/**
 	 * 全局懒处理dao
