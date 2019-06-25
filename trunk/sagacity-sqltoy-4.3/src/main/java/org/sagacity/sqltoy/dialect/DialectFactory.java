@@ -394,9 +394,9 @@ public class DialectFactory {
 			if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
 				throw new IllegalArgumentException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
 
-			FieldMeta IdMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
+			FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 			// 主键
-			treeModel.idField(IdMeta.getColumnName());
+			treeModel.idField(idMeta.getColumnName());
 			// 设置加工的节点路径
 			if (!(treeModel.getEntity() instanceof Type)) {
 				Object rootValue = PropertyUtils.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
@@ -413,13 +413,13 @@ public class DialectFactory {
 					&& !columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
 				treeModel.nodeLevelField(null);
 			// 类型,默认值为false
-			if (IdMeta.getType() == java.sql.Types.INTEGER || IdMeta.getType() == java.sql.Types.DECIMAL
-					|| IdMeta.getType() == java.sql.Types.DOUBLE || IdMeta.getType() == java.sql.Types.FLOAT
-					|| IdMeta.getType() == java.sql.Types.NUMERIC) {
+			if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
+					|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
+					|| idMeta.getType() == java.sql.Types.NUMERIC) {
 				treeModel.idTypeIsChar(false);
 				// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
 				// treeModel.setAppendZero(true);
-			} else if (IdMeta.getType() == java.sql.Types.VARCHAR || IdMeta.getType() == java.sql.Types.CHAR) {
+			} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
 				treeModel.idTypeIsChar(true);
 			}
 			treeModel.table(entityMeta.getTableName());
