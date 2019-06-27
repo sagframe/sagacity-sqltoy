@@ -45,7 +45,7 @@ public class ElasticSqlPlugin {
 		realMql = realMql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={" + realMql + "}");
+			logger.debug("execute eql={" + realMql + "}");
 		}
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
@@ -75,7 +75,7 @@ public class ElasticSqlPlugin {
 			realMql = realMql + " limit 0," + topSize;
 		}
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={" + realMql + "}");
+			logger.debug("execute eql={" + realMql + "}");
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realMql,
 				queryExecutor.getResultTypeName());

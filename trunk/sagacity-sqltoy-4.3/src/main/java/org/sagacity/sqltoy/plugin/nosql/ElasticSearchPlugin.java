@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.plugin.nosql;
 
-import static java.lang.System.out;
-
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -65,7 +63,7 @@ public class ElasticSearchPlugin {
 			throw e;
 		}
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
+			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
@@ -106,7 +104,7 @@ public class ElasticSearchPlugin {
 			throw e;
 		}
 		if (sqlToyContext.isDebug()) {
-			out.println("execute eql={" + jsonQuery.toJSONString() + "}");
+			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, queryExecutor.getResultTypeName());
 		return result.getRows();
