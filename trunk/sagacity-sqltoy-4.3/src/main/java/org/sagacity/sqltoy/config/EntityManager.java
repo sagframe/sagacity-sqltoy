@@ -98,7 +98,7 @@ public class EntityManager {
 		if (entityMeta == null) {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 			if (entityMeta == null)
-				throw new Exception("您传入的对象:[".concat(entityClass.getName())
+				throw new IllegalArgumentException("您传入的对象:[".concat(entityClass.getName())
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
 		}
 		return entityMeta;
