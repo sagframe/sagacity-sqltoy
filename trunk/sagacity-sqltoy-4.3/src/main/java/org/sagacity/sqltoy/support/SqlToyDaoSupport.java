@@ -1033,7 +1033,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected long generateBizId(String signature, int increment) throws Exception {
 		if (StringUtil.isBlank(signature))
-			throw new Exception("signature 必须不能为空,请正确指定业务标志符号!");
+			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
 		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
 	}
 
@@ -1046,7 +1046,7 @@ public class SqlToyDaoSupport {
 	protected String generateBizId(Serializable entity) throws Exception {
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
 		if (entityMeta == null || !entityMeta.isHasBizIdConfig())
-			throw new Exception(
+			throw new IllegalArgumentException(
 					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
@@ -1058,8 +1058,8 @@ public class SqlToyDaoSupport {
 			for (int meter = 0; meter < relatedColumn.length; meter++) {
 				relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 				if (relatedColValue[meter] == null)
-					throw new Exception("对象:" + entity.getClass().getName() + " 生成业务主键依赖的关联字段:" + relatedColumn[meter]
-							+ " 值为null!");
+					throw new IllegalArgumentException("对象:" + entity.getClass().getName() + " 生成业务主键依赖的关联字段:"
+							+ relatedColumn[meter] + " 值为null!");
 			}
 		}
 		IdGenerator idGenerator = (entityMeta.getBusinessIdGenerator() == null) ? entityMeta.getIdGenerator()

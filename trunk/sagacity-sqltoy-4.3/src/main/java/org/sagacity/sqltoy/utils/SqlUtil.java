@@ -334,7 +334,9 @@ public class SqlUtil {
 	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
 	 * @param rs
 	 * @param voClass
+	 * @param ignoreAllEmptySet
 	 * @return
+	 * @throws Exception
 	 */
 	private static List reflectResultToValueObject(ResultSet rs, Class voClass, boolean ignoreAllEmptySet)
 			throws Exception {
@@ -588,7 +590,7 @@ public class SqlUtil {
 		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn, ignoreAllEmptySet);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1)
-				throw new Exception("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
+				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
 			return result.get(0);
 		}
 		return null;
@@ -815,7 +817,7 @@ public class SqlUtil {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
 				|| StringUtil.isBlank(treeTableModel.getPidField())) {
 			logger.error("请设置树形表的table名称、id字段名称、pid字段名称!");
-			throw new Exception("没有对应的table名称、id字段名称、pid字段名称");
+			throw new IllegalArgumentException("没有对应的table名称、id字段名称、pid字段名称");
 		}
 		String flag = "";
 		// 判断是否字符串类型

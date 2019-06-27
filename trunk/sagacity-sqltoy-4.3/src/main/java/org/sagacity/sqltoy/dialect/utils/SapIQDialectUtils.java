@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import static java.lang.System.out;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Connection;
@@ -16,6 +14,8 @@ import java.util.List;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -36,6 +36,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes" })
 public class SapIQDialectUtils {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(SapIQDialectUtils.class);
+
 	/**
 	 * @todo 保存对象(sybase iq支持sequence)
 	 * @param sqlToyContext
@@ -84,8 +89,8 @@ public class SapIQDialectUtils {
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-								+ relatedColumn[meter] + " 值为null!");
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -108,7 +113,7 @@ public class SapIQDialectUtils {
 		if (isIdentity)
 			insertSql = insertSql + " select @@IDENTITY ";
 		if (sqlToyContext.isDebug())
-			out.println(insertSql);
+			logger.debug(insertSql);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -184,7 +189,7 @@ public class SapIQDialectUtils {
 			insertSql = "DECLARE @mySeqVariable decimal(20) select @mySeqVariable=" + entityMeta.getSequence()
 					+ ".NEXTVAL " + insertSql;
 		if (sqlToyContext.isDebug())
-			out.println("batch insert sql:" + insertSql);
+			logger.debug("batch insert sql:{}", insertSql);
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn);
 	}
@@ -238,8 +243,8 @@ public class SapIQDialectUtils {
 					for (int meter = 0; meter < relatedColumn.length; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
-							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-									+ relatedColumn[meter] + " 值为null!");
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
@@ -263,7 +268,7 @@ public class SapIQDialectUtils {
 			}
 		}
 		if (sqlToyContext.isDebug())
-			out.println("batch insert sql:" + insertSql);
+			logger.debug("batch insert sql:{}", insertSql);
 		if (entityMeta.isHasDefaultValue())
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn);
 		else

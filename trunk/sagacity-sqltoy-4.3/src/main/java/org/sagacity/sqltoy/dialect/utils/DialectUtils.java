@@ -304,10 +304,11 @@ public class DialectUtils {
 			// 性能最优
 			if (!StringUtil.matches(query_tmp.trim(), DISTINCT_PATTERN) && !hasUnion
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
-				int selectIndex= StringUtil.matchIndex(query_tmp.toLowerCase(), SELECT_REGEX);
-				//截取出select 和from之间的语句
-				String selectFields = (sql_from_index < 1) ? "" : query_tmp.substring(selectIndex+6, sql_from_index).toLowerCase();
-				//剔除嵌套的子查询语句中select 和 from 之间的内容,便于判断统计函数的作用位置
+				int selectIndex = StringUtil.matchIndex(query_tmp.toLowerCase(), SELECT_REGEX);
+				// 截取出select 和from之间的语句
+				String selectFields = (sql_from_index < 1) ? ""
+						: query_tmp.substring(selectIndex + 6, sql_from_index).toLowerCase();
+				// 剔除嵌套的子查询语句中select 和 from 之间的内容,便于判断统计函数的作用位置
 				selectFields = clearSymSelectFromSql(selectFields);
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
@@ -537,7 +538,7 @@ public class DialectUtils {
 
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
 		if (sqlToyContext.isDebug())
-			out.println("saveOrUpdateAll=" + saveOrUpdateSql);
+			logger.debug("saveOrUpdateAll={}", saveOrUpdateSql);
 		return SqlUtil.batchUpdateByJdbc(saveOrUpdateSql, paramValues, batchSize, null, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn);
 	}
@@ -584,8 +585,8 @@ public class DialectUtils {
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
-							throw new Exception("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-									+ relatedColumn[meter] + " 值为null!");
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
@@ -606,7 +607,7 @@ public class DialectUtils {
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
 		if (sqlToyContext.isDebug())
-			out.println("saveAllNotExistSql=" + saveAllNotExistSql);
+			logger.debug("saveAllNotExistSql={}", saveAllNotExistSql);
 		return SqlUtil.batchUpdateByJdbc(saveAllNotExistSql, paramValues, batchSize, null,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn);
 	}
@@ -1091,7 +1092,7 @@ public class DialectUtils {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
 							oneToMany.getMappedFields(), pkValues);
 					if (sqlToyContext.isDebug())
-						out.println("auto load sub table dataSet sql:".concat(sqlToyResult.getSql()));
+						logger.debug("auto load sub table dataSet sql:{}", sqlToyResult.getSql());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty())
@@ -1121,7 +1122,8 @@ public class DialectUtils {
 
 		// 没有主键不能进行load相关的查询
 		if (entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + entityMeta.getSchemaTable() + " 没有主键,不符合load或loadAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException(
+					"表:" + entityMeta.getSchemaTable() + " 没有主键,不符合load或loadAll规则,请检查表设计是否合理!");
 		}
 		// 主键值
 		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
@@ -1234,8 +1236,8 @@ public class DialectUtils {
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-								+ relatedColumn[meter] + " 值为null!");
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -1386,8 +1388,8 @@ public class DialectUtils {
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-									+ relatedColumn[meter] + " 值为null!");
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 					}
 				}
 				// 主键值为null,调用主键生成策略并赋值
@@ -1411,7 +1413,7 @@ public class DialectUtils {
 			}
 		}
 		if (sqlToyContext.isDebug())
-			out.println("batch insert sql:" + insertSql);
+			logger.debug("batch insert sql:{}", insertSql);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn);
 	}
@@ -1431,7 +1433,8 @@ public class DialectUtils {
 			String nullFunction, String[] forceUpdateFields, Connection conn, String tableName) throws Exception {
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + entityMeta.getTableName() + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException(
+					"表:" + entityMeta.getTableName() + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1448,7 +1451,7 @@ public class DialectUtils {
 		if (updateSql == null)
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
-			out.println("update last execute sql:" + updateSql);
+			logger.debug("update last execute sql:{}", updateSql);
 		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
 	}
 
@@ -1545,7 +1548,8 @@ public class DialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + entityMeta.getSchemaTable() + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException(
+					"表:" + entityMeta.getSchemaTable() + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler);
@@ -1577,7 +1581,7 @@ public class DialectUtils {
 		if (updateSql == null)
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
-			out.println("updateAll last execute sql:" + updateSql);
+			logger.debug("updateAll last execute sql:{}", updateSql);
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn);
 	}
@@ -1617,13 +1621,13 @@ public class DialectUtils {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
 					if (sqlToyContext.isDebug())
-						out.println("cascade delete sub table sql：".concat(oneToMany.getDeleteSubTableSql()));
+						logger.debug("cascade delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
 					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
-			out.println(entityMeta.getDeleteByIdsSql(tableName));
+			logger.debug(entityMeta.getDeleteByIdsSql(tableName));
 		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
 	}
 
@@ -1664,14 +1668,14 @@ public class DialectUtils {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
 					if (sqlToyContext.isDebug())
-						out.println("cascade batch delete sub table sql：".concat(oneToMany.getDeleteSubTableSql()));
+						logger.debug("cascade batch delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
 					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues,
 							sqlToyContext.getBatchSize(), parameterTypes, null, conn);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
-			out.println(entityMeta.getDeleteByIdsSql(tableName));
+			logger.debug("根据主键批量删除表sql:{}", entityMeta.getDeleteByIdsSql(tableName));
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
 				parameterTypes, autoCommit, conn);
 	}
@@ -1856,7 +1860,6 @@ public class DialectUtils {
 		return false;
 	}
 
-	
 	/**
 	 * @todo 去除掉sql中的所有对称的括号中的内容，排除干扰
 	 * @param sql
@@ -1888,19 +1891,19 @@ public class DialectUtils {
 	 * @return
 	 */
 	private static String clearSymSelectFromSql(String sql) {
-		//先转化为小写
-		String realSql=sql.toLowerCase();
+		// 先转化为小写
+		String realSql = sql.toLowerCase();
 		StringBuilder lastSql = new StringBuilder(realSql);
 		String SELECT_REGEX = "\\Wselect\\s+";
 		String FROM_REGEX = "\\sfrom[\\(|\\s+]";
-		
+
 		// 删除所有对称的括号中的内容
 		int start = StringUtil.matchIndex(realSql, SELECT_REGEX);
 		int symMarkEnd;
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, lastSql.toString(), start);
 			if (symMarkEnd != -1) {
-				lastSql.delete(start+1, symMarkEnd + 5);
+				lastSql.delete(start + 1, symMarkEnd + 5);
 				start = StringUtil.matchIndex(lastSql.toString(), SELECT_REGEX);
 			} else
 				break;
@@ -1911,7 +1914,7 @@ public class DialectUtils {
 	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
 		if (sqlToyContext.isDebug()) {
-			out.println("=================executeSql执行的语句==============");
+			out.println("=================executeSql执行的语句====================");
 			out.println(" execute sql:" + executeSql);
 			DebugUtil.printAry(params, ";", false);
 			out.println("======================================================");

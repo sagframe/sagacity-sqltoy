@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import static java.lang.System.out;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -88,7 +86,7 @@ public class SqlServerDialectUtils {
 		if (sqlToyConfig.isHasFast())
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
-				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
+				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
@@ -119,8 +117,8 @@ public class SqlServerDialectUtils {
 		 * 从2012版本后则无需进行设置
 		 */
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
+					null, conn, true);
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
@@ -135,8 +133,8 @@ public class SqlServerDialectUtils {
 					}
 				}, reflectPropertyHandler, conn, autoCommit);
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
+					null, conn, true);
 		return updateCount;
 	}
 
@@ -547,8 +545,8 @@ public class SqlServerDialectUtils {
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
 					if (relatedColValue[meter] == null)
-						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-								+ relatedColumn[meter] + " 值为null!");
+						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -572,10 +570,10 @@ public class SqlServerDialectUtils {
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
+					null, conn, true);
 		if (sqlToyContext.isDebug())
-			out.println(insertSql);
+			logger.debug(insertSql);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -635,8 +633,8 @@ public class SqlServerDialectUtils {
 				}
 			}
 			if (isIdentity && openIdentity)
-				DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
-						true);
+				DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF",
+						null, null, conn, true);
 			return result;
 		}
 	}
@@ -668,13 +666,13 @@ public class SqlServerDialectUtils {
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
+					null, conn, true);
 		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, reflectPropertyHandler, conn, autoCommit);
 		if (isIdentity && openIdentity)
-			DialectUtils.executeSql(sqlToyContext,"SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null, null, conn,
-					true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
+					null, conn, true);
 		return updateCount;
 	}
 
@@ -728,8 +726,8 @@ public class SqlServerDialectUtils {
 					for (int meter = 0; meter < relatedColumn.length; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
 						if (relatedColValue[meter] == null)
-							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName() + " 生成业务主键依赖的关联字段:"
-									+ relatedColumn[meter] + " 值为null!");
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
@@ -752,7 +750,7 @@ public class SqlServerDialectUtils {
 			}
 		}
 		if (sqlToyContext.isDebug())
-			out.println("batch insert sql:" + insertSql);
+			logger.debug("batch insert sql:{}", insertSql);
 		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
 				autoCommit, conn);
 	}
@@ -770,7 +768,7 @@ public class SqlServerDialectUtils {
 	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
 			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn) throws Exception {
 		if (rowDatas == null) {
-			logger.error("数据为空!");
+			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
 			return new Long(0);
 		}
 		PreparedStatement pst = null;
@@ -883,7 +881,8 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					DialectUtils.executeSql(sqlToyContext,sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
+					DialectUtils.executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null,
+							conn, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -912,7 +911,6 @@ public class SqlServerDialectUtils {
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		if (lockMode != null) {
 			int fromIndex = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", loadSql, 0);
-
 			String selectPart = loadSql.substring(0, fromIndex);
 			String fromPart = loadSql.substring(fromIndex);
 			String[] sqlChips = fromPart.trim().split("\\s+");

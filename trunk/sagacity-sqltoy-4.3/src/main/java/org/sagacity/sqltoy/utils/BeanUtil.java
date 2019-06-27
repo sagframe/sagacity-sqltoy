@@ -566,7 +566,7 @@ public class BeanUtil {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("反射Java Bean获取数据组装List集合异常!" + e.getMessage());
+			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
 			e.printStackTrace();
 			throw e;
 		}

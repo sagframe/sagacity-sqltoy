@@ -9,8 +9,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -37,7 +35,7 @@ public class OracleDialectUtils {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(OracleDialectUtils.class);
+	//private final static Logger logger = LogManager.getLogger(OracleDialectUtils.class);
 
 	/**
 	 * @todo 加载单个对象

@@ -75,7 +75,7 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingDBStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getName());
 			if (shardingStrategy == null)
-				throw new Exception("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
+				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
 						+ strategyConfig.getName() + " 未定义,请检查!");
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
@@ -93,8 +93,8 @@ public class ShardingUtils {
 			strategyConfig = shardingConfig.getShardingTableStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getName());
 			if (shardingStrategy == null)
-				throw new Exception("POJO 对象:" + entity.getClass().getName() + " Sharding Table Strategy:"
-						+ strategyConfig.getName() + " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName()
+						+ " Sharding Table Strategy:" + strategyConfig.getName() + " 未定义,请检查!");
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
 			String tableName = shardingStrategy.getShardingTable(sqlToyContext, entity.getClass(),
@@ -142,8 +142,8 @@ public class ShardingUtils {
 			hasDB = true;
 			dbStrategy = sqlToyContext.getShardingStrategy(dbConfig.getName());
 			if (dbStrategy == null)
-				throw new Exception("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:" + dbConfig.getName()
-						+ " 未定义,请检查!");
+				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
+						+ dbConfig.getName() + " 未定义,请检查!");
 			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null, false, 0);
 		}
 		// 分表
@@ -155,7 +155,7 @@ public class ShardingUtils {
 			hasTable = true;
 			tableStrategy = sqlToyContext.getShardingStrategy(tableConfig.getName());
 			if (tableStrategy == null)
-				throw new Exception("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
+				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
 						+ tableConfig.getName() + " 未定义,请检查!");
 			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null, false,
 					0);
@@ -377,8 +377,6 @@ public class ShardingUtils {
 						tableMap.put(table, shardingTable);
 				}
 			} else {
-				System.err.println("sharding strategy:".concat(shardingModel.getStrategy())
-						.concat(" don't exist,please check sharding config!"));
 				logger.error("sharding strategy:{} don't exist,please check sharding config!",
 						shardingModel.getStrategy());
 			}
@@ -493,7 +491,7 @@ public class ShardingUtils {
 							for (int meter = 0; meter < relatedColumnIndex.length; meter++) {
 								relatedColValue[meter] = fullParamValues[relatedColumnIndex[meter]];
 								if (relatedColValue[meter] == null)
-									throw new Exception("对象:" + entityMeta.getEntityClass().getName()
+									throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 											+ " 生成业务主键依赖的关联字段:" + relatedColumnIndex[meter] + " 值为null!");
 							}
 						}
