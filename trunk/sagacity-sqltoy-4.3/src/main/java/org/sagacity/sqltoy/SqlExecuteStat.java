@@ -52,7 +52,7 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 向线程中登记发生了异常,便于最终
+	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
 	 * @param e
 	 */
 	public static void error(Exception e) {
@@ -124,8 +124,8 @@ public class SqlExecuteStat {
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("SqlToy超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(), printSqlTimeoutMillis,
-						overTime + printSqlTimeoutMillis, sqlTrace.getId());
+				logger.warn("SqlToy超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
+						printSqlTimeoutMillis, overTime + printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError())
 				return;
@@ -149,21 +149,24 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
+	 * @param printSqlStrategy
+	 *            the printSqlStrategy to set
 	 */
 	public static void setPrintSqlStrategy(String printSqlStrategy) {
 		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
-	 * @param debug the debug to set
+	 * @param debug
+	 *            the debug to set
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis
+	 *            the printSqlTimeoutMillis to set
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;
