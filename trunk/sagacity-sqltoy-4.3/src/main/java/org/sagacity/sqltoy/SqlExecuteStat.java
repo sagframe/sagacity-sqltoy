@@ -86,7 +86,6 @@ public class SqlExecuteStat {
 	 * @param isErrorOrWarn
 	 */
 	private static void printSql(String sql, Object[] paramValues, boolean isErrorOrWarn) {
-		SqlExecuteTrace sqlTrace = threadLocal.get();
 		StringBuilder paramStr = new StringBuilder();
 		if (paramValues != null) {
 			for (int i = 0; i < paramValues.length; i++) {
@@ -95,6 +94,7 @@ public class SqlExecuteStat {
 				paramStr.append("p[" + i + "]=" + paramValues[i]);
 			}
 		}
+		SqlExecuteTrace sqlTrace = threadLocal.get();
 		if (sqlTrace != null) {
 			// 异常或超时
 			if (isErrorOrWarn) {
@@ -105,8 +105,8 @@ public class SqlExecuteStat {
 			}
 		}
 		if (isErrorOrWarn) {
-			logger.error("sqlScript:{}", sql);
-			logger.error("sqlParams:{}", paramStr);
+			logger.error("执行异常对应的sqlScript:{}", sql);
+			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
 			out.println("sqlScript:" + sql);
 			out.println("sqlParams:" + paramStr);
