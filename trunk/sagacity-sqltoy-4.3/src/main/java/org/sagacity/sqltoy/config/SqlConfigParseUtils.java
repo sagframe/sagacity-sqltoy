@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if()
  *               基于freemarker的复杂逻辑判断代码}
  * @Modification {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
+ * @Modification {Date:2019-06-26,修复条件参数中有问号的bug和放开条件参数名称不能是单个字母的限制}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
