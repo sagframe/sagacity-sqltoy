@@ -94,7 +94,7 @@ public class Batch extends BaseLink {
 
 	public Long submit() throws Exception {
 		if (sql == null)
-			throw new Exception("batch execute sql is null!");
+			throw new IllegalArgumentException("batch execute sql is null!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		return dialectFactory.batchUpdate(sqlToyContext, sql, dataSet, realBatchSize, reflectPropertyHandler,
 				insertCallhandler, autoCommit, dataSource);

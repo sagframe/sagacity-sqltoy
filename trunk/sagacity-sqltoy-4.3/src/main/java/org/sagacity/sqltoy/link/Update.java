@@ -135,7 +135,7 @@ public class Update extends BaseLink {
 	 */
 	public Long one(final Serializable entity) throws Exception {
 		if (entity == null)
-			throw new Exception("update operate entity is null!");
+			throw new IllegalArgumentException("update operate entity is null!");
 		boolean cascade = false;
 		if ((forceCascadeClasses != null && forceCascadeClasses.length > 0)
 				|| (subTableForceUpdateProps != null && !subTableForceUpdateProps.isEmpty()))
@@ -155,7 +155,7 @@ public class Update extends BaseLink {
 	 */
 	public Long many(final List<?> entities) throws Exception {
 		if (entities == null || entities.isEmpty())
-			throw new Exception("updateAll operate entities is null or empty!");
+			throw new IllegalArgumentException("updateAll operate entities is null or empty!");
 		String[] forceUpdate = forceUpdateProps;
 		// 深度修改
 		if (deeply) {

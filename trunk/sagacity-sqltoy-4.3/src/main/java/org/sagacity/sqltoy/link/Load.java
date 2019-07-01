@@ -74,7 +74,7 @@ public class Load extends BaseLink {
 	 */
 	public Serializable one(Serializable entity) throws Exception {
 		if (entity == null)
-			throw new Exception("load entity is null!");
+			throw new IllegalArgumentException("load entity is null!");
 		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, dataSource);
 	}
 
@@ -86,7 +86,7 @@ public class Load extends BaseLink {
 	 */
 	public List<?> many(List<?> entities) throws Exception {
 		if (entities == null || entities.isEmpty())
-			throw new Exception("loadAll entities is null or empty!");
+			throw new IllegalArgumentException("loadAll entities is null or empty!");
 		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, dataSource);
 	}
 

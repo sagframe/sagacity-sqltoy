@@ -126,7 +126,7 @@ public class Mongo extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
-			throw new Exception(ERROR_MESSAGE);
+			throw new IllegalArgumentException(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
@@ -150,7 +150,7 @@ public class Mongo extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
-			throw new Exception(ERROR_MESSAGE);
+			throw new IllegalArgumentException(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
@@ -169,7 +169,7 @@ public class Mongo extends BaseLink {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
-			throw new Exception(ERROR_MESSAGE);
+			throw new IllegalArgumentException(ERROR_MESSAGE);
 		// 最后的执行语句
 		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));

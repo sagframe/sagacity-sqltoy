@@ -57,7 +57,7 @@ public class Unique extends BaseLink {
 	 */
 	public Boolean submit() throws Exception {
 		if (entity == null)
-			throw new Exception("Unique check operate entity is null!");
+			throw new IllegalArgumentException("Unique check operate entity is null!");
 		return dialectFactory.isUnique(sqlToyContext, new UniqueExecutor(entity, fields), dataSource);
 	}
 }
