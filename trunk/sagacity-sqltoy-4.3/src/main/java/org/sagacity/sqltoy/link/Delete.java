@@ -61,10 +61,10 @@ public class Delete extends BaseLink {
 	 * @param entity
 	 * @throws Exception
 	 */
-	public Long one(final Serializable entity) throws Exception {
+	public Long one(final Serializable entity) {
 		if (entity == null)
 			throw new IllegalArgumentException("delete entity is null!");
-		return  dialectFactory.delete(sqlToyContext, entity, dataSource);
+		return dialectFactory.delete(sqlToyContext, entity, dataSource);
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class Delete extends BaseLink {
 	 * @param entities
 	 * @throws Exception
 	 */
-	public Long many(final List<?> entities) throws Exception {
+	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("deleteAll entities is null or empty!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();

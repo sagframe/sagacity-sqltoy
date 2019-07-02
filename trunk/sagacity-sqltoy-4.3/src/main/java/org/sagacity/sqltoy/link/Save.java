@@ -109,9 +109,8 @@ public class Save extends BaseLink {
 	 * @todo 保存单条记录
 	 * @param entity
 	 * @return
-	 * @throws Exception
 	 */
-	public Object one(final Serializable entity) throws Exception {
+	public Object one(final Serializable entity) {
 		if (entity == null)
 			throw new IllegalArgumentException("save entity is null!");
 		if (saveMode == SaveMode.APPEND)
@@ -124,22 +123,21 @@ public class Save extends BaseLink {
 	/**
 	 * @todo 批量保存
 	 * @param entities
-	 * @throws Exception
 	 */
-	public Long many(final List<?> entities) throws Exception {
+	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("saveAll entities is null or empty!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE)
-			return dialectFactory.saveAllNotExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler, dataSource,
-					autoCommit);
+			return dialectFactory.saveAllNotExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
+					dataSource, autoCommit);
 		else {
 			if (saveMode == SaveMode.UPDATE)
-				return  dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
+				return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
 						reflectPropertyHandler, dataSource, autoCommit);
 			else
-				return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler, dataSource,
-						autoCommit);
+				return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
+						dataSource, autoCommit);
 		}
 	}
 }

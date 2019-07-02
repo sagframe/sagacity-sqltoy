@@ -87,7 +87,7 @@ public class Elastic extends BaseLink {
 	 * 
 	 * @return
 	 */
-	public Object getOne() throws Exception {
+	public Object getOne() {
 		List result = find();
 		if (result != null && !result.isEmpty())
 			return result.get(0);
@@ -99,14 +99,19 @@ public class Elastic extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List find() throws Exception {
+	public List find() {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
-			return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
-		return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+		try {
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -115,14 +120,19 @@ public class Elastic extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List findTop(final int topSize) throws Exception {
+	public List findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
-			return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
-		return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+		try {
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -131,21 +141,26 @@ public class Elastic extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public PaginationModel findPage(PaginationModel pageModel) throws Exception {
+	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
-			return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
-		return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+		try {
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+				return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
 	 * @todo 构造统一的查询条件
 	 * @return
 	 */
-	private QueryExecutor build() throws Exception {
+	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
 		if (entity != null)
 			queryExecutor = new QueryExecutor(sql, entity);

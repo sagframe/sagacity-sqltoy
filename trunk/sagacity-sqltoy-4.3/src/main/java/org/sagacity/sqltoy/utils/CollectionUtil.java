@@ -97,8 +97,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToDeepList(Object arySource) {
@@ -136,8 +135,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToList(Object arySource) {
@@ -317,7 +315,7 @@ public class CollectionUtil {
 	 * @throws Exception
 	 */
 	public static List pivotList(List data, List categorys, Integer[] categoryCol, Integer[] pkColumns,
-			Integer[] categCompareCol, int startCol, int endCol, Object defaultValue) throws Exception {
+			Integer[] categCompareCol, int startCol, int endCol, Object defaultValue) {
 		if (data == null || data.isEmpty())
 			return data;
 		Integer[] categCol;
@@ -446,8 +444,7 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
+	 * @param keyToStr  将key统一转成字符串
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
@@ -459,10 +456,8 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
-	 * @param isLinkedHash
-	 *            返回的是否为LinkedHashMap
+	 * @param keyToStr     将key统一转成字符串
+	 * @param isLinkedHash 返回的是否为LinkedHashMap
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
@@ -622,11 +617,9 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs
-	 *            {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite
-	 *            存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -752,8 +745,7 @@ public class CollectionUtil {
 	 * @param totalTitle
 	 * @param hasAverage
 	 * @param averageTitle
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize        小数位长度
 	 * @param firstSummary
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
@@ -849,8 +841,7 @@ public class CollectionUtil {
 	 * @param groupIndex
 	 * @param title
 	 * @param rowCount
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize      小数位长度
 	 * @return
 	 */
 	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
@@ -972,8 +963,7 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex
-	 *            保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {

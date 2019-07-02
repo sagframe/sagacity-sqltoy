@@ -70,9 +70,8 @@ public class Load extends BaseLink {
 	 * @todo 单对象加载
 	 * @param entity
 	 * @return
-	 * @throws Exception
 	 */
-	public Serializable one(Serializable entity) throws Exception {
+	public Serializable one(Serializable entity) {
 		if (entity == null)
 			throw new IllegalArgumentException("load entity is null!");
 		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, dataSource);
@@ -82,9 +81,8 @@ public class Load extends BaseLink {
 	 * @todo 批量加载
 	 * @param entities
 	 * @return
-	 * @throws Exception
 	 */
-	public List<?> many(List<?> entities) throws Exception {
+	public List<?> many(List<?> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("loadAll entities is null or empty!");
 		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, dataSource);

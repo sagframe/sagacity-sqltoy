@@ -428,7 +428,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
-			List pivotCategorySet, boolean debug) throws Exception {
+			List pivotCategorySet, boolean debug) {
 		if (result == null || result.isEmpty())
 			return result;
 		// 行列转换
@@ -462,7 +462,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List unPivotResult(UnpivotModel unpivotModel, DataSetResult resultModel,
-			HashMap<String, Integer> labelIndexMap, List result) throws Exception {
+			HashMap<String, Integer> labelIndexMap, List result) {
 		if (result == null || result.isEmpty())
 			return result;
 		int cols = unpivotModel.getColumns().length;
@@ -947,7 +947,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
-			boolean debug) throws Exception {
+			boolean debug) {
 		if (sqlToyConfig.getResultProcessor() != null) {
 			List items = dataSetResult.getRows();
 			List resultProcessors = sqlToyConfig.getResultProcessor();

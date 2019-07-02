@@ -418,7 +418,7 @@ public class MongoElasticUtils {
 	 * @throws Exception
 	 */
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
-			String[] fields) throws Exception {
+			String[] fields) {
 		// 判断是否有缓存翻译器定义
 		boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null || sqlToyConfig.getTranslateMap().isEmpty())
 				? false

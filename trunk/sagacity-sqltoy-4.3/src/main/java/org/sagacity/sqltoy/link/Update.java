@@ -133,7 +133,7 @@ public class Update extends BaseLink {
 	 * @param entity
 	 * @throws Exception
 	 */
-	public Long one(final Serializable entity) throws Exception {
+	public Long one(final Serializable entity) {
 		if (entity == null)
 			throw new IllegalArgumentException("update operate entity is null!");
 		boolean cascade = false;
@@ -153,7 +153,7 @@ public class Update extends BaseLink {
 	 * @param entities
 	 * @throws Exception
 	 */
-	public Long many(final List<?> entities) throws Exception {
+	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("updateAll operate entities is null or empty!");
 		String[] forceUpdate = forceUpdateProps;
@@ -169,7 +169,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return  dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropertyHandler,
+		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropertyHandler,
 				dataSource, autoCommit);
 	}
 }

@@ -98,7 +98,7 @@ public class Execute extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public Long submit() throws Exception {
+	public Long submit() {
 		if (sql == null)
 			throw new IllegalArgumentException("execute operate sql is null!");
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update);

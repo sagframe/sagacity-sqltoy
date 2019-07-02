@@ -41,9 +41,8 @@ public class TreeTable extends BaseLink {
 	/**
 	 * @todo 提交执行并返回是否成功
 	 * @return
-	 * @throws Exception
 	 */
-	public boolean submit() throws Exception {
+	public boolean submit() {
 		if (treeModel == null)
 			throw new IllegalArgumentException("treeTable wrap:treeModel is null!");
 		return dialectFactory.wrapTreeTableRoute(sqlToyContext, treeModel, dataSource);

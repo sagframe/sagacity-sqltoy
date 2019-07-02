@@ -121,22 +121,27 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List find() throws Exception {
+	public List find() {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		// 最后的执行语句
-		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-		// 聚合查询
-		if (noSqlModel.isHasAggs())
-			return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, realMql,
-					queryExecutor.getResultTypeName());
-		else
-			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-					realMql, queryExecutor.getResultTypeName());
+		try {
+			// 最后的执行语句
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			// 聚合查询
+			if (noSqlModel.isHasAggs())
+				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
+						realMql, queryExecutor.getResultTypeName());
+			else
+				return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
+						realMql, queryExecutor.getResultTypeName());
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -145,17 +150,22 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List findTop(final Float topSize) throws Exception {
+	public List findTop(final Float topSize) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		// 最后的执行语句
-		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
-		return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-				realMql, queryExecutor.getResultTypeName());
+		try {
+			// 最后的执行语句
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
+					realMql, queryExecutor.getResultTypeName());
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -164,24 +174,29 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public PaginationModel findPage(PaginationModel pageModel) throws Exception {
+	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
-		// 最后的执行语句
-		String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig));
-		return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-				realMql, queryExecutor.getResultTypeName());
+		try {
+			// 最后的执行语句
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
+					realMql, queryExecutor.getResultTypeName());
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
 	 * @todo 构造统一的查询条件
 	 * @return
 	 */
-	private QueryExecutor build() throws Exception {
+	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
 		if (entity != null)
 			queryExecutor = new QueryExecutor(sql, entity);

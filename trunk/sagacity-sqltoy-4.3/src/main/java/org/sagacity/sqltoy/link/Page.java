@@ -119,7 +119,7 @@ public class Page extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public PaginationModel submit() throws Exception {
+	public PaginationModel submit() {
 		if (sql == null)
 			throw new IllegalArgumentException("pagination operate sql is null!");
 		QueryExecutor queryExecutor = null;

@@ -152,7 +152,7 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public Object getValue() throws Exception {
+	public Object getValue() {
 		QueryExecutor queryExecutor = new QueryExecutor(sql, names, values);
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, dataSource);
 		List rows = result.getRows();
@@ -166,7 +166,7 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public Object getOne() throws Exception {
+	public Object getOne() {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, dataSource);
 		List rows = result.getRows();
@@ -180,7 +180,7 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public Long count() throws Exception {
+	public Long count() {
 		QueryExecutor queryExecute = build();
 		return dialectFactory.getCountBySql(sqlToyContext, queryExecute, dataSource);
 	}
@@ -190,7 +190,7 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List find() throws Exception {
+	public List find() {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, dataSource);
 		return result.getRows();
@@ -202,7 +202,7 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List findTop(final double topSize) throws Exception {
+	public List findTop(final double topSize) {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecute, topSize, dataSource);
 		return result.getRows();
@@ -214,14 +214,14 @@ public class Query extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	public List findRandom(final double randomSize) throws Exception {
+	public List findRandom(final double randomSize) {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, new Double(randomSize),
 				dataSource);
 		return result.getRows();
 	}
 
-	private QueryExecutor build() throws Exception {
+	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
 		if (entity != null)
 			queryExecutor = new QueryExecutor(sql, entity);
