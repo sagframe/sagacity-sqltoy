@@ -988,7 +988,7 @@ public class SqlToyDaoSupport {
 	 * @todo <b>手工提交数据库操作,只提供当前DataSource提交</b>
 	 * @throws Exception
 	 */
-	protected void flush() throws Exception {
+	protected void flush() {
 		flush(null);
 	}
 
@@ -996,7 +996,7 @@ public class SqlToyDaoSupport {
 	 * @todo <b>手工提交数据库操作,只提供当前DataSource提交</b>
 	 * @throws Exception
 	 */
-	protected void flush(DataSource dataSource) throws Exception {
+	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, this.getDataSource(dataSource),
 				new DataSourceCallbackHandler() {
 					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {

@@ -151,8 +151,7 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
 	 * @throws Exception
 	 */
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler)
-			throws Exception;
+	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler);
 
 	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
 
@@ -235,8 +234,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable loadCascade(final Serializable entity, final Class[] cascadeTypes, final LockMode lockMode)
-			throws Exception;
+	public Serializable loadCascade(final Serializable entity, final Class[] cascadeTypes, final LockMode lockMode);
 
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息
@@ -279,8 +277,7 @@ public interface SqlToyLazyDao {
 
 	public Object loadBySql(final String sqlOrNamedSql, final Serializable entity);
 
-	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue)
-			throws Exception;
+	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
@@ -311,8 +308,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public QueryResult findPageByQuery(final PaginationModel pageModel, final QueryExecutor queryExecutor)
-			throws Exception;
+	public QueryResult findPageByQuery(final PaginationModel pageModel, final QueryExecutor queryExecutor);
 
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final Serializable entity);
@@ -345,13 +341,11 @@ public interface SqlToyLazyDao {
 	public List findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
 			final Class voClass, final double topSize);
 
-	public List findTopBySql(final String sqlOrNamedSql, final Serializable entity, final double topSize)
-			throws Exception;
+	public List findTopBySql(final String sqlOrNamedSql, final Serializable entity, final double topSize);
 
 	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
 
-	public List getRandomResult(final String sqlOrNamedSql, final Serializable entity, final double randomCount)
-			throws Exception;
+	public List getRandomResult(final String sqlOrNamedSql, final Serializable entity, final double randomCount);
 
 	public List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class voClass, final double randomCount);
@@ -374,8 +368,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler)
-			throws Exception;
+	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler);
 
 	@Deprecated
 	public List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
@@ -417,7 +410,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * 数据库提交
 	 */
-	public void flush() throws Exception;
+	public void flush();
 
 	/**
 	 * 删除操作集合

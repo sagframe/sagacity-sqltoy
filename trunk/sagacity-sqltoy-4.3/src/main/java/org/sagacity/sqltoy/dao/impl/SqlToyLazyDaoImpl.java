@@ -668,7 +668,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#flush()
 	 */
 	@Override
-	public void flush() throws Exception {
+	public void flush() {
 		super.flush();
 	}
 

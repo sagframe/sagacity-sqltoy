@@ -51,8 +51,7 @@ public class LinkDaoSupport {
 	protected SaveMode IGNORE = SaveMode.IGNORE;
 
 	/**
-	 * @param sqlToyContext
-	 *            the sqlToyContext to set
+	 * @param sqlToyContext the sqlToyContext to set
 	 */
 	@Autowired
 	@Qualifier(value = "sqlToyContext")
@@ -61,15 +60,14 @@ public class LinkDaoSupport {
 	}
 
 	/**
-	 * @param dataSource
-	 *            the dataSource to set
+	 * @param dataSource the dataSource to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
-	
+
 	/**
 	 * @todo 对象加载操作集合
 	 * @return
@@ -85,7 +83,7 @@ public class LinkDaoSupport {
 	protected Save save() {
 		return new Save(sqlToyContext, getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @todo 修改操作集合
 	 * @return
@@ -93,7 +91,7 @@ public class LinkDaoSupport {
 	protected Update update() {
 		return new Update(sqlToyContext, getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @todo 删除操作集合
 	 * @return
@@ -109,7 +107,7 @@ public class LinkDaoSupport {
 	protected Query query() {
 		return new Query(sqlToyContext, getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @todo 分页操作集合
 	 * @return
@@ -125,7 +123,7 @@ public class LinkDaoSupport {
 	protected Unique unique() {
 		return new Unique(sqlToyContext, getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @todo 存储过程操作集合
 	 * @return
@@ -187,7 +185,7 @@ public class LinkDaoSupport {
 	 * @todo <b>手工提交数据库操作，只提供当前DataSource提交</b>
 	 * @throws Exception
 	 */
-	protected void flush() throws Exception {
+	protected void flush() {
 		flush(null);
 	}
 
@@ -195,7 +193,7 @@ public class LinkDaoSupport {
 	 * @todo <b>手工提交数据库操作，只提供当前DataSource提交</b>
 	 * @throws Exception
 	 */
-	protected void flush(DataSource dataSource) throws Exception {
+	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, getDataSource(dataSource), new DataSourceCallbackHandler() {
 			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 				if (!conn.isClosed())

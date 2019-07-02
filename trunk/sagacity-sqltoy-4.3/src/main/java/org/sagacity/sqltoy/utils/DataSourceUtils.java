@@ -181,7 +181,8 @@ public class DataSourceUtils {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
 			if (dbType == DBType.SYBASE_IQ || dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2017
-					|| dbType == DBType.SQLSERVER2014 || dbType == DBType.SQLSERVER2016|| dbType == DBType.SQLSERVER2019)
+					|| dbType == DBType.SQLSERVER2014 || dbType == DBType.SQLSERVER2016
+					|| dbType == DBType.SQLSERVER2019)
 				return " go ";
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -356,26 +357,26 @@ public class DataSourceUtils {
 	 * @throws Exception
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
-			DataSourceCallbackHandler handler) throws Exception {
+			DataSourceCallbackHandler handler) {
 		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
 		Integer dbType;
 		String dialect;
-		// 统一提取数据库方言类型
-		if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
-			dialect = sqltoyContext.getDialect();
-			dbType = getDBType(dialect);
-		} else {
-			dbType = getDbType(conn);
-			dialect = getDialect(dbType);
-		}
 		try {
+			// 统一提取数据库方言类型
+			if (null != sqltoyContext && StringUtil.isNotBlank(sqltoyContext.getDialect())) {
+				dialect = sqltoyContext.getDialect();
+				dbType = getDBType(dialect);
+			} else {
+				dbType = getDbType(conn);
+				dialect = getDialect(dbType);
+			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
 			e.printStackTrace();
 			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
 			conn = null;
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
 			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);

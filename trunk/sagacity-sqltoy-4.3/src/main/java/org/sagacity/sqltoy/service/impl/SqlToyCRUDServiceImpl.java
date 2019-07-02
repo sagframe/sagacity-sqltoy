@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -42,8 +41,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected SqlToyLazyDao sqlToyLazyDao;
 
 	/**
-	 * @param sqlToyLazyDao
-	 *            the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	public void setSqlToyLazyDao(SqlToyLazyDao sqlToyLazyDao) {
@@ -57,13 +55,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
-	public Object save(Serializable entity) throws BaseException {
-		try {
-			return sqlToyLazyDao.save(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Object save(Serializable entity) {
+		return sqlToyLazyDao.save(entity);
 	}
 
 	/*
@@ -73,13 +66,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveAll(entities, reflectPropertyHandler);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
+		return sqlToyLazyDao.saveAll(entities, reflectPropertyHandler);
 	}
 
 	/*
@@ -89,13 +77,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveAll(entities, null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveAll(List<?> entities) {
+		return sqlToyLazyDao.saveAll(entities, null);
 	}
 
 	/*
@@ -106,15 +89,10 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * boolean)
 	 */
 	@Override
-	public Long update(Serializable entity) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.update(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long update(Serializable entity) {
+		if (null == entity)
+			throw new IllegalArgumentException("数据对象为null!");
+		return sqlToyLazyDao.update(entity);
 	}
 
 	/*
@@ -125,15 +103,10 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * boolean)
 	 */
 	@Override
-	public Long updateDeeply(Serializable entity) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.updateDeeply(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long updateDeeply(Serializable entity) {
+		if (null == entity)
+			throw new IllegalArgumentException("数据对象为null!");
+		return sqlToyLazyDao.updateDeeply(entity);
 	}
 
 	/*
@@ -144,15 +117,10 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long update(Serializable entity, String[] forceUpdateProps) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.update(entity, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long update(Serializable entity, String[] forceUpdateProps) {
+		if (null == entity)
+			throw new IllegalArgumentException("数据对象为null!");
+		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
 	/*
@@ -162,14 +130,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler)
-			throws BaseException {
-		try {
-			return sqlToyLazyDao.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler) {
+		return sqlToyLazyDao.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
 	/*
@@ -178,13 +140,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util.List)
 	 */
 	@Override
-	public Long updateAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.updateAll(entities);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long updateAll(List<?> entities) {
+		return sqlToyLazyDao.updateAll(entities);
 	}
 
 	/*
@@ -194,13 +151,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps) throws BaseException {
-		try {
-			return sqlToyLazyDao.updateAll(entities, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long updateAll(List<?> entities, String[] forceUpdateProps) {
+		return sqlToyLazyDao.updateAll(entities, forceUpdateProps);
 	}
 
 	/*
@@ -210,13 +162,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .util.List)
 	 */
 	@Override
-	public Long updateAllDeeply(List<?> entities) throws Exception {
-		try {
-			return sqlToyLazyDao.updateAllDeeply(entities, null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long updateAllDeeply(List<?> entities) {
+		return sqlToyLazyDao.updateAllDeeply(entities, null);
 	}
 
 	/*
@@ -226,15 +173,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .Serializable)
 	 */
 	@Override
-	public Long saveOrUpdate(Serializable entity) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.saveOrUpdate(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveOrUpdate(Serializable entity) {
+		if (null == entity)
+			throw new IllegalArgumentException("数据对象为null!");
+		return sqlToyLazyDao.saveOrUpdate(entity);
+
 	}
 
 	/*
@@ -244,15 +187,10 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .Serializable, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws BaseException {
-		try {
-			if (null == entity)
-				throw new BaseException("数据对象为null!");
-			return sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) {
+		if (null == entity)
+			throw new IllegalArgumentException("数据对象为null!");
+		return sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
 	}
 
 	/*
@@ -262,13 +200,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveOrUpdateAll(List<?> entities) {
+		return sqlToyLazyDao.saveOrUpdateAll(entities);
 	}
 
 	/*
@@ -278,13 +211,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) {
+		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
 	/*
@@ -296,13 +224,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
-		try {
-			return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+			ReflectPropertyHandler reflectPropertyHandler) {
+		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
 	/*
@@ -312,13 +235,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
-	public Serializable load(Serializable entity) throws BaseException {
-		try {
-			return sqlToyLazyDao.load(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Serializable load(Serializable entity) {
+		return sqlToyLazyDao.load(entity);
 	}
 
 	/*
@@ -328,13 +246,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity) throws BaseException {
-		try {
-			return sqlToyLazyDao.loadCascade(entity, null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Serializable loadCascade(Serializable entity) {
+		return sqlToyLazyDao.loadCascade(entity, null);
 	}
 
 	/*
@@ -343,13 +256,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#loadAll(java.util.List)
 	 */
 	@Override
-	public List loadAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.loadAll(entities);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public List loadAll(List<?> entities) {
+		return sqlToyLazyDao.loadAll(entities);
 	}
 
 	/*
@@ -358,13 +266,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see
 	 * org.sagacity.sqltoy.service.SqlToyCRUDService#delete(java.io.Serializable )
 	 */
-	public Long delete(Serializable entity) throws BaseException {
-		try {
-			return sqlToyLazyDao.delete(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long delete(Serializable entity) {
+		return sqlToyLazyDao.delete(entity);
 	}
 
 	/*
@@ -373,13 +276,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#deleteAll(java.util .List)
 	 */
 	@Override
-	public Long deleteAll(List<?> entities) throws BaseException {
-		try {
-			return sqlToyLazyDao.deleteAll(entities);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public Long deleteAll(List<?> entities) {
+		return sqlToyLazyDao.deleteAll(entities);
 	}
 
 	/*
@@ -389,13 +287,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	public void truncate(final Class entityClass) throws BaseException {
-		try {
-			sqlToyLazyDao.truncate(entityClass);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public void truncate(final Class entityClass) {
+		sqlToyLazyDao.truncate(entityClass);
 	}
 
 	/*
@@ -405,13 +298,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .Serializable)
 	 */
 	@Override
-	public boolean isUnique(Serializable entity) throws BaseException {
-		try {
-			return sqlToyLazyDao.isUnique(entity, null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public boolean isUnique(Serializable entity) {
+		return sqlToyLazyDao.isUnique(entity, null);
 	}
 
 	/*
@@ -421,13 +309,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, java.lang.String[], java.lang.String)
 	 */
 	@Override
-	public boolean isUnique(Serializable entity, String[] paramsNamed) throws BaseException {
-		try {
-			return sqlToyLazyDao.isUnique(entity, paramsNamed);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public boolean isUnique(Serializable entity, String[] paramsNamed) {
+		return sqlToyLazyDao.isUnique(entity, paramsNamed);
 	}
 
 	/*
@@ -437,13 +320,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.io.Serializable, java.lang.String)
 	 */
 	@Override
-	public boolean wrapTreeTableRoute(Serializable entity, String pid) throws BaseException {
-		try {
-			return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public boolean wrapTreeTableRoute(Serializable entity, String pid) {
+		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid));
 	}
 
 	/*
@@ -454,13 +332,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, java.lang.String, int)
 	 */
 	@Override
-	public boolean wrapTreeTableRoute(Serializable entity, String pid, int appendIdSize) throws BaseException {
-		try {
-			return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid).idLength(appendIdSize));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public boolean wrapTreeTableRoute(Serializable entity, String pid, int appendIdSize) {
+		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid).idLength(appendIdSize));
 	}
 
 	/*
@@ -470,14 +343,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
-	public List findFrom(Serializable entity) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public List findFrom(Serializable entity) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
 	}
 
 	/*
@@ -487,16 +355,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public List findFrom(Serializable entity, ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.findByQuery(
-					new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
-					.getRows();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public List findFrom(Serializable entity, ReflectPropertyHandler reflectPropertyHandler) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.findByQuery(
+				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
+				.getRows();
 	}
 
 	/*
@@ -506,14 +369,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .core.database.model.PaginationModel, java.io.Serializable)
 	 */
 	@Override
-	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.findPageBySql(paginationModel, entityMeta.getPageSql(), entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.findPageBySql(paginationModel, entityMeta.getPageSql(), entity);
 	}
 
 	/*
@@ -525,16 +383,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity,
-			ReflectPropertyHandler reflectPropertyHandler) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.findPageByQuery(paginationModel,
-					new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
-					.getPageResult();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+			ReflectPropertyHandler reflectPropertyHandler) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.findPageByQuery(paginationModel,
+				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
+				.getPageResult();
 	}
 
 	/*
@@ -544,14 +397,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
-	public List findTopFrom(Serializable entity, double topSize) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public List findTopFrom(Serializable entity, double topSize) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
 	}
 
 	/*
@@ -561,16 +409,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
-	public List getRandomFrom(Serializable entity, double randomCount) throws BaseException {
-		try {
-			EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-			return sqlToyLazyDao.getRandomResult(
-					StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(),
-					entity, randomCount);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public List getRandomFrom(Serializable entity, double randomCount) {
+		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		return sqlToyLazyDao.getRandomResult(
+				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
+				randomCount);
 	}
 
 	/*
@@ -581,13 +424,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * int)
 	 */
 	@Override
-	public long generateBizId(String signature, int increment) throws BaseException {
-		try {
-			return sqlToyLazyDao.generateBizId(signature, increment);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public long generateBizId(String signature, int increment) {
+		return sqlToyLazyDao.generateBizId(signature, increment);
 	}
 
 	/*
@@ -597,13 +435,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	public String generateBizId(Serializable entity) throws Exception {
-		try {
-			return sqlToyLazyDao.generateBizId(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BaseException(e);
-		}
+	public String generateBizId(Serializable entity) {
+		return sqlToyLazyDao.generateBizId(entity);
 	}
 
 	/*
@@ -616,7 +449,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
-			TranslateHandler handler) throws Exception {
+			TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
 	}
 
