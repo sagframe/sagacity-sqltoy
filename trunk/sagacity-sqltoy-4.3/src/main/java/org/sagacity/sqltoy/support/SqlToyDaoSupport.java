@@ -602,7 +602,7 @@ public class SqlToyDaoSupport {
 
 	protected void truncate(final Class entityClass, final Boolean autoCommit) throws Exception {
 		if (null == entityClass)
-			throw new Exception("entityClass is null!Please enter the correct!");
+			throw new IllegalArgumentException("entityClass is null!Please enter the correct!");
 		truncate(sqlToyContext.getEntityMeta(entityClass).getTableName(), autoCommit, null);
 	}
 

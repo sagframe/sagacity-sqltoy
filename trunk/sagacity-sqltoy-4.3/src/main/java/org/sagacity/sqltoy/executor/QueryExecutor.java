@@ -111,7 +111,7 @@ public class QueryExecutor implements Serializable {
 			this.resultType = entity.getClass();
 			// 类型检测
 			if (this.resultType.equals("".getClass().getClass()))
-				throw new Exception("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
+				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
 		}
 	}
 

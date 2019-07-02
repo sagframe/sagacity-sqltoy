@@ -137,7 +137,7 @@ public class ExpressionUtil {
 		} else if (opt.equals(")")) {
 			return -1000;
 		}
-		throw new Exception("运算符号" + opt + "非法!");
+		throw new RuntimeException("运算符号" + opt + "非法!");
 	}
 
 	protected static int getOptPriorityIn(String opt) throws Exception {
@@ -174,7 +174,7 @@ public class ExpressionUtil {
 		} else if (opt.equals("#")) {
 			return 0;
 		}
-		throw new Exception("运算符号:" + opt + "非法!");
+		throw new RuntimeException("运算符号:" + opt + "非法!");
 	}
 
 	protected static String getOPTS() {
@@ -248,9 +248,9 @@ public class ExpressionUtil {
 					return 0;
 			}
 		} catch (Exception e) {
-			throw new Exception("参数:" + value1 + "和:" + value2 + "在进行:" + opt + "运算时非法!");
+			throw new RuntimeException("参数:" + value1 + "和:" + value2 + "在进行:" + opt + "运算时非法!");
 		}
-		throw new Exception("运算符号:" + opt + "非法!");
+		throw new RuntimeException("运算符号:" + opt + "非法!");
 	}
 
 	protected static String getValue(String oldValue) throws Exception {
@@ -296,9 +296,9 @@ public class ExpressionUtil {
 				return String.valueOf(Math.exp(db));
 			}
 		} catch (Exception e) {
-			throw new Exception("函数" + function + "参数:" + value + "非法!");
+			throw new RuntimeException("函数" + function + "参数:" + value + "非法!");
 		}
 
-		throw new Exception("函数" + function + "不支持！");
+		throw new RuntimeException("函数" + function + "不支持！");
 	}
 }

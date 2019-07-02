@@ -31,6 +31,7 @@ import org.elasticsearch.client.RestClient;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
+import org.sagacity.sqltoy.exception.BaseException;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -111,7 +112,7 @@ public class HttpClientUtils {
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null)
-			throw new Exception("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
+			throw new IllegalArgumentException("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
 
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = null;
@@ -202,7 +203,7 @@ public class HttpClientUtils {
 		if (json.containsKey("error")) {
 			String errorMessage = JSON.toJSONString(json.getJSONObject("error").getJSONArray("root_cause").get(0));
 			logger.error("elastic查询失败,endpoint:[{}],错误信息:[{}]", nosqlConfig.getEndpoint(), errorMessage);
-			throw new Exception("ElasticSearch查询失败,错误信息:" + errorMessage);
+			throw new BaseException("ElasticSearch查询失败,错误信息:" + errorMessage);
 		}
 		return json;
 	}

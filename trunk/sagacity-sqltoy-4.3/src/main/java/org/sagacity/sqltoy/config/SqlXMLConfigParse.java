@@ -226,11 +226,11 @@ public class SqlXMLConfigParse {
 		String countSql = (sqlElt.element("count-sql") == null) ? null : sqlElt.elementText("count-sql");
 
 		if (null == sqlContent || sqlContent.trim().equals(""))
-			throw new Exception("请检查sql配置,没有正确填写sql内容!");
+			throw new RuntimeException("请检查sql配置,没有正确填写sql内容!");
 
 		String id = sqlElt.attributeValue("id");
 		if (id == null)
-			throw new Exception("请检查sql配置,没有给定sql id!");
+			throw new RuntimeException("请检查sql配置,没有给定sql id!");
 
 		// 替换全角空格
 		if (sqlContent != null) {
