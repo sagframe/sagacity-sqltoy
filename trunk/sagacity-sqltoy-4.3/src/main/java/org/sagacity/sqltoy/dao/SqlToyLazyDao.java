@@ -57,7 +57,7 @@ public interface SqlToyLazyDao {
 	 * @param entityClass
 	 * @return EntityMeta
 	 */
-	public EntityMeta getEntityMeta(Class entityClass) throws Exception;
+	public EntityMeta getEntityMeta(Class entityClass);
 
 	/**
 	 * @todo 判断对象属性在数据库中是否唯一
@@ -66,7 +66,7 @@ public interface SqlToyLazyDao {
 	 * @return boolean true：唯一；false：不唯一
 	 * @throws Exception
 	 */
-	public boolean isUnique(Serializable entity, String[] paramsNamed) throws Exception;
+	public boolean isUnique(Serializable entity, String[] paramsNamed);
 
 	/**
 	 * @todo 获取符合条件的查询对应的记录数量
@@ -76,7 +76,7 @@ public interface SqlToyLazyDao {
 	 * @return Long
 	 * @throws Exception
 	 */
-	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue) throws Exception;
+	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
 
 	/**
 	 * @todo 无结果存储过程调用
@@ -84,10 +84,10 @@ public interface SqlToyLazyDao {
 	 * @param inParamValues
 	 * @throws Exception
 	 */
-	public StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues) throws Exception;
+	public StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues);
 
 	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
-			Class resultType) throws Exception;
+			Class resultType);
 
 	/**
 	 * @todo 保存对象
@@ -95,9 +95,9 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Object save(Serializable serializableVO) throws Exception;
+	public Object save(Serializable serializableVO);
 
-	public Long saveAll(List<?> entities) throws Exception;
+	public Long saveAll(List<?> entities);
 
 	/**
 	 * @todo 批量保存数据
@@ -105,30 +105,29 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 * @throws Exception
 	 */
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws Exception;
+	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 非深度修改
 	 * @param serializableVO
 	 * @throws Exception
 	 */
-	public Long update(Serializable serializableVO) throws Exception;
+	public Long update(Serializable serializableVO);
 
 	/**
 	 * @todo 修改数据
 	 * @param entitySet
-	 * @param forceUpdateProps
-	 *            强制修改的字段属性
+	 * @param forceUpdateProps 强制修改的字段属性
 	 * @throws Exception
 	 */
-	public Long update(Serializable serializableVO, String[] forceUpdateProps) throws Exception;
+	public Long update(Serializable serializableVO, String[] forceUpdateProps);
 
 	/**
 	 * @todo 深度修改
 	 * @param serializableVO
 	 * @throws Exception
 	 */
-	public Long updateDeeply(Serializable serializableVO) throws Exception;
+	public Long updateDeeply(Serializable serializableVO);
 
 	/**
 	 * @todo 修改数据
@@ -139,27 +138,25 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
-			HashMap<Class, String[]> subTableForceUpdateProps) throws Exception;
+			HashMap<Class, String[]> subTableForceUpdateProps);
 
-	public Long updateAll(List<?> entities) throws Exception;
+	public Long updateAll(List<?> entities);
 
-	public Long updateAll(List<?> entities, String[] forceUpdateProps) throws Exception;
+	public Long updateAll(List<?> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改对象
 	 * @param entitys
-	 * @param forceUpdateProps
-	 *            强制修改的属性
-	 * @param reflectPropertyHandler
-	 *            用于通过反射机制设置属性值
+	 * @param forceUpdateProps       强制修改的属性
+	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
 	 * @throws Exception
 	 */
 	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler)
 			throws Exception;
 
-	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws Exception;
+	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
 
-	public Long saveOrUpdate(Serializable serializableVO) throws Exception;
+	public Long saveOrUpdate(Serializable serializableVO);
 
 	/**
 	 * @todo 保存或修改数据
@@ -167,11 +164,11 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @throws Exception
 	 */
-	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps) throws Exception;
+	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps);
 
-	public Long saveOrUpdateAll(List<?> entities) throws Exception;
+	public Long saveOrUpdateAll(List<?> entities);
 
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception;
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改或保存数据
@@ -181,28 +178,28 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception;
+			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 删除单条对象
 	 * @param entity
 	 * @throws Exception
 	 */
-	public Long delete(final Serializable entity) throws Exception;
+	public Long delete(final Serializable entity);
 
 	/**
 	 * @todo 批量删除对象
 	 * @param entities
 	 * @throws Exception
 	 */
-	public Long deleteAll(final List<?> entities) throws Exception;
+	public Long deleteAll(final List<?> entities);
 
 	/**
 	 * @todo truncate表
 	 * @param entityClass
 	 * @throws Exception
 	 */
-	public void truncate(final Class entityClass) throws Exception;
+	public void truncate(final Class entityClass);
 
 	/**
 	 * @todo 根据实体对象的主键值获取对象的详细信息
@@ -210,7 +207,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable load(final Serializable entity) throws Exception;
+	public Serializable load(final Serializable entity);
 
 	/**
 	 * @todo 根据主键获取对象,提供读取锁设定
@@ -219,7 +216,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable load(final Serializable entity, final LockMode lockMode) throws Exception;
+	public Serializable load(final Serializable entity, final LockMode lockMode);
 
 	/**
 	 * @todo 默认加载所有子表信息
@@ -228,7 +225,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable loadCascade(final Serializable entity, final LockMode lockMode) throws Exception;
+	public Serializable loadCascade(final Serializable entity, final LockMode lockMode);
 
 	/**
 	 * @todo 指定加载子类的单记录查询
@@ -247,7 +244,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List loadAll(List<?> entities) throws Exception;
+	public List loadAll(List<?> entities);
 
 	/**
 	 * @todo 级联加载子表数据
@@ -255,7 +252,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List loadAllCascade(List<?> entities) throws Exception;
+	public List loadAllCascade(List<?> entities);
 
 	/**
 	 * @todo 选择性的加载子表信息
@@ -264,9 +261,9 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List loadAllCascade(List<?> entities, final Class[] cascadeTypes) throws Exception;
+	public List loadAllCascade(List<?> entities, final Class[] cascadeTypes);
 
-	public Object loadByQuery(final QueryExecutor query) throws Exception;
+	public Object loadByQuery(final QueryExecutor query);
 
 	/**
 	 * @todo 通过sql获取单条记录
@@ -278,9 +275,9 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public Object loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass) throws Exception;
+			final Class voClass);
 
-	public Object loadBySql(final String sqlOrNamedSql, final Serializable entity) throws Exception;
+	public Object loadBySql(final String sqlOrNamedSql, final Serializable entity);
 
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue)
 			throws Exception;
@@ -291,23 +288,21 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public QueryResult findByQuery(final QueryExecutor query) throws Exception;
+	public QueryResult findByQuery(final QueryExecutor query);
 
-	public List findBySql(final String sqlOrNamedSql, final Serializable entity) throws Exception;
+	public List findBySql(final String sqlOrNamedSql, final Serializable entity);
 
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
-	 * @param paramsValue
-	 *            对应Named参数的值
-	 * @param voClass
-	 *            返回结果List中的对象类型
+	 * @param paramsValue   对应Named参数的值
+	 * @param voClass       返回结果List中的对象类型
 	 * @return
 	 * @throws Exception
 	 */
 	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass) throws Exception;
+			final Class voClass);
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
@@ -320,7 +315,7 @@ public interface SqlToyLazyDao {
 			throws Exception;
 
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Serializable entity) throws Exception;
+			final Serializable entity);
 
 	/**
 	 * @todo 普通sql分页查询
@@ -333,9 +328,9 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final String[] paramsNamed, final Object[] paramValues, final Class voClass) throws Exception;
+			final String[] paramsNamed, final Object[] paramValues, final Class voClass);
 
-	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) throws Exception;
+	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
 	 * @todo 取记录的前多少条记录
@@ -348,18 +343,18 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public List findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
-			final Class voClass, final double topSize) throws Exception;
+			final Class voClass, final double topSize);
 
 	public List findTopBySql(final String sqlOrNamedSql, final Serializable entity, final double topSize)
 			throws Exception;
 
-	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) throws Exception;
+	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
 
 	public List getRandomResult(final String sqlOrNamedSql, final Serializable entity, final double randomCount)
 			throws Exception;
 
 	public List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass, final double randomCount) throws Exception;
+			final Class voClass, final double randomCount);
 
 	/**
 	 * @todo 批量集合通过sql进行修改操作
@@ -370,7 +365,7 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
-			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit) throws Exception;
+			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
 
 	/**
 	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
@@ -384,7 +379,7 @@ public interface SqlToyLazyDao {
 
 	@Deprecated
 	public List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler) throws Exception;
+			final UpdateRowHandler updateRowHandler);
 
 	/**
 	 * @todo 随机提取符合条件的记录,锁定并进行修改
@@ -396,7 +391,7 @@ public interface SqlToyLazyDao {
 	 */
 	@Deprecated
 	public List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler) throws Exception;
+			final UpdateRowHandler updateRowHandler);
 
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
@@ -407,10 +402,9 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
-			final ReflectPropertyHandler reflectPropertyHandler) throws Exception;
+			final ReflectPropertyHandler reflectPropertyHandler);
 
-	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue)
-			throws Exception;
+	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
 	 * @todo 构造树形表的节点路径、层次等级、是否叶子节点等必要信息
@@ -418,7 +412,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel) throws Exception;
+	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel);
 
 	/**
 	 * 数据库提交
@@ -537,7 +531,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public long generateBizId(String signature, int increment) throws Exception;
+	public long generateBizId(String signature, int increment);
 
 	/**
 	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
@@ -545,7 +539,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public String generateBizId(Serializable entity) throws Exception;
+	public String generateBizId(Serializable entity);
 
 	/**
 	 * @todo 获取sqltoy中用于翻译的缓存
@@ -554,7 +548,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception;
+	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
 
 	/**
 	 * @todo 对记录进行翻译
@@ -566,6 +560,6 @@ public interface SqlToyLazyDao {
 	 * @throws Exception
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
-			TranslateHandler handler) throws Exception;
+			TranslateHandler handler);
 
 }

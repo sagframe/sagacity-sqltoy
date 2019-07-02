@@ -189,8 +189,7 @@ public class DialectFactory {
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final List dataSet,
 			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
-			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource)
-			throws Exception {
+			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
@@ -216,7 +215,7 @@ public class DialectFactory {
 			});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -234,7 +233,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long executeSql(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, final Boolean autoCommit, final DataSource dataSource) throws Exception {
+			final Object[] paramsValue, final Boolean autoCommit, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "update", sqlToyConfig.isShowSql());
@@ -258,7 +257,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -273,12 +272,12 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		if (uniqueExecutor.getEntity() == null)
 			throw new IllegalArgumentException("unique judge entity object is null,please check!");
-		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(), false,
-				dataSource);
 		try {
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
+					false, dataSource);
 			SqlExecuteStat.start(uniqueExecutor.getEntity().getClass().getName(), "isUnique", null);
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -289,7 +288,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -305,7 +304,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Double randomCount, final DataSource dataSource) throws Exception {
+			final Double randomCount, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
@@ -367,7 +366,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -382,53 +381,60 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
-			final DataSource dataSource) throws Exception {
-		if (null != treeModel.getEntity()) {
-			EntityMeta entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
-			HashMap<String, String> columnMap = new HashMap<String, String>();
-			for (FieldMeta column : entityMeta.getFieldsMeta().values())
-				columnMap.put(column.getColumnName().toUpperCase(), "");
-			if (null == treeModel.getNodeRouteField()
-					|| !columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
-				throw new IllegalArgumentException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
-			if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
-				throw new IllegalArgumentException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
+			final DataSource dataSource) {
+		try {
+			if (null != treeModel.getEntity()) {
+				EntityMeta entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
+				HashMap<String, String> columnMap = new HashMap<String, String>();
+				for (FieldMeta column : entityMeta.getFieldsMeta().values())
+					columnMap.put(column.getColumnName().toUpperCase(), "");
+				if (null == treeModel.getNodeRouteField()
+						|| !columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
+					throw new IllegalArgumentException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
+				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
+					throw new IllegalArgumentException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
 
-			FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
-			// 主键
-			treeModel.idField(idMeta.getColumnName());
-			// 设置加工的节点路径
-			if (!(treeModel.getEntity() instanceof Type)) {
-				Object rootValue = PropertyUtils.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
-				Object pidValue = PropertyUtils.getProperty(treeModel.getEntity(),
-						StringUtil.toHumpStr(treeModel.getPidField(), false));
-				if (null == treeModel.getRootId())
-					treeModel.rootId(pidValue);
-				if (null == treeModel.getIdValue())
-					treeModel.setIdValue(rootValue);
+				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
+				// 主键
+				treeModel.idField(idMeta.getColumnName());
+				// 设置加工的节点路径
+				if (!(treeModel.getEntity() instanceof Type)) {
+					Object rootValue = PropertyUtils.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
+					Object pidValue = PropertyUtils.getProperty(treeModel.getEntity(),
+							StringUtil.toHumpStr(treeModel.getPidField(), false));
+					if (null == treeModel.getRootId())
+						treeModel.rootId(pidValue);
+					if (null == treeModel.getIdValue())
+						treeModel.setIdValue(rootValue);
+				}
+				if (treeModel.getLeafField() != null && !columnMap.containsKey(treeModel.getLeafField().toUpperCase()))
+					treeModel.isLeafField(null);
+				if (treeModel.getNodeLevelField() != null
+						&& !columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
+					treeModel.nodeLevelField(null);
+				// 类型,默认值为false
+				if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
+						|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
+						|| idMeta.getType() == java.sql.Types.NUMERIC) {
+					treeModel.idTypeIsChar(false);
+					// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
+					// treeModel.setAppendZero(true);
+				} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
+					treeModel.idTypeIsChar(true);
+				}
+				treeModel.table(entityMeta.getTableName());
 			}
-			if (treeModel.getLeafField() != null && !columnMap.containsKey(treeModel.getLeafField().toUpperCase()))
-				treeModel.isLeafField(null);
-			if (treeModel.getNodeLevelField() != null
-					&& !columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
-				treeModel.nodeLevelField(null);
-			// 类型,默认值为false
-			if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
-					|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
-					|| idMeta.getType() == java.sql.Types.NUMERIC) {
-				treeModel.idTypeIsChar(false);
-				// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
-				// treeModel.setAppendZero(true);
-			} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
-				treeModel.idTypeIsChar(true);
-			}
-			treeModel.table(entityMeta.getTableName());
+			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+					new DataSourceCallbackHandler() {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							this.setResult(SqlUtil.wrapTreeTableRoute(treeModel, conn));
+						}
+					});
+		} catch (Exception e) {
+			logger.error("封装树形表节点路径操作:wrapTreeTableRoute发生错误,{}", e.getMessage());
+			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
-			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-				this.setResult(SqlUtil.wrapTreeTableRoute(treeModel, conn));
-			}
-		});
 	}
 
 	/**
@@ -442,7 +448,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
-			final Integer pageSize, final DataSource dataSource) throws Exception {
+			final Integer pageSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
@@ -528,7 +534,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -544,7 +550,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final double topSize, final DataSource dataSource) throws Exception {
+			final double topSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
@@ -590,7 +596,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -605,7 +611,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
@@ -642,7 +648,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -657,7 +663,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
@@ -676,7 +682,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -747,11 +753,11 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
-			final String[] forceUpdateProps, final DataSource dataSource) throws Exception {
+			final String[] forceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
 			return new Long(0);
-		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 		try {
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -762,7 +768,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -781,7 +787,7 @@ public class DialectFactory {
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource, final Boolean autoCommit) throws Exception {
+			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
@@ -814,7 +820,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -831,8 +837,8 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long saveAllNotExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource, final Boolean autoCommit)
-			throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
+			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
@@ -866,7 +872,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -883,12 +889,12 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity, final Class[] cascadeTypes,
-			final LockMode lockMode, final DataSource dataSource) throws Exception {
+			final LockMode lockMode, final DataSource dataSource) {
 		if (entity == null)
 			return null;
-		// 单记录操作返回对应的库和表配置
-		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 		try {
+			// 单记录操作返回对应的库和表配置
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "load", null);
 			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -900,7 +906,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -917,7 +923,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public List<?> loadAll(final SqlToyContext sqlToyContext, final List<?> entities, final Class[] cascadeTypes,
-			final LockMode lockMode, final DataSource dataSource) throws Exception {
+			final LockMode lockMode, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		try {
@@ -940,7 +946,7 @@ public class DialectFactory {
 			});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -954,12 +960,12 @@ public class DialectFactory {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable save(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource)
-			throws Exception {
+	public Serializable save(final SqlToyContext sqlToyContext, final Serializable entity,
+			final DataSource dataSource) {
 		if (entity == null)
 			return null;
-		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 		try {
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -969,7 +975,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -986,8 +992,8 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource, final Boolean autoCommit)
-			throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
+			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
@@ -1020,7 +1026,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1039,11 +1045,11 @@ public class DialectFactory {
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
-			final HashMap<Class, String[]> subTableForceUpdateProps, final DataSource dataSource) throws Exception {
+			final HashMap<Class, String[]> subTableForceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
 			return new Long(0);
-		final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 		try {
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1054,7 +1060,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1073,7 +1079,7 @@ public class DialectFactory {
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource, final Boolean autoCommit) throws Exception {
+			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
@@ -1107,7 +1113,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1120,8 +1126,7 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource)
-			throws Exception {
+	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null)
 			return new Long(0);
 		try {
@@ -1136,7 +1141,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1152,7 +1157,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public Long deleteAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final DataSource dataSource, final Boolean autoCommit) throws Exception {
+			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		try {
@@ -1185,7 +1190,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1201,7 +1206,7 @@ public class DialectFactory {
 	 * @throws Exception
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final UpdateRowHandler updateRowHandler, final DataSource dataSource) throws Exception {
+			final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
@@ -1229,7 +1234,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1237,8 +1242,7 @@ public class DialectFactory {
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Integer topSize, final UpdateRowHandler updateRowHandler, final DataSource dataSource)
-			throws Exception {
+			final Integer topSize, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
@@ -1267,7 +1271,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1275,8 +1279,7 @@ public class DialectFactory {
 
 	@Deprecated
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Integer random, final UpdateRowHandler updateRowHandler, final DataSource dataSource)
-			throws Exception {
+			final Integer random, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
@@ -1304,7 +1307,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1323,7 +1326,7 @@ public class DialectFactory {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "callStore", sqlToyConfig.isShowSql());
 			return (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
@@ -1368,7 +1371,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw e;
+			throw new RuntimeException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}

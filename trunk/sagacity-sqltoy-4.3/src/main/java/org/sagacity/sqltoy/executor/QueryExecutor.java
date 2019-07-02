@@ -104,7 +104,7 @@ public class QueryExecutor implements Serializable {
 	 * @param entity
 	 * @throws Exception
 	 */
-	public QueryExecutor(String sql, Serializable entity) throws Exception {
+	public QueryExecutor(String sql, Serializable entity) {
 		this.sql = sql;
 		this.entity = entity;
 		if (entity != null) {

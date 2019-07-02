@@ -89,7 +89,7 @@ public class EntityManager {
 	 * @param entityClass
 	 * @return
 	 */
-	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) throws Exception {
+	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
 		if (entityClass == null)
 			return null;
 		EntityMeta entityMeta = entitysMetaMap.get(entityClass);
@@ -650,8 +650,7 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param packagesToScan
-	 *            the packagesToScan to set
+	 * @param packagesToScan the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -665,16 +664,14 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param annotatedClasses
-	 *            the annotatedClasses to set
+	 * @param annotatedClasses the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = annotatedClasses;
 	}
 
 	/**
-	 * @param recursive
-	 *            the recursive to set
+	 * @param recursive the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		this.recursive = recursive;

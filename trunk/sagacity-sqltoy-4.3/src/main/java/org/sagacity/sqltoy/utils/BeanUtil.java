@@ -481,7 +481,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler) {
 		List datas = new ArrayList();
 		datas.add(serializable);
 		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
@@ -502,7 +502,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) {
 		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1)
 			return null;
 		// 数据的长度
@@ -568,12 +568,12 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException(e);
 		}
 		return resultList;
 	}
 
-	public static List reflectListToBean(List datas, String[] properties, Class voClass) throws Exception {
+	public static List reflectListToBean(List datas, String[] properties, Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -607,7 +607,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass,
-			boolean autoConvertType) throws Exception {
+			boolean autoConvertType) {
 		if (null == datas || datas.isEmpty())
 			return null;
 		if (null == properties || properties.length < 1 || null == voClass || null == indexs || indexs.length == 0
@@ -680,13 +680,13 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("将集合数据{}反射到Java Bean的属性{}过程异常!{}", cellData, propertyName, e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException(e);
 		}
 		return resultList;
 	}
 
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType) throws Exception {
+			boolean autoConvertType) {
 		batchSetProperties(voList, properties, values, autoConvertType, true);
 	}
 
@@ -696,12 +696,11 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate
-	 *            强制更新
+	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType, boolean forceUpdate) throws Exception {
+			boolean autoConvertType, boolean forceUpdate) {
 		if (null == voList || voList.isEmpty())
 			return;
 		if (null == properties || properties.length < 1 || null == values || values.length < 1
@@ -739,7 +738,7 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException("将集合数据反射到Java Bean过程异常!{}" + e.getMessage(), e);
 		}
 	}
 
@@ -807,14 +806,10 @@ public class BeanUtil {
 
 	/**
 	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans
-	 *            源对象数据集合
-	 * @param fromProps
-	 *            源对象的属性
-	 * @param targetProps
-	 *            目标对象的属性
-	 * @param newClass
-	 *            目标对象类型
+	 * @param fromBeans   源对象数据集合
+	 * @param fromProps   源对象的属性
+	 * @param targetProps 目标对象的属性
+	 * @param newClass    目标对象类型
 	 * @return
 	 * @throws Exception
 	 */
@@ -832,8 +827,7 @@ public class BeanUtil {
 	 * @param fromProps
 	 * @param targetProps
 	 * @param newClass
-	 * @param autoMapping
-	 *            是否自动匹配
+	 * @param autoMapping 是否自动匹配
 	 * @return
 	 * @throws Exception
 	 */

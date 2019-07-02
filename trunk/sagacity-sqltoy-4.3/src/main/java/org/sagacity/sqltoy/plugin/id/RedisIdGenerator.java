@@ -66,8 +66,7 @@ public class RedisIdGenerator implements IdGenerator {
 	private RedisTemplate redisTemplate;
 
 	/**
-	 * @param redisTemplate
-	 *            the redisTemplate to set
+	 * @param redisTemplate the redisTemplate to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "redisTemplate")
@@ -90,7 +89,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length) throws Exception {
+			Date bizDate, int jdbcType, int length) {
 		String key = (signature == null ? "" : signature);
 		// 主键生成依赖业务的相关字段值
 		HashMap<String, Object> keyValueMap = new HashMap<String, Object>();
@@ -116,8 +115,8 @@ public class RedisIdGenerator implements IdGenerator {
 		}
 		// 结合redis计数取末尾几位顺序数
 		Long result;
-		
-		//update 2019-1-24 key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索
+
+		// update 2019-1-24 key命名策略改为SQLTOY_GL_ID.tableName.xxx 便于redis检索
 		if (tableName != null)
 			result = generateId(realKey.equals("") ? tableName : tableName.concat(":").concat(realKey));
 		else
@@ -181,8 +180,7 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @param dateFormat
-	 *            the dateFormat to set
+	 * @param dateFormat the dateFormat to set
 	 */
 	public void setDateFormat(String dateFormat) {
 		this.dateFormat = dateFormat;

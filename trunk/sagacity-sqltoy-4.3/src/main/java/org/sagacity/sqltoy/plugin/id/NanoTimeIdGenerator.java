@@ -36,7 +36,7 @@ public class NanoTimeIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length) throws Exception {
+			Date bizDate, int jdbcType, int length) {
 		return SqlUtil.convertIdValueType(IdUtil.getNanoTimeId(SqlToyConstants.SERVER_ID), jdbcType);
 	}
 

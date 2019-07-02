@@ -39,7 +39,7 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length) throws Exception {
+			Date bizDate, int jdbcType, int length) {
 		if (idWorker == null) {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
 		}

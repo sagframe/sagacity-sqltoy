@@ -36,7 +36,7 @@ public class DefaultIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColsValue,
-			Date bizDate, int jdbcType, int length) throws Exception {
+			Date bizDate, int jdbcType, int length) {
 		return SqlUtil.convertIdValueType(IdUtil.getShortNanoTimeId(SqlToyConstants.SERVER_ID), jdbcType);
 	}
 }

@@ -103,8 +103,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 *            the sqlToyContext to set
+	 * @param sqlToyContext the sqlToyContext to set
 	 */
 	@Autowired
 	@Qualifier(value = "sqlToyContext")
@@ -135,7 +134,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected boolean isUnique(final Serializable entity) throws Exception {
+	protected boolean isUnique(final Serializable entity) {
 		return isUnique(new UniqueExecutor(entity));
 	}
 
@@ -149,14 +148,14 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected boolean isUnique(final Serializable entity, final String[] paramsNamed) throws Exception {
+	protected boolean isUnique(final Serializable entity, final String[] paramsNamed) {
 		return isUnique(new UniqueExecutor(entity, paramsNamed));
 	}
 
 	/*
 	 * @see isUnique(final Serializable entity, final String[] paramsNamed)
 	 */
-	protected boolean isUnique(final UniqueExecutor uniqueExecutor) throws Exception {
+	protected boolean isUnique(final UniqueExecutor uniqueExecutor) {
 		return dialectFactory.isUnique(sqlToyContext, uniqueExecutor,
 				this.getDataSource(uniqueExecutor.getDataSource()));
 	}
@@ -168,8 +167,7 @@ public class SqlToyDaoSupport {
 	 * @param paramsValue
 	 * @return Long
 	 */
-	protected Long getCountBySql(final String sqlOrNamedQuery, final String[] paramsNamed, final Object[] paramsValue)
-			throws Exception {
+	protected Long getCountBySql(final String sqlOrNamedQuery, final String[] paramsNamed, final Object[] paramsValue) {
 		return getCountByQuery(new QueryExecutor(sqlOrNamedQuery, paramsNamed, paramsValue));
 	}
 
@@ -179,17 +177,17 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Long getCountByQuery(final QueryExecutor queryExecutor) throws Exception {
+	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor,
 				this.getDataSource(queryExecutor.getDataSource()));
 	}
 
 	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues,
-			final Integer[] outParamsType, final Class resultType) throws Exception {
+			final Integer[] outParamsType, final Class resultType) {
 		return executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);
 	}
 
-	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues) throws Exception {
+	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues) {
 		return executeStore(storeNameOrKey, inParamValues, null, null, null);
 	}
 
@@ -199,21 +197,20 @@ public class SqlToyDaoSupport {
 	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
 	 * @param storeNameOrKey
 	 * @param inParamsValue
-	 * @param outParamsType(可以为null)
-	 * @param resultType
-	 *            (VOClass,HashMap或null)
+	 * @param                outParamsType(可以为null)
+	 * @param resultType     (VOClass,HashMap或null)
 	 * @param dataSource
 	 * @return
 	 * @throws Exception
 	 */
 	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamsValue,
-			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) throws Exception {
+			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
 		return dialectFactory.executeStore(sqlToyContext, getSqlToyConfig(storeNameOrKey, SqlType.search),
 				inParamsValue, outParamsType, resultType, this.getDataSource(dataSource));
 	}
 
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue)
-			throws Exception {
+	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramsValue) {
 		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
 	}
 
@@ -227,7 +224,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		Object queryResult = loadByQuery(
 				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).dataSource(dataSource));
 		if (null != queryResult) {
@@ -242,7 +239,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Serializable load(final Serializable entity) throws Exception {
+	protected Serializable load(final Serializable entity) {
 		if (entity == null)
 			return null;
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
@@ -258,7 +255,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Serializable load(final Serializable entity, final LockMode lockMode) throws Exception {
+	protected Serializable load(final Serializable entity, final LockMode lockMode) {
 		return load(entity, lockMode, null);
 	}
 
@@ -270,8 +267,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Serializable load(final Serializable entity, final LockMode lockMode, final DataSource dataSource)
-			throws Exception {
+	protected Serializable load(final Serializable entity, final LockMode lockMode, final DataSource dataSource) {
 		return dialectFactory.load(sqlToyContext, entity, null, lockMode, this.getDataSource(dataSource));
 	}
 
@@ -282,7 +278,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Serializable loadCascade(Serializable entity, LockMode lockMode) throws Exception {
+	protected Serializable loadCascade(Serializable entity, LockMode lockMode) {
 		if (entity == null)
 			return null;
 		return dialectFactory.load(sqlToyContext, entity,
@@ -297,7 +293,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) throws Exception {
+	protected Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) {
 		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, this.getDataSource(null));
 	}
 
@@ -308,11 +304,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected List loadAll(final List<?> entities, final LockMode lockMode) throws Exception {
+	protected List loadAll(final List<?> entities, final LockMode lockMode) {
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
-	protected List loadAllCascade(final List<?> entities, final LockMode lockMode) throws Exception {
+	protected List loadAllCascade(final List<?> entities, final LockMode lockMode) {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		return dialectFactory.loadAll(sqlToyContext, entities,
@@ -328,8 +324,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected List loadAllCascade(final List<?> entities, final Class[] cascadeTypes, final LockMode lockMode)
-			throws Exception {
+	protected List loadAllCascade(final List<?> entities, final Class[] cascadeTypes, final LockMode lockMode) {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, this.getDataSource(null));
 	}
 
@@ -343,7 +338,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Object loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
-			final Class resultType) throws Exception {
+			final Class resultType) {
 		return loadByQuery(new QueryExecutor(sql, paramNames, paramValues).resultType(resultType));
 	}
 
@@ -354,11 +349,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Object loadBySql(final String sql, final Serializable entity) throws Exception {
+	protected Object loadBySql(final String sql, final Serializable entity) {
 		return loadByQuery(new QueryExecutor(sql, entity));
 	}
 
-	protected Object loadByQuery(final QueryExecutor queryExecutor) throws Exception {
+	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor,
 				this.getDataSource(queryExecutor.getDataSource()));
 		List rows = result.getRows();
@@ -386,7 +381,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity,
-			final ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 		// 根据sql中的变量从entity对象中提取参数值
 		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
@@ -401,8 +396,7 @@ public class SqlToyDaoSupport {
 	 * @param paramsValue
 	 * @throws Exception
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue)
-			throws Exception {
+	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
 		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, false, this.getDataSource(null));
 	}
 
@@ -411,13 +405,12 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit
-	 *            是否自动提交
+	 * @param autoCommit    是否自动提交
 	 * @param dataSource
 	 * @throws Exception
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Boolean autoCommit, final DataSource dataSource) throws Exception {
+			final Boolean autoCommit, final DataSource dataSource) {
 		return dialectFactory.executeSql(sqlToyContext, sqlOrNamedSql, paramsNamed, paramsValue, autoCommit,
 				this.getDataSource(dataSource));
 	}
@@ -431,7 +424,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
-			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) {
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
 				autoCommit, this.getDataSource(null));
 	}
@@ -447,7 +440,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
-			final Boolean autoCommit) throws Exception {
+			final Boolean autoCommit) {
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler,
 				insertCallhandler, autoCommit, this.getDataSource(null));
 	}
@@ -462,7 +455,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
-			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit) throws Exception {
+			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit) {
 		return batchUpdate(sqlOrNamedSql, dataSet, batchSize, null, insertCallhandler, autoCommit, null);
 	}
 
@@ -479,12 +472,12 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
-			final Boolean autoCommit, final DataSource dataSource) throws Exception {
+			final Boolean autoCommit, final DataSource dataSource) {
 		return dialectFactory.batchUpdate(sqlToyContext, sqlOrNamedSql, dataSet, batchSize, reflectPropertyHandler,
 				insertCallhandler, autoCommit, getDataSource(dataSource));
 	}
 
-	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel) throws Exception {
+	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel) {
 		return wrapTreeTableRoute(treeModel, null);
 	}
 
@@ -495,7 +488,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel, final DataSource dataSource) throws Exception {
+	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel, final DataSource dataSource) {
 		return dialectFactory.wrapTreeTableRoute(sqlToyContext, treeModel, this.getDataSource(dataSource));
 	}
 
@@ -506,16 +499,16 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected List findBySql(final String sql, final Serializable entity) throws Exception {
+	protected List findBySql(final String sql, final Serializable entity) {
 		return findByQuery(new QueryExecutor(sql, entity)).getRows();
 	}
 
 	protected List findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass) throws Exception {
+			final Class voClass) {
 		return findByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass)).getRows();
 	}
 
-	protected QueryResult findByQuery(final QueryExecutor queryExecutor) throws Exception {
+	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor,
 				this.getDataSource(queryExecutor.getDataSource()));
 	}
@@ -527,8 +520,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor)
-			throws Exception {
+	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
 		return dialectFactory.findPage(sqlToyContext, queryExecutor, paginationModel.getPageNo(),
 				paginationModel.getPageSize(), this.getDataSource(queryExecutor.getDataSource()));
 	}
@@ -540,18 +532,18 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param                 voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 * @throws Exception
 	 */
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
-			final String[] paramsNamed, final Object[] paramsValue, Class voClass) throws Exception {
+			final String[] paramsNamed, final Object[] paramsValue, Class voClass) {
 		return findPageByQuery(paginationModel, new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass))
 				.getPageResult();
 	}
 
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
-			final Serializable entity) throws Exception {
+			final Serializable entity) {
 		return findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
@@ -560,21 +552,21 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param             voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @param topSize
 	 * @return
 	 * @throws Exception
 	 */
 	protected List findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass, final double topSize) throws Exception {
+			final Class voClass, final double topSize) {
 		return findTopByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass), topSize).getRows();
 	}
 
-	protected List findTopBySql(final String sql, final Serializable entity, final double topSize) throws Exception {
+	protected List findTopBySql(final String sql, final Serializable entity, final double topSize) {
 		return findTopByQuery(new QueryExecutor(sql, entity), topSize).getRows();
 	}
 
-	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) throws Exception {
+	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		return dialectFactory.findTop(sqlToyContext, queryExecutor, topSize,
 				this.getDataSource(queryExecutor.getDataSource()));
 	}
@@ -587,20 +579,19 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount)
-			throws Exception {
+	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, randomCount,
 				this.getDataSource(queryExecutor.getDataSource()));
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	protected List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			Class voClass, final double randomCount) throws Exception {
+			Class voClass, final double randomCount) {
 		return getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
 				randomCount).getRows();
 	}
 
-	protected void truncate(final Class entityClass, final Boolean autoCommit) throws Exception {
+	protected void truncate(final Class entityClass, final Boolean autoCommit) {
 		if (null == entityClass)
 			throw new IllegalArgumentException("entityClass is null!Please enter the correct!");
 		truncate(sqlToyContext.getEntityMeta(entityClass).getTableName(), autoCommit, null);
@@ -613,8 +604,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	protected void truncate(final String tableName, final Boolean autoCommit, final DataSource dataSource)
-			throws Exception {
+	protected void truncate(final String tableName, final Boolean autoCommit, final DataSource dataSource) {
 		this.executeSql("truncate table ".concat(tableName), null, null, autoCommit, this.getDataSource(dataSource));
 	}
 
@@ -624,7 +614,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Object save(final Serializable entity) throws Exception {
+	protected Object save(final Serializable entity) {
 		return this.save(entity, null);
 	}
 
@@ -635,7 +625,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Object save(final Serializable entity, final DataSource dataSource) throws Exception {
+	protected Object save(final Serializable entity, final DataSource dataSource) {
 		return dialectFactory.save(sqlToyContext, entity, this.getDataSource(dataSource));
 	}
 
@@ -644,7 +634,7 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @throws Exception
 	 */
-	protected Long saveAll(final List<?> entities) throws Exception {
+	protected Long saveAll(final List<?> entities) {
 		return this.saveAll(entities, null, null);
 	}
 
@@ -654,8 +644,7 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @throws Exception
 	 */
-	protected Long saveAll(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler)
-			throws Exception {
+	protected Long saveAll(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.saveAll(entities, reflectPropertyHandler, null);
 	}
 
@@ -667,7 +656,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long saveAll(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		return dialectFactory.saveAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), reflectPropertyHandler,
 				this.getDataSource(dataSource), null);
 	}
@@ -678,7 +667,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Long saveAllNotExist(final List<?> entities) throws Exception {
+	protected Long saveAllNotExist(final List<?> entities) {
 		return this.saveAllNotExist(entities, null, null);
 	}
 
@@ -689,7 +678,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected Long saveAllNotExist(final List<?> entities, final DataSource dataSource) throws Exception {
+	protected Long saveAllNotExist(final List<?> entities, final DataSource dataSource) {
 		return this.saveAllNotExist(entities, null, dataSource);
 	}
 
@@ -701,7 +690,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long saveAllNotExist(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		return dialectFactory.saveAllNotExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
@@ -711,7 +700,7 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @throws Exception
 	 */
-	protected Long update(final Serializable entity) throws Exception {
+	protected Long update(final Serializable entity) {
 		return this.update(entity, null, null);
 	}
 
@@ -721,7 +710,7 @@ public class SqlToyDaoSupport {
 	 * @param forceUpdateProps
 	 * @throws Exception
 	 */
-	protected Long update(final Serializable entity, final String[] forceUpdateProps) throws Exception {
+	protected Long update(final Serializable entity, final String[] forceUpdateProps) {
 		return this.update(entity, forceUpdateProps, null);
 	}
 
@@ -732,8 +721,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource)
-			throws Exception {
+	protected Long update(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource) {
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
@@ -742,14 +730,12 @@ public class SqlToyDaoSupport {
 	 * @todo 修改对象,并通过指定级联的子对象做级联修改
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @param forceCascadeClasses
-	 *            (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
+	 * @param forceCascadeClasses      (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
 	 * @param subTableForceUpdateProps
 	 * @throws Exception
 	 */
 	protected Long updateCascade(final Serializable entity, final String[] forceUpdateProps,
-			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps)
-			throws Exception {
+			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps) {
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, true, forceCascadeClasses,
 				subTableForceUpdateProps, this.getDataSource(null));
 	}
@@ -759,7 +745,7 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @throws Exception
 	 */
-	protected Long updateDeeply(final Serializable entity) throws Exception {
+	protected Long updateDeeply(final Serializable entity) {
 		return this.updateDeeply(entity, null);
 	}
 
@@ -769,7 +755,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	protected Long updateDeeply(final Serializable entity, final DataSource dataSource) throws Exception {
+	protected Long updateDeeply(final Serializable entity, final DataSource dataSource) {
 		return this.update(entity, sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(),
 				this.getDataSource(dataSource));
 	}
@@ -779,7 +765,7 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @throws Exception
 	 */
-	protected Long updateAll(final List<?> entities) throws Exception {
+	protected Long updateAll(final List<?> entities) {
 		return this.updateAll(entities, null, null, null);
 	}
 
@@ -789,12 +775,12 @@ public class SqlToyDaoSupport {
 	 * @param forceUpdateProps
 	 * @throws Exception
 	 */
-	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps) throws Exception {
+	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps) {
 		return this.updateAll(entities, forceUpdateProps, null, null);
 	}
 
 	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.updateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
 	}
 
@@ -807,7 +793,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
@@ -818,8 +804,7 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @throws Exception
 	 */
-	protected Long updateAllDeeply(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler)
-			throws Exception {
+	protected Long updateAllDeeply(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler) {
 		return updateAllDeeply(entities, reflectPropertyHandler, null);
 	}
 
@@ -831,7 +816,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long updateAllDeeply(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource) throws Exception {
+			final DataSource dataSource) {
 		if (entities == null || entities.isEmpty())
 			return new Long(0);
 		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(),
@@ -843,11 +828,11 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @throws Exception
 	 */
-	protected Long saveOrUpdate(final Serializable entity) throws Exception {
+	protected Long saveOrUpdate(final Serializable entity) {
 		return this.saveOrUpdate(entity, null, null);
 	}
 
-	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps) throws Exception {
+	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps) {
 		return this.saveOrUpdate(entity, forceUpdateProps, null);
 	}
 
@@ -858,12 +843,12 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps, final DataSource dataSource)
-			throws Exception {
+	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps,
+			final DataSource dataSource) {
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
-	protected Long saveOrUpdateAll(final List<?> entities) throws Exception {
+	protected Long saveOrUpdateAll(final List<?> entities) {
 		return this.saveOrUpdateAll(entities, null, null, null);
 	}
 
@@ -873,7 +858,7 @@ public class SqlToyDaoSupport {
 	 * @param forceUpdateProps
 	 * @throws Exception
 	 */
-	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps) throws Exception {
+	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps) {
 		return this.saveOrUpdateAll(entities, forceUpdateProps, null, null);
 	}
 
@@ -886,7 +871,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
 	}
 
@@ -899,7 +884,7 @@ public class SqlToyDaoSupport {
 	 * @throws Exception
 	 */
 	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
@@ -909,15 +894,15 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @throws Exception
 	 */
-	protected Long delete(final Serializable entity) throws Exception {
+	protected Long delete(final Serializable entity) {
 		return dialectFactory.delete(sqlToyContext, entity, this.getDataSource(null));
 	}
 
-	protected Long delete(final Serializable entity, final DataSource dataSource) throws Exception {
+	protected Long delete(final Serializable entity, final DataSource dataSource) {
 		return dialectFactory.delete(sqlToyContext, entity, this.getDataSource(dataSource));
 	}
 
-	protected Long deleteAll(final List<?> entities) throws Exception {
+	protected Long deleteAll(final List<?> entities) {
 		return this.deleteAll(entities, null);
 	}
 
@@ -927,7 +912,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @throws Exception
 	 */
-	protected Long deleteAll(final List<?> entities, final DataSource dataSource) throws Exception {
+	protected Long deleteAll(final List<?> entities, final DataSource dataSource) {
 		return dialectFactory.deleteAll(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				this.getDataSource(dataSource), null);
 	}
@@ -938,8 +923,7 @@ public class SqlToyDaoSupport {
 	 * @param updateRowHandler
 	 * @return
 	 */
-	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler)
-			throws Exception {
+	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, updateRowHandler,
 				this.getDataSource(queryExecutor.getDataSource())).getRows();
 	}
@@ -954,7 +938,7 @@ public class SqlToyDaoSupport {
 	 */
 	@Deprecated
 	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler) throws Exception {
+			final UpdateRowHandler updateRowHandler) {
 		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, topSize, updateRowHandler,
 				this.getDataSource(queryExecutor.getDataSource())).getRows();
 	}
@@ -964,12 +948,11 @@ public class SqlToyDaoSupport {
 	 * @param queryExecutor
 	 * @param random
 	 * @param updateRowHandler
-	 * @return
-	 * @throws Exception
+	 * @return @
 	 */
 	@Deprecated
 	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler) throws Exception {
+			final UpdateRowHandler updateRowHandler) {
 		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, random, updateRowHandler,
 				this.getDataSource(queryExecutor.getDataSource())).getRows();
 	}
@@ -980,7 +963,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected EntityMeta getEntityMeta(Class entityClass) throws Exception {
+	protected EntityMeta getEntityMeta(Class entityClass) {
 		return sqlToyContext.getEntityMeta(entityClass);
 	}
 
@@ -1031,7 +1014,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected long generateBizId(String signature, int increment) throws Exception {
+	protected long generateBizId(String signature, int increment) {
 		if (StringUtil.isBlank(signature))
 			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
 		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
@@ -1043,7 +1026,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected String generateBizId(Serializable entity) throws Exception {
+	protected String generateBizId(Serializable entity) {
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
 		if (entityMeta == null || !entityMeta.isHasBizIdConfig())
 			throw new IllegalArgumentException(
@@ -1078,7 +1061,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) throws Exception {
+	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
 		return this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext, cacheName, cacheType);
 	}
 }

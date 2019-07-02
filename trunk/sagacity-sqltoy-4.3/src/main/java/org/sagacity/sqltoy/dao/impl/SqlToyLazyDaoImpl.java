@@ -70,7 +70,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue) throws Exception {
+	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue) {
 		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
 	}
 
@@ -81,7 +81,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Object getSingleValue(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) throws Exception {
+	public Object getSingleValue(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
 		return super.getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue);
 	}
 
@@ -92,8 +92,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public Object loadBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class resultType)
-			throws Exception {
+	public Object loadBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class resultType) {
 		return super.loadBySql(sqlOrNamedSql, paramsNamed, paramsValue, resultType);
 	}
 
@@ -104,7 +103,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * Serializable)
 	 */
 	@Override
-	public Object loadBySql(String sqlOrNamedSql, Serializable entity) throws Exception {
+	public Object loadBySql(String sqlOrNamedSql, Serializable entity) {
 		return super.loadBySql(sqlOrNamedSql, entity);
 	}
 
@@ -115,7 +114,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.io.Serializable)
 	 */
 	@Override
-	public List findBySql(String sqlOrNamedSql, Serializable entity) throws Exception {
+	public List findBySql(String sqlOrNamedSql, Serializable entity) {
 		return super.findBySql(sqlOrNamedSql, entity);
 	}
 
@@ -126,8 +125,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class voClass)
-			throws Exception {
+	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class voClass) {
 		return super.findByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass))
 				.getRows();
 	}
@@ -139,7 +137,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .database.model.PaginationModel, org.sagacity.sqltoy.executor.QueryExecutor)
 	 */
 	@Override
-	public QueryResult findPageByQuery(PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
+	public QueryResult findPageByQuery(PaginationModel pageModel, QueryExecutor queryExecutor) {
 		return super.findPageByQuery(pageModel, queryExecutor);
 	}
 
@@ -151,7 +149,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Serializable entity) throws Exception {
+			final Serializable entity) {
 		return super.findPageBySql(paginationModel, sqlOrNamedSql, entity);
 	}
 
@@ -164,7 +162,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public PaginationModel findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql, String[] paramsNamed,
-			Object[] paramValues, Class voClass) throws Exception {
+			Object[] paramValues, Class voClass) {
 		return super.findPageByQuery(paginationModel,
 				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass)).getPageResult();
 	}
@@ -177,7 +175,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public List findTopBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues, Class voClass,
-			double topSize) throws Exception {
+			double topSize) {
 		return super.findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass),
 				topSize).getRows();
 	}
@@ -189,7 +187,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.io.Serializable, double)
 	 */
 	@Override
-	public List findTopBySql(String sqlOrNamedSql, Serializable entity, double topSize) throws Exception {
+	public List findTopBySql(String sqlOrNamedSql, Serializable entity, double topSize) {
 		return super.findTopByQuery(new QueryExecutor(sqlOrNamedSql, entity), topSize).getRows();
 	}
 
@@ -201,7 +199,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .sqltoy.executor.QueryExecutor, double)
 	 */
 	@Override
-	public QueryResult getRandomResult(QueryExecutor queryExecutor, double randomCount) throws Exception {
+	public QueryResult getRandomResult(QueryExecutor queryExecutor, double randomCount) {
 		return super.getRandomResult(queryExecutor, randomCount);
 	}
 
@@ -212,7 +210,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * String, java.io.Serializable, double)
 	 */
 	@Override
-	public List getRandomResult(String sqlOrNamedSql, Serializable entity, double randomCount) throws Exception {
+	public List getRandomResult(String sqlOrNamedSql, Serializable entity, double randomCount) {
 		return super.getRandomResult(new QueryExecutor(sqlOrNamedSql, entity), randomCount).getRows();
 	}
 
@@ -224,7 +222,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public List getRandomResult(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class voClass,
-			double randomCount) throws Exception {
+			double randomCount) {
 		return super.getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
 				randomCount).getRows();
 	}
@@ -238,7 +236,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public Long batchUpdate(String sqlOrNamedSql, List dataSet, InsertRowCallbackHandler insertCallhandler,
-			Boolean autoCommit) throws Exception {
+			Boolean autoCommit) {
 		return super.batchUpdate(sqlOrNamedSql, dataSet, null, insertCallhandler, autoCommit);
 	}
 
@@ -249,7 +247,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .core.database.model.TreeTableModel)
 	 */
 	@Override
-	public boolean wrapTreeTableRoute(TreeTableModel treeTableModel) throws Exception {
+	public boolean wrapTreeTableRoute(TreeTableModel treeTableModel) {
 		return super.wrapTreeTableRoute(treeTableModel, null);
 	}
 
@@ -260,7 +258,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#getEntityMeta(java.io.Serializable)
 	 */
 	@Override
-	public EntityMeta getEntityMeta(Class entityClass) throws Exception {
+	public EntityMeta getEntityMeta(Class entityClass) {
 		return super.getEntityMeta(entityClass);
 	}
 
@@ -271,7 +269,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public boolean isUnique(Serializable entity, String[] paramsNamed) throws Exception {
+	public boolean isUnique(Serializable entity, String[] paramsNamed) {
 		return super.isUnique(entity, paramsNamed);
 	}
 
@@ -283,12 +281,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Object[])
 	 */
 	@Override
-	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues) throws Exception {
+	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues) {
 		return super.executeStore(storeNameOrKey, inParamValues, null, null, null);
 	}
 
 	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
-			Class resultType) throws Exception {
+			Class resultType) {
 		return super.executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);
 	}
 
@@ -298,7 +296,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#save(java.io.Serializable)
 	 */
 	@Override
-	public Object save(Serializable entity) throws Exception {
+	public Object save(Serializable entity) {
 		return super.save(entity);
 	}
 
@@ -308,7 +306,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveAll(java.util.List)
 	 */
 	@Override
-	public Long saveAll(List<?> entities) throws Exception {
+	public Long saveAll(List<?> entities) {
 		return super.saveAll(entities);
 	}
 
@@ -319,7 +317,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveAll(entities, reflectPropertyHandler);
 	}
 
@@ -329,7 +327,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#update(java.io.Serializable)
 	 */
 	@Override
-	public Long update(Serializable entity) throws Exception {
+	public Long update(Serializable entity) {
 		return super.update(entity);
 	}
 
@@ -340,7 +338,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long update(Serializable entity, String[] forceUpdateProps) throws Exception {
+	public Long update(Serializable entity, String[] forceUpdateProps) {
 		return super.update(entity, forceUpdateProps);
 	}
 
@@ -350,7 +348,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateDeeply(java.io.Serializable)
 	 */
 	@Override
-	public Long updateDeeply(Serializable entity) throws Exception {
+	public Long updateDeeply(Serializable entity) {
 		return super.updateDeeply(entity);
 	}
 
@@ -363,7 +361,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] emptyUpdateClass,
-			HashMap<Class, String[]> subTableForceUpdateProps) throws Exception {
+			HashMap<Class, String[]> subTableForceUpdateProps) {
 		return super.updateCascade(entity, forceUpdateProps, emptyUpdateClass, subTableForceUpdateProps);
 	}
 
@@ -373,7 +371,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateAll(java.util.List)
 	 */
 	@Override
-	public Long updateAll(List<?> entities) throws Exception {
+	public Long updateAll(List<?> entities) {
 		return super.updateAll(entities);
 	}
 
@@ -384,7 +382,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps) throws Exception {
+	public Long updateAll(List<?> entities, String[] forceUpdateProps) {
 		return super.updateAll(entities, forceUpdateProps);
 	}
 
@@ -395,8 +393,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler)
-			throws Exception {
+	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
@@ -407,7 +404,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAllDeeply(entities, reflectPropertyHandler);
 	}
 
@@ -418,7 +415,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * Serializable)
 	 */
 	@Override
-	public Long saveOrUpdate(Serializable entity) throws Exception {
+	public Long saveOrUpdate(Serializable entity) {
 		return super.saveOrUpdate(entity);
 	}
 
@@ -429,7 +426,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) throws Exception {
+	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) {
 		return super.saveOrUpdate(entity, forceUpdateProps);
 	}
 
@@ -440,7 +437,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities) throws Exception {
+	public Long saveOrUpdateAll(List<?> entities) {
 		return super.saveOrUpdateAll(entities);
 	}
 
@@ -451,7 +448,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) throws Exception {
+	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
@@ -463,7 +460,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
@@ -473,7 +470,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#delete(java.io.Serializable)
 	 */
 	@Override
-	public Long delete(Serializable entity) throws Exception {
+	public Long delete(Serializable entity) {
 		return super.delete(entity);
 	}
 
@@ -483,7 +480,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#deleteAll(java.util.List)
 	 */
 	@Override
-	public Long deleteAll(List<?> entities) throws Exception {
+	public Long deleteAll(List<?> entities) {
 		return super.deleteAll(entities);
 	}
 
@@ -493,7 +490,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#truncate(java.io.Serializable)
 	 */
 	@Override
-	public void truncate(final Class entityClass) throws Exception {
+	public void truncate(final Class entityClass) {
 		super.truncate(entityClass, null);
 	}
 
@@ -503,7 +500,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#load(java.io.Serializable)
 	 */
 	@Override
-	public Serializable load(Serializable entity) throws Exception {
+	public Serializable load(Serializable entity) {
 		return super.load(entity);
 	}
 
@@ -514,7 +511,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable load(Serializable entity, LockMode lockMode) throws Exception {
+	public Serializable load(Serializable entity, LockMode lockMode) {
 		return super.load(entity, lockMode);
 	}
 
@@ -525,7 +522,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity, LockMode lockMode) throws Exception {
+	public Serializable loadCascade(Serializable entity, LockMode lockMode) {
 		return super.loadCascade(entity, lockMode);
 	}
 
@@ -535,7 +532,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAll(java.util.List)
 	 */
 	@Override
-	public List loadAll(List<?> entities) throws Exception {
+	public List loadAll(List<?> entities) {
 		return super.loadAll(entities, null);
 	}
 
@@ -545,7 +542,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAllCascade(java.util.List)
 	 */
 	@Override
-	public List loadAllCascade(List<?> entities) throws Exception {
+	public List loadAllCascade(List<?> entities) {
 		return super.loadAllCascade(entities, null);
 	}
 
@@ -556,7 +553,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[])
 	 */
 	@Override
-	public List loadAllCascade(List<?> entities, Class[] cascadeTypes) throws Exception {
+	public List loadAllCascade(List<?> entities, Class[] cascadeTypes) {
 		return super.loadAllCascade(entities, cascadeTypes, null);
 	}
 
@@ -567,7 +564,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[], org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) throws Exception {
+	public Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) {
 		return super.loadCascade(entity, cascadeTypes, lockMode);
 	}
 
@@ -578,7 +575,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .executor.QueryExecutor)
 	 */
 	@Override
-	public Object loadByQuery(QueryExecutor queryExecutor) throws Exception {
+	public Object loadByQuery(QueryExecutor queryExecutor) {
 		return super.loadByQuery(queryExecutor);
 	}
 
@@ -589,7 +586,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .executor.QueryExecutor)
 	 */
 	@Override
-	public QueryResult findByQuery(QueryExecutor queryExecutor) throws Exception {
+	public QueryResult findByQuery(QueryExecutor queryExecutor) {
 		return super.findByQuery(queryExecutor);
 	}
 
@@ -600,7 +597,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .executor.QueryExecutor, double)
 	 */
 	@Override
-	public QueryResult findTopByQuery(QueryExecutor queryExecutor, double topSize) throws Exception {
+	public QueryResult findTopByQuery(QueryExecutor queryExecutor, double topSize) {
 		return super.findTopByQuery(queryExecutor, topSize);
 	}
 
@@ -612,7 +609,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.core.database.callback.UpdateRowHandler)
 	 */
 	@Override
-	public List updateFetch(QueryExecutor queryExecutor, UpdateRowHandler updateRowHandler) throws Exception {
+	public List updateFetch(QueryExecutor queryExecutor, UpdateRowHandler updateRowHandler) {
 		return super.updateFetch(queryExecutor, updateRowHandler);
 	}
 
@@ -625,8 +622,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	@Deprecated
-	public List updateFetchTop(QueryExecutor queryExecutor, Integer topSize, UpdateRowHandler updateRowHandler)
-			throws Exception {
+	public List updateFetchTop(QueryExecutor queryExecutor, Integer topSize, UpdateRowHandler updateRowHandler) {
 		return super.updateFetchTop(queryExecutor, topSize, updateRowHandler);
 	}
 
@@ -639,8 +635,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	@Deprecated
-	public List updateFetchRandom(QueryExecutor queryExecutor, Integer random, UpdateRowHandler updateRowHandler)
-			throws Exception {
+	public List updateFetchRandom(QueryExecutor queryExecutor, Integer random, UpdateRowHandler updateRowHandler) {
 		return super.updateFetchRandom(queryExecutor, random, updateRowHandler);
 	}
 
@@ -652,8 +647,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long executeSql(String sqlOrNamedSql, Serializable entity, ReflectPropertyHandler reflectPropertyHandler)
-			throws Exception {
+	public Long executeSql(String sqlOrNamedSql, Serializable entity, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.executeSql(sqlOrNamedSql, entity, reflectPropertyHandler);
 	}
 
@@ -664,7 +658,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[])
 	 */
 	@Override
-	public Long executeSql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) throws Exception {
+	public Long executeSql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
 		return super.executeSql(sqlOrNamedSql, paramsNamed, paramsValue);
 	}
 
@@ -836,7 +830,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * int)
 	 */
 	@Override
-	public long generateBizId(String signature, int increment) throws Exception {
+	public long generateBizId(String signature, int increment) {
 		return super.generateBizId(signature, increment);
 	}
 
@@ -847,7 +841,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * Serializable)
 	 */
 	@Override
-	public String generateBizId(Serializable entity) throws Exception {
+	public String generateBizId(Serializable entity) {
 		return super.generateBizId(entity);
 	}
 
@@ -859,7 +853,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * String, java.lang.String)
 	 */
 	@Override
-	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) throws Exception {
+	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) {
 		return super.getTranslateCache(cacheName, elementId);
 	}
 
@@ -871,7 +865,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 */
 	@Override
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
-			TranslateHandler handler) throws Exception {
+			TranslateHandler handler) {
 		// 数据以及合法性校验
 		if (dataSet == null || dataSet.isEmpty())
 			return;

@@ -71,8 +71,7 @@ public class TranslateManager {
 	private Timer timer;
 
 	/**
-	 * @param translateConfig
-	 *            the translateConfig to set
+	 * @param translateConfig the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
@@ -118,7 +117,7 @@ public class TranslateManager {
 	 * @throws Exception
 	 */
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(SqlToyContext sqlToyContext, Connection conn,
-			HashMap<String, SqlTranslate> translates) throws Exception {
+			HashMap<String, SqlTranslate> translates) {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
 		SqlTranslate translate;
 		HashMap<String, Object[]> cache;
@@ -146,13 +145,12 @@ public class TranslateManager {
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType
-	 *            一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
 	private HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
-			String cacheType) throws Exception {
+			String cacheType) {
 		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), cacheType);
 		if (result == null || result.isEmpty()) {
 			result = TranslateFactory.getCacheData(sqlToyContext, cacheModel, cacheType);
@@ -172,8 +170,8 @@ public class TranslateManager {
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, String cacheName, String cacheType)
-			throws Exception {
+	public HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, String cacheName,
+			String cacheType) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
 		if (cacheModel == null) {
 			logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
@@ -183,16 +181,14 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @param charset
-	 *            the charset to set
+	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
 	}
 
 	/**
-	 * @param translateCacheManager
-	 *            the translateCacheManager to set
+	 * @param translateCacheManager the translateCacheManager to set
 	 */
 	public void setTranslateCacheManager(TranslateCacheManager translateCacheManager) {
 		this.translateCacheManager = translateCacheManager;
@@ -204,5 +200,5 @@ public class TranslateManager {
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
 	}
-	
+
 }

@@ -775,7 +775,7 @@ public class SqlConfigParseUtils {
 	 * @throws Exception
 	 */
 	public static Object[] reflectBeanParams(String[] paramsName, Serializable entity,
-			ReflectPropertyHandler reflectPropsHandler) throws Exception {
+			ReflectPropertyHandler reflectPropsHandler) {
 		if (null != entity && null != paramsName && paramsName.length > 0) {
 			return BeanUtil.reflectBeanToAry(entity, paramsName, null, reflectPropsHandler);
 		}
