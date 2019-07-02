@@ -10,7 +10,6 @@ import java.sql.Connection;
  * @description 数据库连接反调,通过反调传递Connection,并通过Result进行数据交互
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:DataSourceCallbackHandler.java,Revision:v1.0,Date:2012-6-10
- *          下午4:17:58
  */
 public abstract class DataSourceCallbackHandler {
 	/**
@@ -35,8 +34,7 @@ public abstract class DataSourceCallbackHandler {
 	}
 
 	/**
-	 * @param result
-	 *            the result to set
+	 * @param result the result to set
 	 */
 	public void setResult(Object result) {
 		this.result = result;

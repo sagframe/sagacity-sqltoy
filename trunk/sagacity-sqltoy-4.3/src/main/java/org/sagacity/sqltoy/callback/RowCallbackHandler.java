@@ -12,8 +12,7 @@ import java.util.List;
  * @project sagacity-sqltoy
  * @description 行结果集反调处理接口
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:RowCallbackHandler.java,Revision:v1.0,Date:2008-12-9 下午10:18:14
- * 
+ * @version id:RowCallbackHandler.java,Revision:v1.0,Date:2008-12-9
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class RowCallbackHandler {

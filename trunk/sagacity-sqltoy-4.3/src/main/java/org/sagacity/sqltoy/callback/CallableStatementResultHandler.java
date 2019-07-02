@@ -11,7 +11,6 @@ import java.sql.ResultSet;
  * @description 数据库CallableStatement针对存储过程处理反调抽象类,用来处理result
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:CallableStatementResultHandler.java,Revision:v1.0,Date:2009-3-20
- *          上午11:06:47
  */
 public abstract class CallableStatementResultHandler {
 	/**

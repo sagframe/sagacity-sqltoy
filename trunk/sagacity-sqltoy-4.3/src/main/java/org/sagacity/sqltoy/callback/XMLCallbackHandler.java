@@ -10,7 +10,7 @@ import org.dom4j.Element;
  * @project sagacity-sqltoy
  * @description xml编辑反调抽象类
  * @author chenrf $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version id:XMLCallbackHandler.java,Revision:v1.0,Date:2009-12-30 上午12:34:46
+ * @version id:XMLCallbackHandler.java,Revision:v1.0,Date:2009-12-30 
  */
 public abstract class XMLCallbackHandler {
 	/**

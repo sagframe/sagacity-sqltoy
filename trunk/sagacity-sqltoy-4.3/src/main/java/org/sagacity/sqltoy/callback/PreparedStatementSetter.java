@@ -11,7 +11,6 @@ import java.sql.SQLException;
  * @description 提供数据库参数设置反调扩展
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:PreparedStatementSetter.java,Revision:v1.0,Date:2011-7-14
- *          上午10:31:06
  */
 public abstract class PreparedStatementSetter {
 	/**
