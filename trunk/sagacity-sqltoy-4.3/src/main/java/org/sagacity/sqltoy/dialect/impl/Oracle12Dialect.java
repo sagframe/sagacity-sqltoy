@@ -27,7 +27,6 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -424,7 +423,7 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " fetch first " + topSize
 		// + " rows only for update nowait";
 		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
@@ -444,7 +443,7 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		// String realSql = sql + " order by dbms_random.random fetch first "
 		// + random + " rows only for update nowait";
 		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,

@@ -29,7 +29,6 @@ import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SapIQDialectUtils;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -553,7 +552,7 @@ public class SybaseIQDialect implements Dialect {
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
 		// 不支持
-		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	/*

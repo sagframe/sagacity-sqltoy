@@ -31,7 +31,7 @@ import org.elasticsearch.client.RestClient;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
-import org.sagacity.sqltoy.exception.BaseException;
+import org.sagacity.sqltoy.exception.DataAccessException;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -203,7 +203,7 @@ public class HttpClientUtils {
 		if (json.containsKey("error")) {
 			String errorMessage = JSON.toJSONString(json.getJSONObject("error").getJSONArray("root_cause").get(0));
 			logger.error("elastic查询失败,endpoint:[{}],错误信息:[{}]", nosqlConfig.getEndpoint(), errorMessage);
-			throw new BaseException("ElasticSearch查询失败,错误信息:" + errorMessage);
+			throw new DataAccessException("ElasticSearch查询失败,错误信息:" + errorMessage);
 		}
 		return json;
 	}

@@ -633,14 +633,6 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp = "select a,(select b from table1) as c from table ";
-
-		// String tmp = "select a,(select a1 from table) as b from table ";
-		// System.err.println(StringUtil.matchIndex(tmp, "\\Wfrom[\\(|\\s+]", 6));
-		// String sql = readLineAsString(new File("D:/test.txt"), "UTF-8");
-		// int index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+",
-		// "(?i)\\s+from[\\(|\\s+]", sql, 0);
-		// System.err.println(index);
 
 	}
 }

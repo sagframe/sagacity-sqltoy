@@ -28,7 +28,6 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqliteDialectUtils;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -479,7 +478,7 @@ public class SqliteDialect implements Dialect {
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn) throws Exception {
 		// 不支持
-		throw new BaseException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {

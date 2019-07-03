@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.plugin.TranslateHandler;
 

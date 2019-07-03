@@ -44,6 +44,7 @@ import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
@@ -185,7 +186,6 @@ public class DialectFactory {
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final List dataSet,
 			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
@@ -215,7 +215,7 @@ public class DialectFactory {
 			});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -230,7 +230,6 @@ public class DialectFactory {
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Long executeSql(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, final Boolean autoCommit, final DataSource dataSource) {
@@ -257,7 +256,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -269,7 +268,6 @@ public class DialectFactory {
 	 * @param uniqueExecutor
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
 			final DataSource dataSource) {
@@ -288,7 +286,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -301,7 +299,6 @@ public class DialectFactory {
 	 * @param randomCount
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Double randomCount, final DataSource dataSource) {
@@ -366,7 +363,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -378,7 +375,6 @@ public class DialectFactory {
 	 * @param treeModel
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
 			final DataSource dataSource) {
@@ -433,7 +429,7 @@ public class DialectFactory {
 		} catch (Exception e) {
 			logger.error("封装树形表节点路径操作:wrapTreeTableRoute发生错误,{}", e.getMessage());
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -445,7 +441,6 @@ public class DialectFactory {
 	 * @param pageSize
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
 			final Integer pageSize, final DataSource dataSource) {
@@ -534,7 +529,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -547,7 +542,6 @@ public class DialectFactory {
 	 * @param topSize
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final double topSize, final DataSource dataSource) {
@@ -596,7 +590,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -608,7 +602,6 @@ public class DialectFactory {
 	 * @param queryExecutor
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) {
@@ -648,7 +641,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -660,7 +653,6 @@ public class DialectFactory {
 	 * @param queryExecutor
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) {
@@ -682,7 +674,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -750,7 +742,6 @@ public class DialectFactory {
 	 * @param forceUpdateProps
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
@@ -768,7 +759,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -783,7 +774,6 @@ public class DialectFactory {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 * @param autoCommit
-	 * @throws Exception
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
@@ -820,7 +810,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -834,7 +824,6 @@ public class DialectFactory {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 * @param autoCommit
-	 * @throws Exception
 	 */
 	public Long saveAllNotExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
@@ -872,7 +861,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -886,7 +875,6 @@ public class DialectFactory {
 	 * @param lockMode
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity, final Class[] cascadeTypes,
 			final LockMode lockMode, final DataSource dataSource) {
@@ -906,7 +894,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -920,7 +908,6 @@ public class DialectFactory {
 	 * @param lockMode
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public List<?> loadAll(final SqlToyContext sqlToyContext, final List<?> entities, final Class[] cascadeTypes,
 			final LockMode lockMode, final DataSource dataSource) {
@@ -946,7 +933,7 @@ public class DialectFactory {
 			});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -958,7 +945,6 @@ public class DialectFactory {
 	 * @param entity
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public Serializable save(final SqlToyContext sqlToyContext, final Serializable entity,
 			final DataSource dataSource) {
@@ -975,7 +961,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -989,7 +975,6 @@ public class DialectFactory {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 * @param autoCommit
-	 * @throws Exception
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
@@ -1026,7 +1011,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1041,7 +1026,6 @@ public class DialectFactory {
 	 * @param forceCascadeClass
 	 * @param subTableForceUpdateProps
 	 * @param dataSource
-	 * @throws Exception
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
@@ -1060,7 +1044,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1075,7 +1059,6 @@ public class DialectFactory {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 * @param autoCommit
-	 * @throws Exception
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
@@ -1113,7 +1096,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1124,7 +1107,6 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param dataSource
-	 * @throws Exception
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null)
@@ -1141,7 +1123,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1154,7 +1136,6 @@ public class DialectFactory {
 	 * @param batchSize
 	 * @param dataSource
 	 * @param autoCommit
-	 * @throws Exception
 	 */
 	public Long deleteAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final DataSource dataSource, final Boolean autoCommit) {
@@ -1190,7 +1171,7 @@ public class DialectFactory {
 			return new Long(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1203,7 +1184,6 @@ public class DialectFactory {
 	 * @param updateRowHandler
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
@@ -1234,7 +1214,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1271,7 +1251,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1307,7 +1287,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
@@ -1322,7 +1302,6 @@ public class DialectFactory {
 	 * @param resultType
 	 * @param dataSource
 	 * @return
-	 * @throws Exception
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
@@ -1371,7 +1350,7 @@ public class DialectFactory {
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		} finally {
 			SqlExecuteStat.destroy();
 		}
