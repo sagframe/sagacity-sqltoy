@@ -109,7 +109,7 @@ public class Elastic extends BaseLink {
 			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -129,7 +129,7 @@ public class Elastic extends BaseLink {
 			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
