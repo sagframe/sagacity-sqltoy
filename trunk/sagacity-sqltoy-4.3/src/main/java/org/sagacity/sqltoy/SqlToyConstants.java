@@ -176,8 +176,7 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * 获取缓存翻译默认过期时长(秒)
-	 * 
+	 * @todo 获取缓存翻译默认过期时长(秒)
 	 * @return
 	 */
 	public static int getCacheExpireSeconds() {

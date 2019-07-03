@@ -171,8 +171,6 @@ public class DataSourceUtils {
 
 	/**
 	 * @todo <b>获取数据库批量sql语句的分割符号</b>
-	 * @author zhongxuchen
-	 * @date 2011-5-16 下午05:43:00
 	 * @param conn
 	 * @return
 	 */
@@ -248,10 +246,7 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * 
 	 * @todo <b>获取数据库类型</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-3 下午06:25:41
 	 * @param conn
 	 * @return
 	 * @throws SQLException
@@ -325,8 +320,7 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * 获取不同数据库validator语句
-	 * 
+	 * @todo 获取不同数据库validator语句
 	 * @param conn
 	 * @return
 	 * @throws Exception
