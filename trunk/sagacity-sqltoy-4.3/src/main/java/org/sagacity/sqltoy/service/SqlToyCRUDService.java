@@ -24,7 +24,6 @@ public interface SqlToyCRUDService {
 	 * @todo 保存单条记录对象
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public Object save(Serializable entity);
 
@@ -32,21 +31,18 @@ public interface SqlToyCRUDService {
 	 * @todo 批量保存对象
 	 * @param entities
 	 * @param reflectPropertyHandler
-	 * @throws BaseException
 	 */
 	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 批量保存对象
 	 * @param entities
-	 * @throws BaseException
 	 */
 	public Long saveAll(List<?> entities);
 
 	/**
 	 * @todo 非深度修改对象
 	 * @param entity
-	 * @throws BaseException
 	 */
 	public Long update(Serializable entity);
 
@@ -54,21 +50,18 @@ public interface SqlToyCRUDService {
 	 * @todo 修改对象，设置强制修改的属性
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @throws BaseException
 	 */
 	public Long update(Serializable entity, String[] forceUpdateProps);
 
 	/**
 	 * @todo 是否深度修改对象
 	 * @param entity
-	 * @throws BaseException
 	 */
 	public Long updateDeeply(Serializable entity);
 
 	/**
 	 * @todo 批量对对象进行修改(以首条记录为基准决定哪些字段会被修改)
 	 * @param entities
-	 * @throws BaseException
 	 */
 	public Long updateAll(List<?> entities);
 
@@ -76,7 +69,6 @@ public interface SqlToyCRUDService {
 	 * @todo 批量对象修改，通过forceUpdateProps指定哪些字段需要强制修改
 	 * @param entities
 	 * @param forceUpdateProps
-	 * @throws BaseException
 	 */
 	public Long updateAll(List<?> entities, String[] forceUpdateProps);
 
@@ -85,14 +77,12 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
-	 * @throws BaseException
 	 */
 	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 批量深度集合修改
 	 * @param entities
-	 * @throws Exception
 	 */
 	public Long updateAllDeeply(List<?> entities);
 
@@ -102,7 +92,6 @@ public interface SqlToyCRUDService {
 	 * @todo 修改或保存单条记录
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @throws BaseException
 	 */
 	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps);
 
@@ -115,7 +104,6 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
-	 * @throws BaseException
 	 */
 	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
@@ -124,7 +112,6 @@ public interface SqlToyCRUDService {
 	 * @todo 获取对象数据
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public Serializable load(Serializable entity);
 
@@ -132,29 +119,24 @@ public interface SqlToyCRUDService {
 	 * @todo 级联加载对象
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public Serializable loadCascade(Serializable entity);
 
 	/**
 	 * @todo 删除对象
 	 * @param entity
-	 * @throws BaseException
 	 */
 	public Long delete(Serializable entity);
 
 	/**
 	 * @todo 批量删除对象
 	 * @param entities
-	 * @throws Exception
 	 */
 	public Long deleteAll(List<?> entities);
 
 	/**
-	 * 清除表的记录
-	 * 
+	 * @todo 清除表的记录
 	 * @param entityClass
-	 * @throws BaseException
 	 */
 	public void truncate(final Class entityClass);
 
@@ -162,7 +144,6 @@ public interface SqlToyCRUDService {
 	 * @todo 判断是否唯一
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public boolean isUnique(Serializable entity);
 
@@ -171,7 +152,6 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @param paramsNamed group+uniqueField
 	 * @return
-	 * @throws BaseException
 	 */
 	public boolean isUnique(Serializable entity, final String[] paramsNamed);
 
@@ -180,7 +160,6 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @param pid
 	 * @return
-	 * @throws BaseException
 	 */
 	public boolean wrapTreeTableRoute(final Serializable entity, String pid);
 
@@ -190,7 +169,6 @@ public interface SqlToyCRUDService {
 	 * @param pid
 	 * @param appendIdSize
 	 * @return
-	 * @throws BaseException
 	 */
 	public boolean wrapTreeTableRoute(final Serializable entity, String pid, int appendIdSize);
 
@@ -198,7 +176,6 @@ public interface SqlToyCRUDService {
 	 * @todo 根据对象主键获取对象详细信息
 	 * @param entities
 	 * @return
-	 * @throws BaseException
 	 */
 	public List loadAll(List<?> entities);
 
@@ -206,7 +183,6 @@ public interface SqlToyCRUDService {
 	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public List findFrom(Serializable entity);
 
@@ -217,7 +193,6 @@ public interface SqlToyCRUDService {
 	 * @param paginationModel
 	 * @param entity
 	 * @return
-	 * @throws BaseException
 	 */
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity);
 
@@ -229,7 +204,6 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @param topSize
 	 * @return
-	 * @throws BaseException
 	 */
 	public List findTopFrom(Serializable entity, double topSize);
 
@@ -238,7 +212,6 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @param randomCount
 	 * @return
-	 * @throws BaseException
 	 */
 	public List getRandomFrom(Serializable entity, double randomCount);
 
@@ -247,7 +220,6 @@ public interface SqlToyCRUDService {
 	 * @param signature
 	 * @param increment
 	 * @return
-	 * @throws Exception
 	 */
 	public long generateBizId(String signature, int increment);
 
@@ -255,7 +227,6 @@ public interface SqlToyCRUDService {
 	 * @todo 根据实体对象对应的POJO配置的业务主键策略,提取对象的属性值产生业务主键
 	 * @param entity
 	 * @return
-	 * @throws Exception
 	 */
 	public String generateBizId(Serializable entity);
 
@@ -266,7 +237,6 @@ public interface SqlToyCRUDService {
 	 * @param cacheType
 	 * @param cacheNameIndex
 	 * @param handler
-	 * @throws Exception
 	 */
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer cacheNameIndex,
 			TranslateHandler handler);
