@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy;
 
-import static java.lang.System.out;
-
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -101,15 +99,15 @@ public class SqlExecuteStat {
 				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
-				out.println("执行:{" + sqlTrace.getType() + "} 类型sql,sqlId=" + sqlTrace.getId());
+				logger.info("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
 			}
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
 			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
-			out.println("sqlScript:" + sql);
-			out.println("sqlParams:" + paramStr);
+			logger.info("sqlScript:{}", sql);
+			logger.info("sqlParams:{}", paramStr);
 		}
 	}
 
