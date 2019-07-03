@@ -44,7 +44,7 @@ public class Query extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class resultType;
+	private Class<?> resultType;
 
 	/**
 	 * 结果自定义处理器,一般不使用(作为特殊情况下的备用策略)
@@ -87,7 +87,7 @@ public class Query extends BaseLink {
 		return this;
 	}
 
-	public Query rowhandle(RowCallbackHandler handler) {
+	public Query rowhandler(RowCallbackHandler handler) {
 		this.handler = handler;
 		return this;
 	}
@@ -137,7 +137,7 @@ public class Query extends BaseLink {
 		return this;
 	}
 
-	public Query resultType(Class resultType) {
+	public Query resultType(Class<?> resultType) {
 		this.resultType = resultType;
 		return this;
 	}
@@ -150,7 +150,6 @@ public class Query extends BaseLink {
 	/**
 	 * @todo 获取单值
 	 * @return
-	 * @throws Exception
 	 */
 	public Object getValue() {
 		QueryExecutor queryExecutor = new QueryExecutor(sql, names, values);
@@ -164,7 +163,6 @@ public class Query extends BaseLink {
 	/**
 	 * @todo 获取一条记录
 	 * @return
-	 * @throws Exception
 	 */
 	public Object getOne() {
 		QueryExecutor queryExecute = build();
@@ -176,9 +174,8 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 查询结果
+	 * @todo 查询记录集的数量
 	 * @return
-	 * @throws Exception
 	 */
 	public Long count() {
 		QueryExecutor queryExecute = build();
@@ -186,9 +183,8 @@ public class Query extends BaseLink {
 	}
 
 	/**
-	 * @todo 查询结果
+	 * @todo 查询结果集合
 	 * @return
-	 * @throws Exception
 	 */
 	public List find() {
 		QueryExecutor queryExecute = build();
@@ -200,7 +196,6 @@ public class Query extends BaseLink {
 	 * @todo 取前多少条记录
 	 * @param topSize
 	 * @return
-	 * @throws Exception
 	 */
 	public List findTop(final double topSize) {
 		QueryExecutor queryExecute = build();
@@ -212,7 +207,6 @@ public class Query extends BaseLink {
 	 * @todo 随机取记录
 	 * @param randomSize
 	 * @return
-	 * @throws Exception
 	 */
 	public List findRandom(final double randomSize) {
 		QueryExecutor queryExecute = build();

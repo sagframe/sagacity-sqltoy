@@ -30,7 +30,7 @@ public class Store extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class resultType;
+	private Class<?> resultType;
 
 	/**
 	 * 存储过程语句({?=call xxxStore(? in,? in,? out)})
@@ -55,7 +55,7 @@ public class Store extends BaseLink {
 		return this;
 	}
 
-	public Store resultType(Class resultType) {
+	public Store resultType(Class<?> resultType) {
 		this.resultType = resultType;
 		return this;
 	}
@@ -77,7 +77,6 @@ public class Store extends BaseLink {
 
 	/**
 	 * @return
-	 * @throws Exception
 	 */
 	public StoreResult submit() {
 		if (sql == null)

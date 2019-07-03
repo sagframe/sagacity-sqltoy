@@ -82,12 +82,12 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
-	public Batch insertHandle(InsertRowCallbackHandler insertCallhandler) {
+	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;
 		return this;
 	}
 
-	public Batch reflectHandle(ReflectPropertyHandler reflectPropertyHandler) {
+	public Batch reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		this.reflectPropertyHandler = reflectPropertyHandler;
 		return this;
 	}

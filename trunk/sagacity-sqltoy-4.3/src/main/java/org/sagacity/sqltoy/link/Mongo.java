@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
@@ -66,7 +67,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class resultType;
+	private Class<?> resultType;
 
 	/**
 	 * @param sqlToyContext
@@ -100,7 +101,7 @@ public class Mongo extends BaseLink {
 		return this;
 	}
 
-	public Mongo resultType(Class resultType) {
+	public Mongo resultType(Class<?> resultType) {
 		this.resultType = resultType;
 		return this;
 	}
@@ -119,7 +120,6 @@ public class Mongo extends BaseLink {
 	/**
 	 * @todo 集合记录查询
 	 * @return
-	 * @throws Exception
 	 */
 	public List find() {
 		QueryExecutor queryExecutor = build();
@@ -140,7 +140,7 @@ public class Mongo extends BaseLink {
 						realMql, queryExecutor.getResultTypeName());
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -148,7 +148,6 @@ public class Mongo extends BaseLink {
 	 * @todo 查询前多少条记录
 	 * @param topSize
 	 * @return
-	 * @throws Exception
 	 */
 	public List findTop(final Float topSize) {
 		QueryExecutor queryExecutor = build();
@@ -164,7 +163,7 @@ public class Mongo extends BaseLink {
 					realMql, queryExecutor.getResultTypeName());
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -172,7 +171,6 @@ public class Mongo extends BaseLink {
 	 * @todo 分页查询
 	 * @param pageModel
 	 * @return
-	 * @throws Exception
 	 */
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
@@ -188,7 +186,7 @@ public class Mongo extends BaseLink {
 					realMql, queryExecutor.getResultTypeName());
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -246,7 +244,6 @@ public class Mongo extends BaseLink {
 	 * @param mql
 	 * @param resultClass
 	 * @return
-	 * @throws Exception
 	 */
 	private List findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
 			String resultClass) throws Exception {
@@ -274,7 +271,6 @@ public class Mongo extends BaseLink {
 	 * @param mql
 	 * @param resultClass
 	 * @return
-	 * @throws Exception
 	 */
 	private List aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, String resultClass)
 			throws Exception {

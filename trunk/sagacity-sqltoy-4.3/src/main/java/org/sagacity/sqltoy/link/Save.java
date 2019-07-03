@@ -54,14 +54,13 @@ public class Save extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	public Save reflectHandle(ReflectPropertyHandler reflectPropertyHandler) {
+	public Save reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		this.reflectPropertyHandler = reflectPropertyHandler;
 		return this;
 	}
 
 	/**
-	 * 设置强制修改的属性
-	 * 
+	 * @todo 设置强制修改的属性
 	 * @param forceUpdateProps
 	 * @return
 	 */

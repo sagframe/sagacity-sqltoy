@@ -48,7 +48,7 @@ public class Page extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class resultType;
+	private Class<?> resultType;
 
 	/**
 	 * 结果自定义处理器,一般不使用(作为特殊情况下的备用策略)
@@ -74,7 +74,7 @@ public class Page extends BaseLink {
 		return this;
 	}
 
-	public Page rowhandle(RowCallbackHandler handler) {
+	public Page rowhandler(RowCallbackHandler handler) {
 		this.handler = handler;
 		return this;
 	}
@@ -99,7 +99,7 @@ public class Page extends BaseLink {
 		return this;
 	}
 
-	public Page resultType(Class resultType) {
+	public Page resultType(Class<?> resultType) {
 		this.resultType = resultType;
 		return this;
 	}
@@ -117,7 +117,6 @@ public class Page extends BaseLink {
 	/**
 	 * @todo 提交执行,并返回结果
 	 * @return
-	 * @throws Exception
 	 */
 	public PaginationModel submit() {
 		if (sql == null)

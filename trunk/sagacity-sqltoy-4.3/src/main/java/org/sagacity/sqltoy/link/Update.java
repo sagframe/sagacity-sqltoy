@@ -113,7 +113,7 @@ public class Update extends BaseLink {
 		return this;
 	}
 
-	public Update reflectHandle(ReflectPropertyHandler reflectPropertyHandler) {
+	public Update reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		this.reflectPropertyHandler = reflectPropertyHandler;
 		return this;
 	}
@@ -131,7 +131,6 @@ public class Update extends BaseLink {
 	/**
 	 * @todo 单个对象修改
 	 * @param entity
-	 * @throws Exception
 	 */
 	public Long one(final Serializable entity) {
 		if (entity == null)
@@ -151,7 +150,6 @@ public class Update extends BaseLink {
 	/**
 	 * @todo 批量修改(批量不做级联)
 	 * @param entities
-	 * @throws Exception
 	 */
 	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty())

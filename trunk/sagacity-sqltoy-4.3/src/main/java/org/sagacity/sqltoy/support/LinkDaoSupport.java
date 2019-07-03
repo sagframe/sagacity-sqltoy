@@ -191,7 +191,6 @@ public class LinkDaoSupport {
 
 	/**
 	 * @todo <b>手工提交数据库操作，只提供当前DataSource提交</b>
-	 * @throws Exception
 	 */
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, getDataSource(dataSource), new DataSourceCallbackHandler() {

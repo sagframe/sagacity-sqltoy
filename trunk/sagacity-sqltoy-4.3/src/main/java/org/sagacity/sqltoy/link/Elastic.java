@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.plugin.nosql.ElasticSearchPlugin;
@@ -47,7 +48,7 @@ public class Elastic extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class resultType;
+	private Class<?> resultType;
 
 	/**
 	 * @param sqlToyContext
@@ -77,14 +78,13 @@ public class Elastic extends BaseLink {
 		return this;
 	}
 
-	public Elastic resultType(Class resultType) {
+	public Elastic resultType(Class<?> resultType) {
 		this.resultType = resultType;
 		return this;
 	}
 
 	/**
-	 * 获取单条记录
-	 * 
+	 * @todo 获取单条记录
 	 * @return
 	 */
 	public Object getOne() {
@@ -97,7 +97,6 @@ public class Elastic extends BaseLink {
 	/**
 	 * @todo 集合记录查询
 	 * @return
-	 * @throws Exception
 	 */
 	public List find() {
 		QueryExecutor queryExecutor = build();
@@ -118,7 +117,6 @@ public class Elastic extends BaseLink {
 	 * @todo 查询前多少条记录
 	 * @param topSize
 	 * @return
-	 * @throws Exception
 	 */
 	public List findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
@@ -139,7 +137,6 @@ public class Elastic extends BaseLink {
 	 * @todo 分页查询
 	 * @param pageModel
 	 * @return
-	 * @throws Exception
 	 */
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
@@ -152,7 +149,7 @@ public class Elastic extends BaseLink {
 			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException(e);
+			throw new DataAccessException(e);
 		}
 	}
 

@@ -59,7 +59,6 @@ public class Delete extends BaseLink {
 	/**
 	 * @todo 删除单条对象记录
 	 * @param entity
-	 * @throws Exception
 	 */
 	public Long one(final Serializable entity) {
 		if (entity == null)
@@ -70,7 +69,6 @@ public class Delete extends BaseLink {
 	/**
 	 * @todo 批量删除对象记录
 	 * @param entities
-	 * @throws Exception
 	 */
 	public Long many(final List<?> entities) {
 		if (entities == null || entities.isEmpty())

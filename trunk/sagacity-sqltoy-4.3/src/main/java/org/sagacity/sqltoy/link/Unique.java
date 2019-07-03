@@ -53,7 +53,6 @@ public class Unique extends BaseLink {
 	/**
 	 * @todo 提交执行返回结果
 	 * @return
-	 * @throws Exception
 	 */
 	public Boolean submit() {
 		if (entity == null)

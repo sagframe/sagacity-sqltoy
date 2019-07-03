@@ -26,7 +26,7 @@ public class Load extends BaseLink {
 	/**
 	 * 级联的对象类型
 	 */
-	private Class[] cascadeTypes;
+	private Class<?>[] cascadeTypes;
 
 	/**
 	 * @param sqlToyContext
@@ -51,7 +51,7 @@ public class Load extends BaseLink {
 	 * @param cascadeTypes
 	 * @return
 	 */
-	public Load cascade(Class... cascadeTypes) {
+	public Load cascade(Class<?>... cascadeTypes) {
 		this.cascadeTypes = cascadeTypes;
 		return this;
 	}

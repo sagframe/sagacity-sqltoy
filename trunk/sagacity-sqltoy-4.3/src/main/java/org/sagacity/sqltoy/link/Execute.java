@@ -83,7 +83,7 @@ public class Execute extends BaseLink {
 		return this;
 	}
 
-	public Execute reflectHandle(ReflectPropertyHandler reflectPropertyHandler) {
+	public Execute reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		this.reflectPropertyHandler = reflectPropertyHandler;
 		return this;
 	}
@@ -96,7 +96,6 @@ public class Execute extends BaseLink {
 	/**
 	 * @todo 执行并返回修改的记录数量
 	 * @return
-	 * @throws Exception
 	 */
 	public Long submit() {
 		if (sql == null)
