@@ -148,7 +148,7 @@ public class ParamFilterUtils {
 			// 本身就是一个key 代码值,不做处理
 			if (cacheDataMap.containsKey(paramValue)) {
 				// 存在别名,设置别名对应的值
-				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+				if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
 					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
 					paramValues[aliasIndex] = paramValue;
 				}
@@ -237,7 +237,7 @@ public class ParamFilterUtils {
 
 			// 没有匹配到具体key,将笔名对应的列值设置为当前条件值
 			if (matchKeys.isEmpty()) {
-				if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+				if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
 					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
 					// 没有设置未匹配的默认值,直接将当前参数值作为别名值
 					if (StringUtil.isBlank(paramFilterModel.getCacheNotMatchedValue()))
@@ -252,7 +252,7 @@ public class ParamFilterUtils {
 			Object[] realMatched = new Object[matchKeys.size()];
 			matchKeys.toArray(realMatched);
 			// 存在别名,设置别名对应的值
-			if (!StringUtil.isBlank(paramFilterModel.getAliasName())) {
+			if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
 				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
 				paramValues[aliasIndex] = realMatched;
 			} else {
