@@ -41,9 +41,9 @@
 	</repositories>
 	<distributionManagement>
 
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
-			</repository>
-		<!--  <repository>
+		<!--<repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+			</repository> -->
+		  <repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
@@ -53,7 +53,7 @@
 			<name>Department 
 			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository>  -->
+		</snapshotRepository> 
 
 	</distributionManagement>
 	<dependencies>
