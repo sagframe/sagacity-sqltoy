@@ -190,7 +190,8 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * @return the paramsName
+	 * @param sqlToyConfig
+	 * @return
 	 */
 	public String[] getParamsName(SqlToyConfig sqlToyConfig) {
 		if (this.entity == null) {
@@ -217,7 +218,6 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * 
 	 * @param sqlToyConfig
 	 * @return
 	 */
