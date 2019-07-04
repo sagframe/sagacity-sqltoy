@@ -3,7 +3,6 @@
  */
 package org.sagacity.sqltoy.utils;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,8 +42,8 @@ public class ParamFilterUtils {
 	 * @param filters
 	 * @return
 	 */
-	public static Object[] filterValue(SqlToyContext sqlToyContext, Serializable entity, String[] paramsName,
-			Object[] values, ParamFilterModel[] filters) {
+	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
+			ParamFilterModel[] filters) {
 		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0)
 			return values;
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
@@ -69,7 +68,7 @@ public class ParamFilterUtils {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
 			} // 缓存中提取精准查询参数作为sql查询条件值
 			else if (paramFilterModel.getFilterType().equals("cache-arg")) {
-				filterCache(sqlToyContext, entity, paramIndexMap, paramFilterModel, paramValues);
+				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
@@ -105,13 +104,12 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 从缓存中过滤提取值作为实际查询语句的条件
 	 * @param sqlToyContext
-	 * @param entity
 	 * @param paramIndexMap
 	 * @param paramFilterModel
 	 * @param paramValues
 	 */
-	private static void filterCache(SqlToyContext sqlToyContext, Serializable entity,
-			HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel, Object[] paramValues) {
+	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
+			ParamFilterModel paramFilterModel, Object[] paramValues) {
 		try {
 			// 注:param 和 aliasName等参数在SqlXMLConfigParse时已经转小写
 			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
@@ -120,12 +118,13 @@ public class ParamFilterUtils {
 			String paramValue = null;
 			if (index >= 0) {
 				paramValue = (paramValues[index] == null) ? null : paramValues[index].toString();
-			} else if (entity != null) {
-				Object[] tmp = BeanUtil.reflectBeanToAry(entity, new String[] { paramFilterModel.getParam() }, null,
-						null);
-				if (tmp != null && tmp.length > 0 && tmp[0] != null)
-					paramValue = tmp[0].toString();
 			}
+//			else if (entity != null) {
+//				Object[] tmp = BeanUtil.reflectBeanToAry(entity, new String[] { paramFilterModel.getParam() }, null,
+//						null);
+//				if (tmp != null && tmp.length > 0 && tmp[0] != null)
+//					paramValue = tmp[0].toString();
+//			}
 			if (paramValue == null)
 				return;
 			// 是否将转化的值按新的条件参数存储

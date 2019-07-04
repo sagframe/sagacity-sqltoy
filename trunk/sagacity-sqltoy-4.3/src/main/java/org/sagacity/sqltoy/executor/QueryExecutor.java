@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.executor;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -134,6 +136,7 @@ public class QueryExecutor implements Serializable {
 
 	public QueryExecutor values(Object... paramsValue) {
 		this.paramsValue = paramsValue;
+		this.shardingParamsValue = paramsValue;
 		return this;
 	}
 
@@ -200,7 +203,7 @@ public class QueryExecutor implements Serializable {
 			else
 				return paramsName;
 		} else
-			return sqlToyConfig.getParamsName();
+			return sqlToyConfig.getFullParamNames();
 	}
 
 	/**
@@ -257,7 +260,7 @@ public class QueryExecutor implements Serializable {
 		// 是否萃取过
 		if (!extracted) {
 			if (this.entity != null) {
-				paramsValue = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), this.entity,
+				paramsValue = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getFullParamNames(), this.entity,
 						reflectPropertyHandler);
 			}
 			extracted = true;
@@ -266,7 +269,7 @@ public class QueryExecutor implements Serializable {
 			realValues = paramsValue.clone();
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(sqlToyContext, entity, getParamsName(sqlToyConfig), realValues,
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
 					sqlToyConfig.getFilters());
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null
@@ -353,5 +356,45 @@ public class QueryExecutor implements Serializable {
 	 */
 	public int getMaxRows() {
 		return maxRows;
+	}
+
+	/**
+	 * @TODO 用于cache-arg模式下传参数容易漏掉alias-name 的场景
+	 * @param sqlToyConfig
+	 */
+	public void optimizeArgs(SqlToyConfig sqlToyConfig) {
+		if (sqlToyConfig.getCacheArgNames().isEmpty() || this.entity != null)
+			return;
+		// 只有这种场景下需要校正参数
+		if (this.paramsName != null && this.paramsValue != null) {
+			List<String> tmp = new ArrayList<String>();
+			boolean exist = false;
+			for (String comp : sqlToyConfig.getCacheArgNames()) {
+				exist = false;
+				for (String param : this.paramsName) {
+					if (param.toLowerCase().equals(comp)) {
+						exist = true;
+						break;
+					}
+				}
+				if (!exist)
+					tmp.add(comp);
+			}
+			if (tmp.isEmpty())
+				return;
+			// 补全额外的参数名称,对应的值则为null
+			String[] realParams = new String[this.paramsName.length + tmp.size()];
+			Object[] realValues = new Object[this.paramsValue.length + tmp.size()];
+			System.arraycopy(this.paramsName, 0, realParams, 0, this.paramsName.length);
+			int index = this.paramsName.length;
+			for (String extParam : tmp) {
+				realParams[index] = extParam;
+				index++;
+			}
+			System.arraycopy(this.paramsValue, 0, realValues, 0, this.paramsValue.length);
+			this.paramsName = realParams;
+			this.paramsValue = realValues;
+			this.shardingParamsValue = realValues;
+		}
 	}
 }

@@ -304,8 +304,9 @@ public class DialectFactory {
 			final Double randomCount, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
+			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -448,6 +449,7 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -547,8 +549,9 @@ public class DialectFactory {
 			final double topSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findTop operate sql is null!");
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
+			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -607,8 +610,9 @@ public class DialectFactory {
 			final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
+			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -659,6 +663,7 @@ public class DialectFactory {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1188,6 +1193,7 @@ public class DialectFactory {
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1224,6 +1230,7 @@ public class DialectFactory {
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Integer topSize, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1261,6 +1268,7 @@ public class DialectFactory {
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Integer random, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,

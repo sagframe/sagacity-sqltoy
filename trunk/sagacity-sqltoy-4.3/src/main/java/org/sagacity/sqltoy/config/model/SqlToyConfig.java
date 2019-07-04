@@ -691,8 +691,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	public void addCacheArgParam(String name) {
-		if (!this.cacheArgNames.contains(name))
-			this.cacheArgNames.add(name);
+		String param=name.toLowerCase();
+		if (!this.cacheArgNames.contains(param))
+			this.cacheArgNames.add(param);
 	}
 
 	public List<String> getCacheArgNames() {
