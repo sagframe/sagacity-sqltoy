@@ -698,4 +698,23 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public List<String> getCacheArgNames() {
 		return this.cacheArgNames;
 	}
+
+	public String[] getFullParamNames() {
+		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
+			return this.paramsName;
+		} else {
+			List<String> tmp = new ArrayList<String>();
+			if (this.paramsName != null && this.paramsName.length > 0) {
+				for (String item : this.paramsName) {
+					if (!tmp.contains(item))
+						tmp.add(item);
+				}
+			}
+			for (String item : this.cacheArgNames) {
+				if (!tmp.contains(item))
+					tmp.add(item);
+			}
+			return tmp.toArray(new String[tmp.size()]);
+		}
+	}
 }
