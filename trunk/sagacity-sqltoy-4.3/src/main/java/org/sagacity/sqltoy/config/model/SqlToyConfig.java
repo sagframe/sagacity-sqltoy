@@ -706,13 +706,13 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			List<String> tmp = new ArrayList<String>();
 			if (this.paramsName != null && this.paramsName.length > 0) {
 				for (String item : this.paramsName) {
-					if (!tmp.contains(item))
-						tmp.add(item);
+					if (!tmp.contains(item.toLowerCase()))
+						tmp.add(item.toLowerCase());
 				}
 			}
 			for (String item : this.cacheArgNames) {
-				if (!tmp.contains(item))
-					tmp.add(item);
+				if (!tmp.contains(item.toLowerCase()))
+					tmp.add(item.toLowerCase());
 			}
 			return tmp.toArray(new String[tmp.size()]);
 		}
