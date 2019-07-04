@@ -80,7 +80,8 @@ public class SqlXMLConfigParse {
 	private static final Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionConverts
+	 *            the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<IFunction> functionConverts) {
 		SqlXMLConfigParse.functionConverts = functionConverts;
@@ -284,9 +285,9 @@ public class SqlXMLConfigParse {
 			blankToNull = (Boolean.parseBoolean(sqlElt.attributeValue("blank-to-null"))) ? 1 : 0;
 		// 解析参数过滤器
 		if (sqlElt.element("filters") != null)
-			sqlToyConfig.setFilters(parseFilters(sqlElt.element("filters").elements(), blankToNull));
+			parseFilters(sqlToyConfig, sqlElt.element("filters").elements(), blankToNull);
 		else
-			sqlToyConfig.setFilters(parseFilters(null, blankToNull));
+			parseFilters(sqlToyConfig, null, blankToNull);
 
 		// 解析分页优化器
 		// <page-optimize alive-max="100" alive-seconds="90"/>
@@ -418,7 +419,7 @@ public class SqlXMLConfigParse {
 				String maskRate = getAttrValue(elt, "mask-rate");
 				if (maskRate == null)
 					maskRate = getAttrValue(elt, "mask-percent");
-				//剔除百分号
+				// 剔除百分号
 				if (maskRate != null)
 					maskRate = maskRate.replace("%", "").trim();
 				for (String col : columns) {
@@ -441,7 +442,7 @@ public class SqlXMLConfigParse {
 					if (StringUtil.isNotBlank(tailSize))
 						secureMask.setTailSize(Integer.parseInt(tailSize));
 					if (StringUtil.isNotBlank(maskRate)) {
-						//小數
+						// 小數
 						if (Double.parseDouble(maskRate) < 1)
 							secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
 						else
@@ -538,11 +539,11 @@ public class SqlXMLConfigParse {
 
 	/**
 	 * @todo 解析3.0版本 filters xml元素
+	 * @param sqlToyConfig
 	 * @param filterSet
 	 * @param blankToNull
-	 * @return
 	 */
-	public static ParamFilterModel[] parseFilters(List<Element> filterSet, int blankToNull) {
+	public static void parseFilters(SqlToyConfig sqlToyConfig, List<Element> filterSet, int blankToNull) {
 		List<ParamFilterModel> filterModels = new ArrayList<ParamFilterModel>();
 		// 1:强制将空白当做null;0:强制对空白不作为null处理;-1:默认值,用户不配置blank过滤器则视同为1,配置了则视同为0
 		if (blankToNull == 1)
@@ -578,7 +579,7 @@ public class SqlXMLConfigParse {
 					else if (filterType.equals("dateFormat"))
 						filterType = "date-format";
 					filterModel.setFilterType(filterType);
-					parseFilterElt(filterModel, filter);
+					parseFilterElt(sqlToyConfig, filterModel, filter);
 					filterModels.add(filterModel);
 				}
 			}
@@ -587,18 +588,19 @@ public class SqlXMLConfigParse {
 		if (!hasBlank && blankToNull == -1)
 			filterModels.add(0, new ParamFilterModel("blank", new String[] { "*" }));
 		if (filterModels.isEmpty())
-			return null;
+			return;
 		ParamFilterModel[] result = new ParamFilterModel[filterModels.size()];
 		filterModels.toArray(result);
-		return result;
+		sqlToyConfig.setFilters(result);
 	}
 
 	/**
 	 * @todo 解析filter
+	 * @param sqlToyConfig
 	 * @param filterModel
 	 * @param filter
 	 */
-	private static void parseFilterElt(ParamFilterModel filterModel, Element filter) {
+	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter) {
 		// 没有设置参数名称，则表示全部参数用*表示
 		if (filter.attribute("params") == null) {
 			filterModel.setParams(new String[] { "*" });
@@ -646,6 +648,7 @@ public class SqlXMLConfigParse {
 		// <cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes=""
 		// data-type="" alias-name=""/>
 		if (filter.attribute("cache-name") != null) {
+			sqlToyConfig.addCacheArgParam(filterModel.getParam());
 			filterModel.setCacheName(filter.attributeValue("cache-name"));
 			if (filter.attribute("cache-type") != null)
 				filterModel.setCacheType(filter.attributeValue("cache-type"));
@@ -663,8 +666,10 @@ public class SqlXMLConfigParse {
 				}
 				filterModel.setCacheMappingIndexes(mappingIndexes);
 			}
-			if (filter.attribute("alias-name") != null)
+			if (filter.attribute("alias-name") != null) {
 				filterModel.setAliasName(filter.attributeValue("alias-name").toLowerCase());
+				sqlToyConfig.addCacheArgParam(filterModel.getAliasName());
+			}
 			// 缓存过滤未匹配上赋予的默认值
 			if (filter.attribute("cache-not-matched-value") != null)
 				filterModel.setCacheNotMatchedValue(filter.attributeValue("cache-not-matched-value"));

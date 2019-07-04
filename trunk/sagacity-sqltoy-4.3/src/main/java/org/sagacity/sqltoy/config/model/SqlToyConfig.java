@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -126,6 +127,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private String[] paramsName;
 
 	/**
+	 * 缓存条件参数名称
+	 */
+	private List<String> cacheArgNames = new ArrayList<String>();
+
+	/**
 	 * 是否有分页
 	 */
 	private boolean hasFast = false;
@@ -174,7 +180,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param ignoreEmpty the ignoreEmpty to set
+	 * @param ignoreEmpty
+	 *            the ignoreEmpty to set
 	 */
 	public void setIgnoreEmpty(boolean ignoreEmpty) {
 		this.ignoreEmpty = ignoreEmpty;
@@ -681,5 +688,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public void addCacheArgParam(String name) {
+		if (!this.cacheArgNames.contains(name))
+			this.cacheArgNames.add(name);
+	}
+
+	public List<String> getCacheArgNames() {
+		return this.cacheArgNames;
 	}
 }

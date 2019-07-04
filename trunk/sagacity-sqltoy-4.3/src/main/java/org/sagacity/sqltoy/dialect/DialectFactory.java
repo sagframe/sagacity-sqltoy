@@ -446,8 +446,8 @@ public class DialectFactory {
 			final Integer pageSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null)
 			throw new IllegalArgumentException("findPage operate sql is null!");
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		try {
+			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
