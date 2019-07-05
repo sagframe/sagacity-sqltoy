@@ -442,7 +442,7 @@ public class SqlXMLConfigParse {
 					if (StringUtil.isNotBlank(tailSize))
 						secureMask.setTailSize(Integer.parseInt(tailSize));
 					if (StringUtil.isNotBlank(maskRate)) {
-						// 小數
+						// 小数
 						if (Double.parseDouble(maskRate) < 1)
 							secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
 						else
