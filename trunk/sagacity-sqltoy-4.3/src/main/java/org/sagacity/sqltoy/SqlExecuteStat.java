@@ -99,15 +99,15 @@ public class SqlExecuteStat {
 				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
-				logger.info("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
+				logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
 			}
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
 			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
-			logger.info("sqlScript:{}", sql);
-			logger.info("sqlParams:{}", paramStr);
+			logger.debug("sqlScript:{}", sql);
+			logger.debug("sqlParams:{}", paramStr);
 		}
 	}
 
