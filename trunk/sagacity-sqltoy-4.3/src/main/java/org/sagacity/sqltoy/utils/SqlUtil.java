@@ -10,7 +10,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -55,7 +54,8 @@ import org.sagacity.sqltoy.model.TreeTableModel;
  *               {完善分页查询语句中存在union的处理机制,框架自动判断是否存在union,有union则自动实现外层包裹}
  * @Modification Date:2017-6-5 {剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select
  *               xxxfrom }
- * @Modification $Date:2017-6-14 {修复针对阿里的driud数据库datasource针对clob类型处理的错误}
+ * @Modification $Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
+ * @Modification $Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlUtil {
@@ -73,15 +73,15 @@ public class SqlUtil {
 
 	public static final Pattern UPCASE_ORDER_PATTERN = Pattern.compile("\\WORder\\s+");
 
-	/**
-	 * alibaba druid clob
-	 */
-	private static final String ALIBABA_DRUID_JDBC_CLOBPROXY = "com.alibaba.druid.proxy.jdbc.ClobProxyImpl";
-
-	/**
-	 * alibaba druid nclob
-	 */
-	private static final String ALIBABA_DRUID_JDBC_NCLOBPROXY = "com.alibaba.druid.proxy.jdbc.NClobProxyImpl";
+//	/**
+//	 * alibaba druid clob
+//	 */
+//	private static final String ALIBABA_DRUID_JDBC_CLOBPROXY = "com.alibaba.druid.proxy.jdbc.ClobProxyImpl";
+//
+//	/**
+//	 * alibaba druid nclob
+//	 */
+//	private static final String ALIBABA_DRUID_JDBC_NCLOBPROXY = "com.alibaba.druid.proxy.jdbc.NClobProxyImpl";
 
 	// sql 注释过滤器
 	private static HashMap sqlCommentfilters = new HashMap();
@@ -220,7 +220,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2017-6-14 修复使用driud数据库dataSource时clob处理的错误
+	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
+	 * clob bug的支持(druid 1.1.10 已经修复)
 	 * 
 	 * @todo 设置sql中的参数条件的值
 	 * @param conn
@@ -244,32 +245,38 @@ public class SqlUtil {
 			if (paramValue instanceof java.lang.String) {
 				tmpStr = (String) paramValue;
 				if (jdbcType == java.sql.Types.CLOB) {
-					try {
-						Clob clob = conn.createClob();
-						// 针对druid clob类型进行兼容，通过反射模式解决对druid库的强依赖问题
-						String className = clob.getClass().getName();
-						if (ALIBABA_DRUID_JDBC_CLOBPROXY.equals(className)) {
-							Method method = clob.getClass().getMethod("getRawClob", null);
-							clob = (Clob) method.invoke(clob, null);
-						}
-						clob.setString(1, tmpStr);
-						pst.setClob(paramIndex, clob);
-					} catch (Exception e) {
-						pst.setString(paramIndex, tmpStr);
-					}
+					Clob clob = conn.createClob();
+					clob.setString(1, tmpStr);
+					pst.setClob(paramIndex, clob);
+					// try {
+					// Clob clob = conn.createClob();
+					// // 针对druid clob类型进行兼容，通过反射模式解决对druid库的强依赖问题
+					// String className = clob.getClass().getName();
+					// if (ALIBABA_DRUID_JDBC_CLOBPROXY.equals(className)) {
+					// Method method = clob.getClass().getMethod("getRawClob", null);
+					// clob = (Clob) method.invoke(clob, null);
+					// }
+					// clob.setString(1, tmpStr);
+					// pst.setClob(paramIndex, clob);
+					// } catch (Exception e) {
+					// pst.setString(paramIndex, tmpStr);
+					// }
 				} else if (jdbcType == java.sql.Types.NCLOB) {
-					try {
-						NClob nclob = conn.createNClob();
-						String className = nclob.getClass().getName();
-						if (ALIBABA_DRUID_JDBC_NCLOBPROXY.equals(className)) {
-							Method method = nclob.getClass().getMethod("getRawNClob", null);
-							nclob = (NClob) method.invoke(nclob, null);
-						}
-						nclob.setString(1, tmpStr);
-						pst.setNClob(paramIndex, nclob);
-					} catch (Exception e) {
-						pst.setString(paramIndex, tmpStr);
-					}
+					NClob nclob = conn.createNClob();
+					nclob.setString(1, tmpStr);
+					pst.setNClob(paramIndex, nclob);
+					// try {
+					// NClob nclob = conn.createNClob();
+					// String className = nclob.getClass().getName();
+					// if (ALIBABA_DRUID_JDBC_NCLOBPROXY.equals(className)) {
+					// Method method = nclob.getClass().getMethod("getRawNClob", null);
+					// nclob = (NClob) method.invoke(nclob, null);
+					// }
+					// nclob.setString(1, tmpStr);
+					// pst.setNClob(paramIndex, nclob);
+					// } catch (Exception e) {
+					// pst.setString(paramIndex, tmpStr);
+					// }
 				} else {
 					pst.setString(paramIndex, tmpStr);
 				}
