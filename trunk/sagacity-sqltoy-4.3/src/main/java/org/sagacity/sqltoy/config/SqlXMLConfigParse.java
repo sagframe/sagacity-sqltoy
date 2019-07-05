@@ -842,9 +842,10 @@ public class SqlXMLConfigParse {
 						}
 						translateMap.put(translateModel.getColumn(), translateModel);
 					}
-				} else
+				} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
 					logger.warn("sqlId:{} 对应的cache translate columns must mapped with cache-indexs!",
 							sqlToyConfig.getId());
+				}
 			}
 			sqlToyConfig.setTranslateMap(translateMap);
 		}
