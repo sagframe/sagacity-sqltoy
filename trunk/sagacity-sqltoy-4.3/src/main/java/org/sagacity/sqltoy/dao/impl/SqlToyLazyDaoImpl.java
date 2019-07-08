@@ -866,37 +866,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) {
-		// 数据以及合法性校验
-		if (dataSet == null || dataSet.isEmpty())
-			return;
-		if (cacheName == null)
-			throw new IllegalArgumentException("缓存名称不能为空!");
-		if (handler == null)
-			throw new IllegalArgumentException("缓存翻译行取key和设置name的反调函数不能为null!");
-		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
-		final HashMap<String, Object[]> cache = super.getTranslateCache(cacheName, cacheType);
-		if (cache == null || cache.isEmpty())
-			return;
-		Iterator iter = dataSet.iterator();
-		Object row;
-		Object key;
-		Object name;
-		// 默认名称字段列为1
-		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
-		// 循环获取行数据
-		while (iter.hasNext()) {
-			row = iter.next();
-			if (row != null) {
-				// 反调获取需要翻译的key
-				key = handler.getKey(row);
-				if (key != null) {
-					// 从缓存中获取对应的名称
-					name = cache.get(key.toString())[cacheIndex];
-					// 反调设置行数据中具体列或属性翻译后的名称
-					handler.setName(row, (name == null) ? "" : name.toString());
-				}
-			}
-		}
+		super.translate(dataSet, cacheName, cacheType, cacheNameIndex, handler);
 	}
 
 }
