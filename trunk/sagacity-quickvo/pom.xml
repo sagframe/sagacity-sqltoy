@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
@@ -7,8 +8,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dom4j.version>2.1.1</dom4j.version>
-		<log4j.version>2.11.2</log4j.version>
-		<mysql.version>8.0.15</mysql.version>
+		<log4j.version>2.12.0</log4j.version>
+		<mysql.version>8.0.16</mysql.version>
 		<beanutils.version>1.9.3</beanutils.version>
 		<freemarker.version>2.3.28</freemarker.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
@@ -17,7 +18,7 @@
 		<repository>
 			<id>sagframe-release</id>
 			<name>sagframe-release</name>
-			<url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+			<url>http://www.sagframe.com:8081/repository/public</url>
 		</repository>
 		<repository>
 			<id>nexus-aliyun</id>
@@ -28,18 +29,15 @@
 
 
 	<distributionManagement>
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
-			</repository> -->
+
 		<repository>
-			<id>renturbo</id>
-			<name>3rd party</name>
-			<url>http://59.110.27.96:9081/repository/maven-releases/</url>
+			<id>sagframe-release</id>
+			<url>http://www.sagframe.com:8081/repository/maven-releases</url>
 		</repository>
-		<snapshotRepository>
-			<id>renturbo</id>
-			<name>Department Repository</name>
-			<url>http://59.110.27.96:9081/repository/maven-snapshots/</url>
-		</snapshotRepository>
+		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
+			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
+			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
+			</snapshotRepository> -->
 
 	</distributionManagement>
 	<dependencies>
