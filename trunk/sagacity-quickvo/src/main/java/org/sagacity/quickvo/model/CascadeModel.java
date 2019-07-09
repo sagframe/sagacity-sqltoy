@@ -6,7 +6,6 @@ package org.sagacity.quickvo.model;
 import java.io.Serializable;
 
 /**
- * 
  * @project sagacity-quickvo
  * @description <p>级联关系模型</p>
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>

@@ -6,10 +6,8 @@ package org.sagacity.quickvo.model;
 import java.io.Serializable;
 
 /**
- * @project  sagacity-quickvo
- * @description <p>
- *                单个任务的配置
- *                </p>
+ * @project sagacity-quickvo
+ * @description 单个任务的配置
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:QuickModel.java,Revision:v1.0,Date:Apr 15, 2009 8:44:57 PM $
  */
@@ -30,11 +28,11 @@ public class QuickModel implements Serializable {
 	private boolean daoActive;
 	private String daoTemplate;
 	private String daoInclude;
-	
+
 	private String dataSource;
-	
-	private boolean swaggerApi=false;
-	
+
+	private boolean swaggerApi = false;
+
 	/**
 	 * 作者，主要针对Dao层提供任务责任人
 	 */
@@ -216,7 +214,8 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param daoExclude the daoExclude to set
+	 * @param daoExclude
+	 *            the daoExclude to set
 	 */
 	public void setDaoExclude(String daoExclude) {
 		this.daoExclude = daoExclude;
@@ -230,7 +229,8 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param author the author to set
+	 * @param author
+	 *            the author to set
 	 */
 	public void setAuthor(String author) {
 		this.author = author;
@@ -244,7 +244,8 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param daoInclude the daoInclude to set
+	 * @param daoInclude
+	 *            the daoInclude to set
 	 */
 	public void setDaoInclude(String daoInclude) {
 		this.daoInclude = daoInclude;
@@ -258,7 +259,8 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource the dataSource to set
+	 * @param dataSource
+	 *            the dataSource to set
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -272,11 +274,11 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param swaggerApi the swaggerApi to set
+	 * @param swaggerApi
+	 *            the swaggerApi to set
 	 */
 	public void setSwaggerApi(boolean swaggerApi) {
 		this.swaggerApi = swaggerApi;
 	}
 
-	
 }

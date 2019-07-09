@@ -48,7 +48,6 @@ public class FileUtil {
 	 * @todo 读取文件到二进制数组中
 	 * @param file
 	 * @return
-	 * @throws IOException
 	 */
 	public static byte[] readAsByteArray(File file) {
 		FileInputStream in = null;

@@ -688,10 +688,8 @@ public class TaskController {
 						}
 					} else {
 						exportKey.setCascade(1);
-						// exportKey.setAutoSave(1);
 					}
 				}
-				// exportKey.setDeleteCascade(exportKey.getDeleteRule());
 			}
 			quickVO.setExportTables(new ArrayList(subTablesMap.values()));
 		}

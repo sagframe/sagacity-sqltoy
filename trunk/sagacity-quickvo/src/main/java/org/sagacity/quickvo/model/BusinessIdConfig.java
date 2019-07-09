@@ -44,7 +44,6 @@ public class BusinessIdConfig implements Serializable {
 
 	/**
 	 * 主键生成策略
-	 * 
 	 */
 	private String generator;
 

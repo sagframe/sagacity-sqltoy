@@ -181,9 +181,8 @@ public class DBUtil {
 	/**
 	 * @todo 获取当前数据库的版本
 	 * @return
-	 * @throws SQLException
 	 */
-	public static int getCurrentDBVersion(final Connection conn) throws SQLException {
+	public static int getCurrentDBVersion(final Connection conn) {
 		// -1表示版本不确定
 		int result = -1;
 		// 部分数据库驱动还不支持此方法

@@ -6,7 +6,7 @@ package org.sagacity.quickvo.model;
 import java.io.Serializable;
 
 /**
- * @project  sagacity-quickvo
+ * @project sagacity-quickvo
  * @description 主键生成策略模型
  * @author renfei.chen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:PrimaryKeyStrage.java,Revision:v1.0,Date:2012-6-7 下午2:43:26 $
@@ -27,8 +27,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	 * @param sequence
 	 * @param generator
 	 */
-	public PrimaryKeyStrategy(String name, String strategy, String sequence,
-			String generator) {
+	public PrimaryKeyStrategy(String name, String strategy, String sequence, String generator) {
 		super();
 		this.name = name;
 		this.strategy = strategy;
@@ -55,11 +54,11 @@ public class PrimaryKeyStrategy implements Serializable {
 	 * 主键产生器,对应主键产生的class
 	 */
 	private String generator;
-	
+
 	/**
 	 * 是否强迫改变
 	 */
-	private boolean force=false;
+	private boolean force = false;
 
 	/**
 	 * @return the name
@@ -129,11 +128,11 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param force the force to set
+	 * @param force
+	 *            the force to set
 	 */
 	public void setForce(boolean force) {
 		this.force = force;
 	}
 
-	
 }
