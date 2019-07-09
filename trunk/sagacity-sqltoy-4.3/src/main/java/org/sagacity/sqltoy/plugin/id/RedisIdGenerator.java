@@ -33,12 +33,6 @@ public class RedisIdGenerator implements IdGenerator {
 	private static RedisIdGenerator me = new RedisIdGenerator();
 
 	/**
-	 * 嵌入的日期匹配表达式
-	 */
-	// private final static Pattern DF_REGEX =
-	// Pattern.compile("(?i)(\\@|\\$)(date|day|df)\\([\\w|\\W]*\\)");
-
-	/**
 	 * 全局ID的前缀符号,用于避免在redis中跟其它业务场景发生冲突
 	 */
 	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID:";
@@ -49,12 +43,6 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @return
 	 */
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
-		if (me.getRedisTemplate() == null) {
-			if (sqlToyContext.getBean("redisTemplate") == null)
-				logger.error("RedisIdGenerator 未定义基于spring 的redisTemplate 对象!");
-			else
-				me.setRedisTemplate((RedisTemplate) sqlToyContext.getBean("redisTemplate"));
-		}
 		return me;
 	}
 
@@ -66,7 +54,8 @@ public class RedisIdGenerator implements IdGenerator {
 	private RedisTemplate redisTemplate;
 
 	/**
-	 * @param redisTemplate the redisTemplate to set
+	 * @param redisTemplate
+	 *            the redisTemplate to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "redisTemplate")
@@ -122,22 +111,6 @@ public class RedisIdGenerator implements IdGenerator {
 		else
 			result = generateId(realKey);
 		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
-		// // $case(columnName,a,a1,b,b1,c,c1,other)
-		// // key 的格式如:PO@day(yyyyMMdd) 表示PO开头+yyyyMMdd格式,格式也可以写成PO$df(yyyyMMdd)
-		// Matcher m = DF_REGEX.matcher(key);
-		// if (m.find()) {
-		// String df = m.group();
-		// df = df.substring(df.indexOf("(") + 1, df.indexOf(")")).replaceAll("\'|\"",
-		// "").trim();
-		// // PO@day()格式,日期采用默认的2位年模式
-		// if (df.equals(""))
-		// df = "yyMMdd";
-		// realKey = key.substring(0, m.start()).concat(DateUtil.formatDate(realBizDate,
-		// df))
-		// .concat(key.substring(m.end()));
-		// } else if (dateFormat != null)
-		// realKey = key.concat(DateUtil.formatDate(realBizDate, dateFormat));
-
 	}
 
 	/**
@@ -180,7 +153,8 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @param dateFormat the dateFormat to set
+	 * @param dateFormat
+	 *            the dateFormat to set
 	 */
 	public void setDateFormat(String dateFormat) {
 		this.dateFormat = dateFormat;
