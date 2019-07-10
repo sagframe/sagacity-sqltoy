@@ -206,11 +206,13 @@ public class ParamFilterUtils {
 				if (hasFilter) {
 					for (int i = 0; i < cacheFilters.length; i++) {
 						cacheFilter = cacheFilters[i];
+						//过滤条件是否相等
 						if (cacheRow[cacheFilter.getCacheIndex()] == null)
 							hasEqual = false;
 						else
 							hasEqual = filterValues.get(i)
 									.containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
+						
 						if ((cacheFilter.getCompareType().equals("eq") && !hasEqual)
 								|| (cacheFilter.getCompareType().equals("neq") && hasEqual)) {
 							skip = true;
