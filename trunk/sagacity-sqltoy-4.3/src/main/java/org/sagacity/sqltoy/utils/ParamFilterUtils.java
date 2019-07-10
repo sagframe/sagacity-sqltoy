@@ -212,7 +212,7 @@ public class ParamFilterUtils {
 						else
 							hasEqual = filterValues.get(i)
 									.containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
-
+						// 条件成立则过滤掉
 						if ((cacheFilter.getCompareType().equals("eq") && hasEqual)
 								|| (cacheFilter.getCompareType().equals("neq") && !hasEqual)) {
 							skip = true;
