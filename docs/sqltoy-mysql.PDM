@@ -1998,7 +1998,7 @@ Table.Comment 0</a:SymbolContent>
 <a:CreationDate>1562722588</a:CreationDate>
 <a:ModificationDate>1562760344</a:ModificationDate>
 <a:IconMode>-1</a:IconMode>
-<a:Rect>((-38267,-23939), (-21913,-9841))</a:Rect>
+<a:Rect>((-38916,-23939), (-21264,-9841))</a:Rect>
 <a:LineColor>16512</a:LineColor>
 <a:FillColor>16570034</a:FillColor>
 <a:ShadowColor>12632256</a:ShadowColor>
@@ -2940,60 +2940,60 @@ Table.Comment 0</a:SymbolContent>
 <o:Column Id="o92">
 <a:ObjectID>41A0A4EB-130B-401D-B630-A896127A1CE3</a:ObjectID>
 <a:Name>地区代码</a:Name>
-<a:Code>地区代码</a:Code>
+<a:Code>AREA_CODE</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
 <o:Column Id="o93">
 <a:ObjectID>8712BC92-F690-410E-95F4-D5F8E03CD882</a:ObjectID>
 <a:Name>地区名称</a:Name>
-<a:Code>地区名称</a:Code>
+<a:Code>AREA_NAME</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
 <o:Column Id="o94">
 <a:ObjectID>E6F12BC2-E581-4C2B-987D-B9C6343C93E4</a:ObjectID>
 <a:Name>国家代码</a:Name>
-<a:Code>国家代码</a:Code>
+<a:Code>COUNTRY_CODE</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
 <o:Column Id="o95">
 <a:ObjectID>EEAA96B7-2943-4C2D-860F-598179527017</a:ObjectID>
 <a:Name>所在城市</a:Name>
-<a:Code>所在城市</a:Code>
+<a:Code>CITY_CODE</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
 <o:Column Id="o96">
 <a:ObjectID>4ED8BF05-4636-4AD2-82FB-DC14652696AE</a:ObjectID>
 <a:Name>所在省份</a:Name>
-<a:Code>所在省份</a:Code>
+<a:Code>PROVICEN_CODE</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
 <o:Column Id="o97">
 <a:ObjectID>275E59E0-2481-44BE-9908-B78A8517CAF0</a:ObjectID>
 <a:Name>完整名称</a:Name>
-<a:Code>完整名称</a:Code>
+<a:Code>FULL_NAME</a:Code>
 <a:CreationDate>1562760181</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1562760249</a:ModificationDate>
+<a:ModificationDate>1562760807</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
 <a:DataType>&lt;Undefined&gt;</a:DataType>
 </o:Column>
