@@ -208,15 +208,15 @@ public class SqlScriptLoader {
 					if (functionName.indexOf(".") == -1) {
 						converts.add((IFunction) (Class
 								.forName("org.sagacity.sqltoy.config.function.impl.".concat(functionName))
-								.newInstance()));
+								.getDeclaredConstructor().newInstance()));
 					} else {
-						converts.add((IFunction) (Class.forName(functionName).newInstance()));
+						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
 					}
 				}
 			} // 为null时启用默认配置
 			else {
 				for (String convert : functions) {
-					converts.add((IFunction) (Class.forName(convert).newInstance()));
+					converts.add((IFunction) (Class.forName(convert).getDeclaredConstructor().newInstance()));
 				}
 			}
 		} catch (Exception e) {

@@ -1544,7 +1544,7 @@ public class DialectUtils {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, String nullFunction,
 			Connection conn, final Boolean autoCommit, String tableName, boolean skipNull) throws Exception {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
@@ -1597,7 +1597,7 @@ public class DialectUtils {
 	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
 			throws Exception {
 		if (entity == null)
-			return new Long(0);
+			return Long.valueOf(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		if (null == entityMeta.getIdArray())
 			throw new IllegalArgumentException("delete 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
@@ -1644,7 +1644,7 @@ public class DialectUtils {
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		if (null == entityMeta.getIdArray())
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");

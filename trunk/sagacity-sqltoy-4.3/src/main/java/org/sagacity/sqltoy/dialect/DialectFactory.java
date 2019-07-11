@@ -334,7 +334,7 @@ public class DialectFactory {
 								if (sqlToyContext.isDebug()) {
 									out.println("getRandomResult按比例提取数据,总记录数=" + totalCount);
 								}
-								randomCnt = new Double(totalCount * randomCount.doubleValue()).longValue();
+								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
 								// 如果总记录数不为零，randomCnt最小为1
 								if (totalCount >= 1 && randomCnt < 1)
 									randomCnt = 1L;
@@ -486,7 +486,7 @@ public class DialectFactory {
 								queryResult = new QueryResult();
 								queryResult.setPageNo(pageNo);
 								queryResult.setPageSize(pageSize);
-								queryResult.setRecordCount(new Long(0));
+								queryResult.setRecordCount(Long.valueOf(0));
 								if (illegal)
 									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getSql());
 							} else {
@@ -503,7 +503,7 @@ public class DialectFactory {
 									long totalRecord = (queryResult.getRows() == null) ? 0
 											: queryResult.getRows().size();
 									queryResult.setPageNo(1L);
-									queryResult.setPageSize(new Long(totalRecord).intValue());
+									queryResult.setPageSize(Long.valueOf(totalRecord).intValue());
 									queryResult.setRecordCount(totalRecord);
 								} else {
 									// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
@@ -567,9 +567,9 @@ public class DialectFactory {
 								if (sqlToyContext.isDebug()) {
 									out.println("findTopByQuery按比例提取数据,总记录数=" + totalCount);
 								}
-								realTopSize = new Double(topSize * totalCount.longValue()).intValue();
+								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
 							} else
-								realTopSize = new Double(topSize).intValue();
+								realTopSize = Double.valueOf(topSize).intValue();
 							if (realTopSize == 0) {
 								this.setResult(new QueryResult());
 								return;
@@ -751,7 +751,7 @@ public class DialectFactory {
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
@@ -784,7 +784,7 @@ public class DialectFactory {
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -812,7 +812,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			return new Long(updateTotalCnt);
+			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -834,7 +834,7 @@ public class DialectFactory {
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -863,7 +863,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			return new Long(updateTotalCnt);
+			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -985,7 +985,7 @@ public class DialectFactory {
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1013,7 +1013,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			return new Long(updateTotalCnt);
+			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1036,7 +1036,7 @@ public class DialectFactory {
 			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1069,7 +1069,7 @@ public class DialectFactory {
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1098,7 +1098,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			return new Long(updateTotalCnt);
+			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1115,7 +1115,7 @@ public class DialectFactory {
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null)
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -1145,7 +1145,7 @@ public class DialectFactory {
 	public Long deleteAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return new Long(0);
+			return Long.valueOf(0);
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1173,7 +1173,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			return new Long(updateTotalCnt);
+			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);

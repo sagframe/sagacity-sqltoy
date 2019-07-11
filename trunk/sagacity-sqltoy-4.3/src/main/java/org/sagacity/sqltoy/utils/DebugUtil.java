@@ -102,7 +102,7 @@ public class DebugUtil {
 	public static void beginTime(String transactionId) {
 		long nowTime = System.nanoTime();
 		if (transactionId == null) {
-			orderTime.set(new Long(nowTime));
+			orderTime.set(Long.valueOf(nowTime));
 		} else
 			timeMap.put(transactionId, nowTime);
 	}
@@ -120,7 +120,7 @@ public class DebugUtil {
 		} else {
 			Long preTime = (Long) timeMap.get(transactionId);
 			if (preTime == null)
-				preTime = new Long(System.nanoTime());
+				preTime = Long.valueOf(System.nanoTime());
 			totalTime = endTime - preTime;
 			timeMap.remove(transactionId);
 		}

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -97,7 +98,8 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
-	 * @param arySource Object
+	 * @param arySource
+	 *            Object
 	 * @return List
 	 */
 	public static List arrayToDeepList(Object arySource) {
@@ -135,7 +137,8 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
-	 * @param arySource Object
+	 * @param arySource
+	 *            Object
 	 * @return List
 	 */
 	public static List arrayToList(Object arySource) {
@@ -444,7 +447,8 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr  将key统一转成字符串
+	 * @param keyToStr
+	 *            将key统一转成字符串
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
@@ -456,8 +460,10 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr     将key统一转成字符串
-	 * @param isLinkedHash 返回的是否为LinkedHashMap
+	 * @param keyToStr
+	 *            将key统一转成字符串
+	 * @param isLinkedHash
+	 *            返回的是否为LinkedHashMap
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
@@ -617,9 +623,11 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs
+	 *            {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite
+	 *            存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -745,7 +753,8 @@ public class CollectionUtil {
 	 * @param totalTitle
 	 * @param hasAverage
 	 * @param averageTitle
-	 * @param radixSize        小数位长度
+	 * @param radixSize
+	 *            小数位长度
 	 * @param firstSummary
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
@@ -841,7 +850,8 @@ public class CollectionUtil {
 	 * @param groupIndex
 	 * @param title
 	 * @param rowCount
-	 * @param radixSize      小数位长度
+	 * @param radixSize
+	 *            小数位长度
 	 * @return
 	 */
 	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
@@ -877,8 +887,8 @@ public class CollectionUtil {
 				else {
 					averageValue = Double.valueOf(rowSummaryData[i].toString().replace(",", "")) / rowCount;
 					if (radixSize >= 0)
-						average.add(i, BigDecimal.valueOf(averageValue).setScale(radixSize, BigDecimal.ROUND_FLOOR)
-								.doubleValue());
+						average.add(i,
+								BigDecimal.valueOf(averageValue).setScale(radixSize, RoundingMode.FLOOR).doubleValue());
 					else
 						average.add(i, BigDecimal.valueOf(averageValue).doubleValue());
 				}
@@ -950,7 +960,7 @@ public class CollectionUtil {
 							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
 									.add(new BigDecimal(StringUtil.isBlank(cellValue) ? "0"
 											: cellValue.toString().replace(",", "")))
-									.setScale(radixSize, BigDecimal.ROUND_FLOOR);
+									.setScale(radixSize, RoundingMode.FLOOR);
 				else
 					groupSums[columnIndex] = new BigDecimal(
 							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
@@ -963,7 +973,8 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndex
+	 *            保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {
@@ -1061,19 +1072,19 @@ public class CollectionUtil {
 				if (type.equals("string")) {
 					result[i] = values[i];
 				} else if (type.equals("int") || type.equals("integer")) {
-					result[i] = Integer.parseInt(values[i]);
+					result[i] = Integer.valueOf(values[i]);
 				} else if (type.equals("long")) {
-					result[i] = new Long(values[i]);
+					result[i] = Long.valueOf(values[i]);
 				} else if (type.equals("date")) {
 					result[i] = DateUtil.parseString(values[i]);
 				} else if (type.equals("boolean")) {
 					result[i] = Boolean.parseBoolean(values[i]);
 				} else if (type.equals("double")) {
-					result[i] = Double.parseDouble(values[i]);
+					result[i] = Double.valueOf(values[i]);
 				} else if (type.equals("float")) {
-					result[i] = Float.parseFloat(values[i]);
+					result[i] = Float.valueOf(values[i]);
 				} else if (type.equals("short")) {
-					result[i] = Short.parseShort(values[i]);
+					result[i] = Short.valueOf(values[i]);
 				} else if (type.equals("java.lang.class") || type.equals("class")) {
 					try {
 						result[i] = Class.forName(values[i]);

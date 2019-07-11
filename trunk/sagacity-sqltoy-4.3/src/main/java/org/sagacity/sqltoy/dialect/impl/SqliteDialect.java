@@ -118,7 +118,7 @@ public class SqliteDialect implements Dialect {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), new Long(pageSize), (pageNo - 1) * pageSize);
+				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
 	}
@@ -140,7 +140,7 @@ public class SqliteDialect implements Dialect {
 		} else
 			sql.append(sqlToyConfig.getSql());
 		sql.append(" limit ");
-		sql.append(new Double(topSize).intValue());
+		sql.append(Double.valueOf(topSize).intValue());
 
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());

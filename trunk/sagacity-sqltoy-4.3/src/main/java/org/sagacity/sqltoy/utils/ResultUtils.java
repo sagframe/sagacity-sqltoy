@@ -104,7 +104,7 @@ public class ResultUtils {
 		}
 		// 填充记录数
 		if (result.getRows() != null)
-			result.setRecordCount(new Long(result.getRows().size()));
+			result.setRecordCount(Long.valueOf(result.getRows().size()));
 		return result;
 	}
 
@@ -222,7 +222,7 @@ public class ResultUtils {
 
 		// 按比例模糊(百分比)
 		if (mask.getMaskRate() > 0) {
-			int maskSize = new Double(size * mask.getMaskRate() * 1.00 / 100).intValue();
+			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
 			if (maskSize < 1)
 				maskSize = 1;
 			else if (maskSize >= size)

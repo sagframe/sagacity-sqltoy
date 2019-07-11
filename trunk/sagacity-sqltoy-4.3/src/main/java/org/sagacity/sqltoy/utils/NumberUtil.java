@@ -69,10 +69,10 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
-		return format(target, pattern, null,null);
+		return format(target, pattern, null, null);
 	}
 
-	public static String format(Object target, String pattern, RoundingMode roundingMode,String locale) {
+	public static String format(Object target, String pattern, RoundingMode roundingMode, String locale) {
 		if (target == null)
 			return null;
 		if (pattern == null)
@@ -148,7 +148,7 @@ public class NumberUtil {
 			return null;
 		NumberFormat nf = NumberFormat.getPercentInstance();
 		try {
-			return new Float(nf.parse(percent).floatValue());
+			return Float.valueOf(nf.parse(percent).floatValue());
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -165,7 +165,7 @@ public class NumberUtil {
 	public static Float parseFloat(String floatStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(floatStr, maxIntDigits, null, maxFractionDigits, null);
 		if (number != null)
-			return new Float(number.floatValue());
+			return Float.valueOf(number.floatValue());
 		return null;
 	}
 
@@ -193,7 +193,7 @@ public class NumberUtil {
 	public static Double parseDouble(String doubleStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(doubleStr, maxIntDigits, null, maxFractionDigits, null);
 		if (number != null)
-			return new Double(number.doubleValue());
+			return Double.valueOf(number.doubleValue());
 		return null;
 	}
 
@@ -231,9 +231,9 @@ public class NumberUtil {
 		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(new BigDecimal("100000000"))
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
 		if (capitalMoney.indexOf("负") == 0)
-			return new BigDecimal(0).subtract(result).setScale(scale, BigDecimal.ROUND_HALF_UP);
+			return new BigDecimal(0).subtract(result).setScale(scale, RoundingMode.HALF_UP);
 		else
-			return result.setScale(scale, BigDecimal.ROUND_HALF_UP);
+			return result.setScale(scale, RoundingMode.HALF_UP);
 	}
 
 	/**
@@ -242,7 +242,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
-		BigDecimal realMoney = money.setScale(5, BigDecimal.ROUND_HALF_UP).abs();
+		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
 		if (realMoney.compareTo(new BigDecimal(0)) == 0)
 			return "零元";
 		// 绝对值字符串

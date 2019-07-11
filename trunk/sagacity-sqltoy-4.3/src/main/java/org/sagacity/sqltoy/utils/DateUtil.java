@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -376,7 +377,7 @@ public class DateUtil {
 	}
 
 	public static Date addSecond(Object dt, double second) {
-		Double millisecond = new Double(1000.0 * second);
+		Double millisecond = Double.valueOf(1000.0 * second);
 		return addMilliSecond(dt, millisecond.longValue());
 	}
 
@@ -385,7 +386,7 @@ public class DateUtil {
 	}
 
 	public static Date addDay(Object dt, double day) {
-		Double millisecond = new Double(1000.0 * 60.0 * 60.0 * 24.0 * day);
+		Double millisecond = Double.valueOf(1000.0 * 60.0 * 60.0 * 24.0 * day);
 		return addMilliSecond(dt, millisecond.longValue());
 	}
 
@@ -426,9 +427,9 @@ public class DateUtil {
 	 */
 	public static int getIntervalDays(Object floorDate, Object goalDate) {
 		BigDecimal result = new BigDecimal(
-				new Double(getIntervalMillSeconds(DateUtil.formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
+				Double.valueOf(getIntervalMillSeconds(DateUtil.formatDate(floorDate, FORMAT.DATE_HORIZONTAL),
 						DateUtil.formatDate(goalDate, FORMAT.DATE_HORIZONTAL))) / (3600 * 1000 * 24));
-		return result.setScale(1, BigDecimal.ROUND_HALF_UP).intValue();
+		return result.setScale(1, RoundingMode.HALF_UP).intValue();
 	}
 
 	/**

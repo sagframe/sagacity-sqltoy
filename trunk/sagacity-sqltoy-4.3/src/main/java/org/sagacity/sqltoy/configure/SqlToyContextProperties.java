@@ -157,7 +157,7 @@ public class SqlToyContextProperties {
 	public IUnifyFieldsHandler getUnifyFieldsHandler() {
 		try {
 			if (StringUtil.isNotBlank(unifyFieldsHandler))
-				return (IUnifyFieldsHandler) Class.forName(unifyFieldsHandler).newInstance();
+				return (IUnifyFieldsHandler) Class.forName(unifyFieldsHandler).getDeclaredConstructor().newInstance();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

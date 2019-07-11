@@ -75,10 +75,10 @@ public class XMLUtil {
 			validator.validate(xmlSource);
 			return true;
 		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!" + ioe.getMessage());
+			logger.error("文件IO读取失败!{}", ioe.getMessage());
 			ioe.printStackTrace();
 		} catch (SAXException ex) {
-			logger.error("xml验证不合法:" + ex.getMessage());
+			logger.error("xml验证不合法:{}", ex.getMessage());
 			ex.printStackTrace();
 		}
 		return false;
@@ -103,17 +103,16 @@ public class XMLUtil {
 			validator.validate(xmlSource);
 			return true;
 		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!" + ioe.getMessage());
+			logger.error("文件IO读取失败!{}", ioe.getMessage());
 			ioe.printStackTrace();
 		} catch (SAXException ex) {
-			logger.error("xml验证不合法:" + ex.getMessage());
+			logger.error("xml验证不合法:{}", ex.getMessage());
 			ex.printStackTrace();
 		}
 		return false;
 	}
 
 	/**
-	 * 
 	 * @todo 验证xml文件对应的schema文件是否匹配
 	 * @param xsdFile
 	 * @param xmlFile
@@ -133,7 +132,7 @@ public class XMLUtil {
 			validator.validate(source);
 			return true;
 		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!" + ioe.getMessage());
+			logger.error("文件IO读取失败!{}", ioe.getMessage());
 			ioe.printStackTrace();
 		} catch (SAXException ex) {
 			logger.error(xmlFile + " is not valid " + ex.getMessage());

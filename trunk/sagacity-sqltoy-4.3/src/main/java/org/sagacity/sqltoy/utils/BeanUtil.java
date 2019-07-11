@@ -642,7 +642,7 @@ public class BeanUtil {
 			while (iter.hasNext()) {
 				rowObject = iter.next();
 				if (rowObject != null) {
-					bean = voClass.newInstance();
+					bean = voClass.getDeclaredConstructor().newInstance();
 					if (meter == 0) {
 						if (rowObject instanceof Object[])
 							isArray = true;
@@ -696,7 +696,8 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate     强制更新
+	 * @param forceUpdate
+	 *            强制更新
 	 * @throws Exception
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
@@ -806,10 +807,14 @@ public class BeanUtil {
 
 	/**
 	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans   源对象数据集合
-	 * @param fromProps   源对象的属性
-	 * @param targetProps 目标对象的属性
-	 * @param newClass    目标对象类型
+	 * @param fromBeans
+	 *            源对象数据集合
+	 * @param fromProps
+	 *            源对象的属性
+	 * @param targetProps
+	 *            目标对象的属性
+	 * @param newClass
+	 *            目标对象类型
 	 * @return
 	 * @throws Exception
 	 */
@@ -827,7 +832,8 @@ public class BeanUtil {
 	 * @param fromProps
 	 * @param targetProps
 	 * @param newClass
-	 * @param autoMapping 是否自动匹配
+	 * @param autoMapping
+	 *            是否自动匹配
 	 * @return
 	 * @throws Exception
 	 */

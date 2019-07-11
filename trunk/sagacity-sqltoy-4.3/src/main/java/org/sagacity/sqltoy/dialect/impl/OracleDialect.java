@@ -141,7 +141,7 @@ public class OracleDialect implements Dialect {
 		sql.append("SELECT SAG_Paginationtable.* FROM ( ");
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql());
 		sql.append(") SAG_Paginationtable where ROWNUM <=");
-		sql.append(new Double(topSize).intValue());
+		sql.append(Double.valueOf(topSize).intValue());
 
 		if (sqlToyConfig.isHasFast())
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());

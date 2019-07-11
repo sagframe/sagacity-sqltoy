@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -647,6 +648,18 @@ public class ParamFilterUtils {
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
+		} // 取指定日期的星期一的日期
+		else if (format.equals("first_week_day")) {
+			Calendar ca = Calendar.getInstance();
+			ca.setTime(DateUtil.parse(paramValue, null));
+			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
+			result = DateUtil.parse(ca.getTime(), DateUtil.FORMAT.DATE_HORIZONTAL);
+		} // 取指定日期的星期天的日期
+		else if (format.equals("last_week_day")) {
+			Calendar ca = Calendar.getInstance();
+			ca.setTime(DateUtil.parse(paramValue, null));
+			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
+			result = DateUtil.parse(ca.getTime(), DateUtil.FORMAT.DATE_HORIZONTAL);
 		} else {
 			result = DateUtil.addDay(paramValue, paramFilterModel.getIncrementDays());
 			if (StringUtil.isNotBlank(format))

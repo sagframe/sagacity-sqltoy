@@ -77,7 +77,7 @@ public class SqlUtilsExt {
 			final int batchSize, final Boolean autoCommit, final Connection conn) throws Exception {
 		if (rowDatas == null) {
 			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
-			return new Long(0);
+			return Long.valueOf(0);
 		}
 		long updateCount = 0;
 		PreparedStatement pst = null;
@@ -92,7 +92,7 @@ public class SqlUtilsExt {
 			}
 			pst = conn.prepareStatement(updateSql);
 			int totalRows = rowDatas.size();
-			//只有一条记录不采用批量
+			// 只有一条记录不采用批量
 			boolean useBatch = (totalRows > 1) ? true : false;
 			Object[] rowData;
 			// 批处理计数器
@@ -110,10 +110,10 @@ public class SqlUtilsExt {
 									j + 1);
 					}
 					meter++;
-					//批量
+					// 批量
 					if (useBatch) {
 						pst.addBatch();
-						//判断是否是最后一条记录或到达批次量,执行批处理
+						// 判断是否是最后一条记录或到达批次量,执行批处理
 						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
 							int[] updateRows = pst.executeBatch();
 							for (int t : updateRows) {
@@ -187,7 +187,7 @@ public class SqlUtilsExt {
 				realValue = DateUtil.getTimestamp(null);
 			else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
 					|| jdbcType == java.sql.Types.TINYINT)
-				realValue = Integer.parseInt(defaultValue);
+				realValue = Integer.valueOf(defaultValue);
 			else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC)
 				realValue = new BigDecimal(defaultValue);
 			else if (jdbcType == java.sql.Types.DOUBLE)

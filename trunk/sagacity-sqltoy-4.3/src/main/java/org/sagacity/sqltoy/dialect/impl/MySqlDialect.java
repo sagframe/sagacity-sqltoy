@@ -126,7 +126,7 @@ public class MySqlDialect implements Dialect {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, new Long(pageSize));
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
 	}
@@ -148,7 +148,7 @@ public class MySqlDialect implements Dialect {
 		} else
 			sql.append(sqlToyConfig.getSql());
 		sql.append(" limit ");
-		sql.append(new Double(topSize).intValue());
+		sql.append(Double.valueOf(topSize).intValue());
 
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());

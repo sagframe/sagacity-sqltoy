@@ -123,7 +123,7 @@ public class SqlServerDialect implements Dialect {
 		if (sqlToyConfig.isHasFast())
 			sql.append(sqlToyConfig.getFastPreSql()).append(" (");
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
-		String partSql = " select top " + new Double(topSize).intValue() + " ";
+		String partSql = " select top " + Double.valueOf(topSize).intValue() + " ";
 		if (sqlToyConfig.isHasWith()) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(minSql);
 			sql.append(sqlWith.getWithSql());

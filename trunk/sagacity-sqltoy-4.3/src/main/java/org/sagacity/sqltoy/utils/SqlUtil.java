@@ -73,15 +73,17 @@ public class SqlUtil {
 
 	public static final Pattern UPCASE_ORDER_PATTERN = Pattern.compile("\\WORder\\s+");
 
-//	/**
-//	 * alibaba druid clob
-//	 */
-//	private static final String ALIBABA_DRUID_JDBC_CLOBPROXY = "com.alibaba.druid.proxy.jdbc.ClobProxyImpl";
-//
-//	/**
-//	 * alibaba druid nclob
-//	 */
-//	private static final String ALIBABA_DRUID_JDBC_NCLOBPROXY = "com.alibaba.druid.proxy.jdbc.NClobProxyImpl";
+	// /**
+	// * alibaba druid clob
+	// */
+	// private static final String ALIBABA_DRUID_JDBC_CLOBPROXY =
+	// "com.alibaba.druid.proxy.jdbc.ClobProxyImpl";
+	//
+	// /**
+	// * alibaba druid nclob
+	// */
+	// private static final String ALIBABA_DRUID_JDBC_NCLOBPROXY =
+	// "com.alibaba.druid.proxy.jdbc.NClobProxyImpl";
 
 	// sql 注释过滤器
 	private static HashMap sqlCommentfilters = new HashMap();
@@ -301,7 +303,7 @@ public class SqlUtil {
 				pst.setString(paramIndex, tmpStr);
 			} else if (paramValue instanceof java.sql.Blob) {
 				Blob tmp = (java.sql.Blob) paramValue;
-				pst.setBytes(paramIndex, tmp.getBytes(0, new Long(tmp.length()).intValue()));
+				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
 			} else if (paramValue instanceof java.sql.Date) {
 				pst.setTimestamp(paramIndex, new Timestamp(((java.sql.Date) paramValue).getTime()));
 			} else if (paramValue instanceof java.lang.Character) {
@@ -406,7 +408,7 @@ public class SqlUtil {
 			Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		TableColumnMeta colMeta;
-		Object bean = voClass.newInstance();
+		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
 		boolean allNull = true;
 		for (int i = 0, n = matchedFields.size(); i < n; i++) {
@@ -732,7 +734,7 @@ public class SqlUtil {
 			final Connection conn) throws Exception {
 		if (rowDatas == null) {
 			logger.error("数据为空!");
-			return new Long(0);
+			return Long.valueOf(0);
 		}
 		PreparedStatement pst = null;
 		long updateCount = 0;
@@ -1070,8 +1072,8 @@ public class SqlUtil {
 				try {
 					stat = conn.createStatement();
 					if (logger.isDebugEnabled())
-						logger.debug("######正在执行sql:" + sql.trim());
-					stat.execute(sql.trim());
+						logger.debug("正在批量执行的sql:{}", sql);
+					stat.execute(sql);
 				} catch (SQLException e) {
 					logger.error(e.getMessage(), e);
 				} finally {
@@ -1164,7 +1166,7 @@ public class SqlUtil {
 				SqlUtil.setParamsValue(conn, pst, params, paramsType, 0);
 				pst.executeUpdate();
 				// 返回update的记录数量
-				this.setResult(new Long(pst.getUpdateCount()));
+				this.setResult(Long.valueOf(pst.getUpdateCount()));
 			}
 		});
 		if (result != null)
@@ -1190,14 +1192,14 @@ public class SqlUtil {
 		case java.sql.Types.CHAR:
 			return idValue.toString();
 		case java.sql.Types.BIGINT:
-			return new Long(idValue.toString());
+			return Long.valueOf(idValue.toString());
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
 			return new BigDecimal(idValue.toString());
 		case java.sql.Types.TINYINT:
 		case java.sql.Types.INTEGER:
 		case java.sql.Types.SMALLINT:
-			return new Integer(idValue.toString());
+			return Integer.valueOf(idValue.toString());
 		default:
 			return idValue;
 		}
@@ -1231,10 +1233,4 @@ public class SqlUtil {
 			// do nothing
 		}
 	}
-
-	// public static void main(String[] args)
-	// {
-	// String sql="select /*! hint */ from table";
-	// System.err.println(StringUtil.matches(sql, maskPattern));
-	// }
 }

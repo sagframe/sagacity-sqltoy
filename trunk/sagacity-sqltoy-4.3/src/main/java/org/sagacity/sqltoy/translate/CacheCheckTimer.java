@@ -95,7 +95,7 @@ public class CacheCheckTimer extends TimerTask {
 			// 间隔大于设定阈值,执行检测
 			if (nowInterval >= interval) {
 				// 更新最后检测时间
-				lastCheckTime.put(checker, new Long(DateUtil.parse(nowMillis, dateFmt).getTime()));
+				lastCheckTime.put(checker, Long.valueOf(DateUtil.parse(nowMillis, dateFmt).getTime()));
 				// 执行检测
 				doCheck(sqlToyContext, checkerConfig, preCheck);
 			}

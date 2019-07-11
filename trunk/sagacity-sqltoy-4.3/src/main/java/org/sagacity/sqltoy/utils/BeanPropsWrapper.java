@@ -29,7 +29,7 @@ public class BeanPropsWrapper {
 	private Object[] values;
 
 	/**
-	 * @todo　构造函数传递需要设置的参数名称
+	 * @todo 构造函数传递需要设置的参数名称
 	 * @param names
 	 */
 	public BeanPropsWrapper(String... names) {
@@ -43,8 +43,7 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Object[] mappingAry(List dataSet) throws Exception {
-		if (null == names || names.length != 1 || null == dataSet
-				|| dataSet.isEmpty())
+		if (null == names || names.length != 1 || null == dataSet || dataSet.isEmpty())
 			return null;
 		List<List> reflectValue = BeanUtil.reflectBeansToList(dataSet, names);
 		List result = new ArrayList();
@@ -83,8 +82,7 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Collection wrap(Type type) throws Exception {
-		if (null == names || names.length != 1 || null == values
-				|| values.length < 1 || null == type)
+		if (null == names || names.length != 1 || null == values || values.length < 1 || null == type)
 			return null;
 		List valuesSet = new ArrayList();
 		for (int i = 0; i < values.length; i++) {
@@ -92,8 +90,7 @@ public class BeanPropsWrapper {
 			rowList.add(values[i]);
 			valuesSet.add(rowList);
 		}
-		return BeanUtil.reflectListToBean(valuesSet, new int[] { 0 }, names,
-				(Class) type);
+		return BeanUtil.reflectListToBean(valuesSet, new int[] { 0 }, names, (Class) type);
 	}
 
 	/**
@@ -103,8 +100,9 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Serializable mapping(Serializable serializable) throws Exception {
-		Serializable bean = (serializable instanceof Type) ? (Serializable) ((Class) serializable)
-				.newInstance() : serializable;
+		Serializable bean = (serializable instanceof Type)
+				? (Serializable) ((Class) serializable).getDeclaredConstructor().newInstance()
+				: serializable;
 		List voList = new ArrayList();
 		voList.add(bean);
 		BeanUtil.batchSetProperties(voList, names, values, false);

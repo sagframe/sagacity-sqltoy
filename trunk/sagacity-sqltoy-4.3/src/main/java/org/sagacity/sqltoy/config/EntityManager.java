@@ -514,7 +514,8 @@ public class EntityManager {
 					String beanName = idGenerator.substring(start + 1, end).replaceAll("\"|\'", "").trim();
 					idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
 				} else
-					idGenerators.put(idGenerator, (IdGenerator) Class.forName(idGenerator).newInstance());
+					idGenerators.put(idGenerator,
+							(IdGenerator) Class.forName(idGenerator).getDeclaredConstructor().newInstance());
 			}
 		}
 	}
@@ -650,7 +651,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param packagesToScan the packagesToScan to set
+	 * @param packagesToScan
+	 *            the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -664,14 +666,16 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param annotatedClasses the annotatedClasses to set
+	 * @param annotatedClasses
+	 *            the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = annotatedClasses;
 	}
 
 	/**
-	 * @param recursive the recursive to set
+	 * @param recursive
+	 *            the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		this.recursive = recursive;

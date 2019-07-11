@@ -769,7 +769,7 @@ public class SqlServerDialectUtils {
 			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn) throws Exception {
 		if (rowDatas == null) {
 			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
-			return new Long(0);
+			return Long.valueOf(0);
 		}
 		PreparedStatement pst = null;
 		long updateCount = 0;
