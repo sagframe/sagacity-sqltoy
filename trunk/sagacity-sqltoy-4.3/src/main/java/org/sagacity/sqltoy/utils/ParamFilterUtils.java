@@ -538,13 +538,13 @@ public class ParamFilterUtils {
 			if (null != result[i]) {
 				value = result[i].toString();
 				if (dataType.equals("integer") || dataType.equals("int"))
-					result[i] = new Integer(value);
+					result[i] = Integer.valueOf(value);
 				else if (dataType.equals("long"))
-					result[i] = new Long(value);
+					result[i] = Long.valueOf(value);
 				else if (dataType.equals("float"))
-					result[i] = new Float(value);
+					result[i] = Float.valueOf(value);
 				else if (dataType.equals("double"))
-					result[i] = new Double(value);
+					result[i] = Double.valueOf(value);
 				else if (dataType.equals("decimal") || dataType.equals("number"))
 					result[i] = new BigDecimal(value);
 				else if (dataType.equals("date"))
@@ -571,13 +571,13 @@ public class ParamFilterUtils {
 			if (result[i] != null) {
 				value = result[i].toString();
 				if (dataType.equals("integer") || dataType.equals("int"))
-					result[i] = new Integer(value);
+					result[i] = Integer.valueOf(value);
 				else if (dataType.equals("long"))
-					result[i] = new Long(value);
+					result[i] = Long.valueOf(value);
 				else if (dataType.equals("float"))
-					result[i] = new Float(value);
+					result[i] = Float.valueOf(value);
 				else if (dataType.equals("double"))
-					result[i] = new Double(value);
+					result[i] = Double.valueOf(value);
 				else if (dataType.equals("decimal") || dataType.equals("number"))
 					result[i] = new BigDecimal(value);
 				else if (dataType.equals("string"))
@@ -600,13 +600,13 @@ public class ParamFilterUtils {
 			result = value;
 		else {
 			if (dataType.equals("integer") || dataType.equals("int"))
-				result = new Integer(value.intValue());
+				result = Integer.valueOf(value.intValue());
 			else if (dataType.equals("long"))
-				result = new Long(value.longValue());
+				result = Long.valueOf(value.longValue());
 			else if (dataType.equals("float"))
-				result = new Float(value.floatValue());
+				result = Float.valueOf(value.floatValue());
 			else if (dataType.equals("double"))
-				result = new Double(value.doubleValue());
+				result = Double.valueOf(value.doubleValue());
 			else
 				result = value;
 		}
@@ -624,7 +624,7 @@ public class ParamFilterUtils {
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat().toLowerCase();
 		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
-		if (format.equals("first_day")||format.equals("first_month_day")) {
+		if (format.equals("first_day") || format.equals("first_month_day")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
@@ -636,7 +636,7 @@ public class ParamFilterUtils {
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取当前月份的最后一天
-		else if (format.equals("last_day")||format.equals("last_month_day")) {
+		else if (format.equals("last_day") || format.equals("last_month_day")) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
