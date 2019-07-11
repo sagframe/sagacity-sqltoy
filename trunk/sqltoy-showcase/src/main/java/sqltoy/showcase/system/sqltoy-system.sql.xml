@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+
+	<!-- 列转行测试 -->
+	<sql id="sys_unpvoitSearch">
+		<value>
+		<![CDATA[
+		SELECT TRANS_DATE, 
+		       sum(TOTAL_AMOUNT) TOTAL_AMOUNT,
+		       sum(PERSON_AMOUNT) PERSON_AMOUNT,
+		       sum(COMPANY_AMOUNT) COMPANY_AMOUNT
+		FROM sys_unpivot_data
+		group by TRANS_DATE
+		]]>
+		</value>
+		<!-- 将指定的列变成行(这里3列变成了3行) -->
+		<unpivot
+			columns="TOTAL_AMOUNT:总金额,PERSON_AMOUNT:个人金额,COMPANY_AMOUNT:企业金额"
+			values-as-column="TRANS_AMOUNT" labels-as-column="AMOUNT_TYPE" />
+	</sql>
+
+	<!-- 行转列测试 -->
+	<sql id="sys_pvoitSearch">
+		<value>
+		<![CDATA[
+		select t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE,sum(t.TRANS_AMT) TRANS_AMT from sys_summary_case t
+		group by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
+		order by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
+		]]>
+		</value>
+		<pivot category-columns="TRANS_CHANNEL,TRANS_CODE"
+			start-column="TRANS_AMT" default-value="0" default-type="decimal"
+			end-column="TRANS_AMT" group-columns="TRANS_DATE" />
+	</sql>
+
+	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题) -->
+	<sql id="sys_summarySearch">
+		<sharding-datasource strategy="multiDataSource" />
+		<value>
+		<![CDATA[
+		select	t.TRANS_CHANNEL,t.TRANS_CODE,sum( t.TRANS_AMT )
+		from sys_summary_case t
+		group by t.TRANS_CHANNEL,t.TRANS_CODE
+		]]>
+		</value>
+		<summary columns="2" reverse="true" sum-site="left"
+			radix-size="2">
+			<global sum-label="总计" label-column="0" />
+			<group sum-label="小计/平均" label-column="0" group-column="0"
+				average-label="平均" />
+		</summary>
+	</sql>
+
+	<!-- 分页查询 -->
+	<sql id="sys_findStaff">
+		<!-- 从机构Id和Name的缓存中提取机构名称,避免关联数据库查询，提升效率，简化sql -->
+		<translate cache="organIdNameCache" columns="ORGAN_NAME" />
+		<!-- 安全脱敏:将姓名进行脱敏 -->
+		<secure-mask type="name" column="STAFF_NAME" />
+		<value>
+		<![CDATA[
+		select STAFF_ID,STAFF_CODE,STAFF_NAME,POST,SEX_TYPE, ORGAN_ID,ORGAN_ID ORGAN_NAME
+	    from sys_staff_info
+	    where #[STAFF_NAME like :staffName]
+		]]>
+		</value>
+	</sql>
+
+	<!-- 分页优化查询 -->
+	<sql id="sys_findStaff_optimize">
+		<!-- 优化分页查询,核心是避免相同的查询条件每次查询总记录数量 -->
+		<page-optimize alive-max="100" alive-seconds="600" />
+		<value>
+		<![CDATA[
+		select t.STAFF_ID,t.STAFF_CODE,t.STAFF_NAME,t.POST,t.SEX_TYPE, t.ORGAN_ID,t1.ORGAN_NAME
+	    from sys_staff_info t 
+	      left join sys_organ_info t1
+	         on t.ORGAN_ID=t1.ORGAN_ID
+	    where t.STAFF_NAME like :staffName
+		]]>
+		</value>
+		<!-- 自定义计算总记录数的sql语句(默认sqltoy会智能优化提取count sql,无需自定义), 在极端性能优化场景下给开发者留一个口子 -->
+		<count-sql>
+		<![CDATA[
+		select 1 from sys_staff_info where STAFF_NAME like :staffName
+		]]>
+		</count-sql>
+	</sql>
+
+	<!-- 分表分库查询 -->
+	<sql id="sys_findByShardingTime">
+		<!-- 分库查询,将查询压力分担到多个数据库上 -->
+		<sharding-datasource strategy="multiDataSource" />
+
+		<!-- 分表查询:按数据热度分表,如：将最近30天的数据查询30天的表，其他查询历史表，提升查询效率 -->
+		<sharding-table tables="sys_sharding_real"
+			strategy="dateHisTable" params="beginTime" />
+
+		<!-- 优化分页查询,核心是避免相同的查询条件每次查询总记录数量 -->
+		<page-optimize alive-max="100" alive-seconds="600" />
+		<value>
+		<![CDATA[
+		SELECT ID, STAFF_ID, POST_TYPE, CREATE_TIME, COMMENTS
+		FROM sqltoy.sys_sharding_real t
+		where t.CREATE_TIME between :beginTime and :endTime
+		]]>
+		</value>
+	</sql>
+
+	<!-- blank-to-null 默认为true,一般无需写明 -->
+	<sql id="sys_findByShardingTime">
+		<value>
+		<![CDATA[
+		SELECT *  FROM web_user 
+		where 1=1
+		#[and username like :username]
+		#[and acount=:account]
+		]]>
+		</value>
+	</sql>
+
+	<!-- 分页查询 -->
+	<sql id="sys_findStaff_fast">
+		<!-- 通过数据字典翻译出岗位名称,避免关联查询 -->
+		<translate cache="dictKeyNameCache" columns="postName" />
+		<!-- 优化分页查询,核心是避免相同的查询条件每次查询总记录数量,如下一页时,sqltoy 就通过缓存提取出总记录数，直接查询下一页数据 -->
+		<page-optimize alive-max="100" alive-seconds="600" />
+		<value>
+		<![CDATA[
+		select t0.*,t1.ORGAN_NAME
+	    from 
+	    -- 先从符合条件的记录中分页取10条,再关联机构,提升效率
+	    @fast(select t.STAFF_ID,
+			  t.STAFF_CODE,
+			  t.STAFF_NAME,
+			  t.POST,
+		      t.POST postName
+		      t.SEX_TYPE, 
+		      t.ORGAN_ID
+	          from sys_staff_info t
+	          where 1=1
+	          --like 模式，sqltoy会判断参数中是否含%号,不含%则自动两边补全,如:张,则like ?, pst.set(index,'%张%')
+	          --sqltoy 不做任何直接的sql拼接，全部变成? 然后通过preparedStatement.set(index,paramValue);
+	          #[and t.STAFF_NAME like :staffName]
+	          --in 模式 sqltoy会自动根据techGroups数组长度构造in(?,?,?),不是直接将值拼起来，从而避免sql注入
+	          #[and t.tech_group in (:techGroups)]
+	          #[and t.birthday>=:beginDate ] 
+	          #[and t.birthday<=:endDate]
+	          ) t0
+	      left join sys_organ_info t1
+	           on t0.ORGAN_ID=t1.ORGAN_ID
+		]]>
+		</value>
+	</sql>
+
+	<!-- elasticSearch-sql插件模式 -->
+	<eql id="sys_elastic_test" fields="chineseName,price,trademarkId">
+		<value>
+		<![CDATA[
+			select * from goods_index
+			where 1=1
+			#[and chineseName =matchPhrase(:keyword)]
+			#[and manufacturerName =matchPhrase(:keyword2)]
+			#[and trademarkName =matchPhrase(:keyword3)]
+			#[and goodsCateId in (:goodsCateIds)]
+			#[and transactionType =:transactionType]
+			#[and trademarkId =:trademarkId]
+			#[and uom =:uom]
+			#[and :endPrice >=price]
+			#[and price >=:startPrice]
+			#[@if(:priceSort==1 && :transactionSort==1) order by price desc,days desc,upTime desc]
+			#[@if(:priceSort==0 && :transactionSort==0) order by price asc,days asc,upTime desc]
+			#[@if(:priceSort==1 && :transactionSort==0) order by price asc,days asc,upTime desc]
+			#[@if(:priceSort==0 && :transactionSort==1) order by price asc,days asc,upTime desc]
+		]]>
+		</value>
+	</eql>
+
+	<eql id="query_goods"
+		fields="resourceId,
+            address,
+            chineseName,
+            currencyType,
+            deliveryMode,
+            enterpriseId,
+            price,
+            manufacturerId,
+            manufacturerName,
+            trademarkId,
+            trademarkName,
+            transactionType,
+            days,
+            uom,
+            upTime,
+            country,
+            provinceCode,
+            cityCode,
+            areCode,
+            goodsCateId,
+            goodsCatePid">
+		<value>
+		<![CDATA[
+        select * from goods_index
+        where 1=1
+        #[and chineseName =matchPhrase(:keyword)]
+        #[and manufacturerName =matchPhrase(:keyword2)]
+        #[and trademarkName =matchPhrase(:keyword3)]
+        #[and goodsCateId in (:goodsCateIds)]
+        #[and transactionType =:transactionType]
+        #[and trademarkId =:trademarkId]
+        #[and uom =:uom]
+        #[and :endPrice >=price]
+        #[and price >=:startPrice]
+        #[@if(:priceSort==1 && :transactionSort==1) order by price desc,days desc,upTime desc]
+        #[@if(:priceSort==0 && :transactionSort==0) order by price asc,days asc,upTime desc]
+        #[@if(:priceSort==1 && :transactionSort==0) order by price desc,days asc,upTime desc]
+        #[@if(:priceSort==0 && :transactionSort==1) order by price asc,days desc,upTime desc]
+        ]]>
+		</value>
+	</eql>
+
+	<!-- elastic 原生查询模式 -->
+	<eql id="sys_elastic_test_json"
+		fields="organ_id,organ_name,create_time">
+		<value>
+		<![CDATA[
+			{
+				    "_source": [
+				    	"organ_id",
+						"organ_name",
+						"create_time"
+				    ], 
+				    "query": {
+				        "bool":{
+					        "filter":[
+					        	<#>{"terms":{"organ_id":[@(:organIds)]}}</#>
+					        ]
+				        }
+				    }
+				}
+		]]>
+		</value>
+	</eql>
+
+	<!-- elastic 聚合查询 -->
+	<eql id="sys_elastic_test_aggs" index="bank" type="account"
+		fields="">
+		<value>
+		<![CDATA[
+			{
+			    "from":0,
+			    "size":1,
+			    "query": {
+			        "bool": {
+			            "must": [
+			                { "match_all": {} }
+			            ],
+			            "filter": [
+			                { "range": { "account_number":{"gte":5,"lte":500} } }
+			            ]
+			        }
+			        
+			    },
+			    "aggs" : {
+			        "按州分组" : {
+			            "terms" : { "field" : "state.keyword","order" : {"_term":"asc"}},
+			            "aggs" : {
+			            	"余额":{"sum":{"field" : "balance"} },
+			                "按年龄分组":{
+			                	"terms" : {"field" : "age","order" : {"_term":"asc"}},
+			                    "aggs": {
+				                    "平均额" : { "avg" : { "field" : "balance" } },
+				                    "总额":{"sum":{"field" : "balance"}},
+				                    "最小额":{"min":{"field" : "balance"}},
+				                    "最大额":{"max":{"field" : "balance"}}
+				                }
+			                }
+			            }
+			        },
+			        "总余额":{"sum":{"field" : "balance"} }
+			    }
+			}
+		]]>
+		</value>
+	</eql>
+	<!--根据分类id查询供应商 -->
+	<eql id="find_goods_count" fields="count" aggregate="true"
+		value-root="suggest,blog-suggest,options">
+		<value><![CDATA[
+       select  count(*) count  from index_goods_resource_list  where
+       upstatus=1
+       and effecttime>=:operateDate
+ ]]></value>
+	</eql>
+
+	<!-- 查询热搜 -->
+	<eql id="query_hot_search" fields="keywords">
+		<value><![CDATA[
+		  { 
+
+			  "suggest": {
+			    "blog-suggest": {
+			      "prefix": "LDPE",
+			      "completion": {
+			        "field": "keywords",
+			        "size": 9 
+			      }
+			    }
+			  },
+			   "_source": ["keywords"]
+			}
+
+		]]></value>
+	</eql>
+</sqltoy>
