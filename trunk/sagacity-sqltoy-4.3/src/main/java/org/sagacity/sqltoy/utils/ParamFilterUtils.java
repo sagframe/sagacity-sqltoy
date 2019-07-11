@@ -623,54 +623,44 @@ public class ParamFilterUtils {
 	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel) {
 		Object result;
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat().toLowerCase();
+		String realFmt = DAY_FORMAT;
 		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
 		if (format.equals("first_day") || format.equals("first_month_day")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的第一天
 		else if (format.equals("first_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-01-01";
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取当前月份的最后一天
 		else if (format.equals("last_day") || format.equals("last_month_day")) {
 			result = DateUtil.lastDayOfMonth(paramValue);
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的最后一天
 		else if (format.equals("last_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-12-31";
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取指定日期的星期一的日期
 		else if (format.equals("first_week_day")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
 			result = ca.getTime();
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取指定日期的星期天的日期
 		else if (format.equals("last_week_day")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
 			result = ca.getTime();
-			if (paramFilterModel.getIncrementDays() != 0)
-				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-			result = DateUtil.parse(result, DAY_FORMAT);
 		} else {
-			result = DateUtil.addDay(paramValue, paramFilterModel.getIncrementDays());
+			result = DateUtil.convertDateObject(paramValue);
 			if (StringUtil.isNotBlank(format))
-				result = DateUtil.parse(DateUtil.formatDate(result, format), format);
+				realFmt = format;
+			else
+				realFmt = null;
 		}
+		// 存在日期加减
+		if (paramFilterModel.getIncrementDays() != 0)
+			result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
+		if (realFmt != null)
+			result = DateUtil.parse(result, realFmt);
 		return result;
 	}
 
