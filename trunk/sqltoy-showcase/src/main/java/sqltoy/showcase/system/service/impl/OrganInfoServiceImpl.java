@@ -5,7 +5,6 @@ package sqltoy.showcase.system.service.impl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.sagacity.sqltoy.exception.BaseException;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,7 +16,7 @@ import sqltoy.showcase.system.vo.OrganInfoVO;
 /**
  * @project sqltoy-showcase
  * @description
- * 				<p>
+ *              <p>
  *              请在此说明类的功能
  *              </p>
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
@@ -41,14 +40,8 @@ public class OrganInfoServiceImpl implements OrganInfoService {
 	 */
 	@Override
 	@CacheEvict(value = "organIdNameCache", allEntries = true)
-	public void add(OrganInfoVO organInfoVO) throws BaseException {
-		try {
-			sqlToyLazyDao.save(organInfoVO);
-			logger.info("新增机构信息成功！");
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("新增机构信息失败！");
-			throw new BaseException("新增机构信息失败！", e);
-		}
+	public void add(OrganInfoVO organInfoVO) {
+		sqlToyLazyDao.save(organInfoVO);
+		logger.info("新增机构信息成功！");
 	}
 }

@@ -18,12 +18,12 @@ import org.sagacity.sqltoy.support.BaseDaoSupport;
  * @version id:LinkDaoDemo.java,Revision:v1.0,Date:2017年10月30日
  */
 public class LinkDaoDemo extends BaseDaoSupport {
-	public void saveEntities(List entities) throws Exception {
+	public void saveEntities(List entities) {
 		super.save().batchSize(100).saveMode(UPDATE).many(entities);
 		super.flush();
 	}
 
-	public Object save(Serializable vo) throws Exception {
+	public Object save(Serializable vo) {
 		// super.findByCriteria(new Criteria(vo).)
 		return super.save().one(vo);
 	}

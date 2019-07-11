@@ -3,14 +3,12 @@
  */
 package sqltoy.showcase.system.service;
 
-import org.sagacity.sqltoy.exception.BaseException;
-
 import sqltoy.showcase.system.vo.OrganInfoVO;
 
 /**
  * @project sqltoy-showcase
  * @description
- * 				<p>
+ *              <p>
  *              机构信息维护
  *              </p>
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
@@ -23,5 +21,5 @@ public interface OrganInfoService {
 	 * @param organInfoVO
 	 * @throws CreateSequenceException
 	 */
-	public void add(OrganInfoVO organInfoVO) throws BaseException;
+	public void add(OrganInfoVO organInfoVO);
 }
