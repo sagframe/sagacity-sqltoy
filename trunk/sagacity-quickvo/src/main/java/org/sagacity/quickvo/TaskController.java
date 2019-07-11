@@ -238,7 +238,7 @@ public class TaskController {
 					quickVO.setPkIsAllColumn("1");
 				if (pks != null && notNullCnt == pks.size())
 					quickVO.setPkSizeEqualNotNullSize("1");
-				//单主键
+				// 单主键
 				if (pks.size() == 1) {
 					quickVO.setSinglePk("1");
 				}
@@ -247,7 +247,7 @@ public class TaskController {
 					quickVO.setSinglePk("-1");
 					logger.warn("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
-					//设置主键约束配置,对postgresql 有意义
+					// 设置主键约束配置,对postgresql 有意义
 					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
 					String pkCol;
 					QuickColMeta quickColMeta;
@@ -437,8 +437,8 @@ public class TaskController {
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
 			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
-			//是否关键词
-			if(QuickVOConstants.isKeyword(colMeta.getColName()))
+			// 是否关键词
+			if (QuickVOConstants.isKeyword(colMeta.getColName()))
 				quickColMeta.setKeyword("true");
 			quickColMeta.setJdbcType(colMeta.getTypeName());
 			quickColMeta.setPrecision(colMeta.getPrecision());
@@ -447,7 +447,8 @@ public class TaskController {
 			// 避免部分数据库整数类型，默认值小数位后面还有好几个0,如：1.000000
 			if (quickColMeta.getDefaultValue() != null && isNumber(quickColMeta.getDefaultValue())) {
 				if (colMeta.getLength() == colMeta.getPrecision()) {
-					quickColMeta.setDefaultValue(Long.toString(new Double(quickColMeta.getDefaultValue()).longValue()));
+					quickColMeta
+							.setDefaultValue(Long.toString(Double.valueOf(quickColMeta.getDefaultValue()).longValue()));
 				}
 			}
 			quickColMeta.setNullable(colMeta.isNullable() ? "1" : "0");
