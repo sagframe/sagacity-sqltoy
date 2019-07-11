@@ -654,12 +654,18 @@ public class ParamFilterUtils {
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
 			result = ca.getTime();
+			if (paramFilterModel.getIncrementDays() != 0)
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
+			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取指定日期的星期天的日期
 		else if (format.equals("last_week_day")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
 			result = ca.getTime();
+			if (paramFilterModel.getIncrementDays() != 0)
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
+			result = DateUtil.parse(result, DAY_FORMAT);
 		} else {
 			result = DateUtil.addDay(paramValue, paramFilterModel.getIncrementDays());
 			if (StringUtil.isNotBlank(format))
