@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
  * @project sqltoy-orm
- * @description 根据纳秒、机器IP地址后两位、2位随机数产生22位长唯一的字符串
+ * @description 格式:13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:DefaultGenerator.java,Revision:v1.0,Date:2012-6-4 上午10:12:48
  */
@@ -20,8 +20,7 @@ public class DefaultIdGenerator implements IdGenerator {
 	private static IdGenerator me = new DefaultIdGenerator();
 
 	/**
-	 * 获取对象单例
-	 * 
+	 * @TODO 获取对象单例
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

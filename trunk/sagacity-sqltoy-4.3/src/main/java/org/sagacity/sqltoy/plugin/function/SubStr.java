@@ -32,7 +32,7 @@ public class SubStr extends IFunction {
 	 */
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
-				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SYBASE_IQ) {
+				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019 || dialect == DBType.SYBASE_IQ) {
 			return wrapArgs("substring", args);
 		} else if (dialect == DBType.DB2 || dialect == DBType.DB2_11 || dialect == DBType.MYSQL
 				|| dialect == DBType.MYSQL8 || dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {

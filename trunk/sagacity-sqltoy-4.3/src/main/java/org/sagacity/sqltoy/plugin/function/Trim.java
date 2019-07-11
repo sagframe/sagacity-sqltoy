@@ -43,7 +43,7 @@ public class Trim extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
-				|| dialect == DBType.SQLSERVER2016) {
+				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019) {
 			return "rtrim(ltrim(" + args[0] + "))";
 		}
 		return null;

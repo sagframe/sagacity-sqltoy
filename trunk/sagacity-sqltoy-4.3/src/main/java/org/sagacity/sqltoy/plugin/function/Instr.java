@@ -42,9 +42,8 @@ public class Instr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017
-				|| dialect == DBType.SQLSERVER2014 || dialect == DBType.SQLSERVER2016
-				|| dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
+				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019 || dialect == DBType.SYBASE_IQ) {
 			if (functionName.equalsIgnoreCase("instr")) {
 				StringBuilder result = new StringBuilder();
 				result.append("charindex(").append(args[1]).append(",").append(args[0]);
@@ -53,9 +52,8 @@ public class Instr extends IFunction {
 				return result.append(")").toString();
 			}
 		} else if (dialect == DBType.DB2 || dialect == DBType.DB2_11 || dialect == DBType.ORACLE
-				|| dialect == DBType.ORACLE12 || dialect == DBType.MYSQL
-				|| dialect == DBType.MYSQL8 || dialect == DBType.POSTGRESQL
-				|| dialect == DBType.POSTGRESQL10) {
+				|| dialect == DBType.ORACLE12 || dialect == DBType.MYSQL || dialect == DBType.MYSQL8
+				|| dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL10) {
 			if (functionName.equalsIgnoreCase("charindex")) {
 				StringBuilder result = new StringBuilder();
 				result.append("instr(").append(args[1]).append(",").append(args[0]);

@@ -62,6 +62,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *               {增加了分页优化功能,缓存相同查询条件的总记录数,在一定周期情况下无需再查询总记录数,从而提升分页查询的整体效率 }
  * @Modification Date:2017-7-13 {增加saveAllNotExist功能,批量保存数据时忽视已经存在的,避免重复性数据主键冲突}
  * @Modification Date:2017-11-1 {增加对象操作分库分表功能实现,精简和优化代码}
+ * @Modification Date:2019-3-1 {增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索}
+ * @Modification Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
  */
 @SuppressWarnings("rawtypes")
 public class SqlToyDaoSupport {

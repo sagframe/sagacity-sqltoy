@@ -20,8 +20,7 @@ public class NanoTimeIdGenerator implements IdGenerator {
 	private static IdGenerator me = new NanoTimeIdGenerator();
 
 	/**
-	 * 获取对象单例
-	 * 
+	 * @TODO 获取对象单例
 	 * @return
 	 */
 	public static IdGenerator getInstance() {

@@ -42,8 +42,8 @@ public class Concat extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017
-				|| dialect == DBType.SQLSERVER2014 || dialect == DBType.SQLSERVER2016) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
+				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019) {
 			if (args != null) {
 				StringBuilder result = new StringBuilder();
 				for (int i = 0; i < args.length; i++) {
