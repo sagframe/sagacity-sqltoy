@@ -13,15 +13,13 @@ import java.util.Map;
  */
 public interface IUnifyFieldsHandler {
 	/**
-	 * 返回创建记录时需要修改的字段和对应的值
-	 * 
+	 * @TODO 返回创建记录时需要修改的字段和对应的值
 	 * @return
 	 */
 	public Map<String, Object> createUnifyFields();
 
 	/**
-	 * 返回修改记录时相关字段的名称和值
-	 * 
+	 * @TODO 返回修改记录时相关字段的名称和值
 	 * @return
 	 */
 	public Map<String, Object> updateUnifyFields();

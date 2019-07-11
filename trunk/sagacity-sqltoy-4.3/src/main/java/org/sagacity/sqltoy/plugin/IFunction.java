@@ -15,8 +15,7 @@ public abstract class IFunction {
 	public abstract String regex();
 
 	/**
-	 * 函数转换
-	 * 
+	 * @TODO 函数转换
 	 * @param dialect
 	 * @param functionName
 	 * @param hasArgs

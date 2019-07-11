@@ -6,10 +6,10 @@ package org.sagacity.sqltoy.plugin.id.macro;
 import java.util.HashMap;
 
 /**
- * @project nebula-report
+ * @project sqltoy-orm
  * @description 提供抽象的宏处理类
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Macro.java,Revision:v1.0,Date:2015年6月23日
+ * @version id:AbstractMacro.java,Revision:v1.0,Date:2015年6月23日
  */
 public abstract class AbstractMacro {
 	/**

@@ -42,7 +42,7 @@ public interface ShardingStrategy {
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap);
 
 	/**
-	 * 初始化
+	 * @TODO 初始化
 	 */
 	public void initialize();
 }

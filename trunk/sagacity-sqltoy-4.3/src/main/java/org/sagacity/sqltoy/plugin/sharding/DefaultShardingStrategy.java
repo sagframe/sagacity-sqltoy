@@ -58,7 +58,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	private HashMap<String, Integer> dataSourceWeight;
 
-	// {dataSource,weight}
+	//格式 {dataSource,weight}
 	private Object[][] dataSourceWeightConfig;
 
 	private int[] weights;
@@ -95,7 +95,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			weights[i] = entry.getValue();
 			i++;
 		}
-		// 不做自动检测
+		// 检测时间小于等于零,则表示不做自动检测
 		if (checkSeconds <= 0)
 			return;
 		if (timer == null) {
@@ -165,8 +165,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * 根据权重配置分配数据库
-	 * 
+	 * @TODO 根据权重配置分配数据库
 	 * @param dataSourceMap
 	 * @return
 	 */
