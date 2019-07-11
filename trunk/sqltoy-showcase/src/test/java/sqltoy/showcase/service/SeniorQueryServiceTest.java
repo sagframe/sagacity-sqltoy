@@ -123,7 +123,7 @@ public class SeniorQueryServiceTest {
 		List<List> result = seniorQueryService.findPivotList();
 		for (List row : result) {
 			System.err.println();
-			DebugUtil.printAry(row, null, ",", false);
+			DebugUtil.printAry(row, ",", false);
 		}
 	}
 
