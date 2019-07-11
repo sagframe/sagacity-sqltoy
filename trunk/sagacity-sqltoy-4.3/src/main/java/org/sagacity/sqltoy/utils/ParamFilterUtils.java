@@ -653,13 +653,13 @@ public class ParamFilterUtils {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
-			result = DateUtil.parse(ca.getTime(), DAY_FORMAT);
+			result = ca.getTime();
 		} // 取指定日期的星期天的日期
 		else if (format.equals("last_week_day")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
-			result = DateUtil.parse(ca.getTime(), DAY_FORMAT);
+			result = ca.getTime();
 		} else {
 			result = DateUtil.addDay(paramValue, paramFilterModel.getIncrementDays());
 			if (StringUtil.isNotBlank(format))
