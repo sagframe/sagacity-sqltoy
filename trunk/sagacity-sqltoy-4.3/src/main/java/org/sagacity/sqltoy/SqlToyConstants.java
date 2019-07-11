@@ -27,8 +27,7 @@ public class SqlToyConstants {
 	/**
 	 * 符号对,用来提取字符串中对称字符的过滤,如:{ name(){} }，第一个{对称的符合}是最后一位
 	 */
-	@SuppressWarnings("rawtypes")
-	public static HashMap filters = new HashMap() {
+	public static HashMap<String, String> filters = new HashMap<String, String>() {
 		/**
 		 * 
 		 */
@@ -125,7 +124,7 @@ public class SqlToyConstants {
 	 * 不输出sql的表达式
 	 */
 	public final static Pattern NOT_PRINT_REGEX = Pattern.compile("(?i)\\#not\\_(print|debug)\\#");
-	
+
 	/**
 	 * 忽视空记录
 	 */
@@ -333,18 +332,18 @@ public class SqlToyConstants {
 		return result;
 	}
 
-//	/**
-//	 * @return the keywordSign
-//	 */
-//	public static String getKeywordSign() {
-//		return keywordSign;
-//	}
-//
-//	/**
-//	 * @param keywordSign the keywordSign to set
-//	 */
-//	public static void setKeywordSign(String keywordSign) {
-//		SqlToyConstants.keywordSign = keywordSign;
-//	}
-	
+	// /**
+	// * @return the keywordSign
+	// */
+	// public static String getKeywordSign() {
+	// return keywordSign;
+	// }
+	//
+	// /**
+	// * @param keywordSign the keywordSign to set
+	// */
+	// public static void setKeywordSign(String keywordSign) {
+	// SqlToyConstants.keywordSign = keywordSign;
+	// }
+
 }

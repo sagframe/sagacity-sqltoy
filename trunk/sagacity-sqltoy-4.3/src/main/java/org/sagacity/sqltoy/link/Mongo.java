@@ -225,7 +225,7 @@ public class Mongo extends BaseLink {
 
 		// 设置分页
 		if (result.getPageNo() == -1) {
-			query.skip(0).limit(new Long(result.getRecordCount()).intValue());
+			query.skip(0).limit(Long.valueOf(result.getRecordCount()).intValue());
 		} else
 			query.skip((pageModel.getPageNo() - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
 		List<Document> rs = mongoTemplate.find(query, Document.class,
