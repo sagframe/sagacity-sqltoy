@@ -386,6 +386,8 @@
 								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
 								<xsd:enumeration value="first_year_day" />
 								<xsd:enumeration value="last_year_day" />
+								<xsd:enumeration value="first_week_day" />
+								<xsd:enumeration value="last_week_day" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
