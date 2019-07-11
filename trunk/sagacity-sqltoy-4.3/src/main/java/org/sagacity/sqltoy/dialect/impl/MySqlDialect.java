@@ -500,11 +500,12 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// String realSql = sql + " order by rand() limit " + random
-		// + " for update";
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// realSql, paramsValue, updateRowHandler, conn, 0);
+		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String realSql = sql + " order by rand() limit " + random + " for update";
+		if (dbType.equals(DBType.MYSQL8))
+			realSql = realSql + " skip locked ";
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+				0);
 	}
 
 	/*

@@ -423,11 +423,10 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// String realSql = sql + " fetch first " + topSize
-		// + " rows only for update nowait";
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// realSql, paramsValue, updateRowHandler, conn, 0);
+		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String realSql = sql + " fetch first " + topSize + " rows only for update nowait";
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+				0);
 	}
 
 	/*
@@ -443,11 +442,10 @@ public class Oracle12Dialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// String realSql = sql + " order by dbms_random.random fetch first "
-		// + random + " rows only for update nowait";
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// realSql, paramsValue, updateRowHandler, conn, 0);
+		//throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update nowait";
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+				0);
 	}
 
 	/*
