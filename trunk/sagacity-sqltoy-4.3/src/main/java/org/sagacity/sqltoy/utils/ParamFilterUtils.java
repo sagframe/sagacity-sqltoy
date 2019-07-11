@@ -621,28 +621,28 @@ public class ParamFilterUtils {
 	 */
 	private static Object toDate(Object paramValue, ParamFilterModel paramFilterModel) {
 		Object result;
-		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
+		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat().toLowerCase();
 		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
-		if (format.equalsIgnoreCase("first_day")) {
+		if (format.equals("first_day")||format.equals("first_month_day")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的第一天
-		else if (format.equalsIgnoreCase("first_year_day")) {
+		else if (format.equals("first_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-01-01";
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 取当前月份的最后一天
-		else if (format.equalsIgnoreCase("last_day")) {
+		else if (format.equals("last_day")||format.equals("last_month_day")) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
 			result = DateUtil.parse(result, DAY_FORMAT);
 		} // 年的最后一天
-		else if (format.equalsIgnoreCase("last_year_day")) {
+		else if (format.equals("last_year_day")) {
 			result = DateUtil.getYear(paramValue) + "-12-31";
 			if (paramFilterModel.getIncrementDays() != 0)
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());

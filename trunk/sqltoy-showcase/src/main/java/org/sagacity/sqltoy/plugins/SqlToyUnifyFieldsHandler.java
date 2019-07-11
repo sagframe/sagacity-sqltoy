@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ShowCaseUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月18日
  */
-public class ShowCaseUnifyFieldsHandler implements IUnifyFieldsHandler {
+public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	private String defaultUserName = "system-auto";
 
 	/*
@@ -32,6 +32,7 @@ public class ShowCaseUnifyFieldsHandler implements IUnifyFieldsHandler {
 		Timestamp nowTime = DateUtil.getTimestamp(null);
 		// 获取用户信息
 		String userId = getUserId();
+		//不存在的字段名称会自动忽略掉(因此下述属性未必是每个表中必须存在的)
 		map.put("createBy", userId);
 		map.put("createDate", nowDate);
 		map.put("createTime", nowTime);
@@ -53,7 +54,7 @@ public class ShowCaseUnifyFieldsHandler implements IUnifyFieldsHandler {
 	public Map<String, Object> updateUnifyFields() {
 		Timestamp timestamp = DateUtil.getTimestamp(null);
 		Map<String, Object> map = new HashMap<String, Object>();
-		// 获取用户信息
+		// 获取用户信息，不存在的字段名称会自动忽略掉(因此下述属性未必是每个表中必须存在的)
 		map.put("updateBy", getUserId());
 		map.put("updateTime", timestamp);
 		map.put("updateDate", timestamp);
@@ -66,7 +67,7 @@ public class ShowCaseUnifyFieldsHandler implements IUnifyFieldsHandler {
 	 * @return
 	 */
 	private String getUserId() {
-		// 通过SpringSecurity 获取当前用户
+		// 通过SpringSecurity 获取当前用户ID,请根据实际项目情况调整此处
 		// return (SpringSecurityUtils.getCurrentUser() != null) ?
 		// SpringSecurityUtils.getCurrentUser().getId() : defaultUserName;
 		return defaultUserName;
