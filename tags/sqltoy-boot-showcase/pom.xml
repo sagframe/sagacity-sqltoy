@@ -19,9 +19,9 @@
 	</properties>
 	<repositories>
 		<repository>
-			<id>sagframe-nexus</id>
-			<name>Nexus sagframe</name>
-			<url>http://www.sagframe.com:8081/repository/sagframe</url>
+			<id>sagframe-release</id>
+			<name>sagframe-release</name>
+			<url>http://www.sagframe.com:8081/repository/public</url>
 		</repository>
 	</repositories>
 	<dependencies>

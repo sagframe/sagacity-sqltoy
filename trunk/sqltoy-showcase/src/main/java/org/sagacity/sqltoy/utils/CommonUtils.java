@@ -1,7 +1,7 @@
 /**
  * @Copyright 2008 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
  */
-package org.sagacity.sqltoy.showcase;
+package org.sagacity.sqltoy.utils;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
