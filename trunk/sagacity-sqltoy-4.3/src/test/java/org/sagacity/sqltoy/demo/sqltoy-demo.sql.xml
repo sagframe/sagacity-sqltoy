@@ -17,7 +17,6 @@
 	<sql id="test_page_list">
 		<filters>
 			<primary param="" excludes=""/>
-			<primary param="" excludes=""/>
 			<exclusive param="" compare-type="eq" set-params="" compare-values="" set-value=""/>
 			
 		</filters>
