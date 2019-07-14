@@ -44,4 +44,4 @@
 		</count-sql>
 		<unpivot columns="colName1:总量,colName2:个人" values-as-column="transCount" labels-as-column="bizType"/>
 	</sql>
-</sagacity>
+</sqltoy>
