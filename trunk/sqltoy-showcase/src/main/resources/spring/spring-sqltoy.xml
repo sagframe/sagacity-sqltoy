@@ -14,7 +14,7 @@
 
 		<!-- 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
-			<bean class="sqltoy.showcase.SqlToyShowCaseUnifyFieldsHandler" />
+			<bean class="org.sagacity.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig"
