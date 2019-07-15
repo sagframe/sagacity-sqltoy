@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
  * @project sqltoy-showcase
  * @description 统一字段赋值范例
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ShowCaseUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月18日
+ * @version id:SqlToyUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月18日
  */
 public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	private String defaultUserName = "system-auto";

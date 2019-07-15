@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * 
  * @project sagacity-quickvo
  * @description 输入输出IO工具类
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
@@ -36,8 +35,7 @@ public class ShowCaseUtils {
 	private final static Logger logger = LogManager.getLogger(ShowCaseUtils.class);
 
 	/**
-	 * 转换InputStream为String
-	 * 
+	 * @TODO 转换InputStream为String
 	 * @param is
 	 * @param encoding
 	 * @return
@@ -65,7 +63,7 @@ public class ShowCaseUtils {
 	}
 
 	/**
-	 * @todo 将inputStream转换成byte数组
+	 * @TODO 将inputStream转换成byte数组
 	 * @param is
 	 * @return
 	 */
@@ -108,10 +106,8 @@ public class ShowCaseUtils {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 * 
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @TODO 关闭一个或多个流对象
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -125,10 +121,8 @@ public class ShowCaseUtils {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 * 
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @TODO 关闭一个或多个流对象
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
@@ -139,9 +133,8 @@ public class ShowCaseUtils {
 	}
 
 	/**
-	 * @todo 获得指定路径的文件
-	 * @param file
-	 *            文件路径like:classpath:xxx.xml或xxx.xml
+	 * @TODO 获得指定路径的文件
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
@@ -179,7 +172,7 @@ public class ShowCaseUtils {
 	}
 
 	/**
-	 * @按照概率获取对应概率的数据索引，如：A：概率80%，B：10%，C：6%，D：4%，将出现概率放入数组， 按随机规则返回对应概率的索引
+	 * @TODO 按照概率获取对应概率的数据索引，如：A：概率80%，B：10%，C：6%，D：4%，将出现概率放入数组， 按随机规则返回对应概率的索引
 	 * @param probabilities
 	 * @return
 	 */
