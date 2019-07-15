@@ -13,8 +13,14 @@ import org.sagacity.sqltoy.showcase.vo.StaffInfoVO;
  */
 public interface CrudCaseService {
 	/**
-	 * 
+	 * @TODO 创建保存员工信息
 	 * @param staffInfoVO
 	 */
-	public void saveStaffInfo(StaffInfoVO staffInfoVO);
+	public Object saveStaffInfo(StaffInfoVO staffInfoVO);
+
+	/**
+	 * @TODO 修改员工信息
+	 * @param staffInfoVO
+	 */
+	public void updateStaffInfo(StaffInfoVO staffInfoVO);
 }

@@ -29,6 +29,23 @@ public class CrudCaseServiceTest {
 	@Test
 	public void saveStaffInfo() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715001");
+		staffInfo.setStaffCode("S190715001");
+		staffInfo.setStaffName("测试员工");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test@aliyun.com");
+		staffInfo.setEntryDate(DateUtil.getNowTime());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		crudCaseService.saveStaffInfo(staffInfo);
+	}
+
+	@Test
+	public void updateStaffInfo() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715001");
 		staffInfo.setStaffCode("S190715001");
 		staffInfo.setStaffName("测试员工");
 		staffInfo.setSexType("M");

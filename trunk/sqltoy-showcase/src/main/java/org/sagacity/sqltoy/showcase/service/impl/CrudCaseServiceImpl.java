@@ -27,8 +27,20 @@ public class CrudCaseServiceImpl implements CrudCaseService {
 	 * sagacity.sqltoy.showcase.vo.StaffInfoVO)
 	 */
 	@Override
-	public void saveStaffInfo(StaffInfoVO staffInfoVO) {
-		sqlToyLazyDao.save(staffInfoVO);
+	public Object saveStaffInfo(StaffInfoVO staffInfoVO) {
+		return sqlToyLazyDao.save(staffInfoVO);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.sagacity.sqltoy.showcase.service.CrudCaseService#updateStaffInfo(org.
+	 * sagacity.sqltoy.showcase.vo.StaffInfoVO)
+	 */
+	@Override
+	public void updateStaffInfo(StaffInfoVO staffInfoVO) {
+		sqlToyLazyDao.update(staffInfoVO);
 	}
 
 }
