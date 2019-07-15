@@ -1,7 +1,11 @@
 package org.sagacity.sqltoy.configure;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
+import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "sqltoy.context.config")
@@ -11,7 +15,7 @@ public class SqlToyContextProperties {
 	 * 指定sql.xml 文件的路径实现目录的递归查找,非必须属性
 	 */
 	private String sqlResourcesDir;
-	
+
 	/**
 	 * 
 	 */
@@ -27,6 +31,8 @@ public class SqlToyContextProperties {
 	 */
 	private String[] packagesToScan;
 
+	private List<ElasticEndpoint> elasticConfigs = new ArrayList<ElasticEndpoint>();
+
 	/**
 	 * 缓存管理器
 	 */
@@ -34,6 +40,11 @@ public class SqlToyContextProperties {
 
 	private String debug;
 	private int batchSize;
+
+	/**
+	 * 统一字段处理器
+	 */
+	private String unifyFieldsHandler;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -140,4 +151,39 @@ public class SqlToyContextProperties {
 		this.packagesToScan = packagesToScan;
 	}
 
+	/**
+	 * @return the unifyFieldsHandler
+	 */
+	public IUnifyFieldsHandler getUnifyFieldsHandler() {
+		try {
+			if (StringUtil.isNotBlank(unifyFieldsHandler))
+				return (IUnifyFieldsHandler) Class.forName(unifyFieldsHandler).getDeclaredConstructor().newInstance();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * @param unifyFieldsHandler
+	 *            the unifyFieldsHandler to set
+	 */
+	public void setUnifyFieldsHandler(String unifyFieldsHandler) {
+		this.unifyFieldsHandler = unifyFieldsHandler;
+	}
+
+	/**
+	 * @return the elasticConfigs
+	 */
+	public List<ElasticEndpoint> getElasticConfigs() {
+		return elasticConfigs;
+	}
+
+	/**
+	 * @param elasticConfigs
+	 *            the elasticConfigs to set
+	 */
+	public void setElasticConfigs(List<ElasticEndpoint> elasticConfigs) {
+		this.elasticConfigs = elasticConfigs;
+	}
 }
