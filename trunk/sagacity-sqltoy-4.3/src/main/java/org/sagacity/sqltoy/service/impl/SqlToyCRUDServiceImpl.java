@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.plugin.TranslateHandler;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 /**
@@ -44,6 +45,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @param sqlToyLazyDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
+	@Qualifier(value = "sqlToyLazyDao")
 	public void setSqlToyLazyDao(SqlToyLazyDao sqlToyLazyDao) {
 		this.sqlToyLazyDao = sqlToyLazyDao;
 	}
