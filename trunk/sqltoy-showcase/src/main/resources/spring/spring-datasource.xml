@@ -30,7 +30,7 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="select 1 from dual" />
+		<property name="validationQuery" value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
@@ -60,7 +60,7 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="select 1 from dual" />
+		<property name="validationQuery" value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
@@ -90,7 +90,7 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="select 1 from dual" />
+		<property name="validationQuery" value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
