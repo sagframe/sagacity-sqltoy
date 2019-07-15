@@ -36,7 +36,6 @@
 			]]>
 			</sql>
 		</sql-translate>
-
 	</cache-translates>
 
 	<!-- 缓存刷新检测 -->
