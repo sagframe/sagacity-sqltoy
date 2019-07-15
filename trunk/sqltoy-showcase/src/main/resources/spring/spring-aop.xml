@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd 
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
+	default-lazy-init="true" default-autowire="byName">
+
+	<!-- 事务处理的AOP配置 // -->
+	<aop:config proxy-target-class="true">
+		<aop:advisor
+			pointcut="execution(* org.sagacity.sqltoy.showcase..*ServiceImpl.*(..))"
+			advice-ref="txAdvice" />
+	</aop:config>
+	<!-- 事务管理器定义 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 事务AOP处理的方法和事务类型定义 -->
+	<tx:advice id="txAdvice"
+		transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="get*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="load*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="query*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="search*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="find*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+
+			<tx:method name="add*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="change*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="create*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="del*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="edit*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="execute*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="save*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="update*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="write*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+</beans>
