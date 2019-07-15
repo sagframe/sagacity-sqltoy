@@ -8,26 +8,32 @@
 		disk-store-path="./sqltoy-showcase/translateCaches">
 		<sql-translate cache="dictKeyNameCache">
 			<sql>
-	<![CDATA[
-		select t.DICT_KEY,t.DICT_NAME,t.SEGMENT,t.comments
-		from sag_dict_detail t
-        where t.DICT_TYPE_CODE=:dictTypeCode
-        order by t.SHOW_INDEX
-	]]>
-	</sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME
+				from SQLTOY_DICT_DETAIL t
+		        where t.DICT_TYPE=:dictType
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
 		</sql-translate>
 
-		<!-- 员工ID和姓名的缓存/sys_staffIdNameCache -->
+		<!-- 员工ID和姓名的缓存 -->
 		<sql-translate cache="staffIdNameCache"
-			sql="sys_staffIdNameCache" datasource="dataSource" />
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select STAFF_ID,STAFF_NAME from SQLTOY_STAFF_INFO
+			]]>
+			</sql>
+		</sql-translate>
 		<!-- 机构号和机构名称的缓存 -->
 		<sql-translate cache="organIdNameCache"
 			datasource="dataSource">
 			<sql>
-	<![CDATA[
-		select ORGAN_ID,ORGAN_NAME from sys_organ_info
-	]]>
-	</sql>
+			<![CDATA[
+				select ORGAN_ID,ORGAN_NAME from SQLTOY_ORGAN_INFO order by SHOW_INDEX
+			]]>
+			</sql>
 		</sql-translate>
 
 	</cache-translates>
@@ -42,17 +48,17 @@
 			--#not_debug#--
 			-- 机构缓存更新检测
 			select distinct 'organIdName' cacheName,null cache_type
-			from sys_organ_info t
+			from SQLTOY_ORGAN_INFO t
 			where t.UPDATE_TIME >=:lastUpdateTime
 			-- 员工工号姓名缓存检测
 			union all 
 			select distinct 'staffIdName' cacheName,null cache_type
-			from sys_staff_info t1
+			from SQLTOY_STAFF_INFO t1
 			where t1.UPDATE_TIME >=:lastUpdateTime
 			-- 数据字典key和name缓存检测
 			union all 
 			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE_CODE cache_type
-			from sag_dict_detail t2
+			from SQLTOY_DICT_DETAIL t2
 			where t2.UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
 		</sql-checker>

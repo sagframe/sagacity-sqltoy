@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <quickvo xmlns="http://www.sagframe.com/schema/quickvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
       xsi:schemaLocation="http://www.sagframe.com/schema/quickvo http://www.sagframe.com/schema/sqltoy/quickvo.xsd">
-	<property file="../../src/main/resources/system.properties" />
+	<property file="../../src/main/resources/application.properties" />
 	<!-- 最大小数位长度,避免个别数据库NUMBER(m,0)的情况下获取出来的默认小数位长度都很长 -->
 	<property name="max.scale.length" value="3" />
 	<property name="project.version" value="1.0.0" />
 	<property name="project.name" value="sqltoy-showcase" />
-	<property name="project.package" value="org.sagacity.sqltoy.showcase" />
+	<property name="project.package" value="org.sagacity.sqltoy" />
 	<property name="include.schema" value="false" />
 	<!-- oracle支持schema,mysql\DB2:catalog,4.0.6版本之后增加name属性 -->
 	<datasource name="sqltoy" url="${jdbc.connection.url}" driver="${jdbc.connection.driver_class}"  catalog="${jdbc.connection.catalog}"
@@ -14,8 +14,8 @@
 	<tasks dist="../../src/main/java" encoding="UTF-8">
 		<!-- 4.0.6之后增加datasource属性适应多数据库配置 -->
 		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy">
-			<vo package="${project.package}.sagacity.vo" substr="Sag" name="#{subName}VO" />
-			<dao package="${project.package}.sagacity.dao" name="#{subName}Dao"	active="false" />
+			<vo package="${project.package}.showcase.vo" substr="Sqltoy" name="#{subName}VO" />
+			<dao package="${project.package}.showcase.dao" name="#{subName}Dao"	active="false" />
 		</task>
 		<task active="false" author="zhongxuchen" include="^SYS_\w+" datasource="sqltoy">
 			<vo package="${project.package}.system.vo" substr="Sys" name="#{subName}VO" />

@@ -17,7 +17,7 @@
 		<property name="tableNamesMap">
 			<map>
 				<!-- value可用逗号分隔,跟days对应 ,如:value="a,b,c" -->
-				<entry key="SYS_SHARDING_REAL" value="SYS_SHARDING_HIS" />
+				<entry key="SQLTOY_TRANS_INFO_15D" value="SQLTOY_TRANS_INFO_HIS" />
 			</map>
 		</property>
 	</bean>
@@ -29,8 +29,8 @@
 		<!-- 不同数据库的分配权重 -->
 		<property name="dataSourceWeight">
 			<map>
-				<entry key="dataSource" value="30" />
-				<entry key="dataSourceView" value="70" />
+				<entry key="dataSource" value="70" />
+				<entry key="sharding1" value="30" />
 			</map>
 		</property>
 		<!-- 数据库有效性检测时间间隔秒数,小于等于0表示不自动检测数据库 -->
@@ -41,19 +41,11 @@
 	<bean id="hashDataSourceSharding" name="hashDataSourceSharding"
 		class="org.sagacity.sqltoy.plugin.sharding.HashShardingStrategy"
 		init-method="initialize">
-		<!-- 不同数据库的分配权重 -->
+		<!-- 根据hash取模分库 -->
 		<property name="dataSourceMap">
 			<map>
-				<entry key="0" value="dataSource" />
-				<entry key="1" value="sharding1" />
-				<entry key="2" value="sharding2" />
-			</map>
-		</property>
-		<!-- 分表 -->
-		<property name="tableMap">
-			<map>
-				<entry key="0" value="SYS_STAFF_INFO" />
-				<entry key="1" value="SYS_STAFF_INFO_1" />
+				<entry key="0" value="sharding1" />
+				<entry key="1" value="sharding2" />
 			</map>
 		</property>
 	</bean>

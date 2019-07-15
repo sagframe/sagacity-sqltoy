@@ -30,16 +30,17 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="${jdbc.validationQuery}" />
+		<property name="validationQuery"
+			value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
 
-	<!-- 数据源的配置 报表库 -->
+	<!-- 数据源的配置 sharding1 -->
 	<bean id="sharding1"
 		class="com.alibaba.druid.pool.DruidDataSource" name="sharding1"
 		destroy-method="close">
-		<property name="name" value="dataSource" />
+		<property name="name" value="sharding1" />
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.sharding1.url}" />
@@ -60,16 +61,17 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="${jdbc.validationQuery}" />
+		<property name="validationQuery"
+			value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
 
-	<!-- 数据源的配置 报表库 -->
+	<!-- 数据源的配置 sharding2 -->
 	<bean id="sharding2"
 		class="com.alibaba.druid.pool.DruidDataSource" name="sharding2"
 		destroy-method="close">
-		<property name="name" value="dataSource" />
+		<property name="name" value="sharding2" />
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.sharding2.url}" />
@@ -90,7 +92,8 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="${jdbc.validationQuery}" />
+		<property name="validationQuery"
+			value="${jdbc.validationQuery}" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>

@@ -14,15 +14,8 @@
 	<context:component-scan
 		base-package="org.sagacity.sqltoy.showcase" />
 	<!-- 基本dataSource的配置 -->
-	<import
-		resource="classpath:spring/dataSource/spring-datasource.xml" />
+	<import resource="classpath:spring/spring-datasource.xml" />
 
-	<!-- 分库验证子库1 -->
-	<import
-		resource="classpath:spring/dataSource/spring-datasource-sharding1.xml" />
-	<!-- 分库验证子库2 -->
-	<import
-		resource="classpath:spring/dataSource/spring-datasource-sharding2.xml" />
 	<!-- redis配置 -->
 	<import resource="classpath:spring/spring-redis.xml" />
 	<!-- sqltoy-orm的配置 -->

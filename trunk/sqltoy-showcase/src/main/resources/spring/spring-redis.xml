@@ -8,9 +8,10 @@
 	default-lazy-init="true" default-autowire="byName">
 	<bean id="resourcePropertySource"
 		class="org.springframework.core.io.support.ResourcePropertySource">
-		<constructor-arg name="name" value="system.properties" />
+		<constructor-arg name="name"
+			value="application.properties" />
 		<constructor-arg name="resource"
-			value="classpath:system.properties" />
+			value="classpath:application.properties" />
 	</bean>
 
 	<!--common-pool2线程池配置 -->
