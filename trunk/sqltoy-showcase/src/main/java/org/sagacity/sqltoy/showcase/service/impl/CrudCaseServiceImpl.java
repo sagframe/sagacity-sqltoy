@@ -3,7 +3,10 @@
  */
 package org.sagacity.sqltoy.showcase.service.impl;
 
+import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.showcase.service.CrudCaseService;
+import org.sagacity.sqltoy.showcase.vo.StaffInfoVO;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @project sqltoy-showcase
@@ -12,5 +15,18 @@ import org.sagacity.sqltoy.showcase.service.CrudCaseService;
  * @version id:CrudCaseServiceImpl.java,Revision:v1.0,Date:2019年7月11日
  */
 public class CrudCaseServiceImpl implements CrudCaseService {
+	@Autowired
+	private SqlToyLazyDao sqlToyLazyDao;
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.showcase.service.CrudCaseService#saveStaffInfo(org.
+	 * sagacity.sqltoy.showcase.vo.StaffInfoVO)
+	 */
+	@Override
+	public void saveStaffInfo(StaffInfoVO staffInfoVO) {
+		sqlToyLazyDao.save(staffInfoVO);
+	}
 
 }

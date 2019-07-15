@@ -15,9 +15,14 @@
 		base-package="org.sagacity.sqltoy.showcase" />
 	<!-- 基本dataSource的配置 -->
 	<import resource="classpath:spring/spring-datasource.xml" />
+	<!-- 数据库事务配置 -->
+	<import resource="classpath:spring/spring-aop.xml" />
 
 	<!-- redis配置 -->
 	<import resource="classpath:spring/spring-redis.xml" />
 	<!-- sqltoy-orm的配置 -->
 	<import resource="classpath:spring/spring-sqltoy.xml" />
+
+	<!-- sqltoy分库分表的配置 -->
+	<import resource="classpath:spring/spring-sqltoy-sharding.xml" />
 </beans>

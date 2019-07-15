@@ -68,38 +68,41 @@ public class CommonUtils {
 	 * @todo 将inputStream转换成byte数组
 	 * @param is
 	 * @return
-	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static byte[] getBytes(InputStream is) throws Exception {
+	public static byte[] getBytes(InputStream is) {
 		byte[] data = null;
-		// 避免空流
-		if (is.available() == 0)
-			return new byte[] {};
-		Collection chunks = new ArrayList();
-		byte[] buffer = new byte[1024 * 1000];
-		int read = -1;
-		int size = 0;
-		while ((read = is.read(buffer)) != -1) {
-			if (read > 0) {
-				byte[] chunk = new byte[read];
-				System.arraycopy(buffer, 0, chunk, 0, read);
-				chunks.add(chunk);
-				size += chunk.length;
-			}
-		}
-		if (size > 0) {
-			ByteArrayOutputStream bos = null;
-			try {
-				bos = new ByteArrayOutputStream(size);
-				for (Iterator itr = chunks.iterator(); itr.hasNext();) {
-					byte[] chunk = (byte[]) itr.next();
-					bos.write(chunk);
+		try {
+			// 避免空流
+			if (is.available() == 0)
+				return new byte[] {};
+			Collection chunks = new ArrayList();
+			byte[] buffer = new byte[1024 * 1000];
+			int read = -1;
+			int size = 0;
+			while ((read = is.read(buffer)) != -1) {
+				if (read > 0) {
+					byte[] chunk = new byte[read];
+					System.arraycopy(buffer, 0, chunk, 0, read);
+					chunks.add(chunk);
+					size += chunk.length;
 				}
-				data = bos.toByteArray();
-			} finally {
-				closeQuietly(bos);
 			}
+			if (size > 0) {
+				ByteArrayOutputStream bos = null;
+				try {
+					bos = new ByteArrayOutputStream(size);
+					for (Iterator itr = chunks.iterator(); itr.hasNext();) {
+						byte[] chunk = (byte[]) itr.next();
+						bos.write(chunk);
+					}
+					data = bos.toByteArray();
+				} finally {
+					closeQuietly(bos);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return data;
 	}
