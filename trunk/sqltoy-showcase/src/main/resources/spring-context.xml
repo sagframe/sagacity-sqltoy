@@ -8,7 +8,7 @@
 	default-lazy-init="true" default-autowire="byName">
 	<!-- 加载配置文件 -->
 	<context:property-placeholder
-		location="classpath:system.properties" />
+		location="classpath:application.properties" />
 
 	<!-- 让Spring通过自动扫描来查询和管理Bean -->
 	<context:component-scan

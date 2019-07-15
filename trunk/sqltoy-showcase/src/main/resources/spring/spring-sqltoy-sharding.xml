@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	default-autowire="byName" default-lazy-init="true">
+
+	<!-- 所有分库分表策略开发者可以自行实现接口进行拓展 -->
+	<!-- 按照周期范围进行分表查询 -->
+	<bean id="historyTableStrategy" name="dateHisTable"
+		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
+		init-method="initialize">
+		<!-- 多少天内查询实时表,可以用逗号分隔,如:value="360,35,1" -->
+		<property name="days" value="14" />
+		<property name="dateParams"
+			value="createTime,beginDate,bizDate,beginTime,bizTime" />
+		<!-- 实时表和历史表对照 -->
+		<property name="tableNamesMap">
+			<map>
+				<!-- value可用逗号分隔,跟days对应 ,如:value="a,b,c" -->
+				<entry key="SYS_SHARDING_REAL" value="SYS_SHARDING_HIS" />
+			</map>
+		</property>
+	</bean>
+
+	<!-- 按照权重进行分库查询分流策略 -->
+	<bean id="dataSourceStrategy" name="multiDataSource"
+		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
+		init-method="initialize">
+		<!-- 不同数据库的分配权重 -->
+		<property name="dataSourceWeight">
+			<map>
+				<entry key="dataSource" value="30" />
+				<entry key="dataSourceView" value="70" />
+			</map>
+		</property>
+		<!-- 数据库有效性检测时间间隔秒数,小于等于0表示不自动检测数据库 -->
+		<property name="checkSeconds" value="180" />
+	</bean>
+
+	<!-- 按照hash取模进行分库和分表策略 -->
+	<bean id="hashDataSourceSharding" name="hashDataSourceSharding"
+		class="org.sagacity.sqltoy.plugin.sharding.HashShardingStrategy"
+		init-method="initialize">
+		<!-- 不同数据库的分配权重 -->
+		<property name="dataSourceMap">
+			<map>
+				<entry key="0" value="dataSource" />
+				<entry key="1" value="sharding1" />
+				<entry key="2" value="sharding2" />
+			</map>
+		</property>
+		<!-- 分表 -->
+		<property name="tableMap">
+			<map>
+				<entry key="0" value="SYS_STAFF_INFO" />
+				<entry key="1" value="SYS_STAFF_INFO_1" />
+			</map>
+		</property>
+	</bean>
+</beans>
