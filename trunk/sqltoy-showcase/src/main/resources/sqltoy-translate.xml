@@ -6,7 +6,8 @@
 	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
 	<cache-translates
 		disk-store-path="./sqltoy-showcase/translateCaches">
-		<sql-translate cache="dictKeyNameCache">
+		<sql-translate cache="dictKeyNameCache"
+			datasource="dataSource">
 			<sql>
 			<![CDATA[
 				select t.DICT_KEY,t.DICT_NAME
