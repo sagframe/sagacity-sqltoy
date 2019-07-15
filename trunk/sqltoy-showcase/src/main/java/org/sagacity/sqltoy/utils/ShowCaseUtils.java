@@ -29,11 +29,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version $id:IOUtil.java,Revision:v1.0,Date:2008-12-14 下午07:53:54 $
  */
 @SuppressWarnings("rawtypes")
-public class CommonUtils {
+public class ShowCaseUtils {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(CommonUtils.class);
+	private final static Logger logger = LogManager.getLogger(ShowCaseUtils.class);
 
 	/**
 	 * 转换InputStream为String

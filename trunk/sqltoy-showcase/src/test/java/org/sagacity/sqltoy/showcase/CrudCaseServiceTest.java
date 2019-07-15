@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.SqlToyApplication;
 import org.sagacity.sqltoy.showcase.service.CrudCaseService;
 import org.sagacity.sqltoy.showcase.vo.StaffInfoVO;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.ShowCaseUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,7 +36,7 @@ public class CrudCaseServiceTest {
 		staffInfo.setEntryDate(DateUtil.getNowTime());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
-		staffInfo.setPhoto(CommonUtils.getBytes(CommonUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
 		staffInfo.setCountry("86");
 		crudCaseService.saveStaffInfo(staffInfo);
 	}
