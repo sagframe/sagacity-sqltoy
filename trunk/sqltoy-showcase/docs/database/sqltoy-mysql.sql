@@ -3,6 +3,8 @@ alter table SQLTOY_DICT_DETAIL
 
 drop table if exists SQLTOY_AREA_INFO;
 
+drop table if exists SQLTOY_DEVICE_ORDER_INFO;
+
 
 alter table SQLTOY_DICT_DETAIL 
    drop foreign key FK_SQLTOY_D_REFERENCE_SQLTOY_D;
@@ -51,6 +53,31 @@ create table SQLTOY_AREA_INFO
 );
 
 alter table SQLTOY_AREA_INFO comment '地区代码表';
+
+/*==============================================================*/
+/* Table: SQLTOY_DEVICE_ORDER_INFO                              */
+/*==============================================================*/
+create table SQLTOY_DEVICE_ORDER_INFO
+(
+   ORDER_ID             varchar(22) not null  comment '订单ID',
+   DEVICE_TYPE          varchar(10) not null  comment '设备类型',
+   PS_TYPE              char(1) not null  comment '购销标志',
+   TOTAL_CNT            decimal(12,3)  comment '商品总量',
+   TOTAL_AMT            decimal(12,2)  comment '总金额',
+   BUYER                varchar(22)  comment '购买方',
+   SALER                varchar(22)  comment '销售方',
+   TRANS_DATE           date not null  comment '成交日期',
+   DELIVERY_TERM        date  comment '交货期限',
+   STAFF_ID             varchar(22)  comment '业务员',
+   CREATE_BY            varchar(22) not null  comment '创建人',
+   CREATE_TIME          datetime not null  comment '创建时间',
+   UPDATE_BY            varchar(22) not null  comment '最后修改人',
+   UPDATE_TIME          datetime not null  comment '最后修改时间',
+   STATUS               int(1) not null  comment '状态',
+   primary key (ORDER_ID)
+);
+
+alter table SQLTOY_DEVICE_ORDER_INFO comment '硬件购销定单表(演示有规则单号)';
 
 /*==============================================================*/
 /* Table: SQLTOY_DICT_DETAIL                                    */
@@ -141,6 +168,7 @@ create table SQLTOY_STAFF_INFO
    STAFF_NAME           varchar(30) not null  comment '姓名',
    ORGAN_ID             varchar(22) not null  comment '部门',
    SEX_TYPE             char(1) not null  comment '性别',
+   BIRTHDAY             date  comment '出生日期',
    ENTRY_DATE           date not null  comment '入职日期',
    TERM_DATE            date  comment '离职日期',
    PHOTO                longblob  comment '照片',
