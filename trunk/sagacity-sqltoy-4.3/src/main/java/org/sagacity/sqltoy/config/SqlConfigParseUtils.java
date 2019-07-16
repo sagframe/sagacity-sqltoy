@@ -116,6 +116,9 @@ public class SqlConfigParseUtils {
 	public final static Pattern AND_START_PATTERN = Pattern.compile("(?i)^and\\W");
 	public final static Pattern OR_START_PATTERN = Pattern.compile("(?i)^or\\W");
 
+	// update set 语法
+	public final static Pattern UPDATE_SET_PATTERN = Pattern.compile("(?i)\\Wset\\s*$");
+
 	/**
 	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
 	 */
@@ -635,6 +638,10 @@ public class SqlConfigParseUtils {
 			} else if (!markContentSql.trim().equals("")) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
 			}
+		}
+		// update 语句 set 后面连接逗号"," 情况下去除逗号
+		if (StringUtil.matches(preSql, UPDATE_SET_PATTERN) && tmp.startsWith(",")) {
+			return preSql.concat(" ").concat(subStr.trim().substring(1)).concat(" ");
 		}
 		return preSql.concat(" ").concat(subStr);
 	}
