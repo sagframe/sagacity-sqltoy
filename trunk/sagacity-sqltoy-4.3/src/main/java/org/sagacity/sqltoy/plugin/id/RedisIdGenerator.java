@@ -37,21 +37,28 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID:";
 
+	private RedisTemplate redisTemplate;
+	
+	/**
+	 * 日期格式
+	 */
+	private String dateFormat;
+
 	/**
 	 * @todo 获取对象单例
 	 * @param sqlToyContext
 	 * @return
 	 */
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
+		if (me.getRedisTemplate() == null) {
+			Object template = sqlToyContext.getBean("redisTemplate");
+			if (template == null)
+				logger.error("RedisIdGenerator 未定义redisTemplate!");
+			else
+				me.setRedisTemplate((RedisTemplate) template);
+		}
 		return me;
 	}
-
-	/**
-	 * 日期格式
-	 */
-	private String dateFormat;
-
-	private RedisTemplate redisTemplate;
 
 	/**
 	 * @param redisTemplate
