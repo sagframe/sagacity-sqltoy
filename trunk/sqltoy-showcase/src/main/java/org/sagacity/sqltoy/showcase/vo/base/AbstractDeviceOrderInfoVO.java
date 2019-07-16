@@ -7,6 +7,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
+import org.sagacity.sqltoy.config.annotation.BusinessId;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -34,7 +35,8 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 * 订单ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id
+	@BusinessId(generator="org.sagacity.sqltoy.plugin.id.RedisIdGenerator",signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)",relatedColumns={"psType","deviceType"},length=12)
 	@Column(name="ORDER_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String orderId;
 	
