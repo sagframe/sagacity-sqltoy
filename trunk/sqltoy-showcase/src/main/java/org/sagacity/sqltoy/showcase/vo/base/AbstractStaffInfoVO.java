@@ -20,7 +20,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	java.lang.Cloneable {
 	 /*--------------- properties string,handier to copy ---------------------*/
 	 //full properties 
-	 //staffId,staffCode,staffName,organId,sexType,entryDate,termDate,photo,country,censusRegister,address,email,telNo,post,postGrade,createBy,createTime,updateBy,updateTime,status
+	 //staffId,staffCode,staffName,organId,sexType,birthday,entryDate,termDate,photo,country,censusRegister,address,email,telNo,post,postGrade,createBy,createTime,updateBy,updateTime,status
 	 
 	 //not null properties
 	 //staffId,staffCode,staffName,organId,sexType,entryDate,createBy,createTime,updateBy,updateTime,status
@@ -62,6 +62,12 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	protected String sexType;
 	
 	/**
+	 * 出生日期
+	 */
+	@Column(name="BIRTHDAY",length=10L,type=java.sql.Types.DATE,nullable=true)
+	protected Date birthday;
+	
+	/**
 	 * 入职日期
 	 */
 	@Column(name="ENTRY_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
@@ -76,7 +82,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	/**
 	 * 照片
 	 */
-	@Column(name="PHOTO",length=65535L,type=java.sql.Types.BLOB,nullable=true)
+	@Column(name="PHOTO",length=2147483647L,type=java.sql.Types.BLOB,nullable=true)
 	protected byte[] photo;
 	
 	/**
@@ -180,13 +186,14 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date birthday,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
 		this.staffName=staffName;
 		this.organId=organId;
 		this.sexType=sexType;
+		this.birthday=birthday;
 		this.entryDate=entryDate;
 		this.termDate=termDate;
 		this.photo=photo;
@@ -272,6 +279,20 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	 */
 	public String getSexType() {
 	    return this.sexType;
+	}
+	
+	/**
+	 *@param birthday the birthday to set
+	 */
+	public void setBirthday(Date birthday) {
+		this.birthday=birthday;
+	}
+		
+	/**
+	 *@return the Birthday
+	 */
+	public Date getBirthday() {
+	    return this.birthday;
 	}
 	
 	/**
@@ -496,6 +517,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 		columnsBuffer.append("staffName=").append(getStaffName()).append("\n");
 		columnsBuffer.append("organId=").append(getOrganId()).append("\n");
 		columnsBuffer.append("sexType=").append(getSexType()).append("\n");
+		columnsBuffer.append("birthday=").append(getBirthday()).append("\n");
 		columnsBuffer.append("entryDate=").append(getEntryDate()).append("\n");
 		columnsBuffer.append("termDate=").append(getTermDate()).append("\n");
 		columnsBuffer.append("photo=").append(getPhoto()).append("\n");

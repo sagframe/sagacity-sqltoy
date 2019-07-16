@@ -49,13 +49,14 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	}
 
 	/** full constructor */
-	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date birthday,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
 		this.staffName=staffName;
 		this.organId=organId;
 		this.sexType=sexType;
+		this.birthday=birthday;
 		this.entryDate=entryDate;
 		this.termDate=termDate;
 		this.photo=photo;
