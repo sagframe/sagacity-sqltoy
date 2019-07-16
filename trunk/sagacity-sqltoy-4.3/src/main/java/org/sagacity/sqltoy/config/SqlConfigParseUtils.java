@@ -640,6 +640,7 @@ public class SqlConfigParseUtils {
 			}
 		}
 		// update 语句 set 后面连接逗号"," 情况下去除逗号
+		// modify 2019-7-16
 		if (StringUtil.matches(preSql, UPDATE_SET_PATTERN) && tmp.startsWith(",")) {
 			return preSql.concat(" ").concat(subStr.trim().substring(1)).concat(" ");
 		}
