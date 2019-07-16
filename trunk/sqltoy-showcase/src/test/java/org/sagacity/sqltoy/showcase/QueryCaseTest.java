@@ -60,6 +60,14 @@ public class QueryCaseTest {
 	}
 
 	/**
+	 * 取前多少条记录
+	 */
+	@Test
+	public void findTop() {
+
+	}
+
+	/**
 	 * 查询随机记录
 	 */
 	@Test
