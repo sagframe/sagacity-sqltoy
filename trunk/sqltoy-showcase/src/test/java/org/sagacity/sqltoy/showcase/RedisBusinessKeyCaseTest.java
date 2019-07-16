@@ -3,11 +3,14 @@
  */
 package org.sagacity.sqltoy.showcase;
 
+import java.math.BigDecimal;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.SqlToyApplication;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.showcase.vo.DeviceOrderInfoVO;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -42,5 +45,16 @@ public class RedisBusinessKeyCaseTest {
 		deviceOrder.setDeviceType("PC");
 		// 采购
 		deviceOrder.setPsType("P");
+		deviceOrder.setTotalAmt(BigDecimal.valueOf(100000));
+		deviceOrder.setTotalCnt(BigDecimal.valueOf(20));
+		deviceOrder.setBuyer("C10001");
+		deviceOrder.setSaler("S00001");
+		deviceOrder.setStaffId("S001");
+		deviceOrder.setStatus(1);
+		deviceOrder.setTransDate(DateUtil.getNowTime());
+		deviceOrder.setDeliveryTerm(DateUtil.addDay(DateUtil.getNowTime(), 30));
+		// 得到有规则的订单编号,类似:PPC190716001
+		String orderId = (String) sqlToyCRUDService.save(deviceOrder);
+		System.err.println(orderId);
 	}
 }

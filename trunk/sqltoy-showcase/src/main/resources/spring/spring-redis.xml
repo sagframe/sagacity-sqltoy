@@ -61,7 +61,7 @@
 		<property name="validateConnection" value="true" />
 	</bean>
 
-	<bean id="redisTemplate"
+	<bean id="redisTemplate" name="redisTemplate"
 		class="org.springframework.data.redis.core.RedisTemplate">
 		<property name="connectionFactory"
 			ref="lettuceConnectionFactory" />

@@ -57,7 +57,7 @@
 			where t1.UPDATE_TIME >=:lastUpdateTime
 			-- 数据字典key和name缓存检测
 			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE_CODE cache_type
+			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
 			from SQLTOY_DICT_DETAIL t2
 			where t2.UPDATE_TIME >=:lastUpdateTime
 			]]></sql>

@@ -12,7 +12,7 @@
 
 	<!-- 让Spring通过自动扫描来查询和管理Bean -->
 	<context:component-scan
-		base-package="org.sagacity.sqltoy.showcase" />
+		base-package="org.sagacity.sqltoy" />
 	<!-- 基本dataSource的配置 -->
 	<import resource="classpath:spring/spring-datasource.xml" />
 	<!-- 数据库事务配置 -->
