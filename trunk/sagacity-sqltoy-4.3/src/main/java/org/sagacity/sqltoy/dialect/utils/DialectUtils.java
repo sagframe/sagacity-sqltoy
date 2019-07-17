@@ -1259,7 +1259,7 @@ public class DialectUtils {
 		}
 
 		if (sqlToyContext.isDebug())
-			out.println(insertSql);
+			logger.debug(insertSql);
 
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
@@ -1390,7 +1390,7 @@ public class DialectUtils {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null)
+						if (StringUtil.isBlank(relatedColValue[meter]))
 							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 					}
