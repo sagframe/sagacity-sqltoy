@@ -1064,10 +1064,12 @@ public class DialectUtils {
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn) throws Exception {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-		for (int i = 0; i < pkValues.length; i++)
-			if (null == pkValues[i])
+		// 检查主键值是否合法
+		for (int i = 0; i < pkValues.length; i++) {
+			if (StringUtil.isBlank(pkValues[i]))
 				throw new IllegalArgumentException(
 						"load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
+		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
 		// 显示sql
 		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
@@ -1140,7 +1142,8 @@ public class DialectUtils {
 			rowList = (List) pkValues.get(i);
 			for (int j = 0; j < idSize; j++) {
 				value = rowList.get(j);
-				if (null == value)
+				// 验证主键值是否合法
+				if (StringUtil.isBlank(value))
 					throw new IllegalArgumentException("loadAll method must assign value for pk,row:" + i + " pk field:"
 							+ entityMeta.getIdArray()[j]);
 				if (!idValues[j].contains(value)) {
@@ -1235,7 +1238,7 @@ public class DialectUtils {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
-					if (relatedColValue[meter] == null)
+					if (StringUtil.isBlank(relatedColValue[meter]))
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
 				}
@@ -1443,7 +1446,7 @@ public class DialectUtils {
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
-			if (fieldsValues[i] == null)
+			if (StringUtil.isBlank(fieldsValues[i]))
 				throw new IllegalArgumentException("通过对象进行update操作,主键字段必须要赋值!");
 		}
 		// 构建update语句
@@ -1563,7 +1566,8 @@ public class DialectUtils {
 		int count = 0;
 		for (Object[] rowValues : paramsValues) {
 			for (int i = pkIndex; i < end; i++) {
-				if (rowValues[i] == null) {
+				// 判断主键值是否为空
+				if (StringUtil.isBlank(rowValues[i])) {
 					// 跳过主键值为空的
 					if (skipNull) {
 						paramsValues.remove(index - count);
@@ -1604,9 +1608,10 @@ public class DialectUtils {
 		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		Integer[] parameterTypes = new Integer[idValues.length];
 		boolean validator = true;
+		// 判断主键值是否为空
 		for (int i = 0, n = idValues.length; i < n; i++) {
 			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
-			if (null == idValues[i]) {
+			if (StringUtil.isBlank(idValues[i])) {
 				validator = false;
 				break;
 			}
@@ -1654,9 +1659,10 @@ public class DialectUtils {
 		Object[] idsValue;
 		for (int i = 0, n = idValues.size(); i < n; i++) {
 			idsValue = idValues.get(i);
-			for (Object obj : idsValue)
+			for (Object obj : idsValue) {
 				if (StringUtil.isBlank(obj))
 					throw new IllegalArgumentException("第[" + i + "]行数据主键值存在空,批量删除以主键为依据，主键不能为空!");
+			}
 		}
 		int idsLength = entityMeta.getIdArray().length;
 		Integer[] parameterTypes = new Integer[idsLength];
