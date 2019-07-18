@@ -222,8 +222,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
-	 * clob bug的支持(druid 1.1.10 已经修复)
+	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 
+	 * update 2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
 	 * 
 	 * @todo 设置sql中的参数条件的值
 	 * @param conn

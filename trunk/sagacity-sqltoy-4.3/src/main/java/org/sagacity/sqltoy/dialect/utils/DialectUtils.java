@@ -979,6 +979,7 @@ public class DialectUtils {
 	public static void processDefaultValue(StringBuilder sql, int dbType, int fieldType, String defaultValue) {
 		if (fieldType == java.sql.Types.CHAR || fieldType == java.sql.Types.CLOB || fieldType == java.sql.Types.VARCHAR
 				|| fieldType == java.sql.Types.NCHAR || fieldType == java.sql.Types.NVARCHAR
+				|| fieldType == java.sql.Types.LONGVARCHAR || fieldType == java.sql.Types.LONGNVARCHAR
 				|| fieldType == java.sql.Types.NCLOB) {
 			if (!defaultValue.startsWith("'"))
 				sql.append("'");

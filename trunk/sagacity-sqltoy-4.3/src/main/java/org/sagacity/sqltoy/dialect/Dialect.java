@@ -69,7 +69,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findTopBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final double topSize, final Connection conn) throws Exception;
+			final QueryExecutor queryExecutor, final Integer topSize, final Connection conn) throws Exception;
 
 	/**
 	 * @todo 普通sql查询

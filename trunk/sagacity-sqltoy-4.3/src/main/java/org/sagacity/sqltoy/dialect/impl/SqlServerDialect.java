@@ -118,12 +118,12 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			double topSize, Connection conn) throws Exception {
+			Integer topSize, Connection conn) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast())
 			sql.append(sqlToyConfig.getFastPreSql()).append(" (");
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
-		String partSql = " select top " + Double.valueOf(topSize).intValue() + " ";
+		String partSql = " select top " + topSize + " ";
 		if (sqlToyConfig.isHasWith()) {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(minSql);
 			sql.append(sqlWith.getWithSql());
@@ -182,7 +182,7 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
 			Connection conn, final Boolean autoCommit, final String tableName) throws Exception {
-		List entities = new ArrayList();
+		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
 				autoCommit, tableName);

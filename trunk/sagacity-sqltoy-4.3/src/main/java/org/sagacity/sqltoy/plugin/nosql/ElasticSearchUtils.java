@@ -116,10 +116,10 @@ public class ElasticSearchUtils {
 		}
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
-		List resultSet = new ArrayList();
+		List<List<Object>> resultSet = new ArrayList<List<Object>>();
 		for (Object row : rows) {
 			item = (JSONArray) row;
-			List result = new ArrayList();
+			List<Object> result = new ArrayList<Object>();
 			for (Object cel : item) {
 				result.add(cel);
 			}

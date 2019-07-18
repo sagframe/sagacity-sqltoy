@@ -154,11 +154,11 @@ public class MacroUtils {
 		LinkedHashMap<String, String> paramsMap = parseParams(template);
 		String result = template;
 		if (paramsMap.size() > 0) {
-			Map.Entry entry;
+			Map.Entry<String, String> entry;
 			Object value;
-			for (Iterator iter = paramsMap.entrySet().iterator(); iter.hasNext();) {
-				entry = (Map.Entry) iter.next();
-				value = keyValues.get(entry.getValue().toString());
+			for (Iterator<Map.Entry<String, String>> iter = paramsMap.entrySet().iterator(); iter.hasNext();) {
+				entry = iter.next();
+				value = keyValues.get(entry.getValue());
 				if (value != null)
 					result = replaceAllStr(result, entry.getKey().toString(), value.toString());
 			}

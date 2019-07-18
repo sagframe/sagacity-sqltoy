@@ -37,8 +37,8 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	private final static String GLOBAL_ID_PREFIX = "SQLTOY_GL_ID:";
 
-	private RedisTemplate redisTemplate;
-	
+	private RedisTemplate<?, ?> redisTemplate;
+
 	/**
 	 * 日期格式
 	 */
@@ -55,7 +55,7 @@ public class RedisIdGenerator implements IdGenerator {
 			if (template == null)
 				logger.error("RedisIdGenerator 未定义redisTemplate!");
 			else
-				me.setRedisTemplate((RedisTemplate) template);
+				me.setRedisTemplate((RedisTemplate<?, ?>) template);
 		}
 		return me;
 	}
@@ -64,16 +64,17 @@ public class RedisIdGenerator implements IdGenerator {
 	 * @param redisTemplate
 	 *            the redisTemplate to set
 	 */
+	// 目前AutoWired 不起作用(没有用spring来托管),因此在getInstance时进行自动获取
 	@Autowired(required = false)
 	@Qualifier(value = "redisTemplate")
-	public void setRedisTemplate(RedisTemplate redisTemplate) {
+	public void setRedisTemplate(RedisTemplate<?, ?> redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
 
 	/**
 	 * @return the redisTemplate
 	 */
-	public RedisTemplate getRedisTemplate() {
+	public RedisTemplate<?, ?> getRedisTemplate() {
 		return redisTemplate;
 	}
 

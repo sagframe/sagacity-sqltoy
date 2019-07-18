@@ -75,7 +75,7 @@ public class PostgreSqlDialectUtils {
 	}
 
 	/**
-	 * @todo 分頁查詢
+	 * @todo 分页查询
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
@@ -120,7 +120,7 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, double topSize, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Integer topSize, Connection conn) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql());
@@ -128,7 +128,7 @@ public class PostgreSqlDialectUtils {
 		} else
 			sql.append(sqlToyConfig.getSql());
 		sql.append(" limit ");
-		sql.append(Double.valueOf(topSize).intValue());
+		sql.append(topSize);
 
 		if (sqlToyConfig.isHasFast())
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());

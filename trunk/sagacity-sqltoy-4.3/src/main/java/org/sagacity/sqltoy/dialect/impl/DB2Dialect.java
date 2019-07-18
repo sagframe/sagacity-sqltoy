@@ -283,7 +283,7 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			double topSize, Connection conn) throws Exception {
+			Integer topSize, Connection conn) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql());
@@ -291,7 +291,7 @@ public class DB2Dialect implements Dialect {
 		} else
 			sql.append(sqlToyConfig.getSql());
 		sql.append(" limit ");
-		sql.append(Double.valueOf(topSize).intValue());
+		sql.append(topSize);
 
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());
@@ -339,7 +339,7 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
 			Connection conn, final Boolean autoCommit, final String tableName) throws Exception {
-		List entities = new ArrayList();
+		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
 				autoCommit, tableName);
