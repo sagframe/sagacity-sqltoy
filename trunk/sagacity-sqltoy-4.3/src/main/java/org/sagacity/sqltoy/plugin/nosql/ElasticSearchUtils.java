@@ -334,8 +334,7 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * 数据集合提取
-	 * 
+	 * @TODO 数据集合提取
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
@@ -381,7 +380,7 @@ public class ElasticSearchUtils {
 	}
 
 	/**
-	 * @todo 提取数据加入集合
+	 * @TODO 提取数据加入集合
 	 * @param result
 	 * @param rowJson
 	 * @param realFields

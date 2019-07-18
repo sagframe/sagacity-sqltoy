@@ -38,7 +38,7 @@ public class ElasticSqlPlugin {
 	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
 		String realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig)).trim();
+				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		realMql = realMql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
@@ -64,10 +64,10 @@ public class ElasticSqlPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
+	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
 		String realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext,sqlToyConfig)).trim();
+				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		if (topSize != null) {
 			realMql = realMql + " limit 0," + topSize;
