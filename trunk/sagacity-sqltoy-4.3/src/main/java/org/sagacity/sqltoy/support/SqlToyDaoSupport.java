@@ -240,12 +240,13 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
-	protected Serializable load(final Serializable entity) {
+	@SuppressWarnings("unchecked")
+	protected <T extends Serializable> T load(final T entity) {
 		if (entity == null)
 			return null;
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
 		if (SqlConfigParseUtils.isNamedQuery(entityMeta.getLoadSql(null)))
-			return (Serializable) this.loadBySql(entityMeta.getLoadSql(null), entity);
+			return (T) this.loadBySql(entityMeta.getLoadSql(null), entity);
 		return load(entity, null, null);
 	}
 
@@ -255,7 +256,7 @@ public class SqlToyDaoSupport {
 	 * @param lockMode
 	 * @return
 	 */
-	protected Serializable load(final Serializable entity, final LockMode lockMode) {
+	protected <T extends Serializable> T load(final T entity, final LockMode lockMode) {
 		return load(entity, lockMode, null);
 	}
 
@@ -266,7 +267,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	protected Serializable load(final Serializable entity, final LockMode lockMode, final DataSource dataSource) {
+	protected <T extends Serializable> T load(final T entity, final LockMode lockMode, final DataSource dataSource) {
 		return dialectFactory.load(sqlToyContext, entity, null, lockMode, this.getDataSource(dataSource));
 	}
 
@@ -276,7 +277,7 @@ public class SqlToyDaoSupport {
 	 * @param lockMode
 	 * @return
 	 */
-	protected Serializable loadCascade(Serializable entity, LockMode lockMode) {
+	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
 		if (entity == null)
 			return null;
 		return dialectFactory.load(sqlToyContext, entity,
@@ -290,7 +291,7 @@ public class SqlToyDaoSupport {
 	 * @param lockMode
 	 * @return
 	 */
-	protected Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) {
+	protected <T extends Serializable> T loadCascade(T entity, Class[] cascadeTypes, LockMode lockMode) {
 		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, this.getDataSource(null));
 	}
 
@@ -300,11 +301,11 @@ public class SqlToyDaoSupport {
 	 * @param lockMode
 	 * @return
 	 */
-	protected List loadAll(final List<?> entities, final LockMode lockMode) {
+	protected <T extends Serializable> List<T> loadAll(final List<T> entities, final LockMode lockMode) {
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
-	protected List loadAllCascade(final List<?> entities, final LockMode lockMode) {
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode) {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		return dialectFactory.loadAll(sqlToyContext, entities,
@@ -319,7 +320,8 @@ public class SqlToyDaoSupport {
 	 * @param lockMode
 	 * @return
 	 */
-	protected List loadAllCascade(final List<?> entities, final Class[] cascadeTypes, final LockMode lockMode) {
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final Class[] cascadeTypes,
+			final LockMode lockMode) {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, this.getDataSource(null));
 	}
 
@@ -610,7 +612,7 @@ public class SqlToyDaoSupport {
 	 * @todo 批量插入对象(会自动根据主键策略产生主键值,并填充对象集合),不做级联操作
 	 * @param entities
 	 */
-	protected Long saveAll(final List<?> entities) {
+	protected Long saveAll(final List<Serializable> entities) {
 		return this.saveAll(entities, null, null);
 	}
 
@@ -619,7 +621,7 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @param reflectPropertyHandler
 	 */
-	protected Long saveAll(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler) {
+	protected Long saveAll(final List<Serializable> entities, final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.saveAll(entities, reflectPropertyHandler, null);
 	}
 
@@ -629,7 +631,7 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected Long saveAll(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
+	protected Long saveAll(final List<Serializable> entities, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource) {
 		return dialectFactory.saveAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), reflectPropertyHandler,
 				this.getDataSource(dataSource), null);
@@ -640,7 +642,7 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
-	protected Long saveAllNotExist(final List<?> entities) {
+	protected Long saveAllNotExist(final List<Serializable> entities) {
 		return this.saveAllNotExist(entities, null, null);
 	}
 
@@ -650,7 +652,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	protected Long saveAllNotExist(final List<?> entities, final DataSource dataSource) {
+	protected Long saveAllNotExist(final List<Serializable> entities, final DataSource dataSource) {
 		return this.saveAllNotExist(entities, null, dataSource);
 	}
 
@@ -660,8 +662,8 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected Long saveAllNotExist(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource) {
+	protected Long saveAllNotExist(final List<Serializable> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		return dialectFactory.saveAllNotExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
@@ -730,7 +732,7 @@ public class SqlToyDaoSupport {
 	 * @todo 批量根据主键值修改对象(具体更新哪些属性以第一条记录为准，如10个属性，第一条记录 中只有5个属性有值，则只更新这5个属性的值)
 	 * @param entities
 	 */
-	protected Long updateAll(final List<?> entities) {
+	protected Long updateAll(final List<Serializable> entities) {
 		return this.updateAll(entities, null, null, null);
 	}
 
@@ -739,11 +741,11 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @param forceUpdateProps
 	 */
-	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps) {
+	protected Long updateAll(final List<Serializable> entities, final String[] forceUpdateProps) {
 		return this.updateAll(entities, forceUpdateProps, null, null);
 	}
 
-	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps,
+	protected Long updateAll(final List<Serializable> entities, final String[] forceUpdateProps,
 			final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.updateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
 	}
@@ -755,7 +757,7 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected Long updateAll(final List<?> entities, final String[] forceUpdateProps,
+	protected Long updateAll(final List<Serializable> entities, final String[] forceUpdateProps,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
@@ -766,7 +768,8 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @param reflectPropertyHandler
 	 */
-	protected Long updateAllDeeply(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler) {
+	protected Long updateAllDeeply(final List<Serializable> entities,
+			final ReflectPropertyHandler reflectPropertyHandler) {
 		return updateAllDeeply(entities, reflectPropertyHandler, null);
 	}
 
@@ -776,8 +779,8 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected Long updateAllDeeply(final List<?> entities, final ReflectPropertyHandler reflectPropertyHandler,
-			final DataSource dataSource) {
+	protected Long updateAllDeeply(final List<Serializable> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty())
 			return Long.valueOf(0);
 		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(),
@@ -807,7 +810,7 @@ public class SqlToyDaoSupport {
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
-	protected Long saveOrUpdateAll(final List<?> entities) {
+	protected Long saveOrUpdateAll(final List<Serializable> entities) {
 		return this.saveOrUpdateAll(entities, null, null, null);
 	}
 
@@ -816,7 +819,7 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @param forceUpdateProps
 	 */
-	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps) {
+	protected Long saveOrUpdateAll(final List<Serializable> entities, final String[] forceUpdateProps) {
 		return this.saveOrUpdateAll(entities, forceUpdateProps, null, null);
 	}
 
@@ -827,7 +830,7 @@ public class SqlToyDaoSupport {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps,
+	protected Long saveOrUpdateAll(final List<Serializable> entities, final String[] forceUpdateProps,
 			final ReflectPropertyHandler reflectPropertyHandler) {
 		return this.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
 	}
@@ -839,7 +842,7 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected Long saveOrUpdateAll(final List<?> entities, final String[] forceUpdateProps,
+	protected Long saveOrUpdateAll(final List<Serializable> entities, final String[] forceUpdateProps,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
@@ -857,7 +860,7 @@ public class SqlToyDaoSupport {
 		return dialectFactory.delete(sqlToyContext, entity, this.getDataSource(dataSource));
 	}
 
-	protected Long deleteAll(final List<?> entities) {
+	protected Long deleteAll(final List<Serializable> entities) {
 		return this.deleteAll(entities, null);
 	}
 
@@ -866,7 +869,7 @@ public class SqlToyDaoSupport {
 	 * @param entities
 	 * @param dataSource
 	 */
-	protected Long deleteAll(final List<?> entities, final DataSource dataSource) {
+	protected Long deleteAll(final List<Serializable> entities, final DataSource dataSource) {
 		return dialectFactory.deleteAll(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				this.getDataSource(dataSource), null);
 	}

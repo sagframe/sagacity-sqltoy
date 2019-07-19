@@ -32,13 +32,13 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 批量保存对象
 	 * @param entities
 	 */
-	public Long saveAll(List<?> entities);
+	public Long saveAll(List<Serializable> entities);
 
 	/**
 	 * @todo 非深度修改对象
@@ -63,14 +63,14 @@ public interface SqlToyCRUDService {
 	 * @todo 批量对对象进行修改(以首条记录为基准决定哪些字段会被修改)
 	 * @param entities
 	 */
-	public Long updateAll(List<?> entities);
+	public Long updateAll(List<Serializable> entities);
 
 	/**
 	 * @todo 批量对象修改，通过forceUpdateProps指定哪些字段需要强制修改
 	 * @param entities
 	 * @param forceUpdateProps
 	 */
-	public Long updateAll(List<?> entities, String[] forceUpdateProps);
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改对象
@@ -78,13 +78,14 @@ public interface SqlToyCRUDService {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler);
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 批量深度集合修改
 	 * @param entities
 	 */
-	public Long updateAllDeeply(List<?> entities);
+	public Long updateAllDeeply(List<Serializable> entities);
 
 	public Long saveOrUpdate(Serializable entity);
 
@@ -95,9 +96,9 @@ public interface SqlToyCRUDService {
 	 */
 	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps);
 
-	public Long saveOrUpdateAll(List<?> entities);
+	public Long saveOrUpdateAll(List<Serializable> entities);
 
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps);
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
@@ -105,7 +106,7 @@ public interface SqlToyCRUDService {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -113,14 +114,14 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @return
 	 */
-	public Serializable load(Serializable entity);
+	public <T extends Serializable> T load(T entity);
 
 	/**
 	 * @todo 级联加载对象
 	 * @param entity
 	 * @return
 	 */
-	public Serializable loadCascade(Serializable entity);
+	public <T extends Serializable> T loadCascade(T entity);
 
 	/**
 	 * @todo 删除对象
@@ -132,7 +133,7 @@ public interface SqlToyCRUDService {
 	 * @todo 批量删除对象
 	 * @param entities
 	 */
-	public Long deleteAll(List<?> entities);
+	public Long deleteAll(List<Serializable> entities);
 
 	/**
 	 * @todo 清除表的记录
@@ -150,7 +151,8 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param entity
-	 * @param paramsNamed group+uniqueField
+	 * @param paramsNamed
+	 *            group+uniqueField
 	 * @return
 	 */
 	public boolean isUnique(Serializable entity, final String[] paramsNamed);
@@ -177,7 +179,7 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 * @return
 	 */
-	public List loadAll(List<?> entities);
+	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
 	/**
 	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集

@@ -42,7 +42,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected SqlToyLazyDao sqlToyLazyDao;
 
 	/**
-	 * @param sqlToyLazyDao the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao
+	 *            the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "sqlToyLazyDao")
@@ -68,7 +69,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
+	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return sqlToyLazyDao.saveAll(entities, reflectPropertyHandler);
 	}
 
@@ -79,7 +80,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities) {
+	public Long saveAll(List<Serializable> entities) {
 		return sqlToyLazyDao.saveAll(entities, null);
 	}
 
@@ -132,7 +133,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler) {
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler) {
 		return sqlToyLazyDao.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
@@ -142,7 +144,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util.List)
 	 */
 	@Override
-	public Long updateAll(List<?> entities) {
+	public Long updateAll(List<Serializable> entities) {
 		return sqlToyLazyDao.updateAll(entities);
 	}
 
@@ -153,7 +155,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps) {
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps) {
 		return sqlToyLazyDao.updateAll(entities, forceUpdateProps);
 	}
 
@@ -164,7 +166,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .util.List)
 	 */
 	@Override
-	public Long updateAllDeeply(List<?> entities) {
+	public Long updateAllDeeply(List<Serializable> entities) {
 		return sqlToyLazyDao.updateAllDeeply(entities, null);
 	}
 
@@ -202,7 +204,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities) {
+	public Long saveOrUpdateAll(List<Serializable> entities) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities);
 	}
 
@@ -213,7 +215,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) {
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
@@ -225,7 +227,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
@@ -237,7 +239,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
-	public Serializable load(Serializable entity) {
+	public <T extends Serializable> T load(T entity) {
 		return sqlToyLazyDao.load(entity);
 	}
 
@@ -248,7 +250,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity) {
+	public <T extends Serializable> T loadCascade(T entity) {
 		return sqlToyLazyDao.loadCascade(entity, null);
 	}
 
@@ -258,7 +260,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#loadAll(java.util.List)
 	 */
 	@Override
-	public List loadAll(List<?> entities) {
+	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
 
@@ -278,7 +280,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#deleteAll(java.util .List)
 	 */
 	@Override
-	public Long deleteAll(List<?> entities) {
+	public Long deleteAll(List<Serializable> entities) {
 		return sqlToyLazyDao.deleteAll(entities);
 	}
 

@@ -93,14 +93,14 @@ public interface SqlToyLazyDao {
 	 */
 	public Object save(Serializable serializableVO);
 
-	public Long saveAll(List<?> entities);
+	public Long saveAll(List<Serializable> entities);
 
 	/**
 	 * @todo 批量保存数据
 	 * @param dataSet
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 非深度修改
@@ -111,7 +111,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 修改数据
 	 * @param entitySet
-	 * @param forceUpdateProps 强制修改的字段属性
+	 * @param forceUpdateProps
+	 *            强制修改的字段属性
 	 */
 	public Long update(Serializable serializableVO, String[] forceUpdateProps);
 
@@ -131,19 +132,22 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
-	public Long updateAll(List<?> entities);
+	public Long updateAll(List<Serializable> entities);
 
-	public Long updateAll(List<?> entities, String[] forceUpdateProps);
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改对象
 	 * @param entitys
-	 * @param forceUpdateProps       强制修改的属性
-	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
+	 * @param forceUpdateProps
+	 *            强制修改的属性
+	 * @param reflectPropertyHandler
+	 *            用于通过反射机制设置属性值
 	 */
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler);
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler);
 
-	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public Long updateAllDeeply(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	public Long saveOrUpdate(Serializable serializableVO);
 
@@ -154,9 +158,9 @@ public interface SqlToyLazyDao {
 	 */
 	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps);
 
-	public Long saveOrUpdateAll(List<?> entities);
+	public Long saveOrUpdateAll(List<Serializable> entities);
 
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps);
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改或保存数据
@@ -164,7 +168,7 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -177,7 +181,7 @@ public interface SqlToyLazyDao {
 	 * @todo 批量删除对象
 	 * @param entities
 	 */
-	public Long deleteAll(final List<?> entities);
+	public Long deleteAll(final List<Serializable> entities);
 
 	/**
 	 * @todo truncate表
@@ -191,7 +195,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable load(final Serializable entity);
+	public <T extends Serializable> T load(final T entity);
 
 	/**
 	 * @todo 根据主键获取对象,提供读取锁设定
@@ -199,7 +203,7 @@ public interface SqlToyLazyDao {
 	 * @param lockMode
 	 * @return
 	 */
-	public Serializable load(final Serializable entity, final LockMode lockMode);
+	public <T extends Serializable> T load(final T entity, final LockMode lockMode);
 
 	/**
 	 * @todo 默认加载所有子表信息
@@ -207,7 +211,7 @@ public interface SqlToyLazyDao {
 	 * @param lockMode
 	 * @return
 	 */
-	public Serializable loadCascade(final Serializable entity, final LockMode lockMode);
+	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode);
 
 	/**
 	 * @todo 指定加载子类的单记录查询
@@ -216,21 +220,21 @@ public interface SqlToyLazyDao {
 	 * @param lockMode
 	 * @return
 	 */
-	public Serializable loadCascade(final Serializable entity, final Class[] cascadeTypes, final LockMode lockMode);
+	public <T extends Serializable> T loadCascade(final T entity, final Class[] cascadeTypes, final LockMode lockMode);
 
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息
 	 * @param entities
 	 * @return
 	 */
-	public List loadAll(List<?> entities);
+	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
 	/**
 	 * @todo 级联加载子表数据
 	 * @param entities
 	 * @return
 	 */
-	public List loadAllCascade(List<?> entities);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities);
 
 	/**
 	 * @todo 选择性的加载子表信息
@@ -238,7 +242,7 @@ public interface SqlToyLazyDao {
 	 * @param cascadeTypes
 	 * @return
 	 */
-	public List loadAllCascade(List<?> entities, final Class[] cascadeTypes);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class[] cascadeTypes);
 
 	public Object loadByQuery(final QueryExecutor query);
 
@@ -270,8 +274,10 @@ public interface SqlToyLazyDao {
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
-	 * @param paramsValue   对应Named参数的值
-	 * @param voClass       返回结果List中的对象类型
+	 * @param paramsValue
+	 *            对应Named参数的值
+	 * @param voClass
+	 *            返回结果List中的对象类型
 	 * @return
 	 */
 	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,

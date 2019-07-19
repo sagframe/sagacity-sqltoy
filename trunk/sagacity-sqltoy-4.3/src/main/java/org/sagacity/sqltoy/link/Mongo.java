@@ -111,7 +111,7 @@ public class Mongo extends BaseLink {
 	 * @return
 	 */
 	public Object getOne() throws Exception {
-		List result = find();
+		List<?> result = find();
 		if (result != null && !result.isEmpty())
 			return result.get(0);
 		return null;
@@ -121,7 +121,7 @@ public class Mongo extends BaseLink {
 	 * @todo 集合记录查询
 	 * @return
 	 */
-	public List find() {
+	public List<?> find() {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
@@ -149,7 +149,7 @@ public class Mongo extends BaseLink {
 	 * @param topSize
 	 * @return
 	 */
-	public List findTop(final Float topSize) {
+	public List<?> findTop(final Float topSize) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
@@ -245,7 +245,7 @@ public class Mongo extends BaseLink {
 	 * @param resultClass
 	 * @return
 	 */
-	private List findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
+	private List<?> findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
 			String resultClass) throws Exception {
 		BasicQuery query = new BasicQuery(mql);
 		if (topSize != null) {
@@ -272,7 +272,7 @@ public class Mongo extends BaseLink {
 	 * @param resultClass
 	 * @return
 	 */
-	private List aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, String resultClass)
+	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, String resultClass)
 			throws Exception {
 		String realMql = mql.trim();
 		if (realMql.startsWith("{") && realMql.endsWith("}"))

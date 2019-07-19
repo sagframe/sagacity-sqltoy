@@ -22,7 +22,7 @@ public class Batch extends BaseLink {
 	/**
 	 * 批量处理的数据集合
 	 */
-	private List dataSet;
+	private List<?> dataSet;
 
 	/**
 	 * 批次记录数量
@@ -67,7 +67,7 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
-	public Batch dataSet(List dataSet) {
+	public Batch dataSet(List<?> dataSet) {
 		this.dataSet = dataSet;
 		return this;
 	}

@@ -88,7 +88,7 @@ public class Elastic extends BaseLink {
 	 * @return
 	 */
 	public Object getOne() {
-		List result = find();
+		List<?> result = find();
 		if (result != null && !result.isEmpty())
 			return result.get(0);
 		return null;
@@ -98,7 +98,7 @@ public class Elastic extends BaseLink {
 	 * @todo 集合记录查询
 	 * @return
 	 */
-	public List find() {
+	public List<?> find() {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
@@ -118,7 +118,7 @@ public class Elastic extends BaseLink {
 	 * @param topSize
 	 * @return
 	 */
-	public List findTop(final int topSize) {
+	public List<?> findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)

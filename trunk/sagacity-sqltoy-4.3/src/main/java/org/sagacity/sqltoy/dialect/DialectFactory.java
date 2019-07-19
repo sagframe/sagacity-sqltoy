@@ -881,15 +881,15 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @return
 	 */
-	public Serializable load(final SqlToyContext sqlToyContext, final Serializable entity, final Class[] cascadeTypes,
-			final LockMode lockMode, final DataSource dataSource) {
+	public <T extends Serializable> T load(final SqlToyContext sqlToyContext, final T entity,
+			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
 		if (entity == null)
 			return null;
 		try {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "load", null);
-			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
+			return (T) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
@@ -914,8 +914,8 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @return
 	 */
-	public List<?> loadAll(final SqlToyContext sqlToyContext, final List<?> entities, final Class[] cascadeTypes,
-			final LockMode lockMode, final DataSource dataSource) {
+	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
+			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		try {
@@ -1142,7 +1142,7 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @param autoCommit
 	 */
-	public Long deleteAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
+	public Long deleteAll(final SqlToyContext sqlToyContext, final List<Serializable> entities, final int batchSize,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return Long.valueOf(0);

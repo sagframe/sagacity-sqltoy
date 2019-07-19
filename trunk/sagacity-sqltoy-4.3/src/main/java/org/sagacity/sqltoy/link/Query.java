@@ -186,7 +186,7 @@ public class Query extends BaseLink {
 	 * @todo 查询结果集合
 	 * @return
 	 */
-	public List find() {
+	public List<?> find() {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, dataSource);
 		return result.getRows();
@@ -197,7 +197,7 @@ public class Query extends BaseLink {
 	 * @param topSize
 	 * @return
 	 */
-	public List findTop(final double topSize) {
+	public List<?> findTop(final double topSize) {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecute, topSize, dataSource);
 		return result.getRows();
@@ -208,7 +208,7 @@ public class Query extends BaseLink {
 	 * @param randomSize
 	 * @return
 	 */
-	public List findRandom(final double randomSize) {
+	public List<?> findRandom(final double randomSize) {
 		QueryExecutor queryExecute = build();
 		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, new Double(randomSize),
 				dataSource);

@@ -305,7 +305,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveAll(java.util.List)
 	 */
 	@Override
-	public Long saveAll(List<?> entities) {
+	public Long saveAll(List<Serializable> entities) {
 		return super.saveAll(entities);
 	}
 
@@ -316,7 +316,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
+	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveAll(entities, reflectPropertyHandler);
 	}
 
@@ -370,7 +370,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateAll(java.util.List)
 	 */
 	@Override
-	public Long updateAll(List<?> entities) {
+	public Long updateAll(List<Serializable> entities) {
 		return super.updateAll(entities);
 	}
 
@@ -381,7 +381,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps) {
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps) {
 		return super.updateAll(entities, forceUpdateProps);
 	}
 
@@ -392,7 +392,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAll(List<?> entities, String[] forceUpdateProps, ReflectPropertyHandler reflectPropertyHandler) {
+	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
 
@@ -403,7 +404,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAllDeeply(List<?> entities, ReflectPropertyHandler reflectPropertyHandler) {
+	public Long updateAllDeeply(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAllDeeply(entities, reflectPropertyHandler);
 	}
 
@@ -436,7 +437,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities) {
+	public Long saveOrUpdateAll(List<Serializable> entities) {
 		return super.saveOrUpdateAll(entities);
 	}
 
@@ -447,7 +448,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps) {
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
@@ -458,7 +459,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<?> entities, String[] forceUpdateProps,
+	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
@@ -479,7 +480,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#deleteAll(java.util.List)
 	 */
 	@Override
-	public Long deleteAll(List<?> entities) {
+	public Long deleteAll(List<Serializable> entities) {
 		return super.deleteAll(entities);
 	}
 
@@ -499,7 +500,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#load(java.io.Serializable)
 	 */
 	@Override
-	public Serializable load(Serializable entity) {
+	public <T extends Serializable> T load(T entity) {
 		return super.load(entity);
 	}
 
@@ -510,7 +511,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable load(Serializable entity, LockMode lockMode) {
+	public <T extends Serializable> T load(T entity, LockMode lockMode) {
 		return super.load(entity, lockMode);
 	}
 
@@ -521,7 +522,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity, LockMode lockMode) {
+	public <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
 		return super.loadCascade(entity, lockMode);
 	}
 
@@ -531,7 +532,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAll(java.util.List)
 	 */
 	@Override
-	public List loadAll(List<?> entities) {
+	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return super.loadAll(entities, null);
 	}
 
@@ -541,7 +542,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAllCascade(java.util.List)
 	 */
 	@Override
-	public List loadAllCascade(List<?> entities) {
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities) {
 		return super.loadAllCascade(entities, null);
 	}
 
@@ -552,7 +553,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[])
 	 */
 	@Override
-	public List loadAllCascade(List<?> entities, Class[] cascadeTypes) {
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, Class[] cascadeTypes) {
 		return super.loadAllCascade(entities, cascadeTypes, null);
 	}
 
@@ -563,7 +564,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[], org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public Serializable loadCascade(Serializable entity, Class[] cascadeTypes, LockMode lockMode) {
+	public <T extends Serializable> T loadCascade(T entity, Class[] cascadeTypes, LockMode lockMode) {
 		return super.loadCascade(entity, cascadeTypes, lockMode);
 	}
 

@@ -70,7 +70,7 @@ public class Delete extends BaseLink {
 	 * @todo 批量删除对象记录
 	 * @param entities
 	 */
-	public Long many(final List<?> entities) {
+	public Long many(final List<Serializable> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("deleteAll entities is null or empty!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
