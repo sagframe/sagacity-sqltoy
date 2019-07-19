@@ -40,7 +40,7 @@ public class CacheCheckTimer extends TimerTask {
 	/**
 	 * 时间格式到秒级别(避免存在时间精度的差异)
 	 */
-	private final String dateFmt = "yyyy-MM-dd HH:mm:ss";
+	private final String dateFmt = DateUtil.FORMAT.DATETIME_HORIZONTAL;
 
 	/**
 	 * 更新检测器
@@ -50,6 +50,11 @@ public class CacheCheckTimer extends TimerTask {
 	private SqlToyContext sqlToyContext;
 
 	private TranslateCacheManager translateCacheManager;
+
+	/**
+	 * 默认缓存刷新检测间隔时间(秒)
+	 */
+	private static int defaultIntervalSeconds = 15;
 
 	public CacheCheckTimer(SqlToyContext sqlToyContext, TranslateCacheManager translateCacheManager,
 			List<CheckerConfigModel> updateCheckers) {
@@ -110,7 +115,7 @@ public class CacheCheckTimer extends TimerTask {
 	 */
 	private long getInterval(List<TimeSection> sections, int hourMinutes) {
 		// 默认15秒
-		long interval = 15;
+		long interval = defaultIntervalSeconds;
 		if (sections != null) {
 			for (TimeSection section : sections) {
 				if (hourMinutes >= section.getStart() && hourMinutes < section.getEnd()) {
