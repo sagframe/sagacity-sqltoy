@@ -91,7 +91,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public Object loadBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class resultType) {
+	public <T> T loadBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class<T> resultType) {
 		return super.loadBySql(sqlOrNamedSql, paramsNamed, paramsValue, resultType);
 	}
 
@@ -124,9 +124,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[], java.lang.Class)
 	 */
 	@Override
-	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class voClass) {
-		return super.findByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass))
-				.getRows();
+	public <T> List<T> findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class<T> voClass) {
+		return (List<T>) super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, voClass);
 	}
 
 	/*

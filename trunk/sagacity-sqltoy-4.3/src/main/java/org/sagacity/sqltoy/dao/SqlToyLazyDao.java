@@ -255,8 +255,8 @@ public interface SqlToyLazyDao {
 	 * @param voClass
 	 * @return
 	 */
-	public Object loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass);
+	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> voClass);
 
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
 
@@ -281,8 +281,8 @@ public interface SqlToyLazyDao {
 	 *            返回结果List中的对象类型
 	 * @return
 	 */
-	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass);
+	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> voClass);
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询

@@ -332,9 +332,9 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	protected Object loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
-			final Class resultType) {
-		return loadByQuery(new QueryExecutor(sql, paramNames, paramValues).resultType(resultType));
+	protected <T> T loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
+			final Class<T> resultType) {
+		return (T) loadByQuery(new QueryExecutor(sql, paramNames, paramValues).resultType(resultType));
 	}
 
 	/**
@@ -488,9 +488,9 @@ public class SqlToyDaoSupport {
 		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
 	}
 
-	protected List findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass) {
-		return findByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass)).getRows();
+	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> voClass) {
+		return (List<T>) findByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass)).getRows();
 	}
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
