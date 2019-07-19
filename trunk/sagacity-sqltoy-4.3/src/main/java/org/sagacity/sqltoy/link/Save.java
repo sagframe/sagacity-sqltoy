@@ -123,7 +123,7 @@ public class Save extends BaseLink {
 	 * @todo 批量保存
 	 * @param entities
 	 */
-	public Long many(final List<Serializable> entities) {
+	public <T extends Serializable> Long many(final List<T> entities) {
 		if (entities == null || entities.isEmpty())
 			throw new IllegalArgumentException("saveAll entities is null or empty!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();

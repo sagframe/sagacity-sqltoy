@@ -93,14 +93,14 @@ public interface SqlToyLazyDao {
 	 */
 	public Object save(Serializable serializableVO);
 
-	public Long saveAll(List<Serializable> entities);
+	public <T extends Serializable> Long saveAll(List<T> entities);
 
 	/**
 	 * @todo 批量保存数据
 	 * @param dataSet
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 非深度修改
@@ -132,9 +132,9 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
-	public Long updateAll(List<Serializable> entities);
+	public <T extends Serializable> Long updateAll(List<T> entities);
 
-	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps);
+	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改对象
@@ -144,10 +144,11 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 *            用于通过反射机制设置属性值
 	 */
-	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
 
-	public Long updateAllDeeply(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
+			ReflectPropertyHandler reflectPropertyHandler);
 
 	public Long saveOrUpdate(Serializable serializableVO);
 
@@ -158,9 +159,9 @@ public interface SqlToyLazyDao {
 	 */
 	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps);
 
-	public Long saveOrUpdateAll(List<Serializable> entities);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities);
 
-	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps);
 
 	/**
 	 * @todo 批量修改或保存数据
@@ -168,7 +169,7 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -181,7 +182,7 @@ public interface SqlToyLazyDao {
 	 * @todo 批量删除对象
 	 * @param entities
 	 */
-	public Long deleteAll(final List<Serializable> entities);
+	public <T extends Serializable> Long deleteAll(final List<T> entities);
 
 	/**
 	 * @todo truncate表

@@ -305,7 +305,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveAll(java.util.List)
 	 */
 	@Override
-	public Long saveAll(List<Serializable> entities) {
+	public <T extends Serializable> Long saveAll(List<T> entities) {
 		return super.saveAll(entities);
 	}
 
@@ -316,7 +316,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveAll(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler) {
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveAll(entities, reflectPropertyHandler);
 	}
 
@@ -370,7 +370,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateAll(java.util.List)
 	 */
 	@Override
-	public Long updateAll(List<Serializable> entities) {
+	public <T extends Serializable> Long updateAll(List<T> entities) {
 		return super.updateAll(entities);
 	}
 
@@ -381,7 +381,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps) {
+	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps) {
 		return super.updateAll(entities, forceUpdateProps);
 	}
 
@@ -392,7 +392,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAll(List<Serializable> entities, String[] forceUpdateProps,
+	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
@@ -404,7 +404,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long updateAllDeeply(List<Serializable> entities, ReflectPropertyHandler reflectPropertyHandler) {
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
+			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.updateAllDeeply(entities, reflectPropertyHandler);
 	}
 
@@ -437,7 +438,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<Serializable> entities) {
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities) {
 		return super.saveOrUpdateAll(entities);
 	}
 
@@ -448,7 +449,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * .List, java.lang.String[])
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps) {
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
@@ -459,7 +460,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public Long saveOrUpdateAll(List<Serializable> entities, String[] forceUpdateProps,
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
 	}
@@ -480,7 +481,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#deleteAll(java.util.List)
 	 */
 	@Override
-	public Long deleteAll(List<Serializable> entities) {
+	public <T extends Serializable> Long deleteAll(List<T> entities) {
 		return super.deleteAll(entities);
 	}
 

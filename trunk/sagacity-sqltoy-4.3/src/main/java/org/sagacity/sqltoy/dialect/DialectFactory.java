@@ -1142,8 +1142,8 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @param autoCommit
 	 */
-	public Long deleteAll(final SqlToyContext sqlToyContext, final List<Serializable> entities, final int batchSize,
-			final DataSource dataSource, final Boolean autoCommit) {
+	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
+			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
 			return Long.valueOf(0);
 		try {
