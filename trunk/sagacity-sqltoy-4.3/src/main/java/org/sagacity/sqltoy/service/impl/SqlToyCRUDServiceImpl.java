@@ -347,7 +347,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
-	public List findFrom(Serializable entity) {
+	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
 	}
@@ -359,9 +359,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	public List findFrom(Serializable entity, ReflectPropertyHandler reflectPropertyHandler) {
+	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		return sqlToyLazyDao.findByQuery(
+		return (List<T>) sqlToyLazyDao.findByQuery(
 				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
 				.getRows();
 	}
@@ -401,9 +401,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
-	public List findTopFrom(Serializable entity, double topSize) {
+	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		return sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
+		return (List<T>) sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
 	}
 
 	/*
@@ -413,9 +413,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
-	public List getRandomFrom(Serializable entity, double randomCount) {
+	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		return sqlToyLazyDao.getRandomResult(
+		return (List<T>) sqlToyLazyDao.getRandomResult(
 				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
 				randomCount);
 	}

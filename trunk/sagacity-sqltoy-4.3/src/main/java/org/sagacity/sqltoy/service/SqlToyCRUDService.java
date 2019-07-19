@@ -186,9 +186,9 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @return
 	 */
-	public List findFrom(Serializable entity);
+	public <T extends Serializable> List<T> findFrom(T entity);
 
-	public List findFrom(Serializable entity, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 通过实体对象中的@page/或@list 定义的sql查询分页结果集
@@ -207,7 +207,7 @@ public interface SqlToyCRUDService {
 	 * @param topSize
 	 * @return
 	 */
-	public List findTopFrom(Serializable entity, double topSize);
+	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize);
 
 	/**
 	 * @todo 通过实体对象中@page/@list 定义的sql进行随机记录查询
@@ -215,7 +215,7 @@ public interface SqlToyCRUDService {
 	 * @param randomCount
 	 * @return
 	 */
-	public List getRandomFrom(Serializable entity, double randomCount);
+	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount);
 
 	/**
 	 * @todo 获取业务ID

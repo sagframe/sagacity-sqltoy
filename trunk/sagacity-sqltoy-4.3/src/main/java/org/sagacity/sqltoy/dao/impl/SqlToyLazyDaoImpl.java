@@ -102,7 +102,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * Serializable)
 	 */
 	@Override
-	public Object loadBySql(String sqlOrNamedSql, Serializable entity) {
+	public <T extends Serializable> T loadBySql(String sqlOrNamedSql, T entity) {
 		return super.loadBySql(sqlOrNamedSql, entity);
 	}
 
@@ -113,7 +113,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.io.Serializable)
 	 */
 	@Override
-	public List findBySql(String sqlOrNamedSql, Serializable entity) {
+	public <T extends Serializable> List<T> findBySql(String sqlOrNamedSql, final T entity) {
 		return super.findBySql(sqlOrNamedSql, entity);
 	}
 
@@ -186,8 +186,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.io.Serializable, double)
 	 */
 	@Override
-	public List findTopBySql(String sqlOrNamedSql, Serializable entity, double topSize) {
-		return super.findTopByQuery(new QueryExecutor(sqlOrNamedSql, entity), topSize).getRows();
+	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
+			final double topSize) {
+		return super.findTopBySql(sqlOrNamedSql, entity, topSize);
 	}
 
 	/*
@@ -209,8 +210,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * String, java.io.Serializable, double)
 	 */
 	@Override
-	public List getRandomResult(String sqlOrNamedSql, Serializable entity, double randomCount) {
-		return super.getRandomResult(new QueryExecutor(sqlOrNamedSql, entity), randomCount).getRows();
+	public <T extends Serializable> List<T> getRandomResult(String sqlOrNamedSql, T entity, double randomCount) {
+		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrNamedSql, entity), randomCount).getRows();
 	}
 
 	/*

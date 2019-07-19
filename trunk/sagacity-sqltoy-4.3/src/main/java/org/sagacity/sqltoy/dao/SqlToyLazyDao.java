@@ -258,7 +258,7 @@ public interface SqlToyLazyDao {
 	public Object loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class voClass);
 
-	public Object loadBySql(final String sqlOrNamedSql, final Serializable entity);
+	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
 
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
@@ -269,7 +269,7 @@ public interface SqlToyLazyDao {
 	 */
 	public QueryResult findByQuery(final QueryExecutor query);
 
-	public List findBySql(final String sqlOrNamedSql, final Serializable entity);
+	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
@@ -321,11 +321,13 @@ public interface SqlToyLazyDao {
 	public List findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
 			final Class voClass, final double topSize);
 
-	public List findTopBySql(final String sqlOrNamedSql, final Serializable entity, final double topSize);
+	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
+			final double topSize);
 
 	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
 
-	public List getRandomResult(final String sqlOrNamedSql, final Serializable entity, final double randomCount);
+	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
+			final double randomCount);
 
 	public List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class voClass, final double randomCount);

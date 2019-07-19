@@ -240,7 +240,6 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T extends Serializable> T load(final T entity) {
 		if (entity == null)
 			return null;
@@ -344,8 +343,8 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
-	protected Object loadBySql(final String sql, final Serializable entity) {
-		return loadByQuery(new QueryExecutor(sql, entity));
+	protected <T extends Serializable> T loadBySql(final String sql, final T entity) {
+		return (T) loadByQuery(new QueryExecutor(sql, entity));
 	}
 
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
@@ -485,8 +484,8 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
-	protected List findBySql(final String sql, final Serializable entity) {
-		return findByQuery(new QueryExecutor(sql, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sql, final T entity) {
+		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
 	}
 
 	protected List findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
@@ -545,8 +544,8 @@ public class SqlToyDaoSupport {
 		return findTopByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass), topSize).getRows();
 	}
 
-	protected List findTopBySql(final String sql, final Serializable entity, final double topSize) {
-		return findTopByQuery(new QueryExecutor(sql, entity), topSize).getRows();
+	protected <T extends Serializable> List<T> findTopBySql(final String sql, final T entity, final double topSize) {
+		return (List<T>) findTopByQuery(new QueryExecutor(sql, entity), topSize).getRows();
 	}
 
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
