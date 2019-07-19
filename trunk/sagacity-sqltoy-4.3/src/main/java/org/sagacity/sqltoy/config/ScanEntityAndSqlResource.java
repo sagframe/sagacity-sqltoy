@@ -49,7 +49,7 @@ public class ScanEntityAndSqlResource {
 	 * @todo 从指定包package中获取所有的sqltoy实体对象
 	 * @param pack
 	 * @param recursive
-	 *            是否循环迭代下级目录
+	 * @param charset
 	 * @return
 	 */
 	public static Set<Class<?>> getPackageEntities(String pack, boolean recursive, String charset) {

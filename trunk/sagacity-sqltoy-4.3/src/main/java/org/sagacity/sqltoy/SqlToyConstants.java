@@ -115,6 +115,11 @@ public class SqlToyConstants {
 	public static String keywordSign = "'";
 
 	/**
+	 * sql in 里面参数最大值
+	 */
+	public static int SQL_IN_MAX = 999;
+
+	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
 	private final static Pattern paramPattern = Pattern

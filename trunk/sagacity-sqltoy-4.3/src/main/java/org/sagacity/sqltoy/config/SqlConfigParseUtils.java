@@ -780,7 +780,6 @@ public class SqlConfigParseUtils {
 	 * @param entity
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
 	 */
 	public static Object[] reflectBeanParams(String[] paramsName, Serializable entity,
 			ReflectPropertyHandler reflectPropsHandler) {

@@ -655,8 +655,8 @@ public class SqlXMLConfigParse {
 			if (filter.attribute("cache-mapping-max") != null) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
 				// sql in a参数量不能超过1000
-				if (filterModel.getCacheMappingMax() > 999)
-					filterModel.setCacheMappingMax(999);
+				if (filterModel.getCacheMappingMax() > SqlToyConstants.SQL_IN_MAX)
+					filterModel.setCacheMappingMax(SqlToyConstants.SQL_IN_MAX);
 			}
 			if (filter.attribute("cache-mapping-indexes") != null) {
 				String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
@@ -966,7 +966,7 @@ public class SqlXMLConfigParse {
 						try {
 							pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
 						} catch (Exception e) {
-
+							e.printStackTrace();
 						}
 					} else
 						pivotModel.setDefaultValue(defaultValue);
