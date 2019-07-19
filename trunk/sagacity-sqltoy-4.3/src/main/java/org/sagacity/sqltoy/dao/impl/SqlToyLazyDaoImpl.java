@@ -172,10 +172,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[], java.lang.Object[], java.lang.Class, double)
 	 */
 	@Override
-	public List findTopBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues, Class voClass,
+	public <T> List<T> findTopBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues, Class<T> voClass,
 			double topSize) {
-		return super.findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass),
-				topSize).getRows();
+		return super.findTopBySql(sqlOrNamedSql, paramsNamed, paramValues, voClass, topSize);
 	}
 
 	/*
@@ -220,10 +219,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * String, java.lang.String[], java.lang.Object[], java.lang.Class, double)
 	 */
 	@Override
-	public List getRandomResult(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue, Class voClass,
-			double randomCount) {
-		return super.getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
-				randomCount).getRows();
+	public <T> List<T> getRandomResult(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue,
+			Class<T> voClass, double randomCount) {
+		return super.getRandomResult(sqlOrNamedSql, paramsNamed, paramsValue, voClass, randomCount);
 	}
 
 	/*

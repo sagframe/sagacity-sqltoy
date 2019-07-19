@@ -318,8 +318,8 @@ public interface SqlToyLazyDao {
 	 * @param topSize
 	 * @return
 	 */
-	public List findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
-			final Class voClass, final double topSize);
+	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
+			final Class<T> voClass, final double topSize);
 
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
 			final double topSize);
@@ -329,8 +329,8 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
 			final double randomCount);
 
-	public List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass, final double randomCount);
+	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
 
 	/**
 	 * @todo 批量集合通过sql进行修改操作

@@ -539,9 +539,10 @@ public class SqlToyDaoSupport {
 	 * @param topSize
 	 * @return
 	 */
-	protected List findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
-			final Class voClass, final double topSize) {
-		return findTopByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass), topSize).getRows();
+	protected <T> List<T> findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
+			final Class<T> voClass, final double topSize) {
+		return (List<T>) findTopByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass), topSize)
+				.getRows();
 	}
 
 	protected <T extends Serializable> List<T> findTopBySql(final String sql, final T entity, final double topSize) {
@@ -566,9 +567,9 @@ public class SqlToyDaoSupport {
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	protected List getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
-			Class voClass, final double randomCount) {
-		return getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
+	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> voClass, final double randomCount) {
+		return (List<T>) getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
 				randomCount).getRows();
 	}
 

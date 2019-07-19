@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,8 +10,7 @@ import java.util.List;
  * @author zhongxuchen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:PaginationModel.java,Revision:v1.0,Date:2011-2-25 上午08:48:55 $
  */
-@SuppressWarnings({ "rawtypes" })
-public class PaginationModel implements java.io.Serializable {
+public class PaginationModel<T> implements Serializable {
 	private static final long serialVersionUID = -7117473828519846708L;
 
 	/**
@@ -26,7 +26,7 @@ public class PaginationModel implements java.io.Serializable {
 	/**
 	 * 分页查询出的数据明细
 	 */
-	private List rows;
+	private List<T> rows;
 
 	/**
 	 * 总记录数
@@ -42,34 +42,34 @@ public class PaginationModel implements java.io.Serializable {
 
 	}
 
-	public PaginationModel(List rows, long recordCount) {
+	public PaginationModel(List<T> rows, long recordCount) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = 0;
 	}
 
-	public PaginationModel(List rows, long recordCount, long startIndex) {
+	public PaginationModel(List<T> rows, long recordCount, long startIndex) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
 
-	public PaginationModel(List rows, long recordCount, Integer pageSize, long startIndex) {
+	public PaginationModel(List<T> rows, long recordCount, Integer pageSize, long startIndex) {
 		setPageSize(pageSize);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
 
-	public List getRows() {
+	public List<T> getRows() {
 		if (this.rows == null)
-			return new ArrayList();
+			return new ArrayList<>();
 		return this.rows;
 	}
 
-	public void setRows(List rows) {
+	public void setRows(List<T> rows) {
 		this.rows = rows;
 	}
 
@@ -107,8 +107,8 @@ public class PaginationModel implements java.io.Serializable {
 	 * Sets the value of the pageNo property.
 	 * 
 	 * @param aPageNo
-	 *            the new value of the pageNo property where pageNo==-1 then
-	 *            show all page
+	 *            the new value of the pageNo property where pageNo==-1 then show
+	 *            all page
 	 */
 	public void setPageNo(long pageNo) {
 		this.pageNo = pageNo;
