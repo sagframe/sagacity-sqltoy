@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect;
 
-import static java.lang.System.out;
-
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.sql.Connection;
@@ -332,7 +330,7 @@ public class DialectFactory {
 											dbType, dialect);
 								}
 								if (sqlToyContext.isDebug()) {
-									out.println("getRandomResult按比例提取数据,总记录数=" + totalCount);
+									logger.debug("getRandomResult按比例提取数据,总记录数=" + totalCount);
 								}
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
 								// 如果总记录数不为零，randomCnt最小为1
@@ -565,7 +563,7 @@ public class DialectFactory {
 								Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 										dbType, dialect);
 								if (sqlToyContext.isDebug()) {
-									out.println("findTopByQuery按比例提取数据,总记录数=" + totalCount);
+									logger.debug("findTopByQuery按比例提取数据,总记录数=" + totalCount);
 								}
 								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
 							} else
