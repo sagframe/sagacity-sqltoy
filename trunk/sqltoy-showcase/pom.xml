@@ -15,7 +15,7 @@
 		<spring.version>5.1.8.RELEASE</spring.version>
 		<spring-data.version>2.1.9.RELEASE</spring-data.version>
 		<log4j.version>2.12.0</log4j.version>
-		<druid.version>1.1.18</druid.version>
+		<druid.version>1.1.19</druid.version>
 		<sagacity-sqltoy.version>4.5.3</sagacity-sqltoy.version>
 		<ehcache.version>3.7.1</ehcache.version>
 		<fastjson.version>1.2.58</fastjson.version>
