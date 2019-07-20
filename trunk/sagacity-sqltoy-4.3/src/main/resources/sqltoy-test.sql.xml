@@ -47,9 +47,9 @@
 			cache-indexs="1" uncached-template=""/>
 			
 		<!-- 安全掩码:tel\姓名\地址\卡号 -->
-		<!--最简单用法: <secure-mask column="" type="tel"/> -->
-		<secure-mask column="" type="name" head-size="" tail-size=""
-			mask-code="*****" mask-rate="50%" />
+		<!--最简单用法: <secure-mask columns="" type="tel"/> -->
+		<secure-mask columns="" type="name" head-size="3" tail-size="4"
+			mask-code="*****" mask-rate="50" />
 		<!-- 分库策略 -->
 		<sharding-datasource strategy="" />
 		<!-- 分表策略 -->
@@ -57,9 +57,9 @@
 		<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
 		<page-optimize alive-max="100" alive-seconds="600" />
 		<!-- 日期格式化 -->
-		<dateFormat columns="" format=""/>
+		<date-format columns="" format="yyyy-MM-dd HH:mm:ss"/>
 		<!-- 数字格式 -->
-		<numberFormat columns="" format=""/>
+		<number-format columns="" format=""/>
 		<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME from 
@@ -84,7 +84,7 @@
 		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
 		<link sign="," column="" />
 		<!-- 行转列 (跟unpivot互斥) -->
-		<pivot group-columns="" start-column="" end-column=""
+		<pivot category-columns="" group-columns="" start-column="" end-column=""
 			default-value="0" />
 		<!-- 列转行 -->
 		<unpivot columns="" values-as-column="" />
