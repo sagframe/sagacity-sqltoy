@@ -9,7 +9,7 @@
 
 	<!-- 数据源的配置 报表库 -->
 	<bean id="dataSource"
-		class="com.alibaba.druid.pool.DruidDataSource" name="dataSource" primary="true"
+		class="com.alibaba.druid.pool.DruidDataSource" name="dataSource" 
 		destroy-method="close">
 		<property name="name" value="dataSource" />
 		<property name="driverClassName"
