@@ -108,8 +108,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 *            the sqlToyContext to set
+	 * @param sqlToyContext the sqlToyContext to set
 	 */
 	@Autowired
 	@Qualifier(value = "sqlToyContext")
@@ -200,9 +199,8 @@ public class SqlToyDaoSupport {
 	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
 	 * @param storeNameOrKey
 	 * @param inParamsValue
-	 * @param outParamsType(可以为null)
-	 * @param resultType
-	 *            (VOClass,HashMap或null)
+	 * @param                outParamsType(可以为null)
+	 * @param resultType     (VOClass,HashMap或null)
 	 * @param dataSource
 	 * @return
 	 */
@@ -396,8 +394,7 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit
-	 *            是否自动提交
+	 * @param autoCommit    是否自动提交
 	 * @param dataSource
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
@@ -516,7 +513,7 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param                 voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 */
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
@@ -535,7 +532,7 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
+	 * @param             voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @param topSize
 	 * @return
 	 */
@@ -701,8 +698,7 @@ public class SqlToyDaoSupport {
 	 * @todo 修改对象,并通过指定级联的子对象做级联修改
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @param forceCascadeClasses
-	 *            (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
+	 * @param forceCascadeClasses      (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
 	 * @param subTableForceUpdateProps
 	 */
 	protected Long updateCascade(final Serializable entity, final String[] forceUpdateProps,

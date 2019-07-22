@@ -29,8 +29,11 @@ public class CrudCaseServiceTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
 
-	@Resource(name = "sqlToyLazyDaoShard")
-	private SqlToyLazyDao sqlToyLazyDaoShard;
+	@Resource(name = "sqlToyLazyDaoShard1")
+	private SqlToyLazyDao sqlToyLazyDaoShard1;
+	
+	@Resource(name = "sqlToyLazyDaoShard2")
+	private SqlToyLazyDao sqlToyLazyDaoShard2;
 
 	/**
 	 * 创建一条员工记录
@@ -48,9 +51,11 @@ public class CrudCaseServiceTest {
 		staffInfo.setOrganId("C0001");
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
 		staffInfo.setCountry("86");
-		sqlToyCRUDService.save(staffInfo);
+		sqlToyCRUDService.saveOrUpdate(staffInfo);
 		
-		sqlToyLazyDaoShard.save(staffInfo);
+		sqlToyLazyDaoShard1.saveOrUpdate(staffInfo);
+		
+		sqlToyLazyDaoShard2.saveOrUpdate(staffInfo);
 	}
 
 	/**
