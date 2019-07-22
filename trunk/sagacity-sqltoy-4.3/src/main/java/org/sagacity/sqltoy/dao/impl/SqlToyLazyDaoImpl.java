@@ -39,7 +39,6 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugin.TranslateHandler;
 import org.sagacity.sqltoy.support.BaseDaoSupport;
-import org.springframework.stereotype.Repository;
 
 /**
  * @project sqltoy-orm
@@ -48,7 +47,6 @@ import org.springframework.stereotype.Repository;
  * @version id:SqlToyLazyDaoImpl.java,Revision:v1.0,Date:2012-7-15
  */
 @SuppressWarnings({ "rawtypes" })
-@Repository("sqlToyLazyDao")
 public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	/*
