@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 /**
  * @project sqltoy-orm
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @version id:SqlToyCRUDServiceImpl.java,Revision:v1.0,Date:2012-7-16
  */
 @SuppressWarnings({ "rawtypes" })
+@Service("sqlToyCRUDService")
 public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/**
 	 * 定义全局日志
