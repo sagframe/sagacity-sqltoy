@@ -3,9 +3,12 @@
  */
 package org.sagacity.sqltoy.showcase;
 
+import javax.annotation.Resource;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.SqlToyApplication;
+import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.showcase.vo.StaffInfoVO;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -26,6 +29,9 @@ public class CrudCaseServiceTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
 
+	@Resource(name = "sqlToyLazyDaoShard")
+	private SqlToyLazyDao sqlToyLazyDaoShard;
+
 	/**
 	 * 创建一条员工记录
 	 */
@@ -43,6 +49,8 @@ public class CrudCaseServiceTest {
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
 		staffInfo.setCountry("86");
 		sqlToyCRUDService.save(staffInfo);
+		
+		sqlToyLazyDaoShard.save(staffInfo);
 	}
 
 	/**
