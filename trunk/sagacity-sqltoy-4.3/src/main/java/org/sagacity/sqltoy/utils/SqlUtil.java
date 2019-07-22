@@ -733,7 +733,7 @@ public class SqlUtil {
 			final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes, final Boolean autoCommit,
 			final Connection conn) throws Exception {
 		if (rowDatas == null) {
-			logger.error("数据为空!");
+			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return Long.valueOf(0);
 		}
 		PreparedStatement pst = null;
