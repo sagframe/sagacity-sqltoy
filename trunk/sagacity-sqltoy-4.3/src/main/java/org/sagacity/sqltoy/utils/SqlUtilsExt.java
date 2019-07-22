@@ -86,8 +86,8 @@ public class SqlUtilsExt {
 		try {
 			boolean hasSetAutoCommit = false;
 			// 是否自动提交
-			if (autoCommit != null && !autoCommit.equals(conn.getAutoCommit())) {
-				conn.setAutoCommit(autoCommit);
+			if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
+				conn.setAutoCommit(autoCommit.booleanValue());
 				hasSetAutoCommit = true;
 			}
 			pst = conn.prepareStatement(updateSql);
