@@ -53,7 +53,7 @@ public class ScanEntityAndSqlResource {
 	 * @return
 	 */
 	public static Set<Class<?>> getPackageEntities(String pack, boolean recursive, String charset) {
-		// 第一个class类的集合
+		// class类的集合
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
 		// 获取包的名字 并进行替换
 		String packageName = pack;
