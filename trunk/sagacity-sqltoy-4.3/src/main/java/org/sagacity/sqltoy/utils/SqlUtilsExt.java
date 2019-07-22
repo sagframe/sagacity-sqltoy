@@ -127,7 +127,7 @@ public class SqlUtilsExt {
 					}
 				}
 			}
-			// updateCount = new Long(pst.getUpdateCount());
+			// 恢复conn原始autoCommit默认值
 			if (hasSetAutoCommit)
 				conn.setAutoCommit(!autoCommit);
 		} catch (Exception e) {
