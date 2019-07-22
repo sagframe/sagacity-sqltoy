@@ -765,7 +765,9 @@ public class SqlConfigParseUtils {
 								buffer.append(" with ");
 							if (i > 0)
 								buffer.append(",");
-							buffer.append(aliasTableAs[0]).append(" as (").append(aliasTableAs[1]).append(") ");
+							//aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容}
+							buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
+									.append(aliasTableAs[2]).append(") ");
 						}
 						sqlToyConfig.setFastWithSql(buffer.toString());
 					}

@@ -134,8 +134,9 @@ public class SybaseIQDialect implements Dialect {
 						else
 							sql.append(",");
 						sql.append(aliasTableAs[0]);
-						sql.append(" as (");
-						sql.append(aliasTableAs[1]);
+						sql.append(" as ").append(aliasTableAs[1]);
+						sql.append(" (");
+						sql.append(aliasTableAs[2]);
 						sql.append(")");
 						index++;
 					}
