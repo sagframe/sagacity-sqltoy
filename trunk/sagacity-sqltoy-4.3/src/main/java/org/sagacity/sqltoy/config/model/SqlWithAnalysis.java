@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.sagacity.sqltoy.utils.DebugUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -32,14 +30,14 @@ public class SqlWithAnalysis implements Serializable {
 
 //	private final Pattern withPattern = Pattern.compile(
 //			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
-	
+
 	// with 下面多个as
 	private final Pattern otherWithPattern = Pattern.compile(
 			"(?i)\\s*\\,\\s*[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 
 //	private final Pattern otherWithPattern = Pattern.compile(
 //			"(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
-	
+
 	private final Pattern asPattern = Pattern.compile("\\Was");
 
 	private String sql;
@@ -161,15 +159,16 @@ public class SqlWithAnalysis implements Serializable {
 		this.hasWith = hasWith;
 	}
 
-	public static void main(String[] args) {
-		
-		String sql = "with t1(p1,p2) as  (select * from table ),t2 as (select 1 from table2) select * from t1 left join t2 on t1.id=t2.id";
-		// String sql = "with t1(p1,p2) as materialized(select * from table ) select p1,p2 from t1";
-		DebugUtil.beginTime("id");
-		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
-		//System.err.println(sqlWith.withSql);
-		//System.err.println(sqlWith.rejectWithSql);
-		DebugUtil.endTime("id");
-		//DebugUtil.printAry(sqlWith.withSqlSet, ";", true);
-	}
+//	public static void main(String[] args) {
+//
+//		String sql = "with t1(p1,p2) as  (select * from table ),t2 as (select 1 from table2) select * from t1 left join t2 on t1.id=t2.id";
+//		// String sql = "with t1(p1,p2) as materialized(select * from table ) select
+//		// p1,p2 from t1";
+//		DebugUtil.beginTime("id");
+//		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+//		// System.err.println(sqlWith.withSql);
+//		// System.err.println(sqlWith.rejectWithSql);
+//		DebugUtil.endTime("id");
+//		// DebugUtil.printAry(sqlWith.withSqlSet, ";", true);
+//	}
 }
