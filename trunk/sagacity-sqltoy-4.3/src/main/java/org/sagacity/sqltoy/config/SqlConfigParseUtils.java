@@ -84,7 +84,7 @@ public class SqlConfigParseUtils {
 	 */
 	// private final static Pattern CTE_PATTERN =
 	// Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
-	private final static Pattern CTE_PATTERN = Pattern.compile(
+	public final static Pattern CTE_PATTERN = Pattern.compile(
 			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
@@ -127,7 +127,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
 
 	// nosql数据库的参数名称匹配(参数必须要有字母)
-	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
+	public static final Pattern NOSQL_NAMED_PATTERN = Pattern
 			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-z|A-Z]+\\w*(\\.\\w+)*\\s*\\)");
 
 	/**

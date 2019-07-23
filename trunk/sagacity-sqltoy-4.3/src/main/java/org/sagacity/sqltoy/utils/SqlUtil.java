@@ -67,7 +67,7 @@ public class SqlUtil {
 	/**
 	 * sql中的单行注释
 	 */
-	private final static Pattern maskPattern = Pattern.compile("\\/\\*[^(+|!)]");
+	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^(+|!)]");
 
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
