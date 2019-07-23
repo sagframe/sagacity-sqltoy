@@ -699,8 +699,9 @@ public class SqlConfigParseUtils {
 		originalSql = convertFunctions(functionConverts, dialect, originalSql);
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
-		// 判定是否有union语句
-		sqlToyConfig.setHasUnion(DialectUtils.hasUnion(originalSql, false));
+		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
+		if (StringUtil.matches(originalSql, DialectUtils.UNION_PATTERN))
+			sqlToyConfig.setHasUnion(DialectUtils.hasUnion(originalSql, false));
 		/**
 		 * 只有在查询模式前提下才支持fastPage机制
 		 */
