@@ -325,9 +325,9 @@ public class DB2Dialect implements Dialect {
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(final SqlToyContext sqlToyContext, final String sql, final Object[] paramsValue,
-			final boolean isLastSql, Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, appendWithUR(sql), paramsValue, isLastSql, conn);
+	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+			final Object[] paramsValue, final boolean isLastSql, Connection conn) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, appendWithUR(sql), paramsValue, isLastSql, conn);
 	}
 
 	/*

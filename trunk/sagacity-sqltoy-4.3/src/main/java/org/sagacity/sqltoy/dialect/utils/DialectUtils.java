@@ -249,6 +249,7 @@ public class DialectUtils {
 	/**
 	 * @todo 通用的查询记录总数
 	 * @param sqlToyContext
+	 * @param sqlToyConfig
 	 * @param sql
 	 * @param paramsValue
 	 * @param isLastSql
@@ -256,8 +257,9 @@ public class DialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long getCountBySql(final SqlToyContext sqlToyContext, final String sql, final Object[] paramsValue,
-			final boolean isLastSql, final Connection conn) throws Exception {
+	public static Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn)
+			throws Exception {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
@@ -265,9 +267,14 @@ public class DialectUtils {
 		if (isLastSql) {
 			lastCountSql = sql;
 		} else {
-			// with as分析器
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
-			String query_tmp = sqlWith.getRejectWithSql();
+			String query_tmp = sql;
+			String withSql = "";
+			// with as分析器(避免每次做with 检测,提升效率)
+			if (sqlToyConfig != null && sqlToyConfig.isHasWith()) {
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+				query_tmp = sqlWith.getRejectWithSql();
+				withSql = sqlWith.getWithSql();
+			}
 			int lastBracketIndex = query_tmp.lastIndexOf(")");
 			int sql_from_index = 0;
 			// sql不以from开头，截取from 后的部分语句
@@ -324,8 +331,8 @@ public class DialectUtils {
 			}
 
 			paramCnt = getParamsCount(countQueryStr.toString());
-			withParamCnt = getParamsCount(sqlWith.getWithSql());
-			countQueryStr.insert(0, sqlWith.getWithSql() + " ");
+			withParamCnt = getParamsCount(withSql);
+			countQueryStr.insert(0, withSql + " ");
 			lastCountSql = countQueryStr.toString();
 		}
 		final int paramCntFin = paramCnt;
@@ -1748,7 +1755,7 @@ public class DialectUtils {
 			}
 
 			// 防止数据量过大，先用count方式查询提升效率
-			long recordCnt = getCountBySql(sqlToyContext, queryStr.toString(), paramValues, true, conn);
+			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn);
 			if (recordCnt == 0)
 				return true;
 			else if (recordCnt > 1)

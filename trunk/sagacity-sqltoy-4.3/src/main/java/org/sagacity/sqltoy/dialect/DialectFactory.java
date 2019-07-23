@@ -708,15 +708,25 @@ public class DialectFactory {
 				sql = (sqlToyConfig.getFastWithSql() == null ? "" : sqlToyConfig.getFastWithSql()).concat(" ")
 						.concat(sqlToyConfig.getFastSql());
 			}
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+			String rejectWithSql = sql;
+			String withSql = "";
+			boolean hasUnion = false;
+			// update 2019-07-23 进行先判定然后再通过逻辑解析with as 相关语法,提升效率
+			// 存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
+			if (sqlToyConfig.isHasUnion() && sqlToyConfig.isUnionAllCount()) {
+				if (sqlToyConfig.isHasWith()) {
+					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+					rejectWithSql = sqlWith.getRejectWithSql();
+					withSql = sqlWith.getWithSql();
+				}
+				hasUnion = DialectUtils.hasUnion(rejectWithSql, false);
+			}
 			// 判定union all并且可以进行union all简化处理(sql文件中进行配置)
-			if (DialectUtils.hasUnion(sqlWith.getRejectWithSql(), false)
-					&& StringUtil.matches(sqlWith.getRejectWithSql(), SqlToyConstants.UNION_ALL_REGEX)
-					&& sqlToyConfig.isUnionAllCount()) {
+			if (hasUnion && StringUtil.matches(rejectWithSql, SqlToyConstants.UNION_ALL_REGEX)) {
 				isLastSql = true;
-				String[] unionSqls = sqlWith.getRejectWithSql().split(SqlToyConstants.UNION_ALL_REGEX);
+				String[] unionSqls = rejectWithSql.split(SqlToyConstants.UNION_ALL_REGEX);
 				StringBuilder countSql = new StringBuilder();
-				countSql.append(sqlWith.getWithSql());
+				countSql.append(withSql);
 				countSql.append(" select sum(row_count) from (");
 				int sql_from_index;
 				int unionSqlSize = unionSqls.length;
@@ -735,7 +745,7 @@ public class DialectFactory {
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, queryParam.getSql(),
+		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn);
 	}
 

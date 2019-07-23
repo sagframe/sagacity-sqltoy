@@ -182,9 +182,9 @@ public class MySqlDialect implements Dialect {
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(final SqlToyContext sqlToyContext, String sql, Object[] paramsValue, boolean isLastSql,
-			final Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sql, paramsValue, isLastSql, conn);
+	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
+			Object[] paramsValue, boolean isLastSql, final Connection conn) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
 	}
 
 	/*

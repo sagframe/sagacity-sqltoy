@@ -114,9 +114,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(SqlToyContext sqlToyContext, String sql, Object[] paramsValue, boolean isLastSql,
-			Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sql, paramsValue, isLastSql, conn);
+	public Long getCountBySql(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
+			Object[] paramsValue, boolean isLastSql, Connection conn) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext,sqlToyConfig, sql, paramsValue, isLastSql, conn);
 	}
 
 	/*

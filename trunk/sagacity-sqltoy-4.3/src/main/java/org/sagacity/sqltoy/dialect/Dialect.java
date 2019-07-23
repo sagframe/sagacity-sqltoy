@@ -91,6 +91,7 @@ public interface Dialect {
 	/**
 	 * @todo 取记录数量
 	 * @param sqlToyContext
+	 * @param sqlToyConfig
 	 * @param sql
 	 * @param paramsValue
 	 * @param isLastSql
@@ -98,8 +99,8 @@ public interface Dialect {
 	 * @return
 	 * @throws Exception
 	 */
-	public Long getCountBySql(final SqlToyContext sqlToyContext, final String sql, final Object[] paramsValue,
-			final boolean isLastSql, final Connection conn) throws Exception;
+	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+			final Object[] paramsValue, final boolean isLastSql, final Connection conn) throws Exception;
 
 	/**
 	 * @todo 获取单个对象

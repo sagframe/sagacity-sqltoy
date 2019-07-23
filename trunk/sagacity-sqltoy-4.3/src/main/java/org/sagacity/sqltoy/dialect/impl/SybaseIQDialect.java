@@ -211,7 +211,10 @@ public class SybaseIQDialect implements Dialect {
 			sql.append(sqlWith.getWithSql());
 			minSql = sqlWith.getRejectWithSql();
 		}
-		if (DialectUtils.hasUnion(minSql, false)) {
+		boolean hasUnion = false;
+		if (sqlToyConfig.isHasUnion())
+			hasUnion = DialectUtils.hasUnion(minSql, false);
+		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" SAG_Paginationtable.* from (");
 			sql.append(minSql);
@@ -249,9 +252,9 @@ public class SybaseIQDialect implements Dialect {
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(final SqlToyContext sqlToyContext, final String sql, final Object[] paramsValue,
-			final boolean isLastSql, final Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sql, paramsValue, isLastSql, conn);
+	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+			final Object[] paramsValue, final boolean isLastSql, final Connection conn) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
 	}
 
 	/*
