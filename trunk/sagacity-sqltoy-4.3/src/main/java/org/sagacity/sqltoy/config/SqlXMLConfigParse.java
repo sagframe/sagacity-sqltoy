@@ -95,8 +95,8 @@ public class SqlXMLConfigParse {
 	 * @param dialect
 	 * @throws Exception
 	 */
-	public static synchronized void parseXML(List xmlFiles, ConcurrentHashMap<String, SqlToyConfig> cache,
-			String encoding, String dialect) throws Exception {
+	public static void parseXML(List xmlFiles, ConcurrentHashMap<String, SqlToyConfig> cache, String encoding,
+			String dialect) throws Exception {
 		if (xmlFiles == null || xmlFiles.isEmpty())
 			return;
 		File sqlFile;
@@ -107,14 +107,16 @@ public class SqlXMLConfigParse {
 			if (resource instanceof File) {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
-				Long lastModified = Long.valueOf(sqlFile.lastModified());
-				// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-				Long preModified = (Long) filesLastModifyMap.get(fileName);
-				// 最后修改时间比上次修改时间大，重新加载sql文件
-				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-					filesLastModifyMap.put(fileName, lastModified);
-					logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
-					parseSingleFile(sqlFile, cache, encoding, dialect, true);
+				synchronized (fileName) {
+					Long lastModified = Long.valueOf(sqlFile.lastModified());
+					// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
+					Long preModified = (Long) filesLastModifyMap.get(fileName);
+					// 最后修改时间比上次修改时间大，重新加载sql文件
+					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
+						filesLastModifyMap.put(fileName, lastModified);
+						logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
+						parseSingleFile(sqlFile, cache, encoding, dialect, true);
+					}
 				}
 			}
 		}
