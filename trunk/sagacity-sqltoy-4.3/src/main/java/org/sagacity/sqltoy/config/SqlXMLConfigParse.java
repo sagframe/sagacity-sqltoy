@@ -95,8 +95,8 @@ public class SqlXMLConfigParse {
 	 * @param dialect
 	 * @throws Exception
 	 */
-	public static void parseXML(List xmlFiles, ConcurrentHashMap<String, SqlToyConfig> cache, String encoding,
-			String dialect) throws Exception {
+	public static synchronized void parseXML(List xmlFiles, ConcurrentHashMap<String, SqlToyConfig> cache,
+			String encoding, String dialect) throws Exception {
 		if (xmlFiles == null || xmlFiles.isEmpty())
 			return;
 		File sqlFile;
