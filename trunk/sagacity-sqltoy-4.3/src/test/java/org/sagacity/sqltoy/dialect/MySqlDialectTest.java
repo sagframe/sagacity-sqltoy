@@ -17,11 +17,8 @@ import junit.framework.TestCase;
 
 /**
  * @project sqltoy-orm
- * @description
- *              <p>
- *              本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
+ * @description 本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
  *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql
- *              </p>
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015年2月13日
  */
@@ -79,7 +76,7 @@ public class MySqlDialectTest extends TestCase {
 				"jdbc:mysql://192.168.56.109:3306/vxiplatform?useUnicode=true&characterEncoding=utf-8", "root", "root");
 		MySqlDialect dialect = new MySqlDialect();
 		try {
-			Long count = dialect.getCountBySql(null,null, query.toString(), paramValues, false, conn);
+			Long count = dialect.getCountBySql(null, null, query.toString(), paramValues, false, conn);
 			System.err.println(count);
 		} catch (Exception e) {
 			e.printStackTrace();

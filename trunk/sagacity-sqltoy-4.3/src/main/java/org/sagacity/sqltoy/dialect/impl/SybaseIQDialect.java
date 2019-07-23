@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -213,7 +214,7 @@ public class SybaseIQDialect implements Dialect {
 		}
 		boolean hasUnion = false;
 		if (sqlToyConfig.isHasUnion())
-			hasUnion = DialectUtils.hasUnion(minSql, false);
+			hasUnion = SqlUtil.hasUnion(minSql, false);
 		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" SAG_Paginationtable.* from (");

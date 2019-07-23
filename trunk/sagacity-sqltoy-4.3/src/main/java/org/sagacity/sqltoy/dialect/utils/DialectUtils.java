@@ -1812,7 +1812,7 @@ public class DialectUtils {
 	public static boolean isComplexPageQuery(String queryStr) {
 		// 清除不必要的字符并转小写
 		String tmpQuery = StringUtil.clearMistyChars(queryStr.toLowerCase(), " ");
-		boolean isComplexQuery = hasUnion(tmpQuery, false);
+		boolean isComplexQuery = SqlUtil.hasUnion(tmpQuery, false);
 		// from 和 where之间有","表示多表查询
 		if (!isComplexQuery) {
 			int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, tmpQuery, 0);
@@ -1831,35 +1831,6 @@ public class DialectUtils {
 			}
 		}
 		return isComplexQuery;
-	}
-
-	/**
-	 * @todo 判断是否内包含union 查询,即是否是select * from (select * from t union select * from
-	 *       t2 ) 形式的查询,将所有()剔除后判定是否有union 存在
-	 * @param sql
-	 * @param clearMistyChar
-	 * @return
-	 */
-	public static boolean hasUnion(String sql, boolean clearMistyChar) {
-		StringBuilder lastSql = new StringBuilder(clearMistyChar ? StringUtil.clearMistyChars(sql, " ") : sql);
-		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
-		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
-		if (fromIndex != -1)
-			lastSql.delete(0, fromIndex);
-		// 删除所有对称的括号中的内容
-		int start = lastSql.indexOf("(");
-		int symMarkEnd;
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("(", ")", lastSql.toString(), start);
-			if (symMarkEnd != -1) {
-				lastSql.delete(start, symMarkEnd + 1);
-				start = lastSql.indexOf("(");
-			} else
-				break;
-		}
-		if (StringUtil.matches(lastSql.toString(), UNION_PATTERN))
-			return true;
-		return false;
 	}
 
 	/**

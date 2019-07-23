@@ -20,7 +20,6 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
-import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.plugin.IFunction;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -700,8 +699,8 @@ public class SqlConfigParseUtils {
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
-		if (StringUtil.matches(originalSql, DialectUtils.UNION_PATTERN))
-			sqlToyConfig.setHasUnion(DialectUtils.hasUnion(originalSql, false));
+		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN))
+			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		/**
 		 * 只有在查询模式前提下才支持fastPage机制
 		 */

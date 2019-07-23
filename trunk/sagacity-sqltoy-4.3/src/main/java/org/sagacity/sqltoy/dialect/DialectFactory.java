@@ -719,7 +719,7 @@ public class DialectFactory {
 					rejectWithSql = sqlWith.getRejectWithSql();
 					withSql = sqlWith.getWithSql();
 				}
-				hasUnion = DialectUtils.hasUnion(rejectWithSql, false);
+				hasUnion = SqlUtil.hasUnion(rejectWithSql, false);
 			}
 			// 判定union all并且可以进行union all简化处理(sql文件中进行配置)
 			if (hasUnion && StringUtil.matches(rejectWithSql, SqlToyConstants.UNION_ALL_REGEX)) {
