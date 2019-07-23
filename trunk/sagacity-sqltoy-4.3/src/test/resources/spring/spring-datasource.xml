@@ -7,13 +7,6 @@
 	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd 
 	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
 	default-lazy-init="true" default-autowire="byName">
-
-	<!-- druid 统计过滤器 -->
-	<bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
-		<property name="slowSqlMillis" value="10000" />
-		<property name="logSlowSql" value="true" />
-	</bean>
-	
 	<!-- 数据源的配置 portal库 -->
 	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
 		name="dataSource" destroy-method="close">
@@ -44,8 +37,6 @@
 		<property name="removeAbandonedTimeoutMillis" value="300000" /> 
 		<!-- 关闭abanded连接时输出错误日志 --> 
 		<property name="logAbandoned" value="false" />
-		
-		<!-- <property name="filters" value="stat,config" /> -->
 	    <!-- 使用默认密钥配置 -->
      	<property name="connectionProperties" value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
