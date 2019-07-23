@@ -82,8 +82,10 @@ public class SqlConfigParseUtils {
 	/**
 	 * CTE 即 with as 用法
 	 */
-	private final static Pattern CTE_PATTERN = Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
-
+	// private final static Pattern CTE_PATTERN =
+	// Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
+	private final static Pattern CTE_PATTERN = Pattern.compile(
+			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
 	 */
@@ -695,7 +697,7 @@ public class SqlConfigParseUtils {
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = convertFunctions(functionConverts, dialect, originalSql);
 		// 判定是否有with查询模式
-		sqlToyConfig.setHasWith(SqlConfigParseUtils.hasWith(originalSql));
+		sqlToyConfig.setHasWith(hasWith(originalSql));
 
 		/**
 		 * 只有在查询模式前提下才支持fastPage机制
@@ -765,7 +767,7 @@ public class SqlConfigParseUtils {
 								buffer.append(" with ");
 							if (i > 0)
 								buffer.append(",");
-							//aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容}
+							// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容}
 							buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
 									.append(aliasTableAs[2]).append(") ");
 						}
