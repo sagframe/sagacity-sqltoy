@@ -79,7 +79,7 @@ public class MySqlDialectTest extends TestCase {
 				"jdbc:mysql://192.168.56.109:3306/vxiplatform?useUnicode=true&characterEncoding=utf-8", "root", "root");
 		MySqlDialect dialect = new MySqlDialect();
 		try {
-			Long count = dialect.getCountBySql(null, query.toString(), paramValues, false, conn);
+			Long count = dialect.getCountBySql(null,null, query.toString(), paramValues, false, conn);
 			System.err.println(count);
 		} catch (Exception e) {
 			e.printStackTrace();
