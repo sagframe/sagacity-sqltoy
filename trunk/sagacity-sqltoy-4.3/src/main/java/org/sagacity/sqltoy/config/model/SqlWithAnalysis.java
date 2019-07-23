@@ -15,8 +15,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description Sql语句中存在with的分析,只支持单个with 但支持多个as
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-6-20
- * @Modification Date:2019-7-22 {填写修改说明} //需要优化with as 语法解析格式 ,其格式包含:with xx as
- *               (); with xx xx as () ; with xxx(p1,p2) as () 三种形态
+ * @Modification Date:2019-7-22 优化with as 语法解析格式 ,其格式包含:with xx as (); with xx
+ *               xx as () ; with xxx(p1,p2) as () 三种形态
  */
 public class SqlWithAnalysis implements Serializable {
 	/**
@@ -28,15 +28,15 @@ public class SqlWithAnalysis implements Serializable {
 	private final Pattern withPattern = Pattern.compile(
 			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 
-//	private final Pattern withPattern = Pattern.compile(
-//			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
+	// private final Pattern withPattern = Pattern.compile(
+	// "(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
 
 	// with 下面多个as
 	private final Pattern otherWithPattern = Pattern.compile(
 			"(?i)\\s*\\,\\s*[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 
-//	private final Pattern otherWithPattern = Pattern.compile(
-//			"(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
+	// private final Pattern otherWithPattern = Pattern.compile(
+	// "(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
 
 	private final Pattern asPattern = Pattern.compile("\\Was");
 
@@ -153,22 +153,24 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
-	 * @param hasWith the hasWith to set
+	 * @param hasWith
+	 *            the hasWith to set
 	 */
 	public void setHasWith(boolean hasWith) {
 		this.hasWith = hasWith;
 	}
 
-//	public static void main(String[] args) {
-//
-//		String sql = "with t1(p1,p2) as  (select * from table ),t2 as (select 1 from table2) select * from t1 left join t2 on t1.id=t2.id";
-//		// String sql = "with t1(p1,p2) as materialized(select * from table ) select
-//		// p1,p2 from t1";
-//		DebugUtil.beginTime("id");
-//		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
-//		// System.err.println(sqlWith.withSql);
-//		// System.err.println(sqlWith.rejectWithSql);
-//		DebugUtil.endTime("id");
-//		// DebugUtil.printAry(sqlWith.withSqlSet, ";", true);
-//	}
+	// public static void main(String[] args) {
+	//
+	// String sql = "with t1(p1,p2) as (select * from table ),t2 as (select 1 from
+	// table2) select * from t1 left join t2 on t1.id=t2.id";
+	// // String sql = "with t1(p1,p2) as materialized(select * from table ) select
+	// // p1,p2 from t1";
+	// DebugUtil.beginTime("id");
+	// SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+	// // System.err.println(sqlWith.withSql);
+	// // System.err.println(sqlWith.rejectWithSql);
+	// DebugUtil.endTime("id");
+	// // DebugUtil.printAry(sqlWith.withSqlSet, ";", true);
+	// }
 }
