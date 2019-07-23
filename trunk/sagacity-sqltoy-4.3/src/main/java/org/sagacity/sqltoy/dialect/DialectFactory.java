@@ -702,11 +702,12 @@ public class DialectFactory {
 			sql = sqlToyConfig.getCountSql();
 			isLastSql = true;
 		} else {
-			if (!sqlToyConfig.isHasFast())
+			if (!sqlToyConfig.isHasFast()) {
 				sql = sqlToyConfig.getSql();
-			else
+			} else {
 				sql = (sqlToyConfig.getFastWithSql() == null ? "" : sqlToyConfig.getFastWithSql()).concat(" ")
 						.concat(sqlToyConfig.getFastSql());
+			}
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 			// 判定union all并且可以进行union all简化处理(sql文件中进行配置)
 			if (DialectUtils.hasUnion(sqlWith.getRejectWithSql(), false)
