@@ -142,6 +142,25 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private boolean hasWith = false;
 
 	/**
+	 * 判定sql是否有union 语法
+	 */
+	private boolean hasUnion = false;
+
+	/**
+	 * @return the hasUnion
+	 */
+	public boolean isHasUnion() {
+		return hasUnion;
+	}
+
+	/**
+	 * @param hasUnion the hasUnion to set
+	 */
+	public void setHasUnion(boolean hasUnion) {
+		this.hasUnion = hasUnion;
+	}
+
+	/**
 	 * 快速分页部分的sql引用with as表名的位置，即用到第几个with
 	 */
 	private int fastWithIndex = -1;
@@ -691,7 +710,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	public void addCacheArgParam(String name) {
-		String param=name.toLowerCase();
+		String param = name.toLowerCase();
 		if (!this.cacheArgNames.contains(param))
 			this.cacheArgNames.add(param);
 	}
