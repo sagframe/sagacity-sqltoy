@@ -25,6 +25,7 @@
 		<beanutils.version>1.9.3</beanutils.version>
 		<commons-pool2.version>2.6.2</commons-pool2.version>
 		<aspectjweaver.version>1.9.4</aspectjweaver.version>
+		<mysql.version>8.0.17</mysql.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -77,6 +78,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
+			<version>${mysql.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
