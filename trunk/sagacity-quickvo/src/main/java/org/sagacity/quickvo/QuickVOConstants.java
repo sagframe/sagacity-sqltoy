@@ -125,11 +125,13 @@ public class QuickVOConstants implements Serializable {
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "Date", "java.util.Date" },
 			{ "DATETIME", "Timestamp", "java.util.Date" }, { "TIME", "Date", "java.util.Date" },
 			{ "VARCHAR", "String", "" }, { "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" },
+			{ "LONGVARCHAR", "String", "" }, { "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" },
 			{ "STRING", "String", "" }, { "CHAR", "String", "" }, { "CHARACTER", "String", "" },
 			{ "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" }, { "Clob", "Clob", "java.sql.Clob" },
-			{ "CLOB", "CLOB", "oracle.sql.CLOB", "10" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "10" },
-			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
-			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "Serializable", "java.io.Serializable" } };
+			{ "NCLOB", "Clob", "java.sql.Clob" }, { "CLOB", "CLOB", "oracle.sql.CLOB", "10" },
+			{ "BLOB", "BLOB", "oracle.sql.BLOB", "10" }, { "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" },
+			{ "LONGTEXT", "String", "" }, { "IMAGE", "byte[]", "" },
+			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
 
 	/**
 	 * 原始类型
