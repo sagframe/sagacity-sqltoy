@@ -45,6 +45,8 @@ public class DBUtil {
 		// sqlserver建议采用2012或以上版本
 		// 2005版本或以上版本,以2008为支持主体
 		public final static String SQLSERVER = "sqlserver";
+		
+		@Deprecated
 		public final static String SQLSERVER2012 = "sqlserver2012";
 		// 暂时未启用
 		public final static String SQLSERVER2014 = "sqlserver2014";
@@ -58,7 +60,8 @@ public class DBUtil {
 		// 以12.x为基准版
 		public final static String INFORMIX = "informix";
 		public final static String POSTGRESQL = "postgresql";
-
+		
+		@Deprecated
 		public final static String POSTGRESQL94 = "postgresql94";
 
 		// 以15.7为基准起始版
@@ -88,6 +91,7 @@ public class DBUtil {
 		// 不再支持sqlserver2000
 		public final static int SQLSERVER = 30;
 		// public final static int SQLSERVER2005 = 31;
+		@Deprecated
 		public final static int SQLSERVER2012 = 32;
 		public final static int SQLSERVER2014 = 33;
 		public final static int SQLSERVER2016 = 34;
@@ -96,6 +100,7 @@ public class DBUtil {
 		public final static int INFORMIX9_10 = 50;
 		public final static int INFORMIX = 51;
 
+		@Deprecated
 		public final static int POSTGRESQL94 = 60;
 		public final static int POSTGRESQL = 61;
 
