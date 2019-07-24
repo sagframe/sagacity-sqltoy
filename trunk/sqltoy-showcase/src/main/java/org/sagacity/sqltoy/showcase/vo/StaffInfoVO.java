@@ -20,6 +20,11 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	 */
 	private static final long serialVersionUID = 3818740781613222254L;
 	
+	/**
+	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
+	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
+	 */
+	 
 	/** default constructor */
 	public StaffInfoVO() {
 		super();
@@ -76,6 +81,10 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 
 	/*---end-constructor-area---don't-update-this-area--*/
 	
+	
+	//请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
+	//如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
+	 
 	/**
      *@todo vo columns to String
      */

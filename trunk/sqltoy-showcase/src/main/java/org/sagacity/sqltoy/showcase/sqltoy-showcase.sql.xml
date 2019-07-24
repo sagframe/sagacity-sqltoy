@@ -17,7 +17,7 @@
 		<value>
 			<![CDATA[
 		SELECT ID, STAFF_ID,STAFF_ID STAFF_NAME, POST_TYPE,POST_TYPE POST_NAME, CREATE_TIME, COMMENTS
-		FROM sagacity.sag_sharding_real t
+		FROM sag_sharding_real t
 		where 1=1 
 		and t.CREATE_TIME>=:beginTime and t.CREATE_TIME<:endTime
 		#[and t.STAFF_ID in (:staffIds)]
