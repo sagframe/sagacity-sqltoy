@@ -9,7 +9,7 @@
 
 	<!-- 数据源的配置 报表库 -->
 	<bean id="dataSource"
-		class="com.alibaba.druid.pool.DruidDataSource" name="dataSource" 
+		class="com.alibaba.druid.pool.DruidDataSource" name="dataSource"
 		destroy-method="close">
 		<property name="name" value="dataSource" />
 		<property name="driverClassName"
@@ -32,6 +32,12 @@
 		<property name="testOnReturn" value="false" />
 		<property name="validationQuery"
 			value="${jdbc.validationQuery}" />
+		<!-- 超过时间限制是否回收 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 超时时间；单位为秒。180秒=3分钟 -->
+		<property name="removeAbandonedTimeoutMillis" value="300000" />
+		<!-- 关闭abanded连接时输出错误日志 -->
+		<property name="logAbandoned" value="false" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
