@@ -25,35 +25,23 @@
 	<tx:advice id="txAdvice"
 		transaction-manager="transactionManager">
 		<tx:attributes>
-			<tx:method name="get*" propagation="NOT_SUPPORTED"
-				isolation="DEFAULT" />
-			<tx:method name="load*" propagation="NOT_SUPPORTED"
-				isolation="DEFAULT" />
-			<tx:method name="query*" propagation="NOT_SUPPORTED"
-				isolation="DEFAULT" />
-			<tx:method name="search*" propagation="NOT_SUPPORTED"
-				isolation="DEFAULT" />
-			<tx:method name="find*" propagation="NOT_SUPPORTED"
-				isolation="DEFAULT" />
+			<!--  查询,只读事务 -->
+			<tx:method name="get*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
+			<tx:method name="load*" propagation="NOT_SUPPORTED"	isolation="DEFAULT" />
+			<tx:method name="query*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
+			<tx:method name="search*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
+			<tx:method name="find*" propagation="NOT_SUPPORTED"	isolation="DEFAULT" />
 
-			<tx:method name="add*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="change*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="create*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="del*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="edit*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="execute*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="save*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="update*" propagation="REQUIRED"
-				rollback-for="Throwable" />
-			<tx:method name="write*" propagation="REQUIRED"
-				rollback-for="Throwable" />
+			<!--  增加、修改、删除 -->
+			<tx:method name="add*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="change*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="create*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="del*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="edit*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="execute*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="update*" propagation="REQUIRED" rollback-for="Throwable" />
+			<tx:method name="write*" propagation="REQUIRED" rollback-for="Throwable" />
 			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
 		</tx:attributes>
 	</tx:advice>
