@@ -42,6 +42,8 @@
 			<tx:method name="save*" propagation="REQUIRED" rollback-for="Throwable" />
 			<tx:method name="update*" propagation="REQUIRED" rollback-for="Throwable" />
 			<tx:method name="write*" propagation="REQUIRED" rollback-for="Throwable" />
+			
+			<!--  其他默认supports -->
 			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
 		</tx:attributes>
 	</tx:advice>
