@@ -9,8 +9,7 @@
 
 	<!-- 数据源的配置 报表库 -->
 	<bean id="dataSource"
-		class="com.alibaba.druid.pool.DruidDataSource" name="dataSource"
-		destroy-method="close">
+		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
 		<property name="name" value="dataSource" />
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
@@ -44,8 +43,7 @@
 
 	<!-- 数据源的配置 sharding1 -->
 	<bean id="sharding1"
-		class="com.alibaba.druid.pool.DruidDataSource" name="sharding1"
-		destroy-method="close">
+		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
 		<property name="name" value="sharding1" />
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
@@ -75,8 +73,7 @@
 
 	<!-- 数据源的配置 sharding2 -->
 	<bean id="sharding2"
-		class="com.alibaba.druid.pool.DruidDataSource" name="sharding2"
-		destroy-method="close">
+		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
 		<property name="name" value="sharding2" />
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />

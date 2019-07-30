@@ -11,8 +11,10 @@
 		location="classpath:application.properties" />
 
 	<!-- 让Spring通过自动扫描来查询和管理Bean -->
-	<context:component-scan
-		base-package="org.sagacity.sqltoy" />
+	<!-- sqltoy相关注解类扫描加载 -->
+	<context:component-scan	base-package="org.sagacity.sqltoy" />
+	<!-- 项目包 -->
+	<context:component-scan	base-package="com.sagframe.sqltoy" />
 	<!-- 基本dataSource的配置 -->
 	<import resource="classpath:spring/spring-datasource.xml" />
 	<!-- 数据库事务配置 -->
