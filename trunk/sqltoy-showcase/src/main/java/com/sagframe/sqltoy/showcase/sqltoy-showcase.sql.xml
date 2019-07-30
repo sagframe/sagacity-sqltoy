@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	<!-- sharding 测试 -->
+	<sql id="sag_sharding_test">
+		<filters>
+			<!-- 参数值等于-1则将其设置为null,比如-1表示页面上select选项中的"选择全部" -->
+			<equals value="-1" params="sexType" />
+			<!-- 如果日期传进来时是字符类型的，可以进行类型转换 -->
+			<to-date params="beginTime" format="yyyy-MM-dd" />
+			<!--一般截止日期没有考虑小时,导致查询范围缩小,通过加一天来解决,可以是负数来表示减 -->
+			<to-date params="endTime" format="yyyy-MM-dd"
+				increment-days="1" />
+		</filters>
+		<page-optimize alive-max="100" alive-seconds="600" />
+		<value>
+			<![CDATA[
+		SELECT ID, STAFF_ID,STAFF_ID STAFF_NAME, POST_TYPE,POST_TYPE POST_NAME, CREATE_TIME, COMMENTS
+		FROM sag_sharding_real t
+		where 1=1 
+		and t.CREATE_TIME>=:beginTime and t.CREATE_TIME<:endTime
+		#[and t.STAFF_ID in (:staffIds)]
+		#[and t.sex_type =:sexType]
+		]]>
+		</value>
+	</sql>
+
+
+	<sql id="biz_test">
+		<value>
+		<![CDATA[
+				with tmp1 as(
+					select
+						a.CREATE_BY,
+						a.COST_ID,
+						a.SETTLE_DATE,
+						a.PAY_COMPANY_ID COST_COMPANY_ID,
+						a.CURRENCY,
+						(
+						select
+							IFNULL(sum(IFNULL(c.AMOUNT, 0)),
+							0)
+						from
+							WMS_COST_SETTLEMENT_DETAIL c
+						where
+							C.COST_ID = a.COST_ID) totalAmt,
+						IFNULL( (
+						select
+							sum(d.APPLY_AMOUNT)
+						from
+							fin_payment_apply_line d
+						join fin_payment_apply_head e on
+							e.PAYMENT_APPLY_ID = d.PAYMENT_APPLY_ID
+						where e.PAYMENT_APPLY_STATUS = '70'
+							and d.ORDER_ID in (
+							select
+								wcsd.ORDER_ID
+							from
+								WMS_COST_SETTLEMENT_DETAIL wcsd
+							where
+								wcsd.COST_ID = a.COST_ID )
+							and d.SOURCE_ID in (
+							select
+								wcsd.COST_ID
+							from
+								WMS_COST_SETTLEMENT_DETAIL wcsd
+							where
+								wcsd.COST_ID = a.COST_ID ) ) ,
+						0) payReceiptAmount,
+						IFNULL( (
+						select
+							sum(g.APPLY_AMOUNT)
+						from
+							fin_payment_apply_line g
+						join fin_payment_apply_head h on
+							g.PAYMENT_APPLY_ID = h.PAYMENT_APPLY_ID
+						where  h.PAYMENT_APPLY_STATUS not in('60',
+							'70')
+							and g.ORDER_ID in (
+							select
+								wcsd.ORDER_ID
+							from
+								WMS_COST_SETTLEMENT_DETAIL wcsd
+							where
+								wcsd.COST_ID = a.COST_ID )
+							and g.SOURCE_ID in (
+							select
+								wcsd.COST_ID
+							from
+								WMS_COST_SETTLEMENT_DETAIL wcsd
+							where
+								wcsd.COST_ID = a.COST_ID ) ) ,
+						0) appliedAndNonPayment
+					from
+						WMS_COST_SETTLEMENT a
+					where a.PAY_COMPANY_ID = 'b9e814c6702045f990b15e939edbf09e'
+						and a.CURRENCY = 'RMB'
+						and a.STATUS = 'ALREADY_SETTLEMENT'
+						and a.RED_FLAG = '10'
+						and a.VOUCHER_STATUS in('10',
+						'20')
+						and a.SETTLE_DATE >= '2019-06-26'
+						and a.SETTLE_DATE <= '2019-07-27'
+					group by
+						a.COST_ID,
+						a.SETTLE_DATE,
+						a.PAY_COMPANY_ID,
+						a.CURRENCY ) ,
+					tmp2 as(
+					select
+						jj.* ,
+						case
+							when jj.payReceiptAmount = 0 then '0'
+							when jj.payReceiptAmount = jj.totalAmt
+							or jj.payReceiptAmount >0 then '1'
+						end payStatus
+					from
+						tmp1 jj ) 
+					select
+						count(1)
+					from
+						tmp1 ss
+					left join tmp2 tt on
+						(ss.COST_ID = tt.COST_ID)
+					where
+						 (ss.payReceiptAmount <= 0
+						or ss.payReceiptAmount >= ss.totalAmt)
+						and ss.totalAmt - ss.payReceiptAmount - ss.appliedAndNonPayment <> 0	
+		]]>
+		</value>
+	</sql>
+</sqltoy>

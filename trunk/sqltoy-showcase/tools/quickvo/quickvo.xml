@@ -8,7 +8,7 @@
 	<property name="max.scale.length" value="3" />
 	<property name="project.version" value="1.0.0" />
 	<property name="project.name" value="sqltoy-showcase" />
-	<property name="project.package" value="org.sagacity.sqltoy" />
+	<property name="project.package" value="com.sagframe.sqltoy" />
 	<property name="include.schema" value="false" />
 	<!-- oracle支持schema,mysql\DB2:catalog,4.0.6版本之后增加name属性 -->
 	<datasource name="sqltoy" url="${jdbc.connection.url}"
