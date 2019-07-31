@@ -134,13 +134,11 @@ public class Save extends BaseLink {
 		if (saveMode == SaveMode.IGNORE)
 			return dialectFactory.saveAllNotExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
 					dataSource, autoCommit);
-		else {
-			if (saveMode == SaveMode.UPDATE)
-				return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
-						reflectPropertyHandler, dataSource, autoCommit);
-			else
-				return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
-						dataSource, autoCommit);
-		}
+		else if (saveMode == SaveMode.UPDATE)
+			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
+					reflectPropertyHandler, dataSource, autoCommit);
+		else
+			return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler, dataSource,
+					autoCommit);
 	}
 }
