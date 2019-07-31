@@ -77,7 +77,7 @@ public class SqlUtilsExt {
 			final int batchSize, final Boolean autoCommit, final Connection conn) throws Exception {
 		if (rowDatas == null) {
 			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
-			return Long.valueOf(0);
+			return 0L;
 		}
 		long updateCount = 0;
 		PreparedStatement pst = null;

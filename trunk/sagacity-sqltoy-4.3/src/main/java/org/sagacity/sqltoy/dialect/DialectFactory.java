@@ -484,7 +484,7 @@ public class DialectFactory {
 								queryResult = new QueryResult();
 								queryResult.setPageNo(pageNo);
 								queryResult.setPageSize(pageSize);
-								queryResult.setRecordCount(Long.valueOf(0));
+								queryResult.setRecordCount(0L);
 								if (illegal)
 									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getSql());
 							} else {
@@ -760,7 +760,7 @@ public class DialectFactory {
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
@@ -793,7 +793,7 @@ public class DialectFactory {
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -844,7 +844,7 @@ public class DialectFactory {
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -996,7 +996,7 @@ public class DialectFactory {
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1048,7 +1048,7 @@ public class DialectFactory {
 			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, final DataSource dataSource) {
 		if (entity == null)
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1081,7 +1081,7 @@ public class DialectFactory {
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1128,7 +1128,7 @@ public class DialectFactory {
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null)
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -1158,7 +1158,7 @@ public class DialectFactory {
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,

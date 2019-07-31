@@ -747,7 +747,7 @@ public class SqlUtil {
 			final Connection conn) throws Exception {
 		if (rowDatas == null) {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
-			return Long.valueOf(0);
+			return 0L;
 		}
 		PreparedStatement pst = null;
 		long updateCount = 0;

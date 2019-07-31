@@ -783,7 +783,7 @@ public class SqlToyDaoSupport {
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty())
-			return Long.valueOf(0);
+			return 0L;
 		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(),
 				reflectPropertyHandler, null);
 	}
