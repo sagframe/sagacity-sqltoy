@@ -93,21 +93,22 @@ public class SqlExecuteStat {
 			}
 		}
 		SqlExecuteTrace sqlTrace = threadLocal.get();
+		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
 		if (sqlTrace != null) {
 			// 异常或超时
 			if (isErrorOrWarn) {
 				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
-				logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
+				System.out.println("执行:" + sqlTrace.getType() + " 类型sql,sqlId=" + sqlTrace.getId());
 			}
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
 			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
-			logger.debug("sqlScript:{}", sql);
-			logger.debug("sqlParams:{}", paramStr);
+			System.out.println("sqlScript:" + sql);
+			System.out.println("sqlParams:" + paramStr);
 		}
 	}
 
