@@ -23,7 +23,7 @@ public class DialectExecutor implements Callable<ShardingResult> {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(DialectExecutor.class);
 
 	/**
 	 * sqltoy上下文
@@ -57,6 +57,7 @@ public class DialectExecutor implements Callable<ShardingResult> {
 		ShardingResult result = new ShardingResult();
 		// 异常捕获掉,确保其他节点可以正常执行
 		try {
+			logger.debug("库分表执行,DataSource节点:{},table={}", dataSourceName, tableName);
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
