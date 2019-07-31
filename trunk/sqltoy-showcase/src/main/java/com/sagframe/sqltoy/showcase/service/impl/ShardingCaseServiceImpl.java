@@ -18,4 +18,5 @@ import org.springframework.stereotype.Service;
 public class ShardingCaseServiceImpl implements ShardingCaseService {
 	@Autowired
 	private SqlToyLazyDao sqlToyLazyDao;
+	
 }

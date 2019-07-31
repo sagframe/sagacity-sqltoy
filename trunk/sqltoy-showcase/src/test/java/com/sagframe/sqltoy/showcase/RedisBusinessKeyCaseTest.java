@@ -28,7 +28,7 @@ public class RedisBusinessKeyCaseTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
 	
-	// 请参见tools\quickvo\quickvo.xml中的配置
+	// 请参见tools\quickvo\quickvo.xml中的配置:
 	// <business-primary-key>
 	// <!-- 1位购销标志_2位设备分类代码_6位日期_3位流水 (如果当天超过3位会自动扩展到4位) -->
 	// <table name="SQLTOY_DEVICE_ORDER_INFO" column="ORDER_ID"

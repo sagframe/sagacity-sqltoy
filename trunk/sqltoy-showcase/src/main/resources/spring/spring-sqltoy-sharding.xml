@@ -24,7 +24,7 @@
 	</bean>
 
 	<!-- 按照权重进行分库查询分流策略 -->
-	<bean id="weightBalanceStrategy"
+	<bean id="weightBalanceDBStrategy"
 		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
 		init-method="initialize">
 		<!-- 不同数据库的分配权重 -->
@@ -39,14 +39,15 @@
 	</bean>
 
 	<!-- 按照hash取模进行分库和分表策略 -->
-	<bean id="hashBalanceSharding"
+	<bean id="hashBalanceDBSharding"
 		class="org.sagacity.sqltoy.plugin.sharding.HashShardingStrategy"
 		init-method="initialize">
 		<!-- 根据hash取模分库 -->
 		<property name="dataSourceMap">
 			<map>
-				<entry key="0" value="sharding1" />
-				<entry key="1" value="sharding2" />
+				<entry key="0" value="dataSource" />
+				<entry key="1" value="sharding1" />
+				<entry key="2" value="sharding2" />
 			</map>
 		</property>
 	</bean>

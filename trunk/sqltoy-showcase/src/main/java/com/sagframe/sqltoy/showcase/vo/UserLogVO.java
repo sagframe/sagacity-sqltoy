@@ -19,10 +19,8 @@ import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
  * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
  * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
  */
-@Sharding(db = @Strategy(name = "hashBalanceSharding", fields = {
-		"userId" }),
-		// table = @Strategy(name = "hashBalanceSharding", fields = {
-		// "userId" }),
+@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = {"userId" }),
+		// table = @Strategy(name = "hashBalanceSharding", fields = {"userId" }),
 maxConcurrents = 10, maxWaitSeconds = 1800)
 @SqlToyEntity
 public class UserLogVO extends AbstractUserLogVO {
