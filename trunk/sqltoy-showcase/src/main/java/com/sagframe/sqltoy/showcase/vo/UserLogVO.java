@@ -4,78 +4,89 @@
 package com.sagframe.sqltoy.showcase.vo;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.Strategy;
 import java.util.Date;
 import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
 
 /**
  * @project sqltoy-showcase
  * @author zhongxuchen
- * @version 1.0.0
- * Table: sqltoy_user_log,Remark:用户日志表 	
+ * @version 1.0.0 Table: sqltoy_user_log,Remark:用户日志表
  */
+/*
+ * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
+ * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
+ * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
+ */
+@Sharding(db = @Strategy(name = "hashBalanceSharding", fields = {
+		"userId" }),
+		// table = @Strategy(name = "hashBalanceSharding", fields = {
+		// "userId" }),
+maxConcurrents = 10, maxWaitSeconds = 1800)
 @SqlToyEntity
-public class UserLogVO extends AbstractUserLogVO {	
+public class UserLogVO extends AbstractUserLogVO {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1296922598783858512L;
-	
+
 	/**
 	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
+	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
+	 * tableName (A,B) values(?,?)
 	 */
-	 
+
 	/** default constructor */
 	public UserLogVO() {
 		super();
 	}
-	
+
 	/*---begin-constructor-area---don't-update-this-area--*/
 	/** pk constructor */
-	public UserLogVO(String logId)
-	{
-		this.logId=logId;
+	public UserLogVO(String logId) {
+		this.logId = logId;
 	}
 
 	/** minimal constructor */
-	public UserLogVO(String logId,String userId,Date logTime,Date logDate,String logType,String channel,String contents)
-	{
-		this.logId=logId;
-		this.userId=userId;
-		this.logTime=logTime;
-		this.logDate=logDate;
-		this.logType=logType;
-		this.channel=channel;
-		this.contents=contents;
+	public UserLogVO(String logId, String userId, Date logTime, Date logDate, String logType, String channel,
+			String contents) {
+		this.logId = logId;
+		this.userId = userId;
+		this.logTime = logTime;
+		this.logDate = logDate;
+		this.logType = logType;
+		this.channel = channel;
+		this.contents = contents;
 	}
 
 	/** full constructor */
-	public UserLogVO(String logId,String userId,String terminalIp,String deviceCode,Date logTime,Date logDate,String logType,String channel,String contents)
-	{
-		this.logId=logId;
-		this.userId=userId;
-		this.terminalIp=terminalIp;
-		this.deviceCode=deviceCode;
-		this.logTime=logTime;
-		this.logDate=logDate;
-		this.logType=logType;
-		this.channel=channel;
-		this.contents=contents;
+	public UserLogVO(String logId, String userId, String terminalIp, String deviceCode, Date logTime, Date logDate,
+			String logType, String channel, String contents) {
+		this.logId = logId;
+		this.userId = userId;
+		this.terminalIp = terminalIp;
+		this.deviceCode = deviceCode;
+		this.logTime = logTime;
+		this.logDate = logDate;
+		this.logType = logType;
+		this.channel = channel;
+		this.contents = contents;
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
-	
-	
-	//请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	//如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	 
+
+	// 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
+	// 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
+	// tableName (A,B) values(?,?)
+
 	/**
-     *@todo vo columns to String
-     */
+	 * @todo vo columns to String
+	 */
 	public String toString() {
 		return super.toString();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -90,5 +101,5 @@ public class UserLogVO extends AbstractUserLogVO {
 		}
 		return null;
 	}
-	
+
 }

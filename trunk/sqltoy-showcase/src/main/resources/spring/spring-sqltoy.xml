@@ -8,14 +8,14 @@
 		init-method="initialize">
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
 		<property name="sqlResourcesDir"
-			value="classpath:org/sagacity/sqltoy/showcase/" />
+			value="classpath:com/sagframe/sqltoy/showcase/" />
 		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default" />
 
 		<!-- 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
 			<bean
-				class="org.sagacity.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
+				class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig"

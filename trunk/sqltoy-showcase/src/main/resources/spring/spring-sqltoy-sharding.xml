@@ -6,7 +6,7 @@
 
 	<!-- 所有分库分表策略开发者可以自行实现接口进行拓展 -->
 	<!-- 按照周期范围进行分表查询 -->
-	<bean id="historyTableStrategy" name="dateHisTable"
+	<bean id="historyTableStrategy"
 		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
 		init-method="initialize">
 		<!-- 多少天内查询实时表,可以用逗号分隔,如:value="360,35,1" -->
@@ -17,13 +17,14 @@
 		<property name="tableNamesMap">
 			<map>
 				<!-- value可用逗号分隔,跟days对应 ,如:value="a,b,c" -->
-				<entry key="SQLTOY_TRANS_INFO_15D" value="SQLTOY_TRANS_INFO_HIS" />
+				<entry key="SQLTOY_TRANS_INFO_15D"
+					value="SQLTOY_TRANS_INFO_HIS" />
 			</map>
 		</property>
 	</bean>
 
 	<!-- 按照权重进行分库查询分流策略 -->
-	<bean id="dataSourceStrategy" name="multiDataSource"
+	<bean id="weightBalanceStrategy"
 		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
 		init-method="initialize">
 		<!-- 不同数据库的分配权重 -->
@@ -38,7 +39,7 @@
 	</bean>
 
 	<!-- 按照hash取模进行分库和分表策略 -->
-	<bean id="hashDataSourceSharding" name="hashDataSourceSharding"
+	<bean id="hashBalanceSharding"
 		class="org.sagacity.sqltoy.plugin.sharding.HashShardingStrategy"
 		init-method="initialize">
 		<!-- 根据hash取模分库 -->
