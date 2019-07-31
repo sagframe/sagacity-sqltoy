@@ -11,7 +11,7 @@ import com.sagframe.sqltoy.SqlToyApplication;
 
 /**
  * @project sqltoy-showcase
- * @description 请在此说明类的功能
+ * @description 链式(流式)操作演示,本质还是常规的多参数接口调用，只是通过链式设置参数提供更优雅的执行模式
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:LinkCaseServiceTest.java,Revision:v1.0,Date:2019年7月12日
  */

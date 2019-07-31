@@ -115,7 +115,7 @@ public class Save extends BaseLink {
 		if (saveMode == SaveMode.APPEND)
 			return dialectFactory.save(sqlToyContext, entity, dataSource);
 		else if (saveMode == SaveMode.UPDATE)
-			return dialectFactory.save(sqlToyContext, entity, dataSource);
+			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, dataSource);
 		return null;
 	}
 

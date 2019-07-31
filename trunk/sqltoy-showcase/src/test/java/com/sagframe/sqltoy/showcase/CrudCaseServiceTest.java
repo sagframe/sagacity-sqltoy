@@ -43,7 +43,7 @@ public class CrudCaseServiceTest {
 		staffInfo.setOrganId("C0001");
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
 		staffInfo.setCountry("86");
-		sqlToyCRUDService.saveOrUpdate(staffInfo);
+		sqlToyCRUDService.save(staffInfo);
 	}
 
 	/**
