@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sagacity-quickvo
+ * @project sqltoy-boot-showcase
  * @description 输入输出IO工具类
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:ShowCaseUtils.java,Revision:v1.0,Date:2008-12-14 下午07:53:54 $
