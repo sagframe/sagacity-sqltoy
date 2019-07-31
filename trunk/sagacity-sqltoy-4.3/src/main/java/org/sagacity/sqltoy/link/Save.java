@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -116,6 +117,9 @@ public class Save extends BaseLink {
 			return dialectFactory.save(sqlToyContext, entity, dataSource);
 		else if (saveMode == SaveMode.UPDATE)
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, dataSource);
+		else if (saveMode == SaveMode.IGNORE) {
+			throw new IllegalArgumentException("单条对象记录保存不支持IGNORE 模式,请通过自身逻辑判断SaveMode是append(insert) 还是 update!");
+		}
 		return null;
 	}
 
