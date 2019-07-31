@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -27,6 +28,11 @@ import com.sagframe.sqltoy.SqlToyApplication;
 public class QueryCaseTest {
 	@Resource(name = "sqlToyLazyDao")
 	private SqlToyLazyDao sqlToyLazyDao;
+
+	@Before
+	public void initData() {
+
+	}
 
 	/**
 	 * 根据对象加载数据
