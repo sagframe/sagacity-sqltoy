@@ -1059,23 +1059,22 @@ public class SqlUtil {
 	 * @todo <b>sql文件自动创建到数据库</b>
 	 * @param conn
 	 * @param sqlContent
-	 * @param splitSign
 	 * @param autoCommit
 	 * @throws Exception
 	 */
-	public static void executeBatchSql(Connection conn, String sqlContent, String splitSign, boolean autoCommit)
-			throws Exception {
-		String lastSplitSign = StringUtil.isBlank(splitSign) ? ";" : splitSign;
+	public static void executeBatchSql(Connection conn, String sqlContent, Boolean autoCommit) throws Exception {
+		String splitSign = DataSourceUtils.getDatabaseSqlSplitSign(conn);
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
-		if (lastSplitSign.toLowerCase().indexOf("go") != -1)
+		if (splitSign.indexOf("go") != -1)
 			sqlContent = StringUtil.clearMistyChars(sqlContent, " ");
 		// sqlserver sybase 数据库以go 分割,则整个sql文件作为一个语句执行
-		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, lastSplitSign, sqlCommentfilters);
-		boolean setAuto = false;
-		if (conn.getAutoCommit()) {
-			conn.setAutoCommit(false);
-			setAuto = true;
+		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, splitSign, sqlCommentfilters);
+		boolean hasSetAutoCommit = false;
+		// 是否自动提交
+		if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
+			conn.setAutoCommit(autoCommit.booleanValue());
+			hasSetAutoCommit = true;
 		}
 		Statement stat = null;
 		String sql;
@@ -1084,21 +1083,21 @@ public class SqlUtil {
 			if (StringUtil.isNotBlank(sql)) {
 				try {
 					stat = conn.createStatement();
-					if (logger.isDebugEnabled())
-						logger.debug("正在批量执行的sql:{}", sql);
+					logger.debug("正在批量执行的sql:{}", sql);
 					stat.execute(sql);
 				} catch (SQLException e) {
 					logger.error(e.getMessage(), e);
+					throw e;
 				} finally {
-					if (stat != null)
+					if (stat != null) {
 						stat.close();
+					}
 				}
 			}
 		}
-		if (autoCommit)
-			conn.commit();
-		if (setAuto)
-			conn.setAutoCommit(true);
+		// 恢复conn原始autoCommit默认值
+		if (hasSetAutoCommit)
+			conn.setAutoCommit(!autoCommit);
 	}
 
 	/**
