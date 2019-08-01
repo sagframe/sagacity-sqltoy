@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -40,6 +41,8 @@ public class QueryCaseTest {
 	 */
 	@Before
 	public void initData() {
+		// 删除机构数据
+		sqlToyLazyDao.execute().sql("delete from sqltoy_organ_info").submit();
 		final String sqlContent = ShowCaseUtils.loadFile("classpath:/initDataSql.sql", "UTF-8");
 		if (StringUtil.isBlank(sqlContent))
 			return;
@@ -51,6 +54,9 @@ public class QueryCaseTest {
 						SqlUtil.executeBatchSql(conn, sqlContent, 100, null);
 					}
 				});
+		TreeTableModel treeTableModel=new TreeTableModel();
+		//treeTableModel.
+		sqlToyLazyDao.wrapTreeTableRoute(treeTableModel);
 	}
 
 	/**
