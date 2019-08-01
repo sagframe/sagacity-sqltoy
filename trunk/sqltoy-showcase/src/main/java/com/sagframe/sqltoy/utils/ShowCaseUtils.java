@@ -35,6 +35,16 @@ public class ShowCaseUtils {
 	private final static Logger logger = LogManager.getLogger(ShowCaseUtils.class);
 
 	/**
+	 * @TODO 加载文件
+	 * @param file
+	 * @param encoding
+	 * @return
+	 */
+	public static String loadFile(Object file, String encoding) {
+		return inputStream2String(getFileInputStream(file), StringUtil.isBlank(encoding) ? "UTF-8" : encoding);
+	}
+
+	/**
 	 * @TODO 转换InputStream为String
 	 * @param is
 	 * @param encoding
@@ -107,7 +117,8 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
+	 * @param closeables
+	 *            可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -122,7 +133,8 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 关闭一个或多个流对象
-	 * @param closeables 可关闭的流对象列表
+	 * @param closeables
+	 *            可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
@@ -134,7 +146,8 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 获得指定路径的文件
-	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
+	 * @param file
+	 *            文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
