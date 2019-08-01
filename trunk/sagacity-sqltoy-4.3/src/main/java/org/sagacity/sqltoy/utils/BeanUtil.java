@@ -130,7 +130,7 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.VARCHAR;
 					else if (typeName.equals("integer"))
 						fieldsType[i] = java.sql.Types.INTEGER;
-					else if (typeName.equalsIgnoreCase("bigdecimal"))
+					else if (typeName.equals("bigdecimal"))
 						fieldsType[i] = java.sql.Types.DECIMAL;
 					else if (typeName.equals("date"))
 						fieldsType[i] = java.sql.Types.DATE;
