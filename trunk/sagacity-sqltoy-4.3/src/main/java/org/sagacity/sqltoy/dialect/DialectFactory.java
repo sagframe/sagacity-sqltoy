@@ -379,7 +379,11 @@ public class DialectFactory {
 			final DataSource dataSource) {
 		try {
 			if (null != treeModel.getEntity()) {
-				EntityMeta entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
+				EntityMeta entityMeta = null;
+				if (treeModel.getEntity() instanceof Type)
+					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
+				else
+					entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
 				HashMap<String, String> columnMap = new HashMap<String, String>();
 				for (FieldMeta column : entityMeta.getFieldsMeta().values())
 					columnMap.put(column.getColumnName().toUpperCase(), "");
