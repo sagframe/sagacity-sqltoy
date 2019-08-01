@@ -887,10 +887,9 @@ public class CollectionUtil {
 				else {
 					averageValue = Double.valueOf(rowSummaryData[i].toString().replace(",", "")) / rowCount;
 					if (radixSize >= 0)
-						average.add(i,
-								BigDecimal.valueOf(averageValue).setScale(radixSize, RoundingMode.FLOOR).doubleValue());
+						average.add(i, BigDecimal.valueOf(averageValue).setScale(radixSize, RoundingMode.FLOOR));
 					else
-						average.add(i, BigDecimal.valueOf(averageValue).doubleValue());
+						average.add(i, BigDecimal.valueOf(averageValue));
 				}
 			}
 			// 设置分组列前面的数据
@@ -913,6 +912,8 @@ public class CollectionUtil {
 				// 平均数据优先显示
 				if (title[3].equals("bottom"))
 					result.add(0, average);
+				else
+					result.add(average);
 			} else {
 				// 汇总数据是否左边显示
 				boolean isLeft = title[3].equals("left");
@@ -921,10 +922,14 @@ public class CollectionUtil {
 				String linkSign = " / ";
 				if (title.length == 6 && title[5] != null)
 					linkSign = title[5].toString();
+				summary.set(titleIndex, isLeft ? (summary.get(titleIndex) + linkSign + average.get(titleIndex))
+						: (average.get(titleIndex) + linkSign + summary.get(titleIndex)));
 				for (int i = 0, n = rowSummaryData.length; i < n; i++) {
 					if (rowSummaryData[i] != null) {
-						sumCellValue = (summary.get(i) == null) ? "" : summary.get(i).toString();
-						averageValue = (average.get(i) == null) ? "" : average.get(i).toString();
+						sumCellValue = (summary.get(i) == null) ? ""
+								: ((BigDecimal) summary.get(i)).stripTrailingZeros().toPlainString();
+						averageValue = (average.get(i) == null) ? ""
+								: ((BigDecimal) average.get(i)).stripTrailingZeros().toPlainString();
 						summary.set(i, isLeft ? (sumCellValue + linkSign + averageValue)
 								: (averageValue + linkSign + sumCellValue));
 					}
