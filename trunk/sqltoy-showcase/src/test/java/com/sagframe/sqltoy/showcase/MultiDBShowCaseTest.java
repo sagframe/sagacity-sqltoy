@@ -60,9 +60,7 @@ public class MultiDBShowCaseTest {
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
 		staffInfo.setCountry("86");
 		sqlToyLazyDao.saveOrUpdate(staffInfo);
-
 		sqlToyLazyDaoShard1.saveOrUpdate(staffInfo);
-
 		sqlToyLazyDaoShard2.saveOrUpdate(staffInfo);
 	}
 
@@ -84,10 +82,9 @@ public class MultiDBShowCaseTest {
 		staffInfo.setCountry("86");
 		sqlToyLazyDao.saveOrUpdate(staffInfo);
 		sqlToyLazyDao.save().dataSource(sharding1).saveMode(SaveMode.UPDATE).one(staffInfo);
+		sqlToyLazyDao.save().dataSource(sharding2).saveMode(SaveMode.UPDATE).one(staffInfo);
 		// 多条记录,SaveMode 设置当记录存在时的是ignore还是update
 		// sqlToyLazyDao.save().dataSource(sharding1).forceUpdateProps(new String[]
 		// {""}).saveMode(SaveMode.UPDATE).many(entities);
-		sqlToyLazyDao.save().dataSource(sharding2).saveMode(SaveMode.UPDATE).one(staffInfo);
-
 	}
 }

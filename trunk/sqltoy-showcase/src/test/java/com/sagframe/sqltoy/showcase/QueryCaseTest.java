@@ -3,6 +3,7 @@
  */
 package com.sagframe.sqltoy.showcase;
 
+import java.sql.Connection;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -10,12 +11,17 @@ import javax.annotation.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.utils.ShowCaseUtils;
 
 /**
  * @project sqltoy-boot-showcase
@@ -29,9 +35,22 @@ public class QueryCaseTest {
 	@Resource(name = "sqlToyLazyDao")
 	private SqlToyLazyDao sqlToyLazyDao;
 
+	/**
+	 * 加载数据字典、订单等模拟数据sql文件
+	 */
 	@Before
 	public void initData() {
-
+		final String sqlContent = ShowCaseUtils.loadFile("classpath:/initDataSql.sql", "UTF-8");
+		if (StringUtil.isBlank(sqlContent))
+			return;
+		DataSourceUtils.processDataSource(sqlToyLazyDao.getSqlToyContext(), sqlToyLazyDao.getDataSource(),
+				new DataSourceCallbackHandler() {
+					@Override
+					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						// executeBatchSql可以根据数据库类型将大的sql字符进行分割循环执行
+						SqlUtil.executeBatchSql(conn, sqlContent, 100, null);
+					}
+				});
 	}
 
 	/**

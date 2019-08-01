@@ -41,6 +41,8 @@ public class RedisBusinessKeyCaseTest {
 
 	@Test
 	public void generateBusinessKey() {
+		//@case() 类似于oracle的decode 函数
+		//signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
 		DeviceOrderInfoVO deviceOrder = new DeviceOrderInfoVO();
 		// pc设备
 		deviceOrder.setDeviceType("PC");
