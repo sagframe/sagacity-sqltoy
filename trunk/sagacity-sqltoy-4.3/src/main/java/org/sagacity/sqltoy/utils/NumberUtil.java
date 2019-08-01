@@ -100,7 +100,7 @@ public class NumberUtil {
 			e.printStackTrace();
 			logger.error("value:" + target + ";pattern=" + pattern + e.getMessage());
 		}
-		return null;
+		return target.toString();
 	}
 
 	/**
@@ -134,7 +134,7 @@ public class NumberUtil {
 			e.printStackTrace();
 			logger.error(e.getMessage());
 		}
-		return null;
+		return target.toString();
 	}
 
 	/**
