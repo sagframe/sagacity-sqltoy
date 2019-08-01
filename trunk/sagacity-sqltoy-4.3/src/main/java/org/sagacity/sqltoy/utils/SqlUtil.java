@@ -1059,10 +1059,12 @@ public class SqlUtil {
 	 * @todo <b>sql文件自动创建到数据库</b>
 	 * @param conn
 	 * @param sqlContent
+	 * @param batchSize
 	 * @param autoCommit
 	 * @throws Exception
 	 */
-	public static void executeBatchSql(Connection conn, String sqlContent, Boolean autoCommit) throws Exception {
+	public static void executeBatchSql(Connection conn, String sqlContent, Integer batchSize, Boolean autoCommit)
+			throws Exception {
 		String splitSign = DataSourceUtils.getDatabaseSqlSplitSign(conn);
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
@@ -1077,20 +1079,31 @@ public class SqlUtil {
 			hasSetAutoCommit = true;
 		}
 		Statement stat = null;
-		for (String sql : statments) {
-			if (StringUtil.isNotBlank(sql)) {
-				try {
-					stat = conn.createStatement();
+		try {
+			stat = conn.createStatement();
+			int meter = 0;
+			int realBatch = (batchSize == null || batchSize.intValue() > 1) ? batchSize.intValue() : 100;
+			int totalRows = statments.length;
+			int i = 0;
+			for (String sql : statments) {
+				if (StringUtil.isNotBlank(sql)) {
+					meter++;
 					logger.debug("正在批量执行的sql:{}", sql);
-					stat.execute(sql);
-				} catch (SQLException e) {
-					logger.error(e.getMessage(), e);
-					throw e;
-				} finally {
-					if (stat != null) {
-						stat.close();
+					stat.addBatch(sql);
+					if ((meter % realBatch) == 0 || i + 1 == totalRows) {
+						stat.executeBatch();
 					}
+					stat.clearBatch();
 				}
+				i++;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (stat != null) {
+				stat.close();
+				stat = null;
 			}
 		}
 		// 恢复conn原始autoCommit默认值
