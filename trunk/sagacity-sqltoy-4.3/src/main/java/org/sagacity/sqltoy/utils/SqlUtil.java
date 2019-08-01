@@ -1077,9 +1077,7 @@ public class SqlUtil {
 			hasSetAutoCommit = true;
 		}
 		Statement stat = null;
-		String sql;
-		for (int i = 0; i < statments.length; i++) {
-			sql = statments[i].trim();
+		for (String sql : statments) {
 			if (StringUtil.isNotBlank(sql)) {
 				try {
 					stat = conn.createStatement();
