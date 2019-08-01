@@ -559,9 +559,10 @@ public class SqlUtil {
 			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 3) {
 				sql = sql.substring(0, markIndex);
 				break;
-			} else
+			} else {
 				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
+			}
 			markIndex = sql.indexOf("<!--");
 		}
 		// 剔除/* */形式的多行注释(如果是/*+ALL_ROWS*/ 或 /*! ALL_ROWS*/形式的诸如oracle hint的用法不看作是注释)
@@ -571,9 +572,10 @@ public class SqlUtil {
 			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 2) {
 				sql = sql.substring(0, markIndex);
 				break;
-			} else
+			} else {
 				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
+			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
 		// 剔除单行注释
@@ -584,9 +586,10 @@ public class SqlUtil {
 			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 1) {
 				sql = sql.substring(0, markIndex);
 				break;
-			} else
+			} else {
 				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
+			}
 			markIndex = sql.indexOf("--");
 		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
