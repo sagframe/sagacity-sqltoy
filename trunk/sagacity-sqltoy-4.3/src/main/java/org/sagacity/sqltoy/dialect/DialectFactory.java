@@ -384,6 +384,24 @@ public class DialectFactory {
 					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
 				else
 					entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
+				//兼容填写fieldName,统一转化为columnName
+				//pid
+				String columnName = entityMeta.getColumnName(treeModel.getPidField());
+				if (columnName != null)
+					treeModel.pidField(columnName);
+				//leafField
+				columnName = entityMeta.getColumnName(treeModel.getLeafField());
+				if (columnName != null)
+					treeModel.isLeafField(columnName);
+				//nodeLevel
+				columnName = entityMeta.getColumnName(treeModel.getNodeLevelField());
+				if (columnName != null)
+					treeModel.nodeLevelField(columnName);
+				//nodeRoute
+				columnName = entityMeta.getColumnName(treeModel.getNodeRouteField());
+				if (columnName != null)
+					treeModel.nodeRouteField(columnName);
+				
 				HashMap<String, String> columnMap = new HashMap<String, String>();
 				for (FieldMeta column : entityMeta.getFieldsMeta().values())
 					columnMap.put(column.getColumnName().toUpperCase(), "");
@@ -396,6 +414,7 @@ public class DialectFactory {
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 主键
 				treeModel.idField(idMeta.getColumnName());
+				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
 				if (!(treeModel.getEntity() instanceof Type)) {
 					Object rootValue = PropertyUtils.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
@@ -421,7 +440,6 @@ public class DialectFactory {
 				} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
 					treeModel.idTypeIsChar(true);
 				}
-				treeModel.table(entityMeta.getTableName());
 			}
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
