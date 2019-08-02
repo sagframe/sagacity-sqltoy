@@ -1093,10 +1093,10 @@ public class SqlUtil {
 					meter++;
 					logger.debug("正在批量执行的sql:{}", sql);
 					stat.addBatch(sql);
-					if ((meter % realBatch) == 0 || i + 1 == totalRows) {
-						stat.executeBatch();
-						stat.clearBatch();
-					}
+				}
+				if ((meter % realBatch) == 0 || i + 1 == totalRows) {
+					stat.executeBatch();
+					stat.clearBatch();
 				}
 				i++;
 			}
