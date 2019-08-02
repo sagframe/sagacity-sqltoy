@@ -1095,8 +1095,8 @@ public class SqlUtil {
 					stat.addBatch(sql);
 					if ((meter % realBatch) == 0 || i + 1 == totalRows) {
 						stat.executeBatch();
+						stat.clearBatch();
 					}
-					stat.clearBatch();
 				}
 				i++;
 			}
