@@ -377,6 +377,11 @@ public class DialectFactory {
 	 */
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
 			final DataSource dataSource) {
+		if (treeModel == null || StringUtil.isBlank(treeModel.getPidField()))
+			throw new IllegalArgumentException("请检查pidField赋值是否正确!");
+		if (StringUtil.isBlank(treeModel.getLeafField()) || StringUtil.isBlank(treeModel.getNodeRouteField())
+				|| StringUtil.isBlank(treeModel.getNodeLevelField()))
+			throw new IllegalArgumentException("请检查isLeafField\nodeRouteField\nodeLevelField 赋值是否正确!");
 		try {
 			if (null != treeModel.getEntity()) {
 				EntityMeta entityMeta = null;
@@ -384,32 +389,35 @@ public class DialectFactory {
 					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
 				else
 					entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
-				//兼容填写fieldName,统一转化为columnName
-				//pid
+				// 兼容填写fieldName,统一转化为columnName
+				// pid
 				String columnName = entityMeta.getColumnName(treeModel.getPidField());
 				if (columnName != null)
 					treeModel.pidField(columnName);
-				//leafField
+				// leafField
 				columnName = entityMeta.getColumnName(treeModel.getLeafField());
 				if (columnName != null)
 					treeModel.isLeafField(columnName);
-				//nodeLevel
+				// nodeLevel
 				columnName = entityMeta.getColumnName(treeModel.getNodeLevelField());
 				if (columnName != null)
 					treeModel.nodeLevelField(columnName);
-				//nodeRoute
+				// nodeRoute
 				columnName = entityMeta.getColumnName(treeModel.getNodeRouteField());
 				if (columnName != null)
 					treeModel.nodeRouteField(columnName);
-				
+
 				HashMap<String, String> columnMap = new HashMap<String, String>();
 				for (FieldMeta column : entityMeta.getFieldsMeta().values())
 					columnMap.put(column.getColumnName().toUpperCase(), "");
-				if (null == treeModel.getNodeRouteField()
-						|| !columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
-					throw new IllegalArgumentException("树形表的节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
+				if (!columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
+					throw new IllegalArgumentException("树形表:节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
+				if (!columnMap.containsKey(treeModel.getLeafField().toUpperCase()))
+					throw new IllegalArgumentException("树形表:是否叶子节点字段名称:" + treeModel.getLeafField() + "不正确,请检查!");
+				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
+					throw new IllegalArgumentException("树形表:节点等级字段名称:" + treeModel.getNodeLevelField() + "不正确,请检查!");
 				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
-					throw new IllegalArgumentException("对象对应的数据库表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
+					throw new IllegalArgumentException("树形表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
 
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 主键
@@ -425,11 +433,6 @@ public class DialectFactory {
 					if (null == treeModel.getIdValue())
 						treeModel.setIdValue(rootValue);
 				}
-				if (treeModel.getLeafField() != null && !columnMap.containsKey(treeModel.getLeafField().toUpperCase()))
-					treeModel.isLeafField(null);
-				if (treeModel.getNodeLevelField() != null
-						&& !columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
-					treeModel.nodeLevelField(null);
 				// 类型,默认值为false
 				if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
 						|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
