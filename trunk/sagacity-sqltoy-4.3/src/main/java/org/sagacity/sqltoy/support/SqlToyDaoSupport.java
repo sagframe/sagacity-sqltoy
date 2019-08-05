@@ -1042,6 +1042,7 @@ public class SqlToyDaoSupport {
 		Object name;
 		// 默认名称字段列为1
 		int cacheIndex = (cacheNameIndex == null) ? 1 : cacheNameIndex.intValue();
+		Object[] keyRow;
 		// 循环获取行数据
 		while (iter.hasNext()) {
 			row = iter.next();
@@ -1049,8 +1050,9 @@ public class SqlToyDaoSupport {
 				// 反调获取需要翻译的key
 				key = handler.getKey(row);
 				if (key != null) {
+					keyRow = cache.get(key.toString());
 					// 从缓存中获取对应的名称
-					name = cache.get(key.toString())[cacheIndex];
+					name = (keyRow == null) ? null : keyRow[cacheIndex];
 					// 反调设置行数据中具体列或属性翻译后的名称
 					handler.setName(row, (name == null) ? "" : name.toString());
 				}
