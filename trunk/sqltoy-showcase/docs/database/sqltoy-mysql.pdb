@@ -3627,10 +3627,10 @@ LABL 0 新宋体,8,N</a:FontList>
 <a:Code>PS_TYPE</a:Code>
 <a:CreationDate>1563242872</a:CreationDate>
 <a:Creator>zhong</a:Creator>
-<a:ModificationDate>1563259663</a:ModificationDate>
+<a:ModificationDate>1564988040</a:ModificationDate>
 <a:Modifier>zhong</a:Modifier>
-<a:DataType>char(1)</a:DataType>
-<a:Length>1</a:Length>
+<a:DataType>varchar(10)</a:DataType>
+<a:Length>10</a:Length>
 <a:Column.Mandatory>1</a:Column.Mandatory>
 </o:Column>
 <o:Column Id="o152">

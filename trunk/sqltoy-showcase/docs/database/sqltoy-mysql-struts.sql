@@ -61,7 +61,7 @@ create table SQLTOY_DEVICE_ORDER_INFO
 (
    ORDER_ID             varchar(22) not null  comment '订单ID',
    DEVICE_TYPE          varchar(10) not null  comment '设备类型',
-   PS_TYPE              char(1) not null  comment '购销标志',
+   PS_TYPE              varchar(10) not null  comment '购销标志',
    TOTAL_CNT            decimal(12,3)  comment '商品总量',
    TOTAL_AMT            decimal(12,2)  comment '总金额',
    BUYER                varchar(22)  comment '购买方',
