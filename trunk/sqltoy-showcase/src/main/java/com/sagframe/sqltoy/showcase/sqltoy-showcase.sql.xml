@@ -4,7 +4,8 @@
 	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
 	<!-- 演示分库 -->
 	<sql id="sqltoy_db_sharding_case">
-		<sharding-datasource strategy="hashBalanceDBSharding" params="userId"/>
+		<sharding-datasource
+			strategy="hashBalanceDBSharding" params="userId" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_user_log t 
@@ -15,15 +16,31 @@
 				]]>
 		</value>
 	</sql>
-	
+
 	<!-- 演示分表 -->
 	<sql id="sqltoy_15d_table_sharding_case">
-		<sharding-table tables="sqltoy_trans_info_15d" strategy="historyTableStrategy" params="beginDate"/>
+		<sharding-table tables="sqltoy_trans_info_15d"
+			strategy="historyTableStrategy" params="beginDate" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_trans_info_15d t 
 			where t.trans_date>=:beginDate
 			#[and t.trans_date<=:endDate]
+				]]>
+		</value>
+	</sql>
+
+	<!-- 演示树形表递归查询 -->
+	<sql id="sqltoy_treeTable_search">
+		<value>
+			<![CDATA[
+			select * from sqltoy_organ_info t 
+			where exists 
+			(
+				select 1 from sqltoy_organ_info t1 
+				where t1.`ORGAN_ID`=t.`ORGAN_ID`
+				and instr(t1.`NODE_ROUTE`,:nodeRoute)
+			)
 				]]>
 		</value>
 	</sql>

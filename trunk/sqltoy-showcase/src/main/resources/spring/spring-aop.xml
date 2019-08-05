@@ -12,7 +12,7 @@
 	<!-- 事务处理的AOP配置 // -->
 	<aop:config proxy-target-class="true">
 		<aop:advisor
-			pointcut="execution(* org.sagacity.sqltoy.showcase..*ServiceImpl.*(..))"
+			pointcut="execution(* org.sagframe.sqltoy.showcase..*ServiceImpl.*(..)) || execution(* org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl.*(..))"
 			advice-ref="txAdvice" />
 	</aop:config>
 	<!-- 事务管理器定义 -->

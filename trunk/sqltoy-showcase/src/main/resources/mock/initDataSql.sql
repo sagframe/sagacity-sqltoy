@@ -1,3 +1,6 @@
+delete from sqltoy.sqltoy_staff_info;
+delete from sqltoy.sqltoy_organ_info;
+delete from sqltoy.sqltoy_dict_detail;
 delete from sqltoy.sqltoy_dict_type;
 INSERT INTO sqltoy.sqltoy_dict_type
 (`DICT_TYPE`, `DICT_TYPE_NAME`, `COMMENTS`, `SHOW_INDEX`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
@@ -24,7 +27,7 @@ INSERT INTO sqltoy.sqltoy_dict_type
 (`DICT_TYPE`, `DICT_TYPE_NAME`, `COMMENTS`, `SHOW_INDEX`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('TRANS_CODE', '交易代码表', '交易代码表', 8, 'S0001', '2019-08-01 16:47:01.000', 'S0001', '2019-08-01 16:47:01.000', 1);
 
-delete from sqltoy.sqltoy_dict_detail;
+
 INSERT INTO sqltoy.sqltoy_dict_detail
 (`DICT_KEY`, `DICT_TYPE`, `DICT_NAME`, `SHOW_INDEX`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('OFFICE', 'DEVICE_TYPE', '办公用品', 3, 'S0001', '2019-08-01 16:47:01.000', 1);
@@ -128,7 +131,7 @@ INSERT INTO sqltoy.sqltoy_dict_detail
 (`DICT_KEY`, `DICT_TYPE`, `DICT_NAME`, `SHOW_INDEX`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('T004', 'TRANS_CODE', '订单查询', 4, 'S0001', '2019-08-01 16:47:01.000', 1);
 
-delete from sqltoy.sqltoy_organ_info;
+
 INSERT INTO sqltoy.sqltoy_organ_info
 (`ORGAN_ID`, `ORGAN_NAME`, `ORGAN_CODE`, `COST_NO`, `ORGAN_PID`, `NODE_ROUTE`, `NODE_LEVEL`, `IS_LEAF`, `SHOW_INDEX`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('100001', 'X科技创新集团有限公司', '100001', NULL, '-1', '-1,100001,', 1, 0, 1, 'S0001', '2019-08-01 16:47:01.000', 'S0001', '2019-08-01 16:47:01.000', 1);
@@ -163,7 +166,7 @@ INSERT INTO sqltoy.sqltoy_organ_info
 (`ORGAN_ID`, `ORGAN_NAME`, `ORGAN_CODE`, `COST_NO`, `ORGAN_PID`, `NODE_ROUTE`, `NODE_LEVEL`, `IS_LEAF`, `SHOW_INDEX`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('100011', '后勤保障部', '100011', NULL, '100001', '-1,100001,100011,', 2, 1, 11, 'S0001', '2019-08-01 16:47:01.000', 'S0001', '2019-08-01 16:47:01.000', 1);
 
-delete from sqltoy.sqltoy_staff_info;
+
 INSERT INTO sqltoy.sqltoy_staff_info
 (`STAFF_ID`, `STAFF_CODE`, `STAFF_NAME`, `ORGAN_ID`, `SEX_TYPE`, `BIRTHDAY`, `ENTRY_DATE`, `TERM_DATE`, `PHOTO`, `COUNTRY`, `CENSUS_REGISTER`, `ADDRESS`, `EMAIL`, `TEL_NO`, `POST`, `POST_GRADE`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('S0001', 'S0001', '张三', '100002', 'M', NULL, '2019-08-01', NULL, NULL, '86', NULL, NULL, NULL, NULL, 'M', 'L10', 'S0001', '2019-07-31 11:04:11.000', 'S0001', '2019-07-31 11:04:11.000', 1);
