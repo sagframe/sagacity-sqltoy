@@ -50,12 +50,9 @@
 		<value>
 			<![CDATA[
 			select * from sqltoy_device_order_info t 
-			where exists 
-			(
-				select 1 from sqltoy_organ_info t1 
-				where t1.`ORGAN_ID`=t.`ORGAN_ID`
-				and instr(t1.`NODE_ROUTE`,:nodeRoute)
-			)
+			where 1=1
+			#[and ]
+			#[and ]
 				]]>
 		</value>
 	</sql>
