@@ -73,7 +73,7 @@ public class QueryCaseTest {
 		// 查询全部员工
 		List<StaffInfoVO> staffs = sqlToyLazyDao.findBySql("select STAFF_ID,STAFF_NAME,ORGAN_ID from sqltoy_staff_info",
 				null, null, StaffInfoVO.class);
-		String staff;
+		StaffInfoVO staff;
 		int[] days = { 10, 15, 20, 30, 60 };
 		Date nowTime = DateUtil.getNowTime();
 		List<DictDetailVO> deviceTypes = sqlToyLazyDao.findBySql(
@@ -82,10 +82,11 @@ public class QueryCaseTest {
 		String[] psTypes = { "PO", "SO" };
 		for (int i = 0; i < max; i++) {
 			DeviceOrderInfoVO orderVO = new DeviceOrderInfoVO();
-			staff = staffs.get(ShowCaseUtils.getRandomNum(staffs.size() - 1)).getStaffId();
+			staff = staffs.get(ShowCaseUtils.getRandomNum(staffs.size() - 1));
 			orderVO.setBuyer("C000" + i);
 			orderVO.setSaler("S000" + i);
-			orderVO.setStaffId(staff);
+			orderVO.setStaffId(staff.getStaffId());
+			orderVO.setOrganId(staff.getOrganId());
 			orderVO.setTransDate(nowTime);
 			orderVO.setDeliveryTerm(DateUtil.addDay(nowTime, days[ShowCaseUtils.getRandomNum(4)]));
 			orderVO.setDeviceType(deviceTypes.get(ShowCaseUtils.getRandomNum(deviceTypes.size() - 1)).getDictKey());
