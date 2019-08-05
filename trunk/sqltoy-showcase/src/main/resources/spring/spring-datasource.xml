@@ -21,9 +21,10 @@
 		<property name="maxWait" value="${jdbc.maxWait}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
+		<property name="defaultAutoCommit" value="false"/>
 		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
 		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-
+		
 		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
 		<property name="minEvictableIdleTimeMillis" value="300000" />
 		<property name="testWhileIdle" value="true" />
@@ -57,6 +58,7 @@
 		<property name="maxWait" value="${jdbc.maxWait}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
+		<property name="defaultAutoCommit" value="false"/>
 		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
 		<property name="timeBetweenEvictionRunsMillis" value="60000" />
 
@@ -87,6 +89,7 @@
 		<property name="maxWait" value="${jdbc.maxWait}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
+		<property name="defaultAutoCommit" value="false"/>
 		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
 		<property name="timeBetweenEvictionRunsMillis" value="60000" />
 

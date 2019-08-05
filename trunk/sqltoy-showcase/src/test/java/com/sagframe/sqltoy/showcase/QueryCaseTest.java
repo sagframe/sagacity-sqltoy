@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
 import com.sagframe.sqltoy.utils.ShowCaseUtils;
 
 /**
@@ -43,7 +44,8 @@ public class QueryCaseTest {
 	public void initData() {
 		// 删除机构数据
 		sqlToyLazyDao.execute().sql("delete from sqltoy_organ_info").submit();
-		final String sqlContent = ShowCaseUtils.loadFile("classpath:/initDataSql.sql", "UTF-8");
+		sqlToyLazyDao.flush();
+		final String sqlContent = ShowCaseUtils.loadFile("classpath:/mock/initDataSql.sql", "UTF-8");
 		if (StringUtil.isBlank(sqlContent))
 			return;
 		DataSourceUtils.processDataSource(sqlToyLazyDao.getSqlToyContext(), sqlToyLazyDao.getDataSource(),
@@ -51,11 +53,22 @@ public class QueryCaseTest {
 					@Override
 					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 						// executeBatchSql可以根据数据库类型将大的sql字符进行分割循环执行
-						SqlUtil.executeBatchSql(conn, sqlContent, 100, null);
+						SqlUtil.executeBatchSql(conn, sqlContent, 100, true);
 					}
 				});
-		TreeTableModel treeTableModel=new TreeTableModel();
-		//treeTableModel.
+		sqlToyLazyDao.flush();
+		// 根机构
+		OrganInfoVO organVO = sqlToyLazyDao.load(new OrganInfoVO("100001"));
+		TreeTableModel treeTableModel = new TreeTableModel(organVO);
+		//设置父节点
+		treeTableModel.pidField("organPid");
+		
+		//节点路径、节点等级、是否叶子节点，可以不用设置(默认值是nodeRoute、nodeLevel、isLeaf)
+		treeTableModel.nodeLevelField("nodeLevel");
+		treeTableModel.nodeRouteField("nodeRoute");
+		treeTableModel.isLeafField("isLeaf");
+
+		// 构造节点路径
 		sqlToyLazyDao.wrapTreeTableRoute(treeTableModel);
 	}
 
