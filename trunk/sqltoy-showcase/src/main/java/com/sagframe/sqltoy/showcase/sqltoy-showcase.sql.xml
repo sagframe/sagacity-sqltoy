@@ -44,4 +44,19 @@
 				]]>
 		</value>
 	</sql>
+	
+	<!-- 综合查询演示 -->
+	<sql id="sqltoy_order_search">
+		<value>
+			<![CDATA[
+			select * from sqltoy_device_order_info t 
+			where exists 
+			(
+				select 1 from sqltoy_organ_info t1 
+				where t1.`ORGAN_ID`=t.`ORGAN_ID`
+				and instr(t1.`NODE_ROUTE`,:nodeRoute)
+			)
+				]]>
+		</value>
+	</sql>
 </sqltoy>

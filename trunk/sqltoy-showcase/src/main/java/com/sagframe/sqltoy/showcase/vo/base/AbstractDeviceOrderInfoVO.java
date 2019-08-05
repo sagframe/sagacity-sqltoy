@@ -22,7 +22,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	java.lang.Cloneable {
 	 /*--------------- properties string,handier to copy ---------------------*/
 	 //full properties 
-	 //orderId,deviceType,psType,totalCnt,totalAmt,buyer,saler,transDate,deliveryTerm,staffId,createBy,createTime,updateBy,updateTime,status
+	 //orderId,deviceType,psType,totalCnt,totalAmt,buyer,saler,transDate,deliveryTerm,staffId,organId,createBy,createTime,updateBy,updateTime,status
 	 
 	 //not null properties
 	 //orderId,deviceType,psType,transDate,createBy,createTime,updateBy,updateTime,status
@@ -49,7 +49,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 * 购销标志
 	 */
-	@Column(name="PS_TYPE",length=1L,type=java.sql.Types.CHAR,nullable=false)
+	@Column(name="PS_TYPE",length=10L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String psType;
 	
 	/**
@@ -93,6 +93,12 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	 */
 	@Column(name="STAFF_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=true)
 	protected String staffId;
+	
+	/**
+	 * 业务机构
+	 */
+	@Column(name="ORGAN_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=true)
+	protected String organId;
 	
 	/**
 	 * 创建人
@@ -151,7 +157,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,Date transDate,Date deliveryTerm,String staffId,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,Date transDate,Date deliveryTerm,String staffId,String organId,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
 	{
 		this.orderId=orderId;
 		this.deviceType=deviceType;
@@ -163,6 +169,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 		this.transDate=transDate;
 		this.deliveryTerm=deliveryTerm;
 		this.staffId=staffId;
+		this.organId=organId;
 		this.createBy=createBy;
 		this.createTime=createTime;
 		this.updateBy=updateBy;
@@ -311,6 +318,20 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	}
 	
 	/**
+	 *@param organId the organId to set
+	 */
+	public void setOrganId(String organId) {
+		this.organId=organId;
+	}
+		
+	/**
+	 *@return the OrganId
+	 */
+	public String getOrganId() {
+	    return this.organId;
+	}
+	
+	/**
 	 *@param createBy the createBy to set
 	 */
 	public void setCreateBy(String createBy) {
@@ -397,6 +418,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 		columnsBuffer.append("transDate=").append(getTransDate()).append("\n");
 		columnsBuffer.append("deliveryTerm=").append(getDeliveryTerm()).append("\n");
 		columnsBuffer.append("staffId=").append(getStaffId()).append("\n");
+		columnsBuffer.append("organId=").append(getOrganId()).append("\n");
 		columnsBuffer.append("createBy=").append(getCreateBy()).append("\n");
 		columnsBuffer.append("createTime=").append(getCreateTime()).append("\n");
 		columnsBuffer.append("updateBy=").append(getUpdateBy()).append("\n");

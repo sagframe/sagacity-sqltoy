@@ -69,6 +69,7 @@ create table SQLTOY_DEVICE_ORDER_INFO
    TRANS_DATE           date not null  comment '成交日期',
    DELIVERY_TERM        date  comment '交货期限',
    STAFF_ID             varchar(22)  comment '业务员',
+   ORGAN_ID             varchar(22)  comment '业务机构',
    CREATE_BY            varchar(22) not null  comment '创建人',
    CREATE_TIME          datetime not null  comment '创建时间',
    UPDATE_BY            varchar(22) not null  comment '最后修改人',

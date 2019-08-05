@@ -38,15 +38,12 @@ public class OrganInfoVO extends AbstractOrganInfoVO {
 	}
 
 	/** minimal constructor */
-	public OrganInfoVO(String organId,String organName,String organCode,String organPid,String nodeRoute,Integer nodeLevel,Integer isLeaf,Integer showIndex,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public OrganInfoVO(String organId,String organName,String organCode,String organPid,Integer showIndex,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
 	{
 		this.organId=organId;
 		this.organName=organName;
 		this.organCode=organCode;
 		this.organPid=organPid;
-		this.nodeRoute=nodeRoute;
-		this.nodeLevel=nodeLevel;
-		this.isLeaf=isLeaf;
 		this.showIndex=showIndex;
 		this.createBy=createBy;
 		this.createTime=createTime;
