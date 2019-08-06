@@ -184,12 +184,13 @@ public class SqlUtil {
 	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params, Integer[] paramsType,
 			int fromIndex) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
+			int n = params.length;
 			if (null == paramsType || paramsType.length == 0) {
-				for (int i = 0, n = params.length; i < n; i++) {
+				for (int i = 0; i < n; i++) {
 					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
 				}
 			} else {
-				for (int i = 0, n = params.length; i < n; i++) {
+				for (int i = 0; i < n; i++) {
 					setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
 				}
 			}
