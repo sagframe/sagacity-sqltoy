@@ -86,18 +86,6 @@ public class SqlUtil {
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
 
-	// /**
-	// * alibaba druid clob
-	// */
-	// private static final String ALIBABA_DRUID_JDBC_CLOBPROXY =
-	// "com.alibaba.druid.proxy.jdbc.ClobProxyImpl";
-	//
-	// /**
-	// * alibaba druid nclob
-	// */
-	// private static final String ALIBABA_DRUID_JDBC_NCLOBPROXY =
-	// "com.alibaba.druid.proxy.jdbc.NClobProxyImpl";
-
 	// sql 注释过滤器
 	private static HashMap sqlCommentfilters = new HashMap();
 
@@ -263,35 +251,10 @@ public class SqlUtil {
 					Clob clob = conn.createClob();
 					clob.setString(1, tmpStr);
 					pst.setClob(paramIndex, clob);
-					// try {
-					// Clob clob = conn.createClob();
-					// // 针对druid clob类型进行兼容，通过反射模式解决对druid库的强依赖问题
-					// String className = clob.getClass().getName();
-					// if (ALIBABA_DRUID_JDBC_CLOBPROXY.equals(className)) {
-					// Method method = clob.getClass().getMethod("getRawClob", null);
-					// clob = (Clob) method.invoke(clob, null);
-					// }
-					// clob.setString(1, tmpStr);
-					// pst.setClob(paramIndex, clob);
-					// } catch (Exception e) {
-					// pst.setString(paramIndex, tmpStr);
-					// }
 				} else if (jdbcType == java.sql.Types.NCLOB) {
 					NClob nclob = conn.createNClob();
 					nclob.setString(1, tmpStr);
 					pst.setNClob(paramIndex, nclob);
-					// try {
-					// NClob nclob = conn.createNClob();
-					// String className = nclob.getClass().getName();
-					// if (ALIBABA_DRUID_JDBC_NCLOBPROXY.equals(className)) {
-					// Method method = nclob.getClass().getMethod("getRawNClob", null);
-					// nclob = (NClob) method.invoke(nclob, null);
-					// }
-					// nclob.setString(1, tmpStr);
-					// pst.setNClob(paramIndex, nclob);
-					// } catch (Exception e) {
-					// pst.setString(paramIndex, tmpStr);
-					// }
 				} else {
 					pst.setString(paramIndex, tmpStr);
 				}
