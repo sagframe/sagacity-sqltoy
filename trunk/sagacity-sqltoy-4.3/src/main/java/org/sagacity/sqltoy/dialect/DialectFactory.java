@@ -512,6 +512,8 @@ public class DialectFactory {
 								queryResult.setRecordCount(0L);
 								if (illegal)
 									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getSql());
+								else
+									logger.debug("提取记录总数为0,sql={}", sqlToyConfig.getSql());
 							} else {
 								// 合法的全记录提取,设置页号为1按记录数
 								if (pageNo == -1) {
