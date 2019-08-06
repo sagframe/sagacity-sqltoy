@@ -4,7 +4,6 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,20 +12,18 @@ import javax.annotation.Resource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
-import org.sagacity.sqltoy.utils.SqlUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.showcase.service.InitDataService;
 import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
 import com.sagframe.sqltoy.showcase.vo.DictDetailVO;
 import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
@@ -48,6 +45,9 @@ public class QueryCaseTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
 
+	@Autowired
+	private InitDataService initDataService;
+
 	/**
 	 * 初次先执行此方法, 加载数据字典、订单等模拟数据sql文件
 	 */
@@ -55,18 +55,11 @@ public class QueryCaseTest {
 	@Test
 	public void initData() {
 		// 加载初始化数据脚本(最好手工执行数据初始化,便于演示缓存翻译功能)
-		final String sqlContent = ShowCaseUtils.loadFile("classpath:/mock/initDataSql.sql", "UTF-8");
-		if (StringUtil.isBlank(sqlContent))
-			return;
-		DataSourceUtils.processDataSource(sqlToyLazyDao.getSqlToyContext(), sqlToyLazyDao.getDataSource(),
-				new DataSourceCallbackHandler() {
-					@Override
-					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-						// executeBatchSql可以根据数据库类型将大的sql字符进行分割循环执行
-						SqlUtil.executeBatchSql(conn, sqlContent, 100, true);
-					}
-				});
+		initDataService.createData("classpath:/mock/initDataSql.sql");
+	}
 
+	@Test
+	public void mockOrderData() {
 		// 模拟订单信息
 		List<DeviceOrderInfoVO> orderInfos = new ArrayList<DeviceOrderInfoVO>();
 		int max = 1000;
@@ -164,17 +157,16 @@ public class QueryCaseTest {
 	}
 
 	/**
-	 * 唯一性验证
-	 * 返回false表示已经存在;返回true表示唯一可以插入
+	 * 唯一性验证 返回false表示已经存在;返回true表示唯一可以插入
 	 */
 	@Test
 	public void unique() {
 		DictDetailVO dictDetail = new DictDetailVO("PC", "DEVICE_TYPE");
-		//第一个参数，放入需要验证的对象
-		//第二个参数，哪几个字段值进行唯一性检查
+		// 第一个参数，放入需要验证的对象
+		// 第二个参数，哪几个字段值进行唯一性检查
 		boolean isExist = sqlToyLazyDao.isUnique(dictDetail, new String[] { "dictKey", "dictType" });
-		//unique 返回false表示已经存在;返回true表示唯一可以插入
-		//在记录变更时,带入主键值，会自动判断是否是自身
+		// unique 返回false表示已经存在;返回true表示唯一可以插入
+		// 在记录变更时,带入主键值，会自动判断是否是自身
 		System.err.println(isExist);
 	}
 
@@ -189,10 +181,27 @@ public class QueryCaseTest {
 
 	/**
 	 * 分页查询
+	 * sqltoy 的分页特点:
+	 * 1、具有快速分页能力，即先分页后关联，实现查询效率的提升
+	 * 2、具有分页优化能力，即缓存总记录数，将分页2次查询变成1.3~1.5次
+	 * 3、具有智能优化count查询能力:
+	 * -->剔除order by提升性能;
+	 * -->解析sql判断是否可以select count(1)替代原语句from前部分,避免直接select count(1) from (原sql),从而提升效率
+	 *    (如：select decode(A,1,xxx),case when end from table 等计算变成select count(1) from table 则避免了不必要的计算)
 	 */
 	@Test
 	public void findPage() {
-
+		PaginationModel pageModel = new PaginationModel();
+		StaffInfoVO staffVO = new StaffInfoVO();
+		// 作为查询条件传参数
+		staffVO.setStaffName("陈");
+		//使用了分页优化器
+		//第一次调用:执行count 和 取记录两次查询
+		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		System.err.println(JSON.toJSONString(result));
+		//第二次调用:条件一致，不执行count查询
+		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		System.err.println(JSON.toJSONString(result));
 	}
 
 	/**
