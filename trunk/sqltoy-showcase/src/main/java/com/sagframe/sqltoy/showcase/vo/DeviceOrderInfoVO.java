@@ -11,81 +11,195 @@ import com.sagframe.sqltoy.showcase.vo.base.AbstractDeviceOrderInfoVO;
 /**
  * @project sqltoy-showcase
  * @author zhongxuchen
- * @version 1.0.0
- * Table: sqltoy_device_order_info,Remark:硬件购销定单表(演示有规则单号) 	
+ * @version 1.0.0 Table: sqltoy_device_order_info,Remark:硬件购销定单表(演示有规则单号)
  */
 @SqlToyEntity
-public class DeviceOrderInfoVO extends AbstractDeviceOrderInfoVO {	
+public class DeviceOrderInfoVO extends AbstractDeviceOrderInfoVO {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3803808565657692676L;
-	
+
 	/**
 	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
+	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
+	 * tableName (A,B) values(?,?)
 	 */
-	 
+
 	/** default constructor */
 	public DeviceOrderInfoVO() {
 		super();
 	}
-	
+
 	/*---begin-constructor-area---don't-update-this-area--*/
 	/** pk constructor */
-	public DeviceOrderInfoVO(String orderId)
-	{
-		this.orderId=orderId;
+	public DeviceOrderInfoVO(String orderId) {
+		this.orderId = orderId;
 	}
 
 	/** minimal constructor */
-	public DeviceOrderInfoVO(String orderId,String deviceType,String psType,Date transDate,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
-	{
-		this.orderId=orderId;
-		this.deviceType=deviceType;
-		this.psType=psType;
-		this.transDate=transDate;
-		this.createBy=createBy;
-		this.createTime=createTime;
-		this.updateBy=updateBy;
-		this.updateTime=updateTime;
-		this.status=status;
+	public DeviceOrderInfoVO(String orderId, String deviceType, String psType, Date transDate, String createBy,
+			Date createTime, String updateBy, Date updateTime, Integer status) {
+		this.orderId = orderId;
+		this.deviceType = deviceType;
+		this.psType = psType;
+		this.transDate = transDate;
+		this.createBy = createBy;
+		this.createTime = createTime;
+		this.updateBy = updateBy;
+		this.updateTime = updateTime;
+		this.status = status;
 	}
 
 	/** full constructor */
-	public DeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,Date transDate,Date deliveryTerm,String staffId,String organId,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
-	{
-		this.orderId=orderId;
-		this.deviceType=deviceType;
-		this.psType=psType;
-		this.totalCnt=totalCnt;
-		this.totalAmt=totalAmt;
-		this.buyer=buyer;
-		this.saler=saler;
-		this.transDate=transDate;
-		this.deliveryTerm=deliveryTerm;
-		this.staffId=staffId;
-		this.organId=organId;
-		this.createBy=createBy;
-		this.createTime=createTime;
-		this.updateBy=updateBy;
-		this.updateTime=updateTime;
-		this.status=status;
+	public DeviceOrderInfoVO(String orderId, String deviceType, String psType, BigDecimal totalCnt, BigDecimal totalAmt,
+			String buyer, String saler, Date transDate, Date deliveryTerm, String staffId, String organId,
+			String createBy, Date createTime, String updateBy, Date updateTime, Integer status) {
+		this.orderId = orderId;
+		this.deviceType = deviceType;
+		this.psType = psType;
+		this.totalCnt = totalCnt;
+		this.totalAmt = totalAmt;
+		this.buyer = buyer;
+		this.saler = saler;
+		this.transDate = transDate;
+		this.deliveryTerm = deliveryTerm;
+		this.staffId = staffId;
+		this.organId = organId;
+		this.createBy = createBy;
+		this.createTime = createTime;
+		this.updateBy = updateBy;
+		this.updateTime = updateTime;
+		this.status = status;
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
-	
-	
-	//请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	//如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	 
+
+	// 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
+	// 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
+	// tableName (A,B) values(?,?)
+
 	/**
-     *@todo vo columns to String
-     */
+	 * 设备类型名称
+	 */
+	private String deviceTypeName;
+
+	/**
+	 * 购销类型名称
+	 */
+	private String psTypeName;
+
+	/**
+	 * 业务员名称
+	 */
+	private String staffName;
+
+	/**
+	 * 业务机构名称
+	 */
+	private String organName;
+
+	/**
+	 * 记录创建人名称
+	 */
+	private String createName;
+
+	/**
+	 * 订单状态名称
+	 */
+	private String statusName;
+
+	/**
+	 * @return the deviceTypeName
+	 */
+	public String getDeviceTypeName() {
+		return deviceTypeName;
+	}
+
+	/**
+	 * @param deviceTypeName the deviceTypeName to set
+	 */
+	public void setDeviceTypeName(String deviceTypeName) {
+		this.deviceTypeName = deviceTypeName;
+	}
+
+	/**
+	 * @return the psTypeName
+	 */
+	public String getPsTypeName() {
+		return psTypeName;
+	}
+
+	/**
+	 * @param psTypeName the psTypeName to set
+	 */
+	public void setPsTypeName(String psTypeName) {
+		this.psTypeName = psTypeName;
+	}
+
+	/**
+	 * @return the staffName
+	 */
+	public String getStaffName() {
+		return staffName;
+	}
+
+	/**
+	 * @param staffName the staffName to set
+	 */
+	public void setStaffName(String staffName) {
+		this.staffName = staffName;
+	}
+
+	/**
+	 * @return the organName
+	 */
+	public String getOrganName() {
+		return organName;
+	}
+
+	/**
+	 * @param organName the organName to set
+	 */
+	public void setOrganName(String organName) {
+		this.organName = organName;
+	}
+
+	/**
+	 * @return the createName
+	 */
+	public String getCreateName() {
+		return createName;
+	}
+
+	/**
+	 * @param createName the createName to set
+	 */
+	public void setCreateName(String createName) {
+		this.createName = createName;
+	}
+
+	/**
+	 * @return the statusName
+	 */
+	public String getStatusName() {
+		return statusName;
+	}
+
+	/**
+	 * @param statusName the statusName to set
+	 */
+	public void setStatusName(String statusName) {
+		this.statusName = statusName;
+	}
+
+	/**
+	 * @todo vo columns to String
+	 */
 	public String toString() {
 		return super.toString();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -100,5 +214,5 @@ public class DeviceOrderInfoVO extends AbstractDeviceOrderInfoVO {
 		}
 		return null;
 	}
-	
+
 }

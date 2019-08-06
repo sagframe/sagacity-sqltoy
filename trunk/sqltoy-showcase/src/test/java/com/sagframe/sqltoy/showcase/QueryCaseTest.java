@@ -171,12 +171,16 @@ public class QueryCaseTest {
 	}
 
 	/**
-	 * 普通sql查询
+	 * 普通sql查询,本查询演示了缓存翻译、缓存条件匹配过滤(缓存在项目启动时加载配置，首次调用时加载数据,第二次调用时就会体现出缓存效率优势)
 	 */
 	@Test
 	public void findBySql() {
-		List result = (List) sqlToyLazyDao.findBySql("biz_test", null);
-		System.err.println(JSON.toJSONString(result));
+		//授权的机构
+		String[] authedOrgans= {"100004","100007"};
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findBySql("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
+				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class);
+		for(DeviceOrderInfoVO vo:result)
+			System.err.println(JSON.toJSONString(vo));
 	}
 
 	/**
@@ -206,17 +210,32 @@ public class QueryCaseTest {
 
 	/**
 	 * 取前多少条记录
+	 * topSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
 	 */
 	@Test
 	public void findTop() {
-
+		//topSize:
+		//授权的机构
+		String[] authedOrgans= {"100004","100007"};
+		double topSize=20;
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
+				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class,topSize);
+		for(DeviceOrderInfoVO vo:result)
+			System.err.println(JSON.toJSONString(vo));
 	}
 
 	/**
 	 * 查询随机记录
+	 * randomSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
 	 */
 	@Test
 	public void findByRandom() {
-
+		//授权的机构
+		String[] authedOrgans= {"100004","100007"};
+		double randomSize=20;
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
+				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class,randomSize);
+		for(DeviceOrderInfoVO vo:result)
+			System.err.println(JSON.toJSONString(vo));
 	}
 }

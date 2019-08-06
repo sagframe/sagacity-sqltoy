@@ -1,0 +1,4 @@
+#Key and value types
+#Tue Aug 06 13:37:31 CST 2019
+keyType=java.lang.String
+valueType=java.util.HashMap

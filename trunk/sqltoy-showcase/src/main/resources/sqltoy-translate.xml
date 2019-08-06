@@ -10,7 +10,7 @@
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME
+				select t.DICT_KEY,t.DICT_NAME,t.STATUS
 				from SQLTOY_DICT_DETAIL t
 		        where t.DICT_TYPE=:dictType
 		        order by t.SHOW_INDEX
@@ -23,7 +23,8 @@
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
-				select STAFF_ID,STAFF_NAME from SQLTOY_STAFF_INFO
+				select STAFF_ID,STAFF_NAME,STATUS
+				from SQLTOY_STAFF_INFO
 			]]>
 			</sql>
 		</sql-translate>
