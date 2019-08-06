@@ -120,13 +120,6 @@ public class ParamFilterUtils {
 			if (index >= 0) {
 				paramValue = (paramValues[index] == null) ? null : paramValues[index].toString();
 			}
-			// else if (entity != null) {
-			// Object[] tmp = BeanUtil.reflectBeanToAry(entity, new String[] {
-			// paramFilterModel.getParam() }, null,
-			// null);
-			// if (tmp != null && tmp.length > 0 && tmp[0] != null)
-			// paramValue = tmp[0].toString();
-			// }
 			if (paramValue == null)
 				return;
 			// 是否将转化的值按新的条件参数存储
