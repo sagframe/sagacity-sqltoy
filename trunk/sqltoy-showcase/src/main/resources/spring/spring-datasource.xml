@@ -66,14 +66,14 @@
 		<!-- 超过时间限制是否回收 -->
 		<property name="removeAbandonedOnBorrow" value="true" />
 		<!-- 超时时间；单位为秒。180秒=3分钟 -->
-		<property name="removeAbandonedTimeout" value="300000" />
+		<property name="removeAbandonedTimeout" value="300" />
 		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
 		<property name="numTestsPerEvictionRun"
 			value="${jdbc.numTestsPerEvictionRun}" />
-		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
-		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
-		<property name="minEvictableIdleTimeMillis" value="300000" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,2分钟 -->
+		<property name="timeBetweenEvictionRunsMillis" value="120000" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒，10分钟 -->
+		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
@@ -105,14 +105,14 @@
 		<!-- 超过时间限制是否回收 -->
 		<property name="removeAbandonedOnBorrow" value="true" />
 		<!-- 超时时间；单位为秒。180秒=3分钟 -->
-		<property name="removeAbandonedTimeout" value="300000" />
+		<property name="removeAbandonedTimeout" value="300" />
 		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
 		<property name="numTestsPerEvictionRun"
 			value="${jdbc.numTestsPerEvictionRun}" />
-		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
-		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
-		<property name="minEvictableIdleTimeMillis" value="300000" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,2分钟 -->
+		<property name="timeBetweenEvictionRunsMillis" value="120000" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 10分钟-->
+		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
