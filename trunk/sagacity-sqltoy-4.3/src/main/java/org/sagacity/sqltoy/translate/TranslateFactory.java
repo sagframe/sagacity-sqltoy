@@ -70,6 +70,7 @@ public class TranslateFactory {
 	 * @param config
 	 * @param preCheckTime
 	 * @return
+	 * @throws Exception
 	 */
 	private static List doSqlCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
 			Timestamp preCheckTime) throws Exception {
@@ -92,6 +93,7 @@ public class TranslateFactory {
 	 * @param config
 	 * @param preCheckTime
 	 * @return
+	 * @throws Exception
 	 */
 	private static List doServiceCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
 			Timestamp preCheckTime) throws Exception {
@@ -105,6 +107,7 @@ public class TranslateFactory {
 	 * @param config
 	 * @param preCheckTime
 	 * @return
+	 * @throws Exception
 	 */
 	private static List doRestCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
 			Timestamp preCheckTime) throws Exception {
