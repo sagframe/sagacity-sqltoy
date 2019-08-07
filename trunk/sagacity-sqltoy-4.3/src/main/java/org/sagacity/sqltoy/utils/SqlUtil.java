@@ -196,32 +196,23 @@ public class SqlUtil {
 			}
 		}
 	}
-
-	/**
-	 * @todo 自动进行类型转换,设置sql中的参数条件的值
-	 * @param conn
-	 * @param pst
-	 * @param params
-	 * @param paramsType
-	 * @param fromIndex
-	 * @param endIndex
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params, Integer[] paramsType,
-			int fromIndex, int endIndex) throws SQLException, IOException {
-		if (null != params && params.length > 0) {
-			if (null == paramsType || paramsType.length == 0) {
-				for (int i = 0; i < endIndex; i++) {
-					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
-				}
-			} else {
-				for (int i = 0; i < endIndex; i++) {
-					setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
-				}
-			}
-		}
-	}
+	
+	//update by 2019-8-7 此方法不在sqltoy中使用,因此注释掉(原本用于exceltoy中的) 
+	// public static void setParamsValue(Connection conn, PreparedStatement pst,
+	// Object[] params, Integer[] paramsType,
+	// int fromIndex, int endIndex) throws SQLException, IOException {
+	// if (null != params && params.length > 0) {
+	// if (null == paramsType || paramsType.length == 0) {
+	// for (int i = 0; i < endIndex; i++) {
+	// setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
+	// }
+	// } else {
+	// for (int i = 0; i < endIndex; i++) {
+	// setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
+	// }
+	// }
+	// }
+	// }
 
 	/**
 	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
