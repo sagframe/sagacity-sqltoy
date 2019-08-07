@@ -8,22 +8,20 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.6.RELEASE</version>
+		<version>2.1.7.RELEASE</version>
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>5.1.8.RELEASE</spring.version>
-		<spring-data.version>2.1.9.RELEASE</spring-data.version>
 		<log4j.version>2.12.0</log4j.version>
 		<sagacity-sqltoy.version>4.5.3</sagacity-sqltoy.version>
 		<ehcache.version>3.8.0</ehcache.version>
 		<fastjson.version>1.2.59</fastjson.version>
-		<lettuce-core.version>5.1.7.RELEASE</lettuce-core.version>
+		<lettuce-core.version>5.1.8.RELEASE</lettuce-core.version>
 		<elastic-rest-client.version>7.3.0</elastic-rest-client.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.3</beanutils.version>
 		<commons-pool2.version>2.6.2</commons-pool2.version>
-		<dbcp.version>2.6.0</dbcp.version>
+		<commons-dbcp2.version>2.6.0</commons-dbcp2.version>
 		<aspectjweaver.version>1.9.4</aspectjweaver.version>
 		<mysql.version>8.0.17</mysql.version>
 	</properties>
@@ -53,7 +51,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-dbcp2</artifactId>
-			<version>${dbcp.version}</version>
+			<version>${commons-dbcp2.version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
