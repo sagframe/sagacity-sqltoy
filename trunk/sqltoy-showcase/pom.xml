@@ -15,15 +15,16 @@
 		<spring.version>5.1.8.RELEASE</spring.version>
 		<spring-data.version>2.1.9.RELEASE</spring-data.version>
 		<log4j.version>2.12.0</log4j.version>
-		<druid.version>1.1.19</druid.version>
+		<!-- <druid.version>1.1.19</druid.version> -->
 		<sagacity-sqltoy.version>4.5.3</sagacity-sqltoy.version>
 		<ehcache.version>3.8.0</ehcache.version>
-		<fastjson.version>1.2.58</fastjson.version>
+		<fastjson.version>1.2.59</fastjson.version>
 		<lettuce-core.version>5.1.7.RELEASE</lettuce-core.version>
-		<elastic-rest-client.version>7.2.0</elastic-rest-client.version>
+		<elastic-rest-client.version>7.3.0</elastic-rest-client.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.3</beanutils.version>
 		<commons-pool2.version>2.6.2</commons-pool2.version>
+		<dbcp.version>2.6.0</dbcp.version>
 		<aspectjweaver.version>1.9.4</aspectjweaver.version>
 		<mysql.version>8.0.17</mysql.version>
 	</properties>
@@ -49,6 +50,13 @@
 			<artifactId>commons-pool2</artifactId>
 			<version>${commons-pool2.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-dbcp2</artifactId>
+			<version>${dbcp.version}</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
 		<dependency>
 			<groupId>org.aspectj</groupId>
@@ -69,11 +77,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
+	<!-- 	<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>druid</artifactId>
 			<version>${druid.version}</version>
-		</dependency>
+		</dependency> -->
 		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 		<dependency>
 			<groupId>mysql</groupId>
@@ -168,11 +176,8 @@
 			<artifactId>spring-data-commons</artifactId>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-mongodb -->
-		<!-- <dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-mongodb</artifactId>
-			<version>${spring-data.version}</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.springframework.data</groupId> <artifactId>spring-data-mongodb</artifactId> 
+			<version>${spring-data.version}</version> </dependency> -->
 
 		<dependency>
 			<groupId>io.lettuce</groupId>
@@ -185,10 +190,8 @@
 			<artifactId>spring-data-redis</artifactId>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-		<!-- <dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.mongodb</groupId> <artifactId>mongo-java-driver</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>elasticsearch-rest-high-level-client</artifactId>

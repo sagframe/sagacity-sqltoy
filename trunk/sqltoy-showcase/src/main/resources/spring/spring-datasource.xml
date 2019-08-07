@@ -9,43 +9,46 @@
 
 	<!-- 数据源的配置 报表库 -->
 	<bean id="dataSource"
-		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
-		<property name="name" value="dataSource" />
+		class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.url}" />
 		<property name="username" value="${jdbc.connection.username}" />
 		<property name="password" value="${jdbc.connection.password}" />
-		<property name="maxActive" value="${jdbc.maxActive}" />
 		<!-- 获取连接时最大等待时间,单位毫秒,设置的是60秒 -->
-		<property name="maxWait" value="${jdbc.maxWait}" />
+		<property name="maxWaitMillis" value="${jdbc.maxWait}" />
+		<property name="maxTotal" value="${jdbc.maxActive}" />
+		<property name="maxIdle" value="${jdbc.maxActive}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
-		<property name="defaultAutoCommit" value="false"/>
-		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
-		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-		
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
-		<property name="minEvictableIdleTimeMillis" value="300000" />
+		<property name="defaultAutoCommit"
+			value="${jdbc.defaultAutoCommit}" />
+
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
 		<property name="validationQuery"
 			value="${jdbc.validationQuery}" />
 		<!-- 超过时间限制是否回收 -->
-		<property name="removeAbandoned" value="true" />
+		<property name="removeAbandonedOnBorrow" value="true" />
 		<!-- 超时时间；单位为秒。180秒=3分钟 -->
-		<property name="removeAbandonedTimeoutMillis" value="300000" />
-		<!-- 关闭abanded连接时输出错误日志 -->
-		<property name="logAbandoned" value="false" />
+		<property name="removeAbandonedTimeout" value="300000" />
+		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
+		<property name="numTestsPerEvictionRun"
+			value="${jdbc.numTestsPerEvictionRun}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
+		<property name="timeBetweenEvictionRunsMillis" value="60000" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="300000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
 
 	<!-- 数据源的配置 sharding1 -->
 	<bean id="sharding1"
-		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
-		<property name="name" value="sharding1" />
+		class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.sharding1.url}" />
@@ -53,30 +56,38 @@
 			value="${jdbc.connection.sharding1.username}" />
 		<property name="password"
 			value="${jdbc.connection.sharding1.password}" />
-		<property name="maxActive" value="${jdbc.maxActive}" />
 		<!-- 获取连接时最大等待时间,单位毫秒,设置的是60秒 -->
-		<property name="maxWait" value="${jdbc.maxWait}" />
+		<property name="maxWaitMillis" value="${jdbc.maxWait}" />
+		<property name="maxTotal" value="${jdbc.maxActive}" />
+		<property name="maxIdle" value="${jdbc.maxActive}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
-		<property name="defaultAutoCommit" value="false"/>
-		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
-		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
-		<property name="minEvictableIdleTimeMillis" value="300000" />
+		<property name="defaultAutoCommit"
+			value="${jdbc.defaultAutoCommit}" />
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
 		<property name="validationQuery"
 			value="${jdbc.validationQuery}" />
+		<!-- 超过时间限制是否回收 -->
+		<property name="removeAbandonedOnBorrow" value="true" />
+		<!-- 超时时间；单位为秒。180秒=3分钟 -->
+		<property name="removeAbandonedTimeout" value="300000" />
+		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
+		<property name="numTestsPerEvictionRun"
+			value="${jdbc.numTestsPerEvictionRun}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
+		<property name="timeBetweenEvictionRunsMillis" value="60000" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="300000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
 
 	<!-- 数据源的配置 sharding2 -->
 	<bean id="sharding2"
-		class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
-		<property name="name" value="sharding2" />
+		class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
 		<property name="driverClassName"
 			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.sharding2.url}" />
@@ -84,22 +95,30 @@
 			value="${jdbc.connection.sharding2.username}" />
 		<property name="password"
 			value="${jdbc.connection.sharding2.password}" />
-		<property name="maxActive" value="${jdbc.maxActive}" />
 		<!-- 获取连接时最大等待时间,单位毫秒,设置的是60秒 -->
-		<property name="maxWait" value="${jdbc.maxWait}" />
+		<property name="maxWaitMillis" value="${jdbc.maxWait}" />
+		<property name="maxTotal" value="${jdbc.maxActive}" />
+		<property name="maxIdle" value="${jdbc.maxActive}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
-		<property name="defaultAutoCommit" value="false"/>
-		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
-		<property name="timeBetweenEvictionRunsMillis" value="60000" />
-
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
-		<property name="minEvictableIdleTimeMillis" value="300000" />
+		<property name="defaultAutoCommit"
+			value="${jdbc.defaultAutoCommit}" />
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
 		<property name="validationQuery"
 			value="${jdbc.validationQuery}" />
+		<!-- 超过时间限制是否回收 -->
+		<property name="removeAbandonedOnBorrow" value="true" />
+		<!-- 超时时间；单位为秒。180秒=3分钟 -->
+		<property name="removeAbandonedTimeout" value="300000" />
+		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
+		<property name="numTestsPerEvictionRun"
+			value="${jdbc.numTestsPerEvictionRun}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,默认为1分钟 -->
+		<property name="timeBetweenEvictionRunsMillis" value="60000" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="300000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
 	</bean>
