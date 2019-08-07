@@ -183,9 +183,11 @@ public class SqlUtil {
 	 */
 	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params, Integer[] paramsType,
 			int fromIndex) throws SQLException, IOException {
+		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
 		if (null != params && params.length > 0) {
 			int n = params.length;
 			if (null == paramsType || paramsType.length == 0) {
+				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
 					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
 				}
@@ -196,8 +198,8 @@ public class SqlUtil {
 			}
 		}
 	}
-	
-	//update by 2019-8-7 此方法不在sqltoy中使用,因此注释掉(原本用于exceltoy中的) 
+
+	// update by 2019-8-7 此方法不在sqltoy中使用,因此注释掉(原本用于exceltoy中的)
 	// public static void setParamsValue(Connection conn, PreparedStatement pst,
 	// Object[] params, Integer[] paramsType,
 	// int fromIndex, int endIndex) throws SQLException, IOException {
@@ -561,6 +563,7 @@ public class SqlUtil {
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param conn
+	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
@@ -583,6 +586,7 @@ public class SqlUtil {
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param conn
+	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
@@ -767,7 +771,6 @@ public class SqlUtil {
 					}
 				}
 			}
-			// updateCount = new Long(pst.getUpdateCount());
 			if (hasSetAutoCommit)
 				conn.setAutoCommit(!autoCommit);
 		} catch (Exception e) {
