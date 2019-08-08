@@ -100,7 +100,7 @@ where #[t.ORDER_ID=:orderId]
 	<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME 
-		-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再进行管理
+		-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再关联
 		from @fast(select t.*
 			   from sqltoy_staff_info t
 			   where t.STATUS=1 
