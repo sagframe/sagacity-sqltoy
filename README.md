@@ -38,7 +38,7 @@
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
 
-(```)
+```
 select 	*
 from sqltoy_device_order_info t 
 where #[t.ORDER_ID=:orderId]
@@ -46,10 +46,12 @@ where #[t.ORDER_ID=:orderId]
       #[and t.STAFF_ID in (:staffIds)]
       #[and t.TRANS_DATE>=:beginDate]
       #[and t.TRANS_DATE<:endDate]  
-(```)
+```
 
 * mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程性的硬模式)
-(```)
+
+```
+
  select *
  from sqltoy_device_order_info t 
  <where>
@@ -75,7 +77,8 @@ where #[t.ORDER_ID=:orderId]
 	and t.TRANS_DATE<#{endDate}
     </if>
 </where>
-(```)
+
+```
 
 # 2. sqltoy框架介绍
 
