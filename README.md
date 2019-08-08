@@ -34,10 +34,9 @@
 
 # 2. 快速特点展示
 
-## 2.1 最直观sql编写
+## 2.1 最优雅直观的sql编写模式
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
-
 ```
 select 	*
 from sqltoy_device_order_info t 
@@ -48,7 +47,7 @@ where #[t.ORDER_ID=:orderId]
       #[and t.TRANS_DATE<:endDate]  
 ```
 
-* mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程性的硬模式)
+* mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程化的硬搞死搞模式)
 
 ```
  select *
@@ -77,6 +76,39 @@ where #[t.ORDER_ID=:orderId]
     </if>
 </where>
 ```
+## 2.2 最强大的分页查询
+
+```xml
+<!-- 快速分页和分页优化演示 -->
+	<sql id="sqltoy_fastPage">
+	<!-- 分页优化器,通过缓存实现查询条件一致的情况下在一定时间周期内缓存总记录数量，从而无需每次查询总记录数量 -->
+	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
+		<page-optimize alive-max="100" alive-seconds="120" />
+		<!-- 安全脱敏,type提供了几种标准的脱敏模式
+			mask-rate:脱敏比例
+			mask-code:自定义脱敏掩码,一般***,默认为***
+			head-size:前面保留多长字符
+			tail-size:尾部保留多长字符
+		 -->
+		<secure-mask columns="address" type="address" />
+		<secure-mask columns="tel_no" type="tel"/>
+		<value>
+			<![CDATA[
+			select t1.*,t2.ORGAN_NAME 
+			-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再进行管理
+			from @fast(select t.*
+			           from sqltoy_staff_info t
+			           where t.STATUS=1 
+			             #[and t.STAFF_NAME like :staffName] 
+			           order by t.ENTRY_DATE desc
+			            ) t1 
+			left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
+				]]>
+		</value>
+		<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
+		<!-- <count-sql></count-sql> -->
+	</sql>
+```xml
 
 # 2. sqltoy框架介绍
 
