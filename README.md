@@ -76,39 +76,117 @@ where #[t.ORDER_ID=:orderId]
     </if>
 </where>
 ```
-## 2.2 最强大的分页查询
+
+## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部preparedStatement.set(index,value)
+## 2.3 最强大的分页查询
+* 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
+* 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
+* 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'
 
 ```xml
 <!-- 快速分页和分页优化演示 -->
-	<sql id="sqltoy_fastPage">
+<sql id="sqltoy_fastPage">
 	<!-- 分页优化器,通过缓存实现查询条件一致的情况下在一定时间周期内缓存总记录数量，从而无需每次查询总记录数量 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
-		<page-optimize alive-max="100" alive-seconds="120" />
-		<!-- 安全脱敏,type提供了几种标准的脱敏模式
-			mask-rate:脱敏比例
-			mask-code:自定义脱敏掩码,一般***,默认为***
-			head-size:前面保留多长字符
-			tail-size:尾部保留多长字符
-		 -->
-		<secure-mask columns="address" type="address" />
-		<secure-mask columns="tel_no" type="tel"/>
-		<value>
-			<![CDATA[
-			select t1.*,t2.ORGAN_NAME 
-			-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再进行管理
-			from @fast(select t.*
-			           from sqltoy_staff_info t
-			           where t.STATUS=1 
-			             #[and t.STAFF_NAME like :staffName] 
-			           order by t.ENTRY_DATE desc
-			            ) t1 
-			left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
-				]]>
-		</value>
-		<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
-		<!-- <count-sql></count-sql> -->
-	</sql>
+	<page-optimize alive-max="100" alive-seconds="120" />
+	<!-- 安全脱敏,type提供了几种标准的脱敏模式
+		mask-rate:脱敏比例
+		mask-code:自定义脱敏掩码,一般***,默认为***
+		head-size:前面保留多长字符
+		tail-size:尾部保留多长字符
+	 -->
+	<secure-mask columns="address" type="address" />
+	<secure-mask columns="tel_no" type="tel"/>
+	<value>
+		<![CDATA[
+		select t1.*,t2.ORGAN_NAME 
+		-- @fast() 实现先分页取10条(具体数量由pageSize确定),然后再进行管理
+		from @fast(select t.*
+			   from sqltoy_staff_info t
+			   where t.STATUS=1 
+			     #[and t.STAFF_NAME like :staffName] 
+			   order by t.ENTRY_DATE desc
+			    ) t1 
+		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
+			]]>
+	</value>
+	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
+	<!-- <count-sql></count-sql> -->
+</sql>
+```
+## 2.4 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
+* 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
+* 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
+	
 ```xml
+<sql id="sqltoy_order_search">
+	<!-- 缓存翻译设备类型 
+	cache:具体的缓存定义的名称
+	cache-type:一般针对数据字典，提供一个分类条件过滤
+	columns:sql中的查询字段名称，可以逗号分隔对多个字段进行翻译
+	cache-indexs:缓存数据名称对应的列,不填则默认为第二列(从0开始,1则表示第二列)，
+	      例如缓存的数据结构是:key、name、fullName,则第三列表示全称
+	-->
+	<translate cache="dictKeyNameCache" cache-type="DEVICE_TYPE" columns="deviceTypeName" cache-indexs="1"/>
+	<!-- 缓存翻译购销类型 -->
+	<translate cache="dictKeyNameCache" cache-type="PURCHASE_SALE_TYPE" columns="psTypeName" />
+	<!-- 缓存翻译订单状态 -->
+	<translate cache="dictKeyNameCache" cache-type="ORDER_STATUS" columns="statusName" />
+	<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
+	<translate cache="staffIdNameCache" columns="staffName,createName" />
+	<!-- 机构名称翻译 -->
+	<translate cache="organIdNameCache" columns="organName" />
+	<filters>
+		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds">
+			<!--
+			   可选配置:这里的filter是排除的概念,将符合条件的排除掉(可以不使用)
+			   compare-param:可以是具体的一个条件参数名称,也可以是一个固定值
+			   cache-index:针对缓存具体哪一列进行值对比
+			   compare-type:目前分 eq和neq两种情况，这里表示将状态无效的员工过滤掉
+			-->
+			<filter compare-param="0" cache-index="2" compare-type="eq"/>
+		</cache-arg>
+		<!-- 千万不要to_str(trans_date)>=:xxx 模式,sqltoy提供了日期、数字等类型转换,另外了解format的选项可以大幅简化代码处理 -->
+		<to-date params="beginDate" format="yyyy-MM-dd"/>
+		<!-- 对截止日期加1,从而达到类似于 trans_date<='yyyy-MM-dd 23:59:59' 平衡时分秒因素 -->
+		<to-date params="endDate" format="yyyy-MM-dd" increment-days="1"/>
+	</filters>
+	<value>
+	<![CDATA[
+	select 	ORDER_ID,
+		DEVICE_TYPE,
+		DEVICE_TYPE deviceTypeName,-- 设备分类名称
+		PS_TYPE,
+		PS_TYPE as psTypeName, -- 购销类别名称
+		TOTAL_CNT,
+		TOTAL_AMT,
+		BUYER,
+		SALER,
+		TRANS_DATE,
+		DELIVERY_TERM,
+		STAFF_ID,
+		STAFF_ID staffName, -- 员工姓名
+		ORGAN_ID,
+		ORGAN_ID organName, -- 机构名称
+		CREATE_BY,
+		CREATE_BY createName, -- 创建人名称
+		CREATE_TIME,
+		UPDATE_BY,
+		UPDATE_TIME,
+		STATUS,
+		STATUS statusName -- 状态名称
+	from sqltoy_device_order_info t 
+	where #[t.ORDER_ID=:orderId]
+	      -- 当前用户能够访问的授权组织机构，控制数据访问权限(一般登录后直接放于用户session中)
+		  #[and t.ORGAN_ID in (:authedOrganIds)]
+		  #[and t.STAFF_ID in (:staffIds)]
+		  #[and t.TRANS_DATE>=:beginDate]
+		  #[and t.TRANS_DATE<:endDate]
+		]]>
+	</value>
+</sql>
+```
+## 2.4 提供行列转换(数据旋转)，避免写负责的sql甚至上存储过程，用算法集成来化解对sql的要求
 
 # 2. sqltoy框架介绍
 
