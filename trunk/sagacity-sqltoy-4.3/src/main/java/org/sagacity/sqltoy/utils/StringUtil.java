@@ -71,7 +71,6 @@ public class StringUtil {
 	public static String clearMistyChars(String source, String target) {
 		if (source == null)
 			return null;
-		//return source.replaceAll("\r", target).replaceAll("\t", target).replaceAll("\n", target);
 		return source.replaceAll("\r|\t|\n", target);
 	}
 
