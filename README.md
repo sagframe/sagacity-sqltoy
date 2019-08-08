@@ -187,14 +187,15 @@ where #[t.ORDER_ID=:orderId]
 </sql>
 ```
 ## 2.4 提供行列转换(数据旋转)，避免写负责的sql甚至上存储过程，用算法集成来化解对sql的要求
+## 2.5 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+## 2.6 elastic原生查询支持
+## 2.7 elasticsearch-sql 插件模式sql模式支持
 
 # 2. sqltoy框架介绍
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
 
-sqltoy-orm 主要分以下几个部分：
-  
-  
+* sqltoy-orm 主要分以下几个部分：
   - BaseDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
   - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
