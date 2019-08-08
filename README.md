@@ -32,6 +32,51 @@
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-show-1.jpg)
 
+# 2. 快速特点展示
+
+## 2.1 最直观sql编写
+
+* sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
+
+(```)
+select 	*
+from sqltoy_device_order_info t 
+where #[t.ORDER_ID=:orderId]
+      #[and t.ORGAN_ID in (:authedOrganIds)]
+      #[and t.STAFF_ID in (:staffIds)]
+      #[and t.TRANS_DATE>=:beginDate]
+      #[and t.TRANS_DATE<:endDate]  
+(```)
+
+* mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程性的硬模式)
+(```)
+ select *
+ from sqltoy_device_order_info t 
+ <where>
+    <if test="orderId!=null">
+	and t.ORDER_ID=#{orderId}
+    </if>
+    <if test="authedOrganIds!=null">
+	and t.ORGAN_ID in
+	<foreach collection="authedOrganIds" item="order_id" separator="," open="(" close=")">  
+            #{order_id}  
+ 	</foreach>  
+    </if>
+    <if test="staffIds!=null">
+	and t.STAFF_ID in
+	<foreach collection="staffIds" item="staff_id" separator="," open="(" close=")">  
+            #{staff_id}  
+ 	</foreach>  
+    </if>
+    <if test="beginDate!=null">
+	and t.TRANS_DATE>=#{beginDate}
+    </if>
+    <if test="endDate!=null">
+	and t.TRANS_DATE<#{endDate}
+    </if>
+</where>
+(```)
+
 # 2. sqltoy框架介绍
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
