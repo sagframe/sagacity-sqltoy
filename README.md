@@ -51,7 +51,6 @@ where #[t.ORDER_ID=:orderId]
 * mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程性的硬模式)
 
 ```
-
  select *
  from sqltoy_device_order_info t 
  <where>
@@ -77,7 +76,6 @@ where #[t.ORDER_ID=:orderId]
 	and t.TRANS_DATE<#{endDate}
     </if>
 </where>
-
 ```
 
 # 2. sqltoy框架介绍
