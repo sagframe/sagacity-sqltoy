@@ -37,6 +37,8 @@
 ## 2.1 最优雅直观的sql编写模式
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
+* sqltoy条件判断逻辑很简单#[order_id=:orderId] 就等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
+  #[and t.order_id=:orderId #[and t.order_type=:orderType]] 即支持任意层嵌套
 ```
 select 	*
 from sqltoy_device_order_info t 
