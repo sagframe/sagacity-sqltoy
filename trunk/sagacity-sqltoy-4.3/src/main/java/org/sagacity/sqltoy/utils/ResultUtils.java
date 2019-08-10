@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -987,10 +988,9 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
-		if (resultType == null)
+		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
+				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
-		if (queryResultRows == null)
-			return null;
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(Map.class)
 				|| resultType.equals(LinkedHashMap.class)) {
