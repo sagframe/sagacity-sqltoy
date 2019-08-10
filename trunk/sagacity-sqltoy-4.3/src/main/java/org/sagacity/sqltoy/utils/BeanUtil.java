@@ -10,6 +10,8 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -19,6 +21,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.LocalDate;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 
 /**
@@ -274,6 +277,12 @@ public class BeanUtil {
 				return new java.util.Date(oracleDateConvert(paramValue).getTime());
 			else
 				return DateUtil.parseString(valueStr);
+		} else if (typeName.equals("java.time.localdate")) {
+			return LocalDate.parse(valueStr);
+		} else if (typeName.equals("java.time.localtime")) {
+			return LocalTime.parse(valueStr);
+		} else if (typeName.equals("java.time.localdatetime")) {
+			return LocalDateTime.parse(valueStr);
 		} else if (typeName.equals("java.lang.double")) {
 			return Double.valueOf(valueStr);
 		} else if (typeName.equals("double")) {
