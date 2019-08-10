@@ -185,8 +185,7 @@ public class EntityManager {
 				entityMeta.setLoadAllSql("select * from ".concat(entityMeta.getSchemaTable()));
 
 				// 解析Entity包含的字段信息
-				HashMap fieldNameMap = new HashMap();
-				Field[] realFields = parseFields(fieldNameMap, entityClass, realEntityClass, hasAbstractVO);
+				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
 
 				// 排除主键的字段信息
 				List<String> rejectIdFieldList = new ArrayList<String>();
@@ -196,16 +195,16 @@ public class EntityManager {
 				List<String> idList = new ArrayList<String>();
 				HashMap<String, Integer> idsIndexMap = new HashMap<String, Integer>();
 				// 解析主键
-				parseIdFileds(idList, idsIndexMap, realFields, hasAbstractVO, fieldNameMap);
+				parseIdFileds(idList, idsIndexMap, allFields);
 
 				// 构造按照主键获取单条记录的sql,以:named形式
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
 				StringBuilder loadArgWhereSql = new StringBuilder("");
-				for (Field field : realFields) {
+				for (Field field : allFields) {
 					// 解析对象字段属性跟数据库表字段的对应关系
-					parseFieldMeta(sqlToyContext, entityMeta, field, hasAbstractVO, fieldNameMap, rejectIdFieldList,
-							loadNamedWhereSql, loadArgWhereSql);
+					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, loadNamedWhereSql,
+							loadArgWhereSql);
 					// oneToMany解析
 					parseOneToMany(entityMeta, entity, field, idList, idsIndexMap);
 				}
@@ -342,49 +341,38 @@ public class EntityManager {
 	 * @param idList
 	 * @param idsIndexMap
 	 * @param realFields
-	 * @param hasAbstractVO
-	 * @param fieldNameMap
 	 */
-	private void parseIdFileds(List<String> idList, HashMap<String, Integer> idsIndexMap, Field[] realFields,
-			boolean hasAbstractVO, HashMap fieldNameMap) {
-		Id id;
-		Column column;
+	private void parseIdFileds(List<String> idList, HashMap<String, Integer> idsIndexMap, Field[] realFields) {
 		int idIndex = 0;
 		// 优先提取id集合,有利于统一主键在子表操作中的顺序
 		for (Field field : realFields) {
-			column = field.getAnnotation(Column.class);
-			if (column != null) {
-				// 对于数据库字段处理，仅仅适用于abstractVO中定义的属性
-				if (!hasAbstractVO || (hasAbstractVO && fieldNameMap.get(field.getName()).equals("1"))) {
-					// 判断字段是否为主键
-					id = field.getAnnotation(Id.class);
-					if (id != null) {
-						idList.add(field.getName());
-						idsIndexMap.put(field.getName(), idIndex);
-						idIndex++;
-					}
-				}
+			// 判断字段是否为主键
+			if (field.getAnnotation(Id.class) != null) {
+				idList.add(field.getName());
+				idsIndexMap.put(field.getName(), idIndex);
+				idIndex++;
 			}
 		}
 	}
 
 	/**
 	 * @todo 解析获取entity对象的属性
-	 * @param fieldNameMap
 	 * @param entityClass
 	 * @param realEntityClass
 	 * @param hasAbstractVO
 	 * @return
 	 */
-	private Field[] parseFields(HashMap fieldNameMap, Class entityClass, Class realEntityClass, boolean hasAbstractVO) {
+	private Field[] parseFields(Class entityClass, Class realEntityClass, boolean hasAbstractVO) {
+		HashMap<String, String> fieldNameMap = new HashMap<String, String>();
 		List<Field> allFields = new ArrayList<Field>();
 		// 提取用户在vo上面自定义的属性,如子表级联保存等
 		Field[] voCustFields = entityClass.getDeclaredFields();
 		// 自定义VO属性优先处理
 		for (Field field : voCustFields) {
-			if (!fieldNameMap.containsKey(field.getName())) {
+			if ((field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null)
+					&& !fieldNameMap.containsKey(field.getName())) {
 				allFields.add(field);
-				fieldNameMap.put(field.getName(), "0");
+				fieldNameMap.put(field.getName(), "1");
 			}
 		}
 		// 存在抽象类(标准的sqltoy entity模式)
@@ -392,7 +380,8 @@ public class EntityManager {
 			// abstractVO中的属性
 			Field[] fields = realEntityClass.getDeclaredFields();
 			for (Field field : fields) {
-				if (!fieldNameMap.containsKey(field.getName())) {
+				if ((field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null)
+						&& !fieldNameMap.containsKey(field.getName())) {
 					allFields.add(field);
 					fieldNameMap.put(field.getName(), "1");
 				}
@@ -405,16 +394,14 @@ public class EntityManager {
 	 * @todo 解析对象属性跟数据库表字段的信息
 	 * @param entityMeta
 	 * @param field
-	 * @param hasAbstractVO
-	 * @param fieldNameMap
 	 * @param rejectIdFieldList
 	 * @param loadNamedWhereSql
 	 * @param loadArgWhereSql
 	 * @throws Exception
 	 */
-	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field, boolean hasAbstractVO,
-			HashMap fieldNameMap, List<String> rejectIdFieldList, StringBuilder loadNamedWhereSql,
-			StringBuilder loadArgWhereSql) throws Exception {
+	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
+			List<String> rejectIdFieldList, StringBuilder loadNamedWhereSql, StringBuilder loadArgWhereSql)
+			throws Exception {
 		Column column = field.getAnnotation(Column.class);
 		if (column == null)
 			return;
@@ -426,52 +413,49 @@ public class EntityManager {
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		entityMeta.addFieldMeta(fieldMeta);
-		// 对于数据库字段处理，仅仅适用于abstractVO中定义的属性
-		if (!hasAbstractVO || (hasAbstractVO && fieldNameMap.get(field.getName()).equals("1"))) {
-			// 判断字段是否为主键
-			Id id = field.getAnnotation(Id.class);
-			if (id != null) {
-				fieldMeta.setPK(true);
-				// 主键生成策略
-				entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
-				entityMeta.setSequence(id.sequence());
-				String idGenerator = id.generator();
-				if (StringUtil.isNotBlank(idGenerator)) {
-					processIdGenerator(sqlToyContext, entityMeta, idGenerator);
-					entityMeta.setIdGenerator(idGenerators.get(idGenerator));
-				}
-				if (loadNamedWhereSql.length() > 1) {
-					loadNamedWhereSql.append(" and ");
-					loadArgWhereSql.append(" and ");
-				} else {
-					loadNamedWhereSql.append(" where ");
-					loadArgWhereSql.append(" where ");
-				}
-				loadNamedWhereSql.append(column.name()).append("=:").append(field.getName());
-				loadArgWhereSql.append(column.name()).append("=?");
-			} else {
-				rejectIdFieldList.add(field.getName());
+		// 判断字段是否为主键
+		Id id = field.getAnnotation(Id.class);
+		if (id != null) {
+			fieldMeta.setPK(true);
+			// 主键生成策略
+			entityMeta.setIdStrategy(PKStrategy.getPKStrategy(id.strategy().toLowerCase()));
+			entityMeta.setSequence(id.sequence());
+			String idGenerator = id.generator();
+			if (StringUtil.isNotBlank(idGenerator)) {
+				processIdGenerator(sqlToyContext, entityMeta, idGenerator);
+				entityMeta.setIdGenerator(idGenerators.get(idGenerator));
 			}
-			// 业务主键策略配置解析
-			BusinessId bizId = field.getAnnotation(BusinessId.class);
-			if (bizId != null) {
-				String bizGenerator = bizId.generator();
-				entityMeta.setBizIdLength(bizId.length());
-				entityMeta.setBizIdSignature(bizId.signature());
-				entityMeta.setHasBizIdConfig(true);
-				entityMeta.setBusinessIdField(field.getName());
-				// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
-				if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0)
-					entityMeta.setBizIdRelatedColumns(bizId.relatedColumns());
-				processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
-				// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
-				if (id != null) {
-					entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
-					fieldMeta.setLength(bizId.length());
-					entityMeta.setBizIdEqPK(true);
-				} else {
-					entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
-				}
+			if (loadNamedWhereSql.length() > 1) {
+				loadNamedWhereSql.append(" and ");
+				loadArgWhereSql.append(" and ");
+			} else {
+				loadNamedWhereSql.append(" where ");
+				loadArgWhereSql.append(" where ");
+			}
+			loadNamedWhereSql.append(column.name()).append("=:").append(field.getName());
+			loadArgWhereSql.append(column.name()).append("=?");
+		} else {
+			rejectIdFieldList.add(field.getName());
+		}
+		// 业务主键策略配置解析
+		BusinessId bizId = field.getAnnotation(BusinessId.class);
+		if (bizId != null) {
+			String bizGenerator = bizId.generator();
+			entityMeta.setBizIdLength(bizId.length());
+			entityMeta.setBizIdSignature(bizId.signature());
+			entityMeta.setHasBizIdConfig(true);
+			entityMeta.setBusinessIdField(field.getName());
+			// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
+			if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0)
+				entityMeta.setBizIdRelatedColumns(bizId.relatedColumns());
+			processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
+			// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
+			if (id != null) {
+				entityMeta.setIdGenerator(idGenerators.get(bizGenerator));
+				fieldMeta.setLength(bizId.length());
+				entityMeta.setBizIdEqPK(true);
+			} else {
+				entityMeta.setBusinessIdGenerator(idGenerators.get(bizGenerator));
 			}
 		}
 	}
