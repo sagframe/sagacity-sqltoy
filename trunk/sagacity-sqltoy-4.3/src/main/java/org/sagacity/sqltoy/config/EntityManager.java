@@ -83,8 +83,6 @@ public class EntityManager {
 
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
-	 * @author renfei.chen
-	 * @date 2012-6-10 下午2:26:40
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @return
