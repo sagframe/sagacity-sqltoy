@@ -253,9 +253,9 @@ public class SqlUtil {
 					pst.setString(paramIndex, tmpStr);
 				}
 			} else if (paramValue instanceof java.lang.Integer) {
-				pst.setInt(paramIndex, ((Integer) paramValue).intValue());
+				pst.setInt(paramIndex, ((Integer) paramValue));
 			} else if (paramValue instanceof java.lang.Double) {
-				pst.setDouble(paramIndex, ((Double) paramValue).doubleValue());
+				pst.setDouble(paramIndex, ((Double) paramValue));
 			} else if (paramValue instanceof java.sql.Timestamp) {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			} else if (paramValue instanceof java.sql.Time) {
@@ -263,7 +263,7 @@ public class SqlUtil {
 			} else if (paramValue instanceof java.util.Date) {
 				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 			} else if (paramValue instanceof java.lang.Long) {
-				pst.setLong(paramIndex, ((Long) paramValue).longValue());
+				pst.setLong(paramIndex, ((Long) paramValue));
 			} else if (paramValue instanceof java.lang.Boolean) {
 				pst.setBoolean(paramIndex, (Boolean) paramValue);
 			} else if (paramValue instanceof BigDecimal) {
@@ -299,7 +299,7 @@ public class SqlUtil {
 			} else if (paramValue instanceof java.lang.Short) {
 				pst.setShort(paramIndex, (java.lang.Short) paramValue);
 			} else if (paramValue instanceof java.lang.Float) {
-				pst.setFloat(paramIndex, ((Float) paramValue).floatValue());
+				pst.setFloat(paramIndex, ((Float) paramValue));
 			} else {
 				if (jdbcType != -1)
 					pst.setObject(paramIndex, paramValue, jdbcType);
