@@ -4,6 +4,9 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -668,7 +671,8 @@ public class ParamFilterUtils {
 		if (null == param || contrasts == null || contrasts.length == 0)
 			return null;
 		int type = 0;
-		if (param instanceof Date)
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime)
 			type = 1;
 		else if (param instanceof Number)
 			type = 2;
@@ -703,7 +707,8 @@ public class ParamFilterUtils {
 		if (contrasts == null || contrasts.length == 0)
 			return param;
 		int type = 0;
-		if (param instanceof Date)
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime)
 			type = 1;
 		else if (param instanceof Number)
 			type = 2;
@@ -735,7 +740,8 @@ public class ParamFilterUtils {
 	private static Object filterLess(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
@@ -760,7 +766,8 @@ public class ParamFilterUtils {
 	private static Object filterLessEquals(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
@@ -785,7 +792,8 @@ public class ParamFilterUtils {
 	private static Object filterMore(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
@@ -810,7 +818,8 @@ public class ParamFilterUtils {
 	private static Object filterMoreEquals(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
@@ -836,7 +845,8 @@ public class ParamFilterUtils {
 	private static Object filterBetween(Object param, String beginContrast, String endContrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
+				|| param instanceof LocalDateTime) {
 			if (DateUtil.convertDateObject(param).compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
 					&& DateUtil.convertDateObject(param).compareTo(DateUtil.convertDateObject(endContrast)) <= 0)
 				return null;
