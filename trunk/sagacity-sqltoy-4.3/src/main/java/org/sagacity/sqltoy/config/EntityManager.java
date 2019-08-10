@@ -47,6 +47,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @Modification {Date:2017-10-13,分解之前的parseEntityMeta大方法,进行代码优化}
  * @Modification {Date:2018-1-22,增加业务主键配置策略}
  * @Modification {Date:2018-9-6,优化增强业务主键配置策略}
+ * @Modification {Date:2019-8-10,优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -193,9 +194,8 @@ public class EntityManager {
 				List<String> fieldList = new ArrayList<String>();
 				// 主键
 				List<String> idList = new ArrayList<String>();
-				HashMap<String, Integer> idsIndexMap = new HashMap<String, Integer>();
 				// 解析主键
-				parseIdFileds(idList, idsIndexMap, allFields);
+				parseIdFileds(idList, allFields);
 
 				// 构造按照主键获取单条记录的sql,以:named形式
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
@@ -206,7 +206,7 @@ public class EntityManager {
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, loadNamedWhereSql,
 							loadArgWhereSql);
 					// oneToMany解析
-					parseOneToMany(entityMeta, entity, field, idList, idsIndexMap);
+					parseOneToMany(entityMeta, entity, field, idList);
 				}
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
@@ -339,18 +339,14 @@ public class EntityManager {
 	/**
 	 * @todo 解析主键字段
 	 * @param idList
-	 * @param idsIndexMap
-	 * @param realFields
+	 * @param allFields
 	 */
-	private void parseIdFileds(List<String> idList, HashMap<String, Integer> idsIndexMap, Field[] realFields) {
-		int idIndex = 0;
+	private void parseIdFileds(List<String> idList, Field[] allFields) {
 		// 优先提取id集合,有利于统一主键在子表操作中的顺序
-		for (Field field : realFields) {
+		for (Field field : allFields) {
 			// 判断字段是否为主键
 			if (field.getAnnotation(Id.class) != null) {
 				idList.add(field.getName());
-				idsIndexMap.put(field.getName(), idIndex);
-				idIndex++;
 			}
 		}
 	}
@@ -509,95 +505,102 @@ public class EntityManager {
 	 * @param entity
 	 * @param field
 	 * @param idList
-	 * @param idsIndexMap
 	 */
-	private void parseOneToMany(EntityMeta entityMeta, Entity entity, Field field, List<String> idList,
-			HashMap<String, Integer> idsIndexMap) {
-		// 主键字段数量
-		int idSize = idList.size();
-		int idIndex = 0;
+	private void parseOneToMany(EntityMeta entityMeta, Entity entity, Field field, List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-		if (oneToMany != null) {
-			if (idSize != oneToMany.mappedColumns().length)
-				logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
-						oneToMany.mappedTable(), oneToMany.mappedColumns().length);
-			OneToManyModel oneToManyModel = new OneToManyModel();
-			String[] mappedColumns = new String[idSize];
-			String[] mappedFields = new String[idSize];
-
-			// 按照主键顺序排列外键顺序
-			for (int i = 0; i < idSize; i++) {
-				idIndex = idsIndexMap.get(idList.get(i));
-				mappedColumns[i] = oneToMany.mappedColumns()[idIndex];
-				mappedFields[i] = oneToMany.mappedFields()[idIndex];
-			}
-
-			oneToManyModel.setMappedColumns(mappedColumns);
-			oneToManyModel.setMappedFields(mappedFields);
-			// 子表的schema.table
-			String subSchemaTable = (StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-					.concat(oneToMany.mappedTable());
-			oneToManyModel.setMappedTable(subSchemaTable);
-			oneToManyModel.setProperty(field.getName());
-			oneToManyModel
-					.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
-
-			// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
-			oneToManyModel.setDelete(oneToMany.delete());
-
-			// 子表外键查询条件
-			String subWhereSql = " where ";
-			for (int i = 0; i < idSize; i++) {
-				if (i > 0)
-					subWhereSql = subWhereSql.concat(" and ");
-				subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
-			}
-			boolean matchedWhere = false;
-			// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
-			oneToManyModel.setLoad(true);
-			oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql));
-			// 自动加载
-			if (StringUtil.isNotBlank(oneToMany.load())) {
-				// 是否是:xxx形式的参数条件
-				boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
-				if (isNamedSql && !StringUtil.matches(oneToMany.load(), "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
-					// 自定义加载sql
-					if (!oneToMany.load().equalsIgnoreCase("default") && !oneToMany.load().equalsIgnoreCase("true"))
-						oneToManyModel.setLoadSubTableSql(oneToMany.load());
-				} else {
-					matchedWhere = StringUtil.matches(oneToMany.load().toLowerCase(), "\\s+where\\s+");
-					if (matchedWhere)
-						oneToManyModel.setLoadSubTableSql(oneToMany.load());
-					else
-						oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql)
-								.concat(" and ").concat(oneToMany.load()));
-				}
-			}
-
-			// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
-			String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-			for (int i = 0; i < idList.size(); i++) {
-				if (i > 0)
-					subDeleteSql = subDeleteSql.concat(" and ");
-				subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
-			}
-			oneToManyModel.setDeleteSubTableSql(subDeleteSql);
-
-			// 深度级联修改
-			if (StringUtil.isNotBlank(oneToMany.update())) {
-				// 表示先删除子表
-				if (oneToMany.update().equalsIgnoreCase("delete"))
-					oneToManyModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
-				else {
-					// 修改数据(如设置记录状态为失效)
-					matchedWhere = StringUtil.matches(oneToMany.update().toLowerCase(), "\\s+where\\s+");
-					oneToManyModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ")
-							.concat(oneToMany.update()).concat(matchedWhere ? "" : subWhereSql));
-				}
-			}
-			entityMeta.addOneToMany(oneToManyModel);
+		if (oneToMany == null)
+			return;
+		// 主键字段数量
+		int idSize = idList.size();
+		if (idSize != oneToMany.mappedColumns().length) {
+			logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
+					oneToMany.mappedTable(), oneToMany.mappedColumns().length);
+			return;
 		}
+		OneToManyModel oneToManyModel = new OneToManyModel();
+		String[] mappedColumns = new String[idSize];
+		String[] mappedFields = new String[idSize];
+		// 按照主键顺序排列外键顺序
+		// 原则上可以:oneToManyModel.setMappedColumns(oneToMany.mappedColumns())
+		// 直接复制,考虑主键顺序可能会被人为调整
+		String idFieldName;
+		String var;
+		for (int i = 0; i < idSize; i++) {
+			var = oneToMany.mappedFields()[i];
+			for (int j = 0; j < idSize; j++) {
+				idFieldName = idList.get(j);
+				if (var.equalsIgnoreCase(idFieldName)) {
+					mappedFields[j] = var;
+					mappedColumns[j] = oneToMany.mappedColumns()[i];
+					break;
+				}
+			}
+		}
+
+		oneToManyModel.setMappedColumns(mappedColumns);
+		oneToManyModel.setMappedFields(mappedFields);
+		// 子表的schema.table
+		String subSchemaTable = (StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
+				.concat(oneToMany.mappedTable());
+		oneToManyModel.setMappedTable(subSchemaTable);
+		oneToManyModel.setProperty(field.getName());
+		oneToManyModel.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+
+		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
+		oneToManyModel.setDelete(oneToMany.delete());
+
+		// 子表外键查询条件
+		String subWhereSql = " where ";
+		for (int i = 0; i < idSize; i++) {
+			if (i > 0)
+				subWhereSql = subWhereSql.concat(" and ");
+			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
+		}
+		boolean matchedWhere = false;
+		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
+		oneToManyModel.setLoad(true);
+		oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql));
+		// 自动加载
+		if (StringUtil.isNotBlank(oneToMany.load())) {
+			// 是否是:xxx形式的参数条件
+			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
+			if (isNamedSql && !StringUtil.matches(oneToMany.load(), "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
+				// 自定义加载sql
+				if (!oneToMany.load().equalsIgnoreCase("default") && !oneToMany.load().equalsIgnoreCase("true"))
+					oneToManyModel.setLoadSubTableSql(oneToMany.load());
+			} else {
+				matchedWhere = StringUtil.matches(oneToMany.load().toLowerCase(), "\\s+where\\s+");
+				if (matchedWhere)
+					oneToManyModel.setLoadSubTableSql(oneToMany.load());
+				else
+					oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql)
+							.concat(" and ").concat(oneToMany.load()));
+			}
+		}
+
+		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
+		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
+		for (int i = 0; i < idList.size(); i++) {
+			if (i > 0)
+				subDeleteSql = subDeleteSql.concat(" and ");
+			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
+		}
+		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
+
+		// 深度级联修改
+		if (StringUtil.isNotBlank(oneToMany.update())) {
+			// 表示先删除子表
+			if (oneToMany.update().equalsIgnoreCase("delete"))
+				oneToManyModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
+			else {
+				// 修改数据(如设置记录状态为失效)
+				matchedWhere = StringUtil.matches(oneToMany.update().toLowerCase(), "\\s+where\\s+");
+				oneToManyModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ")
+						.concat(oneToMany.update()).concat(matchedWhere ? "" : subWhereSql));
+			}
+		}
+		entityMeta.addOneToMany(oneToManyModel);
 	}
 
 	/**
