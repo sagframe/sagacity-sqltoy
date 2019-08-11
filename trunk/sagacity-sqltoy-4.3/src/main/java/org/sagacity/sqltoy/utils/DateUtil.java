@@ -9,6 +9,10 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -298,6 +302,10 @@ public class DateUtil {
 			result = parseString(dtStr, format, local);
 		} else if (dt instanceof java.util.Date)
 			result = new java.util.Date(((java.util.Date) dt).getTime());
+		else if (dt instanceof java.time.LocalDate)
+			result = asDate((LocalDate) dt);
+		else if (dt instanceof java.time.LocalDateTime)
+			result = asDate((LocalDateTime) dt);
 		else if (dt instanceof java.sql.Date)
 			result = new java.util.Date(((java.sql.Date) dt).getTime());
 		else if (dt instanceof java.lang.Number) {
@@ -542,5 +550,21 @@ public class DateUtil {
 			result = addDay(result, -1);
 			return result;
 		}
+	}
+
+	public static Date asDate(LocalDate localDate) {
+		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+	}
+
+	public static Date asDate(LocalDateTime localDateTime) {
+		return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+	}
+
+	public static LocalDate asLocalDate(Date date) {
+		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+	}
+
+	public static LocalDateTime asLocalDateTime(Date date) {
+		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 }

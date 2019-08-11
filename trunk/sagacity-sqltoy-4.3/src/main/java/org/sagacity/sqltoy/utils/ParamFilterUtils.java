@@ -680,11 +680,16 @@ public class ParamFilterUtils {
 		// 只要有一个对比值相等表示成立，返回null
 		for (String contrast : contrasts) {
 			if (type == 1) {
-				Date compareDate = contrast.equalsIgnoreCase("sysdate")
-						? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-						: DateUtil.convertDateObject(contrast);
-				if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
-					return null;
+				if (param instanceof LocalTime) {
+					if (contrast != null && ((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0)
+						return null;
+				} else {
+					Date compareDate = contrast.equalsIgnoreCase("sysdate")
+							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+							: DateUtil.convertDateObject(contrast);
+					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+						return null;
+				}
 			} else if (type == 2) {
 				if (NumberUtil.isNumber(contrast)
 						&& Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
@@ -714,12 +719,19 @@ public class ParamFilterUtils {
 			type = 2;
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
 		for (String contrast : contrasts) {
+			if (StringUtil.isBlank(contrast))
+				return param;
 			if (type == 1) {
-				Date compareDate = contrast.equalsIgnoreCase("sysdate")
-						? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
-						: DateUtil.convertDateObject(contrast);
-				if (compareDate == null || DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
-					return param;
+				if (param instanceof LocalTime) {
+					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0)
+						return param;
+				} else {
+					Date compareDate = contrast.equalsIgnoreCase("sysdate")
+							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
+							: DateUtil.convertDateObject(contrast);
+					if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+						return param;
+				}
 			} else if (type == 2) {
 				// 非数字或相等
 				if (!NumberUtil.isNumber(contrast)
@@ -740,14 +752,16 @@ public class ParamFilterUtils {
 	private static Object filterLess(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			else
 				compareDate = DateUtil.convertDateObject(contrast);
 			if (DateUtil.convertDateObject(param).before(compareDate))
+				return null;
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).isBefore(LocalTime.parse(contrast)))
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) < Double.parseDouble(contrast))
@@ -766,14 +780,16 @@ public class ParamFilterUtils {
 	private static Object filterLessEquals(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			else
 				compareDate = DateUtil.convertDateObject(contrast);
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) <= 0)
+				return null;
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) <= 0)
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) <= Double.parseDouble(contrast))
@@ -792,14 +808,16 @@ public class ParamFilterUtils {
 	private static Object filterMore(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			else
 				compareDate = DateUtil.convertDateObject(contrast);
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) > 0)
+				return null;
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) > 0)
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) > Double.parseDouble(contrast))
@@ -818,14 +836,16 @@ public class ParamFilterUtils {
 	private static Object filterMoreEquals(Object param, String contrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate"))
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			else
 				compareDate = DateUtil.convertDateObject(contrast);
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) >= 0)
+				return null;
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) >= 0)
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) >= Double.parseDouble(contrast))
@@ -845,10 +865,14 @@ public class ParamFilterUtils {
 	private static Object filterBetween(Object param, String beginContrast, String endContrast) {
 		if (null == param)
 			return null;
-		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime) {
-			if (DateUtil.convertDateObject(param).compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
-					&& DateUtil.convertDateObject(param).compareTo(DateUtil.convertDateObject(endContrast)) <= 0)
+		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
+			Date var = DateUtil.convertDateObject(param);
+			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
+					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0)
+				return null;
+		} else if (param instanceof LocalTime) {
+			if (((LocalTime) param).compareTo(LocalTime.parse(beginContrast)) >= 0
+					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0)
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) >= Double.parseDouble(beginContrast)
