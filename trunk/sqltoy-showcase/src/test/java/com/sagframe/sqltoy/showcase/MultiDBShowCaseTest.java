@@ -54,7 +54,7 @@ public class MultiDBShowCaseTest {
 		staffInfo.setStaffName("测试员工");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test@aliyun.com");
-		staffInfo.setEntryDate(DateUtil.getLocalDate());
+		staffInfo.setEntryDate(DateUtil.getDate());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
@@ -75,7 +75,7 @@ public class MultiDBShowCaseTest {
 		staffInfo.setStaffName("测试员工");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test@aliyun.com");
-		staffInfo.setEntryDate(DateUtil.getLocalDate());
+		staffInfo.setEntryDate(DateUtil.getDate());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));

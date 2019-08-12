@@ -54,7 +54,7 @@ public class RedisBusinessKeyCaseTest {
 		deviceOrder.setSaler("S00001");
 		deviceOrder.setStaffId("S001");
 		deviceOrder.setStatus(1);
-		deviceOrder.setTransDate(DateUtil.getLocalDate());
+		deviceOrder.setTransDate(DateUtil.getDate());
 		deviceOrder.setDeliveryTerm(DateUtil.asLocalDate(DateUtil.addDay(DateUtil.getNowTime(), 30)));
 		// 得到有规则的订单编号,类似:PPC190716001
 		String orderId = (String) sqlToyCRUDService.save(deviceOrder);

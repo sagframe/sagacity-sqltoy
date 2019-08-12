@@ -52,7 +52,7 @@ public class ShardingCaseServiceTest {
 		logVO.setContents("S0001测试");
 		logVO.setLogType("APP_LOGIN");
 		logVO.setLogDate(LocalDate.parse("2019-07-31"));
-		logVO.setLogTime(DateUtil.getLocalDateTime());
+		logVO.setLogTime(DateUtil.getDateTime());
 		entities.add(logVO);
 
 		UserLogVO logVO1 = new UserLogVO();
@@ -62,7 +62,7 @@ public class ShardingCaseServiceTest {
 		logVO1.setContents("S0002测试");
 		logVO1.setLogType("APP_LOGIN");
 		logVO1.setLogDate(LocalDate.parse("2019-07-31"));
-		logVO1.setLogTime(DateUtil.getLocalDateTime());
+		logVO1.setLogTime(DateUtil.getDateTime());
 		entities.add(logVO1);
 
 		UserLogVO logVO2 = new UserLogVO();
@@ -72,7 +72,7 @@ public class ShardingCaseServiceTest {
 		logVO2.setContents("S0003测试");
 		logVO2.setLogType("APP_LOGIN");
 		logVO2.setLogDate(LocalDate.parse("2019-07-31"));
-		logVO2.setLogTime(DateUtil.getLocalDateTime());
+		logVO2.setLogTime(DateUtil.getDateTime());
 		entities.add(logVO2);
 
 		// 这里无论是批量还是单条操作都会进行分库(单条是特殊的批量),根据userId字段值取模获取对应操作的数据库

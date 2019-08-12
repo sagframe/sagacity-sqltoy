@@ -68,7 +68,7 @@ public class QueryCaseTest {
 				null, null, StaffInfoVO.class);
 		StaffInfoVO staff;
 		int[] days = { 10, 15, 20, 30, 60 };
-		LocalDate nowTime = DateUtil.getLocalDate();
+		LocalDate nowTime = DateUtil.getDate();
 		List<DictDetailVO> deviceTypes = sqlToyLazyDao.findBySql(
 				"select * from sqltoy_dict_detail where dict_type=:dictType", new DictDetailVO(null, "DEVICE_TYPE"));
 		// 采购、销售标志
