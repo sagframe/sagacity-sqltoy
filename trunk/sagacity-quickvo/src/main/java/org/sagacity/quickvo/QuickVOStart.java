@@ -45,7 +45,7 @@ public class QuickVOStart {
 	 */
 	private void loadEnv() {
 		try {
-			out.println("=========  welcome use sagacity-quickvo version:4.5.0 =============");
+			out.println("=========  welcome use sagacity-quickvo version:4.6.0 支持jdk8 日期 ==========");
 			String realLogFile = logFile;
 			if (realLogFile.charAt(0) == '/')
 				realLogFile = realLogFile.substring(1);

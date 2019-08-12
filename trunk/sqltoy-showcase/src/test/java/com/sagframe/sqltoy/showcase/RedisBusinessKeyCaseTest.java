@@ -27,7 +27,7 @@ import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
 public class RedisBusinessKeyCaseTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
-	
+
 	// 请参见tools\quickvo\quickvo.xml中的配置:
 	// <business-primary-key>
 	// <!-- 1位购销标志_2位设备分类代码_6位日期_3位流水 (如果当天超过3位会自动扩展到4位) -->
@@ -41,8 +41,8 @@ public class RedisBusinessKeyCaseTest {
 
 	@Test
 	public void generateBusinessKey() {
-		//@case() 类似于oracle的decode 函数
-		//signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
+		// @case() 类似于oracle的decode 函数
+		// signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
 		DeviceOrderInfoVO deviceOrder = new DeviceOrderInfoVO();
 		// pc设备
 		deviceOrder.setDeviceType("PC");
@@ -54,8 +54,8 @@ public class RedisBusinessKeyCaseTest {
 		deviceOrder.setSaler("S00001");
 		deviceOrder.setStaffId("S001");
 		deviceOrder.setStatus(1);
-		deviceOrder.setTransDate(DateUtil.getNowTime());
-		deviceOrder.setDeliveryTerm(DateUtil.addDay(DateUtil.getNowTime(), 30));
+		deviceOrder.setTransDate(DateUtil.getLocalDate());
+		deviceOrder.setDeliveryTerm(DateUtil.asLocalDate(DateUtil.addDay(DateUtil.getNowTime(), 30)));
 		// 得到有规则的订单编号,类似:PPC190716001
 		String orderId = (String) sqlToyCRUDService.save(deviceOrder);
 		System.err.println(orderId);

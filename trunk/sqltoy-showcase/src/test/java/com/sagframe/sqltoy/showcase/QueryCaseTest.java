@@ -4,8 +4,8 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -68,7 +68,7 @@ public class QueryCaseTest {
 				null, null, StaffInfoVO.class);
 		StaffInfoVO staff;
 		int[] days = { 10, 15, 20, 30, 60 };
-		Date nowTime = DateUtil.getNowTime();
+		LocalDate nowTime = DateUtil.getLocalDate();
 		List<DictDetailVO> deviceTypes = sqlToyLazyDao.findBySql(
 				"select * from sqltoy_dict_detail where dict_type=:dictType", new DictDetailVO(null, "DEVICE_TYPE"));
 		// 采购、销售标志
@@ -81,7 +81,8 @@ public class QueryCaseTest {
 			orderVO.setStaffId(staff.getStaffId());
 			orderVO.setOrganId(staff.getOrganId());
 			orderVO.setTransDate(nowTime);
-			orderVO.setDeliveryTerm(DateUtil.addDay(nowTime, days[ShowCaseUtils.getRandomNum(4)]));
+			orderVO.setDeliveryTerm(
+					DateUtil.asLocalDate(DateUtil.addDay(nowTime, days[ShowCaseUtils.getRandomNum(4)])));
 			orderVO.setDeviceType(deviceTypes.get(ShowCaseUtils.getRandomNum(deviceTypes.size() - 1)).getDictKey());
 			orderVO.setPsType(psTypes[ShowCaseUtils.getRandomNum(1)]);
 			orderVO.setTotalCnt(new BigDecimal(ShowCaseUtils.getRandomNum(100, 400)));
@@ -175,23 +176,21 @@ public class QueryCaseTest {
 	 */
 	@Test
 	public void findBySql() {
-		//授权的机构
-		String[] authedOrgans= {"100004","100007"};
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findBySql("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
-				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class);
-		for(DeviceOrderInfoVO vo:result)
+		// 授权的机构
+		String[] authedOrgans = { "100004", "100007" };
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findBySql("sqltoy_order_search",
+				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
+				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class);
+		for (DeviceOrderInfoVO vo : result)
 			System.err.println(JSON.toJSONString(vo));
 	}
 
 	/**
-	 * 分页查询
-	 * sqltoy 的分页特点:
-	 * 1、具有快速分页能力，即先分页后关联，实现查询效率的提升
-	 * 2、具有分页优化能力，即缓存总记录数，将分页2次查询变成1.3~1.5次
-	 * 3、具有智能优化count查询能力:
-	 * -->剔除order by提升性能;
-	 * -->解析sql判断是否可以select count(1)替代原语句from前部分,避免直接select count(1) from (原sql),从而提升效率
-	 *    (如：select decode(A,1,xxx),case when end from table 等计算变成select count(1) from table 则避免了不必要的计算)
+	 * 分页查询 sqltoy 的分页特点: 1、具有快速分页能力，即先分页后关联，实现查询效率的提升
+	 * 2、具有分页优化能力，即缓存总记录数，将分页2次查询变成1.3~1.5次 3、具有智能优化count查询能力: -->剔除order by提升性能;
+	 * -->解析sql判断是否可以select count(1)替代原语句from前部分,避免直接select count(1) from
+	 * (原sql),从而提升效率 (如：select decode(A,1,xxx),case when end from table 等计算变成select
+	 * count(1) from table 则避免了不必要的计算)
 	 */
 	@Test
 	public void findPage() {
@@ -199,43 +198,43 @@ public class QueryCaseTest {
 		StaffInfoVO staffVO = new StaffInfoVO();
 		// 作为查询条件传参数
 		staffVO.setStaffName("陈");
-		//使用了分页优化器
-		//第一次调用:执行count 和 取记录两次查询
+		// 使用了分页优化器
+		// 第一次调用:执行count 和 取记录两次查询
 		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
-		//第二次调用:条件一致，不执行count查询
+		// 第二次调用:条件一致，不执行count查询
 		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
 	}
 
 	/**
-	 * 取前多少条记录
-	 * topSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
+	 * 取前多少条记录 topSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
 	 */
 	@Test
 	public void findTop() {
-		//topSize:
-		//授权的机构
-		String[] authedOrgans= {"100004","100007"};
-		double topSize=20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
-				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class,topSize);
-		for(DeviceOrderInfoVO vo:result)
+		// topSize:
+		// 授权的机构
+		String[] authedOrgans = { "100004", "100007" };
+		double topSize = 20;
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search",
+				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
+				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, topSize);
+		for (DeviceOrderInfoVO vo : result)
 			System.err.println(JSON.toJSONString(vo));
 	}
 
 	/**
-	 * 查询随机记录
-	 * randomSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
+	 * 查询随机记录 randomSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
 	 */
 	@Test
 	public void findByRandom() {
-		//授权的机构
-		String[] authedOrgans= {"100004","100007"};
-		double randomSize=20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search", new String[] {"orderId","authedOrganIds","staffName","beginDate","endDate"},
-				new Object[] {null,authedOrgans,"陈","2018-09-01",null}, DeviceOrderInfoVO.class,randomSize);
-		for(DeviceOrderInfoVO vo:result)
+		// 授权的机构
+		String[] authedOrgans = { "100004", "100007" };
+		double randomSize = 20;
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search",
+				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
+				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, randomSize);
+		for (DeviceOrderInfoVO vo : result)
 			System.err.println(JSON.toJSONString(vo));
 	}
 }

@@ -4,6 +4,7 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,8 +51,8 @@ public class ShardingCaseServiceTest {
 		logVO.setDeviceCode("MEI0001");
 		logVO.setContents("S0001测试");
 		logVO.setLogType("APP_LOGIN");
-		logVO.setLogDate(DateUtil.parseString("2019-07-31"));
-		logVO.setLogTime(DateUtil.getNowTime());
+		logVO.setLogDate(LocalDate.parse("2019-07-31"));
+		logVO.setLogTime(DateUtil.getLocalDateTime());
 		entities.add(logVO);
 
 		UserLogVO logVO1 = new UserLogVO();
@@ -60,8 +61,8 @@ public class ShardingCaseServiceTest {
 		logVO1.setDeviceCode("MEI0002");
 		logVO1.setContents("S0002测试");
 		logVO1.setLogType("APP_LOGIN");
-		logVO1.setLogDate(DateUtil.parseString("2019-07-31"));
-		logVO1.setLogTime(DateUtil.getNowTime());
+		logVO1.setLogDate(LocalDate.parse("2019-07-31"));
+		logVO1.setLogTime(DateUtil.getLocalDateTime());
 		entities.add(logVO1);
 
 		UserLogVO logVO2 = new UserLogVO();
@@ -70,8 +71,8 @@ public class ShardingCaseServiceTest {
 		logVO2.setDeviceCode("MEI0003");
 		logVO2.setContents("S0003测试");
 		logVO2.setLogType("APP_LOGIN");
-		logVO2.setLogDate(DateUtil.parseString("2019-07-31"));
-		logVO2.setLogTime(DateUtil.getNowTime());
+		logVO2.setLogDate(LocalDate.parse("2019-07-31"));
+		logVO2.setLogTime(DateUtil.getLocalDateTime());
 		entities.add(logVO2);
 
 		// 这里无论是批量还是单条操作都会进行分库(单条是特殊的批量),根据userId字段值取模获取对应操作的数据库
@@ -111,8 +112,8 @@ public class ShardingCaseServiceTest {
 			trans.setStatus(1);
 			trans.setTransAmt(BigDecimal.valueOf(1000 + i * NumberUtil.getRandomNum(50)));
 			trans.setTransChannel(channels[NumberUtil.getRandomNum(2)]);
-			trans.setTransTime(DateUtil.addDay(today, 0 - i));
-			trans.setTransDate(DateUtil.addDay(today, 0 - i));
+			trans.setTransTime(DateUtil.asLocalDateTime(DateUtil.addDay(today, 0 - i)));
+			trans.setTransDate(DateUtil.asLocalDate(DateUtil.addDay(today, 0 - i)));
 			trans.setTransCode("T00" + NumberUtil.getRandomNum(9));
 			trans.setResultCode("1");
 			trans15DSet.add(trans);
@@ -127,8 +128,8 @@ public class ShardingCaseServiceTest {
 			trans.setStatus(1);
 			trans.setTransAmt(BigDecimal.valueOf(1000 + i * NumberUtil.getRandomNum(50)));
 			trans.setTransChannel(channels[NumberUtil.getRandomNum(2)]);
-			trans.setTransTime(DateUtil.addDay(today, 0 - i - 15));
-			trans.setTransDate(DateUtil.addDay(today, 0 - i - 15));
+			trans.setTransTime(DateUtil.asLocalDateTime(DateUtil.addDay(today, 0 - i - 15)));
+			trans.setTransDate(DateUtil.asLocalDate(DateUtil.addDay(today, 0 - i - 15)));
 			trans.setTransCode("T00" + NumberUtil.getRandomNum(9));
 			trans.setResultCode("1");
 			transHisSet.add(trans);

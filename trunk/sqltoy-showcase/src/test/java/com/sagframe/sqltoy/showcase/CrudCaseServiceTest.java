@@ -3,6 +3,12 @@
  */
 package com.sagframe.sqltoy.showcase;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -12,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.showcase.vo.ComplexpkHeadVO;
+import com.sagframe.sqltoy.showcase.vo.ComplexpkItemVO;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
 import com.sagframe.sqltoy.utils.ShowCaseUtils;
 
@@ -38,7 +46,7 @@ public class CrudCaseServiceTest {
 		staffInfo.setStaffName("测试员工");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test@aliyun.com");
-		staffInfo.setEntryDate(DateUtil.getNowTime());
+		staffInfo.setEntryDate(LocalDate.now());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
 		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
@@ -93,22 +101,66 @@ public class CrudCaseServiceTest {
 	}
 
 	@Test
-	public void delete() {
-
-	}
-
-	@Test
-	public void deleteAll() {
-
-	}
-
-	@Test
 	public void load() {
-
+		sqlToyCRUDService.load(new StaffInfoVO("S190715001"));
 	}
 
 	@Test
 	public void loadAll() {
+		// 组织批量数据
+		List<StaffInfoVO> staffs = new ArrayList<StaffInfoVO>();
+		String[] ids = { "S190715001", "S190715002" };
+		for (String id : ids) {
+			StaffInfoVO staff = new StaffInfoVO(id);
+			staffs.add(staff);
+		}
+		sqlToyCRUDService.loadAll(staffs);
+	}
 
+	@Test
+	public void delete() {
+		sqlToyCRUDService.delete(new StaffInfoVO("S190715001"));
+	}
+
+	@Test
+	public void deleteAll() {
+		// 组织批量数据
+		List<StaffInfoVO> staffs = new ArrayList<StaffInfoVO>();
+		String[] ids = { "S190715001", "S190715002" };
+		for (String id : ids) {
+			StaffInfoVO staff = new StaffInfoVO(id);
+			staffs.add(staff);
+		}
+		sqlToyCRUDService.deleteAll(staffs);
+	}
+
+	/**
+	 * 演示级联保存
+	 */
+	@Test
+	public void cascadeSave() {
+		ComplexpkHeadVO head = new ComplexpkHeadVO();
+		head.setTransDate(LocalDate.now());
+		head.setTransCode("S0001");
+		head.setTotalCnt(BigDecimal.valueOf(10));
+		head.setTotalAmt(BigDecimal.valueOf(10000));
+
+		// List<>
+		ComplexpkItemVO item1 = new ComplexpkItemVO();
+		item1.setProductId("P01");
+		item1.setPrice(BigDecimal.valueOf(1000));
+		item1.setAmt(BigDecimal.valueOf(5000));
+		item1.setQuantity(BigDecimal.valueOf(5));
+
+		head.getComplexpkItemVOs().add(item1);
+
+		ComplexpkItemVO item2 = new ComplexpkItemVO();
+		item2.setProductId("P02");
+		item2.setPrice(BigDecimal.valueOf(1000));
+		item2.setAmt(BigDecimal.valueOf(5000));
+		item2.setQuantity(BigDecimal.valueOf(5));
+
+		head.getComplexpkItemVOs().add(item2);
+		sqlToyCRUDService.save(head);
 	}
 }
