@@ -279,14 +279,14 @@ public class BeanUtil {
 				return DateUtil.parseString(valueStr);
 		} else if (typeName.equals("java.time.localdate")) {
 			return LocalDate.parse(valueStr);
-		} else if (typeName.equals("java.time.localtime")) {
-			return LocalTime.parse(valueStr);
 		} else if (typeName.equals("java.time.localdatetime")) {
 			return LocalDateTime.parse(valueStr);
 		} else if (typeName.equals("java.lang.double")) {
 			return Double.valueOf(valueStr);
 		} else if (typeName.equals("double")) {
 			return Double.valueOf(valueStr).doubleValue();
+		} else if (typeName.equals("java.time.localtime")) {
+			return LocalTime.parse(valueStr);
 		} else if (typeName.equals("java.lang.short")) {
 			return Short.valueOf(valueStr);
 		} else if (typeName.equals("short")) {
