@@ -51,7 +51,7 @@ where #[t.ORDER_ID=:orderId]
       #[and t.TRANS_DATE<:endDate]  
 ```
 
-* mybatis的写法(写起来真的太痛苦了,如同嚼蜡,完全是一个工程化的硬搞死搞模式)
+* mybatis的写法(一板一眼很工程化)
 
 ```
  select *
