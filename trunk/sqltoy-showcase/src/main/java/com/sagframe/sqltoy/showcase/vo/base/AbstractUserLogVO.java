@@ -7,7 +7,8 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 
 /**
@@ -59,13 +60,13 @@ public abstract class AbstractUserLogVO implements Serializable,
 	 * 日志时间
 	 */
 	@Column(name="LOG_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date logTime;
+	protected LocalDateTime logTime;
 	
 	/**
 	 * 日期日期
 	 */
 	@Column(name="LOG_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
-	protected Date logDate;
+	protected LocalDate logDate;
 	
 	/**
 	 * 日志类型
@@ -98,7 +99,7 @@ public abstract class AbstractUserLogVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractUserLogVO(String logId,String userId,Date logTime,Date logDate,String logType,String channel,String contents)
+	public AbstractUserLogVO(String logId,String userId,LocalDateTime logTime,LocalDate logDate,String logType,String channel,String contents)
 	{
 		this.logId=logId;
 		this.userId=userId;
@@ -110,7 +111,7 @@ public abstract class AbstractUserLogVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractUserLogVO(String logId,String userId,String terminalIp,String deviceCode,Date logTime,Date logDate,String logType,String channel,String contents)
+	public AbstractUserLogVO(String logId,String userId,String terminalIp,String deviceCode,LocalDateTime logTime,LocalDate logDate,String logType,String channel,String contents)
 	{
 		this.logId=logId;
 		this.userId=userId;
@@ -182,28 +183,28 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param logTime the logTime to set
 	 */
-	public void setLogTime(Date logTime) {
+	public void setLogTime(LocalDateTime logTime) {
 		this.logTime=logTime;
 	}
 		
 	/**
 	 *@return the LogTime
 	 */
-	public Date getLogTime() {
+	public LocalDateTime getLogTime() {
 	    return this.logTime;
 	}
 	
 	/**
 	 *@param logDate the logDate to set
 	 */
-	public void setLogDate(Date logDate) {
+	public void setLogDate(LocalDate logDate) {
 		this.logDate=logDate;
 	}
 		
 	/**
 	 *@return the LogDate
 	 */
-	public Date getLogDate() {
+	public LocalDate getLogDate() {
 	    return this.logDate;
 	}
 	

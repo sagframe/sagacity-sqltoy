@@ -7,7 +7,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 
 /**
@@ -66,7 +66,7 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	 * 最后修改时间
 	 */
 	@Column(name="UPDATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date updateTime;
+	protected LocalDateTime updateTime;
 	
 	/**
 	 * 状态
@@ -89,7 +89,7 @@ public abstract class AbstractDictDetailVO implements Serializable,
 
 
 	/** full constructor */
-	public AbstractDictDetailVO(String dictKey,String dictType,String dictName,Integer showIndex,String updateBy,Date updateTime,Integer status)
+	public AbstractDictDetailVO(String dictKey,String dictType,String dictName,Integer showIndex,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.dictKey=dictKey;
 		this.dictType=dictType;
@@ -173,14 +173,14 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(Date updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
 	}
 		
 	/**
 	 *@return the UpdateTime
 	 */
-	public Date getUpdateTime() {
+	public LocalDateTime getUpdateTime() {
 	    return this.updateTime;
 	}
 	

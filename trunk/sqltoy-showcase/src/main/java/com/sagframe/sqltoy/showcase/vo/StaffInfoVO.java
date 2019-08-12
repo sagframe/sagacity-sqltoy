@@ -3,8 +3,11 @@
  */
 package com.sagframe.sqltoy.showcase.vo;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
-import java.util.Date;
+
 import com.sagframe.sqltoy.showcase.vo.base.AbstractStaffInfoVO;
 
 /**
@@ -19,11 +22,6 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	 * 
 	 */
 	private static final long serialVersionUID = 4609820466201465046L;
-	
-	/**
-	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	 */
 	 
 	/** default constructor */
 	public StaffInfoVO() {
@@ -38,7 +36,7 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	}
 
 	/** minimal constructor */
-	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date entryDate,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate entryDate,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
@@ -54,7 +52,7 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	}
 
 	/** full constructor */
-	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date birthday,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public StaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate birthday,LocalDate entryDate,LocalDate termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
@@ -80,11 +78,7 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
-	
-	
-	//请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	//如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	
+
 	/**
 	 * 员工所在机构名称
 	 */

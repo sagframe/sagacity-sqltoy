@@ -9,7 +9,8 @@ import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.BusinessId;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -80,13 +81,13 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	 * 成交日期
 	 */
 	@Column(name="TRANS_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
-	protected Date transDate;
+	protected LocalDate transDate;
 	
 	/**
 	 * 交货期限
 	 */
 	@Column(name="DELIVERY_TERM",length=10L,type=java.sql.Types.DATE,nullable=true)
-	protected Date deliveryTerm;
+	protected LocalDate deliveryTerm;
 	
 	/**
 	 * 业务员
@@ -110,7 +111,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	 * 创建时间
 	 */
 	@Column(name="CREATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date createTime;
+	protected LocalDateTime createTime;
 	
 	/**
 	 * 最后修改人
@@ -122,7 +123,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	 * 最后修改时间
 	 */
 	@Column(name="UPDATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date updateTime;
+	protected LocalDateTime updateTime;
 	
 	/**
 	 * 状态
@@ -143,7 +144,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,Date transDate,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,LocalDate transDate,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.orderId=orderId;
 		this.deviceType=deviceType;
@@ -157,7 +158,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,Date transDate,Date deliveryTerm,String staffId,String organId,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractDeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,LocalDate transDate,LocalDate deliveryTerm,String staffId,String organId,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.orderId=orderId;
 		this.deviceType=deviceType;
@@ -278,28 +279,28 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(Date transDate) {
+	public void setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
 	}
 		
 	/**
 	 *@return the TransDate
 	 */
-	public Date getTransDate() {
+	public LocalDate getTransDate() {
 	    return this.transDate;
 	}
 	
 	/**
 	 *@param deliveryTerm the deliveryTerm to set
 	 */
-	public void setDeliveryTerm(Date deliveryTerm) {
+	public void setDeliveryTerm(LocalDate deliveryTerm) {
 		this.deliveryTerm=deliveryTerm;
 	}
 		
 	/**
 	 *@return the DeliveryTerm
 	 */
-	public Date getDeliveryTerm() {
+	public LocalDate getDeliveryTerm() {
 	    return this.deliveryTerm;
 	}
 	
@@ -348,14 +349,14 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(Date createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
 	}
 		
 	/**
 	 *@return the CreateTime
 	 */
-	public Date getCreateTime() {
+	public LocalDateTime getCreateTime() {
 	    return this.createTime;
 	}
 	
@@ -376,14 +377,14 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(Date updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
 	}
 		
 	/**
 	 *@return the UpdateTime
 	 */
-	public Date getUpdateTime() {
+	public LocalDateTime getUpdateTime() {
 	    return this.updateTime;
 	}
 	

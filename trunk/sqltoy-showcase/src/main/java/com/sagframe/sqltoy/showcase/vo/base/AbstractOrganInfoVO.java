@@ -7,7 +7,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 
 /**
@@ -95,7 +95,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	 * 创建时间
 	 */
 	@Column(name="CREATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date createTime;
+	protected LocalDateTime createTime;
 	
 	/**
 	 * 最后修改人
@@ -107,7 +107,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	 * 最后修改时间
 	 */
 	@Column(name="UPDATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date updateTime;
+	protected LocalDateTime updateTime;
 	
 	/**
 	 * 状态
@@ -128,7 +128,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractOrganInfoVO(String organId,String organName,String organCode,String organPid,Integer showIndex,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractOrganInfoVO(String organId,String organName,String organCode,String organPid,Integer showIndex,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.organId=organId;
 		this.organName=organName;
@@ -143,7 +143,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractOrganInfoVO(String organId,String organName,String organCode,String costNo,String organPid,String nodeRoute,Integer nodeLevel,Integer isLeaf,Integer showIndex,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractOrganInfoVO(String organId,String organName,String organCode,String costNo,String organPid,String nodeRoute,Integer nodeLevel,Integer isLeaf,Integer showIndex,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.organId=organId;
 		this.organName=organName;
@@ -304,14 +304,14 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(Date createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
 	}
 		
 	/**
 	 *@return the CreateTime
 	 */
-	public Date getCreateTime() {
+	public LocalDateTime getCreateTime() {
 	    return this.createTime;
 	}
 	
@@ -332,14 +332,14 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(Date updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
 	}
 		
 	/**
 	 *@return the UpdateTime
 	 */
-	public Date getUpdateTime() {
+	public LocalDateTime getUpdateTime() {
 	    return this.updateTime;
 	}
 	

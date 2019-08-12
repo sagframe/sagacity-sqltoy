@@ -3,8 +3,10 @@
  */
 package com.sagframe.sqltoy.showcase.vo;
 
+import java.time.LocalDateTime;
+
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
-import java.util.Date;
+
 import com.sagframe.sqltoy.showcase.vo.base.AbstractDictDetailVO;
 
 /**
@@ -20,11 +22,6 @@ public class DictDetailVO extends AbstractDictDetailVO {
 	 */
 	private static final long serialVersionUID = 6197361592098673273L;
 	
-	/**
-	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	 */
-	 
 	/** default constructor */
 	public DictDetailVO() {
 		super();
@@ -40,7 +37,7 @@ public class DictDetailVO extends AbstractDictDetailVO {
 
 
 	/** full constructor */
-	public DictDetailVO(String dictKey,String dictType,String dictName,Integer showIndex,String updateBy,Date updateTime,Integer status)
+	public DictDetailVO(String dictKey,String dictType,String dictName,Integer showIndex,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.dictKey=dictKey;
 		this.dictType=dictType;
@@ -53,10 +50,6 @@ public class DictDetailVO extends AbstractDictDetailVO {
 
 	/*---end-constructor-area---don't-update-this-area--*/
 	
-	
-	//请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	//如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into tableName (A,B) values(?,?)
-	 
 	/**
      *@todo vo columns to String
      */

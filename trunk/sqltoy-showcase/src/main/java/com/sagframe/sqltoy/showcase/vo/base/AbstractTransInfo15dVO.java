@@ -8,7 +8,8 @@ import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 
 /**
@@ -72,13 +73,13 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	 * 交易时间
 	 */
 	@Column(name="TRANS_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date transTime;
+	protected LocalDateTime transTime;
 	
 	/**
 	 * 交易日期
 	 */
 	@Column(name="TRANS_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
-	protected Date transDate;
+	protected LocalDate transDate;
 	
 	/**
 	 * 用户ID
@@ -105,7 +106,7 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractTransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,Date transTime,Date transDate,String userId)
+	public AbstractTransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
@@ -119,7 +120,7 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractTransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,Date transTime,Date transDate,String userId,String cardNo)
+	public AbstractTransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
@@ -220,28 +221,28 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transTime the transTime to set
 	 */
-	public void setTransTime(Date transTime) {
+	public void setTransTime(LocalDateTime transTime) {
 		this.transTime=transTime;
 	}
 		
 	/**
 	 *@return the TransTime
 	 */
-	public Date getTransTime() {
+	public LocalDateTime getTransTime() {
 	    return this.transTime;
 	}
 	
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(Date transDate) {
+	public void setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
 	}
 		
 	/**
 	 *@return the TransDate
 	 */
-	public Date getTransDate() {
+	public LocalDate getTransDate() {
 	    return this.transDate;
 	}
 	

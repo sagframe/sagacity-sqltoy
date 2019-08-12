@@ -7,7 +7,8 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -65,19 +66,19 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	 * 出生日期
 	 */
 	@Column(name="BIRTHDAY",length=10L,type=java.sql.Types.DATE,nullable=true)
-	protected Date birthday;
+	protected LocalDate birthday;
 	
 	/**
 	 * 入职日期
 	 */
 	@Column(name="ENTRY_DATE",length=10L,type=java.sql.Types.DATE,nullable=false)
-	protected Date entryDate;
+	protected LocalDate entryDate;
 	
 	/**
 	 * 离职日期
 	 */
 	@Column(name="TERM_DATE",length=10L,type=java.sql.Types.DATE,nullable=true)
-	protected Date termDate;
+	protected LocalDate termDate;
 	
 	/**
 	 * 照片
@@ -137,7 +138,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	 * 创建时间
 	 */
 	@Column(name="CREATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date createTime;
+	protected LocalDateTime createTime;
 	
 	/**
 	 * 最后修改人
@@ -149,7 +150,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	 * 最后修改时间
 	 */
 	@Column(name="UPDATE_TIME",length=19L,type=java.sql.Types.DATE,nullable=false)
-	protected Date updateTime;
+	protected LocalDateTime updateTime;
 	
 	/**
 	 * 状态
@@ -170,7 +171,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date entryDate,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate entryDate,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
@@ -186,7 +187,7 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,Date birthday,Date entryDate,Date termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,Date createTime,String updateBy,Date updateTime,Integer status)
+	public AbstractStaffInfoVO(String staffId,String staffCode,String staffName,String organId,String sexType,LocalDate birthday,LocalDate entryDate,LocalDate termDate,byte[] photo,String country,String censusRegister,String address,String email,String telNo,String post,String postGrade,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.staffId=staffId;
 		this.staffCode=staffCode;
@@ -284,42 +285,42 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	/**
 	 *@param birthday the birthday to set
 	 */
-	public void setBirthday(Date birthday) {
+	public void setBirthday(LocalDate birthday) {
 		this.birthday=birthday;
 	}
 		
 	/**
 	 *@return the Birthday
 	 */
-	public Date getBirthday() {
+	public LocalDate getBirthday() {
 	    return this.birthday;
 	}
 	
 	/**
 	 *@param entryDate the entryDate to set
 	 */
-	public void setEntryDate(Date entryDate) {
+	public void setEntryDate(LocalDate entryDate) {
 		this.entryDate=entryDate;
 	}
 		
 	/**
 	 *@return the EntryDate
 	 */
-	public Date getEntryDate() {
+	public LocalDate getEntryDate() {
 	    return this.entryDate;
 	}
 	
 	/**
 	 *@param termDate the termDate to set
 	 */
-	public void setTermDate(Date termDate) {
+	public void setTermDate(LocalDate termDate) {
 		this.termDate=termDate;
 	}
 		
 	/**
 	 *@return the TermDate
 	 */
-	public Date getTermDate() {
+	public LocalDate getTermDate() {
 	    return this.termDate;
 	}
 	
@@ -452,14 +453,14 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(Date createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
 	}
 		
 	/**
 	 *@return the CreateTime
 	 */
-	public Date getCreateTime() {
+	public LocalDateTime getCreateTime() {
 	    return this.createTime;
 	}
 	
@@ -480,14 +481,14 @@ public abstract class AbstractStaffInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(Date updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
 	}
 		
 	/**
 	 *@return the UpdateTime
 	 */
-	public Date getUpdateTime() {
+	public LocalDateTime getUpdateTime() {
 	    return this.updateTime;
 	}
 	

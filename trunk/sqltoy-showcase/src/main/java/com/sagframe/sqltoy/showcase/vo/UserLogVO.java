@@ -3,10 +3,13 @@
  */
 package com.sagframe.sqltoy.showcase.vo;
 
-import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.annotation.Strategy;
-import java.util.Date;
+
 import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
 
 /**
@@ -19,21 +22,15 @@ import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
  * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
  * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
  */
-@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = {"userId" }),
+@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = { "userId" }),
 		// table = @Strategy(name = "hashBalanceSharding", fields = {"userId" }),
-maxConcurrents = 10, maxWaitSeconds = 1800)
+		maxConcurrents = 10, maxWaitSeconds = 1800)
 @SqlToyEntity
 public class UserLogVO extends AbstractUserLogVO {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1296922598783858512L;
-
-	/**
-	 * 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	 * 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
-	 * tableName (A,B) values(?,?)
-	 */
 
 	/** default constructor */
 	public UserLogVO() {
@@ -47,8 +44,8 @@ public class UserLogVO extends AbstractUserLogVO {
 	}
 
 	/** minimal constructor */
-	public UserLogVO(String logId, String userId, Date logTime, Date logDate, String logType, String channel,
-			String contents) {
+	public UserLogVO(String logId, String userId, LocalDateTime logTime, LocalDate logDate, String logType,
+			String channel, String contents) {
 		this.logId = logId;
 		this.userId = userId;
 		this.logTime = logTime;
@@ -59,8 +56,8 @@ public class UserLogVO extends AbstractUserLogVO {
 	}
 
 	/** full constructor */
-	public UserLogVO(String logId, String userId, String terminalIp, String deviceCode, Date logTime, Date logDate,
-			String logType, String channel, String contents) {
+	public UserLogVO(String logId, String userId, String terminalIp, String deviceCode, LocalDateTime logTime,
+			LocalDate logDate, String logType, String channel, String contents) {
 		this.logId = logId;
 		this.userId = userId;
 		this.terminalIp = terminalIp;
@@ -73,10 +70,6 @@ public class UserLogVO extends AbstractUserLogVO {
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
-
-	// 请绝对不要在此类中重复定义Abstract类中的对应表字段的属性,易导致属性失去@Column关联表字段的注解特征,无法正确生成相应的sql
-	// 如覆盖定义了属性C,原本生成 insert into tableName (A,B,C) values(?,?,?) 变成了 insert into
-	// tableName (A,B) values(?,?)
 
 	/**
 	 * @todo vo columns to String
