@@ -194,8 +194,8 @@ public class DateUtil {
 			// 日期和时间的组合
 			if (hasBlank) {
 				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
-				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ").replace("-", "").replace(".", "").replace(":", "")
-						.replace("/", "");
+				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ").replace("-", "").replace(".", "")
+						.replace(":", "").replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
 				if (size > 16) {
@@ -302,6 +302,8 @@ public class DateUtil {
 			result = new java.util.Date(((java.util.Date) dt).getTime());
 		} else if (dt instanceof java.time.LocalDate) {
 			result = asDate((LocalDate) dt);
+		} else if (dt instanceof java.time.LocalTime) {
+			result = asDate((LocalTime) dt);
 		} else if (dt instanceof java.time.LocalDateTime) {
 			result = asDate((LocalDateTime) dt);
 		} else if (dt instanceof java.sql.Date) {
@@ -581,6 +583,12 @@ public class DateUtil {
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
+	public static Date asDate(LocalTime localTime) {
+		if (localTime == null)
+			return null;
+		return DateUtil.parseString(localTime.toString());
+	}
+
 	public static Date asDate(LocalDateTime localDateTime) {
 		if (localDateTime == null)
 			return null;
@@ -593,10 +601,16 @@ public class DateUtil {
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 
+	public static LocalTime asLocalTime(Date date) {
+		if (date == null)
+			return null;
+		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalTime();
+	}
+
 	public static LocalDateTime asLocalDateTime(Date date) {
 		if (date == null)
 			return null;
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
-	
+
 }
