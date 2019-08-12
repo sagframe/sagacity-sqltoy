@@ -159,8 +159,8 @@ public class DateUtil {
 		String realDF = null;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
-		} // 英文日期格式
-		else if (StringUtil.matches(dateStr, "[a-zA-Z]")) {
+		} // 英文日期格式(2个以上字母)
+		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2,100}")) {
 			SimpleDateFormat dateParser = null;
 			Iterator<String> formatIter = DEFAULT_PATTERNS.iterator();
 			Date result = null;
@@ -188,13 +188,13 @@ public class DateUtil {
 				return null;
 			}
 			int size;
-			boolean hasBlank = (dateStr.indexOf(" ") != -1);
+			boolean hasBlank = (dateStr.indexOf(" ") != -1 || dateStr.toUpperCase().indexOf("T") >= 6);
 			int splitCount;
 			int startIndex;
 			// 日期和时间的组合
 			if (hasBlank) {
-				// 统一格式(去除掉日期中的符号变成全数字)
-				dateStr = dateStr.replaceFirst("\\s+", " ").replace("-", "").replace(".", "").replace(":", "")
+				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
+				dateStr = dateStr.replaceFirst("\\s+", " ").replaceFirst("(?i)T", " ").replace("-", "").replace(".", "").replace(":", "")
 						.replace("/", "");
 				int preSize = dateStr.indexOf(" ");
 				size = dateStr.length();
@@ -598,4 +598,5 @@ public class DateUtil {
 			return null;
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
+	
 }
