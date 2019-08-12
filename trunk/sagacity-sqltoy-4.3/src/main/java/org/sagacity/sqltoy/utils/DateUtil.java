@@ -160,7 +160,7 @@ public class DateUtil {
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
 		} // 英文日期格式(2个以上字母)
-		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2,100}")) {
+		else if (StringUtil.matches(dateStr, "[a-zA-Z]{2}")) {
 			SimpleDateFormat dateParser = null;
 			Iterator<String> formatIter = DEFAULT_PATTERNS.iterator();
 			Date result = null;
