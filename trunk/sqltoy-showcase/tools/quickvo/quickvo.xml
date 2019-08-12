@@ -59,8 +59,12 @@
 	<!-- 数据类型对应关系，native-types表示特定数据库返回的字段类型; jdbc-type：表示对应jdbc标准的类型(见:java.sql.Types), 
 		主要用于vo @Column注解中，设置其类型,方便操作数据库插入或修改时设置类型;java-type:表示对应java对象的属性类型 -->
 	<type-mapping>
-		<sql-type native-types="DATE,DATETIME" jdbc-type="DATE"
-			java-type="java.util.Date" />
+		<sql-type native-types="DATE" jdbc-type="DATE"
+			java-type="java.time.LocalDate" />
+		<sql-type native-types="DATETIME" jdbc-type="DATE"
+			java-type="java.time.LocalDateTime" />
+		<sql-type native-types="TIME" jdbc-type="TIME"
+			java-type="java.time.LocalTime" />
 		<sql-type native-types="TIMESTAMP(6),TIMESTAMP"
 			jdbc-type="TIMESTAMP" java-type="java.sql.Timestamp" />
 		<sql-type native-types="CHAR,CLOB" java-type="String" />
