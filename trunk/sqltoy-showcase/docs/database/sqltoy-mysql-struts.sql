@@ -1,13 +1,24 @@
+alter table SQLTOY_COMPLEXPK_ITEM 
+   drop foreign key FK_COMPLEXH_REF_ITEM;
+
 alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_SQLTOY_D_REFERENCE_SQLTOY_D;
+   drop foreign key FK_DICT_TYPE_REF_ITEM;
 
 drop table if exists SQLTOY_AREA_INFO;
+
+drop table if exists SQLTOY_COMPLEXPK_HEAD;
+
+
+alter table SQLTOY_COMPLEXPK_ITEM 
+   drop foreign key FK_COMPLEXH_REF_ITEM;
+
+drop table if exists SQLTOY_COMPLEXPK_ITEM;
 
 drop table if exists SQLTOY_DEVICE_ORDER_INFO;
 
 
 alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_SQLTOY_D_REFERENCE_SQLTOY_D;
+   drop foreign key FK_DICT_TYPE_REF_ITEM;
 
 drop table if exists SQLTOY_DICT_DETAIL;
 
@@ -53,6 +64,42 @@ create table SQLTOY_AREA_INFO
 );
 
 alter table SQLTOY_AREA_INFO comment '地区代码表';
+
+/*==============================================================*/
+/* Table: SQLTOY_COMPLEXPK_HEAD                                 */
+/*==============================================================*/
+create table SQLTOY_COMPLEXPK_HEAD
+(
+   TRANS_DATE           date not null  comment '交易日期',
+   TRANS_CODE           varchar(30) not null  comment '业务代码',
+   TOTAL_CNT            decimal(12,3) not null  comment '总数量',
+   TOTAL_AMT            decimal(12,3) not null  comment '总金额',
+   CREATE_BY            varchar(22) not null  comment '创建人',
+   CREATE_TIME          datetime not null  comment '创建时间',
+   UPDATE_BY            varchar(22) not null  comment '最后修改人',
+   UPDATE_TIME          datetime not null  comment '最后修改时间',
+   primary key (TRANS_DATE, TRANS_CODE)
+);
+
+alter table SQLTOY_COMPLEXPK_HEAD comment '复合主键级联操作主表';
+
+/*==============================================================*/
+/* Table: SQLTOY_COMPLEXPK_ITEM                                 */
+/*==============================================================*/
+create table SQLTOY_COMPLEXPK_ITEM
+(
+   ID                   varchar(32) not null  comment 'ID',
+   TRANS_DATE           date  comment '交易日期',
+   TRANS_CODE           varchar(30)  comment '业务代码',
+   PRODUCT_ID           varchar(32) not null  comment '商品编码',
+   QUANTITY             decimal(8,3) not null  comment '数量',
+   PRICE                decimal(8,3) not null  comment '价格',
+   AMT                  decimal(10,3) not null  comment '总金额',
+   CREATE_TIME          datetime not null  comment '创建时间',
+   primary key (ID)
+);
+
+alter table SQLTOY_COMPLEXPK_ITEM comment '复合主键级联操作子表';
 
 /*==============================================================*/
 /* Table: SQLTOY_DEVICE_ORDER_INFO                              */
@@ -249,5 +296,8 @@ create table SQLTOY_USER_LOG
 
 alter table SQLTOY_USER_LOG comment '用户日志表';
 
-alter table SQLTOY_DICT_DETAIL add constraint FK_SQLTOY_D_REFERENCE_SQLTOY_D foreign key (DICT_TYPE)
+alter table SQLTOY_COMPLEXPK_ITEM add constraint FK_COMPLEXH_REF_ITEM foreign key (TRANS_DATE, TRANS_CODE)
+      references SQLTOY_COMPLEXPK_HEAD (TRANS_DATE, TRANS_CODE) on delete restrict on update restrict;
+
+alter table SQLTOY_DICT_DETAIL add constraint FK_DICT_TYPE_REF_ITEM foreign key (DICT_TYPE)
       references SQLTOY_DICT_TYPE (DICT_TYPE) on delete restrict on update restrict;
