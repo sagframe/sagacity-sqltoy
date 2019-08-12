@@ -278,10 +278,16 @@ public class BeanUtil {
 			else
 				return DateUtil.parseString(valueStr);
 		} else if (typeName.equals("java.time.localdate")) {
+			if (paramValue instanceof LocalDate)
+				return (LocalDate) paramValue;
 			return DateUtil.asLocalDate(DateUtil.parseString(valueStr));
 		} else if (typeName.equals("java.time.localdatetime")) {
+			if (paramValue instanceof LocalDateTime)
+				return (LocalDateTime) paramValue;
 			return DateUtil.asLocalDateTime(DateUtil.parseString(valueStr));
 		} else if (typeName.equals("java.time.localtime")) {
+			if (paramValue instanceof LocalTime)
+				return (LocalTime) paramValue;
 			return DateUtil.asLocalTime(DateUtil.parseString(valueStr));
 		} else if (typeName.equals("java.lang.double")) {
 			return Double.valueOf(valueStr);
