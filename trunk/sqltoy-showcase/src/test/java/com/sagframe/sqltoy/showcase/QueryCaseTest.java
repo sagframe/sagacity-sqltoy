@@ -180,7 +180,7 @@ public class QueryCaseTest {
 		String[] authedOrgans = { "100004", "100007" };
 		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findBySql("sqltoy_order_search",
 				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
-				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class);
+				new Object[] { null, authedOrgans, "陈", LocalDate.parse("2018-09-01"), null }, DeviceOrderInfoVO.class);
 		for (DeviceOrderInfoVO vo : result)
 			System.err.println(JSON.toJSONString(vo));
 	}
