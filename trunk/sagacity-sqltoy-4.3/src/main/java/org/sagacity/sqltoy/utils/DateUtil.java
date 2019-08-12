@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -293,29 +294,27 @@ public class DateUtil {
 			System.err.println("日期不能为空,请正确输入!");
 			return null;
 		}
-		if (!(dt instanceof String) && !(dt instanceof java.sql.Date) && !(dt instanceof java.util.Date)
-				&& !(dt instanceof java.lang.Number))
-			throw new IllegalArgumentException(dt + "日期数据必须是String、Date、Long、Integer类型,请正确输入!");
 		Date result = null;
 		String dtStr = dt.toString();
 		if (dt instanceof String) {
 			result = parseString(dtStr, format, local);
-		} else if (dt instanceof java.util.Date)
+		} else if (dt instanceof java.util.Date) {
 			result = new java.util.Date(((java.util.Date) dt).getTime());
-		else if (dt instanceof java.time.LocalDate)
+		} else if (dt instanceof java.time.LocalDate) {
 			result = asDate((LocalDate) dt);
-		else if (dt instanceof java.time.LocalDateTime)
+		} else if (dt instanceof java.time.LocalDateTime) {
 			result = asDate((LocalDateTime) dt);
-		else if (dt instanceof java.sql.Date)
+		} else if (dt instanceof java.sql.Date) {
 			result = new java.util.Date(((java.sql.Date) dt).getTime());
-		else if (dt instanceof java.lang.Number) {
+		} else if (dt instanceof java.lang.Number) {
 			// 13位表示毫秒数
 			if (dtStr.length() != 13)
 				result = parseString(dtStr, format, local);
 			else
 				result = new java.util.Date(((Number) dt).longValue());
-		} else
-			result = parseString(dtStr, format, local);
+		} else {
+			throw new IllegalArgumentException(dt + "日期数据必须是String、Date、Long、Integer类型,请正确输入!");
+		}
 		return result;
 	}
 
@@ -374,6 +373,30 @@ public class DateUtil {
 	 */
 	public static Date getNowTime() {
 		return Calendar.getInstance().getTime();
+	}
+
+	public static LocalDate getDate() {
+		return LocalDate.now();
+	}
+
+	public static LocalDate getDate(Object date) {
+		if (date instanceof LocalDate)
+			return (LocalDate) date;
+		return asLocalDate(convertDateObject(date));
+	}
+
+	public static LocalDateTime getDateTime() {
+		return LocalDateTime.now();
+	}
+
+	public static LocalDateTime getDateTime(Object date) {
+		if (date instanceof LocalDateTime)
+			return (LocalDateTime) date;
+		return asLocalDateTime(convertDateObject(date));
+	}
+
+	public static LocalTime getTime() {
+		return LocalTime.now();
 	}
 
 	// Add millisecond
