@@ -288,10 +288,11 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		//判断postgresql是否原生支持
-		if (SqlToyConstants.postgresqlSupportSaveOrUpdate())
+		// 判断postgresql是否原生支持
+		if (SqlToyConstants.postgresqlSupportSaveOrUpdate()) {
 			return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize, reflectPropertyHandler, forceUpdateFields,
 					conn, autoCommit, tableName);
+		}
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
