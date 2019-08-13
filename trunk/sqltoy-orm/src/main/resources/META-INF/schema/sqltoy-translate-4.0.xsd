@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy-translate" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.sagframe.com/schema/sqltoy-translate"
+	elementFormDefault="qualified">
+	<!-- root -->
+	<xsd:element name="sagacity">
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element name="cache-translates">
+					<xsd:complexType>
+						<xsd:choice maxOccurs="unbounded">
+							<xsd:element name="sql-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:sequence minOccurs="0">
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="cache" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attribute name="datasource" type="xsd:string" />
+									<xsd:attribute name="keep-alive" type="xsd:integer"
+										default="3600" />
+									<xsd:attribute name="heap" type="xsd:integer"
+										default="400" />
+									<xsd:attribute name="off-heap" type="xsd:integer"
+										default="30" />
+									<xsd:attribute name="disk-size" type="xsd:integer"
+										default="100" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType>
+									<xsd:attribute name="cache" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="service" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="method" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="keep-alive" type="xsd:integer"
+										default="3600" />
+									<xsd:attribute name="heap" type="xsd:integer"
+										default="400" />
+									<xsd:attribute name="off-heap" type="xsd:integer"
+										default="30" />
+									<xsd:attribute name="disk-size" type="xsd:integer"
+										default="100" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType>
+									<xsd:attribute name="cache" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="url" type="xsd:string" use="required" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+									<xsd:attribute name="keep-alive" type="xsd:integer"
+										default="3600" />
+									<xsd:attribute name="heap" type="xsd:integer"
+										default="400" />
+									<xsd:attribute name="off-heap" type="xsd:integer"
+										default="30" />
+									<xsd:attribute name="disk-size" type="xsd:integer"
+										default="100" />
+								</xsd:complexType>
+							</xsd:element>
+						</xsd:choice>
+						<xsd:attribute name="disk-store-path" default="./translateCaches" />
+					</xsd:complexType>
+
+				</xsd:element>
+				<!-- 缓存变更检测 -->
+				<xsd:element name="cache-update-checkers" minOccurs="0"
+					maxOccurs="1">
+					<xsd:annotation>
+						<xsd:documentation>
+							<![CDATA[
+							1、返回结果必须是:cacheName,cacheType(可为null) 两列值,请求参数:lastUpdateTime;
+							2、check-frequency:可以是一个数字,或:0..10:20?300,10:20..20?15,20..24?150
+							]]>
+						</xsd:documentation>
+					</xsd:annotation>
+					<xsd:complexType>
+						<xsd:choice maxOccurs="unbounded">
+							<xsd:element name="sql-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:sequence>
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attribute name="check-frequency" type="xsd:string" />
+									<xsd:attribute name="datasource" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="service" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="method" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="check-frequency" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-checker" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="url" type="xsd:string" use="required" />
+									<xsd:attribute name="check-frequency" type="xsd:string" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+						</xsd:choice>
+					</xsd:complexType>
+				</xsd:element>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>
