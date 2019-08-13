@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<artifactId>sagacity-quickvo</artifactId>
+	<artifactId>sqltoy-quickvo</artifactId>
 	<version>4.6</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -119,7 +119,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>sagacity-quickvo-${version}</finalName>
+		<finalName>sqltoy-quickvo-${version}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/java</directory>
