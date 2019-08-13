@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -116,7 +117,7 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long getCountBySql(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, boolean isLastSql, Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext,sqlToyConfig, sql, paramsValue, isLastSql, conn);
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
 	}
 
 	/*
@@ -287,6 +288,10 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
+		//判断postgresql是否原生支持
+		if (SqlToyConstants.postgresqlSupportSaveOrUpdate())
+			return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize, reflectPropertyHandler, forceUpdateFields,
+					conn, autoCommit, tableName);
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
@@ -297,21 +302,27 @@ public class PostgreSqlDialect implements Dialect {
 				autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
-		/*
-		 * EntityMeta entityMeta =
-		 * sqlToyContext.getEntityMeta(entities.get(0).getClass()); return
-		 * DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
-		 * forceUpdateFields, new GenerateSqlHandler() { public String
-		 * generateSql(EntityMeta entityMeta, String[] forceUpdateFields) { PKStrategy
-		 * pkStrategy = entityMeta.getIdStrategy(); String sequence = "nextval('" +
-		 * entityMeta.getSequence() + "')"; if (pkStrategy != null &&
-		 * pkStrategy.equals(PKStrategy.IDENTITY)) { pkStrategy = PKStrategy.SEQUENCE;
-		 * sequence = "nextval(" +
-		 * entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-		 * + ")"; } return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL,
-		 * entityMeta, pkStrategy, sequence, forceUpdateFields, tableName); } },
-		 * reflectPropertyHandler, conn, autoCommit);
-		 */
+	}
+
+	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
+			final Boolean autoCommit, final String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							pkStrategy = PKStrategy.SEQUENCE;
+							sequence = "nextval("
+									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
+									+ ")";
+						}
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
+								sequence, forceUpdateFields, tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
 	}
 
 	/*

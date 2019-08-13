@@ -212,6 +212,10 @@ public class MySqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
+		//mysql是否支持原生saveOrUpdate
+		if (SqlToyConstants.mysqlSupportSaveOrUpdate())
+			return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize, reflectPropertyHandler, forceUpdateFields,
+					conn, autoCommit, tableName);
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
@@ -223,25 +227,20 @@ public class MySqlDialect implements Dialect {
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
 	}
+
 	// mysql DUPLICATE key update 在对非空字段操作是报异常
-	// public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities,
-	// final int batchSize,
-	// ReflectPropertyHandler reflectPropertyHandler, final String[]
-	// forceUpdateFields, Connection conn,
-	// final Boolean autoCommit, final String tableName) throws Exception {
-	// EntityMeta entityMeta =
-	// sqlToyContext.getEntityMeta(entities.get(0).getClass());
-	// return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize,
-	// entityMeta, forceUpdateFields,
-	// new GenerateSqlHandler() {
-	// public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields)
-	// {
-	// return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta,
-	// forceUpdateFields,
-	// tableName);
-	// }
-	// }, reflectPropertyHandler, conn, autoCommit);
-	// }
+	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Boolean autoCommit, final String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields,
+								tableName);
+					}
+				}, reflectPropertyHandler, conn, autoCommit);
+	}
 
 	/*
 	 * (non-Javadoc)

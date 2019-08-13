@@ -196,6 +196,22 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * @todo mysql 是否原生支持saveOrUpdate
+	 * @return
+	 */
+	public static boolean mysqlSupportSaveOrUpdate() {
+		return Boolean.parseBoolean(getKeyValue("mysql.support.saveOrUpdate", "false"));
+	}
+	
+	/**
+	 * @todo mysql 是否原生支持saveOrUpdate
+	 * @return
+	 */
+	public static boolean postgresqlSupportSaveOrUpdate() {
+		return Boolean.parseBoolean(getKeyValue("postgresql.support.saveOrUpdate", "false"));
+	}
+	
+	/**
 	 * @todo 获取记录提取的警告阀值
 	 * @return
 	 */
