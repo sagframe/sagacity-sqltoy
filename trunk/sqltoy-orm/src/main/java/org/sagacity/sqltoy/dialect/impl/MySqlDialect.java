@@ -213,10 +213,11 @@ public class MySqlDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql是否支持原生saveOrUpdate
-		if (SqlToyConstants.mysqlSupportSaveOrUpdate()) {
-			return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize, reflectPropertyHandler, forceUpdateFields,
-					conn, autoCommit, tableName);
-		}
+		// if (SqlToyConstants.mysqlSupportSaveOrUpdate()) {
+		// return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize,
+		// reflectPropertyHandler, forceUpdateFields,
+		// conn, autoCommit, tableName);
+		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
