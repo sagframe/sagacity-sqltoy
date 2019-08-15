@@ -41,8 +41,8 @@
 	</repositories>
 	<distributionManagement>
 
-		 <!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
-			</repository>  -->
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+			</repository> -->
 		<repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
@@ -82,9 +82,9 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc8 -->
+		<!-- https://mvnrepository.com/artifact/com.oracle.jdbc/ojdbc8 -->
 		<dependency>
-			<groupId>com.github.noraui</groupId>
+			<groupId>com.oracle.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
