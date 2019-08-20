@@ -32,7 +32,7 @@
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-show-1.jpg)
 
-# 2. 快速特点展示(参见:sqltoy-showcase 中的源码)
+# 2. 快速特点展示(参见:sqltoy-showcase 中的源码，基于springboot+mysql 的集成演示)
 
 ## 2.1 最优雅直观的sql编写模式
 
