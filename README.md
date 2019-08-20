@@ -190,7 +190,7 @@ where #[t.ORDER_ID=:orderId]
 	</value>
 </sql>
 ```
-## 2.4 提供行列转换(数据旋转)，避免写负责的sql甚至上存储过程，用算法集成来化解对sql的要求
+## 2.4 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 ```xml
         <!-- 列转行测试 -->
 	<sql id="sys_unpvoitSearch">
