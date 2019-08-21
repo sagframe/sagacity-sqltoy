@@ -32,7 +32,7 @@
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-show-1.jpg)
 
-# 2. 快速特点展示
+# 2. 快速特点展示(参见:sqltoy-showcase 中的源码，基于springboot+mysql 的集成演示)
 
 ## 2.1 最优雅直观的sql编写模式
 
@@ -190,8 +190,60 @@ where #[t.ORDER_ID=:orderId]
 	</value>
 </sql>
 ```
-## 2.4 提供行列转换(数据旋转)，避免写负责的sql甚至上存储过程，用算法集成来化解对sql的要求
+## 2.4 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+```xml
+        <!-- 列转行测试 -->
+	<sql id="sys_unpvoitSearch">
+		<value>
+		<![CDATA[
+		SELECT TRANS_DATE, 
+		       sum(TOTAL_AMOUNT) TOTAL_AMOUNT,
+		       sum(PERSON_AMOUNT) PERSON_AMOUNT,
+		       sum(COMPANY_AMOUNT) COMPANY_AMOUNT
+		FROM sys_unpivot_data
+		group by TRANS_DATE
+		]]>
+		</value>
+		<!-- 将指定的列变成行(这里3列变成了3行) -->
+		<unpivot columns="TOTAL_AMOUNT:总金额,PERSON_AMOUNT:个人金额,COMPANY_AMOUNT:企业金额"
+			values-as-column="TRANS_AMOUNT" labels-as-column="AMOUNT_TYPE" />
+	</sql>
+
+	<!-- 行转列测试 -->
+	<sql id="sys_pvoitSearch">
+		<value>
+		<![CDATA[
+		select t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE,sum(t.TRANS_AMT) TRANS_AMT from sys_summary_case t
+		group by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
+		order by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
+		]]>
+		</value>
+		<pivot category-columns="TRANS_CHANNEL,TRANS_CODE" start-column="TRANS_AMT"
+			default-value="0" default-type="decimal" end-column="TRANS_AMT"
+			group-columns="TRANS_DATE" />
+	</sql>
+```
 ## 2.5 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+```
+	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
+	<sql id="sys_summarySearch">
+		<!-- 数据源sharding，多库将请求压力分摊到多个数据库节点上，支撑更多并发请求 -->	
+		<sharding-datasource strategy="multiDataSource" />
+		<value>
+		<![CDATA[
+		select	t.TRANS_CHANNEL,t.TRANS_CODE,sum( t.TRANS_AMT )
+		from sys_summary_case t
+		group by t.TRANS_CHANNEL,t.TRANS_CODE
+		]]>
+		</value>
+		<!-- reverse 表示将汇总信息在上面显示(如第1行是汇总值，第2、3、4行为明细，反之，1、2、3行未明细，第4行为汇总)  -->
+		<summary columns="2" reverse="true" sum-site="left" radix-size="2">
+			<global sum-label="总计" label-column="0" />
+                        <!-- 可以无限层级的分组下去-->
+			<group sum-label="小计/平均" label-column="0" group-column="0" average-label="平均" />
+		</summary>
+	</sql>
+```
 ## 2.6 分库分表
 ### 2.6.1 查询分库分表
 ### 2.6.2 操作分库分表
