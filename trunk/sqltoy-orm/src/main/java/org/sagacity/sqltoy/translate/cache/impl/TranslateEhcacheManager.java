@@ -6,6 +6,8 @@ package org.sagacity.sqltoy.translate.cache.impl;
 import java.time.Duration;
 import java.util.HashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
@@ -13,8 +15,10 @@ import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.MemoryUnit;
+import org.sagacity.sqltoy.translate.TranslateFactory;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -25,6 +29,10 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings("unchecked")
 public class TranslateEhcacheManager extends TranslateCacheManager {
+	/**
+	 * 定义全局日志
+	 */
+	protected final static Logger logger = LogManager.getLogger(TranslateEhcacheManager.class);
 
 	/**
 	 * 缓存大小超出范围后存储磁盘路径
@@ -111,11 +119,25 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	@Override
 	public void init() {
 		if (cacheManager == null) {
-			if (StringUtil.isBlank(diskStorePath))
+			if (StringUtil.isBlank(diskStorePath)) {
 				cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
-			else
-				cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-						.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
+			} else {
+				//解决一些场景下,主程序已经关闭但缓存文件仍然被占用,重新开辟一个缓存文件
+				try {
+					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+							.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.error("cache file:{} is locked,create cacheManager failure,please stop running progress!",
+							diskStorePath);
+				}
+				if (cacheManager == null) {
+					String realCacheFile = diskStorePath.concat(IdUtil.getShortNanoTimeId(null).toPlainString());
+					logger.warn("sqltoy ehcacheManager create cache file:{}", realCacheFile);
+					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+							.with(CacheManagerBuilder.persistence(realCacheFile)).build(true);
+				}
+			}
 		}
 	}
 }
