@@ -131,6 +131,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 							diskStorePath);
 				}
 				if (cacheManager == null) {
+					//缓存文件被锁,重新定义一个不重复的文件名称
 					String realCacheFile = diskStorePath.concat(IdUtil.getShortNanoTimeId(null).toPlainString());
 					logger.warn("sqltoy ehcacheManager create cache file:{}", realCacheFile);
 					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
