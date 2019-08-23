@@ -118,6 +118,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	@Override
 	public void init() {
 		if (cacheManager == null) {
+			//未定义持久化文件,则由ehcache自行默认创建
 			if (StringUtil.isBlank(diskStorePath)) {
 				cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
 			} else {
