@@ -137,9 +137,14 @@ public class CacheCheckTimer extends TimerTask {
 		List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
 				DateUtil.getTimestamp(lastCheckTime));
 		if (results != null) {
-			for (CacheCheckResult result : results) {
-				logger.debug("检测到缓存:{} 类别:{} 发生更新!", result.getCacheName(), result.getCacheType());
-				translateCacheManager.clear(result.getCacheName(), result.getCacheType());
+			try {
+				for (CacheCheckResult result : results) {
+					logger.debug("检测到缓存:{} 类别:{} 发生更新!", result.getCacheName(), result.getCacheType());
+					translateCacheManager.clear(result.getCacheName(), result.getCacheType());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("doCheck clearCache error:{}", e.getMessage());
 			}
 		}
 	}
