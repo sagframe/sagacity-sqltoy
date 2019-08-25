@@ -72,6 +72,11 @@ public class SqlScriptLoader {
 	private List realSqlList;
 
 	/**
+	 * 配置文件检测睡眠时长,默认为1秒
+	 */
+	private int sleepSeconds = 1;
+
+	/**
 	 * @param debug
 	 *            the debug to set
 	 */
@@ -123,6 +128,9 @@ public class SqlScriptLoader {
 			e.printStackTrace();
 			logger.error("加载和解析xml过程发生异常!" + e.getMessage(), e);
 		}
+
+		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
+		new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds).run();
 	}
 
 	/*
@@ -131,15 +139,17 @@ public class SqlScriptLoader {
 	 * @see org.sagacity.sqltoy.plugin.SqlConfigPlugin#getSql(java.lang.String)
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey) {
+		//update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
 		// 调试状况下判断文件是否被修改，修改重新加载对应文件中的sql并更新缓存
-		if (this.debug) {
-			try {
-				SqlXMLConfigParse.parseXML(realSqlList, sqlCache, this.encoding, this.dialect);
-			} catch (Exception e) {
-				e.printStackTrace();
-				logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
-			}
-		}
+		// if (this.debug) {
+		// try {
+		// SqlXMLConfigParse.parseXML(realSqlList, sqlCache, this.encoding,
+		// this.dialect);
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
+		// }
+		// }
 		return (SqlToyConfig) sqlCache.get(sqlKey);
 	}
 
@@ -242,6 +252,21 @@ public class SqlScriptLoader {
 	 */
 	public String getDialect() {
 		return dialect;
+	}
+
+	/**
+	 * @return the sleepSeconds
+	 */
+	public int getSleepSeconds() {
+		return sleepSeconds;
+	}
+
+	/**
+	 * @param sleepSeconds
+	 *            the sleepSeconds to set
+	 */
+	public void setSleepSeconds(int sleepSeconds) {
+		this.sleepSeconds = sleepSeconds;
 	}
 
 }
