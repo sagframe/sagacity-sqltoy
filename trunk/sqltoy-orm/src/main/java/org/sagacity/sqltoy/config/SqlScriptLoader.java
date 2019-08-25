@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:SqlScriptLoader.java,Revision:v1.0,Date:2009-12-13 下午03:27:53
  * @Modification Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
+ * @Modification Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {
