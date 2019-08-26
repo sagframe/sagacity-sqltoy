@@ -36,19 +36,24 @@ public class SqlFileModifyWatcher extends Thread {
 	 */
 	private int sleepSeconds = 1;
 
+	private boolean debug = false;
+
 	public SqlFileModifyWatcher(ConcurrentHashMap<String, SqlToyConfig> sqlCache, List realSqlList, String dialect,
-			String encoding, int sleepSeconds) {
+			String encoding, int sleepSeconds, boolean debug) {
 		this.sqlCache = sqlCache;
 		this.realSqlList = realSqlList;
 		this.dialect = dialect;
 		this.encoding = encoding;
 		this.sleepSeconds = (sleepSeconds >= 1) ? sleepSeconds : 1;
+		this.debug = debug;
 	}
 
 	@Override
 	public void run() {
 		boolean isRun = true;
 		while (isRun) {
+			if (debug)
+				System.out.println("检测sql文件是否发生变更!");
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, sqlCache, encoding, dialect);
 			} catch (Exception e) {
