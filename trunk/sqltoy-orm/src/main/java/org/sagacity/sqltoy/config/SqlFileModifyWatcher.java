@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
  * @author zhongxuchen
  *
  */
-public class SqlFileModifyWatcher implements Runnable {
+public class SqlFileModifyWatcher extends Thread {
 	/**
 	 * 定义全局日志
 	 */
