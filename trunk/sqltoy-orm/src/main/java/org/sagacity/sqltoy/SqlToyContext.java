@@ -483,7 +483,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDebug(boolean debug) {
 		this.debug = debug;
-		scriptLoader.setDebug(debug);
 	}
 
 	/**

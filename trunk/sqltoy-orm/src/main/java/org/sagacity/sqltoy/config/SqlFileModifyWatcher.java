@@ -8,9 +8,11 @@ import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 
 /**
- * 
- * @author zhongxuchen
- *
+ * @project sqltoy-orm
+ * @description 用于检测sql文件内容发生变化,如果发生变化则重新加载文件
+ * @author zhong
+ * @version v1.0, Date:2019年8月26日
+ * @modify 2019年8月26日,修改说明
  */
 public class SqlFileModifyWatcher extends Thread {
 	/**
@@ -52,8 +54,9 @@ public class SqlFileModifyWatcher extends Thread {
 	public void run() {
 		boolean isRun = true;
 		while (isRun) {
-			if (debug)
+			if (debug) {
 				System.out.println("检测sql文件是否发生变更!");
+			}
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, sqlCache, encoding, dialect);
 			} catch (Exception e) {
