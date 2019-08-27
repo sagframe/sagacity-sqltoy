@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -267,7 +268,7 @@ public class TranslateFactory {
 			return null;
 		if (target instanceof HashMap && ((HashMap) target).values().iterator().next() instanceof Object[])
 			return (HashMap<String, Object[]>) target;
-		HashMap<String, Object[]> result = new HashMap<String, Object[]>();
+		LinkedHashMap<String, Object[]> result = new LinkedHashMap<String, Object[]>();
 		if (target instanceof HashMap) {
 			if (!((HashMap) target).isEmpty()) {
 				if (((HashMap) target).values().iterator().next() instanceof List) {
