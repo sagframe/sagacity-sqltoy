@@ -10,9 +10,9 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 /**
  * @project sqltoy-orm
  * @description 用于检测sql文件内容发生变化,如果发生变化则重新加载文件
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2019年8月26日
- * @modify 2019年8月26日,修改说明
+ * @modify 2019年8月26日,初始创建
  */
 public class SqlFileModifyWatcher extends Thread {
 	/**

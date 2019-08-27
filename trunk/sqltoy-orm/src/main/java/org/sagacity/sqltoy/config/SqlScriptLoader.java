@@ -115,7 +115,6 @@ public class SqlScriptLoader {
 					else
 						logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
 				}
-				logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
 				for (int i = 0; i < realSqlList.size(); i++) {
 					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect, false);
 				}
