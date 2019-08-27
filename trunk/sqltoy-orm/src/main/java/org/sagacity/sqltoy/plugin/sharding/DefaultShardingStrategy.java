@@ -58,7 +58,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	private HashMap<String, Integer> dataSourceWeight;
 
-	//格式 {dataSource,weight}
+	// 格式 {dataSource,weight}
 	private Object[][] dataSourceWeightConfig;
 
 	private int[] weights;
@@ -177,10 +177,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			index = CommonUtils.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
-		if (logger.isDebugEnabled())
-			logger.debug("本次sharding选择中的数据库为:{}", chooseDataSource);
-		else
-			System.out.println("本次sharding选择中的数据库为:{" + chooseDataSource + "}");
+		logger.debug("本次sharding选择中的数据库为:{}", chooseDataSource);
 		ShardingDBModel shardingModel = new ShardingDBModel();
 		shardingModel.setDataSourceName(chooseDataSource);
 		shardingModel.setDataSource((DataSource) applicationContext.getBean(chooseDataSource));

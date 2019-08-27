@@ -140,12 +140,10 @@ public class SqlXMLConfigParse {
 				File file = (File) xmlFile;
 				filesLastModifyMap.put(file.getName(), Long.valueOf(file.lastModified()));
 				fileIS = new FileInputStream(file);
-				if (logger.isDebugEnabled())
-					logger.debug("正在解析sql文件,对应文件={}", file.getName());
+				logger.debug("正在解析sql文件,对应文件={}", file.getName());
 			} else {
 				fileIS = getResourceAsStream((String) xmlFile);
-				if (logger.isDebugEnabled())
-					logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
+				logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
 			}
 			if (fileIS != null) {
 				if (encoding != null)

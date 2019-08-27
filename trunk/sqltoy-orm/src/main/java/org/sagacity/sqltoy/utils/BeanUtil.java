@@ -473,8 +473,7 @@ public class BeanUtil {
 					} else
 						resultList.add(dataList);
 				} else {
-					if (logger.isDebugEnabled())
-						logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null!", i);
+					logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null!", i);
 					resultList.add(null);
 				}
 			}
@@ -575,8 +574,7 @@ public class BeanUtil {
 					} else
 						resultList.add(dataAry);
 				} else {
-					if (logger.isDebugEnabled())
-						logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null!", i);
+					logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null!", i);
 					resultList.add(null);
 				}
 			}
@@ -686,8 +684,7 @@ public class BeanUtil {
 					resultList.add(bean);
 					meter++;
 				} else {
-					if (logger.isDebugEnabled())
-						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null!", index);
+					logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null!", index);
 					resultList.add(null);
 				}
 				index++;
