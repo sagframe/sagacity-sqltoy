@@ -345,7 +345,7 @@ public class SqlConfigParseUtils {
 	 *       #[t1.status=?] #[and t1.auditTime=?]
 	 * @param sqlToyResult
 	 */
-	public static void processNullConditions(SqlToyResult sqlToyResult) {
+	private static void processNullConditions(SqlToyResult sqlToyResult) {
 		String queryStr = sqlToyResult.getSql();
 		int pseudoMarkStart = queryStr.indexOf(SQL_PSEUDO_START_MARK);
 		if (pseudoMarkStart == -1)
@@ -444,7 +444,7 @@ public class SqlConfigParseUtils {
 	 * @todo 将参数设置为空白
 	 * @param sqlToyResult
 	 */
-	public static void processBlank(SqlToyResult sqlToyResult) {
+	private static void processBlank(SqlToyResult sqlToyResult) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
 			return;
 		String queryStr = sqlToyResult.getSql().toLowerCase();
@@ -472,7 +472,7 @@ public class SqlConfigParseUtils {
 	 * @todo 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
-	public static void processValue(SqlToyResult sqlToyResult) {
+	private static void processValue(SqlToyResult sqlToyResult) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
 			return;
 		String queryStr = sqlToyResult.getSql().toLowerCase();
@@ -504,7 +504,7 @@ public class SqlConfigParseUtils {
 	 * @todo 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
 	 */
-	public static void processLike(SqlToyResult sqlToyResult) {
+	private static void processLike(SqlToyResult sqlToyResult) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
 			return;
 		String queryStr = sqlToyResult.getSql().toLowerCase();
