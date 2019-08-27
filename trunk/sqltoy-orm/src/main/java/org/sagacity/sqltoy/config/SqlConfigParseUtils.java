@@ -516,6 +516,7 @@ public class SqlConfigParseUtils {
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
+			//不存在%符号时，前后增加%
 			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
 				likeParamValue = "%".concat(likeParamValue).concat("%");
 				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
