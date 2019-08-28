@@ -119,9 +119,11 @@ public class SqlScriptLoader {
 		}
 
 		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
-		if (sleepSeconds > 0 && sleepSeconds < maxWait) {
+		if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
 			watcher = new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug);
 			watcher.start();
+		} else {
+			logger.warn("sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
 		}
 	}
 
