@@ -75,6 +75,11 @@ public class SqlScriptLoader {
 	private SqlFileModifyWatcher watcher;
 
 	/**
+	 * 最大检测间隔时长(秒)
+	 */
+	private int maxWait = 3600 * 24;
+
+	/**
 	 * 初始化加载sql文件
 	 * 
 	 * @param debug
@@ -114,8 +119,10 @@ public class SqlScriptLoader {
 		}
 
 		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
-		watcher = new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug);
-		watcher.start();
+		if (sleepSeconds > 0 && sleepSeconds < maxWait) {
+			watcher = new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug);
+			watcher.start();
+		}
 	}
 
 	/*
@@ -124,17 +131,6 @@ public class SqlScriptLoader {
 	 * @see org.sagacity.sqltoy.plugin.SqlConfigPlugin#getSql(java.lang.String)
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey) {
-		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
-		// 调试状况下判断文件是否被修改，修改重新加载对应文件中的sql并更新缓存
-		// if (this.debug) {
-		// try {
-		// SqlXMLConfigParse.parseXML(realSqlList, sqlCache, this.encoding,
-		// this.dialect);
-		// } catch (Exception e) {
-		// e.printStackTrace();
-		// logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
-		// }
-		// }
 		return (SqlToyConfig) sqlCache.get(sqlKey);
 	}
 
