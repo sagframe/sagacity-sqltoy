@@ -151,7 +151,6 @@ public class CollectionUtil {
 		List resultList = new ArrayList();
 		if (arySource.getClass().isArray()) {
 			Object[] aryObject = convertArray(arySource);
-			// return Arrays.asList(aryObject);
 			if (null != aryObject && 0 < aryObject.length) {
 				for (int i = 0, n = aryObject.length; i < n; i++)
 					resultList.add(aryObject[i]);

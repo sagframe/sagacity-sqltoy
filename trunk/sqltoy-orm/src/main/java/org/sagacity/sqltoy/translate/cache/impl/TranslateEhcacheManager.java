@@ -118,11 +118,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	@Override
 	public void init() {
 		if (cacheManager == null) {
-			//未定义持久化文件,则由ehcache自行默认创建
+			// 未定义持久化文件,则由ehcache自行默认创建
 			if (StringUtil.isBlank(diskStorePath)) {
 				cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
 			} else {
-				//解决一些场景下,主程序已经关闭但缓存文件仍然被占用,重新开辟一个缓存文件
+				// 解决一些场景下,主程序已经关闭但缓存文件仍然被占用,重新开辟一个缓存文件
 				try {
 					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
 							.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
@@ -132,7 +132,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 							diskStorePath);
 				}
 				if (cacheManager == null) {
-					//缓存文件被锁,重新定义一个不重复的文件名称
+					// 缓存文件被锁,重新定义一个不重复的文件名称
 					String realCacheFile = diskStorePath.concat(IdUtil.getShortNanoTimeId(null).toPlainString());
 					logger.warn("sqltoy ehcacheManager create cache file:{}", realCacheFile);
 					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
@@ -141,4 +141,17 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			}
 		}
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.translate.cache.TranslateCacheManager#destroy()
+	 */
+	@Override
+	public void destroy() {
+		if (cacheManager != null) {
+			cacheManager.close();
+		}
+	}
+
 }

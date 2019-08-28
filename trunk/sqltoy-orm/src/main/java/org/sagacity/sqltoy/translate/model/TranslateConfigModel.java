@@ -220,21 +220,6 @@ public class TranslateConfigModel implements Serializable {
 		this.dataSource = dataSource;
 	}
 
-	// /**
-	// * @return the cacheConfig
-	// */
-	// public CacheConfig getCacheConfig() {
-	// return cacheConfig;
-	// }
-	//
-	// /**
-	// * @param cacheConfig
-	// * the cacheConfig to set
-	// */
-	// public void setCacheConfig(CacheConfig cacheConfig) {
-	// this.cacheConfig = cacheConfig;
-	// }
-
 	/**
 	 * @return the type
 	 */

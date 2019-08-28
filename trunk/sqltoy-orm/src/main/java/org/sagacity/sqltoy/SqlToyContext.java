@@ -692,4 +692,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.keywordSign = keywordSign;
 	}
 
+	public void destroy() {
+		if (translateManager != null)
+			translateManager.close();
+	}
 }
