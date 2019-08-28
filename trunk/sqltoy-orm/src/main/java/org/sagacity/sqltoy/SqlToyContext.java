@@ -693,7 +693,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	public void destroy() {
-		if (translateManager != null)
-			translateManager.close();
+		try {
+			translateManager.destroy();
+			scriptLoader.destroy();
+		} catch (Exception e) {
+
+		}
 	}
 }

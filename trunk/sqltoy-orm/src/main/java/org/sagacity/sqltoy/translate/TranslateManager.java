@@ -205,7 +205,7 @@ public class TranslateManager {
 		return translateCacheManager;
 	}
 
-	public void close() {
+	public void destroy() {
 		if (translateCacheManager != null)
 			translateCacheManager.destroy();
 		if (timer != null)

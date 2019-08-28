@@ -90,6 +90,8 @@ public class SqlScriptLoader {
 	 */
 	private boolean initialized = false;
 
+	private SqlFileModifyWatcher watcher;
+
 	/**
 	 * 初始化加载sql文件
 	 */
@@ -128,7 +130,8 @@ public class SqlScriptLoader {
 		}
 
 		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
-		new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug).start();
+		watcher = new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug);
+		watcher.start();
 	}
 
 	/*
@@ -267,4 +270,15 @@ public class SqlScriptLoader {
 		this.sleepSeconds = sleepSeconds;
 	}
 
+	/**
+	 * 进程销毁
+	 */
+	public void destroy() {
+		try {
+			if (watcher != null)
+				watcher.interrupt();
+		} catch (Exception e) {
+
+		}
+	}
 }
