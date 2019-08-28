@@ -165,6 +165,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String mongoFactoryName = "mongoDbFactory";
 
 	/**
+	 * 是否显示sql文件变更检测
+	 */
+	private boolean showSqlModifyCheck = false;
+
+	/**
 	 * @param workerId
 	 *            the workerId to set
 	 */
@@ -200,7 +205,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		/**
 		 * 初始化脚本加载器
 		 */
-		scriptLoader.initialize();
+		scriptLoader.initialize(showSqlModifyCheck);
 
 		/**
 		 * 初始化实体对象管理器
@@ -690,6 +695,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setKeywordSign(String keywordSign) {
 		SqlToyConstants.keywordSign = keywordSign;
+	}
+
+	/**
+	 * @param showSqlModifyCheck
+	 *            the showSqlModifyCheck to set
+	 */
+	public void setShowSqlModifyCheck(boolean showSqlModifyCheck) {
+		this.showSqlModifyCheck = showSqlModifyCheck;
 	}
 
 	public void destroy() {

@@ -29,11 +29,6 @@ public class SqlScriptLoader {
 	 */
 	private final static Logger logger = LogManager.getLogger(SqlScriptLoader.class);
 
-	/**
-	 * 是否debug模式
-	 */
-	private boolean debug = false;
-
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
@@ -78,14 +73,6 @@ public class SqlScriptLoader {
 	private int sleepSeconds = 1;
 
 	/**
-	 * @param debug
-	 *            the debug to set
-	 */
-	public void setDebug(boolean debug) {
-		this.debug = debug;
-	}
-
-	/**
 	 * 是否初始化过
 	 */
 	private boolean initialized = false;
@@ -94,8 +81,10 @@ public class SqlScriptLoader {
 
 	/**
 	 * 初始化加载sql文件
+	 * 
+	 * @param debug
 	 */
-	public void initialize() {
+	public void initialize(boolean debug) {
 		if (initialized)
 			return;
 		initialized = true;
