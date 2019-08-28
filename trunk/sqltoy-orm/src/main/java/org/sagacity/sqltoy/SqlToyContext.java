@@ -167,7 +167,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 是否显示sql文件变更检测
 	 */
-	private boolean showSqlModifyCheck = false;
+	private boolean showScriptCheck = false;
+
+	/**
+	 * sql脚本检测间隔时长
+	 */
+	private int scriptCheckIntervalSeconds = 1;
 
 	/**
 	 * @param workerId
@@ -205,7 +210,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		/**
 		 * 初始化脚本加载器
 		 */
-		scriptLoader.initialize(showSqlModifyCheck);
+		scriptLoader.initialize(showScriptCheck, scriptCheckIntervalSeconds);
 
 		/**
 		 * 初始化实体对象管理器
@@ -698,11 +703,19 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param showSqlModifyCheck
-	 *            the showSqlModifyCheck to set
+	 * @param showScriptCheck
+	 *            the showScriptCheck to set
 	 */
-	public void setShowSqlModifyCheck(boolean showSqlModifyCheck) {
-		this.showSqlModifyCheck = showSqlModifyCheck;
+	public void setShowScriptCheck(boolean showScriptCheck) {
+		this.showScriptCheck = showScriptCheck;
+	}
+
+	/**
+	 * @param scriptCheckIntervalSeconds
+	 *            the scriptCheckIntervalSeconds to set
+	 */
+	public void setScriptCheckIntervalSeconds(int scriptCheckIntervalSeconds) {
+		this.scriptCheckIntervalSeconds = scriptCheckIntervalSeconds;
 	}
 
 	public void destroy() {

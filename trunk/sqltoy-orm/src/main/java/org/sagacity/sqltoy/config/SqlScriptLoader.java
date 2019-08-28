@@ -68,11 +68,6 @@ public class SqlScriptLoader {
 	private List realSqlList;
 
 	/**
-	 * 配置文件检测睡眠时长,默认为1秒
-	 */
-	private int sleepSeconds = 1;
-
-	/**
 	 * 是否初始化过
 	 */
 	private boolean initialized = false;
@@ -84,7 +79,7 @@ public class SqlScriptLoader {
 	 * 
 	 * @param debug
 	 */
-	public void initialize(boolean debug) {
+	public void initialize(boolean debug, int sleepSeconds) {
 		if (initialized)
 			return;
 		initialized = true;
@@ -242,21 +237,6 @@ public class SqlScriptLoader {
 	 */
 	public String getDialect() {
 		return dialect;
-	}
-
-	/**
-	 * @return the sleepSeconds
-	 */
-	public int getSleepSeconds() {
-		return sleepSeconds;
-	}
-
-	/**
-	 * @param sleepSeconds
-	 *            the sleepSeconds to set
-	 */
-	public void setSleepSeconds(int sleepSeconds) {
-		this.sleepSeconds = sleepSeconds;
 	}
 
 	/**
