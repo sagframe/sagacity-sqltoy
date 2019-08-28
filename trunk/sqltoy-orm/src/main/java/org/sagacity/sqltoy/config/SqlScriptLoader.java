@@ -244,8 +244,9 @@ public class SqlScriptLoader {
 	 */
 	public void destroy() {
 		try {
-			if (watcher != null)
+			if (watcher != null && !watcher.isInterrupted()) {
 				watcher.interrupt();
+			}
 		} catch (Exception e) {
 
 		}
