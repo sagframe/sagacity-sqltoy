@@ -4,7 +4,6 @@
 package org.sagacity.quickvo.utils;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,16 +28,13 @@ public class ClassLoaderUtil {
 	@SuppressWarnings("unused")
 	private final static Logger logger = LogManager.getLogger(ClassLoaderUtil.class);
 
-	private static Field classes;
 	private static Method addURL;
 	static {
 		try {
-			classes = ClassLoader.class.getDeclaredField("classes");
 			addURL = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
 		} catch (Exception e) {
 			// won't happen,but remain it throw new RootException(e);
 		}
-		classes.setAccessible(true);
 		addURL.setAccessible(true);
 	}
 
@@ -51,19 +47,17 @@ public class ClassLoaderUtil {
 		try {
 			URL[] urls = convertFile2URL(dirOrJars);
 			invoke(urlClassLoader, urls);
-			// addURL.invoke(urlClassLoader, urls);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	private static URL[] convertFile2URL(File[] dirOrJars) throws MalformedURLException {
 		if (dirOrJars == null || dirOrJars.length < 1)
 			return null;
 		URL[] urls = new URL[dirOrJars.length];
 		for (int i = 0; i < urls.length; i++) {
-			urls[i] = dirOrJars[i].toURL();
+			urls[i] = dirOrJars[i].toURI().toURL();
 		}
 		return urls;
 	}
@@ -82,8 +76,9 @@ public class ClassLoaderUtil {
 		File tmpFile;
 		for (int i = 0; i < jarFiles.size(); i++) {
 			tmpFile = (File) jarFiles.get(i);
-			if (tmpFile.exists() && !tmpFile.isDirectory())
+			if (tmpFile.exists() && !tmpFile.isDirectory()) {
 				pureJarFiles.add(jarFiles.get(i));
+			}
 		}
 
 		// 加载驱动类

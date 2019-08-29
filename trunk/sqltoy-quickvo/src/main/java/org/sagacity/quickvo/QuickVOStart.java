@@ -18,7 +18,6 @@ import org.sagacity.quickvo.config.XMLConfigLoader;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.ConfigModel;
 import org.sagacity.quickvo.utils.ClassLoaderUtil;
-import org.sagacity.quickvo.utils.ClassLoaderUtil2;
 import org.sagacity.quickvo.utils.FileUtil;
 
 /**
@@ -89,10 +88,10 @@ public class QuickVOStart {
 			int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
 			List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
 					new String[] { "[\\w|\\-|\\.]+\\.jar$" });
-			//jdk9 之后加载类的方式不一样
+			// jdk9 之后加载类的方式不一样
 			if (javaVersion >= 9) {
-				// ClassLoaderUtil2.loadJarFiles(jars);
-				ClassLoaderUtil.loadJarFiles(jars);
+				logger.info("请将jdbc driver jar放入classpath中!");
+				// ClassLoaderUtil.loadJarFiles(jars);
 			} else {
 				ClassLoaderUtil.loadJarFiles(jars);
 			}
