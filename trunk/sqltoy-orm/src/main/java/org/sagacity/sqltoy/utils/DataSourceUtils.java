@@ -371,6 +371,7 @@ public class DataSourceUtils {
 				dbType = getDbType(conn);
 				dialect = getDialect(dbType);
 			}
+			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (sqltoyContext.isDebug()) {
 				try {
 					logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
