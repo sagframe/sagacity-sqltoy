@@ -11,8 +11,10 @@
 		<log4j.version>2.12.1</log4j.version>
 		<mysql.version>8.0.17</mysql.version>
 		<beanutils.version>1.9.3</beanutils.version>
-		<freemarker.version>2.3.28</freemarker.version>
+		<freemarker.version>2.3.29</freemarker.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
+		<postgresql.version>42.2.6</postgresql.version>
+		<mssql.version>7.4.1.jre8</mssql.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -30,8 +32,8 @@
 
 	<distributionManagement>
 
-		<!--  <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
-			</repository>  -->
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+			</repository> -->
 		<repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
@@ -106,17 +108,31 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql.version}</version>
-			<optional>true</optional>
-			<scope>provided</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc8 -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.github.noraui</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
-			<optional>true</optional>
-			<scope>provided</scope>
+		</dependency> -->
+		<dependency>
+			<groupId>com.oracle.jdbc</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<version>${ojdbc.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>${mssql.version}</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<finalName>sqltoy-quickvo-${version}</finalName>
@@ -145,7 +161,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.1.1</version>
 				<configuration>
 					<archive>
 						<manifest>
