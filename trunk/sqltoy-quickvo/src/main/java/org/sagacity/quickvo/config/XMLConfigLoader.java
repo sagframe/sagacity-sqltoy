@@ -49,7 +49,7 @@ public class XMLConfigLoader {
 			if (!xmlFile.exists()) {
 				logger.error("相对路径:{},配置文件:{}不存在,请正确配置!", QuickVOConstants.BASE_LOCATE,
 						QuickVOConstants.QUICK_CONFIG_FILE);
-				throw new Exception("配置文件不存在,请正确配置!");
+				throw new Exception("配置文件:" + xmlFile.getAbsolutePath() + " 不存在,请正确配置!");
 			}
 		}
 		ConfigModel configModel = new ConfigModel();

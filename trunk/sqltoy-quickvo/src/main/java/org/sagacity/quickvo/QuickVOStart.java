@@ -8,6 +8,7 @@ import static java.lang.System.out;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +18,7 @@ import org.sagacity.quickvo.config.XMLConfigLoader;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.ConfigModel;
 import org.sagacity.quickvo.utils.ClassLoaderUtil;
+import org.sagacity.quickvo.utils.ClassLoaderUtil2;
 import org.sagacity.quickvo.utils.FileUtil;
 
 /**
@@ -72,7 +74,7 @@ public class QuickVOStart {
 			logger.error("加载系统参数或解析任务xml文件出错!", e);
 		}
 	}
-	
+
 	/**
 	 * 开始生成文件
 	 * 
@@ -84,8 +86,16 @@ public class QuickVOStart {
 		try {
 			// 加载位于driver目录下的jdbc驱动程序类库
 			logger.info("Begin load jdbc driver jar path from ./drivers!");
-			ClassLoaderUtil.loadJarFiles(FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
-					new String[] { "[\\w|\\-|\\.]+\\.jar$" }));
+			int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
+			List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
+					new String[] { "[\\w|\\-|\\.]+\\.jar$" });
+			//jdk9 之后加载类的方式不一样
+			if (javaVersion >= 9) {
+				// ClassLoaderUtil2.loadJarFiles(jars);
+				ClassLoaderUtil.loadJarFiles(jars);
+			} else {
+				ClassLoaderUtil.loadJarFiles(jars);
+			}
 			TaskController.setConfigModel(configModel);
 			// 创建vo和vof
 			TaskController.create();
@@ -116,7 +126,7 @@ public class QuickVOStart {
 		QuickVOConstants.BASE_LOCATE = baseDir;
 		// 测试使用(真实场景不起作用)
 		if (args == null || args.length == 0) {
-			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sagframe/trunk/sqltoy-showcase/tools/quickvo";
+			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sagacity-sqltoy/trunk/sqltoy-showcase/tools/quickvo";
 			// QuickVOConstants.BASE_LOCATE =
 			// "D:/workspace/personal/sagacity2.0/sqltoy-orm/tools/quickvo";
 			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
