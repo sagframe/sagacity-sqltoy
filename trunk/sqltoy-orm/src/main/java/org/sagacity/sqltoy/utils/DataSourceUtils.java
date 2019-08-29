@@ -372,8 +372,12 @@ public class DataSourceUtils {
 				dialect = getDialect(dbType);
 			}
 			if (sqltoyContext.isDebug()) {
-				logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
-						conn.getSchema(), conn.getCatalog());
+				try {
+					logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
+							conn.getSchema(), conn.getCatalog());
+				} catch (Exception e) {
+
+				}
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
