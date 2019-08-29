@@ -355,7 +355,6 @@ public class DataSourceUtils {
 	 * @param datasource
 	 * @param handler
 	 * @return
-	 * @throws Exception
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
