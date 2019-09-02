@@ -81,7 +81,8 @@ where #[t.ORDER_ID=:orderId]
 </where>
 ```
 
-## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部preparedStatement.set(index,value)
+## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部:
+    preparedStatement.set(index,value)
 ## 2.3 最强大的分页查询
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
@@ -190,7 +191,31 @@ where #[t.ORDER_ID=:orderId]
 	</value>
 </sql>
 ```
-## 2.4 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.4 最跨数据库
+* 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
+* 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
+* 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
+* 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库
+* 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
+    <property name="functionConverts" value="default" /> 
+    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugin.function.Nvl 代码实现
+  ```xml
+ <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
+		<property name="functionConverts" value="default">
+		<!-- 可以这样自行根据需要进行定义和扩展
+		<property name="functionConverts">
+			<list>
+				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
+				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
+				<value>org.sagacity.sqltoy.plugin.function.Now</value>
+				<value>org.sagacity.sqltoy.plugin.function.Length</value>
+			</list>
+		</property> -->
+</bean>
+
+```
+  
+## 2.5 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 ```xml
         <!-- 列转行测试 -->
 	<sql id="sys_unpvoitSearch">
@@ -223,7 +248,7 @@ where #[t.ORDER_ID=:orderId]
 			group-columns="TRANS_DATE" />
 	</sql>
 ```
-## 2.5 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+## 2.6 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
 ```
 	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
 	<sql id="sys_summarySearch">
@@ -244,13 +269,92 @@ where #[t.ORDER_ID=:orderId]
 		</summary>
 	</sql>
 ```
-## 2.6 分库分表
-### 2.6.1 查询分库分表
-### 2.6.2 操作分库分表
-## 2.6 elastic原生查询支持
-## 2.7 elasticsearch-sql 插件模式sql模式支持
+## 2.7 分库分表
+### 2.7.1 查询分库分表（分库和分表策略可以同时使用）
+```xml
+        sql参见showcase项目:com/sagframe/sqltoy/showcase/sqltoy-showcase.sql.xml 文件
+        sharding策略配置参见:src/main/resources/spring/spring-sqltoy-sharding.xml 配置
+        <!-- 演示分库 -->
+	<sql id="sqltoy_db_sharding_case">
+		<sharding-datasource
+			strategy="hashBalanceDBSharding" params="userId" />
+		<value>
+			<![CDATA[
+			select * from sqltoy_user_log t 
+			-- userId 作为分库关键字段属于必备条件
+			where t.user_id=:userId 
+			#[and t.log_date>=:beginDate]
+			#[and t.log_date<=:endDate]
+				]]>
+		</value>
+	</sql>
 
-# 2. sqltoy框架介绍
+	<!-- 演示分表 -->
+	<sql id="sqltoy_15d_table_sharding_case">
+		<sharding-table tables="sqltoy_trans_info_15d"
+			strategy="historyTableStrategy" params="beginDate" />
+		<value>
+			<![CDATA[
+			select * from sqltoy_trans_info_15d t 
+			where t.trans_date>=:beginDate
+			#[and t.trans_date<=:endDate]
+				]]>
+		</value>
+	</sql>
+        
+```
+   
+### 2.7.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+
+@Sharding 在对象上通过注解来实现分库分表的策略配置
+
+参见:com.sagframe.sqltoy.showcase.ShardingCaseServiceTest 进行演示
+
+```java
+package com.sagframe.sqltoy.showcase.vo;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.config.annotation.Strategy;
+
+import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
+
+/**
+ * @project sqltoy-showcase
+ * @author zhongxuchen
+ * @version 1.0.0 Table: sqltoy_user_log,Remark:用户日志表
+ */
+/*
+ * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
+ * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
+ * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
+ */
+@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = { "userId" }),
+		// table = @Strategy(name = "hashBalanceSharding", fields = {"userId" }),
+		maxConcurrents = 10, maxWaitSeconds = 1800)
+@SqlToyEntity
+public class UserLogVO extends AbstractUserLogVO {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1296922598783858512L;
+
+	/** default constructor */
+	public UserLogVO() {
+		super();
+	}
+}
+
+
+```
+
+## 2.8 elastic原生查询支持
+## 2.9 elasticsearch-sql 插件模式sql模式支持
+
+# 3. sqltoy框架介绍
 
 ![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
 
@@ -270,860 +374,15 @@ where #[t.ORDER_ID=:orderId]
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
-  - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成响应的sql进行交互。
+  - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
   - PageOptimizeCacheImpl:可以看到分页优化默认实现原理。
  
-# 3. sqltoy-orm项目环境搭建
 
-  ## 3.1 环境准备,配置eclipse或ide的sqltoy schema。这里以eclipse为例(4.2.2 版本无需配置,参见xml文件头部的改变)
-  
-    从sqltoy release目录下面提取quickvo.xsd\sqltoy-4.0.xsd 放于eclipse 安装路径下。
-    点击:eclipse window--> Prefences-->XML-->XML Catalog -->Add,如下图:
-![image](D:/eclipse_schema.jpg)
-    分别配置完sqltoy-4.x.xsd和quickvo.xsd,编写quickvo.xml和*.sql.xml就可以自动提示。
 
-  ## 3.2 sqltoy是基于spring框架的，依赖spring-core、spring-jdbc、spring-beans、spring-context、spring-context-support、spring-tx，详见其pom.xml文件。
-  
-    sqltoy仍然可以跟hibernate和mybatis混合使用，如你用hibernate则可只用sqltoy的查询功能，如果用mybatis你可以只用sqltoy的对象操作。sqltoy所有功能不是强制性的！
 
-  ## 3.3 配置spring
-  
-```
-<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
-		<!-- 针对不同数据库函数进行转换,非必须属性 -->
-		<!--<property name="functionConverts" value="default"/>-->
-		<property name="functionConverts" value="default"/>
-		<!-- pojo 包路径(可以写一个高层包路径),非必须属性,sqltoy4.0.1之后会在调用VO操作时动态解析 -->
-		<property name="packagesToScan">
-			<list>
-				<value>sqltoy.showcase.sagacity.vo</value>
-				<value>sqltoy.showcase.system.vo</value>
-			</list>
-		</property>
-		<!-- elasticsearch支持,可以配置多个集群地址 -->
-		<property name="elasticEndpoints">
-			<list>
-				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
-					<!-- 指定url地址 -->
-					<constructor-arg value="${elastic.url}"/>
-					<property name="id" value="${elastic.id}"/>
-					<property name="username" value="${elastic.username}"/>
-					<property name="password" value="${elastic.password}"/>
-				</bean>
-			</list>
-		</property>
-        <!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<!-- 默认值为:false -->
-		<property name="debug" value="${sqltoy.debug}" />
-		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
-		<property name="batchSize" value="${sqltoy.batchSize}" />
-		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
-		<property name="dialect" value="${sqltoy.dialect}" />
-		<!-- 默认值为:100000,设置分页查询最大的提取数据记录量,防止恶意提取数据造成系统内存压力以及保障数据安全 -->
-		<property name="pageFetchSizeLimit" value="50000" />
-		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
-		<property name="defaultDataSource" ref="dataSource" />
-	</bean>
-	
-	<!-- lazyDao定义,为开发者提供简单的Dao避免每个业务都写Dao -->
-	<bean id="sqlToyLazyDao" name="sqlToyLazyDao"
-		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl" />
 
-    <!-- 简单的CRUD 操作服务,简单操作开发者无需写自己的Service -->
-	<bean id="sqlToyCRUDService" name="sqlToyCRUDService"
-		class="org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl" />
-```
-
-上述是一个较为完整的写法,如果是简单项目最简配置如下：
-
-```
-<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
-		<!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
-		<property name="dialect" value="${sqltoy.dialect}" />
-	</bean>
-	
-	<bean id="sqlToyLazyDao" name="sqlToyLazyDao"
-		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl" />
-
-	<bean id="sqlToyCRUDService" name="sqlToyCRUDService"
-		class="org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl" />
-```
-
-如果你不用缓存翻译，配置还可以这样,够简单吧:
-
-
-```
-<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
-	</bean>
-```
-
-## 3.4 quickvo生成POJO对象
-
-  参考sqltoy-showcase项目tools目录下面的quickvo目录，下面有：
-  
-  - drivers目录:将您的数据库驱动放于其目录下面,确保quickvo可以加载响应数据库的驱动。
-  - quickvo.xml:生成VO的配置文件
-  - sagacity-quickvo.jar:含有main程序的quickvo类包。
-  - quickvo.bat:windows 下面的执行脚本，用来执行sagacity-quickvo.jar
-  
-  quickvo.xml配置说明:
-
-
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<quickvo xmlns="http://www.sagframe.com/schema/quickvo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-      xsi:schemaLocation="http://www.sagframe.com/schema/quickvo http://www.sagframe.com/schema/sqltoy/quickvo.xsd">
-	<!-- 可以不引入properties文件(目的是跟项目的properties一致),相关配置固化 -->
-	<property file="../../src/main/resources/system.properties" />
-	<!-- 最大小数位长度,避免个别数据库NUMBER(m,0)的情况下获取出来的默认小数位长度都很长 -->
-	<property name="max.scale.length" value="3" />
-	<property name="project.version" value="1.0.0" />
-	<property name="project.name" value="sqltoy-showcase" />
-	<property name="project.package" value="sqltoy.showcase" />
-	<property name="include.schema" value="false" />
-	<!-- oracle支持schema,mysql\DB2:catalog -->
-    <!-- 通过name支持多数据库模式 -->
-	<datasource name="sagframe" url="${jdbc.connection.url}" driver="${jdbc.connection.driver_class}"  
-	     catalog="${jdbc.connection.catalog}"
-		username="${jdbc.connection.username}" password="${jdbc.connection.password}" />
-	<tasks dist="../../src/main/java" encoding="UTF-8">
-        <!-- 
-           增加了swagger-mode 便于VO生成swagger的modeApi 
-           增加datasource属性关联具体datasouce 的name
-        -->
-		<task active="true" author="zhongxuchen" include="^SAG_\w+" swagger-model="true" >
-			<vo package="${project.package}.sagacity.vo" substr="Sag" name="#{subName}VO" />
-			<dao package="${project.package}.sagacity.dao" name="#{subName}Dao"
-				active="true" />
-		</task>
-		<task active="true" author="zhongxuchen" include="^SYS_\w+">
-			<vo package="${project.package}.system.vo" substr="Sys" name="#{subName}VO" />
-			<dao package="${project.package}.system.dao" name="#{subName}Dao"
-				active="false" />
-		</task>
-	</tasks>
-
-	<!-- 
-		主键策略配置:identity类型的会自动产生响应的主键策略，其他场景sqltoy根据主键类型和长度自动分配响应的策略方式.
-		strategy:分:sequence\assign\generator 三种,sequence为数据库sequence模式需要指定具体的sequence名称，assign 为手工赋值，Generator则为指定具体产生策略
-		generator:主键产生器,目前分:default:22位长度的主键、nanotime:26位纳秒形式;snowflake雪花算法、uuid:32位唯一算法
-	-->
-	<primary-key>
-		<!-- <table name="SAG_\w+|SYS_\w+" strategy="generator" generator="default"/> -->
-		<!-- <table name="xxxTABLE" strategy="sequence" sequence="SEQ_XXXX"/> -->
-		<!--<table name="sys_staff_info" strategy="generator" generator="snowflake"/>-->
-	</primary-key>
-	
-    <!-- 业务主键定义,column 为主键列，则主键策略以业务主键策略为准，signature 支持特定前缀和日期格式组合
-        length定义主键总长度(限制的是最小长度,超出则以实际为准)
-     -->
-	<business-primary-key>
-		<table name="xxxTable" column="xxColumn" signature="PO@df('yyyyMMdd')" length="16" generator="redis"/>
-	</business-primary-key>
-
-	<!-- 主子表的级联关系 update-cascade:delete 表示对存量数据进行先做删除然后再插入,
-	也可以写成:ENABLED=0(sql片段,置状态为无效) -->
-	<cascade>
-		<table name="SAG_DICT_DETAIL" update-cascade="delete" load="ENABLED=1" />
-	</cascade>
-
-	<!-- 数据类型对应关系，native-types表示特定数据库返回的字段类型; jdbc-type：表示对应jdbc标准的类型(见:java.sql.Types), 
-		主要用于vo @Column注解中，设置其类型,方便操作数据库插入或修改时设置类型;java-type:表示对应java对象的属性类型 -->
-	<type-mapping>
-		<sql-type native-types="DATE,DATETIME" jdbc-type="DATE"
-			java-type="java.util.Date" />
-		<sql-type native-types="TIMESTAMP(6),TIMESTAMP" jdbc-type="TIMESTAMP"
-			java-type="java.sql.Timestamp" />
-		<sql-type native-types="bpchar" jdbc-type="CHAR" java-type="String" />
-		<sql-type native-types="CHAR,CLOB" java-type="String" />
-		<sql-type native-types="TEXT,VARCHAR,VARCHAR2,LVARCHAR,long varchar"
-			jdbc-type="VARCHAR" java-type="String" />
-		<sql-type native-types="serial" jdbc-type="INTEGER"
-			java-type="Integer" />
-		<sql-type native-types="TINYINT,INT,INTEGER" java-type="Integer" />
-		<sql-type native-types="BIGINT" java-type="Long" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC" precision="1..8"
-			scale="0" jdbc-type="INTEGER" java-type="Integer" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC" precision="9..18"
-			scale="0" jdbc-type="INTEGER" java-type="Long" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC" precision="2..14"
-			scale="1..6" jdbc-type="DOUBLE" java-type="Double" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC" precision="19..36"
-			scale="0..6" jdbc-type="DECIMAL" java-type="java.math.BigDecimal" />
-		<sql-type native-types="BYTEA,BYTE,long binary" jdbc-type="BINARY"
-			java-type="byte[]" />
-		<sql-type native-types="image,BLOB,LONGBLOB,MEDIUMBLOB"
-			jdbc-type="BLOB" java-type="byte[]" />
-	</type-mapping>
-</quickvo>
-```
-
- quickvo 可以根据表的前缀将POJO分别生成到不同包路径下面，这样做的目的是让项目更加模块化，开发者各自关注自身模块下面的表和对象。
- 
- 配置完点击quickvo.bat 则完成POJO对象生成。
- 
- ![image](D:/POJO.bmp)
- 
- 以SYS_STAFF_INFO 表为例，产生AbstractStaffInfoVO 和 StaffInfoVO两个类，AbstractStaffInfoVO会根据数据库变化而变化，StaffInfoVO则只进行构造函数部分的修改，并保留开发者自行修改部分内容。
-```
-/**
- *@Generated by sagacity-quickvo 3.2
- */
-package sqltoy.showcase.system.vo.base;
-
-import java.io.Serializable;
-import org.sagacity.sqltoy.config.annotation.Entity;
-import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.Column;
-import java.util.Date;
-
-
-/**
- * @project sqltoy-showcase
- * @version 1.0.0
- * Table: sys_staff_info,Remark:员工信息表   
- */
-@Entity(tableName="sys_staff_info",pk_constraint="PRIMARY")
-public abstract class AbstractStaffInfoVO implements Serializable,
-	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //staffId,staffCode,organId,staffName,sexType,mobileTel,birthday,dutyDate,outDutyDate,post,nativePlace,email,operator,operateDate,status
-	 
-	 //not null properties
-	 //staffId,staffCode,organId,staffName,operator,operateDate,status
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 2289977593575720719L;
-	
-	/**
-	 * 员工ID
-	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
-	@Column(name="STAFF_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
-	protected String staffId;
-	
-	/**
-	 * 员工工号
-	 */
-	@Column(name="STAFF_CODE",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
-	protected String staffCode;
-	
-	/**
-	 * 机构编号
-	 */
-	@Column(name="ORGAN_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
-	protected String organId;
-	
-```
-
- StaffInfoVO类代码片段
- 
- 
-```
-/**
- * @project sqltoy-showcase
- * @author zhongxuchen
- * @version 1.0.0 员工信息表 StaffInfoVO generated by sys_staff_info
- */
-@SqlToyEntity
-/*
- * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
- * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
- * maxConcurrents:可选配置，表示最大并行数
- * maxWaitSeconds:可选配置，表示最大等待秒数
- */
-@Sharding(db = @Strategy(name = "hashDataSourceSharding", fields = {
-		"staffId" }), table = @Strategy(name = "hashDataSourceSharding", fields = {
-				"staffId" }), maxConcurrents = 10, maxWaitSeconds = 3600)
-public class StaffInfoVO extends AbstractStaffInfoVO {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4657027516282416619L;
-
-	/** default constructor */
-	public StaffInfoVO() {
-		super();
-	}
-
-	/*---begin-constructor-area---don't-update-this-area--*/
-	/** pk constructor */
-	public StaffInfoVO(String staffId) {
-		this.staffId = staffId;
-	}
-
-	/** minimal constructor */
-	public StaffInfoVO(String staffId, String staffCode, String organId, String staffName, String operator,
-			Date operateDate, String status) {
-		this.staffId = staffId;
-		this.staffCode = staffCode;
-		this.organId = organId;
-		this.staffName = staffName;
-		this.operator = operator;
-		this.operateDate = operateDate;
-		this.status = status;
-	}
-
-	/** full constructor */
-	public StaffInfoVO(String staffId, String staffCode, String organId, String staffName, String sexType,
-			String mobileTel, Date birthday, Date dutyDate, Date outDutyDate, String post, String nativePlace,
-			String email, String operator, Date operateDate, String status) {
-		this.staffId = staffId;
-		this.staffCode = staffCode;
-		this.organId = organId;
-		this.staffName = staffName;
-		this.sexType = sexType;
-		this.mobileTel = mobileTel;
-		this.birthday = birthday;
-		this.dutyDate = dutyDate;
-		this.outDutyDate = outDutyDate;
-		this.post = post;
-		this.nativePlace = nativePlace;
-		this.email = email;
-		this.operator = operator;
-		this.operateDate = operateDate;
-		this.status = status;
-	}
-
-	/*---end-constructor-area---don't-update-this-area--*/
-
-	/**
-	 * 机构名称
-	 */
-	private String organName;
-
-	/**
-	 * 性别名称
-	 */
-	private String sexName;
-
-	/**
-	 * 岗位名称
-	 */
-	private String postName;
-
-	/**
-	 * @todo vo columns to String
-	 */
-	public String toString() {
-		return super.toString();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#clone()
-	 */
-	public StaffInfoVO clone() {
-		try {
-			// TODO Auto-generated method stub
-			return (StaffInfoVO) super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-
-```
-
- 参见上述片段quickvo会自动修改下述标记内容之间的构造函数内容，请不要在此片段之间写代码
- 
-```
- /*---begin-constructor-area---don't-update-this-area--*/
- /*---end-constructor-area---don't-update-this-area--*/
-
-```
-
-# 4. sqltoy-orm 开发详解
-
- ## 4.1 sql查询类操作
- ### 4.1.1 sql完整编写定义(不要吓一跳感觉很复杂，常态下面很简单)
- 
-```
-<?xml version="1.0" encoding="utf-8"?>
-<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-      xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
-	<sql id="show_case">
-		<filters>
-			<!-- 空白转为null -->
-			<blank params="*" excludes="staffName" />
-			<!-- 等于 -->
-			<eq params="organType" value="-1" />
-			<!-- 区间 -->
-			<between params="" start-value="0" end-value="9999" excludes="" />
-			<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
-			<replace params="" regex="" value="" is-first="false" />
-			<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
-			 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
-			<to-date params="" format="" increment-days="1" />
-			<to-number params="" data-type="decimal" />
-			<!-- 小于等于 -->
-			<lte value="" params="" />
-			<!-- 小于 -->
-			<lt value="" params="" />
-			<!-- 大于等于 -->
-			<gte value="" params="" />
-			<!-- 大于 -->
-			<gt value="" params="" />
-			<!-- 首要参数，即当某个参数不为null时，excludes指定的参数全部为null -->
-			<primary param="" excludes="*" />
-			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
-			<exclusive param="" compare-type="eq" compare-values=""
-				set-params="" set-value="" />
-		</filters>
-		<!-- 缓存翻译,可以多个 -->
-		<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
-			cache-indexs="1" />
-		<!-- 安全掩码:tel\姓名\地址\卡号 -->
-		<!--最简单用法: <secure-mask column="" type="tel"/> -->
-		<secure-mask column="" type="name" head-size="" tail-size=""
-			mask-code="*****" mask-rate="50%" />
-		<!-- 分库策略 -->
-		<sharding-datasource strategy="" />
-		<!-- 分表策略 -->
-		<sharding-table tables="" strategy="" params="" />
-		<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
-		<page-optimize alive-max="100" alive-seconds="600" />
-		<value>
-		<![CDATA[
-		select t1.*,t2.ORGAN_NAME from 
-		@fast(select * from sys_staff_info t
-			  where #[t.sexType=:sexType]
-			        #[and t.JOIN_DATE>:beginDate]
-			        #[and t.STAFF_NAME like :staffName]
-			        -- 是否虚拟员工@if()做逻辑判断
-			        #[@if(:isVirtual==true) and t.IS_VIRTUAL=1]
-			        ) t1,sys_organ_info t2
-	    where t1.ORGAN_ID=t2.ORGAN_ID
-		]]>	
-		</value>
-		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
-		<count-sql><![CDATA[]]></count-sql>
-		<!-- 汇总和求平均 -->
-		<summary columns="" radix-size="2" reverse="false" sum-site="left">
-			<global sum-label="" label-column="" />
-			<group sum-label="" label-column="" group-column="" />
-		</summary>
-		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
-		<link sign="," column="" />
-		<!-- 行转列 (跟unpivot互斥) -->
-		<pivot group-columns="" start-column="" end-column=""
-			default-value="0" />
-		<!-- 列转行 -->
-		<unpivot columns="" values-as-column="" />
-	</sql>
-</sqltoy>
-```
-
- - 常态写法：
-  
-  
-```
-<!-- 查询机构信息 -->
-	<sql id="sys_searchOrganInfo">
-		<filters>
-			<eq value="-1" params="enabled,organProperty" />
-		</filters>
-		<translate cache="organIdName"
-			columns="sign_pid_name,sign_tid_name,parent_alias_name" />
-		<translate cache="organTypeName" columns="organ_type_Name"
-			cache-indexs="2" />
-		<value><![CDATA[
-			select
-				t.*,t.sign_pid sign_pid_name,t.sign_tid sign_tid_name,t.organ_type organ_type_Name,t.organ_pid parent_alias_name,
-				(select count(*) from SYS_ORGAN_INFO c where c.ORGAN_PID = t.ORGAN_ID) as CHILD_NUM
-			from 
-				SYS_ORGAN_INFO t 
-			where t.ORGAN_PID=:organPid
-			#[and (instr(t.organ_name,:organName)>0 or instr(t.alias_name,:organName)>0 or t.organ_id like :organName)]
-			#[and t.enabled=:enabled]
-		]]></value>
-	</sql>
-```
-
- - 最常态的写法：
-  
-```
-<!-- 查询法定行政日历 -->
-	<sql id="sys_find_lawcalendar">
-		<value><![CDATA[
-			select lc.HOLIDAY_ID,lc.HOLIDAY_TYPE,lc.COMMENTS,lc.BEGIN_DATE,lc.END_DATE,lc.IS_HOLIDAY 
-			from SYS_LAW_CALENDAR lc 
-			where 
-			#[and lc.BEGIN_DATE >= :beginDate]
-			#[and lc.END_DATE <= :endDate]
-			#[and lc.IS_HOLIDAY = :isHoliday]
-		]]></value>
-	</sql>
-```
-
-**sql的id命名建议:moduleName_+业务名称,避免不同模块下面id重名。**
-
-### 4.1.2 sql编写规则说明：
-   - 基本原则:sqltoy 通过#[] 等同于if(参数值==null) 则#[] 区间的片段全部剔除。#[]可以嵌套，如#[and t.name=:name #[t.sexType=:sexType] ]  
-   - filters:参数过滤器，一般通过逻辑处理将参数转为null，便于将#[]的逻辑统一。
-   - translate:缓存翻译，将sql的字段结合缓存进行keyValue提取，一般用于如查询员工的机构名称，在缓存中放机构Id和机构名称，这样查询员工机构名称就无需管理机构表而直接通过缓存获取机构名称，从而提升效率，translate可以配置多个。
-   - secure-mask:安全脱敏，一般用于金融类项目，对查询结果字段进行脱敏，如账号、手机号显示等。
-   - page-optimize：分页优化器，用于缓存查询条件，当在一定周期内查询条件一样，数据库则不再进行记录数查询，而是直接从缓存中提取。从而降低数据库查询次数实现效率提升。
-   - @fast():针对分页、取top、取随机记录等，先分页取出小范围数据然后再跟其他表进行关联，一定范围适用，提供性能优化的可能。
-   - sharding-datasource：查询分库策略配置，最简单的场景根据条件将数据源定向到不同库，进行分流。
-   - sharding-table:查询分表，如实时表和历史表，根据日期条件查询不同表，实现分流提升查询效率。
-   - summary:汇总，一般用于对查询结果数据再次进行多层分组汇总求平均，如结果是按照产品类别进行了汇总，还需要对产品大类进行汇总，通过sqltoy的提供的算法实现跨数据库功能，一般分组汇总sql比较复杂，不同数据库语法又不一样。
-   - pivot\unpivot:行转列，列转行，即俗称的数据旋转，非常适用于统计分析类报表查询，如交叉报表特别适用，同时让开发者无需写复杂的sql，同时实现跨数据库。同时也提升性能，数据提取出来进行内存处理性能肯定高于sql处理（数据规模是一样的）。
-   - count-sql:为极端情况下诸如分页、取top、取随机记录提供求总记录数的自定义最优化查询语句。因为一些复杂查询框架未必能够最优化的组织count语句。如union和 select sum()、decode(),(select from ) from 等子查询。
-   - link:分组字段值合并，如查询结果为:'苹果,香蕉' 用逗号拼接模式，sqltoy提供link操作实现跨数据库查询。
- 
-### 4.3 定义sqltoy的缓存翻译
-
-    - 参见sqltoy-showcase/src/main/resources 目录下面的sqltoy-translate.xml配置
-    
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<sagacity
-	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
-	<cache-translates disk-store-path="./sinochem-oms/translateCaches">
-		<sql-translate cache="dictKeyName"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.SEGMENT
-				from sag_dict_detail t
-		        where t.DICT_TYPE_CODE=?
-		        order by t.SHOW_INDEX
-			]]>
-			</sql>
-		</sql-translate>
-		<!-- 机构缓存，翻译使用 -->
-		<sql-translate cache="organIdName"
-			sql="sys_organIdNameCache" datasource="dataSource" />
-		<!-- 人员缓存，翻译使用 -->
-		<sql-translate cache="staffIdName"
-			sql="sys_staffIdNameCache" datasource="dataSource" />
-
-		<!-- 国家地区翻译 -->
-		<sql-translate cache="areaIdName"
-			datasource="dataSource">
-			<sql><![CDATA[
-			select area_id,area_name,city_code,city_name,province_code,province_name,full_name from sys_area_info 
-		]]></sql>
-		</sql-translate>
-		<!-- 销售组织机构翻译 -->
-		<sql-translate cache="salesOrganizationIdName"
-			datasource="dataSource">
-			<sql><![CDATA[
-			select org_id,org_name from UC_SALES_ORGANIZATION 
-		]]></sql>
-		</sql-translate>
-
-		<!-- 资质类别翻译 -->
-		<sql-translate cache="qualificationTypeIdName"
-			datasource="dataSource">
-			<sql><![CDATA[
-			select QUALIFICATION_CODE,QUALIFICATION_NAME from UC_QUALIFICATION_TYPE
-		]]></sql>
-		</sql-translate>
-	</cache-translates>
-
-	<!-- 缓存刷新检测 -->
-	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测 -->
-		<sql-checker
-			check-frequency="0..8:30?3000,8:30..20?120,20..24?3600"
-			datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			-- 机构缓存更新检测
-			select distinct 'organIdName' cacheName,null cache_type
-			from sys_organ_info t
-			where t.UPDATE_TIME >=:lastUpdateTime
-			-- 员工工号姓名缓存检测
-			union all 
-			select distinct 'staffIdName' cacheName,null cache_type
-			from sys_staff_info t1
-			where t1.UPDATE_TIME >=:lastUpdateTime
-			-- 数据字典key和name缓存检测
-			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE_CODE cache_type
-			from sag_dict_detail t2
-			where t2.UPDATE_TIME >=:lastUpdateTime
-			-- 资质类别翻译
-			union all 
-			select distinct 'qualificationTypeIdName' cacheName,null cache_type 
-			from UC_QUALIFICATION_TYPE tuc
-			where tuc.UPDATE_TIME >=:lastUpdateTime
-			-- 国家地区翻译
-			union all 
-			select distinct 'areaIdName' cacheName,null cache_type 
-			from sys_area_info area
-			where area.UPDATE_TIME >=:lastUpdateTime
-			-- 销售组织机构
-			union all 
-			select distinct 'salesOrganizationIdName' cacheName,null cache_type 
-			from UC_SALES_ORGANIZATION sales
-			where sales.UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-checker>
-	</cache-update-checkers>
-</sagacity>
-```
- - sqltoy配置缓存翻译,参见sqltoy-showcase 项目中src/main/resources 目录下spring-sqltoy.xml配置,片段截取如下:
- 
-```
-<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:sqltoy/showcase/" />
-		<!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
-	</bean>
-```
-
-### 4.1.3 调用说明
-    这里都以Dao为例进行说明
-
-#### 4.1.3.1 普通查询
-
-- sqltoy 查询的变化主要在java调用过程的变化，如分页、top记录、随机记录提取和普通查询可以共用一个sql。
-    
-    
-```
-    <sql id="sys_findStaff">
-		<!-- 安全脱敏:将姓名进行脱敏 -->
-		<secure-mask type="name" column="STAFF_NAME" />
-		<value>
-		<![CDATA[
-		select STAFF_ID,STAFF_CODE,STAFF_NAME,POST,SEX_TYPE, ORGAN_ID,ORGAN_ID ORGAN_NAME
-	    from sys_staff_info
-	    where 1=1 #[and STAFF_NAME like :staffName]
-		]]>
-		</value>
-	</sql>
-	
-	java调用过程:
-	
-	/**
-	 * 普通sql查询
-	 * 
-	 * @param staffInfoVO
-	 * @return
-	 * @throws Exception
-	 */
-	public List<StaffInfoVO> searchStaff(StaffInfoVO staffInfoVO) throws Exception {
-		//staffInfoVO 中staffName=张
-		return super.findBySql("sys_findStaff", staffInfoVO);
-	}
-	
-	另外一种:
-	public List<StaffInfoVO> searchStaff(StaffInfoVO staffInfoVO) throws Exception {
-		//如果对象属性跟sql中的参数名称不一样
-		return super.findBySql("sys_findStaff", new String[] { "staffName" }, new Object[] { staffInfoVO.getStaffName() },
-				StaffInfoVO.class);
-	}
-	
-	分页查询:
-	
-	public PaginationModel findPage(PaginationModel pageModel, StaffInfoVO staffInfoVO) throws Exception {
-		// 传统模式
-		return super.findPageBySql(pageModel, "sys_findStaff", staffInfoVO);
-	}
-	
-	或者:
-	
-	public PaginationModel findPage(PaginationModel pageModel, StaffInfoVO staffInfoVO) throws Exception {
-		// 链式操作
-		return page().pageModel(pageModel).sql("sys_findStaff").entity(staffInfoVO).submit();
-	}
-	
-	取Top记录:topSize  整数表示取整数条，小数表示按百分比提取
-	
-	/**
-	 * 取top记录数
-	 * @param staffInfoVO
-	 * @param topSize 如果是小数表示按照比例提取
-	 * @return
-	 * @throws Exception
-	 */
-	public List<StaffInfoVO> findTopStaff(StaffInfoVO staffInfoVO, double topSize) throws Exception {
-		return super.findTopBySql("sys_findStaff", staffInfoVO, topSize);
-	}
-	
-	取随机记录:randomSize如果是小数则按比例随机提取
-	
-	public List<StaffInfoVO> findRandomStaff(StaffInfoVO staffInfoVO, double randomSize) throws Exception {
-		return super.getRandomResult("sys_findStaff", new String[] { "staffName" },
-				new Object[] { staffInfoVO.getStaffName() }, StaffInfoVO.class, randomSize);
-	}
-	
-```
-#### 4.1.3.2 缓存翻译
-    如下代码<translate>实现了机构ID转换成机构名称的翻译过程。
-    其中cache是:LinkedMap<String,Object[]> 结构，Object[]数组是{key,name,name1,name2}形式。
-    <translate cache="cacheName" cache-type="类别" columns="sql列"
-			cache-indexs="1" />
-	cache-type:指的是类别参数，如数据字典类别码
-	columns:表示可以对多列通过同一个cache进行翻译，如机构全称、机构简称
-	cache-indexs:默认为1，当客户需要取机构简称时则cache-indexs="2"
-    
-```
-<sql id="sys_findStaff">
-		<!-- 从机构Id和Name的缓存中提取机构名称,避免关联数据库查询，提升效率，简化sql -->
-		<translate cache="organIdNameCache" columns="ORGAN_NAME" />
-		<value>
-		<![CDATA[
-		select STAFF_ID,STAFF_CODE,STAFF_NAME,POST,SEX_TYPE, ORGAN_ID,ORGAN_ID ORGAN_NAME
-	    from sys_staff_info
-	    where 1=1 #[and STAFF_NAME like :staffName]
-		]]>
-		</value>
-	</sql>
-```
-
-
-#### 4.1.3.3 分页优化
-    如下:通过<page-optimize/>实现分页查询优化，这个配置只有执行分页查询时起作用。
-    alive-max:表示支持多少个不同条件的查询缓存。默认100
-    alive-seconds:表示一个不同条件的查询活跃的时长。默认900
-
-```
-<sql id="sys_findStaff">
-		<!-- 优化分页查询,核心是避免相同的查询条件每次查询总记录数量 -->
-		<page-optimize alive-max="100" alive-seconds="600" />
-		<value>
-		<![CDATA[
-		select STAFF_ID,STAFF_CODE,STAFF_NAME,POST,SEX_TYPE, ORGAN_ID,ORGAN_ID ORGAN_NAME
-	    from sys_staff_info
-	    where 1=1 #[and STAFF_NAME like :staffName]
-		]]>
-		</value>
-	</sql>
-```
-
-
-#### 4.1.3.4 汇总查询
-
-
-```
-<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题) -->
-	<sql id="sys_summarySearch">
-		<sharding-datasource strategy="multiDataSource" />
-		<value>
-		<![CDATA[
-		select	t.TRANS_CHANNEL,t.TRANS_CODE,sum( t.TRANS_AMT )
-		from sys_summary_case t
-		group by t.TRANS_CHANNEL,t.TRANS_CODE
-		]]>
-		</value>
-		<summary columns="2" reverse="true" sum-site="left"
-			radix-size="2">
-			<global sum-label="总计" label-column="0" />
-			<group sum-label="小计/平均" label-column="0" group-column="0"
-				average-label="平均" />
-		</summary>
-	</sql>
-```
-
-
-#### 4.1.3.5 旋转查询
-
-
-```
-<!-- 列转行测试 -->
-	<sql id="sys_unpvoitSearch">
-		<value>
-		<![CDATA[
-		SELECT TRANS_DATE, 
-		       sum(TOTAL_AMOUNT) TOTAL_AMOUNT,
-		       sum(PERSON_AMOUNT) PERSON_AMOUNT,
-		       sum(COMPANY_AMOUNT) COMPANY_AMOUNT
-		FROM sys_unpivot_data
-		group by TRANS_DATE
-		]]>
-		</value>
-		<!-- 将指定的列变成行(这里3列变成了3行) -->
-		<unpivot columns="TOTAL_AMOUNT:总金额,PERSON_AMOUNT:个人金额,COMPANY_AMOUNT:企业金额"
-			values-as-column="TRANS_AMOUNT" labels-as-column="AMOUNT_TYPE" />
-	</sql>
-	
-	<!-- 行转列测试 -->
-	<sql id="sys_pvoitSearch">
-		<value>
-		<![CDATA[
-		select t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE,sum(t.TRANS_AMT) TRANS_AMT from sys_summary_case t
-		group by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		order by t.TRANS_DATE,t.TRANS_CHANNEL,TRANS_CODE
-		]]>
-		</value>
-		<pivot category-columns="TRANS_CHANNEL,TRANS_CODE" start-column="TRANS_AMT"
-			default-value="0" default-type="decimal" end-column="TRANS_AMT"
-			group-columns="TRANS_DATE" />
-	</sql>
-```
-
-
-#### 4.1.3.6 link查询
-
-#### 4.1.3.7 @fast快速查询
-
-#### 4.1.3.8 树形结构查询
-
-#### 4.1.3.9 分库分表查询
-
-#### 4.1.3.10 唯一性判断查询
-
-## 4.2 sqltoy对象操作
-
-### 4.2.1 save操作
-
-### 4.2.2 update操作
-
-### 4.2.3 delete操作
-
-### 4.2.4 load操作
-
-
-## 4.3 其他操作
-
-### 4.3.1 树形结构辅助字段封装
-
-### 4.3.2 存储过程调用
-
-### 4.3.3 sql批量执行
-
-## 4.4 sqltoy链式操作
-
-### 4.4.1 save链式操作
-
-### 4.4.2 update 链式操作
-
-### 4.4.3 delete链式操作 
-
-### 4.4.4 batch链式操作
-
-### 4.4.5 load链式操作
 
 
 
