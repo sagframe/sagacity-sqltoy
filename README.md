@@ -245,8 +245,87 @@ where #[t.ORDER_ID=:orderId]
 	</sql>
 ```
 ## 2.6 分库分表
-### 2.6.1 查询分库分表
-### 2.6.2 操作分库分表
+### 2.6.1 查询分库分表（分库和分表策略可以同时使用）
+```xml
+        sql参见showcase项目:com/sagframe/sqltoy/showcase/sqltoy-showcase.sql.xml 文件
+        sharding策略配置参见:src/main/resources/spring/spring-sqltoy-sharding.xml 配置
+        <!-- 演示分库 -->
+	<sql id="sqltoy_db_sharding_case">
+		<sharding-datasource
+			strategy="hashBalanceDBSharding" params="userId" />
+		<value>
+			<![CDATA[
+			select * from sqltoy_user_log t 
+			-- userId 作为分库关键字段属于必备条件
+			where t.user_id=:userId 
+			#[and t.log_date>=:beginDate]
+			#[and t.log_date<=:endDate]
+				]]>
+		</value>
+	</sql>
+
+	<!-- 演示分表 -->
+	<sql id="sqltoy_15d_table_sharding_case">
+		<sharding-table tables="sqltoy_trans_info_15d"
+			strategy="historyTableStrategy" params="beginDate" />
+		<value>
+			<![CDATA[
+			select * from sqltoy_trans_info_15d t 
+			where t.trans_date>=:beginDate
+			#[and t.trans_date<=:endDate]
+				]]>
+		</value>
+	</sql>
+        
+```
+   
+### 2.6.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+
+@Sharding 在对象上通过注解来实现分库分表的策略配置
+
+参见:com.sagframe.sqltoy.showcase.ShardingCaseServiceTest 进行演示
+
+```java
+package com.sagframe.sqltoy.showcase.vo;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.config.annotation.Strategy;
+
+import com.sagframe.sqltoy.showcase.vo.base.AbstractUserLogVO;
+
+/**
+ * @project sqltoy-showcase
+ * @author zhongxuchen
+ * @version 1.0.0 Table: sqltoy_user_log,Remark:用户日志表
+ */
+/*
+ * db则是分库策略配置,table 则是分表策略配置，可以同时配置也可以独立配置
+ * 策略name要跟spring中的bean定义name一致,fields表示要以对象的哪几个字段值作为判断依据,可以一个或多个字段
+ * maxConcurrents:可选配置，表示最大并行数 maxWaitSeconds:可选配置，表示最大等待秒数
+ */
+@Sharding(db = @Strategy(name = "hashBalanceDBSharding", fields = { "userId" }),
+		// table = @Strategy(name = "hashBalanceSharding", fields = {"userId" }),
+		maxConcurrents = 10, maxWaitSeconds = 1800)
+@SqlToyEntity
+public class UserLogVO extends AbstractUserLogVO {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1296922598783858512L;
+
+	/** default constructor */
+	public UserLogVO() {
+		super();
+	}
+}
+
+
+```
+
 ## 2.6 elastic原生查询支持
 ## 2.7 elasticsearch-sql 插件模式sql模式支持
 
