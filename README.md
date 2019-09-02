@@ -81,7 +81,8 @@ where #[t.ORDER_ID=:orderId]
 </where>
 ```
 
-## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部preparedStatement.set(index,value)
+## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部:
+    preparedStatement.set(index,value)
 ## 2.3 最强大的分页查询
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
@@ -191,7 +192,29 @@ where #[t.ORDER_ID=:orderId]
 </sql>
 ```
 ## 2.4 最跨数据库
+* 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
+* 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
+* 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
+* 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库
+* 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
+    <property name="functionConverts" value="default" /> 
+    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugin.function.Nvl 代码实现
+  ```xml
+ <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
+		<property name="functionConverts" value="default">
+		<!-- 可以这样自行根据需要进行定义和扩展
+		<property name="functionConverts">
+			<list>
+				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
+				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
+				<value>org.sagacity.sqltoy.plugin.function.Now</value>
+				<value>org.sagacity.sqltoy.plugin.function.Length</value>
+			</list>
+		</property> -->
+</bean>
 
+```
+  
 ## 2.5 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 ```xml
         <!-- 列转行测试 -->
@@ -351,7 +374,7 @@ public class UserLogVO extends AbstractUserLogVO {
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
-  - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成响应的sql进行交互。
+  - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
   - PageOptimizeCacheImpl:可以看到分页优化默认实现原理。
