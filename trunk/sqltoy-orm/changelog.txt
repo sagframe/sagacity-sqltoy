@@ -1,3 +1,58 @@
+v4.6.2 2019-08-26
+1、优化SQL文件发生变更重新加载的机制，变成独立的进程进行文件变更监测，代替原来根据sqlId获取sql内容时检测机制。
+2、增强了缓存翻译缓存初始化文件策略
+3、增加多数据源连接信息debug输出，便于开发阶段识别
+4、增加了容器销毁时自动销毁定时检测任务和缓存管理器:destroy-method="destroy"
+	<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
+	<bean id="sqlToyContext" name="sqlToyContext"
+			class="org.sagacity.sqltoy.SqlToyContext" init-method="initialize" destroy-method="destroy"></bean>
+			
+v4.6.0 2019-08-12
+1、全面支持jdk8 的LocalDate、LocalDateTime、LocalTime 日期类型；
+2、优化EntityManager 解析对象的代码，避免子类中定义父类中属性导致被覆盖问题；
+3、quickvo也同步进行了修改，默认类型为jdk8的日期类型
+4、提交sqltoy-showcase 范例代码，请参见src\test 下面的用例 和 src\main\resources 下面的配置
+生成vo请参见sqltoy-showcase\tools\quickvo 下面的配置
+
+v4.5.3 2019-07-19
+1、优化一些注释
+2、增强泛型支持，避免：(VO)load(xxxVO) 这种前面需要强转换的操作
+3、增强with as 语法几种模式的解析，如：with t1 (p1,p2) as () select * from t1 模式
+4、sql文件变更解析改成同步机制，避免应用启动阶段因个别任务执行sql导致重复加载
+5、sql模型增加是否有union语法的判断变量并优化部分机制，避免执行过程中去解析判断是否有union 和with as语法，从而提升效率。
+
+v4.5.2 2019-07-16
+1、将统一接口层面的异常抛出去除，统一内部抛出RuntimeException，避免开发者强制要进行异常捕获处理
+（关键更新，因此版本号从4.3升级到4.5，但不影响之前的使用）
+2、cache-arg 缓存条件转换二级过滤逻辑bug修复。
+3、sql查询filter中to-date 过滤处理器里面增加了first_week_day，last_week_day 类型，取指定日期所在周的第一和最后一天
+4、部分注释增强和少量代码优化
+5、针对jdk11 进行了适应性代码改造，将已经废弃的写法重新依据新标准改写，因此sqltoy完全可以在jdk8和以后的版本中应用
+6、增强对update xx set #[, field=？ ] 场景语句set 和 后续语句连接存在多余的逗号问题的兼容处理
+
+v4.3.12 2019-06-27
+1、修复select * from table where instr(a.name,'xxx?x') and a.type=:type 形式查询问号导致的问题
+2、放开参数条件名称不能是单个字母的限制，如 where a.name like :n ，单个字母参数命名一般不严谨，不建议如此简化，基本无法表达意思，考虑有些开发思维不够严谨，特此兼容
+3、优化sql执行时长超过阀值的打印日志格式，便于从日志中快速找到性能慢的sql
+4、优化部分代码，明确Exception的类型，避免部分条件检查直接抛出Exception，而是明确具体的条件非法或其他的准确的异常，避免事务控制时无法判断RunException 还是checkException
+
+v4.3.10 2019-05-08
+1、支持elasticsearch6.x版本的restclient
+2、强化sql查询固定参数中的问号处理
+3、注释优化
+
+v4.3.7.2 2019-04-12
+1、修复sql文件加载剔除非相同方言的sql文件的bug
+
+v4.3.7 2019-04-02
+1、增加数字格式化精度设置(四舍五入、去位、进位等)
+2、增加基于springsecurity安全框架下通用字段的赋值实现(可选,根据项目情况选择使用，不影响项目)
+
+v4.3.6.1 2019-02-25
+1、修复查询语句中to-date('2019-01-01 12:20:30') 给定固定值情况下将:dd 作为:paramNamed 变量参数条件问题
+2、强化分页查询对分组和统计型语句的判断，解决因为子查询中存在统计函数，将sql误判为统计型查询，count语句没有最优化
+3、优化缓存条件过滤，未匹配情况下的赋值问题
+
 v4.3.6 2019-02-22
 1、修复sql中别名参数正则表达式，避免to-date('2019-02-01 12:21:30','yyyy-MM-dd HH:mm:ss') 直接将具体数值写入sql时未能区分出:paramNamed 格式
 2、优化缓存条件筛选过滤机制，当未匹配上时返回指定值
