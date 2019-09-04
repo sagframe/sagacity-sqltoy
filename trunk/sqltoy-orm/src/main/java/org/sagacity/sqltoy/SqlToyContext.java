@@ -170,9 +170,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean showScriptCheck = false;
 
 	/**
-	 * sql脚本检测间隔时长
+	 * sql脚本检测间隔时长(默认为2秒)
 	 */
-	private int scriptCheckIntervalSeconds = 1;
+	private int scriptCheckIntervalSeconds = 2;
 
 	/**
 	 * @param workerId
