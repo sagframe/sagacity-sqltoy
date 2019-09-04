@@ -80,9 +80,9 @@ public class SqlScriptLoader {
 	private int maxWait = 3600 * 24;
 
 	/**
-	 * 初始化加载sql文件
-	 * 
+	 * @TODO 初始化加载sql文件
 	 * @param debug
+	 * @param sleepSeconds
 	 */
 	public void initialize(boolean debug, int sleepSeconds) {
 		if (initialized)
