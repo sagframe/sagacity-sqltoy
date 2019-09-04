@@ -20,7 +20,10 @@
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="dataSource" />
 	</bean>
-
+	
+	<!-- 支持事务注解方式 -->
+	<tx:annotation-driven transaction-manager="txManager" />
+	
 	<!-- 事务AOP处理的方法和事务类型定义 -->
 	<tx:advice id="txAdvice"
 		transaction-manager="transactionManager">
