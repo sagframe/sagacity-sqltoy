@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * 
- * @project sinochem-ubmp
+ * @project sqltoy-orm
  * @description 在sqltoy进行新增和修改操作时，对VO指定属性进行统一赋值操作
  * @author wyl
  * @version Revision:v1.0,Date:2018年1月18日
