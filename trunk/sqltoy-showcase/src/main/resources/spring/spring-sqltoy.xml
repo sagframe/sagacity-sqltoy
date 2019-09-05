@@ -10,7 +10,7 @@
 		<property name="sqlResourcesDir"
 			value="classpath:com/sagframe/sqltoy/showcase/" />
 		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-		<property name="functionConverts" value="default">
+		<property name="functionConverts" value="default"/>
 		<!-- 可以这样自行根据需要进行定义和扩展
 		<property name="functionConverts">
 			<list>

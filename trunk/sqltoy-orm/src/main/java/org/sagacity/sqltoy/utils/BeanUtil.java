@@ -990,4 +990,6 @@ public class BeanUtil {
 				|| clazz.equals(BigInteger.class) || clazz.equals(Boolean.class) || clazz.equals(Date.class)
 				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
 	}
+
+	
 }
