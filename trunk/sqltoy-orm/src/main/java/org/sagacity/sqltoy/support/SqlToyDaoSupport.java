@@ -197,7 +197,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 通用存储过程调用,一般数据库{?=call xxxStore(? in,? in,? out)} 针对oracle数据库只能{call
 	 *       xxxStore(? in,? in,? out)} 同时结果集必须通过OracleTypes.CURSOR out 参数返回
-	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
+	  *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
 	 * @param storeNameOrKey
 	 * @param inParamsValue
 	 * @param                outParamsType(可以为null)
@@ -554,7 +554,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
-	 *       如randomCount=0.05 总记录数为100,则随机取出5条记录
+	  *       如randomCount=0.05 总记录数为100,则随机取出5条记录
 	 * @param queryExecutor
 	 * @param randomCount
 	 * @return
@@ -823,7 +823,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 批量保存或修改,自动根据主键来判断是修改还是保存，没有主键的直接插入记录，
-	 *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
+	  *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
 	 * @param entities
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
@@ -946,6 +946,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo <b>手工提交数据库操作,只提供当前DataSource提交</b>
+	 * @param dataSource
 	 */
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, this.getDataSource(dataSource),
