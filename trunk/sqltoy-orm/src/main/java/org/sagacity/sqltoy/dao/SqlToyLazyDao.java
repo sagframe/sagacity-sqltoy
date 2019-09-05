@@ -111,8 +111,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 修改数据
 	 * @param entitySet
-	 * @param forceUpdateProps
-	 *            强制修改的字段属性
+	 * @param forceUpdateProps 强制修改的字段属性
 	 */
 	public Long update(Serializable serializableVO, String[] forceUpdateProps);
 
@@ -139,10 +138,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 批量修改对象
 	 * @param entitys
-	 * @param forceUpdateProps
-	 *            强制修改的属性
-	 * @param reflectPropertyHandler
-	 *            用于通过反射机制设置属性值
+	 * @param forceUpdateProps       强制修改的属性
+	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
 	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps,
 			ReflectPropertyHandler reflectPropertyHandler);
@@ -275,10 +272,8 @@ public interface SqlToyLazyDao {
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
-	 * @param paramsValue
-	 *            对应Named参数的值
-	 * @param voClass
-	 *            返回结果List中的对象类型
+	 * @param paramsValue   对应Named参数的值
+	 * @param voClass       返回结果List中的对象类型
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
@@ -528,4 +523,10 @@ public interface SqlToyLazyDao {
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler);
 
+	/**
+	 * @todo 判断缓存是否存在
+	 * @param cacheName
+	 * @return
+	 */
+	public boolean existCache(String cacheName);
 }

@@ -151,8 +151,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param entity
-	 * @param paramsNamed
-	 *            group+uniqueField
+	 * @param paramsNamed group+uniqueField
 	 * @return
 	 */
 	public boolean isUnique(Serializable entity, final String[] paramsNamed);
@@ -242,4 +241,11 @@ public interface SqlToyCRUDService {
 	 */
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer cacheNameIndex,
 			TranslateHandler handler);
+
+	/**
+	 * @todo 判断缓存是否存在
+	 * @param cacheName
+	 * @return
+	 */
+	public boolean existCache(String cacheName);
 }

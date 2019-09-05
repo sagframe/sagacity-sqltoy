@@ -868,4 +868,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		super.translate(dataSet, cacheName, cacheType, cacheNameIndex, handler);
 	}
 
+	/**
+	 * @todo 判断缓存是否存在
+	 * @param cacheName
+	 * @return
+	 */
+	public boolean existCache(String cacheName) {
+		return super.existCache(cacheName);
+	}
 }

@@ -42,8 +42,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected SqlToyLazyDao sqlToyLazyDao;
 
 	/**
-	 * @param sqlToyLazyDao
-	 *            the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "sqlToyLazyDao")
@@ -457,4 +456,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
 	}
 
+	/**
+	 * @todo 判断缓存是否存在
+	 * @param cacheName
+	 * @return
+	 */
+	@Override
+	public boolean existCache(String cacheName) {
+		return this.sqlToyLazyDao.existCache(cacheName);
+	}
 }
