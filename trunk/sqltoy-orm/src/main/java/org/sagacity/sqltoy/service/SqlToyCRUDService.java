@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.service;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
@@ -248,4 +249,10 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public boolean existCache(String cacheName);
+
+	/**
+	 * @todo 获取所有缓存的名称
+	 * @return
+	 */
+	public Set<String> getCacheNames();
 }

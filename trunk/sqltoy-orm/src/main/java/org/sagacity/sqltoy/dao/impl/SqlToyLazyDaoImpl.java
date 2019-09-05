@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -873,7 +874,14 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @param cacheName
 	 * @return
 	 */
+	@Override
 	public boolean existCache(String cacheName) {
 		return super.existCache(cacheName);
 	}
+
+	@Override
+	public Set<String> getCacheNames() {
+		return super.getCacheNames();
+	}
+
 }

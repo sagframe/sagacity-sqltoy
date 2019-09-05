@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 
 import org.apache.logging.log4j.LogManager;
@@ -190,6 +191,14 @@ public class TranslateManager {
 		if (cacheModel != null)
 			return true;
 		return false;
+	}
+
+	/**
+	 * @todo 获取所有缓存的名称
+	 * @return
+	 */
+	public Set<String> getCacheNames() {
+		return translateMap.keySet();
 	}
 
 	/**

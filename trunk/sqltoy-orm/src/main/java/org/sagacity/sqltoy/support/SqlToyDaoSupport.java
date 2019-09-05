@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -999,6 +1000,14 @@ public class SqlToyDaoSupport {
 				.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(),
 						relatedColValue, new Date(), businessIdType, entityMeta.getBizIdLength())
 				.toString();
+	}
+
+	/**
+	 * @todo 获取所有缓存的名称
+	 * @return
+	 */
+	public Set<String> getCacheNames() {
+		return this.sqlToyContext.getTranslateManager().getCacheNames();
 	}
 
 	/**

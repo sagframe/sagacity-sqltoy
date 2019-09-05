@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.service.impl;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -463,6 +464,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	public boolean existCache(String cacheName) {
-		return this.sqlToyLazyDao.existCache(cacheName);
+		return sqlToyLazyDao.existCache(cacheName);
+	}
+
+	@Override
+	public Set<String> getCacheNames() {
+		return sqlToyLazyDao.getCacheNames();
 	}
 }

@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -529,4 +530,10 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public boolean existCache(String cacheName);
+
+	/**
+	 * @todo 获取所有缓存的名称
+	 * @return
+	 */
+	public Set<String> getCacheNames();
 }
