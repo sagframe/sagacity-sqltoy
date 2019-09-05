@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:aop="http://www.springframework.org/schema/aop"
 	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
 	http://www.springframework.org/schema/beans/spring-beans.xsd 
-	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
-	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd 
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
 	default-lazy-init="true" default-autowire="byName">
+	<!-- 事务管理器定义 -->
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 支持事务注解方式 -->
+	<tx:annotation-driven
+		transaction-manager="txManager" />
 
 	<!-- 事务处理的AOP配置 // -->
 	<aop:config proxy-target-class="true">
@@ -15,38 +24,44 @@
 			pointcut="execution(* org.sagframe.sqltoy.showcase..*ServiceImpl.*(..)) || execution(* org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl.*(..))"
 			advice-ref="txAdvice" />
 	</aop:config>
-	<!-- 事务管理器定义 -->
-	<bean id="transactionManager"
-		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-		<property name="dataSource" ref="dataSource" />
-	</bean>
-	
-	<!-- 支持事务注解方式 -->
-	<tx:annotation-driven transaction-manager="txManager" />
 	
 	<!-- 事务AOP处理的方法和事务类型定义 -->
 	<tx:advice id="txAdvice"
-		transaction-manager="transactionManager">
+		transaction-manager="txManager">
 		<tx:attributes>
-			<!--  查询,只读事务 -->
-			<tx:method name="get*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
-			<tx:method name="load*" propagation="NOT_SUPPORTED"	isolation="DEFAULT" />
-			<tx:method name="query*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
-			<tx:method name="search*" propagation="NOT_SUPPORTED" isolation="DEFAULT" />
-			<tx:method name="find*" propagation="NOT_SUPPORTED"	isolation="DEFAULT" />
+			<!-- 查询,只读事务 -->
+			<tx:method name="get*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="load*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="query*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="search*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
+			<tx:method name="find*" propagation="NOT_SUPPORTED"
+				isolation="DEFAULT" />
 
-			<!--  增加、修改、删除 -->
-			<tx:method name="add*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="change*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="create*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="del*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="edit*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="execute*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="save*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="update*" propagation="REQUIRED" rollback-for="Throwable" />
-			<tx:method name="write*" propagation="REQUIRED" rollback-for="Throwable" />
-			
-			<!--  其他默认supports -->
+			<!-- 增加、修改、删除 -->
+			<tx:method name="add*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="change*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="create*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="del*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="edit*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="execute*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="save*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="update*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+			<tx:method name="write*" propagation="REQUIRED"
+				rollback-for="Throwable" />
+
+			<!-- 其他默认supports -->
 			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
 		</tx:attributes>
 	</tx:advice>

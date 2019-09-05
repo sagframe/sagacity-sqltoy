@@ -8,7 +8,7 @@
 		init-method="initialize" destroy-method="destroy">
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
 		<property name="sqlResourcesDir"
-			value="classpath:com/sagframe/sqltoy/showcase/" />
+			value="classpath:com/sagframe/sqltoy/showcase" />
 		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default"/>
 		<!-- 可以这样自行根据需要进行定义和扩展
