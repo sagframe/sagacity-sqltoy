@@ -104,8 +104,9 @@ public class ResultUtils {
 
 		}
 		// 填充记录数
-		if (result.getRows() != null)
+		if (result.getRows() != null) {
 			result.setRecordCount(Long.valueOf(result.getRows().size()));
+		}
 		return result;
 	}
 
@@ -127,8 +128,9 @@ public class ResultUtils {
 				int column = index.intValue();
 				for (List row : rows) {
 					value = row.get(column);
-					if (value != null)
+					if (value != null) {
 						row.set(column, maskStr(mask, value));
+					}
 				}
 			}
 		}
@@ -154,11 +156,13 @@ public class ResultUtils {
 					value = row.get(column);
 					if (value != null) {
 						// 日期格式
-						if (fmt.getType() == 1)
+						if (fmt.getType() == 1) {
 							row.set(column, DateUtil.formatDate(value, fmt.getFormat()));
+						}
 						// 数字格式化
-						else
+						else {
 							row.set(column, NumberUtil.format(value, fmt.getFormat()));
+						}
 					}
 				}
 			}
@@ -189,10 +193,11 @@ public class ResultUtils {
 		// 按类别处理
 		// 电话
 		if ("tel".equals(type)) {
-			if (size >= 11)
+			if (size >= 11) {
 				return StringUtil.secureMask(realStr, 3, 4, maskCode);
-			else
+			} else {
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
+			}
 		} // 邮件
 		else if ("email".equals(type)) {
 			return realStr.substring(0, 1).concat(maskCode).concat(realStr.substring(realStr.indexOf("@")));
@@ -204,18 +209,20 @@ public class ResultUtils {
 			return StringUtil.secureMask(realStr, 6, 4, maskCode);
 		} // 姓名
 		else if ("name".equals(type)) {
-			if (size >= 4)
+			if (size >= 4) {
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
-			else
+			} else {
 				return StringUtil.secureMask(realStr, 1, 0, maskCode);
+			}
 		} // 地址
 		else if ("address".equals(type)) {
-			if (size >= 12)
+			if (size >= 12) {
 				return StringUtil.secureMask(realStr, 6, 0, maskCode);
-			else if (size >= 8)
+			} else if (size >= 8) {
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
-			else
+			} else {
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
+			}
 		} // 对公银行账号
 		else if ("public-account".equals(type)) {
 			return StringUtil.secureMask(realStr, 2, 0, maskCode);
@@ -224,18 +231,20 @@ public class ResultUtils {
 		// 按比例模糊(百分比)
 		if (mask.getMaskRate() > 0) {
 			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
-			if (maskSize < 1)
+			if (maskSize < 1) {
 				maskSize = 1;
-			else if (maskSize >= size)
+			} else if (maskSize >= size) {
 				maskSize = size - 1;
+			}
 			tailSize = (size - maskSize) / 2;
 			headSize = size - maskSize - tailSize;
 			if (maskCode == null) {
 				maskCode = "*";
-				if (maskSize > 3)
+				if (maskSize > 3) {
 					maskCode = "***";
-				else if (maskSize == 2)
+				} else if (maskSize == 2) {
 					maskCode = "**";
+				}
 			}
 		}
 		return StringUtil.secureMask(realStr, headSize, tailSize, maskCode);
@@ -311,13 +320,16 @@ public class ResultUtils {
 						cacheValues = linkTranslateMap.get(linkValue.toString());
 						if (cacheValues == null) {
 							linkStr = "";
-							if (isDebug)
+							if (isDebug) {
 								logger.debug("translate cache:{} 对应的key:{} 没有设置相应的value!", translateModel.getCache(),
 										linkValue);
-						} else
+							}
+						} else {
 							linkStr = cacheValues[linkTranslateIndex];
-					} else
+						}
+					} else {
 						linkStr = linkValue.toString();
+					}
 				}
 				identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
 				// 不相等
@@ -337,8 +349,9 @@ public class ResultUtils {
 						items.add(rowTemp);
 					preIdentity = identity;
 				} else {
-					if (linkBuffer.length() > 0)
+					if (linkBuffer.length() > 0) {
 						linkBuffer.append(linkModel.getSign());
+					}
 					linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr.toString(),
 							linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStr);
 					isLastProcess = true;
@@ -373,8 +386,9 @@ public class ResultUtils {
 					}
 					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
 							ignoreAllEmpty);
-					if (rowTemp != null)
+					if (rowTemp != null) {
 						items.add(rowTemp);
+					}
 					index++;
 					// 存在超出25000条数据的查询(具体数据规模可以通过参数进行定义)
 					if (index == warnThresholds) {
@@ -393,8 +407,9 @@ public class ResultUtils {
 						rs.updateRow();
 					}
 					rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
-					if (rowTemp != null)
+					if (rowTemp != null) {
 						items.add(rowTemp);
+					}
 					index++;
 					// 存在超出警告规模级的数据查询
 					if (index == warnThresholds) {
@@ -409,12 +424,14 @@ public class ResultUtils {
 			}
 		}
 		// 超出警告阀值
-		if (warnLimit)
+		if (warnLimit) {
 			warnLog(sqlToyConfig, index);
+		}
 		// 超过最大提取数据阀值
-		if (maxLimit)
+		if (maxLimit) {
 			logger.error("Max Large Result:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
 					sqlToyConfig.getSql());
+		}
 		return items;
 	}
 
@@ -464,8 +481,9 @@ public class ResultUtils {
 	 */
 	private static List unPivotResult(UnpivotModel unpivotModel, DataSetResult resultModel,
 			HashMap<String, Integer> labelIndexMap, List result) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return result;
+		}
 		int cols = unpivotModel.getColumns().length;
 		List newResult = new ArrayList();
 		Integer[] unpivotCols = new Integer[cols];
@@ -484,18 +502,21 @@ public class ResultUtils {
 		// ==== 2015-12-1--- 企业 -------4000
 		int labelColIndex = -1;
 		int valueColIndex = -1;
-		if (labelIndexMap.get(unpivotModel.getLabelsColumn().toLowerCase()) != null)
+		if (labelIndexMap.get(unpivotModel.getLabelsColumn().toLowerCase()) != null) {
 			labelColIndex = labelIndexMap.get(unpivotModel.getLabelsColumn().toLowerCase()).intValue();
+		}
 
-		if (labelIndexMap.get(unpivotModel.getAsColumn().toLowerCase()) != null)
+		if (labelIndexMap.get(unpivotModel.getAsColumn().toLowerCase()) != null) {
 			valueColIndex = labelIndexMap.get(unpivotModel.getAsColumn().toLowerCase()).intValue();
+		}
 
 		// 排序,从大到小排
 		CollectionUtil.sortArray(sortUnpivotCols, true);
 		// 插在最开始被旋转的列位置前
 		int addIndex = sortUnpivotCols[sortUnpivotCols.length - 1].intValue();
-		if (addIndex < 0)
+		if (addIndex < 0) {
 			addIndex = 0;
+		}
 		// 将多列转成行，记录数量是列的倍数
 		int size = result.size() * cols;
 		int removeAdd = 0;
@@ -504,22 +525,23 @@ public class ResultUtils {
 			List row = (List) ((ArrayList) result.get(i / cols)).clone();
 			// 标题列
 			if (hasLabelsColumn) {
-				if (labelColIndex != -1)
+				if (labelColIndex != -1) {
 					row.set(labelColIndex, unpivotModel.getColsAlias()[i % cols]);
-				else {
+				} else {
 					row.add(addIndex, unpivotModel.getColsAlias()[i % cols]);
 					removeAdd = 1;
 				}
 			}
-			if (valueColIndex != -1)
+			if (valueColIndex != -1) {
 				row.set(valueColIndex, row.get(unpivotCols[i % cols]));
-			else {
+			} else {
 				row.add(addIndex + removeAdd, row.get(unpivotCols[i % cols] + removeAdd));
 				removeAdd = removeAdd + 1;
 			}
 			// 从最大列进行删除被旋转的列
-			for (int j = 0; j < cols; j++)
+			for (int j = 0; j < cols; j++) {
 				row.remove(sortUnpivotCols[j].intValue() + removeAdd);
+			}
 			newResult.add(row);
 		}
 
@@ -564,10 +586,11 @@ public class ResultUtils {
 	private static Integer[] mappingLabelIndex(String[] columnLabels, HashMap<String, Integer> labelIndexMap) {
 		Integer[] result = new Integer[columnLabels.length];
 		for (int i = 0; i < result.length; i++) {
-			if (CommonUtils.isInteger(columnLabels[i]))
+			if (CommonUtils.isInteger(columnLabels[i])) {
 				result[i] = Integer.parseInt(columnLabels[i]);
-			else
+			} else {
 				result[i] = labelIndexMap.get(columnLabels[i].toLowerCase());
+			}
 		}
 		return result;
 	}
@@ -650,8 +673,9 @@ public class ResultUtils {
 	 * @return
 	 */
 	private static List sortList(List<List> sortList, int orderCol, int start, int end, boolean ascend) {
-		if (end <= start)
+		if (end <= start) {
 			return sortList;
+		}
 		Object iData;
 		Object jData;
 		// 1:string,2:数字;3:日期
@@ -660,11 +684,11 @@ public class ResultUtils {
 			for (int j = i + 1; j < end + 1; j++) {
 				iData = sortList.get(i).get(orderCol);
 				jData = sortList.get(j).get(orderCol);
-				if ((iData == null && jData == null) || (iData != null && jData == null))
+				if ((iData == null && jData == null) || (iData != null && jData == null)) {
 					lessThen = false;
-				else if (iData == null && jData != null)
+				} else if (iData == null && jData != null) {
 					lessThen = true;
-				else {
+				} else {
 					lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
 				}
 
@@ -706,14 +730,15 @@ public class ResultUtils {
 				String[] beginToEnd = column.split("\\.\\.");
 				int begin = 0;
 				int end = 0;
-				if (CommonUtils.isInteger(beginToEnd[0]))
+				if (CommonUtils.isInteger(beginToEnd[0])) {
 					begin = Integer.parseInt(beginToEnd[0]);
-				else
+				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
+				}
 				endColumnStr = beginToEnd[1];
-				if (CommonUtils.isInteger(endColumnStr))
+				if (CommonUtils.isInteger(endColumnStr)) {
 					end = Integer.parseInt(endColumnStr);
-				else {
+				} else {
 					stepIndex = endColumnStr.indexOf("?");
 					if (stepIndex != -1) {
 						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
@@ -722,18 +747,21 @@ public class ResultUtils {
 					end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
 				}
 				for (int j = begin; j <= end; j += step) {
-					if (!sumColList.contains(j))
+					if (!sumColList.contains(j)) {
 						sumColList.add(j);
+					}
 				}
 			} else if (CommonUtils.isInteger(column)) {
-				if (!sumColList.contains(Integer.parseInt(column)))
+				if (!sumColList.contains(Integer.parseInt(column))) {
 					sumColList.add(Integer.parseInt(column));
+				}
 			} else {
 				Integer colIndex;
-				if (labelIndexMap.containsKey(column))
+				if (labelIndexMap.containsKey(column)) {
 					colIndex = labelIndexMap.get(column);
-				else
+				} else {
 					colIndex = (new BigDecimal(ExpressionUtil.calculate(column).toString())).intValue();
+				}
 				if (!sumColList.contains(colIndex))
 					sumColList.add(colIndex);
 			}
@@ -742,8 +770,9 @@ public class ResultUtils {
 		sumColList.toArray(summaryCols);
 		boolean hasAverage = false;
 		if (summaryModel.getGlobalAverageTitle() != null || summaryModel.getSumSite().equals("left")
-				|| summaryModel.getSumSite().equals("right"))
+				|| summaryModel.getSumSite().equals("right")) {
 			hasAverage = true;
+		}
 		Object[][] groupIndexs = null;
 		if (summaryModel.getGroupMeta() != null) {
 			groupIndexs = new Object[summaryModel.getGroupMeta().length][5];
@@ -758,19 +787,21 @@ public class ResultUtils {
 				group[1] = groupMeta.getSumTitle();
 				group[2] = groupMeta.getAverageTitle();
 				group[3] = summaryModel.getSumSite();
-				if (groupMeta.getLabelColumn() != null)
+				if (groupMeta.getLabelColumn() != null) {
 					group[4] = CommonUtils.isInteger(groupMeta.getLabelColumn())
 							? Integer.parseInt(groupMeta.getLabelColumn())
 							: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase());
+				}
 				groupIndexs[i] = group;
 			}
 		}
 		int globalLabelIndex = -1;
 		if (summaryModel.getGlobalLabelColumn() != null) {
-			if (CommonUtils.isInteger(summaryModel.getGlobalLabelColumn()))
+			if (CommonUtils.isInteger(summaryModel.getGlobalLabelColumn())) {
 				globalLabelIndex = Integer.parseInt(summaryModel.getGlobalLabelColumn());
-			else
+			} else {
 				globalLabelIndex = labelIndexMap.get(summaryModel.getGlobalLabelColumn().toLowerCase());
+			}
 		}
 		// 逆向汇总
 		if (summaryModel.isReverse()) {
@@ -801,16 +832,18 @@ public class ResultUtils {
 		for (int i = startColIndex; i < rowCnt; i++) {
 			fieldValue = rs.getObject(i + 1);
 			if (null != fieldValue) {
-				if (fieldValue instanceof java.sql.Clob)
+				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				}
 				// 有一个非null
 				allNull = false;
 			}
 			rowData.add(fieldValue);
 		}
 		// 全null返回null结果，外围判断结果为null则不加入结果集合
-		if (allNull && ignoreAllEmptySet)
+		if (allNull && ignoreAllEmptySet) {
 			return null;
+		}
 		return rowData;
 	}
 
@@ -840,19 +873,22 @@ public class ResultUtils {
 			keyIndex = Integer.toString(i);
 			if (null != fieldValue) {
 				allNull = false;
-				if (fieldValue instanceof java.sql.Clob)
+				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				}
 				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
 					translate = translateMap.get(label);
-					if (translate == null)
+					if (translate == null) {
 						translate = translateMap.get(keyIndex);
+					}
 					fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
 				}
 			}
 			rowData.add(fieldValue);
 		}
-		if (allNull && ignoreAllEmptySet)
+		if (allNull && ignoreAllEmptySet) {
 			return null;
+		}
 		return rowData;
 	}
 
@@ -870,13 +906,15 @@ public class ResultUtils {
 		if (translate.getSplitRegex() == null) {
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			if (cacheValues == null) {
-				if (translate.getUncached() != null)
+				if (translate.getUncached() != null) {
 					fieldValue = translate.getUncached().replace("${value}", fieldStr);
-				else
+				} else {
 					fieldValue = fieldValue.toString();
+				}
 				logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), fieldValue);
-			} else
+			} else {
 				fieldValue = cacheValues[translate.getIndex()];
+			}
 			return fieldValue;
 		} else {
 			String[] keys = fieldStr.split(translate.getSplitRegex());
@@ -884,17 +922,20 @@ public class ResultUtils {
 			StringBuilder result = new StringBuilder();
 			int index = 0;
 			for (String key : keys) {
-				if (index > 0)
+				if (index > 0) {
 					result.append(linkSign);
+				}
 				Object[] cacheValues = translateKeyMap.get(key.trim());
 				if (cacheValues == null) {
-					if (translate.getUncached() != null)
+					if (translate.getUncached() != null) {
 						result.append(translate.getUncached().replace("${value}", key));
-					else
+					} else {
 						result.append(key);
+					}
 					logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), key);
-				} else
+				} else {
 					result.append(cacheValues[translate.getIndex()]);
+				}
 				index++;
 			}
 			return result.toString();
@@ -958,8 +999,9 @@ public class ResultUtils {
 			String[] fields = dataSetResult.getLabelNames();
 			for (int i = 0, n = fields.length; i < n; i++) {
 				realLabelName = fields[i].toLowerCase();
-				if (realLabelName.indexOf(":") != -1)
+				if (realLabelName.indexOf(":") != -1) {
 					realLabelName = realLabelName.substring(0, realLabelName.indexOf(":")).trim();
+				}
 				labelIndexMap.put(realLabelName, i);
 			}
 
@@ -1006,8 +1048,9 @@ public class ResultUtils {
 				result.add(rowMap);
 			}
 			return result;
-		} else
+		} else {
 			return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
+		}
 	}
 
 	/**
@@ -1019,8 +1062,9 @@ public class ResultUtils {
 		if (labelNames == null)
 			return null;
 		String[] result = new String[labelNames.length];
-		for (int i = 0, n = labelNames.length; i < n; i++)
+		for (int i = 0, n = labelNames.length; i < n; i++) {
 			result[i] = StringUtil.toHumpStr(labelNames[i], false);
+		}
 		return result;
 	}
 
