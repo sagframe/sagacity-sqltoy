@@ -39,8 +39,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	private String diskStorePath = "./translateCaches";
 
 	/**
-	 * @param diskStorePath
-	 *            the diskStorePath to set
+	 * @param diskStorePath the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -64,7 +63,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			HashMap<String, Object[]> cacheValue) {
 		synchronized (cacheName) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
-			// 缓存没有配置,自动创建缓存不建议使用
+			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
 				int heap = StringUtil.isBlank(cacheKey) ? 1 : cacheConfig.getHeap();
 				cache = cacheManager.createCache(cacheName,
@@ -84,8 +83,9 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 					cache.remove(cacheKey);
 			}
 			// 更新缓存
-			else
+			else {
 				cache.put(StringUtil.isBlank(cacheKey) ? cacheName : cacheKey, cacheValue);
+			}
 		}
 	}
 
