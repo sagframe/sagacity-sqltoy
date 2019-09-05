@@ -38,32 +38,60 @@ public class BeanUtil {
 	protected final static Logger logger = LogManager.getLogger(BeanUtil.class);
 
 	/**
+	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误
+	 * 
 	 * @todo 获取指定名称的方法集
 	 * @param voClass
-	 * @param properties
+	 * @param props
 	 * @return
 	 */
-	public static Method[] matchSetMethods(Class voClass, String[] properties) {
-		int indexSize = properties.length;
-		Method[] methods = voClass.getMethods();
+	public static Method[] matchSetMethods(Class voClass, String[] props) {
+		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
-		int classMethodCnt = methods.length;
+		Method[] methods = voClass.getMethods();
+		// 先过滤出全是set且只有一个参数的方法
+		List<Method> realMeth = new ArrayList<Method>();
+		for (Method mt : methods) {
+			if (mt.getParameterTypes().length == 1 && void.class.equals(mt.getReturnType())) {
+				if (mt.getName().startsWith("set")) {
+					realMeth.add(mt);
+				}
+			}
+		}
+		if (realMeth.isEmpty()) {
+			return result;
+		}
 		Method method;
-		String property;
-		String methodName;
+		String prop;
+		boolean matched = false;
+		String name;
+		Class type;
 		for (int i = 0; i < indexSize; i++) {
-			property = "set".concat(properties[i].toLowerCase());
-			for (int j = 0; j < classMethodCnt; j++) {
-				method = methods[j];
-				methodName = method.getName().toLowerCase();
-				// update 2012-10-25 from equals to ignoreCase
-				if ((property.equals(methodName)
-						|| (property.startsWith("setis") && property.replaceFirst("setis", "set").equals(methodName)))
-						&& method.getParameterTypes().length == 1 && void.class.equals(method.getReturnType())) {
+			prop = "set".concat(props[i].toLowerCase());
+			matched = false;
+			for (int j = 0; j < realMeth.size(); j++) {
+				method = realMeth.get(j);
+				name = method.getName().toLowerCase();
+				// setXXX完全匹配
+				if (prop.equals(name)) {
+					matched = true;
+				} else {
+					// boolean 类型参数
+					type = method.getParameterTypes()[0];
+					if ((type.equals(Boolean.class) || type.equals(boolean.class)) && prop.startsWith("setis")
+							&& prop.replaceFirst("setis", "set").equals(name)) {
+						matched = true;
+					}
+				}
+				if (matched) {
 					result[i] = method;
 					result[i].setAccessible(true);
+					realMeth.remove(j);
 					break;
 				}
+			}
+			if (realMeth.isEmpty()) {
+				break;
 			}
 		}
 		return result;
@@ -72,30 +100,57 @@ public class BeanUtil {
 	/**
 	 * @todo 获取指定名称的方法集,不区分大小写
 	 * @param voClass
-	 * @param properties
+	 * @param props
 	 * @return
 	 */
-	public static Method[] matchGetMethods(Class voClass, String[] properties) {
-		int indexSize = properties.length;
+	public static Method[] matchGetMethods(Class voClass, String[] props) {
 		Method[] methods = voClass.getMethods();
+		List<Method> realMeth = new ArrayList<Method>();
+		String name;
+		// 过滤get 和is 开头的方法
+		for (Method mt : methods) {
+			if (!void.class.equals(mt.getReturnType()) && mt.getParameterTypes().length == 0) {
+				name = mt.getName().toLowerCase();
+				if (name.startsWith("get") || name.startsWith("is")) {
+					realMeth.add(mt);
+				}
+			}
+		}
+		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
-		String methodName;
-		int methodCnt = methods.length;
-		String property;
+		if (realMeth.isEmpty()) {
+			return result;
+		}
+		String prop;
 		Method method;
+		boolean matched = false;
+		Class type;
 		for (int i = 0; i < indexSize; i++) {
-			property = properties[i].toLowerCase();
-			for (int j = 0; j < methodCnt; j++) {
-				method = methods[j];
-				methodName = method.getName().toLowerCase();
-				// update 2012-10-25 from equals to ignoreCase
-				if (!void.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0
-						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
-								|| (methodName.startsWith("is") && methodName.equals(property)))) {
+			prop = props[i].toLowerCase();
+			matched = false;
+			for (int j = 0; j < realMeth.size(); j++) {
+				method = realMeth.get(j);
+				name = method.getName().toLowerCase();
+				// get完全匹配
+				if (name.equals("get".concat(prop))) {
+					matched = true;
+				} else if (name.startsWith("is")) {
+					// boolean型 is开头的方法
+					type = method.getReturnType();
+					if ((type.equals(Boolean.class) || type.equals(boolean.class))
+							&& (name.equals(prop) || name.equals("is".concat(prop)))) {
+						matched = true;
+					}
+				}
+				if (matched) {
 					result[i] = method;
 					result[i].setAccessible(true);
+					realMeth.remove(j);
 					break;
 				}
+			}
+			if (realMeth.isEmpty()) {
+				break;
 			}
 		}
 		return result;
@@ -708,8 +763,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate
-	 *            强制更新
+	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
@@ -819,14 +873,10 @@ public class BeanUtil {
 
 	/**
 	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans
-	 *            源对象数据集合
-	 * @param fromProps
-	 *            源对象的属性
-	 * @param targetProps
-	 *            目标对象的属性
-	 * @param newClass
-	 *            目标对象类型
+	 * @param fromBeans   源对象数据集合
+	 * @param fromProps   源对象的属性
+	 * @param targetProps 目标对象的属性
+	 * @param newClass    目标对象类型
 	 * @return
 	 * @throws Exception
 	 */
@@ -844,8 +894,7 @@ public class BeanUtil {
 	 * @param fromProps
 	 * @param targetProps
 	 * @param newClass
-	 * @param autoMapping
-	 *            是否自动匹配
+	 * @param autoMapping 是否自动匹配
 	 * @return
 	 * @throws Exception
 	 */
