@@ -130,8 +130,9 @@ public class TranslateFactory {
 					fatal = true;
 				}
 			}
-			if (fatal)
+			if (fatal) {
 				logger.warn("rest模式检测缓存是否更新数据格式转换异常,数据格式是数组或CacheCheckResult对象类型的数组!");
+			}
 		}
 		return result;
 	}
