@@ -219,7 +219,7 @@ public class TranslateFactory {
 			queryExecutor = new QueryExecutor(cacheModel.getSql());
 		else
 			queryExecutor = new QueryExecutor(cacheModel.getSql(), sqlToyConfig.getParamsName(),
-					new Object[] { cacheType });
+					new Object[] { cacheType.trim() });
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext, queryExecutor,
 						StringUtil.isBlank(dataSourceName) ? sqlToyContext.getDefaultDataSource()
@@ -238,7 +238,7 @@ public class TranslateFactory {
 	private static Object getServiceCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
 		return sqlToyContext.getServiceData(cacheModel.getService(), cacheModel.getMethod(),
-				StringUtil.isBlank(cacheType) ? new Object[] {} : new Object[] { cacheType });
+				StringUtil.isBlank(cacheType) ? new Object[] {} : new Object[] { cacheType.trim() });
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class TranslateFactory {
 	private static List<Object[]> getRestCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
-				cacheModel.getPassword(), "type", cacheType);
+				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
 		if (jsonStr != null)
 			return JSON.parseArray(jsonStr, Object[].class);
 		return null;
@@ -267,7 +267,9 @@ public class TranslateFactory {
 	private static HashMap<String, Object[]> wrapCacheResult(Object target, TranslateConfigModel cacheModel) {
 		if (target == null)
 			return null;
-		if (target instanceof HashMap && ((HashMap) target).values().iterator().next() instanceof Object[])
+		if (target instanceof HashMap && ((HashMap) target).isEmpty())
+			return null;
+		if (target instanceof HashMap && ((HashMap) target).values().iterator().next().getClass().isArray())
 			return (HashMap<String, Object[]>) target;
 		LinkedHashMap<String, Object[]> result = new LinkedHashMap<String, Object[]>();
 		if (target instanceof HashMap) {
