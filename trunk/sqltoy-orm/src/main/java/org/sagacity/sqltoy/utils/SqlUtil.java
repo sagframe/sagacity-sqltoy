@@ -98,14 +98,10 @@ public class SqlUtil {
 
 	/**
 	 * @todo 合成数据库in 查询的条件(不建议使用)
-	 * @param conditions
-	 *            :数据库in条件的数据集合，可以是POJO List或Object[]
-	 * @param colIndex
-	 *            :二维数组对应列编号
-	 * @param property
-	 *            :POJO property
-	 * @param isChar
-	 *            :in 是否要加单引号
+	 * @param conditions :数据库in条件的数据集合，可以是POJO List或Object[]
+	 * @param colIndex   :二维数组对应列编号
+	 * @param property   :POJO property
+	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
 	 * @throws Exception
 	 */
@@ -121,27 +117,30 @@ public class SqlUtil {
 		int dimen = CollectionUtil.judgeObjectDimen(conditions);
 		switch (dimen) {
 		// 单个数据
-		case 0:
+		case 0: {
 			conditons.append(flag).append(conditions.toString()).append(flag);
 			break;
+		}
 		// 一维数组
 		case 1: {
 			Object[] array;
-			if (conditions instanceof Collection)
+			if (conditions instanceof Collection) {
 				array = ((Collection) conditions).toArray();
-			else if (conditions.getClass().isArray())
+			} else if (conditions.getClass().isArray()) {
 				array = CollectionUtil.convertArray(conditions);
-			else
+			} else {
 				array = ((Map) conditions).values().toArray();
-
+			}
 			for (int i = 0; i < array.length; i++) {
-				if (i != 0)
+				if (i != 0) {
 					conditons.append(",");
+				}
 				conditons.append(flag);
-				if (null == property)
+				if (null == property) {
 					conditons.append(array[i]);
-				else
+				} else {
 					conditons.append(BeanUtils.getProperty(array[i], property));
+				}
 				conditons.append(flag);
 			}
 			break;
@@ -149,20 +148,23 @@ public class SqlUtil {
 		// 二维数据
 		case 2: {
 			Object[][] array;
-			if (conditions instanceof Collection)
+			if (conditions instanceof Collection) {
 				array = CollectionUtil.twoDimenlistToArray((Collection) conditions);
-			else if (conditions instanceof Object[][])
+			} else if (conditions instanceof Object[][]) {
 				array = (Object[][]) conditions;
-			else
+			} else {
 				array = CollectionUtil.twoDimenlistToArray(((Map) conditions).values());
+			}
 			for (int i = 0; i < array.length; i++) {
-				if (i != 0)
+				if (i != 0) {
 					conditons.append(",");
+				}
 				conditons.append(flag);
-				if (null == property)
+				if (null == property) {
 					conditons.append(array[i][colIndex.intValue()]);
-				else
+				} else {
 					conditons.append(BeanUtils.getProperty(array[i][colIndex.intValue()], property));
+				}
 				conditons.append(flag);
 			}
 			break;
@@ -199,23 +201,6 @@ public class SqlUtil {
 		}
 	}
 
-	// update by 2019-8-7 此方法不在sqltoy中使用,因此注释掉(原本用于exceltoy中的)
-	// public static void setParamsValue(Connection conn, PreparedStatement pst,
-	// Object[] params, Integer[] paramsType,
-	// int fromIndex, int endIndex) throws SQLException, IOException {
-	// if (null != params && params.length > 0) {
-	// if (null == paramsType || paramsType.length == 0) {
-	// for (int i = 0; i < endIndex; i++) {
-	// setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
-	// }
-	// } else {
-	// for (int i = 0; i < endIndex; i++) {
-	// setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
-	// }
-	// }
-	// }
-	// }
-
 	/**
 	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
 	 * clob bug的支持(druid 1.1.10 已经修复)
@@ -234,10 +219,11 @@ public class SqlUtil {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		String tmpStr;
 		if (null == paramValue) {
-			if (jdbcType != -1)
+			if (jdbcType != -1) {
 				pst.setNull(paramIndex, jdbcType);
-			else
+			} else {
 				pst.setNull(paramIndex, java.sql.Types.NULL);
+			}
 		} else {
 			if (paramValue instanceof java.lang.String) {
 				tmpStr = (String) paramValue;
@@ -294,17 +280,19 @@ public class SqlUtil {
 					} catch (Exception e) {
 						pst.setBytes(paramIndex, (byte[]) paramValue);
 					}
-				} else
+				} else {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
+				}
 			} else if (paramValue instanceof java.lang.Short) {
 				pst.setShort(paramIndex, (java.lang.Short) paramValue);
 			} else if (paramValue instanceof java.lang.Float) {
 				pst.setFloat(paramIndex, ((Float) paramValue));
 			} else {
-				if (jdbcType != -1)
+				if (jdbcType != -1) {
 					pst.setObject(paramIndex, paramValue, jdbcType);
-				else
+				} else {
 					pst.setObject(paramIndex, paramValue);
+				}
 			}
 		}
 	}
@@ -340,8 +328,9 @@ public class SqlUtil {
 		Object rowTemp;
 		while (rs.next()) {
 			rowTemp = reflectResultRowToVOClass(rs, matchedFields, pds, voClass, ignoreAllEmptySet);
-			if (rowTemp != null)
+			if (rowTemp != null) {
 				resultList.add(rowTemp);
+			}
 			index++;
 			// 存在超出25000条数据的查询
 			if (index == warnThresholds) {
@@ -383,10 +372,11 @@ public class SqlUtil {
 		boolean allNull = true;
 		for (int i = 0, n = matchedFields.size(); i < n; i++) {
 			colMeta = (TableColumnMeta) matchedFields.get(i);
-			if (colMeta.getDataType() == java.sql.Types.CLOB)
+			if (colMeta.getDataType() == java.sql.Types.CLOB) {
 				fieldValue = rs.getString(colMeta.getColName());
-			else
+			} else {
 				fieldValue = rs.getObject(colMeta.getColName());
+			}
 			if (null != fieldValue) {
 				allNull = false;
 				// java 反射调用
@@ -395,8 +385,9 @@ public class SqlUtil {
 						BeanUtil.convertType(fieldValue, colMeta.getTypeName()));
 			}
 		}
-		if (allNull && ignoreAllEmptySet)
+		if (allNull && ignoreAllEmptySet) {
 			return null;
+		}
 		return bean;
 	}
 
@@ -550,8 +541,9 @@ public class SqlUtil {
 			markIndex = sql.indexOf("--");
 		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
-		if (sql.endsWith(";") || sql.endsWith(","))
+		if (sql.endsWith(";") || sql.endsWith(",")) {
 			sql = sql.substring(0, sql.length() - 1);
+		}
 		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
 	}
@@ -572,8 +564,9 @@ public class SqlUtil {
 			throws Exception {
 		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn, ignoreAllEmptySet);
 		if (result != null && !result.isEmpty()) {
-			if (result.size() > 1)
+			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
+			}
 			return result.get(0);
 		}
 		return null;
@@ -604,8 +597,9 @@ public class SqlUtil {
 			}
 		});
 		// 为null返回一个空集合
-		if (result == null)
+		if (result == null) {
 			result = new ArrayList();
+		}
 		return result;
 	}
 
@@ -669,12 +663,14 @@ public class SqlUtil {
 					}
 					rowData.add(fieldValue);
 				}
-				if (!(allNull && ignoreAllEmptySet))
+				if (!(allNull && ignoreAllEmptySet)) {
 					items.add(rowData);
+				}
 				index++;
 				// 超出预警阀值
-				if (index == warnThresholds)
+				if (index == warnThresholds) {
 					warnLimit = true;
+				}
 				// 超出最大提取数据阀值,直接终止数据提取
 				if (index == maxThresholds) {
 					maxLimit = true;
@@ -688,8 +684,9 @@ public class SqlUtil {
 			logger.warn("Large Result:total={}>={}", index, warnThresholds);
 		}
 		// 超过最大提取数据阀值
-		if (maxLimit)
+		if (maxLimit) {
 			logger.error("Max Large Result:total={}>={}", index, maxThresholds);
+		}
 		return result;
 	}
 
@@ -736,9 +733,9 @@ public class SqlUtil {
 				index++;
 				if (rowData != null) {
 					// 使用反调
-					if (useCallHandler)
+					if (useCallHandler) {
 						insertCallhandler.process(pst, index, rowData);
-					else {
+					} else {
 						// 使用对象properties方式传值
 						if (rowData.getClass().isArray()) {
 							Object[] tmp = CollectionUtil.convertArray(rowData);
@@ -771,8 +768,9 @@ public class SqlUtil {
 					}
 				}
 			}
-			if (hasSetAutoCommit)
+			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw e;
@@ -854,9 +852,10 @@ public class SqlUtil {
 				}
 				ids = findByJdbcQuery(firstNextNodeQuery.toString(), new Object[] { treeTableModel.getIdValue() }, null,
 						null, conn, false);
-			} else
+			} else {
 				ids = findByJdbcQuery(nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
 						flag + treeTableModel.getRootId() + flag), null, null, null, conn, false);
+			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel, pidsMap,
 						ids, nodeLevel + 1, conn);
@@ -946,24 +945,28 @@ public class SqlUtil {
 					nodeRoute = "";
 					if (!treeTableModel.isChar() || treeTableModel.isAppendZero()) {
 						// 负数
-						if (CommonUtils.isInteger(pid) && pid.indexOf("-") == 0)
+						if (CommonUtils.isInteger(pid) && pid.indexOf("-") == 0) {
 							nodeRoute = nodeRoute.concat("-")
 									.concat(StringUtil.addLeftZero2Len(pid.substring(1), size - 1));
-						else
+						} else {
 							nodeRoute = nodeRoute.concat(StringUtil.addLeftZero2Len(pid, size));
+						}
 					} else {
 						nodeRoute = nodeRoute.concat(StringUtil.addRightBlank2Len(pid, size));
 					}
-				} else
+				} else {
 					nodeRoute = nodeRoute.trim();
+				}
 				// update 2018-1-9 增加判断是否以逗号结尾,解决修改过程中出现双逗号问题
-				if (!nodeRoute.endsWith(treeTableModel.getSplitSign()))
+				if (!nodeRoute.endsWith(treeTableModel.getSplitSign())) {
 					nodeRoute = nodeRoute.concat(treeTableModel.getSplitSign());
+				}
 				// 回置节点的nodeRoute值
-				if (!treeTableModel.isChar() || treeTableModel.isAppendZero())
+				if (!treeTableModel.isChar() || treeTableModel.isAppendZero()) {
 					nodeRoute = nodeRoute.concat(StringUtil.addLeftZero2Len(id, size));
-				else
+				} else {
 					nodeRoute = nodeRoute.concat(StringUtil.addRightBlank2Len(id, size));
+				}
 
 				((List) rowData).set(1, nodeRoute);
 				// 节点等级
@@ -973,8 +976,9 @@ public class SqlUtil {
 
 				if (treeTableModel.isChar()) {
 					pst.setString(3, id);
-				} else
+				} else {
 					pst.setLong(3, Long.parseLong(id));
+				}
 			}
 		}, null, false, conn);
 
@@ -998,9 +1002,9 @@ public class SqlUtil {
 			if (fromIndex >= toIndex) {
 				subIds = new ArrayList();
 				subIds.add(ids.get(toIndex));
-			} else
+			} else {
 				subIds = ids.subList(fromIndex, toIndex + 1);
-
+			}
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 
 			// 获取下一层节点
@@ -1011,8 +1015,9 @@ public class SqlUtil {
 				processNextLevel(updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
 						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn);
 			}
-			if (exist)
+			if (exist) {
 				break;
+			}
 		}
 	}
 
@@ -1029,8 +1034,9 @@ public class SqlUtil {
 		String splitSign = DataSourceUtils.getDatabaseSqlSplitSign(conn);
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
-		if (splitSign.indexOf("go") != -1)
+		if (splitSign.indexOf("go") != -1) {
 			sqlContent = StringUtil.clearMistyChars(sqlContent, " ");
+		}
 		// sqlserver sybase 数据库以go 分割,则整个sql文件作为一个语句执行
 		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, splitSign, sqlCommentfilters);
 		boolean hasSetAutoCommit = false;
@@ -1190,8 +1196,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -1206,8 +1211,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
@@ -1228,8 +1232,9 @@ public class SqlUtil {
 		StringBuilder lastSql = new StringBuilder(clearMistyChar ? StringUtil.clearMistyChars(sql, " ") : sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
-		if (fromIndex != -1)
+		if (fromIndex != -1) {
 			lastSql.delete(0, fromIndex);
+		}
 		// 删除所有对称的括号中的内容
 		int start = lastSql.indexOf("(");
 		int symMarkEnd;

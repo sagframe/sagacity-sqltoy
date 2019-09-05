@@ -88,18 +88,21 @@ public class TranslateManager {
 					updateCheckers, translateConfig, charset);
 			// 配置了缓存翻译
 			if (defaultConfig != null) {
-				if (translateCacheManager == null)
+				if (translateCacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
-				if (!StringUtil.isBlank(defaultConfig.getDiskStorePath()))
+				}
+				if (!StringUtil.isBlank(defaultConfig.getDiskStorePath())) {
 					((TranslateEhcacheManager) translateCacheManager)
 							.setDiskStorePath(defaultConfig.getDiskStorePath());
+				}
 				translateCacheManager.init();
 				initialized = true;
-				if (timer == null)
+				if (timer == null) {
 					timer = new Timer();
-				/**
-				 * 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,这种检查都是高效率的空转不影响性能
-				 */
+				}
+
+				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
+				// 这种检查都是高效率的空转不影响性能
 				timer.schedule(new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers), 20000, 1000);
 			}
 		} catch (Exception e) {
@@ -128,9 +131,9 @@ public class TranslateManager {
 			if (translateMap.containsKey(translate.getCache())) {
 				cacheModel = translateMap.get(translate.getCache());
 				cache = getCacheData(sqlToyContext, cacheModel, translate.getDictType());
-				if (cache != null)
+				if (cache != null) {
 					result.put(translate.getColumn(), cache);
-				else {
+				} else {
 					result.put(translate.getColumn(), new HashMap<String, Object[]>());
 					logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
 							cacheModel.getCache(), translate.getDictType(), translate.getColumn());
@@ -188,8 +191,9 @@ public class TranslateManager {
 	 */
 	public boolean existCache(String cacheName) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
-		if (cacheModel != null)
+		if (cacheModel != null) {
 			return true;
+		}
 		return false;
 	}
 
@@ -223,9 +227,11 @@ public class TranslateManager {
 	}
 
 	public void destroy() {
-		if (translateCacheManager != null)
+		if (translateCacheManager != null) {
 			translateCacheManager.destroy();
-		if (timer != null)
+		}
+		if (timer != null) {
 			timer.cancel();
+		}
 	}
 }

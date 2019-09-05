@@ -187,8 +187,9 @@ public class DataSourceUtils {
 			// sybase or sqlserver
 			if (dbType == DBType.SYBASE_IQ || dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2017
 					|| dbType == DBType.SQLSERVER2014 || dbType == DBType.SQLSERVER2016
-					|| dbType == DBType.SQLSERVER2019)
+					|| dbType == DBType.SQLSERVER2019) {
 				return " go ";
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -206,32 +207,39 @@ public class DataSourceUtils {
 		if (null != conn) {
 			String dbDialect = conn.getMetaData().getDatabaseProductName();
 			// oracle
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1)
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				return Dialect.ORACLE;
+			}
 			// db2
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
 				return Dialect.DB2;
+			}
 			// sqlserver,只支持2000或以上版本
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1) {
 				return Dialect.SQLSERVER;
+			}
 			// mysql以及mysql的分支数据库
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MYSQL) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				return Dialect.MYSQL;
+			}
 			// sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				return Dialect.SQLITE;
+			}
 			// postgresql
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
+			}
 			// sybase iq
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1
 					|| (StringUtil.indexOfIgnoreCase(dbDialect, "sap") != -1
-							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1))
+							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1)) {
 				return Dialect.SYBASE_IQ;
+			}
 		}
 		return Dialect.UNDEFINE;
 	}
@@ -269,15 +277,17 @@ public class DataSourceUtils {
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				dbType = DBType.ORACLE;
-				if (majorVersion >= 12)
+				if (majorVersion >= 12) {
 					dbType = DBType.ORACLE12;
+				}
 			}
 			// db2 10+版本
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
 				dbType = DBType.DB2;
 				// 11+版本
-				if (majorVersion >= 11)
+				if (majorVersion >= 11) {
 					dbType = DBType.DB2_11;
+				}
 			}
 			// sqlserver,只支持2012或以上版本
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
@@ -312,11 +322,13 @@ public class DataSourceUtils {
 			}
 			// sybase IQ
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1) {
 				dbType = DBType.SYBASE_IQ;
+			}
 			// sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				dbType = DBType.SQLITE;
+			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}
 		return DBNameTypeMap.get(dbKey);

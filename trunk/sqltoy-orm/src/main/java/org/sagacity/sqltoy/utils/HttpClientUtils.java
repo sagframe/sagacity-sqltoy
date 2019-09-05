@@ -79,8 +79,9 @@ public class HttpClientUtils {
 						// 认证用户名和密码
 						new UsernamePasswordCredentials(username, password));
 				client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-			} else
+			} else {
 				client = HttpClients.createDefault();
+			}
 			if (paramValue != null) {
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 				nvps.add(new BasicNameValuePair(paramName, paramValue));

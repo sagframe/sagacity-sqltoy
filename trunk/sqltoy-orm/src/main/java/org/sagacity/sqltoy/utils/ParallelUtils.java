@@ -62,8 +62,9 @@ public class ParallelUtils {
 		// 是否全局异常回滚
 		boolean globalRollback = shardingConfig.isGlobalRollback();
 		// 如果额外策略配置了线程数量,则按照指定的线程数量执行
-		if (threads > shardingConfig.getMaxConcurrents() && shardingConfig.getMaxConcurrents() > 1)
+		if (threads > shardingConfig.getMaxConcurrents() && shardingConfig.getMaxConcurrents() > 1) {
 			threads = shardingConfig.getMaxConcurrents();
+		}
 		ExecutorService pool = Executors.newFixedThreadPool(threads);
 		List<Future<ShardingResult>> futureResult = new ArrayList<Future<ShardingResult>>();
 		for (final ShardingGroupModel group : shardingGroups) {
@@ -72,18 +73,20 @@ public class ParallelUtils {
 		}
 		pool.shutdown();
 		// 设置最大等待时长
-		if (shardingConfig.getMaxWaitSeconds() > 0)
+		if (shardingConfig.getMaxWaitSeconds() > 0) {
 			pool.awaitTermination(shardingConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
+		}
 		// 提取各个线程返回的结果进行合并
 		try {
 			for (Future<ShardingResult> future : futureResult) {
 				ShardingResult item = future.get();
-				//全局异常则抛出,让事务进行全部回滚。
+				// 全局异常则抛出,让事务进行全部回滚。
 				if (item != null && !item.isSuccess() && globalRollback) {
 					throw new RuntimeException(item.getMessage());
 				}
-				if (item != null && item.getRows() != null && !item.getRows().isEmpty())
+				if (item != null && item.getRows() != null && !item.getRows().isEmpty()) {
 					results.addAll(item.getRows());
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

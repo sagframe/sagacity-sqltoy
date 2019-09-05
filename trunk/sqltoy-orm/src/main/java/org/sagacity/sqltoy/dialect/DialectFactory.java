@@ -115,9 +115,9 @@ public class DialectFactory {
 	 */
 	private Dialect getDialectSqlWrapper(Integer dbType) throws Exception {
 		// 从map中直接获取实例，避免重复创建和判断
-		if (dialects.containsKey(dbType))
+		if (dialects.containsKey(dbType)) {
 			return dialects.get(dbType);
-		else {
+		} else {
 			// 按照市场排名作为优先顺序
 			Dialect dialectSqlWrapper = null;
 			switch (dbType) {
@@ -141,28 +141,33 @@ public class DialectFactory {
 			case DBType.SQLSERVER2014:
 			case DBType.SQLSERVER2016:
 			case DBType.SQLSERVER2017:
-			case DBType.SQLSERVER2019:
+			case DBType.SQLSERVER2019: {
 				dialectSqlWrapper = new SqlServerDialect();
 				break;
+			}
 			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 			case DBType.POSTGRESQL:
 			case DBType.POSTGRESQL10:
-			case DBType.POSTGRESQL11:
+			case DBType.POSTGRESQL11: {
 				dialectSqlWrapper = new PostgreSqlDialect();
 				break;
+			}
 			// db2 10.x版本分页支持offset模式
 			case DBType.DB2:
-			case DBType.DB2_11:
+			case DBType.DB2_11: {
 				dialectSqlWrapper = new DB2Dialect();
 				break;
+			}
 			// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
-			case DBType.SYBASE_IQ:
+			case DBType.SYBASE_IQ: {
 				dialectSqlWrapper = new SybaseIQDialect();
 				break;
+			}
 			// 基本支持(sqlite 本身功能就相对简单)
-			case DBType.SQLITE:
+			case DBType.SQLITE: {
 				dialectSqlWrapper = new SqliteDialect();
 				break;
+			}
 			// 如果匹配不上使用mysql类型
 			default:
 				dialectSqlWrapper = new MySqlDialect();
@@ -269,8 +274,9 @@ public class DialectFactory {
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final UniqueExecutor uniqueExecutor,
 			final DataSource dataSource) {
-		if (uniqueExecutor.getEntity() == null)
+		if (uniqueExecutor.getEntity() == null) {
 			throw new IllegalArgumentException("unique judge entity object is null,please check!");
+		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
@@ -300,8 +306,9 @@ public class DialectFactory {
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final Double randomCount, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null)
+		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
+		}
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
@@ -334,8 +341,9 @@ public class DialectFactory {
 								}
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
 								// 如果总记录数不为零，randomCnt最小为1
-								if (totalCount >= 1 && randomCnt < 1)
+								if (totalCount >= 1 && randomCnt < 1) {
 									randomCnt = 1L;
+								}
 							}
 							// 总记录数为零(主要针对sybase & informix 数据库)
 							if (totalCount != null && totalCount == 0) {
@@ -377,27 +385,32 @@ public class DialectFactory {
 	 */
 	public boolean wrapTreeTableRoute(final SqlToyContext sqlToyContext, final TreeTableModel treeModel,
 			final DataSource dataSource) {
-		if (treeModel == null || StringUtil.isBlank(treeModel.getPidField()))
+		if (treeModel == null || StringUtil.isBlank(treeModel.getPidField())) {
 			throw new IllegalArgumentException("请检查pidField赋值是否正确!");
+		}
 		if (StringUtil.isBlank(treeModel.getLeafField()) || StringUtil.isBlank(treeModel.getNodeRouteField())
-				|| StringUtil.isBlank(treeModel.getNodeLevelField()))
+				|| StringUtil.isBlank(treeModel.getNodeLevelField())) {
 			throw new IllegalArgumentException("请检查isLeafField\nodeRouteField\nodeLevelField 赋值是否正确!");
+		}
 		try {
 			if (null != treeModel.getEntity()) {
 				EntityMeta entityMeta = null;
-				if (treeModel.getEntity() instanceof Type)
+				if (treeModel.getEntity() instanceof Type) {
 					entityMeta = sqlToyContext.getEntityMeta((Class) treeModel.getEntity());
-				else
+				} else {
 					entityMeta = sqlToyContext.getEntityMeta(treeModel.getEntity().getClass());
+				}
 				// 兼容填写fieldName,统一转化为columnName
 				// pid
 				String columnName = entityMeta.getColumnName(treeModel.getPidField());
-				if (columnName != null)
+				if (columnName != null) {
 					treeModel.pidField(columnName);
+				}
 				// leafField
 				columnName = entityMeta.getColumnName(treeModel.getLeafField());
-				if (columnName != null)
+				if (columnName != null) {
 					treeModel.isLeafField(columnName);
+				}
 				// nodeLevel
 				columnName = entityMeta.getColumnName(treeModel.getNodeLevelField());
 				if (columnName != null)
@@ -468,8 +481,9 @@ public class DialectFactory {
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
 			final Integer pageSize, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null)
+		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
+		}
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
@@ -497,10 +511,10 @@ public class DialectFactory {
 									// 将总记录数登记到缓存
 									PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageQueryKey, recordCnt);
 								}
-							} else
+							} else {
 								recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
 										dialect);
-
+							}
 							// pageNo=-1时的提取数据量限制
 							int limitSize = sqlToyContext.getPageFetchSizeLimit();
 							// pageNo=-1时,总记录数超出限制则返回空集合
@@ -510,10 +524,11 @@ public class DialectFactory {
 								queryResult.setPageNo(pageNo);
 								queryResult.setPageSize(pageSize);
 								queryResult.setRecordCount(0L);
-								if (illegal)
+								if (illegal) {
 									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getSql());
-								else
+								} else {
 									logger.debug("提取记录总数为0,sql={}", sqlToyConfig.getSql());
+								}
 							} else {
 								// 合法的全记录提取,设置页号为1按记录数
 								if (pageNo == -1) {
@@ -572,8 +587,9 @@ public class DialectFactory {
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final double topSize, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null)
+		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
+		}
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
@@ -593,8 +609,9 @@ public class DialectFactory {
 									logger.debug("findTopByQuery按比例提取数据,总记录数=" + totalCount);
 								}
 								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
-							} else
+							} else {
 								realTopSize = Double.valueOf(topSize).intValue();
+							}
 							if (realTopSize == 0) {
 								this.setResult(new QueryResult());
 								return;
@@ -633,8 +650,9 @@ public class DialectFactory {
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) {
-		if (queryExecutor.getSql() == null)
+		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
+		}
 		try {
 			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
@@ -685,8 +703,9 @@ public class DialectFactory {
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final DataSource dataSource) {
-		if (queryExecutor.getSql() == null)
+		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
+		}
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
@@ -786,8 +805,9 @@ public class DialectFactory {
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
-		if (entity == null)
+		if (entity == null) {
 			return 0L;
+		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);

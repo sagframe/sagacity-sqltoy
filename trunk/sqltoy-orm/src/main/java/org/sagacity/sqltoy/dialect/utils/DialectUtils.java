@@ -157,20 +157,25 @@ public class DialectUtils {
 			paramLength = (paramsValue == null) ? 0 : paramsValue.length;
 			realParamValue = new Object[paramLength + extendSize];
 			if (sqlToyConfig.isHasFast()) {
-				if (preSqlParamCnt > 0)
+				if (preSqlParamCnt > 0) {
 					System.arraycopy(paramsValue, 0, realParamValue, 0, preSqlParamCnt);
+				}
 				realParamValue[preSqlParamCnt] = startIndex;
-				if (extendSize == 2)
+				if (extendSize == 2) {
 					realParamValue[preSqlParamCnt + 1] = endIndex;
-				if (tailSqlParamCnt > 0)
+				}
+				if (tailSqlParamCnt > 0) {
 					System.arraycopy(paramsValue, preSqlParamCnt, realParamValue, preSqlParamCnt + extendSize,
 							tailSqlParamCnt);
+				}
 			} else {
-				if (paramLength > 0)
+				if (paramLength > 0) {
 					System.arraycopy(paramsValue, 0, realParamValue, 0, paramLength);
+				}
 				realParamValue[paramLength] = startIndex;
-				if (extendSize == 2)
+				if (extendSize == 2) {
 					realParamValue[paramLength + 1] = endIndex;
+				}
 			}
 		}
 		// 通过参数处理最终的sql和参数值
@@ -231,10 +236,11 @@ public class DialectUtils {
 		// 打印sql
 		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = null;
-		if (updateRowHandler == null)
+		if (updateRowHandler == null) {
 			pst = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		else
+		} else {
 			pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
@@ -286,9 +292,9 @@ public class DialectUtils {
 			// order by 在from 之后
 			if (orderByIndex > sql_from_index) {
 				// 剔除order by 语句
-				if (orderByIndex > lastBracketIndex)
+				if (orderByIndex > lastBracketIndex) {
 					query_tmp = query_tmp.substring(0, orderByIndex + 1);
-				else {
+				} else {
 					// 剔除掉order by 后面语句对称的() 内容
 					String orderJudgeSql = clearDisturbSql(query_tmp.substring(orderByIndex + 1));
 					// 在order by 不在子查询内,说明可以整体切除掉order by
@@ -381,9 +387,9 @@ public class DialectUtils {
 				|| sqlToyConfig.getSql().indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
-		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings())
+		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
 			return sqlToyConfig;
-		else {
+		} else {
 			// clone一个,然后替换sql中的?并进行必要的参数加工
 			SqlToyConfig result = sqlToyConfig.clone();
 			if (!isNamed && wrapNamed) {
@@ -402,8 +408,9 @@ public class DialectUtils {
 					result.setSql(result.getFastPreSql().concat(" (").concat(result.getFastSql()).concat(") ")
 							.concat(result.getFastTailSql()));
 					String[] paramsName = new String[index];
-					for (int i = 0; i < index; i++)
+					for (int i = 0; i < index; i++) {
 						paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
+					}
 					result.setParamsName(paramsName);
 				} else {
 					sqlParams = convertParamsToNamed(result.getSql(), 0);
@@ -469,14 +476,15 @@ public class DialectUtils {
 			start = m.end();
 		}
 		sqlParam.setParamCnt(index);
-		if (index == 0)
+		if (index == 0) {
 			sqlParam.setSql(sql);
-		else {
+		} else {
 			// 添加尾部sql
 			lastSql.append(sql.substring(start));
 			String[] paramsName = new String[index];
-			for (int i = 0; i < index; i++)
+			for (int i = 0; i < index; i++) {
 				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
+			}
 			sqlParam.setSql(lastSql.toString());
 			sqlParam.setParamsName(paramsName);
 		}
@@ -544,8 +552,9 @@ public class DialectUtils {
 		}
 
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("saveOrUpdateAll={}", saveOrUpdateSql);
+		}
 		return SqlUtil.batchUpdateByJdbc(saveOrUpdateSql, paramValues, batchSize, null, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn);
 	}
@@ -591,9 +600,10 @@ public class DialectUtils {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null)
+						if (relatedColValue[meter] == null) {
 							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+						}
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
@@ -613,8 +623,9 @@ public class DialectUtils {
 		}
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("saveAllNotExistSql={}", saveAllNotExistSql);
+		}
 		return SqlUtil.batchUpdateByJdbc(saveAllNotExistSql, paramValues, batchSize, null,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn);
 	}
@@ -668,8 +679,9 @@ public class DialectUtils {
 					if (isAssignPK && isSupportNUL) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
-					} else
+					} else {
 						values.append(sequence);
+					}
 					isStart = false;
 				} else {
 					if (!isStart) {
@@ -691,8 +703,9 @@ public class DialectUtils {
 					values.append("(?,");
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
-				} else
+				} else {
 					values.append("?");
+				}
 				isStart = false;
 			}
 		}
@@ -734,13 +747,15 @@ public class DialectUtils {
 			sql.append(" using (select ");
 			for (int i = 0; i < columnSize; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-				if (i > 0)
+				if (i > 0) {
 					sql.append(",");
+				}
 				sql.append("? as ");
 				sql.append(columnName);
 			}
-			if (StringUtil.isNotBlank(fromTable))
+			if (StringUtil.isNotBlank(fromTable)) {
 				sql.append(" from ").append(fromTable);
+			}
 			sql.append(") tv on (");
 			StringBuilder idColumns = new StringBuilder();
 			// 组织on部分的主键条件判断
@@ -766,8 +781,9 @@ public class DialectUtils {
 				// 需要被强制修改的字段
 				HashMap<String, String> fupc = new HashMap<String, String>();
 				if (forceUpdateFields != null) {
-					for (String field : forceUpdateFields)
+					for (String field : forceUpdateFields) {
 						fupc.put(entityMeta.getColumnName(field), "1");
+					}
 				}
 				FieldMeta fieldMeta;
 				// update 只针对非主键字段进行修改
@@ -797,8 +813,9 @@ public class DialectUtils {
 						processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
-					} else
+					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
 			}
 			// 主键未匹配上则进行插入操作
@@ -879,13 +896,15 @@ public class DialectUtils {
 			sql.append(" using (select ");
 			for (int i = 0; i < columnSize; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-				if (i > 0)
+				if (i > 0) {
 					sql.append(",");
+				}
 				sql.append("? as ");
 				sql.append(columnName);
 			}
-			if (StringUtil.isNotBlank(fromTable))
+			if (StringUtil.isNotBlank(fromTable)) {
 				sql.append(" from ").append(fromTable);
+			}
 			sql.append(") tv on (");
 			StringBuilder idColumns = new StringBuilder();
 			// 组织on部分的主键条件判断
@@ -923,8 +942,9 @@ public class DialectUtils {
 						processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
-					} else
+					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
 			}
 			// 主键未匹配上则进行插入操作
@@ -988,25 +1008,30 @@ public class DialectUtils {
 				|| fieldType == java.sql.Types.NCHAR || fieldType == java.sql.Types.NVARCHAR
 				|| fieldType == java.sql.Types.LONGVARCHAR || fieldType == java.sql.Types.LONGNVARCHAR
 				|| fieldType == java.sql.Types.NCLOB) {
-			if (!defaultValue.startsWith("'"))
+			if (!defaultValue.startsWith("'")) {
 				sql.append("'");
+			}
 			sql.append(defaultValue);
-			if (!defaultValue.endsWith("'"))
+			if (!defaultValue.endsWith("'")) {
 				sql.append("'");
+			}
 		} else {
 			String tmpValue = SqlToyConstants.getDefaultValue(dbType, defaultValue);
-			if (tmpValue.startsWith("'") && tmpValue.endsWith("'"))
+			if (tmpValue.startsWith("'") && tmpValue.endsWith("'")) {
 				sql.append(tmpValue);
+			}
 			// 时间格式,避免默认日期没有单引号问题
 			else if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.DATE
 					|| fieldType == java.sql.Types.TIME_WITH_TIMEZONE || fieldType == java.sql.Types.TIMESTAMP
 					|| fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
 				if (StringUtil.matches(tmpValue, DATE_PATTERN)) {
 					sql.append("'").append(tmpValue).append("'");
-				} else
+				} else {
 					sql.append(tmpValue);
-			} else
+				}
+			} else {
 				sql.append(tmpValue);
+			}
 		}
 	}
 
@@ -1030,13 +1055,15 @@ public class DialectUtils {
 		// 需要被强制修改的字段
 		HashMap<String, String> fupc = new HashMap<String, String>();
 		if (forceUpdateFields != null) {
-			for (String field : forceUpdateFields)
+			for (String field : forceUpdateFields) {
 				fupc.put(entityMeta.getColumnName(field), "1");
+			}
 		}
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-			if (i > 0)
+			if (i > 0) {
 				sql.append(",");
+			}
 			sql.append(columnName);
 			sql.append("=");
 			if (fupc.containsKey(columnName)) {
@@ -1049,8 +1076,9 @@ public class DialectUtils {
 		sql.append(" where ");
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-			if (i > 0)
+			if (i > 0) {
 				sql.append(" and ");
+			}
 			sql.append(columnName);
 			sql.append("=?");
 		}
@@ -1074,9 +1102,10 @@ public class DialectUtils {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
-			if (StringUtil.isBlank(pkValues[i]))
+			if (StringUtil.isBlank(pkValues[i])) {
 				throw new IllegalArgumentException(
 						"load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
+			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
 		// 显示sql
@@ -1101,12 +1130,14 @@ public class DialectUtils {
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
 							oneToMany.getMappedFields(), pkValues);
-					if (sqlToyContext.isDebug())
+					if (sqlToyContext.isDebug()) {
 						logger.debug("auto load sub table dataSet sql:{}", sqlToyResult.getSql());
+					}
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, false);
-					if (null != pkRefDetails && !pkRefDetails.isEmpty())
+					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
 						BeanUtils.setProperty(result, oneToMany.getProperty(), pkRefDetails);
+					}
 				}
 			}
 		}
@@ -1151,9 +1182,10 @@ public class DialectUtils {
 			for (int j = 0; j < idSize; j++) {
 				value = rowList.get(j);
 				// 验证主键值是否合法
-				if (StringUtil.isBlank(value))
+				if (StringUtil.isBlank(value)) {
 					throw new IllegalArgumentException("loadAll method must assign value for pk,row:" + i + " pk field:"
 							+ entityMeta.getIdArray()[j]);
+				}
 				if (!idValues[j].contains(value)) {
 					idValues[j].add(value);
 				}
@@ -1176,8 +1208,9 @@ public class DialectUtils {
 					subTableSql.delete(0, subTableSql.length());
 					subTableSql.append("select * from ").append(oneToMany.getMappedTable()).append(" where ");
 					for (int i = 0; i < idSize; i++) {
-						if (i > 0)
+						if (i > 0) {
 							subTableSql.append(" and ");
+						}
 						subTableSql.append(oneToMany.getMappedColumns()[i]);
 						subTableSql.append(" in (:" + entityMeta.getIdArray()[i] + ") ");
 					}
@@ -1220,8 +1253,9 @@ public class DialectUtils {
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray();
-		} else
+		} else {
 			reflectColumns = entityMeta.getFieldsArray();
+		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, null);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
@@ -1246,9 +1280,10 @@ public class DialectUtils {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
-					if (StringUtil.isBlank(relatedColValue[meter]))
+					if (StringUtil.isBlank(relatedColValue[meter])) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+					}
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -1275,42 +1310,49 @@ public class DialectUtils {
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
-					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS))
+					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
 						pst = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
-					else if (returnPkType.equals(ReturnPkType.PREPARD_ID))
+					} else if (returnPkType.equals(ReturnPkType.PREPARD_ID)) {
 						pst = conn.prepareStatement(insertSql,
 								new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-					else
+					} else {
 						pst = conn.prepareStatement(insertSql);
-				} else
+					}
+				} else {
 					pst = conn.prepareStatement(insertSql);
+				}
 				SqlUtil.setParamsValue(conn, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
-				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET))
+				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
 					keyResult = pst.executeQuery();
-				else
+				} else {
 					pst.execute();
+				}
 				if (isIdentity || isSequence) {
-					if (!returnPkType.equals(ReturnPkType.RESULT_GET))
+					if (!returnPkType.equals(ReturnPkType.RESULT_GET)) {
 						keyResult = pst.getGeneratedKeys();
+					}
 					if (keyResult != null) {
 						List result = new ArrayList();
-						while (keyResult.next())
+						while (keyResult.next()) {
 							result.add(keyResult.getObject(1));
-						if (result.size() == 1)
+						}
+						if (result.size() == 1) {
 							this.setResult(result.get(0));
-						else
+						} else {
 							this.setResult(result.toArray());
+						}
 					}
 				}
 			}
 		});
 		// 无主键直接返回null
-		if (noPK)
+		if (noPK) {
 			return null;
-		else {
-			if (result == null)
+		} else {
+			if (result == null) {
 				result = fullParamValues[pkIndex];
+			}
 			// 回置到entity 主键值
 			if (needUpdatePk || isIdentity || isSequence) {
 				BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
@@ -1368,8 +1410,9 @@ public class DialectUtils {
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray();
-		} else
+		} else {
 			reflectColumns = entityMeta.getFieldsArray();
+		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
@@ -1398,9 +1441,10 @@ public class DialectUtils {
 					relatedColValue = new Object[relatedColumnSize];
 					for (int meter = 0; meter < relatedColumnSize; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (StringUtil.isBlank(relatedColValue[meter]))
+						if (StringUtil.isBlank(relatedColValue[meter])) {
 							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+						}
 					}
 				}
 				// 主键值为null,调用主键生成策略并赋值
@@ -1454,8 +1498,9 @@ public class DialectUtils {
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
-			if (StringUtil.isBlank(fieldsValues[i]))
+			if (StringUtil.isBlank(fieldsValues[i])) {
 				throw new IllegalArgumentException("通过对象进行update操作,主键字段必须要赋值!");
+			}
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
@@ -1749,8 +1794,9 @@ public class DialectUtils {
 			queryStr.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
 			queryStr.append(" where  ");
 			for (int i = 0; i < realParamNamed.length; i++) {
-				if (i > 0)
+				if (i > 0) {
 					queryStr.append(" and ");
+				}
 				queryStr.append(entityMeta.getColumnName(realParamNamed[i])).append("=? ");
 			}
 
@@ -1993,8 +2039,9 @@ public class DialectUtils {
 					preHandler.process();
 				}
 				for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey())))
+					if (StringUtil.isBlank(this.getValue(entry.getKey()))) {
 						this.setValue(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		};

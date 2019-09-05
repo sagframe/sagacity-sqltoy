@@ -62,10 +62,9 @@ public class NumberUtil {
 	/**
 	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
 	 * @param target
-	 * @param pattern
-	 *            :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
-	 *            '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
-	 *            整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
+	 * @param pattern :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
+	 *                '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
+	 *                整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
@@ -73,26 +72,31 @@ public class NumberUtil {
 	}
 
 	public static String format(Object target, String pattern, RoundingMode roundingMode, String locale) {
-		if (target == null)
+		if (target == null) {
 			return null;
-		if (pattern == null)
+		}
+		if (pattern == null) {
 			return target.toString();
+		}
 		try {
 			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
-			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan"))
+			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan")) {
 				return "";
+			}
 			BigDecimal tmp = new BigDecimal(tmpStr);
 			// 将数字转换成大写汉字
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL))
+			if (pattern.equalsIgnoreCase(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
+			}
 			// 数字转换成大写汉字金额
-			else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB))
+			else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
-			else {
+			} else {
 				DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
 						: DecimalFormat.getInstance(new Locale(locale)));
-				if (roundingMode != null)
+				if (roundingMode != null) {
 					df.setRoundingMode(roundingMode);
+				}
 				df.applyPattern(pattern);
 				return df.format(tmp);
 			}
@@ -111,20 +115,23 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String formatCurrency(Object target, String pattern, String locale) {
-		if (target == null)
+		if (target == null) {
 			return null;
-		if (pattern == null)
+		}
+		if (pattern == null) {
 			return target.toString();
+		}
 		try {
 			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
 			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan"))
 				return "";
 			BigDecimal tmp = new BigDecimal(tmpStr);
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL))
+			if (pattern.equalsIgnoreCase(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
-			else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB))
+			} else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY)
+					|| pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
-			else {
+			} else {
 				DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
 						: DecimalFormat.getCurrencyInstance(new Locale(locale)));
 				df.applyPattern(pattern);
@@ -139,8 +146,7 @@ public class NumberUtil {
 
 	/**
 	 * @todo 转换百分数
-	 * @param percent
-	 *            :example: 90% return 0.9
+	 * @param percent :example: 90% return 0.9
 	 * @return
 	 */
 	public static Float parsePercent(String percent) {
@@ -164,8 +170,9 @@ public class NumberUtil {
 	 */
 	public static Float parseFloat(String floatStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(floatStr, maxIntDigits, null, maxFractionDigits, null);
-		if (number != null)
+		if (number != null) {
 			return Float.valueOf(number.floatValue());
+		}
 		return null;
 	}
 
@@ -200,8 +207,7 @@ public class NumberUtil {
 	/**
 	 * @todo 将大写中文金额字符串转换成数字(最大支持到千万亿)
 	 * @param capitalMoney
-	 * @param firstSign
-	 *            ($或￥￡等符号)
+	 * @param firstSign    ($或￥￡等符号)
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
@@ -223,17 +229,20 @@ public class NumberUtil {
 		if (billionIndex != -1) {
 			splitsCapitalMoney[0] = capitalMoney.substring(0, billionIndex);
 			splitsCapitalMoney[1] = capitalMoney.substring(billionIndex + 1, capitalMoney.indexOf("元"));
-		} else if (capitalMoney.indexOf("元") != -1)
+		} else if (capitalMoney.indexOf("元") != -1) {
 			splitsCapitalMoney[1] = capitalMoney.substring(0, capitalMoney.indexOf("元"));
-		if (capitalMoney.indexOf("元") != capitalMoney.length() - 1)
+		}
+		if (capitalMoney.indexOf("元") != capitalMoney.length() - 1) {
 			splitsCapitalMoney[2] = capitalMoney.substring(capitalMoney.indexOf("元") + 1);
+		}
 		// 分段处理合并
 		BigDecimal result = parseMillMoney(splitsCapitalMoney[0]).multiply(new BigDecimal("100000000"))
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
-		if (capitalMoney.indexOf("负") == 0)
+		if (capitalMoney.indexOf("负") == 0) {
 			return new BigDecimal(0).subtract(result).setScale(scale, RoundingMode.HALF_UP);
-		else
+		} else {
 			return result.setScale(scale, RoundingMode.HALF_UP);
+		}
 	}
 
 	/**
@@ -251,24 +260,28 @@ public class NumberUtil {
 		int dotIndex = sourceStr.indexOf(".");
 		String intPartStr = (dotIndex == -1) ? sourceStr : sourceStr.substring(0, dotIndex);
 		String decimalPartStr = "";
-		if (dotIndex != -1)
+		if (dotIndex != -1) {
 			decimalPartStr = sourceStr.substring(dotIndex + 1);
+		}
 		// 处理整数部分
 		String result = numberToChina(intPartStr, true);
 		// 处理以"壹拾"开头的结果统一替换成"拾"
-		if (result.startsWith("壹拾"))
+		if (result.startsWith("壹拾")) {
 			result = result.substring(1);
-		if (!result.equalsIgnoreCase(""))
+		}
+		if (!result.equalsIgnoreCase("")) {
 			result += "元";
+		}
 
 		// 小于零
-		if (money.compareTo(new BigDecimal("0")) < 0)
+		if (money.compareTo(new BigDecimal("0")) < 0) {
 			result = "负" + result;
+		}
 
 		// 没有小数
-		if (dotIndex == -1 || (decimalPartStr.equals("") || Integer.parseInt(decimalPartStr) == 0))
+		if (dotIndex == -1 || (decimalPartStr.equals("") || Integer.parseInt(decimalPartStr) == 0)) {
 			result += "整";
-		else {
+		} else {
 			String[] uomName = { "角", "分", "厘" };
 			int indexValue;
 			boolean hasZero = false;
@@ -308,8 +321,9 @@ public class NumberUtil {
 	public static BigDecimal getMax(BigDecimal[] bigArray) {
 		BigDecimal max = bigArray[0];
 		for (int i = 0; i < bigArray.length; i++) {
-			if (max.compareTo(bigArray[i]) < 0)
+			if (max.compareTo(bigArray[i]) < 0) {
 				max = bigArray[i];
+			}
 		}
 		return max;
 	}
@@ -322,8 +336,9 @@ public class NumberUtil {
 	public static BigDecimal getMin(BigDecimal[] bigArray) {
 		BigDecimal min = bigArray[0];
 		for (int i = 0; i < bigArray.length; i++) {
-			if (min.compareTo(bigArray[i]) > 0)
+			if (min.compareTo(bigArray[i]) > 0) {
 				min = bigArray[i];
+			}
 		}
 		return min;
 	}
@@ -335,8 +350,9 @@ public class NumberUtil {
 	 */
 	public static BigDecimal getAverage(BigDecimal[] bigArray) {
 		BigDecimal sum = new BigDecimal("0");
-		if (bigArray == null || bigArray.length == 0)
+		if (bigArray == null || bigArray.length == 0) {
 			return sum;
+		}
 		for (int i = 0; i < bigArray.length; i++) {
 			sum = sum.add(bigArray[i]);
 		}
@@ -350,8 +366,9 @@ public class NumberUtil {
 	 */
 	public static BigDecimal summary(BigDecimal[] bigArray) {
 		BigDecimal sum = new BigDecimal("0");
-		if (bigArray == null || bigArray.length == 0)
+		if (bigArray == null || bigArray.length == 0) {
 			return sum;
+		}
 		for (int i = 0; i < bigArray.length; i++) {
 			sum = sum.add(bigArray[i]);
 		}
@@ -374,19 +391,22 @@ public class NumberUtil {
 		NumberFormat nf = NumberFormat.getInstance();
 		try {
 			// 最大整数位
-			if (maxIntDigits != null)
+			if (maxIntDigits != null) {
 				nf.setMaximumIntegerDigits(maxIntDigits.intValue());
+			}
 			// 最小整数位
-			if (minIntDigits != null)
+			if (minIntDigits != null) {
 				nf.setMinimumIntegerDigits(minIntDigits.intValue());
+			}
 
 			// 最大小数位
-			if (maxFractionDigits != null)
+			if (maxFractionDigits != null) {
 				nf.setMaximumFractionDigits(maxFractionDigits.intValue());
+			}
 			// 最小小数位
-			if (minFractionDigits != null)
+			if (minFractionDigits != null) {
 				nf.setMinimumFractionDigits(minFractionDigits.intValue());
-			// nf.setRoundingMode(RoundingMode.HALF_UP);
+			}
 			return nf.parse(parseTarget.replace(",", ""));
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -408,8 +428,9 @@ public class NumberUtil {
 		if (millIndex != -1) {
 			millStr = capitalMoneyStr.substring(0, millIndex);
 			lowthousand = (millIndex != capitalMoneyStr.length() - 1) ? capitalMoneyStr.substring(millIndex + 1) : "0";
-		} else
+		} else {
 			lowthousand = capitalMoneyStr;
+		}
 		return parseLowThousandMoney(millStr).multiply(new BigDecimal("10000")).add(parseLowThousandMoney(lowthousand));
 	}
 
@@ -428,19 +449,22 @@ public class NumberUtil {
 		StringBuilder targetStr = new StringBuilder("");
 		String firstChar;
 		for (int i = 0; i < length; i++) {
-			if (targetStr.length() > 0)
+			if (targetStr.length() > 0) {
 				firstChar = String.valueOf(targetStr.charAt(0));
-			else
+			} else {
 				firstChar = "零";
+			}
 			// 从低位处理
 			temp = Integer.parseInt(sourceInt.substring(length - i - 1, length - i));
 			if (temp == 0) {
-				if (i > 0 && i % 4 == 0)
+				if (i > 0 && i % 4 == 0) {
 					targetStr.insert(0, numUOM[i - 1]);
-				else if ("零万亿兆京".indexOf(firstChar) == -1)
+				} else if ("零万亿兆京".indexOf(firstChar) == -1) {
 					targetStr.insert(0, "零");
-			} else
+				}
+			} else {
 				targetStr.insert(0, chinaNum[temp] + ((i > 0) ? realUOM[i - 1] : ""));
+			}
 		}
 		return targetStr.toString();
 	}
@@ -502,10 +526,8 @@ public class NumberUtil {
 
 	/**
 	 * @todo 产生随机数数组
-	 * @param maxValue
-	 *            随机数的最大值
-	 * @param size
-	 *            随机数的个数
+	 * @param maxValue 随机数的最大值
+	 * @param size     随机数的个数
 	 * @return
 	 */
 	public static Object[] randomArray(int maxValue, int size) {
@@ -536,8 +558,9 @@ public class NumberUtil {
 	 */
 	public static int getProbabilityIndex(int[] probabilities) {
 		int total = 0;
-		for (int probabilitiy : probabilities)
+		for (int probabilitiy : probabilities) {
 			total = total + probabilitiy;
+		}
 		int randomData = (int) (Math.random() * total) + 1;
 		int base = 0;
 		for (int i = 0; i < probabilities.length; i++) {

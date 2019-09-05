@@ -53,8 +53,9 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cache == null)
 			return null;
 		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheKey) ? cacheKey : cacheName);
-		if (cacheValue != null)
+		if (cacheValue != null) {
 			return (HashMap<String, Object[]>) cacheValue;
+		}
 		return null;
 	}
 
@@ -77,10 +78,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			}
 			// 清除缓存
 			if (cacheValue == null) {
-				if (StringUtil.isBlank(cacheKey))
+				if (StringUtil.isBlank(cacheKey)) {
 					cache.clear();
-				else
+				} else {
 					cache.remove(cacheKey);
+				}
 			}
 			// 更新缓存
 			else {
@@ -102,10 +104,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
-				if (StringUtil.isBlank(cacheKey))
+				if (StringUtil.isBlank(cacheKey)) {
 					cache.clear();
-				else
+				} else {
 					cache.remove(cacheKey);
+				}
 			}
 		}
 	}

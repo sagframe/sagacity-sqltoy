@@ -114,14 +114,14 @@ public class CommonUtils {
 				if (StringUtil.isBlank(realFile))
 					return null;
 				// 文件路径
-				if (new File(realFile).exists())
+				if (new File(realFile).exists()) {
 					return new FileInputStream(realFile);
-				else {
+				} else {
 					if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
 						realFile = realFile.trim().substring(10).trim();
 					if (realFile.charAt(0) == '/')
 						realFile = realFile.substring(1);
-					InputStream result=Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+					InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
 					if (result == null) {
 						try {
 							Enumeration<URL> urls = Thread.currentThread().getContextClassLoader()
@@ -162,8 +162,9 @@ public class CommonUtils {
 			value = paramValues.get(preCount + i);
 			// 参数为null等价于#[]判断正确
 			if ((value == null) || (value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0)
-					|| ((value instanceof Collection) && ((Collection) value).isEmpty()))
+					|| ((value instanceof Collection) && ((Collection) value).isEmpty())) {
 				return false;
+			}
 		}
 		// 规范判断符号标准
 		sql = sql.replaceAll("\\<\\>", "!=").trim();
@@ -277,8 +278,9 @@ public class CommonUtils {
 		String realValue = value.toString();
 		if (type.equals("time")) {
 			realValue = DateUtil.formatDate(value, dayTimeFmt);
-		} else if (type.equals("date"))
+		} else if (type.equals("date")) {
 			realValue = DateUtil.formatDate(value, dayFmt);
+		}
 		// 等于(兼容等于号非法)
 		if (compareType.equals("==") || compareType.equals("=")) {
 			return realValue.equalsIgnoreCase(compareValue);
@@ -321,8 +323,9 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) >= Double.parseDouble(compare);
-		} else
+		} else {
 			return valueStr.compareTo(compare) >= 0;
+		}
 	}
 
 	/**
@@ -340,8 +343,9 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) <= Double.parseDouble(compare);
-		} else
+		} else {
 			return valueStr.compareTo(compare) <= 0;
+		}
 	}
 
 	/**
@@ -359,8 +363,9 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) > Double.parseDouble(compare);
-		} else
+		} else {
 			return valueStr.compareTo(compare) > 0;
+		}
 	}
 
 	/**
@@ -378,8 +383,9 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) < Double.parseDouble(compare);
-		} else
+		} else {
 			return valueStr.compareTo(compare) < 0;
+		}
 	}
 
 	/**
@@ -391,8 +397,9 @@ public class CommonUtils {
 		if (labelNames == null)
 			return null;
 		String[] result = new String[labelNames.length];
-		for (int i = 0, n = labelNames.length; i < n; i++)
+		for (int i = 0, n = labelNames.length; i < n; i++) {
 			result[i] = StringUtil.toHumpStr(labelNames[i], false);
+		}
 		return result;
 	}
 }

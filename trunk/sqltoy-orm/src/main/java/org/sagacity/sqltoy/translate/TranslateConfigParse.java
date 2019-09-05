@@ -52,7 +52,7 @@ public class TranslateConfigParse {
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
 			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
 			String translateConfig, String charset) throws Exception {
-		//判断缓存翻译的配置文件是否存在
+		// 判断缓存翻译的配置文件是否存在
 		if (CommonUtils.getFileInputStream(translateConfig) == null) {
 			logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性!", translateConfig);
 			return null;
@@ -82,15 +82,17 @@ public class TranslateConfigParse {
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);
-									sqlToyConfig.setParamsName(SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
+									sqlToyConfig.setParamsName(
+											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									translateCacheModel.setSql(sqlId);
 								}
 								index++;
 							}
 							// 过期时长
-							if (translateCacheModel.getKeepAlive() <= 0)
+							if (translateCacheModel.getKeepAlive() <= 0) {
 								translateCacheModel.setKeepAlive(SqlToyConstants.getCacheExpireSeconds());
+							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
 						}
 					}
@@ -115,7 +117,8 @@ public class TranslateConfigParse {
 										SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 												StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 										sqlToyConfig.setShowSql(!isShowSql);
-										sqlToyConfig.setParamsName(SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
+										sqlToyConfig.setParamsName(
+												SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(), true));
 										sqlToyContext.putSqlToyConfig(sqlToyConfig);
 										checherConfigModel.setSql(sqlId);
 									}

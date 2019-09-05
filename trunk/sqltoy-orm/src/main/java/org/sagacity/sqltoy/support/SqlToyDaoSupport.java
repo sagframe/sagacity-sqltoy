@@ -197,7 +197,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 通用存储过程调用,一般数据库{?=call xxxStore(? in,? in,? out)} 针对oracle数据库只能{call
 	 *       xxxStore(? in,? in,? out)} 同时结果集必须通过OracleTypes.CURSOR out 参数返回
-	  *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
+	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
 	 * @param storeNameOrKey
 	 * @param inParamsValue
 	 * @param                outParamsType(可以为null)
@@ -554,7 +554,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
-	  *       如randomCount=0.05 总记录数为100,则随机取出5条记录
+	 *       如randomCount=0.05 总记录数为100,则随机取出5条记录
 	 * @param queryExecutor
 	 * @param randomCount
 	 * @return
@@ -779,8 +779,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			return 0L;
+		}
 		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(),
 				reflectPropertyHandler, null);
 	}
@@ -823,7 +824,7 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 批量保存或修改,自动根据主键来判断是修改还是保存，没有主键的直接插入记录，
-	  *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
+	 *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
 	 * @param entities
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
@@ -966,8 +967,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected long generateBizId(String signature, int increment) {
-		if (StringUtil.isBlank(signature))
+		if (StringUtil.isBlank(signature)) {
 			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
+		}
 		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
 	}
 
@@ -978,9 +980,10 @@ public class SqlToyDaoSupport {
 	 */
 	protected String generateBizId(Serializable entity) {
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
-		if (entityMeta == null || !entityMeta.isHasBizIdConfig())
+		if (entityMeta == null || !entityMeta.isHasBizIdConfig()) {
 			throw new IllegalArgumentException(
 					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
+		}
 		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
@@ -990,9 +993,10 @@ public class SqlToyDaoSupport {
 			relatedColValue = new Object[relatedColumn.length];
 			for (int meter = 0; meter < relatedColumn.length; meter++) {
 				relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
-				if (relatedColValue[meter] == null)
+				if (relatedColValue[meter] == null) {
 					throw new IllegalArgumentException("对象:" + entity.getClass().getName() + " 生成业务主键依赖的关联字段:"
 							+ relatedColumn[meter] + " 值为null!");
+				}
 			}
 		}
 		IdGenerator idGenerator = (entityMeta.getBusinessIdGenerator() == null) ? entityMeta.getIdGenerator()
@@ -1043,14 +1047,17 @@ public class SqlToyDaoSupport {
 		// 数据以及合法性校验
 		if (dataSet == null || dataSet.isEmpty())
 			return;
-		if (cacheName == null)
+		if (cacheName == null) {
 			throw new IllegalArgumentException("缓存名称不能为空!");
-		if (handler == null)
+		}
+		if (handler == null) {
 			throw new IllegalArgumentException("缓存翻译行取key和设置name的反调函数不能为null!");
+		}
 		// 获取缓存,框架会自动判断null并实现缓存数据的加载和更新检测
 		final HashMap<String, Object[]> cache = getTranslateCache(cacheName, cacheType);
-		if (cache == null || cache.isEmpty())
+		if (cache == null || cache.isEmpty()) {
 			return;
+		}
 		Iterator iter = dataSet.iterator();
 		Object row;
 		Object key;

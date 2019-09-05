@@ -212,14 +212,16 @@ public class TranslateFactory {
 			String cacheType) throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search);
 		String dataSourceName = cacheModel.getDataSource();
-		if (dataSourceName == null)
+		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
+		}
 		QueryExecutor queryExecutor = null;
-		if (StringUtil.isBlank(cacheType))
+		if (StringUtil.isBlank(cacheType)) {
 			queryExecutor = new QueryExecutor(cacheModel.getSql());
-		else
+		} else {
 			queryExecutor = new QueryExecutor(cacheModel.getSql(), sqlToyConfig.getParamsName(),
 					new Object[] { cacheType.trim() });
+		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext, queryExecutor,
 						StringUtil.isBlank(dataSourceName) ? sqlToyContext.getDefaultDataSource()
@@ -253,8 +255,9 @@ public class TranslateFactory {
 			String cacheType) throws Exception {
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
 				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
-		if (jsonStr != null)
+		if (jsonStr != null) {
 			return JSON.parseArray(jsonStr, Object[].class);
+		}
 		return null;
 	}
 
@@ -265,12 +268,15 @@ public class TranslateFactory {
 	 * @return
 	 */
 	private static HashMap<String, Object[]> wrapCacheResult(Object target, TranslateConfigModel cacheModel) {
-		if (target == null)
+		if (target == null) {
 			return null;
-		if (target instanceof HashMap && ((HashMap) target).isEmpty())
+		}
+		if (target instanceof HashMap && ((HashMap) target).isEmpty()) {
 			return null;
-		if (target instanceof HashMap && ((HashMap) target).values().iterator().next().getClass().isArray())
+		}
+		if (target instanceof HashMap && ((HashMap) target).values().iterator().next().getClass().isArray()) {
 			return (HashMap<String, Object[]>) target;
+		}
 		LinkedHashMap<String, Object[]> result = new LinkedHashMap<String, Object[]>();
 		if (target instanceof HashMap) {
 			if (!((HashMap) target).isEmpty()) {

@@ -127,8 +127,9 @@ public class ParamFilterUtils {
 				return;
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
-			if (StringUtil.isBlank(aliasName))
+			if (StringUtil.isBlank(aliasName)) {
 				aliasName = paramFilterModel.getParam();
+			}
 			if (!paramIndexMap.containsKey(aliasName)) {
 				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
 						aliasName);
@@ -163,8 +164,9 @@ public class ParamFilterUtils {
 					cacheFilter = cacheFilters[i];
 					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam());
 					compareValue = cacheFilter.getCompareParam();
-					if (cacheValueIndex != null)
+					if (cacheValueIndex != null) {
 						compareValue = paramValues[cacheValueIndex.intValue()];
+					}
 					Map<String, String> tmp = new HashMap<String, String>();
 					if (compareValue.getClass().isArray()) {
 						Object[] ary = (Object[]) compareValue;
@@ -175,8 +177,9 @@ public class ParamFilterUtils {
 						for (Iterator iter = ((Collection) compareValue).iterator(); iter.hasNext();) {
 							tmp.put(iter.next().toString(), "1");
 						}
-					} else
+					} else {
 						tmp.put(compareValue.toString(), "1");
+					}
 					filterValues.add(tmp);
 				}
 			}
@@ -204,11 +207,12 @@ public class ParamFilterUtils {
 					for (int i = 0; i < cacheFilters.length; i++) {
 						cacheFilter = cacheFilters[i];
 						// 过滤条件是否相等
-						if (cacheRow[cacheFilter.getCacheIndex()] == null)
+						if (cacheRow[cacheFilter.getCacheIndex()] == null) {
 							hasEqual = false;
-						else
+						} else {
 							hasEqual = filterValues.get(i)
 									.containsKey(cacheRow[cacheFilter.getCacheIndex()].toString());
+						}
 						// 条件成立则过滤掉
 						if ((cacheFilter.getCompareType().equals("eq") && hasEqual)
 								|| (cacheFilter.getCompareType().equals("neq") && !hasEqual)) {
@@ -230,8 +234,9 @@ public class ParamFilterUtils {
 					}
 				}
 				// 超出阈值跳出
-				if (matchCnt == maxLimit)
+				if (matchCnt == maxLimit) {
 					break;
+				}
 			}
 
 			// 没有匹配到具体key,将笔名对应的列值设置为当前条件值
@@ -239,10 +244,11 @@ public class ParamFilterUtils {
 				if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
 					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
 					// 没有设置未匹配的默认值,直接将当前参数值作为别名值
-					if (StringUtil.isBlank(paramFilterModel.getCacheNotMatchedValue()))
+					if (StringUtil.isBlank(paramFilterModel.getCacheNotMatchedValue())) {
 						paramValues[aliasIndex] = new String[] { paramValue };
-					else
+					} else {
 						paramValues[aliasIndex] = new String[] { paramFilterModel.getCacheNotMatchedValue() };
+					}
 				} else if (StringUtil.isNotBlank(paramFilterModel.getCacheNotMatchedValue())) {
 					paramValues[index] = paramFilterModel.getCacheNotMatchedValue();
 				}
@@ -284,28 +290,31 @@ public class ParamFilterUtils {
 					isExclusive = true;
 				} else if (null != paramValue && null != compareValues) {
 					// 返回null表示条件成立
-					if (null == filterEquals(paramValue, compareValues))
+					if (null == filterEquals(paramValue, compareValues)) {
 						isExclusive = true;
+					}
 				}
 			} else {
 				if (null != paramValue && null != compareValues) {
 					Object result = paramValue;
-					if (compareType.equals(">="))
+					if (compareType.equals(">=")) {
 						result = filterMoreEquals(paramValue, compareValues[0]);
-					else if (compareType.equals(">"))
+					} else if (compareType.equals(">")) {
 						result = filterMore(paramValue, compareValues[0]);
-					else if (compareType.equals("<="))
+					} else if (compareType.equals("<=")) {
 						result = filterLessEquals(paramValue, compareValues[0]);
-					else if (compareType.equals("<"))
+					} else if (compareType.equals("<")) {
 						result = filterLess(paramValue, compareValues[0]);
-					else if (compareType.equals("<>"))
+					} else if (compareType.equals("<>")) {
 						result = filterNotEquals(paramValue, compareValues);
-					else if (compareType.equals("between")) {
+					} else if (compareType.equals("between")) {
 						result = filterBetween(paramValue, compareValues[0], compareValues[compareValues.length - 1]);
-					} else if (compareType.equals("in"))
+					} else if (compareType.equals("in")) {
 						result = filterEquals(paramValue, compareValues);
-					if (null == result)
+					}
+					if (null == result) {
 						isExclusive = true;
+					}
 				}
 			}
 		}
@@ -318,18 +327,19 @@ public class ParamFilterUtils {
 				index = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
 				// 排他性参数中有值为null则排他条件不成立
 				if (index != -1) {
-					if (null == updateValue)
+					if (null == updateValue) {
 						paramValues[index] = null;
-					else {
-						if (null == paramValues[index])
+					} else {
+						if (null == paramValues[index]) {
 							paramValues[index] = updateValue;
-						else {
-							if (paramValues[index] instanceof Date)
+						} else {
+							if (paramValues[index] instanceof Date) {
 								paramValues[index] = DateUtil.convertDateObject(updateValue);
-							else if (paramValues[index] instanceof Number)
+							} else if (paramValues[index] instanceof Number) {
 								paramValues[index] = new BigDecimal(updateValue);
-							else
+							} else {
 								paramValues[index] = updateValue;
+							}
 						}
 					}
 				}
@@ -435,13 +445,16 @@ public class ParamFilterUtils {
 					for (String arg : args) {
 						tmp = arg.trim();
 						if (!tmp.equals("")) {
-							if (cnt > 0)
+							if (cnt > 0) {
 								inStr.append(",");
-							if (!tmp.startsWith("'"))
+							}
+							if (!tmp.startsWith("'")) {
 								inStr.append("'");
+							}
 							inStr.append(tmp);
-							if (!tmp.endsWith("'"))
+							if (!tmp.endsWith("'")) {
 								inStr.append("'");
+							}
 							cnt++;
 						}
 					}
@@ -467,15 +480,17 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object replace(Object paramValue, String regex, String value, boolean isFirst) {
-		if (paramValue == null || regex == null || value == null)
+		if (paramValue == null || regex == null || value == null) {
 			return null;
+		}
 		if (paramValue instanceof String) {
 			if (isFirst)
 				return paramValue.toString().replaceFirst(regex, value);
 			else
 				return paramValue.toString().replaceAll(regex, value);
-		} else
+		} else {
 			return paramValue;
+		}
 	}
 
 	/**
@@ -502,8 +517,9 @@ public class ParamFilterUtils {
 				valueList.set(i, DateUtil.formatDate(valueList.get(i), format));
 			}
 			result = valueList;
-		} else
+		} else {
 			result = DateUtil.formatDate(paramValue, format);
+		}
 		return result;
 	}
 
@@ -593,9 +609,9 @@ public class ParamFilterUtils {
 	private static Object toNumber(Object paramValue, String dataType) {
 		Object result;
 		BigDecimal value = new BigDecimal(paramValue.toString().replaceAll(",", ""));
-		if (dataType == null)
+		if (dataType == null) {
 			result = value;
-		else {
+		} else {
 			if (dataType.equals("integer") || dataType.equals("int"))
 				result = Integer.valueOf(value.intValue());
 			else if (dataType.equals("long"))
@@ -654,10 +670,12 @@ public class ParamFilterUtils {
 				realFmt = null;
 		}
 		// 存在日期加减
-		if (paramFilterModel.getIncrementDays() != 0)
+		if (paramFilterModel.getIncrementDays() != 0) {
 			result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
-		if (realFmt != null)
+		}
+		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
+		}
 		return result;
 	}
 
@@ -672,10 +690,11 @@ public class ParamFilterUtils {
 			return null;
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime)
+				|| param instanceof LocalDateTime) {
 			type = 1;
-		else if (param instanceof Number)
+		} else if (param instanceof Number) {
 			type = 2;
+		}
 
 		// 只要有一个对比值相等表示成立，返回null
 		for (String contrast : contrasts) {
@@ -692,10 +711,12 @@ public class ParamFilterUtils {
 				}
 			} else if (type == 2) {
 				if (NumberUtil.isNumber(contrast)
-						&& Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
+						&& Double.parseDouble(param.toString()) == Double.parseDouble(contrast)) {
 					return null;
-			} else if (param.toString().compareTo(contrast) == 0)
+				}
+			} else if (param.toString().compareTo(contrast) == 0) {
 				return null;
+			}
 		}
 		return param;
 	}
@@ -713,14 +734,16 @@ public class ParamFilterUtils {
 			return param;
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
-				|| param instanceof LocalDateTime)
+				|| param instanceof LocalDateTime) {
 			type = 1;
-		else if (param instanceof Number)
+		} else if (param instanceof Number) {
 			type = 2;
+		}
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
 		for (String contrast : contrasts) {
-			if (StringUtil.isBlank(contrast))
+			if (StringUtil.isBlank(contrast)) {
 				return param;
+			}
 			if (type == 1) {
 				if (param instanceof LocalTime) {
 					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0)
@@ -735,10 +758,12 @@ public class ParamFilterUtils {
 			} else if (type == 2) {
 				// 非数字或相等
 				if (!NumberUtil.isNumber(contrast)
-						|| Double.parseDouble(param.toString()) == Double.parseDouble(contrast))
+						|| Double.parseDouble(param.toString()) == Double.parseDouble(contrast)) {
 					return param;
-			} else if (param.toString().compareTo(contrast) == 0)
+				}
+			} else if (param.toString().compareTo(contrast) == 0) {
 				return param;
+			}
 		}
 		return null;
 	}
@@ -754,20 +779,23 @@ public class ParamFilterUtils {
 			return null;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate"))
+			if (contrast.equalsIgnoreCase("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
-			else
+			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
-			if (DateUtil.convertDateObject(param).before(compareDate))
+			}
+			if (DateUtil.convertDateObject(param).before(compareDate)) {
 				return null;
+			}
 		} else if (param instanceof LocalTime) {
 			if (((LocalTime) param).isBefore(LocalTime.parse(contrast)))
 				return null;
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) < Double.parseDouble(contrast))
 				return null;
-		} else if (param.toString().compareTo(contrast) < 0)
+		} else if (param.toString().compareTo(contrast) < 0) {
 			return null;
+		}
 		return param;
 	}
 
@@ -782,10 +810,11 @@ public class ParamFilterUtils {
 			return null;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate"))
+			if (contrast.equalsIgnoreCase("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
-			else
+			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
+			}
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) <= 0)
 				return null;
 		} else if (param instanceof LocalTime) {
@@ -794,8 +823,9 @@ public class ParamFilterUtils {
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) <= Double.parseDouble(contrast))
 				return null;
-		} else if (param.toString().compareTo(contrast) <= 0)
+		} else if (param.toString().compareTo(contrast) <= 0) {
 			return null;
+		}
 		return param;
 	}
 
@@ -822,8 +852,9 @@ public class ParamFilterUtils {
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) > Double.parseDouble(contrast))
 				return null;
-		} else if (param.toString().compareTo(contrast) > 0)
+		} else if (param.toString().compareTo(contrast) > 0) {
 			return null;
+		}
 		return param;
 	}
 
@@ -850,8 +881,9 @@ public class ParamFilterUtils {
 		} else if (param instanceof Number) {
 			if (Double.parseDouble(param.toString()) >= Double.parseDouble(contrast))
 				return null;
-		} else if (param.toString().compareTo(contrast) >= 0)
+		} else if (param.toString().compareTo(contrast) >= 0) {
 			return null;
+		}
 		return param;
 	}
 
@@ -878,8 +910,9 @@ public class ParamFilterUtils {
 			if (Double.parseDouble(param.toString()) >= Double.parseDouble(beginContrast)
 					&& Double.parseDouble(param.toString()) <= Double.parseDouble(endContrast))
 				return null;
-		} else if (param.toString().compareTo(beginContrast) >= 0 && param.toString().compareTo(endContrast) <= 0)
+		} else if (param.toString().compareTo(beginContrast) >= 0 && param.toString().compareTo(endContrast) <= 0) {
 			return null;
+		}
 		return param;
 	}
 
