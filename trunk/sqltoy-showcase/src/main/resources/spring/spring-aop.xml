@@ -14,9 +14,9 @@
 		<property name="dataSource" ref="dataSource" />
 	</bean>
 
-	<!-- 支持事务注解方式 -->
-	<tx:annotation-driven
-		transaction-manager="txManager" />
+	<!-- 支持事务注解方式 springboot 默认已经开启,再次定义就会报错 -->
+	<!-- 在application.properties 中定义spring.main.allow-bean-definition-overriding=true  -->
+	<tx:annotation-driven transaction-manager="txManager" />
 
 	<!-- 事务处理的AOP配置 // -->
 	<aop:config proxy-target-class="true">
