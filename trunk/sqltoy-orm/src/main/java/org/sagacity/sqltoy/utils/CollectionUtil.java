@@ -98,8 +98,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToDeepList(Object arySource) {
@@ -137,8 +136,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToList(Object arySource) {
@@ -446,8 +444,7 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
+	 * @param keyToStr  将key统一转成字符串
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
@@ -459,10 +456,8 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
-	 * @param isLinkedHash
-	 *            返回的是否为LinkedHashMap
+	 * @param keyToStr     将key统一转成字符串
+	 * @param isLinkedHash 返回的是否为LinkedHashMap
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
@@ -622,11 +617,9 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs
-	 *            {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite
-	 *            存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -752,8 +745,7 @@ public class CollectionUtil {
 	 * @param totalTitle
 	 * @param hasAverage
 	 * @param averageTitle
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize        小数位长度
 	 * @param firstSummary
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
@@ -849,8 +841,7 @@ public class CollectionUtil {
 	 * @param groupIndex
 	 * @param title
 	 * @param rowCount
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize      小数位长度
 	 * @return
 	 */
 	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
@@ -977,8 +968,7 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex
-	 *            保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {
@@ -1098,5 +1088,34 @@ public class CollectionUtil {
 			}
 		}
 		return result;
+	}
+
+	public static boolean any(Object value, Object[] compareAry) {
+		return any(value, compareAry, false);
+	}
+
+	/**
+	 * @todo 判断字符串或对象数据是否在给定的数组中
+	 * @param compareStr
+	 * @param compareAry
+	 * @param ignoreCase
+	 * @return
+	 */
+	public static boolean any(Object value, Object[] compareAry, boolean ignoreCase) {
+		if (value == null || (compareAry == null || compareAry.length == 0)) {
+			return false;
+		}
+		for (Object s : compareAry) {
+			if (s == null) {
+				return false;
+			}
+			if (value.equals(s)) {
+				return true;
+			}
+			if (ignoreCase && value.toString().equalsIgnoreCase(s.toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

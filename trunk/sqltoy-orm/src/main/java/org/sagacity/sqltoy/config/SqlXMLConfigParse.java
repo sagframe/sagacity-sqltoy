@@ -80,8 +80,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<IFunction> functionConverts) {
 		SqlXMLConfigParse.functionConverts = functionConverts;
@@ -146,10 +145,11 @@ public class SqlXMLConfigParse {
 				logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
 			}
 			if (fileIS != null) {
-				if (encoding != null)
+				if (encoding != null) {
 					ir = new InputStreamReader(fileIS, encoding);
-				else
+				} else {
 					ir = new InputStreamReader(fileIS);
+				}
 				SAXReader saxReader = new SAXReader();
 				saxReader.setFeature(SqlToyConstants.XML_FETURE, false);
 				if (StringUtil.isNotBlank(encoding))
@@ -164,8 +164,9 @@ public class SqlXMLConfigParse {
 					sqlToyConfig = parseSingleSql(iter.next(), dialect);
 					if (sqlToyConfig != null) {
 						// 去除sql中的注释语句并放入缓存
-						if (cache.get(sqlToyConfig.getId()) != null && !isReload)
+						if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
 							logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
+						}
 						cache.put(sqlToyConfig.getId(), sqlToyConfig);
 					}
 				}
@@ -200,12 +201,14 @@ public class SqlXMLConfigParse {
 		SqlToyConfig sqlToyConfig = null;
 		if (sqlSegment instanceof String) {
 			SAXReader saxReader = new SAXReader();
-			if (StringUtil.isNotBlank(encoding))
+			if (StringUtil.isNotBlank(encoding)) {
 				saxReader.setEncoding(encoding);
+			}
 			Document doc = saxReader.read(new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding)));
 			sqlToyConfig = parseSingleSql(doc.getRootElement(), dialect);
-		} else if (sqlSegment instanceof Element)
+		} else if (sqlSegment instanceof Element) {
 			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect);
+		}
 		return sqlToyConfig;
 	}
 
@@ -245,10 +248,11 @@ public class SqlXMLConfigParse {
 		// 是否nosql模式
 		boolean isNoSql = false;
 		if (nodeName.equals("mql") || nodeName.equals("eql")) {
-			if (nodeName.equals("mql"))
+			if (nodeName.equals("mql")) {
 				realDialect = DataSourceUtils.Dialect.MONGO;
-			else if (nodeName.equals("eql"))
+			} else if (nodeName.equals("eql")) {
 				realDialect = DataSourceUtils.Dialect.ES;
+			}
 			isNoSql = true;
 		}
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type,
@@ -256,10 +260,11 @@ public class SqlXMLConfigParse {
 		sqlToyConfig.setId(id);
 		sqlToyConfig.setSqlType(type);
 		// 为sql提供特定数据库的扩展
-		if (sqlElt.attribute("dataSource") != null)
+		if (sqlElt.attribute("dataSource") != null) {
 			sqlToyConfig.setDataSource(sqlElt.attributeValue("dataSource"));
-		else if (sqlElt.attribute("datasource") != null)
+		} else if (sqlElt.attribute("datasource") != null) {
 			sqlToyConfig.setDataSource(sqlElt.attributeValue("datasource"));
+		}
 		if (countSql != null) {
 			// 清理sql中的一些注释、以及特殊的符号
 			countSql = StringUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
@@ -270,8 +275,9 @@ public class SqlXMLConfigParse {
 		 * 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 select 1
 		 * from,减少不必要的执行运算，提升效率)
 		 */
-		if (sqlElt.attribute("union-all-count") != null)
+		if (sqlElt.attribute("union-all-count") != null) {
 			sqlToyConfig.setUnionAllCount(Boolean.parseBoolean(sqlElt.attributeValue("union-all-count")));
+		}
 		// 解析sql对应dataSource的sharding配置
 		parseShardingDataSource(sqlToyConfig, sqlElt.element("sharding-datasource"));
 
@@ -281,24 +287,28 @@ public class SqlXMLConfigParse {
 		parseFormat(sqlToyConfig, sqlElt.elements("date-format"), sqlElt.elements("number-format"));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
-		if (sqlElt.attribute("blank-to-null") != null)
+		if (sqlElt.attribute("blank-to-null") != null) {
 			blankToNull = (Boolean.parseBoolean(sqlElt.attributeValue("blank-to-null"))) ? 1 : 0;
+		}
 		// 解析参数过滤器
-		if (sqlElt.element("filters") != null)
+		if (sqlElt.element("filters") != null) {
 			parseFilters(sqlToyConfig, sqlElt.element("filters").elements(), blankToNull);
-		else
+		} else {
 			parseFilters(sqlToyConfig, null, blankToNull);
+		}
 
 		// 解析分页优化器
 		// <page-optimize alive-max="100" alive-seconds="90"/>
 		Element pageOptimize = sqlElt.element("page-optimize");
 		if (pageOptimize != null) {
 			sqlToyConfig.setPageOptimize(true);
-			if (pageOptimize.attribute("alive-max") != null)
+			if (pageOptimize.attribute("alive-max") != null) {
 				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.attributeValue("alive-max")));
+			}
 			// 不同sql条件分页记录数量保存有效时长(默认90秒)
-			if (pageOptimize.attribute("alive-seconds") != null)
+			if (pageOptimize.attribute("alive-seconds") != null) {
 				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.attributeValue("alive-seconds")));
+			}
 		}
 
 		// 解析翻译器
@@ -363,10 +373,11 @@ public class SqlXMLConfigParse {
 			noSqlConfig.setFields(trimParams(sqlElt.elementTextTrim("fields").split("\\,")));
 
 		// valueRoot
-		if (sqlElt.attribute("value-root") != null)
+		if (sqlElt.attribute("value-root") != null) {
 			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-root").split("\\,")));
-		else if (sqlElt.attribute("value-path") != null)
+		} else if (sqlElt.attribute("value-path") != null) {
 			noSqlConfig.setValueRoot(trimParams(sqlElt.attributeValue("value-path").split("\\,")));
+		}
 		// 是否有聚合查询
 		if (sqlElt.getName().equalsIgnoreCase("eql")) {
 			if (sqlElt.attribute("aggregate") != null) {
@@ -379,20 +390,23 @@ public class SqlXMLConfigParse {
 					&& sqlToyConfig.getSql().toLowerCase().indexOf("from") > 0) {
 				noSqlConfig.setSqlMode(true);
 				// sql模式下存在group by 则判定为聚合查询
-				if (StringUtil.matches(sqlToyConfig.getSql(), GROUP_BY_PATTERN))
+				if (StringUtil.matches(sqlToyConfig.getSql(), GROUP_BY_PATTERN)) {
 					noSqlConfig.setHasAggs(true);
+				}
 			}
 		} else if (sqlElt.getName().equalsIgnoreCase("mql")) {
 			if (sqlElt.attribute("aggregate") != null) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.attributeValue("aggregate")));
-			} else
+			} else {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(), MONGO_AGGS_PATTERN));
+			}
 		}
 
 		sqlToyConfig.setNoSqlConfigModel(noSqlConfig);
 		// nosql参数解析模式不同于sql
-		if (!noSqlConfig.isSqlMode())
+		if (!noSqlConfig.isSqlMode()) {
 			sqlToyConfig.setParamsName(SqlConfigParseUtils.getNoSqlParamsName(sqlToyConfig.getSql(), true));
+		}
 	}
 
 	/**
@@ -409,16 +423,18 @@ public class SqlXMLConfigParse {
 			for (Element elt : maskElts) {
 				tmp = getAttrValue(elt, "columns");
 				// 兼容老版本
-				if (tmp == null)
+				if (tmp == null) {
 					tmp = getAttrValue(elt, "column");
+				}
 				String[] columns = tmp.toLowerCase().split("\\,");
 				String type = getAttrValue(elt, "type").toLowerCase();
 				String maskCode = getAttrValue(elt, "mask-code");
 				String headSize = getAttrValue(elt, "head-size");
 				String tailSize = getAttrValue(elt, "tail-size");
 				String maskRate = getAttrValue(elt, "mask-rate");
-				if (maskRate == null)
+				if (maskRate == null) {
 					maskRate = getAttrValue(elt, "mask-percent");
+				}
 				// 剔除百分号
 				if (maskRate != null)
 					maskRate = maskRate.replace("%", "").trim();
@@ -434,8 +450,9 @@ public class SqlXMLConfigParse {
 							secureMask.setMaskCode("******");
 						} else if (secureMask.getType().equals("name")) {
 							secureMask.setMaskCode("**");
-						} else
+						} else {
 							secureMask.setMaskCode("****");
+						}
 					}
 					if (StringUtil.isNotBlank(headSize))
 						secureMask.setHeadSize(Integer.parseInt(headSize));
@@ -443,10 +460,11 @@ public class SqlXMLConfigParse {
 						secureMask.setTailSize(Integer.parseInt(tailSize));
 					if (StringUtil.isNotBlank(maskRate)) {
 						// 小数
-						if (Double.parseDouble(maskRate) < 1)
+						if (Double.parseDouble(maskRate) < 1) {
 							secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
-						else
+						} else {
 							secureMask.setMaskRate(Double.valueOf(maskRate).intValue());
+						}
 					}
 					secureMasks.add(secureMask);
 				}
@@ -523,8 +541,9 @@ public class SqlXMLConfigParse {
 					}
 					shardingModel.setParamsAlias(paramsAlias);
 				}
-				if (elt.attribute("strategy-value") != null)
+				if (elt.attribute("strategy-value") != null) {
 					shardingModel.setStrategyValue(elt.attributeValue("strategy-value"));
+				}
 				shardingModel.setStrategy(elt.attributeValue("strategy"));
 				tablesShardings.add(shardingModel);
 			}
@@ -546,8 +565,9 @@ public class SqlXMLConfigParse {
 	public static void parseFilters(SqlToyConfig sqlToyConfig, List<Element> filterSet, int blankToNull) {
 		List<ParamFilterModel> filterModels = new ArrayList<ParamFilterModel>();
 		// 1:强制将空白当做null;0:强制对空白不作为null处理;-1:默认值,用户不配置blank过滤器则视同为1,配置了则视同为0
-		if (blankToNull == 1)
+		if (blankToNull == 1) {
 			filterModels.add(new ParamFilterModel("blank", new String[] { "*" }));
+		}
 		boolean hasBlank = false;
 		if (filterSet != null && !filterSet.isEmpty()) {
 			String filterType;
@@ -604,18 +624,20 @@ public class SqlXMLConfigParse {
 		// 没有设置参数名称，则表示全部参数用*表示
 		if (filter.attribute("params") == null) {
 			filterModel.setParams(new String[] { "*" });
-		} else
+		} else {
 			filterModel.setParams(trimParams(filter.attributeValue("params").toLowerCase().split("\\,")));
+		}
 		// equals\any\not-any等类型
 		if (filter.attribute("value") != null) {
 			filterModel.setValues(
 					StringUtil.splitExcludeSymMark(filter.attributeValue("value"), ",", SqlToyConstants.filters));
-		} else if (filter.attribute("start-value") != null && filter.attribute("end-value") != null)
+		} else if (filter.attribute("start-value") != null && filter.attribute("end-value") != null) {
 			filterModel.setValues(
 					new String[] { filter.attributeValue("start-value"), filter.attributeValue("end-value") });
-		if (filter.attribute("increment-days") != null)
+		}
+		if (filter.attribute("increment-days") != null) {
 			filterModel.setIncrementDays(Double.valueOf(filter.attributeValue("increment-days")));
-
+		}
 		// to-date filter
 		if (filter.attribute("format") != null)
 			filterModel.setFormat(filter.attributeValue("format"));
@@ -637,8 +659,9 @@ public class SqlXMLConfigParse {
 		if (filter.attribute("excludes") != null) {
 			String[] excludeParams = filter.attributeValue("excludes").toLowerCase().split("\\,");
 			HashMap<String, String> excludeMaps = new HashMap<String, String>();
-			for (String excludeParam : excludeParams)
+			for (String excludeParam : excludeParams) {
 				excludeMaps.put(excludeParam.trim(), "1");
+			}
 			filterModel.setExcludesMap(excludeMaps);
 		}
 
@@ -655,8 +678,9 @@ public class SqlXMLConfigParse {
 			if (filter.attribute("cache-mapping-max") != null) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.attributeValue("cache-mapping-max")));
 				// sql in a参数量不能超过1000
-				if (filterModel.getCacheMappingMax() > SqlToyConstants.SQL_IN_MAX)
+				if (filterModel.getCacheMappingMax() > SqlToyConstants.SQL_IN_MAX) {
 					filterModel.setCacheMappingMax(SqlToyConstants.SQL_IN_MAX);
+				}
 			}
 			if (filter.attribute("cache-mapping-indexes") != null) {
 				String[] cacheIndexes = trimParams(filter.attributeValue("cache-mapping-indexes").split("\\,"));
@@ -671,8 +695,9 @@ public class SqlXMLConfigParse {
 				sqlToyConfig.addCacheArgParam(filterModel.getAliasName());
 			}
 			// 缓存过滤未匹配上赋予的默认值
-			if (filter.attribute("cache-not-matched-value") != null)
+			if (filter.attribute("cache-not-matched-value") != null) {
 				filterModel.setCacheNotMatchedValue(filter.attributeValue("cache-not-matched-value"));
+			}
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
 			List<Element> cacheFilters = filter.elements("filter");
 			if (cacheFilters != null && !cacheFilters.isEmpty()) {
@@ -684,8 +709,9 @@ public class SqlXMLConfigParse {
 					cacheFilterModel.setCacheIndex(Integer.parseInt(cacheFilter.attributeValue("cache-index")));
 					// 对比条件参数
 					cacheFilterModel.setCompareParam(cacheFilter.attributeValue("compare-param").toLowerCase());
-					if (cacheFilter.attribute("compare-type") != null)
+					if (cacheFilter.attribute("compare-type") != null) {
 						cacheFilterModel.setCompareType(cacheFilter.attributeValue("compare-type").toLowerCase());
+					}
 					cacheFilterModels[meter] = cacheFilterModel;
 					meter++;
 				}
@@ -693,12 +719,12 @@ public class SqlXMLConfigParse {
 			}
 		}
 		// exclusive 排他性filter 当条件成立时需要修改的参数(即排斥的参数)
-		if (filter.attribute("set-params") != null)
+		if (filter.attribute("set-params") != null) {
 			filterModel.setUpdateParams(trimParams(filter.attributeValue("set-params").toLowerCase().split("\\,")));
-		else if (filter.attribute("exclusive-params") != null)
+		} else if (filter.attribute("exclusive-params") != null) {
 			filterModel
 					.setUpdateParams(trimParams(filter.attributeValue("exclusive-params").toLowerCase().split("\\,")));
-
+		}
 		// exclusive 排他性filter 对排斥的参数设置的值(默认置为null)
 		if (filter.attribute("set-value") != null)
 			filterModel.setUpdateValue(filter.attributeValue("set-value"));
@@ -728,15 +754,17 @@ public class SqlXMLConfigParse {
 		// exclusive 排他性filter 条件成立的对比值
 		if (filter.attribute("compare-values") != null) {
 			String compareValue = filter.attributeValue("compare-values");
-			if (compareValue.indexOf(";") != -1)
+			if (compareValue.indexOf(";") != -1) {
 				filterModel.setCompareValues(trimParams(compareValue.split("\\;")));
-			else
+			} else {
 				filterModel.setCompareValues(trimParams(compareValue.split("\\,")));
+			}
 		}
 
 		// 数据类型
-		if (filter.attribute("data-type") != null)
+		if (filter.attribute("data-type") != null) {
 			filterModel.setDataType(filter.attributeValue("data-type").toLowerCase());
+		}
 	}
 
 	/**
@@ -765,10 +793,11 @@ public class SqlXMLConfigParse {
 				hasLink = false;
 				cacheName = translate.attributeValue("cache");
 				// 具体的缓存子分类，如数据字典类别
-				if (translate.attribute("cache-type") != null)
+				if (translate.attribute("cache-type") != null) {
 					cacheType = translate.attributeValue("cache-type");
-				else
+				} else {
 					cacheType = null;
+				}
 				columns = trimParams(translate.attributeValue("columns").toLowerCase().split("\\,"));
 				aliasNames = null;
 				uncachedTemplate = null;
@@ -835,10 +864,11 @@ public class SqlXMLConfigParse {
 								translateModel.setUncached(uncachedTemplate);
 						}
 						if (cacheIndexs != null) {
-							if (i < cacheIndexs.length - 1)
+							if (i < cacheIndexs.length - 1) {
 								translateModel.setIndex(cacheIndexs[i]);
-							else
+							} else {
 								translateModel.setIndex(cacheIndexs[cacheIndexs.length - 1]);
+							}
 						}
 						translateMap.put(translateModel.getColumn(), translateModel);
 					}
@@ -867,8 +897,9 @@ public class SqlXMLConfigParse {
 			linkModel.setSign(link.attributeValue("sign"));
 		if (link.element("decorate") != null) {
 			Element decorateElt = link.element("decorate");
-			if (decorateElt.attribute("align") != null)
+			if (decorateElt.attribute("align") != null) {
 				linkModel.setDecorateAlign(decorateElt.attributeValue("align").toLowerCase());
+			}
 			linkModel.setDecorateAppendChar(decorateElt.attributeValue("char"));
 			linkModel.setDecorateSize(Integer.parseInt(decorateElt.attributeValue("size")));
 		}

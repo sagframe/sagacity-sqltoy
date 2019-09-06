@@ -65,9 +65,7 @@ public class SqlFileModifyWatcher extends Thread {
 			}
 			try {
 				// 一秒钟监测一次
-				// if (!Thread.currentThread().isInterrupted()) {
 				Thread.sleep(1000 * sleepSeconds);
-				// }
 			} catch (InterruptedException e) {
 				logger.warn("sql文件变更监测程序进程异常,监测将终止!{}", e.getMessage(), e);
 				isRun = false;

@@ -101,10 +101,11 @@ public class SqlScriptLoader {
 				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
 					sqlFile = realSqlList.get(i);
-					if (sqlFile instanceof File)
+					if (sqlFile instanceof File) {
 						logger.debug("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
-					else
+					} else {
 						logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
+					}
 				}
 				for (int i = 0; i < realSqlList.size(); i++) {
 					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect, false);
@@ -153,39 +154,36 @@ public class SqlScriptLoader {
 	 */
 	public void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
-			if (sqlCache.get(sqlToyConfig.getId()) != null)
+			if (sqlCache.get(sqlToyConfig.getId()) != null) {
 				logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
+			}
 			sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
 		}
 	}
 
 	/**
-	 * @param resourcesDir
-	 *            the resourcesDir to set
+	 * @param resourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources
-	 *            the mappingResources to set
+	 * @param mappingResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
 	}
 
 	/**
-	 * @param encoding
-	 *            the encoding to set
+	 * @param encoding the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(List functionConverts) {
 		List<IFunction> converts = new ArrayList<IFunction>();
@@ -223,8 +221,7 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param dialect
-	 *            the dialect to set
+	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		this.dialect = dialect;

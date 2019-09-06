@@ -82,8 +82,6 @@ public class SqlConfigParseUtils {
 	/**
 	 * CTE 即 with as 用法
 	 */
-	// private final static Pattern CTE_PATTERN =
-	// Pattern.compile("(?i)\\s*with\\s+\\w+\\s+as\\s*\\(");
 	public final static Pattern CTE_PATTERN = Pattern.compile(
 			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 	/**
@@ -189,10 +187,11 @@ public class SqlConfigParseUtils {
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
-		if (isNamedArgs)
+		if (isNamedArgs) {
 			sqlParam = processNamedParamsQuery(queryStr.replaceAll(ARG_REGEX, questionMark));
-		else
+		} else {
 			sqlParam = processNamedParamsQuery(queryStr);
+		}
 
 		sqlToyResult.setSql(sqlParam.getSql());
 
@@ -216,8 +215,9 @@ public class SqlConfigParseUtils {
 		replaceNull(sqlToyResult, 0);
 
 		// 将特殊字符替换回问号
-		if (isNamedArgs)
+		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
+		}
 		return sqlToyResult;
 	}
 
@@ -301,10 +301,12 @@ public class SqlConfigParseUtils {
 			paramName = m.group().substring(2).trim();
 			// 去除重复
 			if (distinct) {
-				if (!paramsNameList.contains(paramName))
+				if (!paramsNameList.contains(paramName)) {
 					paramsNameList.add(paramName);
-			} else
+				}
+			} else {
 				paramsNameList.add(paramName);
+			}
 		}
 		// 没有别名参数
 		if (paramsNameList.isEmpty())
@@ -329,10 +331,12 @@ public class SqlConfigParseUtils {
 			paramName = groupStr.substring(groupStr.indexOf(":") + 1, groupStr.indexOf(")")).trim();
 			// 去除重复
 			if (distinct) {
-				if (!paramsNameList.contains(paramName))
+				if (!paramsNameList.contains(paramName)) {
 					paramsNameList.add(paramName);
-			} else
+				}
+			} else {
 				paramsNameList.add(paramName);
+			}
 		}
 		// 没有别名参数
 		if (paramsNameList.isEmpty())
@@ -385,13 +389,15 @@ public class SqlConfigParseUtils {
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
 						markContentSql = BLANK;
-						for (int k = paramCnt; k > 0; k--)
+						for (int k = paramCnt; k > 0; k--) {
 							paramValuesList.remove(k + preParamCnt - 1);
+						}
 					} else {
 						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
 						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
-						for (int k = 0; k < logicParamCnt; k++)
+						for (int k = 0; k < logicParamCnt; k++) {
 							paramValuesList.remove(preParamCnt);
+						}
 						paramCnt = paramCnt - logicParamCnt;
 					}
 				}
@@ -410,8 +416,9 @@ public class SqlConfigParseUtils {
 						if (i - preParamCnt + 1 < paramCnt) {
 							iMarkSql = markContentSql.substring(beginIndex + 1,
 									StringUtil.indexOrder(markContentSql, ARG_NAME, i - preParamCnt + 1));
-						} else
+						} else {
 							iMarkSql = markContentSql.substring(beginIndex + 1);
+						}
 
 						// 判断是否是is 条件
 						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN))
@@ -426,8 +433,9 @@ public class SqlConfigParseUtils {
 								|| (sqlhasIs && null != value && !(value instanceof java.lang.Boolean))) {
 							// sql中剔除最后部分的#[]内容
 							markContentSql = BLANK;
-							for (int k = paramCnt; k > 0; k--)
+							for (int k = paramCnt; k > 0; k--) {
 								paramValuesList.remove(k + preParamCnt - 1);
+							}
 							break;
 						}
 					}
@@ -454,8 +462,9 @@ public class SqlConfigParseUtils {
 		int blankCnt = 0;
 		List paramValueList = null;
 		while (m.find()) {
-			if (blankCnt == 0)
+			if (blankCnt == 0) {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+			}
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 			// 剔除参数@blank(?) 对应的参数值
@@ -483,8 +492,9 @@ public class SqlConfigParseUtils {
 		List paramValueList = null;
 		Object paramValue = null;
 		while (m.find()) {
-			if (valueCnt == 0)
+			if (valueCnt == 0) {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+			}
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 			// 用参数的值直接覆盖@value(:name)
@@ -516,7 +526,7 @@ public class SqlConfigParseUtils {
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
-			//不存在%符号时，前后增加%
+			// 不存在%符号时，前后增加%
 			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
 				likeParamValue = "%".concat(likeParamValue).concat("%");
 				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
@@ -564,8 +574,9 @@ public class SqlConfigParseUtils {
 					if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
 						inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
 						inParamArray = inParamList.toArray();
-					} else
+					} else {
 						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
+					}
 					// 循环组合成in(?,?*)
 					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", (inParamArray).length);
 					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
@@ -617,8 +628,9 @@ public class SqlConfigParseUtils {
 		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
 			// where 后面拼接的条件语句是空白,增加1=1,避免最终只有一个where
-			if (tmp.equals(""))
+			if (tmp.equals("")) {
 				return preSql.concat(" 1=1 ");
+			}
 			// and 概率更高优先判断，剔除and 或 or
 			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(3)).concat(" ");
@@ -670,8 +682,9 @@ public class SqlConfigParseUtils {
 				paramList.remove(i);
 				i--;
 				index = sql.indexOf(ARG_NAME, index);
-			} else
+			} else {
 				index = sql.indexOf(ARG_NAME, index + 1);
+			}
 		}
 		sqlToyResult.setSql(sql);
 		sqlToyResult.setParamsValue(paramList.toArray());
@@ -700,8 +713,9 @@ public class SqlConfigParseUtils {
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
-		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN))
+		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN)) {
 			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
+		}
 		/**
 		 * 只有在查询模式前提下才支持fastPage机制
 		 */
@@ -724,10 +738,12 @@ public class SqlConfigParseUtils {
 
 				// 判断是否有快速分页
 				sqlToyConfig.setHasFast(true);
-			} else
+			} else {
 				sqlToyConfig.setSql(originalSql);
-		} else
+			}
+		} else {
 			sqlToyConfig.setSql(originalSql);
+		}
 		// 提取with fast查询语句
 		processFastWith(sqlToyConfig);
 		// 提取sql中的参数名称
@@ -765,10 +781,12 @@ public class SqlConfigParseUtils {
 						StringBuilder buffer = new StringBuilder();
 						for (int i = 0; i < endIndex + 1; i++) {
 							aliasTableAs = sqlWith.getWithSqlSet().get(i);
-							if (i == 0)
+							if (i == 0) {
 								buffer.append(" with ");
-							if (i > 0)
+							}
+							if (i > 0) {
 								buffer.append(",");
+							}
 							// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容}
 							buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
 									.append(aliasTableAs[2]).append(") ");
@@ -804,8 +822,9 @@ public class SqlConfigParseUtils {
 	 */
 	public static String convertFunctions(List<IFunction> functionConverts, String dialect, String sqlContent) {
 		if (null == functionConverts || functionConverts.isEmpty() || StringUtil.isBlank(dialect) || null == sqlContent
-				|| sqlContent.trim().equals(""))
+				|| sqlContent.trim().equals("")) {
 			return sqlContent;
+		}
 		int dbType = DataSourceUtils.getDBType(dialect);
 		IFunction function;
 		String lastFunction = sqlContent;
@@ -844,10 +863,11 @@ public class SqlConfigParseUtils {
 			index = matcher.start();
 			matchedGroup = matcher.group();
 			// 是 function()模式
-			if (matchedGroup.endsWith("("))
+			if (matchedGroup.endsWith("(")) {
 				hasArgs = true;
-			else
+			} else {
 				hasArgs = false;
+			}
 			matchedIndex = index + 1;
 			// 函数(:args) 存在参数
 			if (hasArgs) {
@@ -865,10 +885,11 @@ public class SqlConfigParseUtils {
 
 			// 返回null或返回的跟原函数一样则表示不做任何处理
 			if (null == wrapResult
-					|| wrapResult.toLowerCase().concat("(").startsWith(functionName.toLowerCase().concat("(")))
+					|| wrapResult.toLowerCase().concat("(").startsWith(functionName.toLowerCase().concat("("))) {
 				result.append(lastFunction.substring(0, endMarkIndex + 1));
-			else
+			} else {
 				result.append(lastFunction.substring(0, matchedIndex)).append(wrapResult);
+			}
 			lastFunction = lastFunction.substring(endMarkIndex + 1);
 			matcher.reset(lastFunction);
 
