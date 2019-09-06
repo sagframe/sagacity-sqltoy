@@ -7,3 +7,11 @@ trunk/sagacity-sqltoy-4.3/.classpath
 trunk/sagacity-quickvo/.classpath
 trunk/sagacity-sqltoy-4.3/.classpath
 trunk/sagacity-quickvo/.classpath
+*.log
+*.prefs
+trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
+trunk/sqltoy-orm/.settings/org.eclipse.wst.common.component
+trunk/sqltoy-orm/.settings/org.eclipse.wst.common.project.facet.core.xml
+trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
+trunk/sqltoy-showcase/.settings/org.eclipse.jdt.core.prefs
+trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
