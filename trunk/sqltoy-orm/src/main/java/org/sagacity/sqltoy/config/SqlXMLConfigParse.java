@@ -229,7 +229,7 @@ public class SqlXMLConfigParse {
 		String sqlContent = (sqlElt.isTextOnly()) ? sqlElt.getText() : sqlElt.elementText("value");
 		String countSql = (sqlElt.element("count-sql") == null) ? null : sqlElt.elementText("count-sql");
 
-		if (null == sqlContent || sqlContent.trim().equals(""))
+		if (StringUtil.isBlank(sqlContent))
 			throw new RuntimeException("请检查sql配置,没有正确填写sql内容!");
 
 		String id = sqlElt.attributeValue("id");
@@ -367,10 +367,12 @@ public class SqlXMLConfigParse {
 			noSqlConfig.setCharset(sqlElt.attributeValue("charset"));
 		// fields
 		if (sqlElt.attribute("fields") != null) {
-			if (StringUtil.isNotBlank(sqlElt.attributeValue("fields")))
+			if (StringUtil.isNotBlank(sqlElt.attributeValue("fields"))) {
 				noSqlConfig.setFields(trimParams(sqlElt.attributeValue("fields").split("\\,")));
-		} else if (sqlElt.element("fields") != null)
+			}
+		} else if (sqlElt.element("fields") != null) {
 			noSqlConfig.setFields(trimParams(sqlElt.elementTextTrim("fields").split("\\,")));
+		}
 
 		// valueRoot
 		if (sqlElt.attribute("value-root") != null) {
