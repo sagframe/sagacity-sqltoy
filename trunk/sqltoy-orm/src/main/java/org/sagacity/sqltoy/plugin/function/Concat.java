@@ -21,7 +21,7 @@ public class Concat extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "mysql8";
+		return "oracle";
 	}
 
 	/*
@@ -42,18 +42,9 @@ public class Concat extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
-				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019) {
-			if (args != null) {
-				StringBuilder result = new StringBuilder();
-				for (int i = 0; i < args.length; i++) {
-					if (i > 0)
-						result.append("+");
-					result.append(args[i]);
-				}
-				return result.toString();
-			}
-		} else if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
+		//只针对oracle数据库,其他数据库原样返回
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
+			// 超过2个参数
 			if (args != null && args.length > 2) {
 				StringBuilder result = new StringBuilder();
 				for (int i = 0; i < args.length; i++) {
