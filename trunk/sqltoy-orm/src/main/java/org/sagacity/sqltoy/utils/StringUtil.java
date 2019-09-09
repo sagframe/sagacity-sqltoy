@@ -631,4 +631,53 @@ public class StringUtil {
 		}
 		return template;
 	}
+
+	/**
+	 * @todo 针对jdk1.4 replace(char,char)提供jdk1.5中replace(String,String)的功能
+	 * @param source
+	 * @param template
+	 * @param target
+	 * @return
+	 */
+	public static String replaceAllStr(String source, String template, String target) {
+		return replaceAllStr(source, template, target, 0);
+	}
+
+	public static String replaceAllStr(String source, String template, String target, int fromIndex) {
+		if (source == null || template.equals(target)) {
+			return source;
+		}
+		int index = source.indexOf(template, fromIndex);
+		int subLength = target.length() - template.length();
+		int begin = index - 1;
+		while (index != -1 && index >= begin) {
+			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
+			begin = index + subLength + 1;
+			index = source.indexOf(template, begin);
+		}
+		return source;
+	}
+
+	public static String replaceAllStr(String source, String template, String target, int fromIndex, int endIndex) {
+		if (source == null || template.equals(target) || endIndex <= fromIndex) {
+			return source;
+		}
+		if (endIndex >= source.length() - 1) {
+			return replaceAllStr(source, template, target, fromIndex);
+		}
+		String beforeStr = (fromIndex == 0) ? "" : source.substring(0, fromIndex);
+		String replaceBody = source.substring(fromIndex, endIndex + 1);
+		String endStr = source.substring(endIndex + 1);
+		int index = replaceBody.indexOf(template);
+		int begin = index - 1;
+		// 替换后的偏移量，避免在替换内容中再次替换形成死循环
+		int subLength = target.length() - template.length();
+		while (index != -1 && index >= begin) {
+			replaceBody = replaceBody.substring(0, index).concat(target)
+					.concat(replaceBody.substring(index + template.length()));
+			begin = index + subLength + 1;
+			index = replaceBody.indexOf(template, begin);
+		}
+		return beforeStr.concat(replaceBody).concat(endStr);
+	}
 }
