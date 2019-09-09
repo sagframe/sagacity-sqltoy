@@ -309,6 +309,9 @@ public class PostgreSqlDialect implements Dialect {
 		return updateCnt + saveCnt;
 	}
 
+	/**
+	 * 暂时postgresql 不支持原生的saveOrUpdate
+	 */
 	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
