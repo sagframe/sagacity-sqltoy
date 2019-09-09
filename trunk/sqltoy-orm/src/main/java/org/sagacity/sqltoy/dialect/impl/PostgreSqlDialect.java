@@ -58,9 +58,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount,
-				randomCount, conn);
+				randomCount, conn, dbType);
 	}
 
 	/*
@@ -73,8 +74,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn) throws Exception {
-		return PostgreSqlDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn);
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType)
+			throws Exception {
+		return PostgreSqlDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
+				dbType);
 	}
 
 	/*
@@ -86,8 +89,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn) throws Exception {
-		return PostgreSqlDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn);
+			Integer topSize, Connection conn, final Integer dbType) throws Exception {
+		return PostgreSqlDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType);
 	}
 
 	/*
@@ -100,10 +103,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final Connection conn, final int fetchSize,
-			final int maxRows) throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, 0,
-				fetchSize, maxRows);
+			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
+			final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
+				0, fetchSize, maxRows);
 	}
 
 	/*
@@ -115,8 +118,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, boolean isLastSql, Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
+			Object[] paramsValue, boolean isLastSql, Connection conn, final Integer dbType) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
 	/*
@@ -144,7 +147,7 @@ public class PostgreSqlDialect implements Dialect {
 			}
 		}
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn);
+				conn, dbType);
 	}
 
 	/*
@@ -187,7 +190,7 @@ public class PostgreSqlDialect implements Dialect {
 				break;
 			}
 		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn);
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	/*
@@ -197,9 +200,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
-		return PostgreSqlDialectUtils.save(sqlToyContext, entity, conn, tableName);
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
+		return PostgreSqlDialectUtils.save(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	/*
@@ -211,9 +214,9 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
-		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
+		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				autoCommit, tableName);
 	}
 
@@ -227,7 +230,7 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
 			Class[] emptyCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
-			final String tableName) throws Exception {
+			final Integer dbType, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -242,7 +245,7 @@ public class PostgreSqlDialect implements Dialect {
 						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
 								sequence, forceUpdateFields, null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, tableName);
+				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
@@ -255,9 +258,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName, false);
+				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
 	/*
@@ -269,11 +272,11 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			Connection conn, final Boolean autoCommit, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				autoCommit, tableName);
+				dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -287,7 +290,7 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		// 判断postgresql是否原生支持
 		// if (SqlToyConstants.postgresqlSupportSaveOrUpdate()) {
 		// return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize,
@@ -295,12 +298,12 @@ public class PostgreSqlDialect implements Dialect {
 		// conn, autoCommit, tableName);
 		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size())
 			return updateCnt;
-		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
@@ -308,7 +311,7 @@ public class PostgreSqlDialect implements Dialect {
 
 	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -324,7 +327,7 @@ public class PostgreSqlDialect implements Dialect {
 						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
 								sequence, forceUpdateFields, tableName);
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -337,8 +340,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -354,7 +357,7 @@ public class PostgreSqlDialect implements Dialect {
 						return PostgreSqlDialectUtils.getSaveIgnoreExist(DBType.POSTGRESQL, entityMeta, pkStrategy,
 								sequence, tableName);
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
 
 	}
 
@@ -365,9 +368,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
-		return DialectUtils.delete(sqlToyContext, entity, conn, tableName);
+	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
+		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	/*
@@ -378,8 +381,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
-		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, autoCommit, tableName);
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -396,7 +399,7 @@ public class PostgreSqlDialect implements Dialect {
 			throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -413,7 +416,7 @@ public class PostgreSqlDialect implements Dialect {
 			final Integer dbType) throws Exception {
 		String realSql = sql + " limit " + topSize + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -431,7 +434,7 @@ public class PostgreSqlDialect implements Dialect {
 			final Integer dbType) throws Exception {
 		String realSql = sql + " order by random() limit " + random + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -442,7 +445,8 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn);
+			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType)
+			throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 }

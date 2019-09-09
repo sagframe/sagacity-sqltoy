@@ -36,7 +36,8 @@ public class DB2DialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast())
@@ -60,7 +61,7 @@ public class DB2DialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 

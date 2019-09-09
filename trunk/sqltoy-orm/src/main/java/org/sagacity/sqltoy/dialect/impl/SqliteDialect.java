@@ -64,7 +64,8 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast())
@@ -87,7 +88,8 @@ public class SqliteDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -101,7 +103,8 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType)
+			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -120,7 +123,8 @@ public class SqliteDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -132,7 +136,7 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql());
@@ -149,7 +153,8 @@ public class SqliteDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -162,9 +167,9 @@ public class SqliteDialect implements Dialect {
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, 0,
-				fetchSize, maxRows);
+			final Integer dbType, final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
+				0, fetchSize, maxRows);
 	}
 
 	/*
@@ -175,8 +180,9 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final boolean isLastSql, final Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
+			final Object[] paramsValue, final boolean isLastSql, final Connection conn, final Integer dbType)
+			throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
 	/*
@@ -187,11 +193,11 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Boolean autoCommit, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				autoCommit, tableName);
+				dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -203,14 +209,14 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size())
 			return updateCnt;
-		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
@@ -236,15 +242,15 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return SqliteDialectUtils.getSaveIgnoreExistSql(DBType.SQLITE, entityMeta, tableName);
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
 
 	}
 
@@ -268,7 +274,7 @@ public class SqliteDialect implements Dialect {
 		// break;
 		// }
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn);
+				conn, dbType);
 	}
 
 	/*
@@ -307,7 +313,7 @@ public class SqliteDialect implements Dialect {
 		// break;
 		// }
 		// }
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn);
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	/*
@@ -317,8 +323,8 @@ public class SqliteDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
 	 */
 	@Override
-	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
 		// sqlite 只提供autoincrement 机制，即identity模式，所以sequence可以忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
@@ -336,7 +342,7 @@ public class SqliteDialect implements Dialect {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
 					}
-				}, conn);
+				}, conn, dbType);
 	}
 
 	/*
@@ -348,14 +354,14 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils.generateInsertSql(DBType.SQLITE, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -368,15 +374,15 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] emptyCascadeClasses,
-			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final String tableName)
-			throws Exception {
+			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return SqliteDialectUtils.getSaveOrUpdateSql(DBType.SQLITE, entityMeta, forceUpdateFields,
 								null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, tableName);
+				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
@@ -389,9 +395,9 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName, false);
+				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
 	/*
@@ -401,9 +407,9 @@ public class SqliteDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
-		return DialectUtils.delete(sqlToyContext, entity, conn, tableName);
+	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
+		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	/*
@@ -414,8 +420,8 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
-		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, autoCommit, tableName);
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -430,7 +436,8 @@ public class SqliteDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType)
 			throws Exception {
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn, 0);
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
+				dbType, 0);
 	}
 
 	/*
@@ -447,7 +454,7 @@ public class SqliteDialect implements Dialect {
 			final Integer dbType) throws Exception {
 		String realSql = sql + " limit " + topSize;
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -465,7 +472,7 @@ public class SqliteDialect implements Dialect {
 			final Integer dbType) throws Exception {
 		String realSql = sql + " order by random() limit " + random;
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -476,7 +483,8 @@ public class SqliteDialect implements Dialect {
 	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn) throws Exception {
+			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType)
+			throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

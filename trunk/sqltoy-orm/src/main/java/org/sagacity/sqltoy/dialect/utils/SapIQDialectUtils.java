@@ -52,7 +52,7 @@ public class SapIQDialectUtils {
 	 * @throws Exception
 	 */
 	public static Object save(SqlToyContext sqlToyContext, Serializable entity, boolean openIdentity,
-			final Connection conn, String tableName) throws Exception {
+			final Connection conn, final Integer dbType, String tableName) throws Exception {
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		final boolean isIdentity = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
@@ -121,9 +121,9 @@ public class SapIQDialectUtils {
 				pst = conn.prepareStatement(realInsertSql);
 				// 存在默认值
 				if (entityMeta.isHasDefaultValue())
-					SqlUtilsExt.setParamsValue(conn, pst, paramValues, entityMeta);
+					SqlUtilsExt.setParamsValue(conn, dbType, pst, paramValues, entityMeta);
 				else
-					SqlUtil.setParamsValue(conn, pst, paramValues, paramsType, 0);
+					SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
 				if (isSequence || isIdentity)
 					keyResult = pst.executeQuery();
@@ -160,7 +160,7 @@ public class SapIQDialectUtils {
 											this.setValue(mappedFields[i], idValues[i]);
 										}
 									}
-								}, openIdentity, conn, null);
+								}, openIdentity, conn, dbType, null);
 					}
 				}
 			}
@@ -180,8 +180,8 @@ public class SapIQDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, boolean openIdentity, Connection conn, String tableName)
-			throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, boolean openIdentity, Connection conn, final Integer dbType,
+			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String insertSql = DialectUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 				null, "@mySeqVariable", false, tableName);
@@ -191,7 +191,7 @@ public class SapIQDialectUtils {
 		if (sqlToyContext.isDebug())
 			logger.debug("batch insert sql:{}", insertSql);
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
-				reflectPropertyHandler, conn);
+				reflectPropertyHandler, conn, dbType);
 	}
 
 	/**
@@ -208,7 +208,7 @@ public class SapIQDialectUtils {
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -270,9 +270,9 @@ public class SapIQDialectUtils {
 		if (sqlToyContext.isDebug())
 			logger.debug("batch insert sql:{}", insertSql);
 		if (entityMeta.isHasDefaultValue())
-			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn);
+			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn, dbType);
 		else
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
-					null, conn);
+					null, conn, dbType);
 	}
 }

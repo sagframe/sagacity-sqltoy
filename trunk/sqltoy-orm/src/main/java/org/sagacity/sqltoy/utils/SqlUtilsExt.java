@@ -40,8 +40,9 @@ public class SqlUtilsExt {
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn) throws Exception {
-		return batchUpdateByJdbc(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn);
+			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
+		return batchUpdateByJdbc(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -55,9 +56,11 @@ public class SqlUtilsExt {
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final EntityMeta entityMeta, final Boolean autoCommit, final Connection conn) throws Exception {
+			final EntityMeta entityMeta, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
 		return batchUpdateByJdbc(updateSql, rowDatas, entityMeta.getFieldsTypeArray(),
-				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn);
+				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
+				dbType);
 	}
 
 	/**
@@ -74,7 +77,8 @@ public class SqlUtilsExt {
 	 */
 	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
-			final int batchSize, final Boolean autoCommit, final Connection conn) throws Exception {
+			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
 		if (rowDatas == null) {
 			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
 			return 0L;
@@ -155,7 +159,7 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(Connection conn, PreparedStatement pst, Object[] params,
+	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
 			for (int i = 0, n = params.length; i < n; i++)

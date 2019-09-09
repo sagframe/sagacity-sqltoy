@@ -254,7 +254,7 @@ public class DialectFactory {
 							// debug 显示sql
 							SqlExecuteStat.showSql(executeSql, queryParam.getParamsValue());
 							this.setResult(DialectUtils.executeSql(sqlToyContext, executeSql,
-									queryParam.getParamsValue(), null, conn, autoCommit));
+									queryParam.getParamsValue(), null, conn, dbType, autoCommit));
 						}
 					});
 		} catch (Exception e) {
@@ -285,7 +285,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(DialectUtils.isUnique(sqlToyContext, uniqueExecutor.getEntity(),
-									uniqueExecutor.getUniqueFields(), conn, shardingModel.getTableName()));
+									uniqueExecutor.getUniqueFields(), conn, dbType, shardingModel.getTableName()));
 						}
 					});
 		} catch (Exception e) {
@@ -353,11 +353,11 @@ public class DialectFactory {
 								return;
 							}
 							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
-									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn);
+									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType);
 
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-									queryExecutor, conn, dialect);
+									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
 									sqlToyContext.isDebug());
 							if (queryExecutor.getResultType() != null) {
@@ -460,7 +460,7 @@ public class DialectFactory {
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							this.setResult(SqlUtil.wrapTreeTableRoute(treeModel, conn));
+							this.setResult(SqlUtil.wrapTreeTableRoute(treeModel, conn, dbType));
 						}
 					});
 		} catch (Exception e) {
@@ -538,8 +538,8 @@ public class DialectFactory {
 											queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 									queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 											realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-											queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(),
-											queryExecutor.getMaxRows());
+											queryExecutor.getRowCallbackHandler(), conn, dbType,
+											queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
 									long totalRecord = (queryResult.getRows() == null) ? 0
 											: queryResult.getRows().size();
 									queryResult.setPageNo(1L);
@@ -549,14 +549,14 @@ public class DialectFactory {
 									// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 									long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
 									queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-											realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn);
+											realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn, dbType);
 									queryResult.setPageNo(realStartPage);
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(recordCnt);
 								}
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, dialect);
+										queryExecutor, conn, dbType, dialect);
 								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
 										sqlToyContext.isDebug());
 								// 结果映射成对象
@@ -618,10 +618,10 @@ public class DialectFactory {
 							}
 
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findTopBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor, realTopSize, conn);
+									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType);
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-									queryExecutor, conn, dialect);
+									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
 									sqlToyContext.isDebug());
 							// 结果映射成对象
@@ -670,11 +670,11 @@ public class DialectFactory {
 									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(),
+									queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
 									queryExecutor.getMaxRows());
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-									queryExecutor, conn, dialect);
+									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
 									sqlToyContext.isDebug());
 							// 结果映射成对象
@@ -792,7 +792,7 @@ public class DialectFactory {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
-				queryParam.getParamsValue(), isLastSql, conn);
+				queryParam.getParamsValue(), isLastSql, conn, dbType);
 	}
 
 	/**
@@ -815,7 +815,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
-									forceUpdateProps, conn, null, shardingModel.getTableName()));
+									forceUpdateProps, conn, dbType, null, shardingModel.getTableName()));
 						}
 					});
 		} catch (Exception e) {
@@ -854,7 +854,8 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, reflectPropertyHandler,
-													forceUpdateProps, conn, (autoCommit == null) ? false : autoCommit,
+													forceUpdateProps, conn, dbType,
+													(autoCommit == null) ? false : autoCommit,
 													shardingModel.getTableName()));
 										}
 									});
@@ -906,7 +907,7 @@ public class DialectFactory {
 											this.setResult(
 													getDialectSqlWrapper(dbType).saveAllIgnoreExist(sqlToyContext,
 															batchModel.getEntities(), batchSize, reflectPropertyHandler,
-															conn, (autoCommit == null) ? false : autoCommit,
+															conn, dbType, (autoCommit == null) ? false : autoCommit,
 															shardingModel.getTableName()));
 										}
 									});
@@ -1018,7 +1019,7 @@ public class DialectFactory {
 			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn,
+							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn, dbType,
 									shardingModel.getTableName()));
 						}
 					});
@@ -1057,7 +1058,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
-													(autoCommit == null) ? false : autoCommit,
+													dbType, (autoCommit == null) ? false : autoCommit,
 													shardingModel.getTableName()));
 										}
 									});
@@ -1102,7 +1103,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).update(sqlToyContext, entity, forceUpdateFields,
-									cascade, forceCascadeClass, subTableForceUpdateProps, conn,
+									cascade, forceCascadeClass, subTableForceUpdateProps, conn, dbType,
 									shardingModel.getTableName()));
 						}
 					});
@@ -1142,7 +1143,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).updateAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, forceUpdateFields,
-													reflectPropertyHandler, conn,
+													reflectPropertyHandler, conn, dbType,
 													(autoCommit == null) ? false : autoCommit,
 													shardingModel.getTableName()));
 										}
@@ -1182,7 +1183,7 @@ public class DialectFactory {
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn,
+							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn, dbType,
 									shardingModel.getTableName()));
 						}
 					});
@@ -1218,7 +1219,7 @@ public class DialectFactory {
 										public void doConnection(Connection conn, Integer dbType, String dialect)
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).deleteAll(sqlToyContext,
-													batchModel.getEntities(), batchSize, conn,
+													batchModel.getEntities(), batchSize, conn, dbType,
 													(autoCommit == null) ? false : autoCommit,
 													shardingModel.getTableName()));
 										}
@@ -1399,13 +1400,13 @@ public class DialectFactory {
 							// 针对不同数据库执行存储过程调用
 							SqlExecuteStat.showSql(sqlToyResult.getSql(), inParamsValue);
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
-									sqlToyConfig, sqlToyResult.getSql(), inParamsValue, outParamsType, conn);
+									sqlToyConfig, sqlToyResult.getSql(), inParamsValue, outParamsType, conn, dbType);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
 									inParamsValue);
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
-									queryExecutor, conn, dialect);
+									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet, sqlToyContext.isDebug());
 							// }
 							// 映射成对象

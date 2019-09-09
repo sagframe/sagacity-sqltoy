@@ -66,7 +66,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		/*
 		 * select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
@@ -95,7 +96,8 @@ public class MySqlDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -109,7 +111,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType)
+			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -128,7 +131,8 @@ public class MySqlDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -140,7 +144,7 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql());
@@ -157,7 +161,8 @@ public class MySqlDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+				queryExecutor.getRowCallbackHandler(), conn, dbType, queryExecutor.getFetchSize(),
+				queryExecutor.getMaxRows());
 	}
 
 	/*
@@ -170,9 +175,9 @@ public class MySqlDialect implements Dialect {
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, 0,
-				fetchSize, maxRows);
+			final Integer dbType, final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
+				0, fetchSize, maxRows);
 	}
 
 	/*
@@ -183,8 +188,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, boolean isLastSql, final Connection conn) throws Exception {
-		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn);
+			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType) throws Exception {
+		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
 	/*
@@ -195,11 +200,11 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Boolean autoCommit, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
 		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				autoCommit, tableName);
+				dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -211,7 +216,7 @@ public class MySqlDialect implements Dialect {
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql是否支持原生saveOrUpdate
 		// if (SqlToyConstants.mysqlSupportSaveOrUpdate()) {
 		// return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize,
@@ -219,12 +224,12 @@ public class MySqlDialect implements Dialect {
 		// conn, autoCommit, tableName);
 		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropertyHandler, NVL_FUNCTION, conn, autoCommit, tableName, true);
+				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size())
 			return updateCnt;
-		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn,
+		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
@@ -233,7 +238,7 @@ public class MySqlDialect implements Dialect {
 	// mysql DUPLICATE key update 在对非空字段操作是报异常
 	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -241,7 +246,7 @@ public class MySqlDialect implements Dialect {
 						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields,
 								tableName);
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -254,8 +259,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -264,7 +269,7 @@ public class MySqlDialect implements Dialect {
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -292,7 +297,7 @@ public class MySqlDialect implements Dialect {
 			}
 		}
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn);
+				conn, dbType);
 	}
 
 	/*
@@ -334,7 +339,7 @@ public class MySqlDialect implements Dialect {
 				break;
 			}
 		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn);
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	/*
@@ -344,8 +349,8 @@ public class MySqlDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
 	 */
 	@Override
-	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
+	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
 		// mysql只支持identity,sequence 值忽略,mysql identity可以手工插入
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -366,7 +371,7 @@ public class MySqlDialect implements Dialect {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
 					}
-				}, conn);
+				}, conn, dbType);
 	}
 
 	/*
@@ -378,15 +383,15 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, autoCommit);
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -399,14 +404,14 @@ public class MySqlDialect implements Dialect {
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] emptyCascadeClasses,
-			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final String tableName)
-			throws Exception {
+			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields, null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, tableName);
+				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
@@ -419,9 +424,9 @@ public class MySqlDialect implements Dialect {
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				NVL_FUNCTION, conn, autoCommit, tableName, false);
+				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
 	/*
@@ -431,9 +436,9 @@ public class MySqlDialect implements Dialect {
 	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
 	 */
 	@Override
-	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
-		return DialectUtils.delete(sqlToyContext, entity, conn, tableName);
+	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
+		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	/*
@@ -444,8 +449,8 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
-		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, autoCommit, tableName);
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -465,7 +470,7 @@ public class MySqlDialect implements Dialect {
 			lockSql = " for update skip locked ";
 		String realSql = sql.concat(lockSql);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -485,7 +490,7 @@ public class MySqlDialect implements Dialect {
 			lockSql = " for update skip locked ";
 		String realSql = sql + " limit " + topSize + lockSql;
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -506,7 +511,7 @@ public class MySqlDialect implements Dialect {
 		if (dbType.equals(DBType.MYSQL8))
 			realSql = realSql + " skip locked ";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				0);
+				dbType, 0);
 	}
 
 	/*
@@ -517,8 +522,9 @@ public class MySqlDialect implements Dialect {
 	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn);
+			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType)
+			throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {

@@ -62,7 +62,8 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		// sql中是否存在排序或union
@@ -88,7 +89,7 @@ public class SqlServerDialectUtils {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
 				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -116,9 +117,10 @@ public class SqlServerDialectUtils {
 		 * sqlserver2008 identity 模式必须要先执行set identity_insert tableName on
 		 * 从2012版本后则无需进行设置
 		 */
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, true);
+					null, conn, dbType, true);
+		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
@@ -131,10 +133,11 @@ public class SqlServerDialectUtils {
 									+ " " + sql;
 						return sql.concat(";");
 					}
-				}, reflectPropertyHandler, conn, autoCommit);
-		if (isIdentity && openIdentity)
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, true);
+					null, conn, dbType, true);
+		}
 		return updateCount;
 	}
 
@@ -571,7 +574,7 @@ public class SqlServerDialectUtils {
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
 		if (isIdentity && openIdentity)
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, true);
+					null, conn, dbType, true);
 		if (sqlToyContext.isDebug())
 			logger.debug(insertSql);
 		final String realInsertSql = insertSql;
@@ -632,9 +635,10 @@ public class SqlServerDialectUtils {
 					}
 				}
 			}
-			if (isIdentity && openIdentity)
+			if (isIdentity && openIdentity) {
 				DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF",
-						null, null, conn, true);
+						null, null, conn, dbType, true);
+			}
 			return result;
 		}
 	}
@@ -650,8 +654,8 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, final Boolean autoCommit)
-			throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 
@@ -665,14 +669,16 @@ public class SqlServerDialectUtils {
 
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, true);
+					null, conn, dbType, true);
+		}
 		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, reflectPropertyHandler, conn, autoCommit);
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, true);
+					null, conn, dbType, true);
+		}
 		return updateCount;
 	}
 
@@ -855,7 +861,7 @@ public class SqlServerDialectUtils {
 			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, "isnull", forceUpdateFields, conn,
-				tableName);
+				dbType, tableName);
 
 		// 级联修改
 		if (cascade && !entityMeta.getOneToManys().isEmpty()) {
@@ -882,7 +888,7 @@ public class SqlServerDialectUtils {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
 					DialectUtils.executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null,
-							conn, null);
+							conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

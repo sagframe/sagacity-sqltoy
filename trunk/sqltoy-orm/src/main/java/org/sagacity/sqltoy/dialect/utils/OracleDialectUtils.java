@@ -35,7 +35,8 @@ public class OracleDialectUtils {
 	/**
 	 * 定义日志
 	 */
-	//private final static Logger logger = LogManager.getLogger(OracleDialectUtils.class);
+	// private final static Logger logger =
+	// LogManager.getLogger(OracleDialectUtils.class);
 
 	/**
 	 * @todo 加载单个对象
@@ -49,7 +50,7 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
@@ -65,7 +66,7 @@ public class OracleDialectUtils {
 			}
 		}
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
-				conn);
+				conn, dbType);
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -111,7 +112,7 @@ public class OracleDialectUtils {
 				break;
 			}
 		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn);
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	/**
@@ -126,7 +127,8 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		// sql中是否存在排序或union
@@ -155,7 +157,7 @@ public class OracleDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -172,14 +174,14 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
-			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn)
-			throws Exception {
+			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
+			final Integer dbType) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
-				SqlUtil.setParamsValue(conn, callStat, inParamValues, null, 0);
+				SqlUtil.setParamsValue(conn, dbType, callStat, inParamValues, null, 0);
 				int cursorIndex = -1;
 				int cursorCnt = 0;
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;

@@ -198,7 +198,8 @@ public class DialectUtils {
 	 */
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
-			final Connection conn, final int startIndex, final int fetchSize, final int maxRows) throws Exception {
+			final Connection conn, final Integer dbType, final int startIndex, final int fetchSize, final int maxRows)
+			throws Exception {
 		// 打印sql
 		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -210,7 +211,7 @@ public class DialectUtils {
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(conn, pst, paramsValue, null, 0);
+				SqlUtil.setParamsValue(conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, rowCallbackHandler,
 						null, startIndex));
@@ -232,7 +233,7 @@ public class DialectUtils {
 	 */
 	public static QueryResult updateFetchBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final UpdateRowHandler updateRowHandler,
-			final Connection conn, final int startIndex) throws Exception {
+			final Connection conn, final Integer dbType, final int startIndex) throws Exception {
 		// 打印sql
 		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = null;
@@ -244,7 +245,7 @@ public class DialectUtils {
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(conn, pst, paramsValue, null, 0);
+				SqlUtil.setParamsValue(conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
 						updateRowHandler, startIndex));
@@ -264,8 +265,8 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn)
-			throws Exception {
+			final String sql, final Object[] paramsValue, final boolean isLastSql, final Connection conn,
+			final Integer dbType) throws Exception {
 		String lastCountSql;
 		int paramCnt = 0;
 		int withParamCnt = 0;
@@ -359,7 +360,7 @@ public class DialectUtils {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
 				if (realParams != null) {
-					SqlUtil.setParamsValue(conn, pst, realParams, null, 0);
+					SqlUtil.setParamsValue(conn, dbType, pst, realParams, null, 0);
 				}
 				rs = pst.executeQuery();
 				if (rs.next()) {
@@ -504,7 +505,8 @@ public class DialectUtils {
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, String[] forceUpdateFields, GenerateSqlHandler generateSqlHandler,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Boolean autoCommit) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, Boolean autoCommit)
+			throws Exception {
 		// 重新构造修改或保存的属性赋值反调
 		ReflectPropertyHandler handler = getSaveOrUpdateReflectHandler(sqlToyContext, entityMeta.getIdArray(),
 				reflectPropertyHandler);
@@ -572,7 +574,7 @@ public class DialectUtils {
 	 */
 	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropertyHandler reflectPropertyHandler,
-			Connection conn, Boolean autoCommit) throws Exception {
+			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
@@ -1098,7 +1100,8 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn) throws Exception {
+			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn, final Integer dbType)
+			throws Exception {
 		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
@@ -1111,7 +1114,7 @@ public class DialectUtils {
 		// 显示sql
 		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), null, conn, 0, -1, -1);
+				sqlToyResult.getParamsValue(), null, conn, dbType, 0, -1, -1);
 		List rows = queryResult.getRows();
 		Serializable result = null;
 		if (rows != null && rows.size() > 0) {
@@ -1134,7 +1137,7 @@ public class DialectUtils {
 						logger.debug("auto load sub table dataSet sql:{}", sqlToyResult.getSql());
 					}
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-							oneToMany.getMappedType(), null, conn, false);
+							oneToMany.getMappedType(), null, conn, dbType, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
 						BeanUtils.setProperty(result, oneToMany.getProperty(), pkRefDetails);
 					}
@@ -1155,7 +1158,7 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, String sql, List<?> entities,
-			List<Class> cascadeTypes, Connection conn) throws Exception {
+			List<Class> cascadeTypes, Connection conn, final Integer dbType) throws Exception {
 		if (entities == null || entities.isEmpty())
 			return entities;
 		Class entityClass = entities.get(0).getClass();
@@ -1196,7 +1199,7 @@ public class DialectUtils {
 		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), entityClass,
-				null, conn, false);
+				null, conn, dbType, false);
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1218,7 +1221,7 @@ public class DialectUtils {
 							idValues);
 					SqlExecuteStat.showSql(subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(subToyResult.getSql(), subToyResult.getParamsValue(),
-							oneToMany.getMappedType(), null, conn, false);
+							oneToMany.getMappedType(), null, conn, dbType, false);
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
 					BeanUtil.invokeMethod(entities.get(0),
 							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
@@ -1247,7 +1250,7 @@ public class DialectUtils {
 	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, final PKStrategy pkStrategy,
 			final boolean isAssignPK, final ReturnPkType returnPkType, final String insertSql, Serializable entity,
 			final GenerateSqlHandler generateSqlHandler, final GenerateSavePKStrategy generateSavePKStrategy,
-			final Connection conn) throws Exception {
+			final Connection conn, final Integer dbType) throws Exception {
 		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
 		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
 		String[] reflectColumns;
@@ -1321,7 +1324,7 @@ public class DialectUtils {
 				} else {
 					pst = conn.prepareStatement(insertSql);
 				}
-				SqlUtil.setParamsValue(conn, pst, paramValues, paramsType, 0);
+				SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
 				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
 					keyResult = pst.executeQuery();
@@ -1380,7 +1383,7 @@ public class DialectUtils {
 											this.setValue(mappedFields[i], idValues[i]);
 										}
 									}
-								}, conn, null);
+								}, conn, dbType, null);
 					}
 				}
 			}
@@ -1404,7 +1407,8 @@ public class DialectUtils {
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -1470,7 +1474,7 @@ public class DialectUtils {
 		if (sqlToyContext.isDebug())
 			logger.debug("batch insert sql:{}", insertSql);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
-				autoCommit, conn);
+				autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1485,7 +1489,8 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, EntityMeta entityMeta,
-			String nullFunction, String[] forceUpdateFields, Connection conn, String tableName) throws Exception {
+			String nullFunction, String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName)
+			throws Exception {
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
 			throw new IllegalArgumentException(
@@ -1508,7 +1513,7 @@ public class DialectUtils {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		if (sqlToyContext.isDebug())
 			logger.debug("update last execute sql:{}", updateSql);
-		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, null);
+		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
 	}
 
 	/**
@@ -1528,9 +1533,10 @@ public class DialectUtils {
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
 			String[] forceUpdateFields, final boolean cascade, final GenerateSqlHandler generateSqlHandler,
 			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
-			String tableName) throws Exception {
+			final Integer dbType, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, tableName);
+		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
+				tableName);
 		// 级联保存
 		if (cascade && !entityMeta.getOneToManys().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
@@ -1561,7 +1567,8 @@ public class DialectUtils {
 					// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, null);
+					executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType,
+							null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -1574,7 +1581,7 @@ public class DialectUtils {
 										this.setValue(mappedFields[i], IdValues[i]);
 									}
 								}
-							}, conn, null);
+							}, conn, dbType, null);
 				}
 			}
 		}
@@ -1598,7 +1605,8 @@ public class DialectUtils {
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, String nullFunction,
-			Connection conn, final Boolean autoCommit, String tableName, boolean skipNull) throws Exception {
+			Connection conn, final Integer dbType, final Boolean autoCommit, String tableName, boolean skipNull)
+			throws Exception {
 		if (entities == null || entities.isEmpty())
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -1640,7 +1648,7 @@ public class DialectUtils {
 		if (sqlToyContext.isDebug())
 			logger.debug("updateAll last execute sql:{}", updateSql);
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
-				entityMeta.getFieldsTypeArray(), autoCommit, conn);
+				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1651,8 +1659,8 @@ public class DialectUtils {
 	 * @param tableName
 	 * @throws Exception
 	 */
-	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final String tableName)
-			throws Exception {
+	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
 		if (entity == null)
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
@@ -1680,13 +1688,15 @@ public class DialectUtils {
 				if (oneToMany.isDelete()) {
 					if (sqlToyContext.isDebug())
 						logger.debug("cascade delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
-					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, null);
+					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, dbType,
+							null);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
 			logger.debug(entityMeta.getDeleteByIdsSql(tableName));
-		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, null);
+		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn,
+				dbType, null);
 	}
 
 	/**
@@ -1700,7 +1710,7 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -1729,14 +1739,14 @@ public class DialectUtils {
 					if (sqlToyContext.isDebug())
 						logger.debug("cascade batch delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
 					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues,
-							sqlToyContext.getBatchSize(), parameterTypes, null, conn);
+							sqlToyContext.getBatchSize(), parameterTypes, null, conn, dbType);
 				}
 			}
 		}
 		if (sqlToyContext.isDebug())
 			logger.debug("根据主键批量删除表sql:{}", entityMeta.getDeleteByIdsSql(tableName));
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
-				parameterTypes, autoCommit, conn);
+				parameterTypes, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1749,7 +1759,7 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
-			Connection conn, String tableName) {
+			Connection conn, final Integer dbType, String tableName) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
@@ -1801,13 +1811,13 @@ public class DialectUtils {
 			}
 
 			// 防止数据量过大，先用count方式查询提升效率
-			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn);
+			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn, dbType);
 			if (recordCnt == 0)
 				return true;
 			else if (recordCnt > 1)
 				return false;
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
-			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, false);
+			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0)
 				return true;
 			else if (result.size() > 1)
@@ -1943,14 +1953,15 @@ public class DialectUtils {
 	}
 
 	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
-			final Integer[] paramsType, final Connection conn, final Boolean autoCommit) throws Exception {
+			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit)
+			throws Exception {
 		if (sqlToyContext.isDebug()) {
 			out.println("=================executeSql执行的语句====================");
 			out.println(" execute sql:" + executeSql);
 			DebugUtil.printAry(params, ";", false);
 			out.println("======================================================");
 		}
-		return SqlUtil.executeSql(executeSql, params, paramsType, conn, autoCommit);
+		return SqlUtil.executeSql(executeSql, params, paramsType, conn, dbType, autoCommit);
 	}
 
 	/**
@@ -1965,8 +1976,8 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
-			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn)
-			throws Exception {
+			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
+			final Integer dbType) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
@@ -1974,7 +1985,7 @@ public class DialectUtils {
 				callStat = conn.prepareCall(storeSql);
 				boolean isFirstResult = StringUtil.matches(storeSql, STORE_PATTERN);
 				int addIndex = isFirstResult ? 1 : 0;
-				SqlUtil.setParamsValue(conn, callStat, inParamValues, null, addIndex);
+				SqlUtil.setParamsValue(conn, dbType, callStat, inParamValues, null, addIndex);
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;
 				int outCount = (outParamTypes == null) ? 0 : outParamTypes.length;
 

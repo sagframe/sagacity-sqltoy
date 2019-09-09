@@ -954,7 +954,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List getPivotCategory(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Connection conn, String dialect) throws Exception {
+			QueryExecutor queryExecutor, Connection conn, final Integer dbType, String dialect) throws Exception {
 		if (sqlToyConfig.getResultProcessor() != null && !sqlToyConfig.getResultProcessor().isEmpty()) {
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
@@ -971,7 +971,8 @@ public class ResultUtils {
 								queryExecutor.getParamsName(pivotSqlConfig),
 								queryExecutor.getParamsValue(sqlToyContext, pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
-								pivotSqlToyResult.getParamsValue(), null, null, conn, sqlToyConfig.isIgnoreEmpty());
+								pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
+								sqlToyConfig.isIgnoreEmpty());
 						// 行转列返回
 						return CollectionUtil.convertColToRow(pivotCategory, null);
 					}

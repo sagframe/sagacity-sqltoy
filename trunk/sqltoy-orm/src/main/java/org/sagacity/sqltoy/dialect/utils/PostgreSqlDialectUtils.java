@@ -47,7 +47,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType)
+			throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql() : sqlToyConfig.getSql();
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
@@ -70,7 +71,7 @@ public class PostgreSqlDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -86,7 +87,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType)
+			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -105,7 +107,7 @@ public class PostgreSqlDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -120,7 +122,7 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Integer topSize, Connection conn) throws Exception {
+			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql());
@@ -136,7 +138,7 @@ public class PostgreSqlDialectUtils {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, 0, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -149,8 +151,8 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, String tableName)
-			throws Exception {
+	public static Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			String tableName) throws Exception {
 		// 只支持sequence模式
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
@@ -182,7 +184,7 @@ public class PostgreSqlDialectUtils {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
 					}
-				}, conn);
+				}, conn, dbType);
 	}
 
 	/**
@@ -197,8 +199,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Boolean autoCommit, String tableName)
-			throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -211,7 +213,7 @@ public class PostgreSqlDialectUtils {
 		String insertSql = DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
 				sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropertyHandler, conn, autoCommit);
+				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/**

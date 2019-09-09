@@ -40,8 +40,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Long totalCount, final Long randomCount, final Connection conn)
-			throws Exception;
+			final QueryExecutor queryExecutor, final Long totalCount, final Long randomCount, final Connection conn,
+			final Integer dbType) throws Exception;
 
 	/**
 	 * @todo 分页查询
@@ -55,8 +55,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findPageBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Long pageNo, final Integer pageSize, final Connection conn)
-			throws Exception;
+			final QueryExecutor queryExecutor, final Long pageNo, final Integer pageSize, final Connection conn,
+			final Integer dbType) throws Exception;
 
 	/**
 	 * @todo 取top记录数
@@ -69,7 +69,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findTopBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Integer topSize, final Connection conn) throws Exception;
+			final QueryExecutor queryExecutor, final Integer topSize, final Connection conn, final Integer dbType)
+			throws Exception;
 
 	/**
 	 * @todo 普通sql查询
@@ -86,7 +87,7 @@ public interface Dialect {
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final int fetchSize, final int maxRows) throws Exception;
+			final Integer dbType, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 取记录数量
@@ -100,7 +101,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final boolean isLastSql, final Connection conn) throws Exception;
+			final Object[] paramsValue, final boolean isLastSql, final Connection conn, final Integer dbType)
+			throws Exception;
 
 	/**
 	 * @todo 获取单个对象
@@ -142,7 +144,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Object save(final SqlToyContext sqlToyContext, final Serializable entity, final Connection conn,
-			final String tableName) throws Exception;
+			final Integer dbType, final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量修改
@@ -156,8 +158,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
 	 * @todo 修改单个对象
@@ -173,8 +175,8 @@ public interface Dialect {
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
-			final HashMap<Class, String[]> subTableForceUpdateProps, final Connection conn, final String tableName)
-			throws Exception;
+			final HashMap<Class, String[]> subTableForceUpdateProps, final Connection conn, final Integer dbType,
+			final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量修改对象
@@ -190,7 +192,8 @@ public interface Dialect {
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
-			final Connection conn, final Boolean autoCommit, final String tableName) throws Exception;
+			final Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 保存或修改单条记录
@@ -203,8 +206,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
-			final String[] forceUpdateFields, final Connection conn, final Boolean autoCommit, final String tableName)
-			throws Exception;
+			final String[] forceUpdateFields, final Connection conn, final Integer dbType, final Boolean autoCommit,
+			final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量保存或修改记录
@@ -220,7 +223,8 @@ public interface Dialect {
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
-			final Connection conn, final Boolean autoCommit, final String tableName) throws Exception;
+			final Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 批量保存,主键冲突的则忽视
@@ -234,8 +238,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Integer dbType,
+			final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
 	 * @todo 删除单个对象
@@ -246,7 +250,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final Connection conn,
-			final String tableName) throws Exception;
+			final Integer dbType, final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量删除对象
@@ -259,7 +263,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long deleteAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final Connection conn, final Boolean autoCommit, final String tableName) throws Exception;
+			final Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo lock记录查询，并立即修改查询的结果反写到数据库
@@ -298,6 +303,6 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn)
-			throws Exception;
+			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
+			final Integer dbType) throws Exception;
 }
