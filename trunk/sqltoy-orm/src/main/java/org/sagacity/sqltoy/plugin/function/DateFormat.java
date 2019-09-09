@@ -23,7 +23,7 @@ public class DateFormat extends IFunction {
 	@Override
 	public String dialects() {
 		// TODO Auto-generated method stub
-		return "";
+		return "oracle12c,mysql8";
 	}
 
 	/*

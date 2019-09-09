@@ -10,8 +10,17 @@ package org.sagacity.sqltoy.plugin;
  * @version id:IFunction.java,Revision:v1.0,Date:2013-1-2
  */
 public abstract class IFunction {
+
+	/**
+	 * @todo 函数适配的数据库方言,用逗号分隔,返回空或null表示适配所有数据库
+	 * @return
+	 */
 	public abstract String dialects();
 
+	/**
+	 * @todo 函数匹配表达式
+	 * @return
+	 */
 	public abstract String regex();
 
 	/**

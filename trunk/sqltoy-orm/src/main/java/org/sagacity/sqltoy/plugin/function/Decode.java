@@ -24,14 +24,13 @@ public class Decode extends IFunction {
 	}
 
 	public String dialects() {
-		return "oracle12c";
+		return "mysql8";
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.config.function.IFunction#wrap(java.lang.String
-	 * [])
+	 * @see org.sagacity.sqltoy.config.function.IFunction#wrap(java.lang.String [])
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {

@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.plugin.IFunction;
  */
 public class ToDate extends IFunction {
 	public String dialects() {
-		return "oracle";
+		return "oracle12c";
 	}
 
 	/*

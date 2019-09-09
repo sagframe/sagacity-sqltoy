@@ -831,7 +831,8 @@ public class SqlConfigParseUtils {
 		String dialectLowcase = dialect.toLowerCase();
 		for (int i = 0; i < functionConverts.size(); i++) {
 			function = functionConverts.get(i);
-			if (!function.dialects().toLowerCase().contains(dialectLowcase)) {
+			//方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
+			if (StringUtil.isBlank(function.dialects())||function.dialects().toLowerCase().contains(dialectLowcase)) {
 				lastFunction = replaceFunction(lastFunction, dbType, function);
 			}
 		}

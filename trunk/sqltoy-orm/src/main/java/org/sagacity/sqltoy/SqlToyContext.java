@@ -337,8 +337,9 @@ public class SqlToyContext implements ApplicationContextAware {
 					// 十位数作为dataCenterId
 					if (dataCenterId == null)
 						SqlToyConstants.DATA_CENTER_ID = id / 10;
-				} else
+				} else {
 					SqlToyConstants.WORKER_ID = id;
+				}
 			}
 			if (dataCenterId != null && dataCenterId.intValue() > 0 && dataCenterId.intValue() < 32) {
 				SqlToyConstants.DATA_CENTER_ID = dataCenterId.intValue();
@@ -347,8 +348,9 @@ public class SqlToyContext implements ApplicationContextAware {
 			String serverNode = (serverId == null) ? SqlToyConstants.getKeyValue("sqltoy.server.id") : ("" + serverId);
 			if (serverNode != null) {
 				serverNode = StringUtil.addLeftZero2Len(serverNode, 3);
-				if (serverNode.length() > 3)
+				if (serverNode.length() > 3) {
 					serverNode = serverNode.substring(serverNode.length() - 3);
+				}
 				SqlToyConstants.SERVER_ID = serverNode;
 			}
 		} catch (Exception e) {
