@@ -1034,17 +1034,18 @@ public class ResultUtils {
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
 		// 如果结果类型是hashMap
-		if (resultType.equals(HashMap.class) || resultType.equals(Map.class)
-				|| resultType.equals(LinkedHashMap.class)) {
+		if (resultType.equals(HashMap.class) || resultType.getSuperclass().equals(HashMap.class)
+				|| resultType.getSuperclass().equals(LinkedHashMap.class) || resultType.equals(Map.class)
+				|| resultType.getSuperclass().equals(Map.class)) {
 			int width = labelNames.length;
-			boolean isLinked = (resultType.equals(LinkedHashMap.class)) ? true : false;
 			List result = new ArrayList();
 			List rowList;
 			for (int i = 0, n = queryResultRows.size(); i < n; i++) {
 				rowList = (List) queryResultRows.get(i);
-				Map rowMap = isLinked ? new LinkedHashMap() : new HashMap();
-				for (int j = 0; j < width; j++)
+				Map rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				for (int j = 0; j < width; j++) {
 					rowMap.put(labelNames[j], rowList.get(j));
+				}
 				result.add(rowMap);
 			}
 			return result;
