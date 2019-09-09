@@ -42,7 +42,7 @@ public class Concat extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		//只针对oracle数据库,其他数据库原样返回
+		// 只针对oracle数据库,其他数据库原样返回
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
 			// 超过2个参数
 			if (args != null && args.length > 2) {
@@ -50,12 +50,11 @@ public class Concat extends IFunction {
 				for (int i = 0; i < args.length; i++) {
 					if (i > 0)
 						result.append("||");
-					result.append(args[i]);
+					result.append(args[i].replace("\'", "''"));
 				}
 				return result.toString();
 			}
 		}
 		return null;
 	}
-
 }

@@ -36,7 +36,7 @@ public class SqlScriptLoader {
 	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.SubStr",
 			"org.sagacity.sqltoy.plugin.function.Trim", "org.sagacity.sqltoy.plugin.function.Instr",
 			"org.sagacity.sqltoy.plugin.function.Concat", "org.sagacity.sqltoy.plugin.function.ConcatWs",
-			"org.sagacity.sqltoy.plugin.function.Nvl" };
+			"org.sagacity.sqltoy.plugin.function.Nvl", "org.sagacity.sqltoy.plugin.function.DateFormat" };
 
 	/**
 	 * sql资源配置路径
