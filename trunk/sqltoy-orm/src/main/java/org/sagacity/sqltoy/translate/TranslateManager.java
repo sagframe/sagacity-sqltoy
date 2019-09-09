@@ -71,6 +71,11 @@ public class TranslateManager {
 	// private Timer timer;
 
 	private CacheCheckTimer cacheCheck;
+	
+	/**
+	 * 延时检测缓存更新时间(默认30秒)
+	 */
+	private int delayCheckCacheSeconds=30;
 
 	/**
 	 * @param translateConfig the translateConfig to set
@@ -101,7 +106,7 @@ public class TranslateManager {
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
-					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers);
+					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers,delayCheckCacheSeconds);
 					cacheCheck.start();
 				}
 			}
@@ -224,6 +229,10 @@ public class TranslateManager {
 	 */
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
+	}
+
+	public void setDelayCheckCacheSeconds(int delayCheckCacheSeconds) {
+		this.delayCheckCacheSeconds = delayCheckCacheSeconds;
 	}
 
 	public void destroy() {

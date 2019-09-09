@@ -55,11 +55,17 @@ public class CacheCheckTimer extends Thread {
 	 */
 	private static int defaultIntervalSeconds = 15;
 
+	/**
+	 * 延时检测时长
+	 */
+	private int delaySeconds = 30;
+
 	public CacheCheckTimer(SqlToyContext sqlToyContext, TranslateCacheManager translateCacheManager,
-			List<CheckerConfigModel> updateCheckers) {
+			List<CheckerConfigModel> updateCheckers, int delaySeconds) {
 		this.sqlToyContext = sqlToyContext;
 		this.translateCacheManager = translateCacheManager;
 		this.updateCheckers = updateCheckers;
+		this.delaySeconds = delaySeconds;
 		// 初始化检测时间
 		if (updateCheckers != null && !updateCheckers.isEmpty()) {
 			Long checkTime = DateUtil.parse(System.currentTimeMillis(), dateFmt).getTime();
@@ -76,6 +82,13 @@ public class CacheCheckTimer extends Thread {
 	 */
 	@Override
 	public void run() {
+		// 延时
+		try {
+			if (delaySeconds >= 1) {
+				Thread.sleep(1000 * delaySeconds);
+			}
+		} catch (InterruptedException e) {
+		}
 		boolean isRun = true;
 		while (isRun) {
 			Long preCheck;
@@ -83,7 +96,7 @@ public class CacheCheckTimer extends Thread {
 			long interval;
 			long nowInterval;
 			String checker;
-			//多个检测任务
+			// 多个检测任务
 			for (int i = 0; i < updateCheckers.size(); i++) {
 				checker = prefix + i;
 				checkerConfig = updateCheckers.get(i);
@@ -113,7 +126,6 @@ public class CacheCheckTimer extends Thread {
 				isRun = false;
 			}
 		}
-
 	}
 
 	/**
