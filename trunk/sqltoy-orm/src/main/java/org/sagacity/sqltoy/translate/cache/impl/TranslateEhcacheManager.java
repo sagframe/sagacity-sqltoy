@@ -49,6 +49,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheKey) {
+		if (cacheManager == null)
+			return null;
 		Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 		if (cache == null)
 			return null;
@@ -62,6 +64,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	@Override
 	public void put(TranslateConfigModel cacheConfig, String cacheName, String cacheKey,
 			HashMap<String, Object[]> cacheValue) {
+		if (cacheManager == null)
+			return;
 		synchronized (cacheName) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存(不建议使用)
@@ -101,6 +105,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	@Override
 	public void clear(String cacheName, String cacheKey) {
 		synchronized (cacheName) {
+			if (cacheManager == null)
+				return;
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
@@ -119,29 +125,38 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 * @see org.sagacity.sqltoy.translate.cache.TranslateCacheManager#init()
 	 */
 	@Override
-	public void init() {
-		if (cacheManager == null) {
-			// 未定义持久化文件,则由ehcache自行默认创建
-			if (StringUtil.isBlank(diskStorePath)) {
-				cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
-			} else {
-				// 解决一些场景下,主程序已经关闭但缓存文件仍然被占用,重新开辟一个缓存文件
+	public boolean init() {
+		if (cacheManager != null)
+			return true;
+		// 未定义持久化文件,则由ehcache自行默认创建
+		if (StringUtil.isBlank(diskStorePath)) {
+			cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
+			return true;
+		} else {
+			// 解决一些场景下,主程序已经关闭但缓存文件仍然被占用,重新开辟一个缓存文件
+			try {
+				cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+						.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
+				return true;
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("cache file:{} is locked,create cacheManager failure,please stop running progress!",
+						diskStorePath);
+			}
+			if (cacheManager == null) {
+				// 缓存文件被锁,重新定义一个不重复的文件名称
+				String realCacheFile = diskStorePath.concat(IdUtil.getShortNanoTimeId(null).toPlainString());
 				try {
-					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-							.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-					logger.error("cache file:{} is locked,create cacheManager failure,please stop running progress!",
-							diskStorePath);
-				}
-				if (cacheManager == null) {
-					// 缓存文件被锁,重新定义一个不重复的文件名称
-					String realCacheFile = diskStorePath.concat(IdUtil.getShortNanoTimeId(null).toPlainString());
 					logger.warn("sqltoy ehcacheManager create cache file:{}", realCacheFile);
 					cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
 							.with(CacheManagerBuilder.persistence(realCacheFile)).build(true);
+					return true;
+				} catch (Exception e) {
+					logger.error("cann't create cacheManager with file:{},you cann't use cacheTranslate!",
+							realCacheFile);
 				}
 			}
+			return false;
 		}
 	}
 

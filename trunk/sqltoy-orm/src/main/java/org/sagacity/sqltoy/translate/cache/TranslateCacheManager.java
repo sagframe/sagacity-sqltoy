@@ -62,7 +62,7 @@ public abstract class TranslateCacheManager {
 	/**
 	 * 初始化(便于扩展实例启动一些处理逻辑)
 	 */
-	public abstract void init();
+	public abstract boolean init();
 	
 	/**
 	 * 销毁

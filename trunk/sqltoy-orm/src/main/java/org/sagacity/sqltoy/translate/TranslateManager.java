@@ -96,11 +96,11 @@ public class TranslateManager {
 					((TranslateEhcacheManager) translateCacheManager)
 							.setDiskStorePath(defaultConfig.getDiskStorePath());
 				}
-				translateCacheManager.init();
+				boolean initSuccess = translateCacheManager.init();
 				initialized = true;
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
-				if (updateCheckers != null && !updateCheckers.isEmpty()) {
+				if (initSuccess && !updateCheckers.isEmpty()) {
 					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers);
 					cacheCheck.start();
 				}
