@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,7 +68,9 @@ public class TranslateManager {
 	/**
 	 * 定时器
 	 */
-	private Timer timer;
+	// private Timer timer;
+
+	private CacheCheckTimer cacheCheck;
 
 	/**
 	 * @param translateConfig the translateConfig to set
@@ -97,13 +98,12 @@ public class TranslateManager {
 				}
 				translateCacheManager.init();
 				initialized = true;
-				if (timer == null) {
-					timer = new Timer();
-				}
-
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
-				timer.schedule(new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers), 20000, 1000);
+				if (updateCheckers != null && !updateCheckers.isEmpty()) {
+					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers);
+					cacheCheck.start();
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -227,11 +227,15 @@ public class TranslateManager {
 	}
 
 	public void destroy() {
-		if (translateCacheManager != null) {
-			translateCacheManager.destroy();
-		}
-		if (timer != null) {
-			timer.cancel();
+		try {
+			if (translateCacheManager != null) {
+				translateCacheManager.destroy();
+			}
+			if (cacheCheck != null && !cacheCheck.isInterrupted()) {
+				cacheCheck.interrupt();
+			}
+		} catch (Exception e) {
+
 		}
 	}
 }

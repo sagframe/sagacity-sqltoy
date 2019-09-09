@@ -62,13 +62,13 @@ public class SqlXMLConfigParse {
 	/**
 	 * 保存文件最后修改时间的Map
 	 */
-	private static HashMap filesLastModifyMap = new HashMap();
+	private static ConcurrentHashMap filesLastModifyMap = new ConcurrentHashMap();
 
 	/**
 	 * 数据库不同方言的函数转换器
 	 */
 	private static List<IFunction> functionConverts;
-
+	
 	/**
 	 * es判断是否有聚合的表达式
 	 */

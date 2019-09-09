@@ -170,9 +170,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean showScriptCheck = false;
 
 	/**
-	 * sql脚本检测间隔时长(默认为2秒)
+	 * sql脚本检测间隔时长(默认为3秒)
 	 */
-	private int scriptCheckIntervalSeconds = 2;
+	private int scriptCheckIntervalSeconds = 3;
 
 	/**
 	 * @param workerId
@@ -722,8 +722,8 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void destroy() {
 		try {
-			translateManager.destroy();
 			scriptLoader.destroy();
+			translateManager.destroy();
 		} catch (Exception e) {
 
 		}
