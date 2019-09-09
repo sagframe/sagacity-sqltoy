@@ -45,12 +45,12 @@ public class ConcatWs extends IFunction {
 		// 只针对oracle数据库,其他数据库原样返回
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
 			StringBuilder result = new StringBuilder();
-			String split = args[0].replace("\\\'", "''");
+			String split = args[0].replace("\\'", "''");
 			for (int i = 1; i < args.length; i++) {
 				if (i > 1) {
 					result.append("||").append(split).append("||");
 				}
-				result.append(args[i].replace("\\\'", "''"));
+				result.append(args[i].replace("\\'", "''"));
 			}
 			return result.toString();
 		}

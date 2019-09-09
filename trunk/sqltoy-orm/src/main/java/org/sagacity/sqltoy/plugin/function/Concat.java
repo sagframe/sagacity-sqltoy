@@ -51,7 +51,7 @@ public class Concat extends IFunction {
 					if (i > 0) {
 						result.append("||");
 					}
-					result.append(args[i].replace("\\\'", "''"));
+					result.append(args[i].replace("\\'", "''"));
 				}
 				return result.toString();
 			}
