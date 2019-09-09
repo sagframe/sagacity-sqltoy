@@ -60,16 +60,6 @@ public class SqlXMLConfigParse {
 	protected final static Logger logger = LogManager.getLogger(SqlXMLConfigParse.class);
 
 	/**
-	 * 保存文件最后修改时间的Map
-	 */
-	private static ConcurrentHashMap filesLastModifyMap = new ConcurrentHashMap();
-
-	/**
-	 * 数据库不同方言的函数转换器
-	 */
-	private static List<IFunction> functionConverts;
-	
-	/**
 	 * es判断是否有聚合的表达式
 	 */
 	private final static Pattern ES_AGGS_PATTERN = Pattern
@@ -80,13 +70,6 @@ public class SqlXMLConfigParse {
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
 	/**
-	 * @param functionConverts the functionConverts to set
-	 */
-	public static void setFunctionConverts(List<IFunction> functionConverts) {
-		SqlXMLConfigParse.functionConverts = functionConverts;
-	}
-
-	/**
 	 * @todo 判断文件 是否被修改，修改了则重新解析文件重置缓存
 	 * @param xmlFiles
 	 * @param cache
@@ -94,8 +77,9 @@ public class SqlXMLConfigParse {
 	 * @param dialect
 	 * @throws Exception
 	 */
-	public static void parseXML(List xmlFiles, ConcurrentHashMap<String, SqlToyConfig> cache, String encoding,
-			String dialect) throws Exception {
+	public static void parseXML(List xmlFiles, ConcurrentHashMap filesLastModifyMap,
+			ConcurrentHashMap<String, SqlToyConfig> cache, String encoding, String dialect,
+			List<IFunction> functionConverts) throws Exception {
 		if (xmlFiles == null || xmlFiles.isEmpty())
 			return;
 		File sqlFile;
@@ -114,7 +98,7 @@ public class SqlXMLConfigParse {
 					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
 						filesLastModifyMap.put(fileName, lastModified);
 						logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
-						parseSingleFile(sqlFile, cache, encoding, dialect, true);
+						parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true, functionConverts);
 					}
 				}
 			}
@@ -130,8 +114,9 @@ public class SqlXMLConfigParse {
 	 * @param isReload
 	 * @throws Exception
 	 */
-	public static void parseSingleFile(Object xmlFile, ConcurrentHashMap<String, SqlToyConfig> cache, String encoding,
-			String dialect, boolean isReload) throws Exception {
+	public static void parseSingleFile(Object xmlFile, ConcurrentHashMap filesLastModifyMap,
+			ConcurrentHashMap<String, SqlToyConfig> cache, String encoding, String dialect, boolean isReload,
+			List<IFunction> functionConverts) throws Exception {
 		InputStream fileIS = null;
 		InputStreamReader ir = null;
 		try {
@@ -161,7 +146,7 @@ public class SqlXMLConfigParse {
 				// 解析单个sql
 				SqlToyConfig sqlToyConfig;
 				for (Iterator<Element> iter = sqlElts.iterator(); iter.hasNext();) {
-					sqlToyConfig = parseSingleSql(iter.next(), dialect);
+					sqlToyConfig = parseSingleSql(iter.next(), dialect, functionConverts);
 					if (sqlToyConfig != null) {
 						// 去除sql中的注释语句并放入缓存
 						if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
@@ -197,7 +182,8 @@ public class SqlXMLConfigParse {
 	 * @return
 	 * @throws Exception
 	 */
-	public static SqlToyConfig parseSagment(Object sqlSegment, String encoding, String dialect) throws Exception {
+	public static SqlToyConfig parseSagment(Object sqlSegment, List<IFunction> functionConverts, String encoding,
+			String dialect) throws Exception {
 		SqlToyConfig sqlToyConfig = null;
 		if (sqlSegment instanceof String) {
 			SAXReader saxReader = new SAXReader();
@@ -205,9 +191,9 @@ public class SqlXMLConfigParse {
 				saxReader.setEncoding(encoding);
 			}
 			Document doc = saxReader.read(new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding)));
-			sqlToyConfig = parseSingleSql(doc.getRootElement(), dialect);
+			sqlToyConfig = parseSingleSql(doc.getRootElement(), dialect, functionConverts);
 		} else if (sqlSegment instanceof Element) {
-			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect);
+			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect, functionConverts);
 		}
 		return sqlToyConfig;
 	}
@@ -219,7 +205,8 @@ public class SqlXMLConfigParse {
 	 * @return
 	 * @throws Exception
 	 */
-	private static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
+	private static SqlToyConfig parseSingleSql(Element sqlElt, String dialect, List<IFunction> functionConverts)
+			throws Exception {
 		String realDialect = dialect;
 		String nodeName = sqlElt.getName().toLowerCase();
 		// 目前只支持传统sql、elastic、mongo三种类型的语法

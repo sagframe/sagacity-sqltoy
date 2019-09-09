@@ -71,11 +71,6 @@ public class TranslateManager {
 	// private Timer timer;
 
 	private CacheCheckTimer cacheCheck;
-	
-	/**
-	 * 延时检测缓存更新时间(默认30秒)
-	 */
-	private int delayCheckCacheSeconds=30;
 
 	/**
 	 * @param translateConfig the translateConfig to set
@@ -84,7 +79,7 @@ public class TranslateManager {
 		this.translateConfig = translateConfig;
 	}
 
-	public synchronized void initialize(SqlToyContext sqlToyContext) throws Exception {
+	public synchronized void initialize(SqlToyContext sqlToyContext,int delayCheckCacheSeconds) throws Exception {
 		if (initialized)
 			return;
 		logger.debug("开始加载sqltoy的translate缓存翻译配置文件..........................");
@@ -229,10 +224,6 @@ public class TranslateManager {
 	 */
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
-	}
-
-	public void setDelayCheckCacheSeconds(int delayCheckCacheSeconds) {
-		this.delayCheckCacheSeconds = delayCheckCacheSeconds;
 	}
 
 	public void destroy() {

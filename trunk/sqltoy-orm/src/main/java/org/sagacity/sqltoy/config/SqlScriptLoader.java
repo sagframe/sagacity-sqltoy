@@ -85,14 +85,15 @@ public class SqlScriptLoader {
 	 * @param debug
 	 * @param sleepSeconds
 	 */
-	public void initialize(boolean debug, int sleepSeconds) {
+	public void initialize(boolean debug, int delayCheckSeconds, int sleepSeconds) {
 		if (initialized)
 			return;
 		initialized = true;
 		logger.debug("开始加载sql配置文件..........................");
+		ConcurrentHashMap filesLastModifyMap = new ConcurrentHashMap();
 		try {
 			// 设置sql函数转换器
-			SqlXMLConfigParse.setFunctionConverts(functionConverts);
+			// SqlXMLConfigParse.setFunctionConverts(functionConverts);
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
@@ -109,7 +110,8 @@ public class SqlScriptLoader {
 					}
 				}
 				for (int i = 0; i < realSqlList.size(); i++) {
-					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), sqlCache, encoding, dialect, false);
+					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache, encoding,
+							dialect, false, functionConverts);
 				}
 			} else {
 				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
@@ -122,7 +124,8 @@ public class SqlScriptLoader {
 
 		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
 		if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
-			watcher = new SqlFileModifyWatcher(sqlCache, realSqlList, dialect, encoding, sleepSeconds, debug);
+			watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, functionConverts, dialect,
+					encoding, delayCheckSeconds, sleepSeconds, debug);
 			watcher.start();
 		} else {
 			logger.warn("sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
@@ -145,7 +148,7 @@ public class SqlScriptLoader {
 	 * @throws Exception
 	 */
 	public SqlToyConfig parseSqlSagment(Object sqlSegment) throws Exception {
-		return SqlXMLConfigParse.parseSagment(sqlSegment, this.encoding, this.dialect);
+		return SqlXMLConfigParse.parseSagment(sqlSegment, functionConverts, this.encoding, this.dialect);
 	}
 
 	/**
@@ -163,32 +166,28 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir
-	 *            the resourcesDir to set
+	 * @param resourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources
-	 *            the mappingResources to set
+	 * @param mappingResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
 	}
 
 	/**
-	 * @param encoding
-	 *            the encoding to set
+	 * @param encoding the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(List functionConverts) {
 		List<IFunction> converts = new ArrayList<IFunction>();
@@ -226,8 +225,7 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param dialect
-	 *            the dialect to set
+	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		this.dialect = dialect;
