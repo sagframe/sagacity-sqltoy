@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.plugin.function;
 
 import org.sagacity.sqltoy.plugin.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -52,7 +51,7 @@ public class Concat extends IFunction {
 					if (i > 0) {
 						result.append("||");
 					}
-					result.append(StringUtil.replaceAllStr(args[i], "\'", "''"));
+					result.append(args[i].replace("\\\'", "''"));
 				}
 				return result.toString();
 			}
