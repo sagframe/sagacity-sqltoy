@@ -81,6 +81,11 @@ public class SqlScriptLoader {
 	private int maxWait = 3600 * 24;
 
 	/**
+	 * 文件最后修改时间
+	 */
+	private ConcurrentHashMap filesLastModifyMap = new ConcurrentHashMap();
+
+	/**
 	 * @TODO 初始化加载sql文件
 	 * @param debug
 	 * @param sleepSeconds
@@ -90,7 +95,7 @@ public class SqlScriptLoader {
 			return;
 		initialized = true;
 		logger.debug("开始加载sql配置文件..........................");
-		ConcurrentHashMap filesLastModifyMap = new ConcurrentHashMap();
+
 		try {
 			// 设置sql函数转换器
 			// SqlXMLConfigParse.setFunctionConverts(functionConverts);
