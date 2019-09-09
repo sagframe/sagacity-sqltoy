@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1035,7 +1036,8 @@ public class ResultUtils {
 			return queryResultRows;
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.getSuperclass().equals(HashMap.class)
-				|| resultType.getSuperclass().equals(LinkedHashMap.class) || resultType.equals(Map.class)
+				|| resultType.getSuperclass().equals(LinkedHashMap.class) || resultType.equals(ConcurrentHashMap.class)
+				|| resultType.getSuperclass().equals(ConcurrentHashMap.class) || resultType.equals(Map.class)
 				|| resultType.getSuperclass().equals(Map.class)) {
 			int width = labelNames.length;
 			List result = new ArrayList();
