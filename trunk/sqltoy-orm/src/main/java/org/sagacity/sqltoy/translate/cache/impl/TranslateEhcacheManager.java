@@ -169,6 +169,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	public void destroy() {
 		if (cacheManager != null) {
 			cacheManager.close();
+			cacheManager=null;
 		}
 	}
 
