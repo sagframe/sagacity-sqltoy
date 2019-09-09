@@ -559,14 +559,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setFunctionConverts(Object functionConverts) {
 		if (functionConverts == null)
 			return;
-		if (functionConverts instanceof List)
+		if (functionConverts instanceof List) {
 			scriptLoader.setFunctionConverts((List<String>) functionConverts);
-		else if (functionConverts instanceof String) {
+		} else if (functionConverts instanceof String) {
 			String converts = (String) functionConverts;
-			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults"))
+			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
 				scriptLoader.setFunctionConverts(null);
-			else
+			} else {
 				scriptLoader.setFunctionConverts(Arrays.asList(converts.split(",")));
+			}
 		}
 	}
 
