@@ -107,11 +107,11 @@ public class SqlUtilsExt {
 					// 使用对象properties方式传值
 					for (int j = 0, n = rowData.length; j < n; j++) {
 						if (supportDefaultValue)
-							setParamValue(conn, pst, rowData[j], fieldsType[j], fieldsNullable[j],
+							setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
 									fieldsDefaultValue[j], j + 1);
 						else
-							SqlUtil.setParamValue(conn, pst, rowData[j], fieldsType == null ? -1 : fieldsType[j],
-									j + 1);
+							SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
+									fieldsType == null ? -1 : fieldsType[j], j + 1);
 					}
 					meter++;
 					// 批量
@@ -163,7 +163,7 @@ public class SqlUtilsExt {
 			final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
 			for (int i = 0, n = params.length; i < n; i++)
-				setParamValue(conn, pst, params[i], entityMeta.getFieldsTypeArray()[i],
+				setParamValue(conn, dbType, pst, params[i], entityMeta.getFieldsTypeArray()[i],
 						entityMeta.getFieldsNullable()[i], entityMeta.getFieldsDefaultValue()[i], 1 + i);
 		}
 	}
@@ -180,8 +180,8 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamValue(Connection conn, PreparedStatement pst, Object paramValue, int jdbcType,
-			boolean isNullable, String defaultValue, int paramIndex) throws SQLException, IOException {
+	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
+			int jdbcType, boolean isNullable, String defaultValue, int paramIndex) throws SQLException, IOException {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
@@ -203,6 +203,6 @@ public class SqlUtilsExt {
 			else
 				realValue = defaultValue;
 		}
-		SqlUtil.setParamValue(conn, pst, realValue, jdbcType, paramIndex);
+		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
 	}
 }

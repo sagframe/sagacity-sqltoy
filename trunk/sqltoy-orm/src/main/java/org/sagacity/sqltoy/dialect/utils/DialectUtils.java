@@ -558,7 +558,7 @@ public class DialectUtils {
 			logger.debug("saveOrUpdateAll={}", saveOrUpdateSql);
 		}
 		return SqlUtil.batchUpdateByJdbc(saveOrUpdateSql, paramValues, batchSize, null, entityMeta.getFieldsTypeArray(),
-				autoCommit, conn);
+				autoCommit, conn, dbType);
 	}
 
 	/**
@@ -629,7 +629,7 @@ public class DialectUtils {
 			logger.debug("saveAllNotExistSql={}", saveAllNotExistSql);
 		}
 		return SqlUtil.batchUpdateByJdbc(saveAllNotExistSql, paramValues, batchSize, null,
-				entityMeta.getFieldsTypeArray(), autoCommit, conn);
+				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
 
 	/**

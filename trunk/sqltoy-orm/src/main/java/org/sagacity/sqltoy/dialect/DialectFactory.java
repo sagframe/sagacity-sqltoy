@@ -213,7 +213,7 @@ public class DialectFactory {
 					}
 					SqlExecuteStat.showSql(realSql, null);
 					this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler, fieldTypes,
-							(autoCommit == null) ? false : autoCommit, conn));
+							(autoCommit == null) ? false : autoCommit, conn, dbType));
 				}
 			});
 		} catch (Exception e) {

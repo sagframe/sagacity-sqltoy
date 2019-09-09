@@ -589,7 +589,7 @@ public class SqlServerDialectUtils {
 					int index = 0;
 					for (int i = 0, n = paramValues.length; i < n; i++) {
 						if (!paramsType[i].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, pst, paramValues[i], paramsType[i], index + 1);
+							SqlUtil.setParamValue(conn, dbType, pst, paramValues[i], paramsType[i], index + 1);
 							index++;
 						}
 					}
@@ -674,7 +674,7 @@ public class SqlServerDialectUtils {
 					null, conn, dbType, true);
 		}
 		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, reflectPropertyHandler, conn, autoCommit);
+				entities, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
 					null, conn, dbType, true);
@@ -697,7 +697,7 @@ public class SqlServerDialectUtils {
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropertyHandler reflectPropertyHandler,
-			Connection conn, final Boolean autoCommit) throws Exception {
+			Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -758,7 +758,7 @@ public class SqlServerDialectUtils {
 		if (sqlToyContext.isDebug())
 			logger.debug("batch insert sql:{}", insertSql);
 		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
-				autoCommit, conn);
+				autoCommit, conn, dbType);
 	}
 
 	/**
@@ -772,7 +772,8 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn) throws Exception {
+			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
 		if (rowDatas == null) {
 			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
 			return 0L;
@@ -801,7 +802,7 @@ public class SqlServerDialectUtils {
 					for (int j = 0, n = rowData.length; j < n; j++) {
 						// 类型为timestamp 则跳过
 						if (!updateTypes[j].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, pst, rowData[j], updateTypes[j], pstIndex + 1);
+							SqlUtil.setParamValue(conn, dbType, pst, rowData[j], updateTypes[j], pstIndex + 1);
 							pstIndex++;
 						}
 					}

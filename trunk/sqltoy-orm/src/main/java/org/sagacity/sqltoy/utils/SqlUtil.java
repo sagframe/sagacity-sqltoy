@@ -187,7 +187,7 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(Connection conn, Integer dbType, PreparedStatement pst, Object[] params,
+	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			Integer[] paramsType, int fromIndex) throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
 		if (null != params && params.length > 0) {
@@ -195,11 +195,11 @@ public class SqlUtil {
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, pst, params[i], -1, fromIndex + 1 + i);
+					setParamValue(conn, dbType, pst, params[i], -1, fromIndex + 1 + i);
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, pst, params[i], paramsType[i], fromIndex + 1 + i);
+					setParamValue(conn, dbType, pst, params[i], paramsType[i], fromIndex + 1 + i);
 				}
 			}
 		}
@@ -218,8 +218,8 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamValue(Connection conn, PreparedStatement pst, Object paramValue, int jdbcType,
-			int paramIndex) throws SQLException, IOException {
+	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
+			int jdbcType, int paramIndex) throws SQLException, IOException {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		String tmpStr;
 		if (null == paramValue) {
@@ -707,7 +707,7 @@ public class SqlUtil {
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final Collection rowDatas, final int batchSize,
 			final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes, final Boolean autoCommit,
-			final Connection conn) throws Exception {
+			final Connection conn, final Integer dbType) throws Exception {
 		if (rowDatas == null) {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return 0L;
@@ -744,13 +744,14 @@ public class SqlUtil {
 						if (rowData.getClass().isArray()) {
 							Object[] tmp = CollectionUtil.convertArray(rowData);
 							for (int i = 0; i < tmp.length; i++) {
-								setParamValue(conn, pst, tmp[i], updateTypes == null ? -1 : updateTypes[i], i + 1);
+								setParamValue(conn, dbType, pst, tmp[i], updateTypes == null ? -1 : updateTypes[i],
+										i + 1);
 							}
 						} else if (rowData instanceof Collection) {
 							Collection tmp = (Collection) rowData;
 							int tmpIndex = 0;
 							for (Iterator tmpIter = tmp.iterator(); tmpIter.hasNext();) {
-								setParamValue(conn, pst, tmpIter.next(),
+								setParamValue(conn, dbType, pst, tmpIter.next(),
 										updateTypes == null ? -1 : updateTypes[tmpIndex], tmpIndex + 1);
 								tmpIndex++;
 							}
@@ -862,8 +863,8 @@ public class SqlUtil {
 						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false);
 			}
 			if (ids != null && !ids.isEmpty()) {
-				processNextLevel(dbType, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel,
-						pidsMap, ids, nodeLevel + 1, conn);
+				processNextLevel(updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel, pidsMap,
+						ids, nodeLevel + 1, conn, dbType);
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
@@ -935,9 +936,9 @@ public class SqlUtil {
 	 * @param conn
 	 * @throws Exception
 	 */
-	private static void processNextLevel(final int dbType, final String updateLevelAndRoute,
-			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
-			final int nodeLevel, Connection conn) throws Exception {
+	private static void processNextLevel(final String updateLevelAndRoute, final String nextNodeQueryStr,
+			final TreeTableModel treeTableModel, final HashMap pidsMap, List ids, final int nodeLevel, Connection conn,
+			final int dbType) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
@@ -985,7 +986,7 @@ public class SqlUtil {
 					pst.setLong(3, Long.parseLong(id));
 				}
 			}
-		}, null, false, conn);
+		}, null, false, conn, dbType);
 
 		// 处理节点的下一层次
 		int size = ids.size();
@@ -1017,8 +1018,8 @@ public class SqlUtil {
 					dbType, false);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
-				processNextLevel(dbType, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
-						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn);
+				processNextLevel(updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
+						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType);
 			}
 			if (exist) {
 				break;
