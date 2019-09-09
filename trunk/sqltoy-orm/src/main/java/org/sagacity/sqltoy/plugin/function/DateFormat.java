@@ -49,7 +49,7 @@ public class DateFormat extends IFunction {
 		case DBType.ORACLE:
 		case DBType.ORACLE12: {
 			// 日期
-			format = args[1].replace("Y%", "yyyy").replace("y%", "yy").replace("m%", "MM").replace("d%", "dd");
+			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理
 			format = format.replace("%T", "hh24:mi:ss");
 			format = format.replace("%H", "hh24").replace("%h", "hh").replace("%i", "mi").replace("%s", "ss");
@@ -58,7 +58,7 @@ public class DateFormat extends IFunction {
 		case DBType.MYSQL:
 		case DBType.MYSQL8: {
 			// 日期
-			format = args[1].replace("yyyy", "Y%").replace("yy", "y%").replace("MM", "m%").replace("dd", "d%");
+			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			// 时间处理
 			format = format.replace("hh24", "%H").replace("hh", "%h").replace("mi", "%i").replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
