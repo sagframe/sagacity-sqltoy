@@ -65,21 +65,17 @@ public class TranslateManager {
 	 */
 	private String translateConfig = "classpath:sqltoy-translate.xml";
 
-	/**
-	 * 定时器
-	 */
-	// private Timer timer;
-
 	private CacheCheckTimer cacheCheck;
 
 	/**
-	 * @param translateConfig the translateConfig to set
+	 * @param translateConfig
+	 *            the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
 	}
 
-	public synchronized void initialize(SqlToyContext sqlToyContext,int delayCheckCacheSeconds) throws Exception {
+	public synchronized void initialize(SqlToyContext sqlToyContext, int delayCheckCacheSeconds) throws Exception {
 		if (initialized)
 			return;
 		logger.debug("开始加载sqltoy的translate缓存翻译配置文件..........................");
@@ -101,7 +97,8 @@ public class TranslateManager {
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
-					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers,delayCheckCacheSeconds);
+					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers,
+							delayCheckCacheSeconds);
 					cacheCheck.start();
 				}
 			}
@@ -149,7 +146,8 @@ public class TranslateManager {
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType
+	 *            一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
@@ -206,14 +204,16 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @param charset the charset to set
+	 * @param charset
+	 *            the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
 	}
 
 	/**
-	 * @param translateCacheManager the translateCacheManager to set
+	 * @param translateCacheManager
+	 *            the translateCacheManager to set
 	 */
 	public void setTranslateCacheManager(TranslateCacheManager translateCacheManager) {
 		this.translateCacheManager = translateCacheManager;

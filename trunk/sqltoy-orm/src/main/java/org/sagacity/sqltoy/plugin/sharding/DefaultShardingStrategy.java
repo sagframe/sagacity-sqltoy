@@ -3,16 +3,10 @@
  */
 package org.sagacity.sqltoy.plugin.sharding;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.sql.DataSource;
 
@@ -23,7 +17,6 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugin.ShardingStrategy;
 import org.sagacity.sqltoy.utils.CommonUtils;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -63,8 +56,6 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 
 	private int[] weights;
 
-	private Timer timer = null;
-
 	/**
 	 * spring 上下文容器
 	 */
@@ -98,12 +89,12 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		// 检测时间小于等于零,则表示不做自动检测
 		if (checkSeconds <= 0)
 			return;
-		if (timer == null) {
-			timer = new Timer();
-		}
 		if (checkSeconds < 60)
 			checkSeconds = 60;
-		timer.schedule(new IdleConnectionMonitorTimer(), 60000, checkSeconds * 1000);
+
+		IdleConnectionMonitor monitor = new IdleConnectionMonitor(applicationContext, dataSourceWeightConfig, weights,
+				60, checkSeconds);
+		monitor.start();
 	}
 
 	/*
@@ -198,58 +189,6 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	public void setCheckSeconds(int checkSeconds) {
 		this.checkSeconds = checkSeconds;
-	}
-
-	public class IdleConnectionMonitorTimer extends TimerTask {
-		public IdleConnectionMonitorTimer() {
-			super();
-		}
-
-		public void run() {
-			if (dataSourceWeightConfig == null || dataSourceWeightConfig.length < 1)
-				return;
-			DataSource dataSource = null;
-			Connection conn = null;
-			PreparedStatement pst = null;
-			ResultSet rs = null;
-			int i = 0;
-			for (Object[] dataBase : dataSourceWeightConfig) {
-				try {
-					dataSource = (DataSource) applicationContext.getBean(dataBase[0].toString());
-					// 权重大于零且数据源不为null
-					if (((Integer) dataBase[1]).intValue() > 0 && null != dataSource) {
-						conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(dataSource);
-						pst = conn.prepareStatement(DataSourceUtils.getValidateQuery(conn));
-						rs = pst.executeQuery();
-						weights[i] = (Integer) dataBase[1];
-					} else {
-						weights[i] = 0;
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-					// 发生异常时将权重置为0
-					weights[i] = 0;
-				} finally {
-					if (rs != null) {
-						try {
-							rs.close();
-						} catch (SQLException e) {
-							e.printStackTrace();
-						}
-					}
-					if (pst != null) {
-						try {
-							pst.close();
-						} catch (SQLException e) {
-							e.printStackTrace();
-						}
-					}
-					if (dataSource != null)
-						org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, dataSource);
-				}
-				i++;
-			}
-		}
 	}
 
 	/**
