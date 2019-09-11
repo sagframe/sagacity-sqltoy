@@ -139,7 +139,6 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 						.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
 				return true;
 			} catch (Exception e) {
-				e.printStackTrace();
 				logger.error("cache file:{} is locked,create cacheManager failure,please stop running progress!",
 						diskStorePath);
 			}
