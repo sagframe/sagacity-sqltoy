@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
+import org.sagacity.sqltoy.dialect.impl.HanaDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle12Dialect;
 import org.sagacity.sqltoy.dialect.impl.OracleDialect;
@@ -148,7 +149,8 @@ public class DialectFactory {
 			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 			case DBType.POSTGRESQL:
 			case DBType.POSTGRESQL10:
-			case DBType.POSTGRESQL11: {
+			case DBType.POSTGRESQL11:
+			case DBType.GAUSSDB: {
 				dialectSqlWrapper = new PostgreSqlDialect();
 				break;
 			}
@@ -156,6 +158,11 @@ public class DialectFactory {
 			case DBType.DB2:
 			case DBType.DB2_11: {
 				dialectSqlWrapper = new DB2Dialect();
+				break;
+			}
+			// hana
+			case DBType.SAP_HANA: {
+				dialectSqlWrapper = new HanaDialect();
 				break;
 			}
 			// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式

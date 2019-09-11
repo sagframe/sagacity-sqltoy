@@ -58,11 +58,14 @@ public class DataSourceUtils {
 		public final static String POSTGRESQL10 = "postgresql10";
 		public final static String POSTGRESQL11 = "postgresql11";
 
+		// 华为gaussdb(源于postgresql)
+		public final static String GAUSSDB = "gaussdb";
+
 		// 以15.4为基准起始版
 		public final static String SYBASE_IQ = "sybase_iq";
 
 		// 暂不支持
-		public final static String SAP_HANA = "sap_hana";
+		public final static String SAP_HANA = "hana";
 
 		// 未充分验证
 		public final static String SQLITE = "sqlite";
@@ -94,13 +97,17 @@ public class DataSourceUtils {
 		public final static int MYSQL = 40;
 		public final static int MYSQL8 = 42;
 
+		public final static int SAP_HANA = 50;
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 60;
 		public final static int POSTGRESQL10 = 61;
 		public final static int POSTGRESQL11 = 62;
+
+		// gaussdb
+		public final static int GAUSSDB = 70;
+
 		public final static int SYBASE_IQ = 80;
 		public final static int SQLITE = 90;
-		public final static int SAP_HANA = 100;
 
 		public final static int MONGO = 110;
 		public final static int ES = 120;
@@ -126,6 +133,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.POSTGRESQL10, DBType.POSTGRESQL10);
 		DBNameTypeMap.put(Dialect.POSTGRESQL11, DBType.POSTGRESQL11);
+
+		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
@@ -163,14 +172,16 @@ public class DataSourceUtils {
 			return Dialect.SQLSERVER2017;
 		case DBType.SQLSERVER2019:
 			return Dialect.SQLSERVER2019;
-		case DBType.SYBASE_IQ:
-			return Dialect.SYBASE_IQ;
+		case DBType.GAUSSDB:
+			return Dialect.GAUSSDB;
 		case DBType.SAP_HANA:
 			return Dialect.SAP_HANA;
-		case DBType.MONGO:
-			return Dialect.MONGO;
 		case DBType.ES:
 			return Dialect.ES;
+		case DBType.MONGO:
+			return Dialect.MONGO;
+		case DBType.SYBASE_IQ:
+			return Dialect.SYBASE_IQ;
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -232,6 +243,13 @@ public class DataSourceUtils {
 			// postgresql
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
+			} // GAUSSDB
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
+				return Dialect.GAUSSDB;
+			}
+			// hana
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
+				return Dialect.SAP_HANA;
 			}
 			// sybase iq
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
@@ -324,6 +342,9 @@ public class DataSourceUtils {
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1) {
 				dbType = DBType.SYBASE_IQ;
+			} // GAUSSDB
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
+				dbType = DBType.GAUSSDB;
 			}
 			// sqlite
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
@@ -355,6 +376,7 @@ public class DataSourceUtils {
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL10:
 		case DBType.POSTGRESQL11:
+		case DBType.GAUSSDB:
 			return "select version()";
 		default:
 			return "select 1";
