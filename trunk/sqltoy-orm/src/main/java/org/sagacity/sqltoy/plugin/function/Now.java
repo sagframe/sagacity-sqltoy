@@ -31,7 +31,7 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String regex() {
-		return "(?i)\\W(((now|getdate)\\()|(sysdate\\W))";
+		return "(?i)\\W(((now|getdate|sysdate)\\()|(sysdate\\W))";
 	}
 
 	/*
