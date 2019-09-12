@@ -1344,7 +1344,6 @@ public class DialectUtils {
 		if (entityMeta.getIdArray() == null) {
 			return null;
 		}
-		// else {
 		if (result == null) {
 			result = fullParamValues[pkIndex];
 		}
