@@ -80,9 +80,10 @@ public class OracleDialectUtils {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select * from ");
 		loadSql.append(entityMeta.getSchemaTable());
@@ -91,17 +92,19 @@ public class OracleDialectUtils {
 		// 用in 的方式加载全量数据(在实际应用过程中应该注意in () 形式有1000个参数的限制)
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			field = entityMeta.getIdArray()[i];
-			if (i > 0)
+			if (i > 0) {
 				loadSql.append(" and ");
+			}
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		// 是否锁记录
 		if (lockMode != null) {
 			switch (lockMode) {
-			case UPGRADE_NOWAIT:
+			case UPGRADE_NOWAIT: {
 				loadSql.append(" for update nowait ");
 				break;
+			}
 			case UPGRADE:
 				loadSql.append(" for update ");
 				break;
@@ -129,8 +132,9 @@ public class OracleDialectUtils {
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql()).append(" (");
+		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
 			sql.append("select * from (");
@@ -146,9 +150,9 @@ public class OracleDialectUtils {
 		sql.append(" where rownum<=");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql());
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -165,6 +169,7 @@ public class OracleDialectUtils {
 	 * @param inParamValues
 	 * @param outParamTypes
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */

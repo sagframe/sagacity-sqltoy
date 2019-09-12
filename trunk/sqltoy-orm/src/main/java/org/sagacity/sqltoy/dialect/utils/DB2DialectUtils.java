@@ -265,144 +265,143 @@ public class DB2DialectUtils {
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK,
 					realTable);
-		} else {
-			int columnSize = entityMeta.getFieldsArray().length;
-			FieldMeta fieldMeta;
-			StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
-			String columnName;
-			sql.append("merge into ");
-			sql.append(realTable);
-			sql.append(" ta ");
-			sql.append(" using (select ");
-			int fieldType;
-			for (int i = 0; i < columnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
-				fieldType = fieldMeta.getType();
+		}
+		int columnSize = entityMeta.getFieldsArray().length;
+		FieldMeta fieldMeta;
+		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
+		String columnName;
+		sql.append("merge into ");
+		sql.append(realTable);
+		sql.append(" ta ");
+		sql.append(" using (select ");
+		int fieldType;
+		for (int i = 0; i < columnSize; i++) {
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+			fieldType = fieldMeta.getType();
+			columnName = fieldMeta.getColumnName();
+			if (i > 0)
+				sql.append(",");
+			if (fieldType == java.sql.Types.VARCHAR)
+				sql.append("cast(? as varchar(" + fieldMeta.getLength() + "))");
+			else if (fieldType == java.sql.Types.CHAR)
+				sql.append("cast(? as char(" + fieldMeta.getLength() + "))");
+			else if (fieldType == java.sql.Types.DATE)
+				sql.append("cast(? as date)");
+			else if (fieldType == java.sql.Types.NUMERIC)
+				sql.append("cast(? as numeric)");
+			else if (fieldType == java.sql.Types.DECIMAL)
+				sql.append("cast(? as decimal)");
+			else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
+					|| fieldType == java.sql.Types.TINYINT)
+				sql.append("cast(? as integer)");
+			else if (fieldType == java.sql.Types.TIMESTAMP)
+				sql.append("cast(? as timestamp)");
+			else if (fieldType == java.sql.Types.DOUBLE)
+				sql.append("cast(? as double)");
+			else if (fieldType == java.sql.Types.FLOAT)
+				sql.append("cast(? as float)");
+			else if (fieldType == java.sql.Types.TIME)
+				sql.append("cast(? as time)");
+			else if (fieldType == java.sql.Types.CLOB)
+				sql.append("cast(? as clob(" + fieldMeta.getLength() + "))");
+			else if (fieldType == java.sql.Types.BOOLEAN)
+				sql.append("cast(? as boolean)");
+			else if (fieldType == java.sql.Types.BINARY)
+				sql.append("cast(? as BINARY LARGE OBJECT(" + fieldMeta.getLength() + "))");
+			else if (fieldType == java.sql.Types.BLOB)
+				sql.append("cast(? as blob(" + fieldMeta.getLength() + "))");
+			else
+				sql.append("?");
+			sql.append(" as ");
+			sql.append(columnName);
+		}
+		if (StringUtil.isNotBlank(fromTable))
+			sql.append(" from ").append(fromTable);
+		sql.append(") tv on (");
+		StringBuilder idColumns = new StringBuilder();
+		// 组织on部分的主键条件判断
+		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			if (i > 0) {
+				sql.append(" and ");
+				idColumns.append(",");
+			}
+			sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
+			idColumns.append("ta.").append(columnName);
+		}
+		sql.append(" ) ");
+		// 排除id的其他字段信息
+		StringBuilder insertRejIdCols = new StringBuilder();
+		StringBuilder insertRejIdColValues = new StringBuilder();
+		// 是否全部字段都是ID主键(复合主键),匹配上则无需进行更新，只需将未匹配上的插入即可
+		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		if (!allIds) {
+			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
+			// update 只针对非主键字段进行修改
+			for (int i = 0; i < rejectIdColumnSize; i++) {
+				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = fieldMeta.getColumnName();
-				if (i > 0)
-					sql.append(",");
-				if (fieldType == java.sql.Types.VARCHAR)
-					sql.append("cast(? as varchar(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.CHAR)
-					sql.append("cast(? as char(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.DATE)
-					sql.append("cast(? as date)");
-				else if (fieldType == java.sql.Types.NUMERIC)
-					sql.append("cast(? as numeric)");
-				else if (fieldType == java.sql.Types.DECIMAL)
-					sql.append("cast(? as decimal)");
-				else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
-						|| fieldType == java.sql.Types.TINYINT)
-					sql.append("cast(? as integer)");
-				else if (fieldType == java.sql.Types.TIMESTAMP)
-					sql.append("cast(? as timestamp)");
-				else if (fieldType == java.sql.Types.DOUBLE)
-					sql.append("cast(? as double)");
-				else if (fieldType == java.sql.Types.FLOAT)
-					sql.append("cast(? as float)");
-				else if (fieldType == java.sql.Types.TIME)
-					sql.append("cast(? as time)");
-				else if (fieldType == java.sql.Types.CLOB)
-					sql.append("cast(? as clob(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.BOOLEAN)
-					sql.append("cast(? as boolean)");
-				else if (fieldType == java.sql.Types.BINARY)
-					sql.append("cast(? as BINARY LARGE OBJECT(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.BLOB)
-					sql.append("cast(? as blob(" + fieldMeta.getLength() + "))");
-				else
-					sql.append("?");
-				sql.append(" as ");
-				sql.append(columnName);
-			}
-			if (StringUtil.isNotBlank(fromTable))
-				sql.append(" from ").append(fromTable);
-			sql.append(") tv on (");
-			StringBuilder idColumns = new StringBuilder();
-			// 组织on部分的主键条件判断
-			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
 				if (i > 0) {
-					sql.append(" and ");
-					idColumns.append(",");
+					insertRejIdCols.append(",");
+					insertRejIdColValues.append(",");
 				}
-				sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
-				idColumns.append("ta.").append(columnName);
+				insertRejIdCols.append(columnName);
+				// 存在默认值
+				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					insertRejIdColValues.append(isNullFunction);
+					insertRejIdColValues.append("(tv.").append(columnName).append(",");
+					DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
+					insertRejIdColValues.append(")");
+				} else
+					insertRejIdColValues.append("tv.").append(columnName);
 			}
-			sql.append(" ) ");
-			// 排除id的其他字段信息
-			StringBuilder insertRejIdCols = new StringBuilder();
-			StringBuilder insertRejIdColValues = new StringBuilder();
-			// 是否全部字段都是ID主键(复合主键),匹配上则无需进行更新，只需将未匹配上的插入即可
-			boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
-			if (!allIds) {
-				int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
-				// update 只针对非主键字段进行修改
-				for (int i = 0; i < rejectIdColumnSize; i++) {
-					fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-					columnName = fieldMeta.getColumnName();
-					if (i > 0) {
-						insertRejIdCols.append(",");
-						insertRejIdColValues.append(",");
-					}
-					insertRejIdCols.append(columnName);
-					// 存在默认值
-					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
-						insertRejIdColValues.append(isNullFunction);
-						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-								fieldMeta.getDefaultValue());
-						insertRejIdColValues.append(")");
-					} else
-						insertRejIdColValues.append("tv.").append(columnName);
-				}
-			}
-			// 主键未匹配上则进行插入操作
-			sql.append(" when not matched then insert (");
-			String idsColumnStr = idColumns.toString();
-			// 不考虑只有一个字段且还是主键的情况
-			if (allIds) {
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
+		}
+		// 主键未匹配上则进行插入操作
+		sql.append(" when not matched then insert (");
+		String idsColumnStr = idColumns.toString();
+		// 不考虑只有一个字段且还是主键的情况
+		if (allIds) {
+			sql.append(idsColumnStr.replaceAll("ta.", ""));
+			sql.append(") values (");
+			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
+		} else {
+			sql.append(insertRejIdCols.toString());
+			// sequence方式主键
+			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				sql.append(",");
+				sql.append(columnName);
 				sql.append(") values (");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
-			} else {
-				sql.append(insertRejIdCols.toString());
-				// sequence方式主键
-				if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				sql.append(insertRejIdColValues).append(",");
+				if (isAssignPK) {
+					sql.append(isNullFunction);
+					sql.append("(tv.").append(columnName).append(",");
+					sql.append(sequence).append(") ");
+				} else {
+					sql.append(sequence);
+				}
+			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
-					sql.append(") values (");
-					sql.append(insertRejIdColValues).append(",");
-					if (isAssignPK) {
-						sql.append(isNullFunction);
-						sql.append("(tv.").append(columnName).append(",");
-						sql.append(sequence).append(") ");
-					} else {
-						sql.append(sequence);
-					}
-				} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-					if (isAssignPK) {
-						sql.append(",");
-						sql.append(columnName);
-					}
-					sql.append(") values (");
-					// identity 模式insert无需写插入该字段语句
-					sql.append(insertRejIdColValues);
-					if (isAssignPK) {
-						sql.append(",").append("tv.").append(columnName);
-					}
-				} else {
-					sql.append(",");
-					sql.append(idsColumnStr.replaceAll("ta.", ""));
-					sql.append(") values (");
-					sql.append(insertRejIdColValues).append(",");
-					sql.append(idsColumnStr.replaceAll("ta.", "tv."));
 				}
+				sql.append(") values (");
+				// identity 模式insert无需写插入该字段语句
+				sql.append(insertRejIdColValues);
+				if (isAssignPK) {
+					sql.append(",").append("tv.").append(columnName);
+				}
+			} else {
+				sql.append(",");
+				sql.append(idsColumnStr.replaceAll("ta.", ""));
+				sql.append(") values (");
+				sql.append(insertRejIdColValues).append(",");
+				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
 			}
-			sql.append(")");
-			return sql.toString();
 		}
+		sql.append(")");
+		return sql.toString();
 	}
 }

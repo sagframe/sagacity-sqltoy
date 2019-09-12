@@ -60,10 +60,10 @@ public class SapIQDialectUtils {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
 		String insertSql = DialectUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 				null, "@mySeqVariable", false, tableName);
-		if (isSequence)
+		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable decimal(20) select @mySeqVariable="
 					+ entityMeta.getSequence() + ".NEXTVAL " + insertSql + " select @mySeqVariable ";
-
+		}
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
@@ -121,18 +121,21 @@ public class SapIQDialectUtils {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				pst = conn.prepareStatement(realInsertSql);
 				// 存在默认值
-				if (entityMeta.isHasDefaultValue())
+				if (entityMeta.isHasDefaultValue()) {
 					SqlUtilsExt.setParamsValue(conn, dbType, pst, paramValues, entityMeta);
-				else
+				} else {
 					SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
+				}
 				ResultSet keyResult = null;
-				if (isSequence || isIdentity)
-					keyResult = pst.executeQuery();
-				else
-					pst.execute();
 				if (isSequence || isIdentity) {
-					while (keyResult.next())
+					keyResult = pst.executeQuery();
+				} else {
+					pst.execute();
+				}
+				if (isSequence || isIdentity) {
+					while (keyResult.next()) {
 						this.setResult(keyResult.getObject(1));
+					}
 				}
 			}
 		});
@@ -212,8 +215,9 @@ public class SapIQDialectUtils {
 		String[] reflectColumns;
 		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
 			reflectColumns = entityMeta.getRejectIdFieldArray();
-		} else
+		} else {
 			reflectColumns = entityMeta.getFieldsArray();
+		}
 
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
@@ -240,9 +244,10 @@ public class SapIQDialectUtils {
 					relatedColValue = new Object[relatedColumn.length];
 					for (int meter = 0; meter < relatedColumn.length; meter++) {
 						relatedColValue[meter] = rowData[relatedColumn[meter]];
-						if (relatedColValue[meter] == null)
+						if (relatedColValue[meter] == null) {
 							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 									+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+						}
 					}
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {

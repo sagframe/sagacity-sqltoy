@@ -26,57 +26,59 @@ public class SqliteDialectUtils {
 			String tableName) {
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
 		// 无主键表全部采用insert机制
-		if (entityMeta.getIdArray() == null)
+		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
 					realTable);
-		else {
-			StringBuilder sql;
-			// 是否全部是ID
-			boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
-			// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
-			if (allIds)
-				sql = new StringBuilder("replace into ");
-			else
-				sql = new StringBuilder("insert into ");
-			StringBuilder values = new StringBuilder();
-			sql.append(realTable);
-			sql.append(" (");
-			for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
+		}
+		StringBuilder sql;
+		// 是否全部是ID
+		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
+		if (allIds) {
+			sql = new StringBuilder("replace into ");
+		} else {
+			sql = new StringBuilder("insert into ");
+		}
+		StringBuilder values = new StringBuilder();
+		sql.append(realTable);
+		sql.append(" (");
+		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
+			if (i > 0) {
+				sql.append(",");
+				values.append(",");
+			}
+			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			values.append("?");
+		}
+		sql.append(") values (").append(values).append(") ");
+		// 非全部是主键
+		if (!allIds) {
+			sql.append("ON DUPLICATE KEY UPDATE ");
+			// 需要被强制修改的字段
+			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
+			if (forceUpdateFields != null) {
+				for (String forceUpdatefield : forceUpdateFields) {
+					forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
+				}
+			}
+			String columnName;
+			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
+				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
 				if (i > 0) {
 					sql.append(",");
-					values.append(",");
 				}
-				sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
-				values.append("?");
-			}
-			sql.append(") values (").append(values).append(") ");
-			// 非全部是主键
-			if (!allIds) {
-				sql.append("ON DUPLICATE KEY UPDATE ");
-				// 需要被强制修改的字段
-				HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
-				if (forceUpdateFields != null) {
-					for (String forceUpdatefield : forceUpdateFields)
-						forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
-				}
-				String columnName;
-				for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-					columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-					if (i > 0)
-						sql.append(",");
-					sql.append(columnName).append("=");
-					// 强制修改
-					if (forceUpdateColumnMap.containsKey(columnName)) {
-						sql.append("values(").append(columnName).append(")");
-					} else {
-						sql.append("ifnull(values(");
-						sql.append(columnName).append("),");
-						sql.append(columnName).append(")");
-					}
+				sql.append(columnName).append("=");
+				// 强制修改
+				if (forceUpdateColumnMap.containsKey(columnName)) {
+					sql.append("values(").append(columnName).append(")");
+				} else {
+					sql.append("ifnull(values(");
+					sql.append(columnName).append("),");
+					sql.append(columnName).append(")");
 				}
 			}
-			return sql.toString();
 		}
+		return sql.toString();
 	}
 
 	/**
@@ -89,24 +91,23 @@ public class SqliteDialectUtils {
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, String tableName) {
 		// 无主键表全部采用insert机制
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
-		if (entityMeta.getIdArray() == null)
+		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
 					realTable);
-		else {
-			StringBuilder sql = new StringBuilder("insert or ignore into ");
-			StringBuilder values = new StringBuilder();
-			sql.append(realTable);
-			sql.append(" (");
-			for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
-				if (i > 0) {
-					sql.append(",");
-					values.append(",");
-				}
-				sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
-				values.append("?");
-			}
-			sql.append(") values (").append(values).append(") ");
-			return sql.toString();
 		}
+		StringBuilder sql = new StringBuilder("insert or ignore into ");
+		StringBuilder values = new StringBuilder();
+		sql.append(realTable);
+		sql.append(" (");
+		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
+			if (i > 0) {
+				sql.append(",");
+				values.append(",");
+			}
+			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			values.append("?");
+		}
+		sql.append(") values (").append(values).append(") ");
+		return sql.toString();
 	}
 }

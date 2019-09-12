@@ -55,8 +55,9 @@ public class PageOptimizeUtils {
 		int i = 0;
 		// 循环查询条件的值构造key
 		for (Object value : paramValues) {
-			if (i > 0)
+			if (i > 0) {
 				cacheKey.append(",");
+			}
 			if (isParamsNamed) {
 				cacheKey.append(paramNames[i]).append("=");
 			} else {
@@ -148,10 +149,11 @@ public class PageOptimizeUtils {
 			while (iter.hasNext()) {
 				entry = iter.next();
 				// 当前时间已经大于过期时间
-				if (nowTime >= ((Long) entry.getValue()[0]))
+				if (nowTime >= ((Long) entry.getValue()[0])) {
 					iter.remove();
-				else
+				} else {
 					break;
+				}
 			}
 		}
 	}
