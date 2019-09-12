@@ -32,11 +32,6 @@ import oracle.jdbc.OracleTypes;
  */
 @SuppressWarnings("rawtypes")
 public class OracleDialectUtils {
-	/**
-	 * 定义日志
-	 */
-	// private final static Logger logger =
-	// LogManager.getLogger(OracleDialectUtils.class);
 
 	/**
 	 * @todo 加载单个对象

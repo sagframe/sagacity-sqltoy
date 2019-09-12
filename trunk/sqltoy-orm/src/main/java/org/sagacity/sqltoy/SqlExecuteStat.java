@@ -54,8 +54,9 @@ public class SqlExecuteStat {
 	 * @param e
 	 */
 	public static void error(Exception e) {
-		if (threadLocal.get() != null)
+		if (threadLocal.get() != null) {
 			threadLocal.get().setError(true);
+		}
 	}
 
 	/**
@@ -70,8 +71,9 @@ public class SqlExecuteStat {
 				if (threadLocal.get() != null && threadLocal.get().isPrint() == false)
 					return;
 				printSql(sql, paramValues, false);
-			} else if (threadLocal.get() != null)
+			} else if (threadLocal.get() != null) {
 				threadLocal.get().addSqlToyResult(sql, paramValues);
+			}
 		} catch (Exception e) {
 
 		}
@@ -87,8 +89,9 @@ public class SqlExecuteStat {
 		StringBuilder paramStr = new StringBuilder();
 		if (paramValues != null) {
 			for (int i = 0; i < paramValues.length; i++) {
-				if (i > 0)
+				if (i > 0) {
 					paramStr.append(",");
+				}
 				paramStr.append("p[" + i + "]=" + paramValues[i]);
 			}
 		}
@@ -126,12 +129,14 @@ public class SqlExecuteStat {
 				logger.warn("SqlToy超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
 						overTime + printSqlTimeoutMillis, printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
-			else if (!sqlTrace.isError())
+			else if (!sqlTrace.isError()) {
 				return;
+			}
 			// 记录错误日志
 			List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
-			for (SqlToyResult sqlResult : sqlToyResults)
+			for (SqlToyResult sqlResult : sqlToyResults) {
 				printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
+			}
 		} catch (Exception e) {
 
 		}

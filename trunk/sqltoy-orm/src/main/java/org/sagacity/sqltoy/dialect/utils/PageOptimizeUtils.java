@@ -57,13 +57,14 @@ public class PageOptimizeUtils {
 		for (Object value : paramValues) {
 			if (i > 0)
 				cacheKey.append(",");
-			if (isParamsNamed)
+			if (isParamsNamed) {
 				cacheKey.append(paramNames[i]).append("=");
-			else
+			} else {
 				cacheKey.append("p_").append(i).append("=");
-			if (value == null)
+			}
+			if (value == null) {
 				cacheKey.append("null");
-			else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {
+			} else if ((value instanceof Object[]) || value.getClass().isArray() || (value instanceof List)) {
 				Object[] arrayValue = (value instanceof List) ? ((List) value).toArray()
 						: CollectionUtil.convertArray(value);
 				cacheKey.append("[");
@@ -71,8 +72,9 @@ public class PageOptimizeUtils {
 					cacheKey.append((obj == null) ? "null" : obj.toString()).append(",");
 				}
 				cacheKey.append("]");
-			} else
+			} else {
 				cacheKey.append(value.toString());
+			}
 			i++;
 		}
 		return cacheKey.toString();

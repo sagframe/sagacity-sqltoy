@@ -306,10 +306,10 @@ public class PostgreSqlDialectUtils {
 	public static String getSaveIgnoreExist(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String sequence, String tableName) {
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
-		if (entityMeta.getIdArray() == null)
+		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
-		else {
+		} else {
 			// 是否全部是ID
 			boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 			// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况

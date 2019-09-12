@@ -88,9 +88,10 @@ public class SapIQDialectUtils {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
 					relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
-					if (relatedColValue[meter] == null)
+					if (relatedColValue[meter] == null) {
 						throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
 								+ " 生成业务主键依赖的关联字段:" + relatedColumn[meter] + " 值为null!");
+					}
 				}
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
@@ -138,34 +139,31 @@ public class SapIQDialectUtils {
 		// 无主键直接返回null
 		if (noPK)
 			return null;
-		else {
-			if (result == null)
-				result = fullParamValues[pkIndex];
-			// 回置到entity 主键值
-			if (needUpdatePk || isIdentity || isSequence) {
-				BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
-			}
-			// 判断是否有子表级联保存
-			if (!entityMeta.getOneToManys().isEmpty()) {
-				List subTableData;
-				final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-				for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-					final String[] mappedFields = oneToMany.getMappedFields();
-					subTableData = (List) PropertyUtils.getProperty(entity, oneToMany.getProperty());
-					if (subTableData != null && !subTableData.isEmpty()) {
-						saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
-								new ReflectPropertyHandler() {
-									public void process() {
-										for (int i = 0; i < mappedFields.length; i++) {
-											this.setValue(mappedFields[i], idValues[i]);
-										}
-									}
-								}, openIdentity, conn, dbType, null);
-					}
+		if (result == null)
+			result = fullParamValues[pkIndex];
+		// 回置到entity 主键值
+		if (needUpdatePk || isIdentity || isSequence) {
+			BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
+		}
+		// 判断是否有子表级联保存
+		if (!entityMeta.getOneToManys().isEmpty()) {
+			List subTableData;
+			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+				final String[] mappedFields = oneToMany.getMappedFields();
+				subTableData = (List) PropertyUtils.getProperty(entity, oneToMany.getProperty());
+				if (subTableData != null && !subTableData.isEmpty()) {
+					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
+						public void process() {
+							for (int i = 0; i < mappedFields.length; i++) {
+								this.setValue(mappedFields[i], idValues[i]);
+							}
+						}
+					}, openIdentity, conn, dbType, null);
 				}
 			}
-			return result;
 		}
+		return result;
 	}
 
 	/**
@@ -269,10 +267,11 @@ public class SapIQDialectUtils {
 		}
 		if (sqlToyContext.isDebug())
 			logger.debug("batch insert sql:{}", insertSql);
-		if (entityMeta.isHasDefaultValue())
+		if (entityMeta.isHasDefaultValue()) {
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn, dbType);
-		else
+		} else {
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
 					null, conn, dbType);
+		}
 	}
 }

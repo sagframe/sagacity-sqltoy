@@ -202,7 +202,7 @@ public class SqlToyConstants {
 	public static boolean mysqlSupportSaveOrUpdate() {
 		return Boolean.parseBoolean(getKeyValue("mysql.support.saveOrUpdate", "false"));
 	}
-	
+
 	/**
 	 * @todo mysql 是否原生支持saveOrUpdate
 	 * @return
@@ -210,7 +210,7 @@ public class SqlToyConstants {
 	public static boolean postgresqlSupportSaveOrUpdate() {
 		return Boolean.parseBoolean(getKeyValue("postgresql.support.saveOrUpdate", "false"));
 	}
-	
+
 	/**
 	 * @todo 获取记录提取的警告阀值
 	 * @return
@@ -315,11 +315,13 @@ public class SqlToyConstants {
 	public static String getDefaultValue(Integer dbType, String defaultValue) {
 		String realDefault = getKeyValue(defaultValue);
 		if (realDefault == null) {
-			if (defaultValue.toUpperCase().equals("CURRENT TIMESTAMP"))
+			if (defaultValue.toUpperCase().equals("CURRENT TIMESTAMP")) {
 				return "CURRENT_TIMESTAMP";
+			}
 			return defaultValue;
-		} else
+		} else {
 			return realDefault;
+		}
 	}
 
 	/**
@@ -346,25 +348,11 @@ public class SqlToyConstants {
 			for (Iterator<Map.Entry<String, String>> iter = paramsMap.entrySet().iterator(); iter.hasNext();) {
 				entry = iter.next();
 				value = getKeyValue(entry.getValue());
-				if (value != null)
+				if (value != null) {
 					result = result.replace(entry.getKey(), value);
+				}
 			}
 		}
 		return result;
 	}
-
-	// /**
-	// * @return the keywordSign
-	// */
-	// public static String getKeywordSign() {
-	// return keywordSign;
-	// }
-	//
-	// /**
-	// * @param keywordSign the keywordSign to set
-	// */
-	// public static void setKeywordSign(String keywordSign) {
-	// SqlToyConstants.keywordSign = keywordSign;
-	// }
-
 }
