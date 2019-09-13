@@ -883,7 +883,7 @@ public class SqlConfigParseUtils {
 			}
 
 			wrapResult = function.wrap(dbType, functionName, hasArgs, args);
-
+			//update 2019-09-13 修改为:返回函数名称一样也做替换
 			// 返回null或返回的跟原函数一样则表示不做任何处理
 			// if (null == wrapResult
 			// ||
