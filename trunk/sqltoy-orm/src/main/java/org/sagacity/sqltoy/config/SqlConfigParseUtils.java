@@ -831,8 +831,8 @@ public class SqlConfigParseUtils {
 		String dialectLowcase = dialect.toLowerCase();
 		for (int i = 0; i < functionConverts.size(); i++) {
 			function = functionConverts.get(i);
-			//方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
-			if (StringUtil.isBlank(function.dialects())||function.dialects().toLowerCase().contains(dialectLowcase)) {
+			// 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
+			if (StringUtil.isBlank(function.dialects()) || function.dialects().toLowerCase().contains(dialectLowcase)) {
 				lastFunction = replaceFunction(lastFunction, dbType, function);
 			}
 		}
@@ -885,8 +885,11 @@ public class SqlConfigParseUtils {
 			wrapResult = function.wrap(dbType, functionName, hasArgs, args);
 
 			// 返回null或返回的跟原函数一样则表示不做任何处理
-			if (null == wrapResult
-					|| wrapResult.toLowerCase().concat("(").startsWith(functionName.toLowerCase().concat("("))) {
+			// if (null == wrapResult
+			// ||
+			// wrapResult.toLowerCase().concat("(").startsWith(functionName.toLowerCase().concat("(")))
+			// {
+			if (null == wrapResult) {
 				result.append(lastFunction.substring(0, endMarkIndex + 1));
 			} else {
 				result.append(lastFunction.substring(0, matchedIndex)).append(wrapResult);
