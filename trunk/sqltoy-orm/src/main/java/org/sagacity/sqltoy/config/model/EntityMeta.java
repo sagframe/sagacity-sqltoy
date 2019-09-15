@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sagacity.sqltoy.plugin.IdGenerator;
+import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**

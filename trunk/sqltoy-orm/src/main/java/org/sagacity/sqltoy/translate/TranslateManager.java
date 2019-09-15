@@ -65,7 +65,7 @@ public class TranslateManager {
 	 */
 	private String translateConfig = "classpath:sqltoy-translate.xml";
 
-	private CacheCheckTimer cacheCheck;
+	private CacheUpdateWatcher cacheCheck;
 
 	/**
 	 * @param translateConfig
@@ -97,7 +97,7 @@ public class TranslateManager {
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
-					cacheCheck = new CacheCheckTimer(sqlToyContext, translateCacheManager, updateCheckers,
+					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
 							delayCheckCacheSeconds);
 					cacheCheck.start();
 				}

@@ -37,7 +37,7 @@ import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
-import org.sagacity.sqltoy.plugin.function.IFunction;
+import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;

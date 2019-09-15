@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.demo.service.DemoService;
 import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.plugin.TranslateHandler;
+import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

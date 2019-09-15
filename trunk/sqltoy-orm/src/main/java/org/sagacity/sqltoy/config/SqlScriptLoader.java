@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.plugin.function.IFunction;
+import org.sagacity.sqltoy.plugins.function.IFunction;
+import org.sagacity.sqltoy.plugins.function.impl.SubStr;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -32,12 +33,11 @@ public class SqlScriptLoader {
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
+	private final static String funPackage = SubStr.class.getPackage().getName().concat(".");
 	// 提供默认函数配置
-	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.impl.SubStr",
-			"org.sagacity.sqltoy.plugin.function.impl.Trim", "org.sagacity.sqltoy.plugin.function.impl.Instr",
-			"org.sagacity.sqltoy.plugin.function.impl.Concat", "org.sagacity.sqltoy.plugin.function.impl.ConcatWs",
-			"org.sagacity.sqltoy.plugin.function.impl.Nvl", "org.sagacity.sqltoy.plugin.function.impl.DateFormat",
-			"org.sagacity.sqltoy.plugin.function.impl.Now" };
+	private final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
+			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
+			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now") };
 
 	/**
 	 * sql资源配置路径
@@ -172,32 +172,28 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir
-	 *            the resourcesDir to set
+	 * @param resourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources
-	 *            the mappingResources to set
+	 * @param mappingResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
 	}
 
 	/**
-	 * @param encoding
-	 *            the encoding to set
+	 * @param encoding the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(List functionConverts) {
 		List<IFunction> converts = new ArrayList<IFunction>();
@@ -207,12 +203,10 @@ public class SqlScriptLoader {
 				for (int i = 0; i < functionConverts.size(); i++) {
 					functionName = functionConverts.get(i).toString().trim();
 					// sql函数包名变更,修正调整后的包路径,保持兼容
-					functionName = functionName.replace("config.function.impl", "plugin.function.impl");
-					// 只是不包含包名的类名称
-					if (functionName.indexOf(".") == -1) {
-						converts.add((IFunction) (Class
-								.forName("org.sagacity.sqltoy.plugin.function.impl.".concat(functionName))
-								.getDeclaredConstructor().newInstance()));
+					if (functionName.startsWith("org.sagacity.sqltoy.plugin")) {
+						String funName = functionName.substring(functionName.lastIndexOf(".") + 1);
+						converts.add((IFunction) (Class.forName(funPackage.concat(funName)).getDeclaredConstructor()
+								.newInstance()));
 					} else {
 						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
 					}
@@ -234,8 +228,7 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param dialect
-	 *            the dialect to set
+	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		this.dialect = dialect;

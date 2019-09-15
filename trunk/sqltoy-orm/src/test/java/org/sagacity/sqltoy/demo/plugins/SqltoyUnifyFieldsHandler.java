@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DateUtil;
 
 /**

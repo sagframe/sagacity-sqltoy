@@ -13,8 +13,8 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
-import org.sagacity.sqltoy.plugin.nosql.ElasticSearchPlugin;
-import org.sagacity.sqltoy.plugin.nosql.ElasticSqlPlugin;
+import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
+import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
 
 /**
  * @project sagacity-sqltoy4.1

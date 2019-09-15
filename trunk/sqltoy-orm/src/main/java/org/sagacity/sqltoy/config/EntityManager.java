@@ -31,8 +31,8 @@ import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
-import org.sagacity.sqltoy.plugin.IdGenerator;
-import org.sagacity.sqltoy.plugin.id.DefaultIdGenerator;
+import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**

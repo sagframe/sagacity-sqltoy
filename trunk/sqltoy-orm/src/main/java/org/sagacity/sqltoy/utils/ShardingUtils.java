@@ -29,8 +29,8 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
 import org.sagacity.sqltoy.model.ShardingModel;
-import org.sagacity.sqltoy.plugin.IdGenerator;
-import org.sagacity.sqltoy.plugin.ShardingStrategy;
+import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 
 /**
  * @project sagacity-sqltoy
