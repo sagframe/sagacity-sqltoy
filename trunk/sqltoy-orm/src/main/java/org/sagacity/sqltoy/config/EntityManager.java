@@ -32,7 +32,6 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -99,7 +98,7 @@ public class EntityManager {
 	/**
 	 * id产生器的包路径
 	 */
-	private static final String IdGeneratorPackage = DefaultIdGenerator.class.getPackage().getName().concat(".");
+	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
 
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
@@ -493,7 +492,7 @@ public class EntityManager {
 				String generator = IdGenerators.get(idGenerator.toLowerCase());
 				generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
 				// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
-				if (generator.startsWith("org.sagacity.sqltoy.plugin")) {
+				if (generator.startsWith("org.sagacity.sqltoy")) {
 					generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
 				}
 				idGenerators.put(idGenerator,

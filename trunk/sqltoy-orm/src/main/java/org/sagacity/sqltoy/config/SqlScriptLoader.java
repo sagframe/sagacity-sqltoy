@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.function.IFunction;
-import org.sagacity.sqltoy.plugins.function.impl.SubStr;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -33,7 +32,7 @@ public class SqlScriptLoader {
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
-	private final static String funPackage = SubStr.class.getPackage().getName().concat(".");
+	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
 	private final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
@@ -203,7 +202,7 @@ public class SqlScriptLoader {
 				for (int i = 0; i < functionConverts.size(); i++) {
 					functionName = functionConverts.get(i).toString().trim();
 					// sql函数包名变更,修正调整后的包路径,保持兼容
-					if (functionName.startsWith("org.sagacity.sqltoy.plugin")) {
+					if (functionName.startsWith("org.sagacity.sqltoy")) {
 						String funName = functionName.substring(functionName.lastIndexOf(".") + 1);
 						converts.add((IFunction) (Class.forName(funPackage.concat(funName)).getDeclaredConstructor()
 								.newInstance()));
