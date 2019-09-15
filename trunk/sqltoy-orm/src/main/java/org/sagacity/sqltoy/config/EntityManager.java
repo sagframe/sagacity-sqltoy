@@ -457,7 +457,7 @@ public class EntityManager {
 		}
 		// 业务主键策略配置解析
 		BusinessId bizId = field.getAnnotation(BusinessId.class);
-		if (bizId != null) {
+		if (bizId != null && StringUtil.isNotBlank(bizId.generator())) {
 			String bizGenerator = bizId.generator();
 			entityMeta.setBizIdLength(bizId.length());
 			entityMeta.setBizIdSignature(bizId.signature());
@@ -466,6 +466,7 @@ public class EntityManager {
 			// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
 			if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0)
 				entityMeta.setBizIdRelatedColumns(bizId.relatedColumns());
+
 			processIdGenerator(sqlToyContext, entityMeta, bizGenerator);
 			// 如果是业务主键跟ID重叠,则ID以业务主键策略生成
 			if (id != null) {
