@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
@@ -100,7 +101,7 @@ public class Elastic extends BaseLink {
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		try {
@@ -120,7 +121,7 @@ public class Elastic extends BaseLink {
 	 */
 	public List<?> findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		try {
@@ -140,7 +141,7 @@ public class Elastic extends BaseLink {
 	 */
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		if (sqlToyConfig.getNoSqlConfigModel() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		try {

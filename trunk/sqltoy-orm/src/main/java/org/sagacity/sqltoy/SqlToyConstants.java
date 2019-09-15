@@ -230,6 +230,15 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * @todo 获取项目中在代码中编写的sql数量
+	 * @return
+	 */
+	public static int getMaxCodeSqlCount() {
+		// 默认值为2500
+		return Integer.parseInt(getKeyValue("sqltoy.max.code.sql.count", "2500"));
+	}
+	
+	/**
 	 * sybase iq 主键采用identity模式时是否需要在前后开启 SET TEMPORARY OPTION
 	 * IDENTITY_INSERT=tableName
 	 * 

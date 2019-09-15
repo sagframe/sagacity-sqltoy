@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
@@ -123,7 +124,7 @@ public class Mongo extends BaseLink {
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
@@ -151,7 +152,7 @@ public class Mongo extends BaseLink {
 	 */
 	public List<?> findTop(final Float topSize) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
@@ -174,7 +175,7 @@ public class Mongo extends BaseLink {
 	 */
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
 			throw new IllegalArgumentException(ERROR_MESSAGE);
