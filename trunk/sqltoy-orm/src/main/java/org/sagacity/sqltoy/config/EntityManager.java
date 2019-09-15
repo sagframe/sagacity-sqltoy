@@ -80,6 +80,11 @@ public class EntityManager {
 	 * 定义常用的主键生成方式类名称
 	 */
 	private static HashMap<String, String> IdGenerators = new HashMap<String, String>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3964534243191167226L;
+
 		{
 			put("default", "DefaultIdGenerator");
 			put("uuid", "UUIDGenerator");
