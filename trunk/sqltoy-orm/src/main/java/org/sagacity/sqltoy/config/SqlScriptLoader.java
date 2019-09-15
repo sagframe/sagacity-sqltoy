@@ -36,7 +36,8 @@ public class SqlScriptLoader {
 	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.SubStr",
 			"org.sagacity.sqltoy.plugin.function.Trim", "org.sagacity.sqltoy.plugin.function.Instr",
 			"org.sagacity.sqltoy.plugin.function.Concat", "org.sagacity.sqltoy.plugin.function.ConcatWs",
-			"org.sagacity.sqltoy.plugin.function.Nvl", "org.sagacity.sqltoy.plugin.function.DateFormat" };
+			"org.sagacity.sqltoy.plugin.function.Nvl", "org.sagacity.sqltoy.plugin.function.DateFormat",
+			"org.sagacity.sqltoy.plugin.function.Now" };
 
 	/**
 	 * sql资源配置路径
@@ -171,28 +172,32 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir the resourcesDir to set
+	 * @param resourcesDir
+	 *            the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources the mappingResources to set
+	 * @param mappingResources
+	 *            the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
 	}
 
 	/**
-	 * @param encoding the encoding to set
+	 * @param encoding
+	 *            the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionConverts
+	 *            the functionConverts to set
 	 */
 	public void setFunctionConverts(List functionConverts) {
 		List<IFunction> converts = new ArrayList<IFunction>();
@@ -230,7 +235,8 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param dialect the dialect to set
+	 * @param dialect
+	 *            the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		this.dialect = dialect;
