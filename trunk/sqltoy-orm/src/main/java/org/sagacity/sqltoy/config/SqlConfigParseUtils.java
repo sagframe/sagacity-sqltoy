@@ -847,9 +847,8 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	private static String replaceFunction(String sqlContent, int dbType, IFunction function) {
-		Pattern pattern = Pattern.compile(function.regex());
 		String lastFunction = sqlContent;
-		Matcher matcher = pattern.matcher(lastFunction);
+		Matcher matcher = function.regex().matcher(lastFunction);
 		int index = -1;
 		String functionParams;
 		String[] args = null;

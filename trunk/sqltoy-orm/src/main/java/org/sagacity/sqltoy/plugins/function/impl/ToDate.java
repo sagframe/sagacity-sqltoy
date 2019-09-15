@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 
 /**
@@ -12,6 +14,8 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
  * @version id:ToDate.java,Revision:v1.0,Date:2013-1-2
  */
 public class ToDate extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\Wto\\_date\\(");
+
 	public String dialects() {
 		return "oracle12c";
 	}
@@ -21,18 +25,9 @@ public class ToDate extends IFunction {
 	 * 
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
-	public String name() {
-		return "to_date";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
-	 */
 	@Override
-	public String regex() {
-		return "(?i)\\Wto\\_date\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	/*

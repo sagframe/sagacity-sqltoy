@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function;
 
+import java.util.regex.Pattern;
+
 /**
  * @project sqltoy-orm
  * @description 定义不同数据函数转换接口，为加载sql文件时将不同数据库的函数转换成目标数据库的函数 写法
@@ -21,7 +23,7 @@ public abstract class IFunction {
 	 * @todo 函数匹配表达式
 	 * @return
 	 */
-	public abstract String regex();
+	public abstract Pattern regex();
 
 	/**
 	 * @TODO 函数转换

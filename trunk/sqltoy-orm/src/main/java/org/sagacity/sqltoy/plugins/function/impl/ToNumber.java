@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 
 /**
@@ -12,14 +14,16 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
  * @version id:ToNumber.java,Revision:v1.0,Date:2013-1-2
  */
 public class ToNumber extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\Wto\\_number\\(");
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
 	@Override
-	public String regex() {
-		return "(?i)\\Wto\\_number\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	public String dialects() {
@@ -29,13 +33,10 @@ public class ToNumber extends IFunction {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.sagacity.sqltoy.config.function.IFunction#wrap(java.lang.String
-	 * [])
+	 * @see org.sagacity.sqltoy.config.function.IFunction#wrap(java.lang.String [])
 	 */
 	@Override
-	public String wrap(int dialect, String functionName, boolean hasArgs,
-			String... args) {
+	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		return null;
 	}
 }

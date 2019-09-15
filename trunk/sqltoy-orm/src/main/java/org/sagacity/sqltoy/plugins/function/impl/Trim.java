@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -13,6 +15,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version id:Trim.java,Revision:v1.0,Date:2013-3-21
  */
 public class Trim extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\Wtrim\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -30,8 +33,8 @@ public class Trim extends IFunction {
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
 	@Override
-	public String regex() {
-		return "(?i)\\Wtrim\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	/*

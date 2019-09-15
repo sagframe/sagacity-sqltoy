@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -13,6 +15,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version id:Substring.java,Revision:v1.0,Date:2013-3-21
  */
 public class SubStr extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");
+
 	/**
 	 * 本身就支持substr的数据库
 	 */
@@ -23,8 +27,8 @@ public class SubStr extends IFunction {
 	/**
 	 * 匹配substr(xx，xx)函数的正则表达式
 	 */
-	public String regex() {
-		return "(?i)\\W(substr|substring)\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	/**

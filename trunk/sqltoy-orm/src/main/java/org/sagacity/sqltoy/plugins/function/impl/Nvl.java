@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -14,6 +16,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @Modification Date:2013-4-12 {填写修改说明}
  */
 public class Nvl extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\W(nvl|isnull|ifnull|coalesce)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -31,8 +34,8 @@ public class Nvl extends IFunction {
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
 	@Override
-	public String regex() {
-		return "(?i)\\W(nvl|isnull|ifnull|coalesce)\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	/*

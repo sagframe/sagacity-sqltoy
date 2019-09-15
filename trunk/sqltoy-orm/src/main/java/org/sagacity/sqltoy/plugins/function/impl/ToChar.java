@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -13,8 +15,20 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version id:ToChar.java,Revision:v1.0,Date:2013-1-2
  */
 public class ToChar extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\Wto\\_char\\(");
+
 	public String dialects() {
 		return "";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
+	 */
+	@Override
+	public Pattern regex() {
+		return regex;
 	}
 
 	/*
@@ -48,13 +62,4 @@ public class ToChar extends IFunction {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
-	 */
-	@Override
-	public String regex() {
-		return "(?i)\\Wto\\_char\\(";
-	}
 }

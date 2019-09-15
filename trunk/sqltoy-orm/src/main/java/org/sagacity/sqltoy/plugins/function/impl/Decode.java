@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.plugins.function.impl;
 
+import java.util.regex.Pattern;
+
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -13,14 +15,16 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version id:Decode.java,Revision:v1.0,Date:2013-1-2
  */
 public class Decode extends IFunction {
+	private final static Pattern regex = Pattern.compile("(?i)\\Wdecode\\(");
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
 	 */
 	@Override
-	public String regex() {
-		return "(?i)\\Wdecode\\(";
+	public Pattern regex() {
+		return regex;
 	}
 
 	public String dialects() {
