@@ -33,10 +33,6 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugin.IdGenerator;
 import org.sagacity.sqltoy.plugin.id.DefaultIdGenerator;
-import org.sagacity.sqltoy.plugin.id.NanoTimeIdGenerator;
-import org.sagacity.sqltoy.plugin.id.RedisIdGenerator;
-import org.sagacity.sqltoy.plugin.id.SnowflakeIdGenerator;
-import org.sagacity.sqltoy.plugin.id.UUIDGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -80,6 +76,30 @@ public class EntityManager {
 	 * 存放每个对象跟数据库表的关系信息
 	 */
 	private ConcurrentHashMap<Class, EntityMeta> entitysMetaMap = new ConcurrentHashMap<Class, EntityMeta>();
+
+	/**
+	 * 定义常用的主键生成方式类名称
+	 */
+	private static HashMap<String, String> IdGenerators = new HashMap<String, String>() {
+		{
+			put("default", "DefaultIdGenerator");
+			put("uuid", "UUIDGenerator");
+			put("redis", "RedisIdGenerator");
+			put("nanotime", "NanoTimeIdGenerator");
+			put("snowflake", "SnowflakeIdGenerator");
+			put("defaultidgenerator", "DefaultIdGenerator");
+			put("defaultgenerator", "DefaultIdGenerator");
+			put("nanotimeidgenerator", "NanoTimeIdGenerator");
+			put("snowflakeidgenerator", "SnowflakeIdGenerator");
+			put("uuidgenerator", "UUIDGenerator");
+			put("redisidgenerator", "RedisIdGenerator");
+		}
+	};
+
+	/**
+	 * id产生器的包路径
+	 */
+	private static final String IdGeneratorPackage = DefaultIdGenerator.class.getPackage().getName().concat(".");
 
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
@@ -463,38 +483,24 @@ public class EntityManager {
 	 */
 	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
 			throws Exception {
-		if (StringUtil.isNotBlank(idGenerator)) {
-			if (!idGenerators.containsKey(idGenerator)) {
-				// 做一些兼容性处理,同时进行单例化
-				// 原来的包名是org.sagacity.sqltoy.plugin,现在已经移到:org.sagacity.sqltoy.plugin.id下面
-				if (idGenerator.equals("org.sagacity.sqltoy.plugin.DefaultIdGenerator"))
-					idGenerators.put(idGenerator, DefaultIdGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.DefaultGenerator"))
-					idGenerators.put(idGenerator, DefaultIdGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.NanoTimeIdGenerator"))
-					idGenerators.put(idGenerator, NanoTimeIdGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.SnowflakeIdGenerator"))
-					idGenerators.put(idGenerator, SnowflakeIdGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.UUIDGenerator"))
-					idGenerators.put(idGenerator, UUIDGenerator.getInstance());
-				else if (idGenerator.equals("org.sagacity.sqltoy.plugin.id.RedisIdGenerator")) {
-					RedisIdGenerator generator = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-					if (generator == null || generator.getRedisTemplate() == null)
-						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-								entityMeta.getEntityClass().getName());
-					idGenerators.put(idGenerator, generator);
+		if (!idGenerators.containsKey(idGenerator)) {
+			// 自定义springbean 模式
+			if (idGenerator.toLowerCase().startsWith("@bean(")) {
+				String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
+						.replaceAll("\"|\'", "").trim();
+				idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
+			} else {
+				String generator = IdGenerators.get(idGenerator.toLowerCase());
+				generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
+				// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
+				if (generator.startsWith("org.sagacity.sqltoy.plugin")) {
+					generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
 				}
-				// 以spring 定义的bean模式注入id生成策略,格式:@bean(idGenerator)
-				else if (idGenerator.toLowerCase().startsWith("@bean(")) {
-					int start = idGenerator.indexOf("(");
-					int end = idGenerator.indexOf(")");
-					String beanName = idGenerator.substring(start + 1, end).replaceAll("\"|\'", "").trim();
-					idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
-				} else
-					idGenerators.put(idGenerator,
-							(IdGenerator) Class.forName(idGenerator).getDeclaredConstructor().newInstance());
+				idGenerators.put(idGenerator,
+						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 			}
 		}
+
 	}
 
 	/**
@@ -635,8 +641,7 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param packagesToScan
-	 *            the packagesToScan to set
+	 * @param packagesToScan the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -650,16 +655,14 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param annotatedClasses
-	 *            the annotatedClasses to set
+	 * @param annotatedClasses the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = annotatedClasses;
 	}
 
 	/**
-	 * @param recursive
-	 *            the recursive to set
+	 * @param recursive the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		this.recursive = recursive;
