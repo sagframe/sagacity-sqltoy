@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.plugins;
 
 import java.util.Map;
 
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 统一字段赋值处理
@@ -23,5 +25,11 @@ public interface IUnifyFieldsHandler {
 	 * @return
 	 */
 	public Map<String, Object> updateUnifyFields();
+	
+	/**
+	 * @TODO 強制修改的字段
+	 * @return
+	 */
+	public IgnoreCaseSet forceUpdateFields();
 
 }

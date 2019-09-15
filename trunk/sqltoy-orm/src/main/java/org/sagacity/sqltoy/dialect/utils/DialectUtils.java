@@ -46,6 +46,7 @@ import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -2062,6 +2063,8 @@ public class DialectUtils {
 		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
 		if (keyValues == null || keyValues.isEmpty())
 			return preHandler;
+		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
+		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		ReflectPropertyHandler handler = new ReflectPropertyHandler() {
 			@Override
 			public void process() {
@@ -2073,8 +2076,10 @@ public class DialectUtils {
 				}
 				// 修改操作
 				for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey())))
+					if (StringUtil.isBlank(this.getValue(entry.getKey()))
+							|| forceUpdateFields.contains(entry.getKey())) {
 						this.setValue(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		};
@@ -2096,6 +2101,8 @@ public class DialectUtils {
 		final Map<String, Object> updateKeyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
 		if ((addKeyValues == null || addKeyValues.isEmpty()) && (updateKeyValues == null || updateKeyValues.isEmpty()))
 			return preHandler;
+		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
+		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		final int idLength = (idFields == null) ? 0 : idFields.length;
 		ReflectPropertyHandler handler = new ReflectPropertyHandler() {
 			@Override
@@ -2116,8 +2123,10 @@ public class DialectUtils {
 				}
 				// 修改属性值
 				for (Map.Entry<String, Object> entry : updateKeyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey())))
+					if (StringUtil.isBlank(this.getValue(entry.getKey()))
+							|| forceUpdateFields.contains(entry.getKey())) {
 						this.setValue(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		};
