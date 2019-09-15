@@ -36,7 +36,8 @@ public class SqlScriptLoader {
 	// 提供默认函数配置
 	private final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
-			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now") };
+			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
+			funPackage.concat("Length"), funPackage.concat("ToChar") };
 
 	/**
 	 * sql资源配置路径
