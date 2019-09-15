@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.plugin.IFunction;
+import org.sagacity.sqltoy.plugin.function.IFunction;
 
 /**
  * @project sqltoy-orm

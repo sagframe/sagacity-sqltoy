@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.plugin;
+package org.sagacity.sqltoy.plugin.function;
 
 /**
  * @project sqltoy-orm

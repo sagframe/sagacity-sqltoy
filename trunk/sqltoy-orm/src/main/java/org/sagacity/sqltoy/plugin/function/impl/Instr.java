@@ -1,9 +1,9 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.plugin.function;
+package org.sagacity.sqltoy.plugin.function.impl;
 
-import org.sagacity.sqltoy.plugin.IFunction;
+import org.sagacity.sqltoy.plugin.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**

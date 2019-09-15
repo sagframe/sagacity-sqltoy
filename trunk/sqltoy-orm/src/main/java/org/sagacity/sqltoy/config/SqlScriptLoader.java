@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.plugin.IFunction;
+import org.sagacity.sqltoy.plugin.function.IFunction;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -33,11 +33,11 @@ public class SqlScriptLoader {
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
 
 	// 提供默认函数配置
-	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.SubStr",
-			"org.sagacity.sqltoy.plugin.function.Trim", "org.sagacity.sqltoy.plugin.function.Instr",
-			"org.sagacity.sqltoy.plugin.function.Concat", "org.sagacity.sqltoy.plugin.function.ConcatWs",
-			"org.sagacity.sqltoy.plugin.function.Nvl", "org.sagacity.sqltoy.plugin.function.DateFormat",
-			"org.sagacity.sqltoy.plugin.function.Now" };
+	private final static String[] functions = { "org.sagacity.sqltoy.plugin.function.impl.SubStr",
+			"org.sagacity.sqltoy.plugin.function.impl.Trim", "org.sagacity.sqltoy.plugin.function.impl.Instr",
+			"org.sagacity.sqltoy.plugin.function.impl.Concat", "org.sagacity.sqltoy.plugin.function.impl.ConcatWs",
+			"org.sagacity.sqltoy.plugin.function.impl.Nvl", "org.sagacity.sqltoy.plugin.function.impl.DateFormat",
+			"org.sagacity.sqltoy.plugin.function.impl.Now" };
 
 	/**
 	 * sql资源配置路径
@@ -207,12 +207,11 @@ public class SqlScriptLoader {
 				for (int i = 0; i < functionConverts.size(); i++) {
 					functionName = functionConverts.get(i).toString().trim();
 					// sql函数包名变更,修正调整后的包路径,保持兼容
-					functionName = functionName.replace("org.sagacity.sqltoy.config.function.impl",
-							"org.sagacity.sqltoy.plugin.function");
+					functionName = functionName.replace("config.function.impl", "plugin.function.impl");
 					// 只是不包含包名的类名称
 					if (functionName.indexOf(".") == -1) {
 						converts.add((IFunction) (Class
-								.forName("org.sagacity.sqltoy.config.function.impl.".concat(functionName))
+								.forName("org.sagacity.sqltoy.plugin.function.impl.".concat(functionName))
 								.getDeclaredConstructor().newInstance()));
 					} else {
 						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));

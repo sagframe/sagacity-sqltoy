@@ -1,30 +1,18 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.plugin.function;
+package org.sagacity.sqltoy.plugin.function.impl;
 
-import org.sagacity.sqltoy.plugin.IFunction;
+import org.sagacity.sqltoy.plugin.function.IFunction;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @project sqltoy-orm
- * @description 转换to_date函数
+ * @description oracle decode函数
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ToDate.java,Revision:v1.0,Date:2013-1-2
+ * @version id:Decode.java,Revision:v1.0,Date:2013-1-2
  */
-public class ToDate extends IFunction {
-	public String dialects() {
-		return "oracle12c";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.config.function.IFunction#regex()
-	 */
-	public String name() {
-		return "to_date";
-	}
-
+public class Decode extends IFunction {
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -32,7 +20,11 @@ public class ToDate extends IFunction {
 	 */
 	@Override
 	public String regex() {
-		return "(?i)\\Wto\\_date\\(";
+		return "(?i)\\Wdecode\\(";
+	}
+
+	public String dialects() {
+		return "mysql8";
 	}
 
 	/*
@@ -42,6 +34,9 @@ public class ToDate extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
+			return wrapArgs("ELT", args);
+		}
 		return null;
 	}
 }
