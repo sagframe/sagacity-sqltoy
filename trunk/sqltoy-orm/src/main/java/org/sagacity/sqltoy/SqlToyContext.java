@@ -297,24 +297,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type) {
-		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey);
-		if (null == result) {
-			// 判断是否是sqlId,非在xml中定义id的sql
-			if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey,
-						(null == scriptLoader) ? null : scriptLoader.getDialect(), type,
-						(null == scriptLoader) ? null : scriptLoader.getFunctionConverts());
-				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
-				ParamFilterModel[] filters = new ParamFilterModel[1];
-				filters[0] = new ParamFilterModel("blank", new String[] { "*" });
-				result.setFilters(filters);
-			} else {
-				// 这一步理论上不应该执行
-				result = new SqlToyConfig();
-				result.setSql(sqlKey);
-			}
-		}
-		return result;
+		return scriptLoader.getSqlConfig(sqlKey,type);
 	}
 
 	/**

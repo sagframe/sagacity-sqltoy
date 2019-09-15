@@ -10,7 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -31,6 +34,9 @@ public class SqlScriptLoader {
 
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);
+
+	// 设置默认的缓存
+	private ConcurrentHashMap<String, SqlToyConfig> codeSqlCache = new ConcurrentHashMap<String, SqlToyConfig>(128);
 
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
@@ -143,8 +149,29 @@ public class SqlScriptLoader {
 	 * 
 	 * @see org.sagacity.sqltoy.plugin.SqlConfigPlugin#getSql(java.lang.String)
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey) {
-		return (SqlToyConfig) sqlCache.get(sqlKey);
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType type) {
+		SqlToyConfig result = sqlCache.get(sqlKey);
+		if (null == result)
+			result = codeSqlCache.get(sqlKey);
+		if (null != result)
+			return result;
+		// 判断是否是sqlId,非在xml中定义id的sql
+		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
+			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), type,this.functionConverts);
+			// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
+			ParamFilterModel[] filters = new ParamFilterModel[1];
+			filters[0] = new ParamFilterModel("blank", new String[] { "*" });
+			result.setFilters(filters);
+			// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
+			if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
+				codeSqlCache.put(sqlKey, result);
+			}
+		} else {
+			// 这一步理论上不应该执行
+			result = new SqlToyConfig();
+			result.setSql(sqlKey);
+		}
+		return result;
 	}
 
 	/**
