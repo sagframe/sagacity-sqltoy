@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -501,8 +502,17 @@ public class EntityManager {
 				if (generator.startsWith("org.sagacity.sqltoy")) {
 					generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
 				}
-				idGenerators.put(idGenerator,
-						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
+				// redis 情况特殊,依赖redisTemplate,小心修改
+				if (generator.endsWith("RedisIdGenerator")) {
+					RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
+					if (redis == null || redis.getRedisTemplate() == null) {
+						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!", generator);
+					}
+					idGenerators.put(idGenerator, redis);
+				} else {
+					idGenerators.put(idGenerator,
+							(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
+				}
 			}
 		}
 
@@ -646,7 +656,8 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param packagesToScan the packagesToScan to set
+	 * @param packagesToScan
+	 *            the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -660,14 +671,16 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param annotatedClasses the annotatedClasses to set
+	 * @param annotatedClasses
+	 *            the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = annotatedClasses;
 	}
 
 	/**
-	 * @param recursive the recursive to set
+	 * @param recursive
+	 *            the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		this.recursive = recursive;
