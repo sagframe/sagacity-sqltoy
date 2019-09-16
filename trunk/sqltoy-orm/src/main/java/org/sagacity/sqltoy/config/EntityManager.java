@@ -506,7 +506,8 @@ public class EntityManager {
 				if (generator.endsWith("RedisIdGenerator")) {
 					RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
 					if (redis == null || redis.getRedisTemplate() == null) {
-						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!", generator);
+						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
+								entityMeta.getEntityClass().getName());
 					}
 					idGenerators.put(idGenerator, redis);
 				} else {
