@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DateUtil;
 
@@ -61,13 +62,26 @@ public class SqltoyUnifyFieldsHandler implements IUnifyFieldsHandler {
 		return map;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.plugins.IUnifyFieldsHandler#forceUpdateFields()
+	 */
+	@Override
+	public IgnoreCaseSet forceUpdateFields() {
+		IgnoreCaseSet forceUpdates = new IgnoreCaseSet();
+		forceUpdates.add("updateTime");
+		return forceUpdates;
+	}
+
 	/**
 	 * @todo 获取当前用户Id信息
 	 * @return
 	 */
 	private String getUserId() {
-//		return (SpringSecurityUtils.getCurrentUser() != null) ? SpringSecurityUtils.getCurrentUser().getId()
-//				: defaultUserName;
+		// return (SpringSecurityUtils.getCurrentUser() != null) ?
+		// SpringSecurityUtils.getCurrentUser().getId()
+		// : defaultUserName;
 		return defaultUserName;
 	}
 
@@ -79,7 +93,8 @@ public class SqltoyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @param defaultUserName the defaultUserName to set
+	 * @param defaultUserName
+	 *            the defaultUserName to set
 	 */
 	public void setDefaultUserName(String defaultUserName) {
 		this.defaultUserName = defaultUserName;
