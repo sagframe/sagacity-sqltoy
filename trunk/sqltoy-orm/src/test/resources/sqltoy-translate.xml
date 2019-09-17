@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<cache-translates>
+		<!-- sql模式 -->
+		<sql-translate cache="dictKeyNameCache">
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.SEGMENT,t.comments
+				from sag_dict_detail t
+		        where t.DICT_TYPE_CODE=:dictTypeCode
+		        order by t.SHOW_INDEX
+			]]>
+		</sql-translate>
+
+		<!-- spring service 定义模式,开发者自行定义service <translate cache="xxxxCache" service="springBeanName" 
+			method="beanMethod" /> -->
+		<!-- 员工ID和姓名的缓存 -->
+		<sql-translate cache="staffIdNameCache"
+			sql="sys_staffIdNameCache" />
+
+		<!-- 机构号和机构名称的缓存 -->
+		<sql-translate cache="organIdNameCache">
+			<![CDATA[
+				select ORGAN_ID,ORGAN_NAME from sys_organ_info
+			]]>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存变更主动检测,返回cacheName、key、lastUpdateTime -->
+	<cache-update-checkers>
+		<!-- 基于sql的检测机制 -->
+		<sql-checker
+			check-frequency="0..8?300,8..20?15,20..24?150" datasource="">
+			<sql>
+			<![CDATA[
+			select 'dictKeyNameCache' as cacheName,dict_type_code key,update_time 
+			from xxx
+			]]>
+			</sql>
+		</sql-checker>
+		<!-- 基于sql的检测机制 -->
+		<service-checker check-frequency="15" service=""
+			method="" />
+		<!-- rest 请求模式 -->
+		<rest-checker url="" check-frequency="15" username=""
+			password="" />
+	</cache-update-checkers>
+</sagacity>
