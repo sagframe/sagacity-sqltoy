@@ -76,9 +76,10 @@ public class ShardingUtils {
 		if (shardingConfig.getShardingDBStrategy() != null) {
 			strategyConfig = shardingConfig.getShardingDBStrategy();
 			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getName());
-			if (shardingStrategy == null)
+			if (shardingStrategy == null) {
 				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
 						+ strategyConfig.getName() + " 未定义,请检查!");
+			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
 			ShardingDBModel dbModel = shardingStrategy.getShardingDB(sqlToyContext, entity.getClass(),
