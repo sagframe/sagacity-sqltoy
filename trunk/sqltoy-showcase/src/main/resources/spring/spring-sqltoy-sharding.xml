@@ -7,7 +7,7 @@
 	<!-- 所有分库分表策略开发者可以自行实现接口进行拓展 -->
 	<!-- 按照周期范围进行分表查询 -->
 	<bean id="historyTableStrategy"
-		class="org.sagacity.sqltoy.plugin.sharding.DefaultShardingStrategy"
+		class="org.sagacity.sqltoy.plugins.sharding.impl.DefaultShardingStrategy"
 		init-method="initialize">
 		<!-- 多少天内查询实时表,可以用逗号分隔,如:value="360,35,1" -->
 		<property name="days" value="14" />

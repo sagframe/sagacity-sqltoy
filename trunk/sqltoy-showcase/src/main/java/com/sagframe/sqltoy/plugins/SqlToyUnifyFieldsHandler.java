@@ -8,7 +8,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
@@ -63,6 +64,17 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
+	 * 强制修改的字段
+	 */
+	@Override
+	public IgnoreCaseSet forceUpdateFields() {
+		IgnoreCaseSet forceUpdateFields=new IgnoreCaseSet();
+		forceUpdateFields.add("updateTime");
+		forceUpdateFields.add("systemTime");
+		return forceUpdateFields;
+	}
+	
+	/**
 	 * @todo 获取当前用户Id信息
 	 * @return
 	 */
@@ -72,6 +84,8 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 		// SpringSecurityUtils.getCurrentUser().getId() : defaultUserName;
 		return defaultUserName;
 	}
+
+	
 
 	/**
 	 * @return the defaultUserName
