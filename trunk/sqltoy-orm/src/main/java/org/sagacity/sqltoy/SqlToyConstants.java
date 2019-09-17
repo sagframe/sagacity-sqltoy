@@ -184,7 +184,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static int getCacheExpireSeconds() {
-		return Integer.parseInt(getKeyValue("translate.cache.expire.seconds", "3600"));
+		return Integer.parseInt(getKeyValue("sqltoy.translate.cache.expire.seconds", "3600"));
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean db2WithUR() {
-		return Boolean.parseBoolean(getKeyValue("db2.search.with.ur", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.db2.search.with.ur", "false"));
 	}
 
 	/**
@@ -200,7 +200,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean mysqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("mysql.support.saveOrUpdate", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.mysql.support.saveOrUpdate", "false"));
 	}
 
 	/**
@@ -208,7 +208,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean postgresqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("postgresql.support.saveOrUpdate", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.postgresql.support.saveOrUpdate", "false"));
 	}
 
 	/**
@@ -217,7 +217,7 @@ public class SqlToyConstants {
 	 */
 	public static int getWarnThresholds() {
 		// 默认值为25000
-		return Integer.parseInt(getKeyValue("fetch.result.warn.thresholds.value", "25000"));
+		return Integer.parseInt(getKeyValue("sqltoy.fetch.result.warn.thresholds", "25000"));
 	}
 
 	/**
@@ -235,7 +235,7 @@ public class SqlToyConstants {
 	 */
 	public static Long getMaxThresholds() {
 		// 无限大
-		return Long.parseLong(getKeyValue("fetch.result.max.thresholds.value", "999999999999"));
+		return Long.parseLong(getKeyValue("sqltoy.fetch.result.max.thresholds", "999999999999"));
 	}
 
 	/**
@@ -245,7 +245,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean sybaseIQIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sybase.iq.identity.open", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.sybase.iq.identity.open", "false"));
 	}
 
 	/**
@@ -254,7 +254,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean sqlServerIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sqlserver.identity.open", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.sqlserver.identity.open", "false"));
 	}
 
 	/**
@@ -262,7 +262,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean oraclePageIgnoreOrder() {
-		return Boolean.parseBoolean(getKeyValue("oracle.page.ignore.order", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.oracle.page.ignore.order", "false"));
 	}
 
 	/**
@@ -273,7 +273,7 @@ public class SqlToyConstants {
 		// 目前是不支持的
 		if (dbType == DataSourceUtils.DBType.SYBASE_IQ)
 			return false;
-		return Boolean.parseBoolean(getKeyValue("random.with.dialect", "true"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.random.with.dialect", "true"));
 	}
 
 	/**
