@@ -118,7 +118,7 @@ public class RedisIdGenerator implements IdGenerator {
 			result = generateId(realKey.equals("") ? tableName : tableName.concat(":").concat(realKey));
 		else
 			result = generateId(realKey);
-		return realKey + StringUtil.addLeftZero2Len("" + result, length - realKey.length());
+		return realKey.concat(StringUtil.addLeftZero2Len("" + result, length - realKey.length()));
 	}
 
 	/**
