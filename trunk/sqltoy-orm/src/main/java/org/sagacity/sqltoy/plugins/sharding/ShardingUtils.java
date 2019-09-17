@@ -236,9 +236,16 @@ public class ShardingUtils {
 	public static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, DataSource dataSource) throws Exception {
 		// 获取sharding DataSource
+		// 优先以直接指定的dataSource为基准
 		DataSource shardingDataSource = queryExecutor.getDataSource();
+		// 第二以sql中指定的DataSource
+		if (null == shardingDataSource && StringUtil.isNotBlank(sqlToyConfig.getDataSource())) {
+			shardingDataSource = sqlToyContext.getDataSource(sqlToyConfig.getDataSource());
+		}
+		// 第三以自动注入的dataSource
 		if (null == shardingDataSource)
 			shardingDataSource = dataSource;
+		// 如果没有sharding策略，则返回dataSource，否则以sharding的结果dataSource为基准
 		if (null == sqlToyConfig.getDataSourceShardingStragety())
 			return shardingDataSource;
 		String[] paramNames = queryExecutor.getDataSourceShardingParamsName(sqlToyConfig);

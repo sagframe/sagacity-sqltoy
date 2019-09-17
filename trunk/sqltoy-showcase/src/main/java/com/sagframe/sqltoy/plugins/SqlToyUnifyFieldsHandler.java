@@ -64,7 +64,7 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
-	 * 强制修改的字段
+	 * 强制修改的字段，如果没有强制修改，直接返回null
 	 */
 	@Override
 	public IgnoreCaseSet forceUpdateFields() {
@@ -84,8 +84,6 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 		// SpringSecurityUtils.getCurrentUser().getId() : defaultUserName;
 		return defaultUserName;
 	}
-
-	
 
 	/**
 	 * @return the defaultUserName
