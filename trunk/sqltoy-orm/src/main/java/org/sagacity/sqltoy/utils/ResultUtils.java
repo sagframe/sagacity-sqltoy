@@ -821,6 +821,7 @@ public class ResultUtils {
 	 * @param rs
 	 * @param startColIndex
 	 * @param rowCnt
+	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
@@ -855,12 +856,14 @@ public class ResultUtils {
 	 * @param labelNames
 	 * @param rs
 	 * @param size
+	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
 	private static List processResultRowWithTranslate(HashMap<String, SqlTranslate> translateMap,
 			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
 			boolean ignoreAllEmptySet) throws Exception {
+		logger.info("如果报translateKey ArrayIndexOutOfBoundsException 异常,请参见sql中的<translate cache-indexs 配置是否正确!");
 		List rowData = new ArrayList();
 		Object fieldValue;
 		SqlTranslate translate;
