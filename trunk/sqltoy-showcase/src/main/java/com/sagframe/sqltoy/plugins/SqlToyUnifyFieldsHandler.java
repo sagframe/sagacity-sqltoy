@@ -4,7 +4,7 @@
 package com.sagframe.sqltoy.plugins;
 
 import java.sql.Timestamp;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +29,7 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	@Override
 	public Map<String, Object> createUnifyFields() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
-		Date nowDate = DateUtil.getNowTime();
+		LocalDateTime nowDate=DateUtil.getDateTime();
 		Timestamp nowTime = DateUtil.getTimestamp(null);
 		// 获取用户信息
 		String userId = getUserId();
