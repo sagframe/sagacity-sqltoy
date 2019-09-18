@@ -863,32 +863,39 @@ public class ResultUtils {
 	private static List processResultRowWithTranslate(HashMap<String, SqlTranslate> translateMap,
 			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
 			boolean ignoreAllEmptySet) throws Exception {
-		logger.info("如果报translateKey ArrayIndexOutOfBoundsException 异常,请参见sql中的<translate cache-indexs 配置是否正确!");
 		List rowData = new ArrayList();
 		Object fieldValue;
 		SqlTranslate translate;
 		String label;
 		String keyIndex;
 		boolean allNull = true;
-		for (int i = 0; i < size; i++) {
-			label = labelNames[i];
-			fieldValue = rs.getObject(label);
-			label = label.toLowerCase();
-			keyIndex = Integer.toString(i);
-			if (null != fieldValue) {
-				allNull = false;
-				if (fieldValue instanceof java.sql.Clob) {
-					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
-				}
-				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
-					translate = translateMap.get(label);
-					if (translate == null) {
-						translate = translateMap.get(keyIndex);
+		try {
+			for (int i = 0; i < size; i++) {
+				label = labelNames[i];
+				fieldValue = rs.getObject(label);
+				label = label.toLowerCase();
+				keyIndex = Integer.toString(i);
+				if (null != fieldValue) {
+					allNull = false;
+					if (fieldValue instanceof java.sql.Clob) {
+						fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 					}
-					fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
+					if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
+						translate = translateMap.get(label);
+						if (translate == null) {
+							translate = translateMap.get(keyIndex);
+						}
+						fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
+					}
 				}
+				rowData.add(fieldValue);
 			}
-			rowData.add(fieldValue);
+		} catch (ArrayIndexOutOfBoundsException oie) {
+			oie.printStackTrace();
+			logger.error("缓存翻译数组越界:{},请参见sql中的<translate cache-indexs 配置是否正确,index值必须跟缓存数据的列对应!", oie.getMessage());
+			throw oie;
+		} catch (Exception e) {
+			throw e;
 		}
 		if (allNull && ignoreAllEmptySet) {
 			return null;
