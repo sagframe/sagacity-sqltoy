@@ -91,8 +91,18 @@ public class ResultUtils {
 			result.setLabelNames(labelNames);
 			result.setLabelTypes(labelTypes);
 			// 返回结果为非VO class时才可以应用旋转和汇总合计功能
-			result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, rowCnt, labelIndexMap,
-					labelNames, startColIndex));
+			try {
+				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, rowCnt,
+						labelIndexMap, labelNames, startColIndex));
+			} catch (ArrayIndexOutOfBoundsException oie) {
+				oie.printStackTrace();
+				logger.error("sql={} 的缓存翻译数组越界:{},请检查其<translate cache-indexs 配置是否正确,index值必须跟缓存数据的列对应!",
+						sqlToyConfig.getId(), oie.getMessage());
+				throw oie;
+			} catch (Exception e) {
+				throw e;
+			}
+
 			// 字段脱敏
 			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
 				secureMask(result, sqlToyConfig, labelIndexMap);
@@ -869,33 +879,26 @@ public class ResultUtils {
 		String label;
 		String keyIndex;
 		boolean allNull = true;
-		try {
-			for (int i = 0; i < size; i++) {
-				label = labelNames[i];
-				fieldValue = rs.getObject(label);
-				label = label.toLowerCase();
-				keyIndex = Integer.toString(i);
-				if (null != fieldValue) {
-					allNull = false;
-					if (fieldValue instanceof java.sql.Clob) {
-						fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
-					}
-					if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
-						translate = translateMap.get(label);
-						if (translate == null) {
-							translate = translateMap.get(keyIndex);
-						}
-						fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
-					}
+		// try {
+		for (int i = 0; i < size; i++) {
+			label = labelNames[i];
+			fieldValue = rs.getObject(label);
+			label = label.toLowerCase();
+			keyIndex = Integer.toString(i);
+			if (null != fieldValue) {
+				allNull = false;
+				if (fieldValue instanceof java.sql.Clob) {
+					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				}
-				rowData.add(fieldValue);
+				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
+					translate = translateMap.get(label);
+					if (translate == null) {
+						translate = translateMap.get(keyIndex);
+					}
+					fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
+				}
 			}
-		} catch (ArrayIndexOutOfBoundsException oie) {
-			oie.printStackTrace();
-			logger.error("缓存翻译数组越界:{},请参见sql中的<translate cache-indexs 配置是否正确,index值必须跟缓存数据的列对应!", oie.getMessage());
-			throw oie;
-		} catch (Exception e) {
-			throw e;
+			rowData.add(fieldValue);
 		}
 		if (allNull && ignoreAllEmptySet) {
 			return null;
