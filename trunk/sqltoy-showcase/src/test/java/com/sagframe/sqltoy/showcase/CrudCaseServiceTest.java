@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
 import com.sagframe.sqltoy.showcase.vo.ComplexpkHeadVO;
 import com.sagframe.sqltoy.showcase.vo.ComplexpkItemVO;
@@ -39,11 +40,11 @@ public class CrudCaseServiceTest {
 	@Test
 	public void saveStaffInfo() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
-		staffInfo.setStaffId("S190715001");
-		staffInfo.setStaffCode("S190715001");
-		staffInfo.setStaffName("测试员工");
+		staffInfo.setStaffId("S190715003");
+		staffInfo.setStaffCode("S190715003");
+		staffInfo.setStaffName("测试员工3");
 		staffInfo.setSexType("M");
-		staffInfo.setEmail("test@aliyun.com");
+		staffInfo.setEmail("test3@aliyun.com");
 		staffInfo.setEntryDate(LocalDate.now());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
@@ -100,7 +101,8 @@ public class CrudCaseServiceTest {
 
 	@Test
 	public void load() {
-		sqlToyCRUDService.load(new StaffInfoVO("S190715001"));
+		StaffInfoVO staff = sqlToyCRUDService.load(new StaffInfoVO("S190715003"));
+		System.err.println(JSON.toJSONString(staff));
 	}
 
 	@Test
