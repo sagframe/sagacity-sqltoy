@@ -153,24 +153,21 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @param printSqlStrategy
-	 *            the printSqlStrategy to set
+	 * @param printSqlStrategy the printSqlStrategy to set
 	 */
 	public static void setPrintSqlStrategy(String printSqlStrategy) {
 		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
-	 * @param debug
-	 *            the debug to set
+	 * @param debug the debug to set
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis
-	 *            the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;

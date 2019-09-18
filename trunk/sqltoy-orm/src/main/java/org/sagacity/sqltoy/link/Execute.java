@@ -60,6 +60,7 @@ public class Execute extends BaseLink {
 
 	public Execute dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -108,6 +109,7 @@ public class Execute extends BaseLink {
 			names = sqlToyConfig.getParamsName();
 			values = SqlConfigParseUtils.reflectBeanParams(names, entity, reflectPropertyHandler);
 		}
-		return dialectFactory.executeSql(sqlToyContext, sql, names, values, autoCommit, dataSource);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, autoCommit,
+				getDataSource(sqlToyConfig));
 	}
 }

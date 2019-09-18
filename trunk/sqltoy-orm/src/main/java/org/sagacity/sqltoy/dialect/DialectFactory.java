@@ -30,7 +30,6 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
@@ -182,7 +181,7 @@ public class DialectFactory {
 	/**
 	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlToyContext
-	 * @param sqlOrNamedSql
+	 * @param sqlToyConfig
 	 * @param dataSet
 	 * @param batchSize
 	 * @param reflectPropertyHandler
@@ -191,11 +190,10 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @return
 	 */
-	public Long batchUpdate(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final List dataSet,
+	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
 			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		try {
-			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 				public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -228,21 +226,21 @@ public class DialectFactory {
 	/**
 	 * @todo 执行sql修改性质的操作语句
 	 * @param sqlToyContext
-	 * @param sqlOrNamedSql
+	 * @param sqlToyConfig
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
 	 */
-	public Long executeSql(final SqlToyContext sqlToyContext, final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue, final Boolean autoCommit, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
+	public Long executeSql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final String[] paramsNamed, final Object[] paramsValue, final Boolean autoCommit,
+			final DataSource dataSource) {
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "update", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
-							new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue), dataSource),
+							new QueryExecutor(sqlToyConfig.getSql(), paramsNamed, paramsValue), dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(dialect),
@@ -305,12 +303,11 @@ public class DialectFactory {
 	 * @return
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Double randomCount, final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final Double randomCount, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		}
 		try {
-			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -474,18 +471,18 @@ public class DialectFactory {
 	 * @todo 分页查询, pageNo为负一表示取全部记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param pageNo
 	 * @param pageSize
 	 * @param dataSource
 	 * @return
 	 */
-	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor, final long pageNo,
-			final Integer pageSize, final DataSource dataSource) {
+	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
+			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
 		try {
-			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -583,17 +580,17 @@ public class DialectFactory {
 	 * @todo 取符合条件的前多少条记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param topSize
 	 * @param dataSource
 	 * @return
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final double topSize, final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
 		try {
-			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -647,16 +644,16 @@ public class DialectFactory {
 	 * @todo 查询符合条件的数据集合
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param dataSource
 	 * @return
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
 		try {
-			final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 			queryExecutor.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -700,15 +697,15 @@ public class DialectFactory {
 	 * @todo 查询符合条件的记录数量
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param dataSource
 	 * @return
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
@@ -1251,13 +1248,13 @@ public class DialectFactory {
 	 * @todo 查询锁定记录,并进行修改
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param updateRowHandler
 	 * @param dataSource
 	 * @return
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			final SqlToyConfig sqlToyConfig, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
@@ -1293,8 +1290,8 @@ public class DialectFactory {
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Integer topSize, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			final SqlToyConfig sqlToyConfig, final Integer topSize, final UpdateRowHandler updateRowHandler,
+			final DataSource dataSource) {
 		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
@@ -1331,8 +1328,8 @@ public class DialectFactory {
 
 	@Deprecated
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final Integer random, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+			final SqlToyConfig sqlToyConfig, final Integer random, final UpdateRowHandler updateRowHandler,
+			final DataSource dataSource) {
 		queryExecutor.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
@@ -1430,5 +1427,4 @@ public class DialectFactory {
 			SqlExecuteStat.destroy();
 		}
 	}
-
 }

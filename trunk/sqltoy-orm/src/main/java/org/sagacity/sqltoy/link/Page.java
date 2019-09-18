@@ -9,6 +9,8 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 
@@ -106,6 +108,7 @@ public class Page extends BaseLink {
 
 	public Page dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -130,9 +133,9 @@ public class Page extends BaseLink {
 			queryExecutor.resultType(resultType);
 		if (handler != null)
 			queryExecutor.rowCallbackHandler(handler);
-		return dialectFactory
-				.findPage(sqlToyContext, queryExecutor, pageModel.getPageNo(), pageModel.getPageSize(), dataSource)
-				.getPageResult();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, pageModel.getPageNo(),
+				pageModel.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 	}
 
 }

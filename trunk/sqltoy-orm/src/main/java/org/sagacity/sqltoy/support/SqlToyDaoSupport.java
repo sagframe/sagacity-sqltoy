@@ -108,6 +108,21 @@ public class SqlToyDaoSupport {
 		return result;
 	}
 
+	private DataSource getDataSource(DataSource dataSource, SqlToyConfig sqltoyConfig) {
+		// 第一、接口调用时直接指定的数据源
+		DataSource result = dataSource;
+		// 第二、sql指定的数据源
+		if (null == result && null != sqltoyConfig.getDataSource())
+			result = sqlToyContext.getDataSource(sqltoyConfig.getDataSource());
+		// 第三、自动注入的数据源
+		if (null == result)
+			result = this.dataSource;
+		// 第四、sqltoyContext默认的数据源
+		if (null == result)
+			result = sqlToyContext.getDefaultDataSource();
+		return result;
+	}
+
 	/**
 	 * @param sqlToyContext the sqlToyContext to set
 	 */
@@ -181,8 +196,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
-		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor,
-				this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
 	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues,
@@ -207,8 +223,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamsValue,
 			final Integer[] outParamsType, final Class resultType, final DataSource dataSource) {
-		return dialectFactory.executeStore(sqlToyContext, getSqlToyConfig(storeNameOrKey, SqlType.search),
-				inParamsValue, outParamsType, resultType, this.getDataSource(dataSource));
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeNameOrKey, SqlType.search);
+		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
+				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -347,8 +364,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor,
-				this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0)
 			return rows.get(0);
@@ -400,8 +418,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		return dialectFactory.executeSql(sqlToyContext, sqlOrNamedSql, paramsNamed, paramsValue, autoCommit,
-				this.getDataSource(dataSource));
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, autoCommit,
+				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -458,8 +477,9 @@ public class SqlToyDaoSupport {
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
 			final Boolean autoCommit, final DataSource dataSource) {
-		return dialectFactory.batchUpdate(sqlToyContext, sqlOrNamedSql, dataSet, batchSize, reflectPropertyHandler,
-				insertCallhandler, autoCommit, getDataSource(dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
+		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, reflectPropertyHandler,
+				insertCallhandler, autoCommit, getDataSource(dataSource, sqlToyConfig));
 	}
 
 	protected boolean wrapTreeTableRoute(final TreeTableModel treeModel) {
@@ -492,8 +512,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
-		return dialectFactory.findByQuery(sqlToyContext, queryExecutor,
-				this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
 	/**
@@ -503,8 +524,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, paginationModel.getPageNo(),
-				paginationModel.getPageSize(), this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
+				paginationModel.getPageSize(), this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
 	/**
@@ -548,8 +570,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
-		return dialectFactory.findTop(sqlToyContext, queryExecutor, topSize,
-				this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
 	/**
@@ -560,8 +583,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
-		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, randomCount,
-				this.getDataSource(queryExecutor.getDataSource()));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
@@ -880,8 +904,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource())).getRows();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 	}
 
 	/**
@@ -894,8 +919,9 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
 			final UpdateRowHandler updateRowHandler) {
-		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, topSize, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource())).getRows();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize, updateRowHandler,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 	}
 
 	/**
@@ -908,8 +934,9 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
 			final UpdateRowHandler updateRowHandler) {
-		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, random, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource())).getRows();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, sqlToyConfig, random, updateRowHandler,
+				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 	}
 
 	/**

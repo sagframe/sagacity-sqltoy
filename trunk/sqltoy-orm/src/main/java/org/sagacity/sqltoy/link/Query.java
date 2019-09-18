@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 
@@ -144,6 +146,7 @@ public class Query extends BaseLink {
 
 	public Query dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -152,8 +155,10 @@ public class Query extends BaseLink {
 	 * @return
 	 */
 	public Object getValue() {
-		QueryExecutor queryExecutor = new QueryExecutor(sql, names, values);
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, dataSource);
+		QueryExecutor queryExecute = new QueryExecutor(sql, names, values);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0)
 			return ((List) rows.get(0)).get(0);
@@ -166,7 +171,9 @@ public class Query extends BaseLink {
 	 */
 	public Object getOne() {
 		QueryExecutor queryExecute = build();
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0)
 			return rows.get(0);
@@ -179,7 +186,8 @@ public class Query extends BaseLink {
 	 */
 	public Long count() {
 		QueryExecutor queryExecute = build();
-		return dialectFactory.getCountBySql(sqlToyContext, queryExecute, dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		return dialectFactory.getCountBySql(sqlToyContext, queryExecute, sqlToyConfig, getDataSource(sqlToyConfig));
 	}
 
 	/**
@@ -188,7 +196,9 @@ public class Query extends BaseLink {
 	 */
 	public List<?> find() {
 		QueryExecutor queryExecute = build();
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+				getDataSource(sqlToyConfig));
 		return result.getRows();
 	}
 
@@ -199,7 +209,9 @@ public class Query extends BaseLink {
 	 */
 	public List<?> findTop(final double topSize) {
 		QueryExecutor queryExecute = build();
-		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecute, topSize, dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.findTop(sqlToyContext, queryExecute, sqlToyConfig, topSize,
+				getDataSource(sqlToyConfig));
 		return result.getRows();
 	}
 
@@ -210,8 +222,9 @@ public class Query extends BaseLink {
 	 */
 	public List<?> findRandom(final double randomSize) {
 		QueryExecutor queryExecute = build();
-		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, new Double(randomSize),
-				dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute.getSql(), SqlType.search);
+		QueryResult result = dialectFactory.getRandomResult(sqlToyContext, queryExecute, sqlToyConfig,
+				new Double(randomSize), getDataSource(sqlToyConfig));
 		return result.getRows();
 	}
 

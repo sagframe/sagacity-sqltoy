@@ -83,16 +83,6 @@ public class TreeTableModel implements Serializable {
 	 */
 	private String leafField = "IS_LEAF";
 
-	// /**
-	// * 叶子值
-	// */
-	// private String leafValue = "1";
-	//
-	// /**
-	// * 树干的值
-	// */
-	// private String trunkValue = "0";
-
 	/**
 	 * id字段长度
 	 */

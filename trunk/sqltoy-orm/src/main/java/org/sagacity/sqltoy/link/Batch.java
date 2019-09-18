@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 
 /**
  * @project sagacity-sqltoy
@@ -59,6 +61,7 @@ public class Batch extends BaseLink {
 
 	public Batch dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -96,7 +99,8 @@ public class Batch extends BaseLink {
 		if (sql == null)
 			throw new IllegalArgumentException("batch execute sql is null!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.batchUpdate(sqlToyContext, sql, dataSet, realBatchSize, reflectPropertyHandler,
-				insertCallhandler, autoCommit, dataSource);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update);
+		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, reflectPropertyHandler,
+				insertCallhandler, autoCommit, getDataSource(sqlToyConfig));
 	}
 }

@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.link;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 
 /**
@@ -26,6 +27,11 @@ public abstract class BaseLink {
 	protected SqlToyContext sqlToyContext;
 
 	/**
+	 * 是否默认dataSource
+	 */
+	protected boolean defaultDataSource = true;
+
+	/**
 	 * 各种数据库方言实现
 	 */
 	protected DialectFactory dialectFactory = DialectFactory.getInstance();
@@ -33,5 +39,15 @@ public abstract class BaseLink {
 	public BaseLink(SqlToyContext sqlToyContext, DataSource dataSource) {
 		this.sqlToyContext = sqlToyContext;
 		this.dataSource = dataSource;
+	}
+
+	public DataSource getDataSource(SqlToyConfig sqlToyConfig) {
+		DataSource result = dataSource;
+		// 数据源为空或非强制指定了数据源，则使用sql中指定的数据源
+		if ((null == result || defaultDataSource == false) && null != sqlToyConfig.getDataSource())
+			result = sqlToyContext.getDataSource(sqlToyConfig.getDataSource());
+		if (null == result)
+			result = sqlToyContext.getDefaultDataSource();
+		return result;
 	}
 }
