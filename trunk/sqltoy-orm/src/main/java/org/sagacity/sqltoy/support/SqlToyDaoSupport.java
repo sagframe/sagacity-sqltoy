@@ -108,6 +108,12 @@ public class SqlToyDaoSupport {
 		return result;
 	}
 
+	/**
+	 * @TODO 获取sql对应的dataSource
+	 * @param dataSource
+	 * @param sqltoyConfig
+	 * @return
+	 */
 	private DataSource getDataSource(DataSource dataSource, SqlToyConfig sqltoyConfig) {
 		// 第一、接口调用时直接指定的数据源
 		DataSource result = dataSource;
