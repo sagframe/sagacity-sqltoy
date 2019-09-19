@@ -591,7 +591,7 @@ public class SqlUtil {
 			final RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
 			final boolean ignoreAllEmptySet) throws Exception {
 		ResultSet rs = null;
-		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_SCROLL_INSENSITIVE,
+		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
