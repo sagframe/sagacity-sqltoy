@@ -752,6 +752,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 提取fastWith
 	 * @param sqlToyConfig
+	 * @param dialect
 	 */
 	public static void processFastWith(SqlToyConfig sqlToyConfig, String dialect) {
 		// 提取with as 和fast部分的sql，用于分页或取随机记录查询记录数量提供最简sql
@@ -811,102 +812,4 @@ public class SqlConfigParseUtils {
 		}
 		return null;
 	}
-
-	// /**
-	// * @todo 执行不同数据库函数的转换
-	// * @param functionConverts
-	// * @param dialect
-	// * @param sqlContent
-	// * @return
-	// */
-	// public static String convertFunctions(List<IFunction> functionConverts,
-	// String dialect, String sqlContent) {
-	// if (null == functionConverts || functionConverts.isEmpty() ||
-	// StringUtil.isBlank(dialect) || null == sqlContent
-	// || sqlContent.trim().equals("")) {
-	// return sqlContent;
-	// }
-	// int dbType = DataSourceUtils.getDBType(dialect);
-	// IFunction function;
-	// String lastFunction = sqlContent;
-	// String dialectLowcase = dialect.toLowerCase();
-	// for (int i = 0; i < functionConverts.size(); i++) {
-	// function = functionConverts.get(i);
-	// // 方言为null或空白表示适配所有数据库,适配的方言包含当前方言也执行替换
-	// if (StringUtil.isBlank(function.dialects()) ||
-	// function.dialects().toLowerCase().contains(dialectLowcase)) {
-	// lastFunction = replaceFunction(lastFunction, dbType, function);
-	// }
-	// }
-	// return lastFunction;
-	// }
-	//
-	// /**
-	// * @todo 单个sql函数转换处理
-	// * @param sqlContent
-	// * @param dbType
-	// * @param function
-	// * @return
-	// */
-	// private static String replaceFunction(String sqlContent, int dbType,
-	// IFunction function) {
-	// Pattern pattern = Pattern.compile(function.regex());
-	// String lastFunction = sqlContent;
-	// Matcher matcher = pattern.matcher(lastFunction);
-	// int index = -1;
-	// String functionParams;
-	// String[] args = null;
-	// int matchedIndex;
-	// int endMarkIndex = -1;
-	// StringBuilder result = new StringBuilder();
-	// String wrapResult;
-	// String functionName = null;
-	// boolean hasArgs = true;
-	// String matchedGroup;
-	// while (matcher.find()) {
-	// index = matcher.start();
-	// matchedGroup = matcher.group();
-	// // 是 function()模式
-	// if (matchedGroup.endsWith("(")) {
-	// hasArgs = true;
-	// } else {
-	// hasArgs = false;
-	// }
-	// matchedIndex = index + 1;
-	// // 函数(:args) 存在参数
-	// if (hasArgs) {
-	// functionName = lastFunction.substring(matchedIndex, lastFunction.indexOf("(",
-	// matchedIndex));
-	// endMarkIndex = StringUtil.getSymMarkIndex("(", ")", lastFunction,
-	// matchedIndex);
-	// functionParams = lastFunction.substring(lastFunction.indexOf("(",
-	// matchedIndex) + 1, endMarkIndex);
-	// args = StringUtil.splitExcludeSymMark(functionParams, ",",
-	// SqlToyConstants.filters);
-	// } else {
-	// args = null;
-	// endMarkIndex = matcher.end() - 1;
-	// functionName = lastFunction.substring(matchedIndex, endMarkIndex);
-	// }
-	//
-	// wrapResult = function.wrap(dbType, functionName, hasArgs, args);
-	//
-	// // update 2019-09-13 修改为:返回函数名称一样也做替换
-	// // 返回null或返回的跟原函数一样则表示不做任何处理
-	// // if (null == wrapResult
-	// // ||
-	// //
-	// wrapResult.toLowerCase().concat("(").startsWith(functionName.toLowerCase().concat("(")))
-	// if (null == wrapResult) {
-	// result.append(lastFunction.substring(0, endMarkIndex + 1));
-	// } else {
-	// result.append(lastFunction.substring(0, matchedIndex)).append(wrapResult);
-	// }
-	// lastFunction = lastFunction.substring(endMarkIndex + 1);
-	// matcher.reset(lastFunction);
-	//
-	// }
-	// result.append(lastFunction);
-	// return result.toString();
-	// }
 }
