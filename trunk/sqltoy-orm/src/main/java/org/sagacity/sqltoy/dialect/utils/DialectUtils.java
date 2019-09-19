@@ -191,6 +191,7 @@ public class DialectUtils {
 	 * @param paramsValue
 	 * @param rowCallbackHandler
 	 * @param conn
+	 * @param dbType
 	 * @param startIndex
 	 * @param fetchSize
 	 * @param maxRows
@@ -228,6 +229,7 @@ public class DialectUtils {
 	 * @param paramsValue
 	 * @param updateRowHandler
 	 * @param conn
+	 * @param dbType
 	 * @param startIndex
 	 * @return
 	 * @throws Exception
@@ -262,6 +264,7 @@ public class DialectUtils {
 	 * @param paramsValue
 	 * @param isLastSql
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
@@ -472,12 +475,16 @@ public class DialectUtils {
 	/**
 	 * @todo 执行批量保存或修改操作
 	 * @param sqlToyContext
-	 * @param sql
 	 * @param entities
+	 * @param batchSize
 	 * @param entityMeta
+	 * @param forceUpdateFields
+	 * @param generateSqlHandler
 	 * @param reflectPropertyHandler
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -541,12 +548,15 @@ public class DialectUtils {
 	/**
 	 * @todo 执行批量保存或修改操作
 	 * @param sqlToyContext
-	 * @param sql
 	 * @param entities
+	 * @param batchSize
 	 * @param entityMeta
+	 * @param generateSqlHandler
 	 * @param reflectPropertyHandler
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -1069,6 +1079,7 @@ public class DialectUtils {
 	 * @param entity
 	 * @param cascadeTypes
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
@@ -1127,6 +1138,7 @@ public class DialectUtils {
 	 * @param entities
 	 * @param cascadeTypes
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
