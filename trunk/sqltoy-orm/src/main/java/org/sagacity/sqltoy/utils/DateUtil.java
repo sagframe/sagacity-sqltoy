@@ -181,8 +181,9 @@ public class DateUtil {
 			return result;
 		} else {
 			// 中文日期格式
-			if (StringUtil.matches(dateStr, "[年月日时分秒]"))
+			if (StringUtil.matches(dateStr, "[年月日时分秒]")) {
 				dateStr = parseChinaDate(dateStr);
+			}
 			// 含中文，但非标准的时间性中文
 			else if (StringUtil.hasChinese(dateStr)) {
 				return null;
@@ -215,10 +216,11 @@ public class DateUtil {
 						realDF = "yyyyMMdd HH";
 					else
 						realDF = "yyMMdd HHmm";
-				} else if (size == 9)
+				} else if (size == 9) {
 					realDF = "yyMMdd HH";
-				else
+				} else {
 					realDF = "yyyyMMdd HHmmss";
+				}
 			} else {
 				// 去除数字中带的,例如:201,512
 				dateStr = dateStr.replace(",", "");
@@ -531,8 +533,7 @@ public class DateUtil {
 			tmp = tmp.substring(0, tmp.length() - 1);
 		if (StringUtil.isBlank(fmt))
 			return tmp.toString();
-		else
-			return formatDate(tmp, fmt);
+		return formatDate(tmp, fmt);
 	}
 
 	/**
@@ -553,10 +554,8 @@ public class DateUtil {
 		Date date = convertDateObject(objectDate);
 		if (null == date)
 			return null;
-		else {
-			String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
-			return parse(tmp, FORMAT.YEAR_MONTH);
-		}
+		String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
+		return parse(tmp, FORMAT.YEAR_MONTH);
 	}
 
 	/**
@@ -568,13 +567,11 @@ public class DateUtil {
 		Date date = convertDateObject(objectDate);
 		if (null == date)
 			return null;
-		else {
-			String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
-			Date result = parse(tmp, FORMAT.YEAR_MONTH);
-			result = addMonth(result, 1);
-			result = addDay(result, -1);
-			return result;
-		}
+		String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
+		Date result = parse(tmp, FORMAT.YEAR_MONTH);
+		result = addMonth(result, 1);
+		result = addDay(result, -1);
+		return result;
 	}
 
 	public static Date asDate(LocalDate localDate) {

@@ -89,17 +89,16 @@ public class NumberUtil {
 				return numberToChina(tmpStr, false);
 			}
 			// 数字转换成大写汉字金额
-			else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
+			if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
-			} else {
-				DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
-						: DecimalFormat.getInstance(new Locale(locale)));
-				if (roundingMode != null) {
-					df.setRoundingMode(roundingMode);
-				}
-				df.applyPattern(pattern);
-				return df.format(tmp);
 			}
+			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
+					: DecimalFormat.getInstance(new Locale(locale)));
+			if (roundingMode != null) {
+				df.setRoundingMode(roundingMode);
+			}
+			df.applyPattern(pattern);
+			return df.format(tmp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("value:" + target + ";pattern=" + pattern + e.getMessage());
@@ -128,15 +127,14 @@ public class NumberUtil {
 			BigDecimal tmp = new BigDecimal(tmpStr);
 			if (pattern.equalsIgnoreCase(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
-			} else if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY)
-					|| pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
-				return toCapitalMoney(tmp);
-			} else {
-				DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
-						: DecimalFormat.getCurrencyInstance(new Locale(locale)));
-				df.applyPattern(pattern);
-				return df.format(tmp);
 			}
+			if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
+				return toCapitalMoney(tmp);
+			}
+			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
+					: DecimalFormat.getCurrencyInstance(new Locale(locale)));
+			df.applyPattern(pattern);
+			return df.format(tmp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());
@@ -240,9 +238,8 @@ public class NumberUtil {
 				.add(parseMillMoney(splitsCapitalMoney[1])).add(parseLowThousandMoney(splitsCapitalMoney[2]));
 		if (capitalMoney.indexOf("负") == 0) {
 			return new BigDecimal(0).subtract(result).setScale(scale, RoundingMode.HALF_UP);
-		} else {
-			return result.setScale(scale, RoundingMode.HALF_UP);
 		}
+		return result.setScale(scale, RoundingMode.HALF_UP);
 	}
 
 	/**

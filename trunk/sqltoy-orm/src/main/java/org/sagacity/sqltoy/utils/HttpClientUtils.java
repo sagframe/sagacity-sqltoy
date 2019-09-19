@@ -124,10 +124,12 @@ public class HttpClientUtils {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
 				httpEntity = new StringEntity(JSON.toJSONString(map), charset);
-			} else
+			} else {
 				httpEntity = new StringEntity(postValue.toString(), charset);
-		} else
+			}
+		} else {
 			httpEntity = new StringEntity(JSON.toJSONString(postValue), charset);
+		}
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		String realUrl;
@@ -170,8 +172,9 @@ public class HttpClientUtils {
 				httpPost.setConfig(RequestConfig.custom().setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
 						.setConnectTimeout(nosqlConfig.getConnectTimeout())
 						.setSocketTimeout(nosqlConfig.getSocketTimeout()).build());
-			} else
+			} else {
 				httpPost.setConfig(requestConfig);
+			}
 			CloseableHttpClient client = null;
 			try {
 				if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
@@ -181,9 +184,9 @@ public class HttpClientUtils {
 							// 认证用户名和密码
 							new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
 					client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-				} else
+				} else {
 					client = HttpClients.createDefault();
-
+				}
 				HttpResponse response = client.execute(httpPost);
 				reponseEntity = response.getEntity();
 			} catch (Exception e) {

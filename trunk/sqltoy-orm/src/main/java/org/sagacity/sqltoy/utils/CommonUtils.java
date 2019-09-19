@@ -107,39 +107,36 @@ public class CommonUtils {
 		try {
 			if (file instanceof InputStream)
 				return (InputStream) file;
-			else if (file instanceof File)
+			if (file instanceof File)
 				return new FileInputStream((File) file);
-			else {
-				String realFile = (String) file;
-				if (StringUtil.isBlank(realFile))
-					return null;
-				// 文件路径
-				if (new File(realFile).exists()) {
-					return new FileInputStream(realFile);
-				} else {
-					if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
-						realFile = realFile.trim().substring(10).trim();
-					if (realFile.charAt(0) == '/')
-						realFile = realFile.substring(1);
-					InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
-					if (result == null) {
-						try {
-							Enumeration<URL> urls = Thread.currentThread().getContextClassLoader()
-									.getResources(realFile);
-							URL url;
-							while (urls.hasMoreElements()) {
-								url = urls.nextElement();
-								result = new FileInputStream(url.getFile());
-								if (result != null)
-									break;
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+
+			String realFile = (String) file;
+			if (StringUtil.isBlank(realFile))
+				return null;
+			// 文件路径
+			if (new File(realFile).exists()) {
+				return new FileInputStream(realFile);
+			}
+			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
+				realFile = realFile.trim().substring(10).trim();
+			if (realFile.charAt(0) == '/')
+				realFile = realFile.substring(1);
+			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+			if (result == null) {
+				try {
+					Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
+					URL url;
+					while (urls.hasMoreElements()) {
+						url = urls.nextElement();
+						result = new FileInputStream(url.getFile());
+						if (result != null)
+							break;
 					}
-					return result;
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
+			return result;
 		} catch (FileNotFoundException fn) {
 			fn.printStackTrace();
 		}
@@ -220,13 +217,12 @@ public class CommonUtils {
 			}
 			if (expressions.length == 1) {
 				return (expressResult[0] ? "true" : "false");
-			} else {
-				if (logicStr.equals("&&")) {
-					return ((expressResult[0] && expressResult[1]) ? "true" : "false");
-				} else {
-					return ((expressResult[0] || expressResult[1]) ? "true" : "false");
-				}
 			}
+			// 只支持&& 和||
+			if (logicStr.equals("&&")) {
+				return ((expressResult[0] && expressResult[1]) ? "true" : "false");
+			}
+			return ((expressResult[0] || expressResult[1]) ? "true" : "false");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -323,9 +319,8 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) >= Double.parseDouble(compare);
-		} else {
-			return valueStr.compareTo(compare) >= 0;
 		}
+		return valueStr.compareTo(compare) >= 0;
 	}
 
 	/**
@@ -343,9 +338,8 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) <= Double.parseDouble(compare);
-		} else {
-			return valueStr.compareTo(compare) <= 0;
 		}
+		return valueStr.compareTo(compare) <= 0;
 	}
 
 	/**
@@ -363,9 +357,8 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) > Double.parseDouble(compare);
-		} else {
-			return valueStr.compareTo(compare) > 0;
 		}
+		return valueStr.compareTo(compare) > 0;
 	}
 
 	/**
@@ -383,9 +376,8 @@ public class CommonUtils {
 		// 数字
 		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
 			return Double.parseDouble(valueStr) < Double.parseDouble(compare);
-		} else {
-			return valueStr.compareTo(compare) < 0;
 		}
+		return valueStr.compareTo(compare) < 0;
 	}
 
 	/**
