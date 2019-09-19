@@ -213,19 +213,15 @@ public class SqlXMLConfigParse {
 			return null;
 		// 判断是否xml为精简模式即只有<sql id=""><![CDATA[]]></sql>模式
 		String sqlContent = (sqlElt.isTextOnly()) ? sqlElt.getText() : sqlElt.elementText("value");
-		String countSql = (sqlElt.element("count-sql") == null) ? null : sqlElt.elementText("count-sql");
-
 		if (StringUtil.isBlank(sqlContent))
 			throw new RuntimeException("请检查sql配置,没有正确填写sql内容!");
-
 		String id = sqlElt.attributeValue("id");
 		if (id == null)
 			throw new RuntimeException("请检查sql配置,没有给定sql id!");
+		String countSql = (sqlElt.element("count-sql") == null) ? null : sqlElt.elementText("count-sql");
 
 		// 替换全角空格
-		if (sqlContent != null) {
-			sqlContent = sqlContent.replaceAll("\u3000", " ");
-		}
+		sqlContent = sqlContent.replaceAll("\u3000", " ");
 		if (countSql != null) {
 			countSql = countSql.replaceAll("\u3000", " ");
 		}
