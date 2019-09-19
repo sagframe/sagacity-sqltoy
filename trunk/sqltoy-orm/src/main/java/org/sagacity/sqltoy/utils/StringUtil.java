@@ -333,16 +333,16 @@ public class StringUtil {
 		Matcher m = p.matcher(source);
 		if (m.find())
 			return m.start();
-		else
-			return -1;
+		return -1;
 	}
 
 	public static int[] matchIndex(String source, Pattern p, int start) {
 		if (source.length() <= start)
 			return new int[] { -1, -1 };
 		Matcher m = p.matcher(source.substring(start));
-		if (m.find())
+		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
+		}
 		return new int[] { -1, -1 };
 	}
 
