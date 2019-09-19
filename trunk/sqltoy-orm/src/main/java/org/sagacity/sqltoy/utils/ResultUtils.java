@@ -209,24 +209,29 @@ public class ResultUtils {
 			} else {
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
 			}
-		} // 邮件
-		else if ("email".equals(type)) {
+		}
+		// 邮件
+		if ("email".equals(type)) {
 			return realStr.substring(0, 1).concat(maskCode).concat(realStr.substring(realStr.indexOf("@")));
-		} // 身份证
-		else if ("id-card".equals(type)) {
+		}
+		// 身份证
+		if ("id-card".equals(type)) {
 			return StringUtil.secureMask(realStr, 0, 4, maskCode);
-		} // 银行卡
-		else if ("bank-card".equals(type)) {
+		}
+		// 银行卡
+		if ("bank-card".equals(type)) {
 			return StringUtil.secureMask(realStr, 6, 4, maskCode);
-		} // 姓名
-		else if ("name".equals(type)) {
+		}
+		// 姓名
+		if ("name".equals(type)) {
 			if (size >= 4) {
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
 			} else {
 				return StringUtil.secureMask(realStr, 1, 0, maskCode);
 			}
-		} // 地址
-		else if ("address".equals(type)) {
+		}
+		// 地址
+		if ("address".equals(type)) {
 			if (size >= 12) {
 				return StringUtil.secureMask(realStr, 6, 0, maskCode);
 			} else if (size >= 8) {
@@ -234,8 +239,9 @@ public class ResultUtils {
 			} else {
 				return StringUtil.secureMask(realStr, 2, 0, maskCode);
 			}
-		} // 对公银行账号
-		else if ("public-account".equals(type)) {
+		}
+		// 对公银行账号
+		if ("public-account".equals(type)) {
 			return StringUtil.secureMask(realStr, 2, 0, maskCode);
 		}
 
@@ -917,6 +923,7 @@ public class ResultUtils {
 	private static Object translateKey(SqlTranslate translate, HashMap<String, Object[]> translateKeyMap,
 			Object fieldValue) {
 		String fieldStr = fieldValue.toString();
+		// 单值翻译
 		if (translate.getSplitRegex() == null) {
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			if (cacheValues == null) {
@@ -930,30 +937,30 @@ public class ResultUtils {
 				fieldValue = cacheValues[translate.getIndex()];
 			}
 			return fieldValue;
-		} else {
-			String[] keys = fieldStr.split(translate.getSplitRegex());
-			String linkSign = translate.getLinkSign();
-			StringBuilder result = new StringBuilder();
-			int index = 0;
-			for (String key : keys) {
-				if (index > 0) {
-					result.append(linkSign);
-				}
-				Object[] cacheValues = translateKeyMap.get(key.trim());
-				if (cacheValues == null) {
-					if (translate.getUncached() != null) {
-						result.append(translate.getUncached().replace("${value}", key));
-					} else {
-						result.append(key);
-					}
-					logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), key);
-				} else {
-					result.append(cacheValues[translate.getIndex()]);
-				}
-				index++;
-			}
-			return result.toString();
 		}
+		// 将字符串用分隔符切分开进行逐个翻译
+		String[] keys = fieldStr.split(translate.getSplitRegex());
+		String linkSign = translate.getLinkSign();
+		StringBuilder result = new StringBuilder();
+		int index = 0;
+		for (String key : keys) {
+			if (index > 0) {
+				result.append(linkSign);
+			}
+			Object[] cacheValues = translateKeyMap.get(key.trim());
+			if (cacheValues == null) {
+				if (translate.getUncached() != null) {
+					result.append(translate.getUncached().replace("${value}", key));
+				} else {
+					result.append(key);
+				}
+				logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), key);
+			} else {
+				result.append(cacheValues[translate.getIndex()]);
+			}
+			index++;
+		}
+		return result.toString();
 	}
 
 	/**
@@ -1065,9 +1072,8 @@ public class ResultUtils {
 				result.add(rowMap);
 			}
 			return result;
-		} else {
-			return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
 		}
+		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
 	}
 
 	/**
