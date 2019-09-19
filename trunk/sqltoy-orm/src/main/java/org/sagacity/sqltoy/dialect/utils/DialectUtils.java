@@ -1580,6 +1580,7 @@ public class DialectUtils {
 	 * @param reflectPropertyHandler
 	 * @param nullFunction
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
 	 * @param tableName
 	 * @param skipNull
@@ -1639,7 +1640,9 @@ public class DialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
@@ -1688,8 +1691,10 @@ public class DialectUtils {
 	 * @param entities
 	 * @param batchSize
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
 	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
@@ -1738,6 +1743,7 @@ public class DialectUtils {
 	 * @param entity
 	 * @param paramsNamed
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
 	 * @return
 	 */
@@ -1955,6 +1961,7 @@ public class DialectUtils {
 	 * @param inParamValues
 	 * @param outParamTypes
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
