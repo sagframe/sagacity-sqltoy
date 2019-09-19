@@ -486,11 +486,9 @@ public class ParamFilterUtils {
 		if (paramValue instanceof String) {
 			if (isFirst)
 				return paramValue.toString().replaceFirst(regex, value);
-			else
-				return paramValue.toString().replaceAll(regex, value);
-		} else {
+			return paramValue.toString().replaceAll(regex, value);
+		} 
 			return paramValue;
-		}
 	}
 
 	/**
