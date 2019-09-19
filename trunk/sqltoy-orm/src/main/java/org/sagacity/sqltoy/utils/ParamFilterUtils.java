@@ -487,8 +487,8 @@ public class ParamFilterUtils {
 			if (isFirst)
 				return paramValue.toString().replaceFirst(regex, value);
 			return paramValue.toString().replaceAll(regex, value);
-		} 
-			return paramValue;
+		}
+		return paramValue;
 	}
 
 	/**
