@@ -33,10 +33,11 @@ public class SqlUtilsExt {
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param batchSize
-	 * @param insertCallhandler
 	 * @param updateTypes
 	 * @param autoCommit
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
@@ -53,6 +54,8 @@ public class SqlUtilsExt {
 	 * @param entityMeta
 	 * @param autoCommit
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
@@ -73,6 +76,8 @@ public class SqlUtilsExt {
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
@@ -106,12 +111,13 @@ public class SqlUtilsExt {
 				if (rowData != null) {
 					// 使用对象properties方式传值
 					for (int j = 0, n = rowData.length; j < n; j++) {
-						if (supportDefaultValue)
+						if (supportDefaultValue) {
 							setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
 									fieldsDefaultValue[j], j + 1);
-						else
+						} else {
 							SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
 									fieldsType == null ? -1 : fieldsType[j], j + 1);
+						}
 					}
 					meter++;
 					// 批量
@@ -153,6 +159,7 @@ public class SqlUtilsExt {
 	/**
 	 * @todo 自动进行类型转换,设置sql中的参数条件的值
 	 * @param conn
+	 * @param dbType
 	 * @param pst
 	 * @param params
 	 * @param entityMeta
@@ -162,15 +169,17 @@ public class SqlUtilsExt {
 	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
-			for (int i = 0, n = params.length; i < n; i++)
+			for (int i = 0, n = params.length; i < n; i++) {
 				setParamValue(conn, dbType, pst, params[i], entityMeta.getFieldsTypeArray()[i],
 						entityMeta.getFieldsNullable()[i], entityMeta.getFieldsDefaultValue()[i], 1 + i);
+			}
 		}
 	}
 
 	/**
 	 * @todo 提供针对默认值的转化
 	 * @param conn
+	 * @param dbType
 	 * @param pst
 	 * @param paramValue
 	 * @param jdbcType

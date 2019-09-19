@@ -225,11 +225,10 @@ public class StringUtil {
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
 		int beginSignIndex = source.indexOf(beginMarkSign, startIndex);
-		int endIndex = -1;
+
 		if (beginSignIndex == -1)
 			return source.indexOf(endMarkSign, startIndex);
-		else
-			endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
+		int endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
 		int tmpIndex = 0;
 		while (endIndex > beginSignIndex) {
 			// 寻找下一个开始符号
@@ -275,11 +274,9 @@ public class StringUtil {
 		Pattern startP = Pattern.compile(beginMarkSign);
 		Pattern endP = Pattern.compile(endMarkSign);
 		int[] beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
-		int[] endIndex = { -1, -1 };
 		if (beginSignIndex[0] == -1)
 			return StringUtil.matchIndex(source, endP, startIndex)[0];
-		else
-			endIndex = StringUtil.matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] endIndex = StringUtil.matchIndex(source, endP, beginSignIndex[1] + 1);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
@@ -346,8 +343,7 @@ public class StringUtil {
 		Matcher m = p.matcher(source.substring(start));
 		if (m.find())
 			return new int[] { m.start() + start, m.end() + start };
-		else
-			return new int[] { -1, -1 };
+		return new int[] { -1, -1 };
 	}
 
 	public static int matchLastIndex(String source, String regex) {
@@ -414,10 +410,8 @@ public class StringUtil {
 		while (index != -1) {
 			if (count == order)
 				return index;
-			else {
-				begin = index + 1;
-				index = source.indexOf(regex, begin);
-			}
+			begin = index + 1;
+			index = source.indexOf(regex, begin);
 			count++;
 		}
 		return -1;
@@ -440,8 +434,7 @@ public class StringUtil {
 	/**
 	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
 	 * @param source
-	 * @param splitSign
-	 *            如逗号、分号、冒号或具体字符串,非正则表达式
+	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
 	 * @param filter
 	 * @return
 	 */
@@ -453,81 +446,79 @@ public class StringUtil {
 			return new String[] { source };
 		if (filter == null || filter.isEmpty())
 			return source.split(splitSign);
-		else {
-			String[][] filters = new String[filter.size()][2];
-			Iterator iter = filter.entrySet().iterator();
-			int count = 0;
-			String beginSign;
-			String endSign;
-			int beginSignIndex;
-			Map.Entry entry;
-			while (iter.hasNext()) {
-				entry = (Map.Entry) iter.next();
-				beginSign = (String) entry.getKey();
-				endSign = (String) entry.getValue();
-				beginSignIndex = source.indexOf(beginSign);
-				if (beginSignIndex != -1 && source.indexOf(endSign, beginSignIndex + 1) != -1) {
-					filters[count][0] = beginSign;
-					filters[count][1] = endSign;
-					count++;
-				}
+		String[][] filters = new String[filter.size()][2];
+		Iterator iter = filter.entrySet().iterator();
+		int count = 0;
+		String beginSign;
+		String endSign;
+		int beginSignIndex;
+		Map.Entry entry;
+		while (iter.hasNext()) {
+			entry = (Map.Entry) iter.next();
+			beginSign = (String) entry.getKey();
+			endSign = (String) entry.getValue();
+			beginSignIndex = source.indexOf(beginSign);
+			if (beginSignIndex != -1 && source.indexOf(endSign, beginSignIndex + 1) != -1) {
+				filters[count][0] = beginSign;
+				filters[count][1] = endSign;
+				count++;
 			}
-			// 没有对称符合过滤则直接返回分割结果
-			if (count == 0)
-				return source.split(splitSign);
-
-			ArrayList splitResults = new ArrayList();
-			int preSplitIndex = 0;
-			int splitSignLength = splitSign.length();
-			int symBeginIndex = 0;
-			int symEndIndex = 0;
-			int skipIndex = 0;
-			int minBegin = -1;
-			int minEndIndex = -1;
-			int meter = 0;
-			while (splitIndex != -1) {
-				// 寻找最前的对称符号
-				minBegin = -1;
-				minEndIndex = -1;
-				meter = 0;
-				for (int i = 0; i < count; i++) {
-					symBeginIndex = source.indexOf(filters[i][0], skipIndex);
-					symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skipIndex);
-					if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBegin))) {
-						minBegin = symBeginIndex;
-						minEndIndex = symEndIndex;
-						meter++;
-					}
-
-				}
-				// 在中间
-				if (minBegin < splitIndex && minEndIndex > splitIndex) {
-					skipIndex = minEndIndex + 1;
-					splitIndex = source.indexOf(splitSign, minEndIndex + 1);
-				} else {
-					// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
-					if (minBegin > splitIndex || minBegin == -1) {
-						splitResults.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength),
-								splitIndex));
-						preSplitIndex = splitIndex;
-						skipIndex = preSplitIndex + 1;
-						splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
-					} // 对称截止符号在分割符前面，向下继续寻找
-					else {
-						skipIndex = minEndIndex + 1;
-					}
-				}
-				// 找不到下一个分隔符号
-				if (splitIndex == -1) {
-					splitResults.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength)));
-					break;
-				}
-			}
-			String[] resultStr = new String[splitResults.size()];
-			for (int j = 0; j < splitResults.size(); j++)
-				resultStr[j] = (String) splitResults.get(j);
-			return resultStr;
 		}
+		// 没有对称符合过滤则直接返回分割结果
+		if (count == 0)
+			return source.split(splitSign);
+
+		ArrayList splitResults = new ArrayList();
+		int preSplitIndex = 0;
+		int splitSignLength = splitSign.length();
+		int symBeginIndex = 0;
+		int symEndIndex = 0;
+		int skipIndex = 0;
+		int minBegin = -1;
+		int minEndIndex = -1;
+		int meter = 0;
+		while (splitIndex != -1) {
+			// 寻找最前的对称符号
+			minBegin = -1;
+			minEndIndex = -1;
+			meter = 0;
+			for (int i = 0; i < count; i++) {
+				symBeginIndex = source.indexOf(filters[i][0], skipIndex);
+				symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skipIndex);
+				if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBegin))) {
+					minBegin = symBeginIndex;
+					minEndIndex = symEndIndex;
+					meter++;
+				}
+
+			}
+			// 在中间
+			if (minBegin < splitIndex && minEndIndex > splitIndex) {
+				skipIndex = minEndIndex + 1;
+				splitIndex = source.indexOf(splitSign, minEndIndex + 1);
+			} else {
+				// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
+				if (minBegin > splitIndex || minBegin == -1) {
+					splitResults.add(
+							source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
+					preSplitIndex = splitIndex;
+					skipIndex = preSplitIndex + 1;
+					splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
+				} // 对称截止符号在分割符前面，向下继续寻找
+				else {
+					skipIndex = minEndIndex + 1;
+				}
+			}
+			// 找不到下一个分隔符号
+			if (splitIndex == -1) {
+				splitResults.add(source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength)));
+				break;
+			}
+		}
+		String[] resultStr = new String[splitResults.size()];
+		for (int j = 0; j < splitResults.size(); j++)
+			resultStr[j] = (String) splitResults.get(j);
+		return resultStr;
 	}
 
 	/**
@@ -554,8 +545,7 @@ public class StringUtil {
 		// 首字母变大写
 		if (firstIsUpperCase)
 			return firstToUpperCase(result.toString());
-		else
-			return firstToLowerCase(result.toString());
+		return firstToLowerCase(result.toString());
 	}
 
 	/**
@@ -572,9 +562,8 @@ public class StringUtil {
 		String tmp = value.toString();
 		if (tmp.length() <= preLength + tailLength)
 			return tmp;
-		else
-			return tmp.substring(0, preLength).concat(maskStr == null ? "***" : maskStr)
-					.concat(tmp.substring(tmp.length() - tailLength));
+		return tmp.substring(0, preLength).concat(maskStr == null ? "***" : maskStr)
+				.concat(tmp.substring(tmp.length() - tailLength));
 	}
 
 	/**
