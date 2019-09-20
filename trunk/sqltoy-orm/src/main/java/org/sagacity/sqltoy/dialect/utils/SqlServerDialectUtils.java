@@ -58,6 +58,8 @@ public class SqlServerDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */
@@ -97,12 +99,13 @@ public class SqlServerDialectUtils {
 	 * @todo 批量保存或修改
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param batchSize
 	 * @param reflectPropertyHandler
 	 * @param forceUpdateFields
-	 * @param openIdentity
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -143,6 +146,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param forceUpdateFields
@@ -293,6 +297,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param fromTable
@@ -694,7 +699,9 @@ public class SqlServerDialectUtils {
 	 * @param entities
 	 * @param reflectPropertyHandler
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
+	 * @return
 	 * @throws Exception
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
@@ -773,6 +780,8 @@ public class SqlServerDialectUtils {
 	 * @param updateTypes
 	 * @param autoCommit
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
@@ -858,6 +867,7 @@ public class SqlServerDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,

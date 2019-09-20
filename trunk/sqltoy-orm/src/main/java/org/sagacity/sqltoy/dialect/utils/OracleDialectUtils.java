@@ -40,6 +40,8 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -72,6 +74,7 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
@@ -122,6 +125,8 @@ public class OracleDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */

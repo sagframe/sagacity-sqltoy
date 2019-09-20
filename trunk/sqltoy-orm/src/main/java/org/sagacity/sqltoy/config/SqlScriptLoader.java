@@ -85,6 +85,7 @@ public class SqlScriptLoader {
 	/**
 	 * @TODO 初始化加载sql文件
 	 * @param debug
+	 * @param delayCheckSeconds
 	 * @param sleepSeconds
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, int sleepSeconds) {

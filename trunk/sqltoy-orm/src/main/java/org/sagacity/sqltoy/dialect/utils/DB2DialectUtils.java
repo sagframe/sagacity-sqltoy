@@ -32,6 +32,8 @@ public class DB2DialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */
@@ -75,6 +77,7 @@ public class DB2DialectUtils {
 	 * @param isNullFunction
 	 * @param sequence
 	 * @param isAssignPK
+	 * @param tableName
 	 * @return
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,

@@ -92,31 +92,30 @@ public class PageOptimizeUtils {
 		// sql初次执行查询
 		if (null == map) {
 			return null;
-		} else {
-			Object[] values = map.get(conditionsKey);
-			// 为null表示条件初次查询
-			if (null == values)
-				return null;
-			// 总记录数
-			Long totalCount = (Long) values[1];
-			// 失效时间
-			long expireTime = (Long) values[0];
-			long nowTime = System.currentTimeMillis();
-
-			// 先移除(为了调整排列顺序)
-			map.remove(conditionsKey);
-			// 超时,返回null表示需要重新查询，并不需要定时检测
-			// 1、控制总记录数量,最早的始终会排在最前面，会最先排挤出去
-			// 2、每次查询时相同的条件会自动检测是否过期，过期则会重新执行
-			if (nowTime >= expireTime) {
-				return null;
-			}
-			// 重置过期时间
-			values[0] = nowTime + sqlToyConfig.getPageAliveSeconds() * 1000;
-			// 重新置于linkedHashMap的最后位置
-			map.put(conditionsKey, values);
-			return totalCount;
 		}
+		Object[] values = map.get(conditionsKey);
+		// 为null表示条件初次查询
+		if (null == values)
+			return null;
+		// 总记录数
+		Long totalCount = (Long) values[1];
+		// 失效时间
+		long expireTime = (Long) values[0];
+		long nowTime = System.currentTimeMillis();
+
+		// 先移除(为了调整排列顺序)
+		map.remove(conditionsKey);
+		// 超时,返回null表示需要重新查询，并不需要定时检测
+		// 1、控制总记录数量,最早的始终会排在最前面，会最先排挤出去
+		// 2、每次查询时相同的条件会自动检测是否过期，过期则会重新执行
+		if (nowTime >= expireTime) {
+			return null;
+		}
+		// 重置过期时间
+		values[0] = nowTime + sqlToyConfig.getPageAliveSeconds() * 1000;
+		// 重新置于linkedHashMap的最后位置
+		map.put(conditionsKey, values);
+		return totalCount;
 	}
 
 	/*

@@ -358,8 +358,9 @@ public class ScanEntityAndSqlResource {
 				fileName = file.getName();
 				if (!file.isDirectory() && fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 					fileList.add(file);
-				} else
+				} else {
 					getPathFiles(files[loop], fileList);
+				}
 			}
 		} else if (!parentFile.isDirectory() && fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 			fileList.add(parentFile);

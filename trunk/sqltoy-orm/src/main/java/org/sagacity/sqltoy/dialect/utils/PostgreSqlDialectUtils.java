@@ -43,6 +43,8 @@ public class PostgreSqlDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */
@@ -83,6 +85,8 @@ public class PostgreSqlDialectUtils {
 	 * @param pageNo
 	 * @param pageSize
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */
@@ -118,6 +122,8 @@ public class PostgreSqlDialectUtils {
 	 * @param queryExecutor
 	 * @param topSize
 	 * @param conn
+	 * @param dbType
+	 * @param dialect
 	 * @return
 	 * @throws Exception
 	 */
@@ -148,6 +154,7 @@ public class PostgreSqlDialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -195,8 +202,10 @@ public class PostgreSqlDialectUtils {
 	 * @param batchSize
 	 * @param reflectPropertyHandler
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
 	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,

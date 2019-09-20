@@ -694,7 +694,6 @@ public class SqlConfigParseUtils {
 	 * @param querySql
 	 * @param dialect
 	 * @param sqlType
-	 * @param functionConverts
 	 * @return
 	 */
 	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType) {

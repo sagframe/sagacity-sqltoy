@@ -47,6 +47,7 @@ public class SapIQDialectUtils {
 	 * @param entity
 	 * @param openIdentity
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -177,7 +178,9 @@ public class SapIQDialectUtils {
 	 * @param reflectPropertyHandler
 	 * @param openIdentity
 	 * @param conn
+	 * @param dbType
 	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -203,8 +206,11 @@ public class SapIQDialectUtils {
 	 * @param isAssignPK
 	 * @param insertSql
 	 * @param entities
+	 * @param batchSize
 	 * @param reflectPropertyHandler
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
@@ -274,9 +280,8 @@ public class SapIQDialectUtils {
 			logger.debug("batch insert sql:{}", insertSql);
 		if (entityMeta.isHasDefaultValue()) {
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn, dbType);
-		} else {
-			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
-					null, conn, dbType);
 		}
+		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(), null,
+				conn, dbType);
 	}
 }

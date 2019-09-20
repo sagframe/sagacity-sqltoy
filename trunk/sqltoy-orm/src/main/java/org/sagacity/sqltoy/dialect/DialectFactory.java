@@ -298,6 +298,7 @@ public class DialectFactory {
 	 * @todo 取随机记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
+	 * @param sqlToyConfig
 	 * @param randomCount
 	 * @param dataSource
 	 * @return
