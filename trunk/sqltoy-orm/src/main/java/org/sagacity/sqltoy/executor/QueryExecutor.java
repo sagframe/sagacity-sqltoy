@@ -10,6 +10,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -24,6 +26,11 @@ import org.sagacity.sqltoy.utils.ParamFilterUtils;
  * @version id:QueryExecutor.java,Revision:v1.0,Date:2012-9-3
  */
 public class QueryExecutor implements Serializable {
+	/**
+	 * 定义日志
+	 */
+	protected final Logger logger = LogManager.getLogger(QueryExecutor.class);
+
 	/**
 	 * 
 	 */
@@ -114,6 +121,8 @@ public class QueryExecutor implements Serializable {
 			// 类型检测
 			if (this.resultType.equals("".getClass().getClass()))
 				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
+		} else {
+			logger.warn("请关注:查询语句sql={} 指定的查询条件参数entity=null,将以ArrayList作为默认类型返回!", sql);
 		}
 	}
 
@@ -141,6 +150,9 @@ public class QueryExecutor implements Serializable {
 	}
 
 	public QueryExecutor resultType(Type resultType) {
+		if (resultType == null) {
+			logger.warn("请关注:查询语句sql={} 指定的resultType=null,将以ArrayList作为默认类型返回!", sql);
+		}
 		this.resultType = resultType;
 		return this;
 	}
