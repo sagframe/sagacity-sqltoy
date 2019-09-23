@@ -16,8 +16,8 @@
 		<mysql.version>8.0.17</mysql.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
-		<httpclient.version>4.5.9</httpclient.version>
-		<httpclient-core.version>4.4.11</httpclient-core.version>
+		<httpclient.version>4.5.10</httpclient.version>
+		<httpclient-core.version>4.4.12</httpclient-core.version>
 		<elastic-rest-client.version>7.3.2</elastic-rest-client.version>
 		<fastjson.version>1.2.60</fastjson.version>
 		<mongo.version>3.11.0</mongo.version>
