@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version id:ScanEntityAndSqlResource.java,Revision:v1.0,Date:2012-6-10
  *          下午10:43:15
  * @Modification {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
+ * @Modification {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
@@ -197,9 +198,7 @@ public class ScanEntityAndSqlResource {
 		String realRes;
 		Enumeration<URL> urls;
 		URL url;
-		boolean hasDialectSql = false;
 		File file;
-		String dialectXML = StringUtil.isNotBlank(dialect) ? ".".concat(dialect).concat(SQLTOY_SQL_FILE_SUFFIX) : null;
 		boolean startClasspath = false;
 		if (StringUtil.isNotBlank(resourceDir)) {
 			// 统一全角半角，用逗号分隔
@@ -223,56 +222,17 @@ public class ScanEntityAndSqlResource {
 							// 同样的进行循环迭代
 							JarEntry entry;
 							String name;
-							hasDialectSql = false;
 							while (entries.hasMoreElements()) {
 								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
 								entry = entries.nextElement();
 								name = entry.getName();
 								if (name.startsWith(realRes) && name.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()) {
-									if (!hasDialectSql && dialectXML != null && name.endsWith(dialectXML))
-										hasDialectSql = true;
 									result.add(name);
-								}
-							}
-							// 移除非以dialect结尾的sql配置文件
-							if (hasDialectSql) {
-								for (int i = 0; i < result.size(); i++) {
-									if (result.get(i) instanceof String) {
-										name = result.get(i).toString();
-										if (!name.endsWith(dialectXML)) {
-											result.remove(i);
-											i--;
-										}
-									}
 								}
 							}
 						} else {
 							getPathFiles(new File(url.toURI()), result);
-							if (null != dialectXML) {
-								// 判断是否存在dialect 形式的sql文件
-								for (int i = 0; i < result.size(); i++) {
-									if (result.get(i) instanceof File) {
-										file = (File) result.get(i);
-										if (file.getName().endsWith(dialectXML)) {
-											hasDialectSql = true;
-											break;
-										}
-									}
-								}
-								// 移除非以dialect结尾的sql配置文件
-								if (hasDialectSql) {
-									for (int i = 0; i < result.size(); i++) {
-										if (result.get(i) instanceof File) {
-											file = (File) result.get(i);
-											if (!file.getName().endsWith(dialectXML)) {
-												result.remove(i);
-												i--;
-											}
-										}
-									}
-								}
-							}
 						}
 					}
 				}
