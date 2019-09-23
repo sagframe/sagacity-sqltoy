@@ -133,12 +133,13 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
-			if (noSqlModel.isHasAggs())
+			if (noSqlModel.isHasAggs()) {
 				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
-						realMql, queryExecutor.getResultTypeName());
-			else
+						realMql, (Class)queryExecutor.getResultType());
+			} else {
 				return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-						realMql, queryExecutor.getResultTypeName());
+						realMql, (Class)queryExecutor.getResultType());
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -161,7 +162,7 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-					realMql, queryExecutor.getResultTypeName());
+					realMql, (Class)queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -184,7 +185,7 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-					realMql, queryExecutor.getResultTypeName());
+					realMql, (Class)queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -217,7 +218,7 @@ public class Mongo extends BaseLink {
 	 * @throws Exception
 	 */
 	private PaginationModel findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, PaginationModel pageModel,
-			String mql, String resultClass) throws Exception {
+			String mql, Class resultClass) throws Exception {
 		PaginationModel result = new PaginationModel();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
@@ -247,7 +248,7 @@ public class Mongo extends BaseLink {
 	 * @return
 	 */
 	private List<?> findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
-			String resultClass) throws Exception {
+			Class resultClass) throws Exception {
 		BasicQuery query = new BasicQuery(mql);
 		if (topSize != null) {
 			if (topSize > 1)
@@ -273,7 +274,7 @@ public class Mongo extends BaseLink {
 	 * @param resultClass
 	 * @return
 	 */
-	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, String resultClass)
+	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, Class resultClass)
 			throws Exception {
 		String realMql = mql.trim();
 		if (realMql.startsWith("{") && realMql.endsWith("}"))
@@ -293,7 +294,7 @@ public class Mongo extends BaseLink {
 		return extractFieldValues(sqlToyConfig, out.iterator(), resultClass);
 	}
 
-	private List extractFieldValues(SqlToyConfig sqlToyConfig, Iterator<Document> iter, String resultClass)
+	private List extractFieldValues(SqlToyConfig sqlToyConfig, Iterator<Document> iter, Class resultClass)
 			throws Exception {
 		List resultSet = new ArrayList();
 		Document row;

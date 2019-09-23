@@ -49,7 +49,7 @@ public class ElasticSqlPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realMql,
-				queryExecutor.getResultTypeName());
+				(Class)queryExecutor.getResultType());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -76,7 +76,7 @@ public class ElasticSqlPlugin {
 			logger.debug("execute eql={" + realMql + "}");
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realMql,
-				queryExecutor.getResultTypeName());
+				(Class)queryExecutor.getResultType());
 		return result.getRows();
 	}
 

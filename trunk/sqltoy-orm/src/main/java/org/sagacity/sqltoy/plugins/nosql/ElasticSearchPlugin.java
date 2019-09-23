@@ -3,7 +3,13 @@
  */
 package org.sagacity.sqltoy.plugins.nosql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,7 +74,8 @@ public class ElasticSearchPlugin {
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, queryExecutor.getResultTypeName());
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
+				(Class) queryExecutor.getResultType());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -106,7 +113,8 @@ public class ElasticSearchPlugin {
 		if (sqlToyContext.isDebug()) {
 			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, queryExecutor.getResultTypeName());
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
+				(Class) queryExecutor.getResultType());
 		return result.getRows();
 	}
 
@@ -120,7 +128,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, String resultClass) throws Exception {
+			JSONObject jsonQuery, Class resultClass) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
@@ -147,10 +155,16 @@ public class ElasticSearchPlugin {
 			fields = new String[array.length];
 			for (int i = 0; i < fields.length; i++)
 				fields[i] = array[i].toString();
-		} else if (resultClass != null && !resultClass.equalsIgnoreCase("map")
-				&& !resultClass.equalsIgnoreCase("hashmap") && !resultClass.equalsIgnoreCase("linkedHashMap")
-				&& !resultClass.equalsIgnoreCase("linkedMap")) {
-			fields = BeanUtil.matchSetMethodNames(Class.forName(resultClass));
+		} else if (resultClass != null) {
+			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
+					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
+					&& !resultClass.equals(Map.class) && !resultClass.getSuperclass().equals(HashMap.class)
+					&& !resultClass.getSuperclass().equals(Map.class)
+					&& !resultClass.getSuperclass().equals(LinkedHashMap.class)
+					&& !resultClass.equals(ConcurrentHashMap.class)
+					&& !resultClass.getSuperclass().equals(ConcurrentHashMap.class)) {
+				fields = BeanUtil.matchSetMethodNames(resultClass);
+			}
 		}
 		// 执行请求
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);

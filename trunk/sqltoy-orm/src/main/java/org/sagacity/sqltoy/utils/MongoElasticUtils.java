@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -388,8 +389,9 @@ public class MongoElasticUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List wrapResultClass(List rowSet, String[] fields, String resultClass) throws Exception {
-		if (rowSet == null || rowSet.isEmpty() || StringUtil.isBlank(resultClass))
+	public static List wrapResultClass(List rowSet, String[] fields, Class resultType) throws Exception {
+		if (rowSet == null || rowSet.isEmpty() || null==resultType||resultType.equals(List.class)
+				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return rowSet;
 		String[] aliasFields = new String[fields.length];
 		System.arraycopy(fields, 0, aliasFields, 0, fields.length);
@@ -401,26 +403,24 @@ public class MongoElasticUtils {
 			}
 		}
 		String[] aliasNames = CommonUtils.humpFieldNames(aliasFields);
-		int mapType = 0;
-		String className = resultClass.toLowerCase();
-		if (className.equals("map") || className.equals("hashmap"))
-			mapType = 1;
-		else if (className.equals("linkedmap") || className.equals("linkedhashmap"))
-			mapType = 2;
-		if (mapType == 0)
-			return BeanUtil.reflectListToBean(rowSet, aliasNames, Class.forName(resultClass));
-
-		List result = new ArrayList();
-		List rowList;
-		for (int i = 0; i < rowSet.size(); i++) {
-			rowList = (List) rowSet.get(i);
-			Map row = (mapType == 2) ? new LinkedHashMap() : new HashMap();
-			for (int j = 0; j < aliasNames.length; j++) {
-				row.put(aliasNames[j], rowList.get(j));
+		Class superClass=resultType.getSuperclass();
+		if (resultType.equals(HashMap.class) ||superClass.equals(HashMap.class)
+				|| superClass.equals(LinkedHashMap.class) || resultType.equals(ConcurrentHashMap.class)
+				|| superClass.equals(ConcurrentHashMap.class) || resultType.equals(Map.class)
+				|| superClass.equals(Map.class)) {
+			List result = new ArrayList();
+			List rowList;
+			for (int i = 0; i < rowSet.size(); i++) {
+				rowList = (List) rowSet.get(i);
+				Map row = (Map) resultType.getDeclaredConstructor().newInstance();
+				for (int j = 0; j < aliasNames.length; j++) {
+					row.put(aliasNames[j], rowList.get(j));
+				}
+				result.add(row);
 			}
-			result.add(row);
+			return result;
 		}
-		return result;
+		return BeanUtil.reflectListToBean(rowSet, aliasNames, resultType);
 	}
 
 	/**
