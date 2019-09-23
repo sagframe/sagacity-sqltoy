@@ -3,6 +3,9 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -212,10 +215,11 @@ public class MongoElasticUtils {
 						}
 					}
 				}
-				if (sqlMode)
+				if (sqlMode) {
 					queryStr = SqlConfigParseUtils.processWhereLinkAnd(preSql, markContentSql, tailSql);
-				else
+				} else {
 					queryStr = preSql.concat(BLANK).concat(markContentSql).concat(BLANK).concat(tailSql);
+				}
 			}
 			pseudoMarkStart = queryStr.indexOf(startMark);
 		}
@@ -276,11 +280,11 @@ public class MongoElasticUtils {
 			if (method.equals("") || method.equals("param") || method.equals("value")) {
 				Object[] ary = null;
 				isAry = true;
-				if (value.getClass().isArray())
+				if (value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);
-				else if (value instanceof Collection)
+				} else if (value instanceof Collection) {
 					ary = ((Collection) value).toArray();
-				else {
+				} else {
 					ary = new Object[] { value };
 					isAry = false;
 				}
@@ -290,13 +294,18 @@ public class MongoElasticUtils {
 				for (Object var : ary) {
 					if (i > 0)
 						realMql.append(",");
-					if (var instanceof Number)
+					if (var instanceof Number) {
 						realMql.append(var.toString());
-					else if (var instanceof Date) {
+					} else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
 						realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd HH:mm:ss"))
 								.append(charSign);
-					} else
+					} else if ((var instanceof LocalDate)) {
+						realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd")).append(charSign);
+					} else if ((var instanceof LocalTime)) {
+						realMql.append(charSign).append(DateUtil.formatDate(var, "HH:mm:ss")).append(charSign);
+					} else {
 						realMql.append(charSign).append(removeDangerWords(var.toString())).append(charSign);
+					}
 					i++;
 				}
 				if (isAry)
@@ -343,10 +352,15 @@ public class MongoElasticUtils {
 					realMql.append(",");
 				if (var instanceof Number)
 					realMql.append(var.toString());
-				else if (var instanceof Date) {
+				else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
 					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd HH:mm:ss")).append(charSign);
-				} else
+				} else if (var instanceof LocalDate) {
+					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd")).append(charSign);
+				} else if (var instanceof LocalTime) {
+					realMql.append(charSign).append(DateUtil.formatDate(var, "HH:mm:ss")).append(charSign);
+				} else {
 					realMql.append(charSign).append(removeDangerWords(var.toString())).append(charSign);
+				}
 				i++;
 			}
 			index++;
@@ -489,8 +503,9 @@ public class MongoElasticUtils {
 					value = dataSet.get(j).get(realIndex[i]);
 					if (value != null) {
 						translateAry = keyValues.get(value.toString());
-						if (null != translateAry)
+						if (null != translateAry) {
 							dataSet.get(j).set(colIndex, keyValues.get(value.toString())[cacheIndex]);
+						}
 					}
 				}
 			}
@@ -502,8 +517,9 @@ public class MongoElasticUtils {
 				value = dataMap.get(translateModel.getAlias());
 				if (value != null) {
 					translateAry = keyValues.get(value.toString());
-					if (null != translateAry)
+					if (null != translateAry) {
 						dataMap.put(lables[i], keyValues.get(value.toString())[cacheIndex]);
+					}
 				}
 			}
 		}
