@@ -747,6 +747,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		return dialectSqlMap.get(key);
 	}
 
+	/**
+	 * @todo 获取sqlId或sql内容
+	 * @return
+	 */
+	public String getIdOrSql() {
+		if (StringUtil.isBlank(this.id))
+			return this.sql;
+		return this.id;
+	}
+
 	public void setDialect(String dialect) {
 		this.dialect = dialect;
 	}
