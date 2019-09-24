@@ -11,6 +11,7 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 
@@ -407,13 +408,9 @@ public class DataSourceUtils {
 				dialect = getDialect(dbType);
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
-			if (sqltoyContext.isDebug()) {
-				try {
-					logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
-							conn.getSchema(), conn.getCatalog());
-				} catch (Exception e) {
-
-				}
+			if (SqlToyConstants.showDatasourceInfo()) {
+				logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
+						conn.getSchema(), conn.getCatalog());
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);

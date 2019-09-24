@@ -277,6 +277,14 @@ public class SqlToyConstants {
 	}
 
 	/**
+	 * @todo 是否显示数据库信息
+	 * @return
+	 */
+	public static boolean showDatasourceInfo() {
+		return Boolean.parseBoolean(getKeyValue("sqltoy.show.datasource.info", "false"));
+	}
+
+	/**
 	 * @todo 获取文件中的常量元素
 	 * @param propertiesFile
 	 */
