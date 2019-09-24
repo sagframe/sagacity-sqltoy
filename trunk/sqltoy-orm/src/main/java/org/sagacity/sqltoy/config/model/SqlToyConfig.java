@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
