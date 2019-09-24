@@ -356,7 +356,10 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> T loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sql, paramNames, paramValues).resultType(resultType));
+		QueryExecutor query = new QueryExecutor(sql, paramNames, paramValues);
+		if (resultType != null)
+			query.resultType(resultType);
+		return (T) loadByQuery(query);
 	}
 
 	/**
@@ -514,7 +517,10 @@ public class SqlToyDaoSupport {
 
 	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass) {
-		return (List<T>) findByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass)).getRows();
+		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
+		if (voClass != null)
+			query.resultType(voClass);
+		return (List<T>) findByQuery(query).getRows();
 	}
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
@@ -547,8 +553,10 @@ public class SqlToyDaoSupport {
 	 */
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
 			final String[] paramsNamed, final Object[] paramsValue, Class voClass) {
-		return findPageByQuery(paginationModel, new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass))
-				.getPageResult();
+		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
+		if (voClass != null)
+			query.resultType(voClass);
+		return findPageByQuery(paginationModel, query).getPageResult();
 	}
 
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
@@ -567,8 +575,10 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> List<T> findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass, final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass), topSize)
-				.getRows();
+		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
+		if (voClass != null)
+			query.resultType(voClass);
+		return (List<T>) findTopByQuery(query, topSize).getRows();
 	}
 
 	protected <T extends Serializable> List<T> findTopBySql(final String sql, final T entity, final double topSize) {
@@ -597,8 +607,10 @@ public class SqlToyDaoSupport {
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, Class<T> voClass, final double randomCount) {
-		return (List<T>) getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue).resultType(voClass),
-				randomCount).getRows();
+		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
+		if (voClass != null)
+			query.resultType(voClass);
+		return (List<T>) getRandomResult(query, randomCount).getRows();
 	}
 
 	protected void truncate(final Class entityClass, final Boolean autoCommit) {

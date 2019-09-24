@@ -347,7 +347,7 @@ public class DialectFactory {
 							if (totalCount != null && totalCount == 0) {
 								this.setResult(new QueryResult());
 								logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
-										sqlToyConfig.getId());
+										sqlToyConfig.getIdOrSql());
 								return;
 							}
 							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
@@ -523,9 +523,9 @@ public class DialectFactory {
 								queryResult.setPageSize(pageSize);
 								queryResult.setRecordCount(0L);
 								if (illegal) {
-									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getSql(dialect));
+									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getIdOrSql());
 								} else {
-									logger.debug("提取记录总数为0,sql={}", sqlToyConfig.getSql(dialect));
+									logger.debug("提取记录总数为0,sql={}", sqlToyConfig.getIdOrSql());
 								}
 							} else {
 								// 合法的全记录提取,设置页号为1按记录数
