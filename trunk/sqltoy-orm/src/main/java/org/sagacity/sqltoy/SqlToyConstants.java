@@ -314,12 +314,16 @@ public class SqlToyConstants {
 	/**
 	 * @todo 加载数据库方言的参数
 	 * @param propertyFile
+	 * @param keyValues
 	 */
-	public static void loadProperties(String propertyFile) {
+	public static void loadProperties(String propertyFile, Map keyValues) {
 		// 加载默认参数
 		loadPropertyFile(DEFAULT_CONFIG);
 		// 加载额外的配置文件
 		loadPropertyFile(propertyFile);
+		if (keyValues != null && !keyValues.isEmpty()) {
+			PROP_ELEMENTS.putAll(keyValues);
+		}
 	}
 
 	/**
