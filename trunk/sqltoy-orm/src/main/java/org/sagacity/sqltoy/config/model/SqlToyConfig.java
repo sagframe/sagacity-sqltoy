@@ -735,8 +735,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	private String getDialectSql(String type, String sqlContent, String dialect) {
-		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)
-				|| StringUtil.isBlank(sqlContent))
+		if (StringUtil.isBlank(sqlContent))
+			return sqlContent;
+		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect))
 			return sqlContent;
 		String key = dialect.concat(".").concat(type);
 		if (!dialectSqlMap.contains(key)) {
