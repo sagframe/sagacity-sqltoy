@@ -115,7 +115,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * 批处理记录数量,默认为50
+	 * 批处理记录数量,默认为200
 	 */
 	private int batchSize = 200;
 
