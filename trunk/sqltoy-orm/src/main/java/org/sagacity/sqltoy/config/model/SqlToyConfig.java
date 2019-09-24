@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 
 /**
@@ -734,7 +735,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	private String getDialectSql(String type, String sqlContent, String dialect) {
-		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect))
+		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)
+				|| StringUtil.isBlank(sqlContent))
 			return sqlContent;
 		String key = dialect.concat(".").concat(type);
 		if (!dialectSqlMap.contains(key)) {
