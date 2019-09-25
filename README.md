@@ -89,7 +89,7 @@ where #[t.ORDER_ID=:orderId]
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'
-
+     为什么?因为一些查询中有一些运算和order by 等对于取总记录数没有必要，sqltoy则有效剔除了这些不必要的运算，让取总记录数查询最高效。
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
@@ -198,26 +198,26 @@ where #[t.ORDER_ID=:orderId]
 * 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
 * 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
 * 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库
-* 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
-    <property name="functionConverts" value="default" /> 
-    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugin.function.Nvl 代码实现
-  ```xml
+* 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),
+最大程度上实现了代码的产品化。
+   
+```xml
  <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default">
 		<!-- 可以这样自行根据需要进行定义和扩展
 		<property name="functionConverts">
 			<list>
-				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
-				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Now</value>
-				<value>org.sagacity.sqltoy.plugin.function.Length</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Nvl</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.SubStr</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Now</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Length</value>
 			</list>
 		</property> -->
 </bean>
 
 ```
-  
 ## 2.5 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+
 ```xml
         <!-- 列转行测试 -->
 	<sql id="sys_unpvoitSearch">
