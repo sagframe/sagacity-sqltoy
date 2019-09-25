@@ -272,7 +272,7 @@ public class TranslateFactory {
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
 				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
 		if (jsonStr != null) {
-			if (cacheModel.getProperties() == null)
+			if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0)
 				return JSON.parseArray(jsonStr, Object[].class);
 			JSONArray jsonSet = JSON.parseArray(jsonStr);
 			if (jsonSet.isEmpty())
