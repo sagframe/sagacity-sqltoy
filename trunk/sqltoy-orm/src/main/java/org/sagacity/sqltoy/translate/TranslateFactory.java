@@ -49,8 +49,8 @@ public class TranslateFactory {
 	 */
 	public static List<CacheCheckResult> doCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
 			Timestamp preCheckTime) {
-		List result = null;
 		try {
+			List result = null;
 			if (config.getType().equals("sql")) {
 				result = doSqlCheck(sqlToyContext, config, preCheckTime);
 			} else if (config.getType().equals("service")) {
@@ -58,11 +58,12 @@ public class TranslateFactory {
 			} else if (config.getType().equals("rest")) {
 				result = doRestCheck(sqlToyContext, config, preCheckTime);
 			}
+			return wrapCheckResult(result);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
-		return wrapCheckResult(result);
+		return null;
 	}
 
 	/**
@@ -183,8 +184,8 @@ public class TranslateFactory {
 	 */
 	public static HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext,
 			TranslateConfigModel cacheModel, String cacheType) {
-		Object result = null;
 		try {
+			Object result = null;
 			if (cacheModel.getType().equals("sql")) {
 				result = getSqlCacheData(sqlToyContext, cacheModel, cacheType);
 			} else if (cacheModel.getType().equals("service")) {
@@ -192,12 +193,13 @@ public class TranslateFactory {
 			} else if (cacheModel.getType().equals("rest")) {
 				result = getRestCacheData(sqlToyContext, cacheModel, cacheType);
 			}
+			return wrapCacheResult(result, cacheModel);
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("获取缓存数据失败,返回结果应该是List<List> 或List<Object[]> 或 Map<String,Object[]> 类型,错误信息:{}",
+			logger.error("获取缓存数据失败,返回结果应该是List<List> 或List<Object[]> 或 Map<String,Object[]> 或List<DTO>类型(需指定properties),错误信息:{}",
 					e.getMessage());
 		}
-		return wrapCacheResult(result, cacheModel);
+		return null;
 	}
 
 	/**
