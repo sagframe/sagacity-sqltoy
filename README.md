@@ -89,7 +89,7 @@ where #[t.ORDER_ID=:orderId]
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'
-
+     为什么?因为一些查询中有一些运算和order by 等对于取总记录数没有必要，sqltoy则有效剔除了这些不必要的运算，让取总记录数查询最高效。
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
