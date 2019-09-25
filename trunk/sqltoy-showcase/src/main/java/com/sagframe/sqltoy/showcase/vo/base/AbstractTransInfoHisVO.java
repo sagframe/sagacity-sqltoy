@@ -35,7 +35,7 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 * 交易ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="TRANS_ID",length=32L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String transId;
 	

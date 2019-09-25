@@ -50,7 +50,7 @@ public class DeviceOrderInfoVO extends AbstractDeviceOrderInfoVO {
 	}
 
 	/** full constructor */
-	public DeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,LocalDate transDate,LocalDate deliveryTerm,String staffId,String organId,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
+	public DeviceOrderInfoVO(String orderId,String deviceType,String psType,BigDecimal totalCnt,BigDecimal totalAmt,String buyer,String saler,LocalDate transDate,LocalDate deliveryTerm,String staffId,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status,String organId)
 	{
 		this.orderId=orderId;
 		this.deviceType=deviceType;
@@ -62,12 +62,12 @@ public class DeviceOrderInfoVO extends AbstractDeviceOrderInfoVO {
 		this.transDate=transDate;
 		this.deliveryTerm=deliveryTerm;
 		this.staffId=staffId;
-		this.organId=organId;
 		this.createBy=createBy;
 		this.createTime=createTime;
 		this.updateBy=updateBy;
 		this.updateTime=updateTime;
 		this.status=status;
+		this.organId=organId;
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/

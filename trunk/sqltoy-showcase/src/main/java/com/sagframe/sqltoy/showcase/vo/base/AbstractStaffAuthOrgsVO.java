@@ -33,7 +33,7 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 * 授权ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="AUTH_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String authId;
 	

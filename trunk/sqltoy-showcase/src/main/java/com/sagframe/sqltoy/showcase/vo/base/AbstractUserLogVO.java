@@ -34,7 +34,7 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 * 日志ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="LOG_ID",length=32L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String logId;
 	

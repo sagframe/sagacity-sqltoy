@@ -33,7 +33,7 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 * 地区代码
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="AREA_CODE",length=10L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String areaCode;
 	

@@ -37,7 +37,7 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 * 字典类型代码
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="DICT_TYPE",length=50L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String dictType;
 	

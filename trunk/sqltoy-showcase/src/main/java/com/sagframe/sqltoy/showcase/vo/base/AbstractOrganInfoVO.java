@@ -23,7 +23,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	 //organId,organName,organCode,costNo,organPid,nodeRoute,nodeLevel,isLeaf,showIndex,createBy,createTime,updateBy,updateTime,status
 	 
 	 //not null properties
-	 //organId,organName,organCode,organPid,showIndex,createBy,createTime,updateBy,updateTime,status
+	 //organId,organName,organCode,organPid,nodeRoute,nodeLevel,isLeaf,showIndex,createBy,createTime,updateBy,updateTime,status
 
 	/**
 	 * 
@@ -33,7 +33,7 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 * 机构ID
 	 */
-	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.impl.DefaultIdGenerator")
 	@Column(name="ORGAN_ID",length=22L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String organId;
 	
@@ -64,19 +64,19 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 * 节点路径
 	 */
-	@Column(name="NODE_ROUTE",length=200L,type=java.sql.Types.VARCHAR,nullable=true)
+	@Column(name="NODE_ROUTE",length=200L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String nodeRoute;
 	
 	/**
 	 * 节点等级
 	 */
-	@Column(name="NODE_LEVEL",length=1L,type=java.sql.Types.INTEGER,nullable=true)
+	@Column(name="NODE_LEVEL",length=1L,type=java.sql.Types.INTEGER,nullable=false)
 	protected Integer nodeLevel;
 	
 	/**
 	 * 是否叶子节点
 	 */
-	@Column(name="IS_LEAF",length=1L,type=java.sql.Types.INTEGER,nullable=true)
+	@Column(name="IS_LEAF",length=1L,type=java.sql.Types.INTEGER,nullable=false)
 	protected Integer isLeaf;
 	
 	/**
@@ -128,12 +128,15 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractOrganInfoVO(String organId,String organName,String organCode,String organPid,Integer showIndex,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
+	public AbstractOrganInfoVO(String organId,String organName,String organCode,String organPid,String nodeRoute,Integer nodeLevel,Integer isLeaf,Integer showIndex,String createBy,LocalDateTime createTime,String updateBy,LocalDateTime updateTime,Integer status)
 	{
 		this.organId=organId;
 		this.organName=organName;
 		this.organCode=organCode;
 		this.organPid=organPid;
+		this.nodeRoute=nodeRoute;
+		this.nodeLevel=nodeLevel;
+		this.isLeaf=isLeaf;
 		this.showIndex=showIndex;
 		this.createBy=createBy;
 		this.createTime=createTime;
