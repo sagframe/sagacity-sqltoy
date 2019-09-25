@@ -94,7 +94,7 @@ public class TranslateConfigParse {
 								translateCacheModel.setKeepAlive(SqlToyConstants.getCacheExpireSeconds());
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
-							logger.debug("加载缓存翻译:cache={},type={}", translateCacheModel.getCache(), translateType);
+							logger.debug("已经加载缓存翻译:cache={},type={}", translateCacheModel.getCache(), translateType);
 						}
 					}
 				}
@@ -161,7 +161,7 @@ public class TranslateConfigParse {
 								}
 								checherConfigModel.setTimeSections(timeSections);
 								checker.add(checherConfigModel);
-								logger.debug("加载缓存更新检测器:type={}", translateType);
+								logger.debug("已经加载缓存更新检测器:type={}", translateType);
 							}
 						}
 					}
