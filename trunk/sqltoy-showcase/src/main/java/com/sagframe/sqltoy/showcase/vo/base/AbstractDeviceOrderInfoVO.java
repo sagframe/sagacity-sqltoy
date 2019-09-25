@@ -50,7 +50,7 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 * 购销标志
 	 */
-	@Column(name="PS_TYPE",length=1L,type=java.sql.Types.CHAR,nullable=false)
+	@Column(name="PS_TYPE",length=10L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String psType;
 	
 	/**
