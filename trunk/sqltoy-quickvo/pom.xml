@@ -189,15 +189,19 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.2.1</version>
 				<configuration>
-					<!--<keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope> -->
 					<createDependencyReducedPom>false</createDependencyReducedPom>
 					<filters>
 						<filter>
 							<artifact>*:*</artifact>
 							<excludes>
-								<exclude>META-INF/*.SF</exclude>
-								<exclude>META-INF/*.DSA</exclude>
-								<exclude>META-INF/*.RSA</exclude>
+								<exclude>META-INF/DEPENDENCIES</exclude>
+								<exclude>META-INF/maven/**</exclude>
+								<exclude>META-INF/LICENSE*</exclude>
+								<exclude>META-INF/NOTICE*</exclude>
+								<exclude>META-INF/versions/**</exclude>
+								<exclude>META-INF/**/*.SF</exclude>
+								<exclude>META-INF/**/*.DSA</exclude>
+								<exclude>META-INF/**/*.RSA</exclude>
 							</excludes>
 						</filter>
 					</filters>
