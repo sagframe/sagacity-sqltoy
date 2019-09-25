@@ -200,17 +200,17 @@ where #[t.ORDER_ID=:orderId]
 * 4、sqltoy提供了大量基于算法的辅助实现，最大程度上用算法代替了以往的sql，实现了跨数据库
 * 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
     <property name="functionConverts" value="default" /> 
-    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugin.function.Nvl 代码实现
+    default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.impl.Nvl 代码实现
   ```xml
  <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default">
 		<!-- 可以这样自行根据需要进行定义和扩展
 		<property name="functionConverts">
 			<list>
-				<value>org.sagacity.sqltoy.plugin.function.Nvl</value>
-				<value>org.sagacity.sqltoy.plugin.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugin.function.Now</value>
-				<value>org.sagacity.sqltoy.plugin.function.Length</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Nvl</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.SubStr</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Now</value>
+				<value>org.sagacity.sqltoy.plugins.function.impl.Length</value>
 			</list>
 		</property> -->
 </bean>
