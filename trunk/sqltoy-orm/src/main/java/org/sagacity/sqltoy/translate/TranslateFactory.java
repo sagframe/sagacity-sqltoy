@@ -22,11 +22,14 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -62,7 +65,7 @@ public class TranslateFactory {
 			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
-		return wrapCheckResult(result);
+		return wrapCheckResult(result, config);
 	}
 
 	/**
@@ -140,9 +143,10 @@ public class TranslateFactory {
 	/**
 	 * @todo 包装检测结果为统一的对象集合
 	 * @param result
+	 * @param config
 	 * @return
 	 */
-	private static List<CacheCheckResult> wrapCheckResult(List result) {
+	private static List<CacheCheckResult> wrapCheckResult(List result, CheckerConfigModel config) {
 		if (result == null || result.isEmpty())
 			return null;
 		if (result.get(0) instanceof CacheCheckResult)
@@ -167,6 +171,18 @@ public class TranslateFactory {
 				item.setCacheName((String) row.get(0));
 				if (row.size() > 1)
 					item.setCacheType((String) row.get(1));
+				checkResult.add(item);
+			}
+			return checkResult;
+		} else if (config.getProperties() != null && config.getProperties().length > 0) {
+			// 反射对象属性
+			List<Object[]> tmp = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
+			boolean hasType = (config.getProperties().length > 1) ? true : false;
+			for (Object[] row : tmp) {
+				CacheCheckResult item = new CacheCheckResult();
+				item.setCacheName((String) row[0]);
+				if (hasType)
+					item.setCacheType((String) row[1]);
 				checkResult.add(item);
 			}
 			return checkResult;
@@ -256,7 +272,23 @@ public class TranslateFactory {
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
 				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
 		if (jsonStr != null) {
-			return JSON.parseArray(jsonStr, Object[].class);
+			if (cacheModel.getProperties() == null)
+				return JSON.parseArray(jsonStr, Object[].class);
+			JSONArray jsonSet = JSON.parseArray(jsonStr);
+			if (jsonSet.isEmpty())
+				return null;
+			List<Object[]> result = new ArrayList<Object[]>();
+			int size = cacheModel.getProperties().length;
+			JSONObject jsonObj;
+			for (Object obj : jsonSet) {
+				jsonObj = (JSONObject) obj;
+				Object[] row = new Object[size];
+				for (int i = 0; i < size; i++) {
+					row[i] = jsonObj.get(cacheModel.getProperties()[i]);
+				}
+				result.add(row);
+			}
+			return result;
 		}
 		return null;
 	}
@@ -312,6 +344,13 @@ public class TranslateFactory {
 					Object[] row;
 					for (int i = 0, n = tempList.size(); i < n; i++) {
 						row = (Object[]) tempList.get(i);
+						result.put(row[cacheIndex].toString(), row);
+					}
+				} // 对象数组，利用反射提取属性值
+				else if (cacheModel.getProperties() != null && cacheModel.getProperties().length > 1) {
+					List<Object[]> dataSet = BeanUtil.reflectBeansToInnerAry(tempList, cacheModel.getProperties(), null,
+							null, false, 0);
+					for (Object[] row : dataSet) {
 						result.put(row[cacheIndex].toString(), row);
 					}
 				}
