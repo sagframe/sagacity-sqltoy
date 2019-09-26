@@ -4,10 +4,11 @@
 package com.sagframe.sqltoy.showcase.vo.base;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.Column;
-import java.time.LocalDateTime;
 
 
 /**

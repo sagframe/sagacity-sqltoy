@@ -3,8 +3,10 @@
  */
 package com.sagframe.sqltoy.showcase.vo;
 
-import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import java.math.BigDecimal;
+
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+
 import com.sagframe.sqltoy.showcase.vo.base.AbstractAreaInfoVO;
 
 /**

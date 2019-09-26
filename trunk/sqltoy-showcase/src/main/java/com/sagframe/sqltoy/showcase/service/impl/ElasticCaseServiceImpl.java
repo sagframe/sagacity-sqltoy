@@ -4,8 +4,9 @@
 package com.sagframe.sqltoy.showcase.service.impl;
 
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import com.sagframe.sqltoy.showcase.service.ElasticCaseService;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.sagframe.sqltoy.showcase.service.ElasticCaseService;
 
 /**
  * @project sqltoy-boot-showcase

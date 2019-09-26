@@ -4,9 +4,10 @@
 package com.sagframe.sqltoy.showcase.service.impl;
 
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import com.sagframe.sqltoy.showcase.service.LinkCaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.sagframe.sqltoy.showcase.service.LinkCaseService;
 
 /**
  * @project sqltoy-showcase
