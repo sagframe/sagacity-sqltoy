@@ -15,7 +15,7 @@
 		<log4j.version>2.12.1</log4j.version>
 		<sagacity-sqltoy.version>4.8.1</sagacity-sqltoy.version>
 		<ehcache.version>3.8.1</ehcache.version>
-		<fastjson.version>1.2.60</fastjson.version>
+		<fastjson.version>1.2.61</fastjson.version>
 		<lettuce-core.version>5.1.8.RELEASE</lettuce-core.version>
 		<elastic-rest-client.version>7.3.2</elastic-rest-client.version>
 		<dom4j.version>2.1.1</dom4j.version>
