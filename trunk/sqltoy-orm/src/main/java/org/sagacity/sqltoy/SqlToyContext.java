@@ -235,7 +235,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 获取service并调用其指定方法获取报表数据
+	 * @todo 获取service并调用其指定方法获取数据
 	 * @param beanName
 	 * @param motheded
 	 * @param args
@@ -245,7 +245,15 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(beanName) || StringUtil.isBlank(motheded))
 			return null;
 		try {
-			return BeanUtil.invokeMethod(applicationContext.getBean(beanName), motheded, args);
+			Object beanDefine = null;
+			if (applicationContext.containsBean(beanName)) {
+				beanDefine = applicationContext.getBean(beanName);
+			} else if (beanName.indexOf(".") > 0) {
+				beanDefine = applicationContext.getBean(Class.forName(beanName));
+			} else {
+				return null;
+			}
+			return BeanUtil.invokeMethod(beanDefine, motheded, args);
 		} catch (BeansException e) {
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
