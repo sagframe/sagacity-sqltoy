@@ -272,11 +272,14 @@ public class CommonUtils {
 		}
 		compareValue = compareValue.replaceAll("\'", "").replaceAll("\"", "");
 		String realValue = (value == null) ? "null" : value.toString();
-		if (type.equals("time")) {
-			realValue = DateUtil.formatDate(value, dayTimeFmt);
-		} else if (type.equals("date")) {
-			realValue = DateUtil.formatDate(value, dayFmt);
+		if (value != null) {
+			if (type.equals("time")) {
+				realValue = DateUtil.formatDate(value, dayTimeFmt);
+			} else if (type.equals("date")) {
+				realValue = DateUtil.formatDate(value, dayFmt);
+			}
 		}
+
 		// 等于(兼容等于号非法)
 		if (compareType.equals("==") || compareType.equals("=")) {
 			return realValue.equalsIgnoreCase(compareValue);
@@ -285,6 +288,9 @@ public class CommonUtils {
 		if (compareType.equals("!=")) {
 			return !realValue.equalsIgnoreCase(compareValue);
 		}
+		//为null时只参与等于或不等于逻辑判断
+		if (value == null)
+			return false;
 		// 大于等于
 		if (compareType.equals(">=")) {
 			return moreEqual(value, realValue, compareValue, type);
@@ -313,6 +319,8 @@ public class CommonUtils {
 	 * @return
 	 */
 	private static boolean moreEqual(Object value, String valueStr, String compare, String type) {
+		if (value == null)
+			return false;
 		if (type.equals("time") || type.equals("date")) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) >= 0;
 		}
@@ -332,6 +340,8 @@ public class CommonUtils {
 	 * @return
 	 */
 	private static boolean lessEqual(Object value, String valueStr, String compare, String type) {
+		if (value == null)
+			return false;
 		if (type.equals("time") || type.equals("date")) {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) <= 0;
 		}
