@@ -157,10 +157,12 @@ public class CommonUtils {
 		Object value;
 		for (int i = 0; i < logicParamCnt; i++) {
 			value = paramValues.get(preCount + i);
-			// 参数为null等价于#[]判断正确
-			if ((value == null) || (value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0)
-					|| ((value instanceof Collection) && ((Collection) value).isEmpty())) {
-				return false;
+			// 参数为null会参与后面等于和不等于逻辑判断,数组不参与判断
+			if (value != null) {
+				if ((value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0)
+						|| ((value instanceof Collection) && ((Collection) value).isEmpty())) {
+					return false;
+				}
 			}
 		}
 		// 规范判断符号标准
@@ -288,7 +290,7 @@ public class CommonUtils {
 		if (compareType.equals("!=")) {
 			return !realValue.equalsIgnoreCase(compareValue);
 		}
-		//为null时只参与等于或不等于逻辑判断
+		// 为null时只参与等于或不等于逻辑判断
 		if (value == null)
 			return false;
 		// 大于等于
