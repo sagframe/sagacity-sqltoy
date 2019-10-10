@@ -271,7 +271,7 @@ public class CommonUtils {
 			type = "date";
 		}
 		compareValue = compareValue.replaceAll("\'", "").replaceAll("\"", "");
-		String realValue = value.toString();
+		String realValue = (value == null) ? "null" : value.toString();
 		if (type.equals("time")) {
 			realValue = DateUtil.formatDate(value, dayTimeFmt);
 		} else if (type.equals("date")) {
