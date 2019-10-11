@@ -92,7 +92,7 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 执行sql检测
+	 * @todo 执行基于service调用的检测
 	 * @param sqlToyContext
 	 * @param config
 	 * @param preCheckTime
@@ -106,7 +106,7 @@ public class TranslateFactory {
 	}
 
 	/**
-	 * @todo 执行sql检测
+	 * @todo 执行基于rest请求模式的缓存更新检测
 	 * @param sqlToyContext
 	 * @param config
 	 * @param preCheckTime
