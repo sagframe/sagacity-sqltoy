@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -734,6 +735,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	private String getDialectSql(String type, String sqlContent, String dialect) {
+		if (StringUtil.isBlank(sqlContent))
+			return sqlContent;
 		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect))
 			return sqlContent;
 		String key = dialect.concat(".").concat(type);
@@ -742,6 +745,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 			dialectSqlMap.put(key, dialectSql);
 		}
 		return dialectSqlMap.get(key);
+	}
+
+	/**
+	 * @todo 获取sqlId或sql内容
+	 * @return
+	 */
+	public String getIdOrSql() {
+		if (StringUtil.isBlank(this.id))
+			return this.sql;
+		return this.id;
 	}
 
 	public void setDialect(String dialect) {

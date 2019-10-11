@@ -103,7 +103,11 @@ public class FunctionUtils {
 			} else {
 				result.append(dialectSql.substring(0, matchedIndex)).append(wrapResult);
 			}
-			dialectSql = dialectSql.substring(endMarkIndex + 1);
+			if (hasArgs) {
+				dialectSql = dialectSql.substring(endMarkIndex + 1);
+			} else {
+				dialectSql = dialectSql.substring(endMarkIndex);
+			}
 			matcher.reset(dialectSql);
 		}
 		result.append(dialectSql);
@@ -111,7 +115,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionConverts
+	 *            the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<String> functionAry) {
 		List<IFunction> converts = new ArrayList<IFunction>();

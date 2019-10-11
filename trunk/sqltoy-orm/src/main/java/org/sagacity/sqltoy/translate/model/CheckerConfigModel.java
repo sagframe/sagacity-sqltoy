@@ -50,6 +50,11 @@ public class CheckerConfigModel implements Serializable {
 	private String method;
 
 	/**
+	 * 属性
+	 */
+	private String[] properties;
+
+	/**
 	 * rest模式的url地址
 	 */
 	private String url;
@@ -77,8 +82,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -92,8 +96,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param sql
-	 *            the sql to set
+	 * @param sql the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -107,8 +110,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource
-	 *            the dataSource to set
+	 * @param dataSource the dataSource to set
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -122,8 +124,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param checkFrequency
-	 *            the checkFrequency to set
+	 * @param checkFrequency the checkFrequency to set
 	 */
 	public void setCheckFrequency(String checkFrequency) {
 		this.checkFrequency = checkFrequency;
@@ -137,8 +138,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param service
-	 *            the service to set
+	 * @param service the service to set
 	 */
 	public void setService(String service) {
 		this.service = service;
@@ -152,8 +152,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param method
-	 *            the method to set
+	 * @param method the method to set
 	 */
 	public void setMethod(String method) {
 		this.method = method;
@@ -167,8 +166,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param url
-	 *            the url to set
+	 * @param url the url to set
 	 */
 	public void setUrl(String url) {
 		this.url = url;
@@ -182,8 +180,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param username
-	 *            the username to set
+	 * @param username the username to set
 	 */
 	public void setUsername(String username) {
 		this.username = username;
@@ -197,8 +194,7 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param password
-	 *            the password to set
+	 * @param password the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
@@ -212,11 +208,18 @@ public class CheckerConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param timeSections
-	 *            the timeSections to set
+	 * @param timeSections the timeSections to set
 	 */
 	public void setTimeSections(List<TimeSection> timeSections) {
 		this.timeSections = timeSections;
+	}
+
+	public String[] getProperties() {
+		return properties;
+	}
+
+	public void setProperties(String[] properties) {
+		this.properties = properties;
 	}
 
 }

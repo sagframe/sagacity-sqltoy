@@ -6,6 +6,7 @@ package org.sagacity.sqltoy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -114,7 +115,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * 批处理记录数量,默认为50
+	 * 批处理记录数量,默认为200
 	 */
 	private int batchSize = 200;
 
@@ -198,6 +199,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private ApplicationContext applicationContext;
 
 	/**
+	 * 自行定义的属性
+	 */
+	private Map keyValues;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -205,7 +211,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
-		SqlToyConstants.loadProperties(dialectProperties);
+		SqlToyConstants.loadProperties(dialectProperties, keyValues);
 
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
@@ -235,7 +241,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 获取service并调用其指定方法获取数据
+	 * @todo 获取service并调用其指定方法获取报表数据
 	 * @param beanName
 	 * @param motheded
 	 * @param args
@@ -517,8 +523,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * @param dialectProperties the dialectProperties to set
 	 */
-	public void setDialectProperties(String dialectProperties) {
-		this.dialectProperties = dialectProperties;
+	public void setDialectProperties(Object dialectProperties) {
+		if (dialectProperties == null)
+			return;
+		if (dialectProperties instanceof String) {
+			this.dialectProperties = dialectProperties.toString();
+		} else if (dialectProperties instanceof Map) {
+			this.keyValues = (Map) dialectProperties;
+		}
 	}
 
 	public void setSqlResourcesDir(String sqlResourcesDir) {

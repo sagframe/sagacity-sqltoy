@@ -15,7 +15,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0, Date:2019年7月3日
  * @modify 2019年7月3日,修改说明
  */
-
 public class DataAccessException extends RuntimeException {
 
 	/**
