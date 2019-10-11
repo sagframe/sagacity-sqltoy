@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *               基于freemarker的复杂逻辑判断代码}
  * @Modification {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  * @Modification {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
+ * @Modification {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -384,6 +385,7 @@ public class SqlConfigParseUtils {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
 					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
 					int logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
+					//update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
 					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
