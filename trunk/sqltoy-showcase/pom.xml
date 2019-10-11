@@ -13,11 +13,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.12.1</log4j.version>
-		<sagacity-sqltoy.version>4.8.0</sagacity-sqltoy.version>
+		<sagacity-sqltoy.version>4.8.2</sagacity-sqltoy.version>
 		<ehcache.version>3.8.1</ehcache.version>
-		<fastjson.version>1.2.60</fastjson.version>
+		<fastjson.version>1.2.62</fastjson.version>
 		<lettuce-core.version>5.1.8.RELEASE</lettuce-core.version>
-		<elastic-rest-client.version>7.3.1</elastic-rest-client.version>
+		<elastic-rest-client.version>7.4.0</elastic-rest-client.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<commons-pool2.version>2.7.0</commons-pool2.version>
