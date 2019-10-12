@@ -3,10 +3,14 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
@@ -15,6 +19,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 提供一些常用的函數處理
@@ -22,6 +29,11 @@ import java.util.Set;
  * @version id:CommonUtils.java,Revision:v1.0,Date:2017年12月9日
  */
 public class CommonUtils {
+	/**
+	 * 定义日志
+	 */
+	private final static Logger logger = LogManager.getLogger(CommonUtils.class);
+
 	/**
 	 * 整数数字正则表达式
 	 */
@@ -97,6 +109,16 @@ public class CommonUtils {
 	}
 
 	/**
+	 * @TODO 读取文件存为字符串
+	 * @param file
+	 * @param charset
+	 * @return
+	 */
+	public static String readFileAsString(Object file, String charset) {
+		return inputStream2String(getFileInputStream(file), charset);
+	}
+
+	/**
 	 * @todo 获得指定路径的文件
 	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
@@ -141,6 +163,39 @@ public class CommonUtils {
 			fn.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * 转换InputStream为String
+	 *
+	 * @param is
+	 * @param encoding
+	 * @return
+	 */
+	public static String inputStream2String(InputStream is, String encoding) {
+		if (null == is) {
+			return null;
+		}
+		StringBuilder buffer = new StringBuilder();
+		BufferedReader in = null;
+		try {
+			if (StringUtil.isNotBlank(encoding)) {
+				in = new BufferedReader(new InputStreamReader(is, encoding));
+			} else {
+				in = new BufferedReader(new InputStreamReader(is));
+			}
+			String line = "";
+			while ((line = in.readLine()) != null) {
+				buffer.append(line);
+				buffer.append("\r\n");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		} finally {
+			closeQuietly(in);
+		}
+		return buffer.toString();
 	}
 
 	/**
@@ -398,5 +453,34 @@ public class CommonUtils {
 			result[i] = StringUtil.toHumpStr(labelNames[i], false);
 		}
 		return result;
+	}
+
+	/**
+	 * 关闭一个或多个流对象
+	 *
+	 * @param closeables 可关闭的流对象列表
+	 * @throws IOException
+	 */
+	public static void close(Closeable... closeables) throws IOException {
+		if (closeables != null) {
+			for (Closeable closeable : closeables) {
+				if (closeable != null) {
+					closeable.close();
+				}
+			}
+		}
+	}
+
+	/**
+	 * 关闭一个或多个流对象
+	 *
+	 * @param closeables 可关闭的流对象列表
+	 */
+	public static void closeQuietly(Closeable... closeables) {
+		try {
+			close(closeables);
+		} catch (IOException e) {
+			// do nothing
+		}
 	}
 }
