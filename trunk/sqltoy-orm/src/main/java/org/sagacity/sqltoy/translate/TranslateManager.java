@@ -87,14 +87,15 @@ public class TranslateManager {
 				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
-					if (!StringUtil.isBlank(defaultConfig.getDiskStorePath())) {
-						((TranslateEhcacheManager) translateCacheManager)
-								.setDiskStorePath(defaultConfig.getDiskStorePath());
-					}
 				} else {
 					translateCacheManager = cacheManager;
 				}
-
+				// 设置默认存储路径
+				if (!StringUtil.isBlank(defaultConfig.getDiskStorePath())
+						&& translateCacheManager instanceof TranslateEhcacheManager) {
+					((TranslateEhcacheManager) translateCacheManager)
+							.setDiskStorePath(defaultConfig.getDiskStorePath());
+				}
 				boolean initSuccess = translateCacheManager.init();
 				initialized = true;
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
