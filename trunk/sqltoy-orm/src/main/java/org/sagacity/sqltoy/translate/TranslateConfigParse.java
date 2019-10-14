@@ -39,7 +39,7 @@ public class TranslateConfigParse {
 
 	private final static String TRANSLATE_SUFFIX = "-translate";
 	private final static String CHECKER_SUFFIX = "-checker";
-	private final static String[] TRANSLATE_TYPES = new String[] { "sql", "service", "rest" };
+	private final static String[] TRANSLATE_TYPES = new String[] { "sql", "service", "rest", "local" };
 
 	/**
 	 * @todo 解析translate配置文件

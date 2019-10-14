@@ -67,6 +67,21 @@
 										default="100" />
 								</xsd:complexType>
 							</xsd:element>
+							<xsd:element name="local-translate" minOccurs="0"
+								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="cache" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="keep-alive" type="xsd:integer"
+										default="3600" />
+									<xsd:attribute name="heap" type="xsd:integer"
+										default="400" />
+									<xsd:attribute name="off-heap" type="xsd:integer"
+										default="30" />
+									<xsd:attribute name="disk-size" type="xsd:integer"
+										default="100" />
+								</xsd:complexType>
+							</xsd:element>
 						</xsd:choice>
 						<xsd:attribute name="disk-store-path" default="./translateCaches" />
 					</xsd:complexType>
