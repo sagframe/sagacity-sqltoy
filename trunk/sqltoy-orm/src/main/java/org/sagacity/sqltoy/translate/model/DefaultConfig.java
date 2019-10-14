@@ -22,6 +22,11 @@ public class DefaultConfig implements Serializable {
 	 * 默认缓存超限后存放磁盘路径
 	 */
 	private String diskStorePath = "./translateCaches";
+	
+	/**
+	 * 集群的节点时间差异(秒)，默认偏离1秒
+	 */
+	private int deviationSeconds=-1;
 
 	/**
 	 * @return the diskStorePath
@@ -35,6 +40,14 @@ public class DefaultConfig implements Serializable {
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
+	}
+
+	public int getDeviationSeconds() {
+		return deviationSeconds;
+	}
+
+	public void setDeviationSeconds(int deviationSeconds) {
+		this.deviationSeconds = deviationSeconds;
 	}
 	
 	

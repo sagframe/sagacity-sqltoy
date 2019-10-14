@@ -101,6 +101,18 @@ public class TranslateConfigParse {
 				// 解析更新检测器
 				node = root.element("cache-update-checkers");
 				if (node != null) {
+					// 集群节点时间偏差(秒)
+					if (node.attribute("cluster-time-deviation") != null) {
+						defaultConfig
+								.setDeviationSeconds(Integer.parseInt(node.attributeValue("cluster-time-deviation")));
+						if (Math.abs(defaultConfig.getDeviationSeconds()) > 60) {
+							logger.debug("您设置的集群节点时间差异参数cluster-time-deviation={} 秒>60秒,将设置为60秒!",
+									defaultConfig.getDeviationSeconds());
+							defaultConfig.setDeviationSeconds(-60);
+						}else {
+							defaultConfig.setDeviationSeconds(0-Math.abs(defaultConfig.getDeviationSeconds()));
+						}
+					}
 					for (String translateType : TRANSLATE_TYPES) {
 						elts = node.elements(translateType.concat(CHECKER_SUFFIX));
 						if (elts != null && !elts.isEmpty()) {

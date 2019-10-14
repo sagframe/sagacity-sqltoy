@@ -102,7 +102,7 @@ public class TranslateManager {
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
 					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
-							delayCheckCacheSeconds);
+							delayCheckCacheSeconds,defaultConfig.getDeviationSeconds());
 					cacheCheck.start();
 					logger.debug("sqltoy的translate缓存配置加载完成,已经启动:{} 个缓存更新检测!", updateCheckers.size());
 				} else {

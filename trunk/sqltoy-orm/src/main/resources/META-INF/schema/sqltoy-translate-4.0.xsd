@@ -131,6 +131,15 @@
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:choice>
+						<xsd:attribute name="cluster-time-deviation" type="xsd:integer" default="1">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[
+									集群各个节点时间差异(单位秒),缓存更新检测时将基准检测时间扣减差集群时差。
+								]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
 					</xsd:complexType>
 				</xsd:element>
 			</xsd:choice>
