@@ -338,8 +338,8 @@ public class ResultUtils {
 						if (cacheValues == null) {
 							linkStr = "";
 							if (isDebug) {
-								logger.debug("translate cache:{} 对应的key:{} 没有设置相应的value!", translateModel.getCache(),
-										linkValue);
+								logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!",
+										translateModel.getCache(), translateModel.getDictType(), linkValue);
 							}
 						} else {
 							linkStr = cacheValues[linkTranslateIndex];
@@ -932,7 +932,8 @@ public class ResultUtils {
 				} else {
 					fieldValue = fieldValue.toString();
 				}
-				logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), fieldValue);
+				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+						translate.getDictType(), fieldValue);
 			} else {
 				fieldValue = cacheValues[translate.getIndex()];
 			}
@@ -954,7 +955,8 @@ public class ResultUtils {
 				} else {
 					result.append(key);
 				}
-				logger.debug("translate cache:{} 对应的key:{}没有设置相应的value!", translate.getCache(), key);
+				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+						translate.getDictType(), key);
 			} else {
 				result.append(cacheValues[translate.getIndex()]);
 			}
