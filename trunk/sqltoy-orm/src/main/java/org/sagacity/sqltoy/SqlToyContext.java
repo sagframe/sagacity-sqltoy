@@ -69,7 +69,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
 
-	private TranslateCacheManager cacheManager;
+	private TranslateCacheManager translateCacheManager;
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -232,7 +232,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		/**
 		 * 初始化翻译器
 		 */
-		translateManager.initialize(this, cacheManager, delayCheckSeconds);
+		translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 
 		/**
 		 * 初始化sql执行统计的基本参数
@@ -700,8 +700,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.delayCheckSeconds = delayCheckSeconds;
 	}
 
-	public void setCacheManager(TranslateCacheManager cacheManager) {
-		this.cacheManager = cacheManager;
+	public void setTranslateCacheManager(TranslateCacheManager translateCacheManager) {
+		this.translateCacheManager = translateCacheManager;
 	}
 
 	public void destroy() {
