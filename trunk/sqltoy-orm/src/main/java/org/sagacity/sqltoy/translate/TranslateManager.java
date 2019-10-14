@@ -68,14 +68,14 @@ public class TranslateManager {
 	private CacheUpdateWatcher cacheCheck;
 
 	/**
-	 * @param translateConfig
-	 *            the translateConfig to set
+	 * @param translateConfig the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
 	}
 
-	public synchronized void initialize(SqlToyContext sqlToyContext, int delayCheckCacheSeconds) throws Exception {
+	public synchronized void initialize(SqlToyContext sqlToyContext, TranslateCacheManager cacheManager,
+			int delayCheckCacheSeconds) throws Exception {
 		if (initialized)
 			return;
 		try {
@@ -85,13 +85,16 @@ public class TranslateManager {
 			// 配置了缓存翻译
 			if (defaultConfig != null) {
 				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
-				if (translateCacheManager == null) {
+				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
+					if (!StringUtil.isBlank(defaultConfig.getDiskStorePath())) {
+						((TranslateEhcacheManager) translateCacheManager)
+								.setDiskStorePath(defaultConfig.getDiskStorePath());
+					}
+				} else {
+					translateCacheManager = cacheManager;
 				}
-				if (!StringUtil.isBlank(defaultConfig.getDiskStorePath())) {
-					((TranslateEhcacheManager) translateCacheManager)
-							.setDiskStorePath(defaultConfig.getDiskStorePath());
-				}
+
 				boolean initSuccess = translateCacheManager.init();
 				initialized = true;
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
@@ -149,8 +152,7 @@ public class TranslateManager {
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType
-	 *            一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
@@ -207,19 +209,10 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @param charset
-	 *            the charset to set
+	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
-	}
-
-	/**
-	 * @param translateCacheManager
-	 *            the translateCacheManager to set
-	 */
-	public void setTranslateCacheManager(TranslateCacheManager translateCacheManager) {
-		this.translateCacheManager = translateCacheManager;
 	}
 
 	/**

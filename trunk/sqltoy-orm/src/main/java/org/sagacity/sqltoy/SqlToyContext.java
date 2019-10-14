@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
+import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -67,6 +68,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
+
+	private TranslateCacheManager cacheManager;
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -229,7 +232,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		/**
 		 * 初始化翻译器
 		 */
-		translateManager.initialize(this, delayCheckSeconds);
+		translateManager.initialize(this, cacheManager, delayCheckSeconds);
 
 		/**
 		 * 初始化sql执行统计的基本参数
@@ -695,6 +698,10 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setDelayCheckSeconds(int delayCheckSeconds) {
 		this.delayCheckSeconds = delayCheckSeconds;
+	}
+
+	public void setCacheManager(TranslateCacheManager cacheManager) {
+		this.cacheManager = cacheManager;
 	}
 
 	public void destroy() {

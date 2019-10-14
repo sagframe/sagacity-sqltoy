@@ -45,7 +45,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		this.diskStorePath = diskStorePath;
 	}
 
-	private static CacheManager cacheManager;
+	protected static CacheManager cacheManager;
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheKey) {
@@ -168,7 +168,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	public void destroy() {
 		if (cacheManager != null) {
 			cacheManager.close();
-			cacheManager=null;
+			cacheManager = null;
 		}
 	}
 
