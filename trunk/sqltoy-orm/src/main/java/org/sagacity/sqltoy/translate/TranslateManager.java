@@ -68,7 +68,8 @@ public class TranslateManager {
 	private CacheUpdateWatcher cacheCheck;
 
 	/**
-	 * @param translateConfig the translateConfig to set
+	 * @param translateConfig
+	 *            the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
@@ -82,6 +83,9 @@ public class TranslateManager {
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, translateConfig, charset);
+			if (translateMap.isEmpty()) {
+				logger.warn("translateConfig={} 中未定义缓存,请正确定义!", translateConfig);
+			}
 			// 配置了缓存翻译
 			if (defaultConfig != null) {
 				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
@@ -102,7 +106,7 @@ public class TranslateManager {
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
 					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
-							delayCheckCacheSeconds,defaultConfig.getDeviationSeconds());
+							delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
 					cacheCheck.start();
 					logger.debug("sqltoy的translate缓存配置加载完成,已经启动:{} 个缓存更新检测!", updateCheckers.size());
 				} else {
@@ -153,7 +157,8 @@ public class TranslateManager {
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType
+	 *            一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
@@ -210,7 +215,8 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @param charset the charset to set
+	 * @param charset
+	 *            the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
