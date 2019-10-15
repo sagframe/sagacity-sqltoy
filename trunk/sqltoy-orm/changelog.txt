@@ -1,4 +1,51 @@
-﻿v4.6.2 2019-08-26
+﻿离完美剩余的点：
+1、实现缓存的近实时更新和精准增量更新策略，针对变化相对频繁的采用精准增量更新
+2、数据库不同方言函数替换解析在有引号情况下的缺陷(不用担心，99.9%的情况下你不会用到)
+3、支持elasticsearch7.x 的sql分页（目前6.x版本可以通过elasticsearch-sql插件已经支持，但7.x已经支持sql但分页未有标准策略）
+4、增加支持solr、clickHouse、oceanBase、guassDB、hbase等
+
+v4.8.2 2019-10-12
+1、修复#[@if(:param==null) and t.name=:name] 其中:param为null则剔除整个#[] 之间sql的不合理规则
+
+v4.8.1 2019-09-24
+1、优化将查询部分PreparedStatement 原: ResultSet.TYPE_SCROLL_INSENSITIVE 改为ResultSet.TYPE_FORWARD_ONLY，提升效率。
+2、修复根据方言提取sql部分缺陷。
+
+v4.8.0 2019-09-17
+1、调整了plugin包为plugins，下面的类目录做了适当调整，便于今后扩展
+2、大幅优化改进跨数据库函数替换处理模式，将之前执行时函数替换改进为缓存模式，相同数据库类型的存在则直接提取，不存在则进行函数替换并放入缓存中，大幅提升效率
+3、优化了IUnifyFieldsHandler接口，增加public IgnoreCaseSet forceUpdateFields()方法，便于提供统一公共字段强制修改策略，如最后修改时间
+
+      <-- spring  sqltoy 配置 (参见sqltoy-showcase项目) --->
+      <!-- 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋 
+             值，减轻开发者每次赋值操作 -->
+      <property name="unifyFieldsHandler">
+	<bean  class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
+     </property>
+      
+      /* (non-Javadoc)
+	 * @see org.sagacity.sqltoy.plugins.IUnifyFieldsHandler#forceUpdateFields()
+	 */
+	@Override
+	public IgnoreCaseSet forceUpdateFields() {
+		//强制updateTime 和 systemTime 进行修改
+		IgnoreCaseSet forceUpdates=new IgnoreCaseSet();
+		forceUpdates.add("updateTime");
+		forceUpdates.add("systemTime");
+		return forceUpdates;
+	}
+4、修复函数替换sysdate 无括号匹配处理的缺陷
+5、其他一些优化
+
+v4.6.4 2019-09-10
+1、改进缓存更新检测机制由timer定时改为线程内循环检测。
+2、改进shardingDataSource检测机制由Timer定时改为线程内循环检测
+3、修复DTO 中当同时有 isName 和 Name （isXXXX 和 XXXX 字段）时映射错误,强化isXXXX形式是boolean类型判断。
+4、增强函数to_char和date_format 跨数据库时自动替换，实现mysql和oracle等情况下sql的通用性
+5、升级fastjson依赖版本
+6、其他一些优化
+
+v4.6.2 2019-08-26
 1、优化SQL文件发生变更重新加载的机制，变成独立的进程进行文件变更监测，代替原来根据sqlId获取sql内容时检测机制。
 2、增强了缓存翻译缓存初始化文件策略
 3、增加多数据源连接信息debug输出，便于开发阶段识别
