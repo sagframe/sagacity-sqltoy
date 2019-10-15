@@ -42,7 +42,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(getClass());
+	protected final Logger logger = LogManager.getLogger(SqlToyContext.class);
 
 	/**
 	 * sqlToy 配置解析插件
