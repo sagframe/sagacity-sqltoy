@@ -80,6 +80,7 @@ public class TranslateManager {
 		if (initialized)
 			return;
 		try {
+			logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
 					updateCheckers, translateConfig, charset);
@@ -88,7 +89,6 @@ public class TranslateManager {
 			}
 			// 配置了缓存翻译
 			if (defaultConfig != null) {
-				logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
 				} else {
@@ -104,13 +104,13 @@ public class TranslateManager {
 				initialized = true;
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
-				if (initSuccess && !updateCheckers.isEmpty()) {
+				if (initSuccess && !translateMap.isEmpty() && !updateCheckers.isEmpty()) {
 					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
 							delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
 					cacheCheck.start();
 					logger.debug("sqltoy的translate缓存配置加载完成,已经启动:{} 个缓存更新检测!", updateCheckers.size());
 				} else {
-					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制,缓存将按默认时长失效并在使用时重载!");
+					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!");
 				}
 			}
 		} catch (Exception e) {
