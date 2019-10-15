@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:CacheCheckTimer.java,Revision:v1.0,Date:2018年3月11日
  * @Modification {Date:2019-1-22,修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异}
+ * @Modification {Date:2019-10-14,增加集群节点的时间差异参数,便于包容性检测缓存更新}
  */
 public class CacheUpdateWatcher extends Thread {
 	/**
