@@ -6,6 +6,9 @@
 
 v4.8.2 2019-10-12
 1、修复#[@if(:param==null) and t.name=:name] 其中:param为null则剔除整个#[] 之间sql的不合理规则
+2、开放TranslateCacheManager的扩展注入，便于可以替换目前的默认实现
+3、增加了缓存更新检测的集群节点时间差异参数[sqltoy-translate.xml配置]，保障集群环境下缓存更新检测的时效：
+   <cache-update-checkers cluster-time-deviation="1">
 
 v4.8.1 2019-09-24
 1、优化将查询部分PreparedStatement 原: ResultSet.TYPE_SCROLL_INSENSITIVE 改为ResultSet.TYPE_FORWARD_ONLY，提升效率。
