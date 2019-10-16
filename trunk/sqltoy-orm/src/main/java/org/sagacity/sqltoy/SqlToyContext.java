@@ -218,6 +218,11 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
+		
+		/**
+		 * 初始化翻译器
+		 */
+		translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 
 		/**
 		 * 初始化脚本加载器
@@ -228,11 +233,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化实体对象管理器
 		 */
 		entityManager.initialize(this);
-
-		/**
-		 * 初始化翻译器
-		 */
-		translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 
 		/**
 		 * 初始化sql执行统计的基本参数
