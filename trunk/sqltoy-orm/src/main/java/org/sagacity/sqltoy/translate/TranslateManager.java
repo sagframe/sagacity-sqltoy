@@ -99,7 +99,10 @@ public class TranslateManager {
 					((TranslateEhcacheManager) translateCacheManager)
 							.setDiskStorePath(defaultConfig.getDiskStorePath());
 				}
+				//设置装入具体缓存配置
+				translateCacheManager.setTranslateMap(translateMap);
 				boolean initSuccess = translateCacheManager.init();
+				
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {

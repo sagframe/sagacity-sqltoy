@@ -14,6 +14,8 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
  * @version id:TranslateCacheManager.java,Revision:v1.0,Date:2013-4-14
  */
 public abstract class TranslateCacheManager {
+	protected HashMap<String, TranslateConfigModel> translateMap = new HashMap<String, TranslateConfigModel>();
+
 	/**
 	 * 缓存管理器名称
 	 */
@@ -27,8 +29,7 @@ public abstract class TranslateCacheManager {
 	}
 
 	/**
-	 * @param name
-	 *            the name to set
+	 * @param name the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -63,10 +64,14 @@ public abstract class TranslateCacheManager {
 	 * 初始化(便于扩展实例启动一些处理逻辑)
 	 */
 	public abstract boolean init();
-	
+
 	/**
 	 * 销毁
 	 */
 	public abstract void destroy();
+
+	public void setTranslateMap(HashMap<String, TranslateConfigModel> translateMap) {
+		this.translateMap = translateMap;
+	}
 
 }
