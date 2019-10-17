@@ -33,7 +33,7 @@
 		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒,10分钟 -->
 		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
-			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
+			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true;prepStmtCacheSize=250;prepStmtCacheSqlLimit=2048" />
 	</bean>
 
 	<!-- 数据源的配置 sharding1 -->
@@ -72,7 +72,7 @@
 		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒，10分钟 -->
 		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
-			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
+			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true;prepStmtCacheSize=250;prepStmtCacheSqlLimit=2048" />
 	</bean>
 
 	<!-- 数据源的配置 sharding2 -->
@@ -111,6 +111,6 @@
 		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 10分钟-->
 		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
-			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true" />
+			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true;prepStmtCacheSize=250;prepStmtCacheSqlLimit=2048" />
 	</bean>
 </beans>
