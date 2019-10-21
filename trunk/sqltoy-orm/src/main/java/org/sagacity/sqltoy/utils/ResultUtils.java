@@ -1057,11 +1057,12 @@ public class ResultUtils {
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
+		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
-		if (resultType.equals(HashMap.class) || resultType.getSuperclass().equals(HashMap.class)
-				|| resultType.getSuperclass().equals(LinkedHashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| resultType.getSuperclass().equals(ConcurrentHashMap.class) || resultType.equals(Map.class)
-				|| resultType.getSuperclass().equals(Map.class)) {
+		if (resultType.equals(HashMap.class) || HashMap.class.equals(superClass)
+				|| LinkedHashMap.class.equals(superClass) || resultType.equals(ConcurrentHashMap.class)
+				|| ConcurrentHashMap.class.equals(superClass) || resultType.equals(Map.class)
+				|| Map.class.equals(superClass)) {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;

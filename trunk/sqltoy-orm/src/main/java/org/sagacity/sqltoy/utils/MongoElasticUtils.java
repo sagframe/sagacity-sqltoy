@@ -390,7 +390,7 @@ public class MongoElasticUtils {
 	 * @throws Exception
 	 */
 	public static List wrapResultClass(List rowSet, String[] fields, Class resultType) throws Exception {
-		if (rowSet == null || rowSet.isEmpty() || null==resultType||resultType.equals(List.class)
+		if (rowSet == null || rowSet.isEmpty() || null == resultType || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return rowSet;
 		String[] aliasFields = new String[fields.length];
@@ -403,11 +403,11 @@ public class MongoElasticUtils {
 			}
 		}
 		String[] aliasNames = CommonUtils.humpFieldNames(aliasFields);
-		Class superClass=resultType.getSuperclass();
-		if (resultType.equals(HashMap.class) ||superClass.equals(HashMap.class)
-				|| superClass.equals(LinkedHashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| superClass.equals(ConcurrentHashMap.class) || resultType.equals(Map.class)
-				|| superClass.equals(Map.class)) {
+		Class superClass = resultType.getSuperclass();
+		if (resultType.equals(HashMap.class) || HashMap.class.equals(superClass)
+				|| LinkedHashMap.class.equals(superClass) || resultType.equals(ConcurrentHashMap.class)
+				|| ConcurrentHashMap.class.equals(superClass) || resultType.equals(Map.class)
+				|| Map.class.equals(superClass)) {
 			List result = new ArrayList();
 			List rowList;
 			for (int i = 0; i < rowSet.size(); i++) {
