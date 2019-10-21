@@ -63,9 +63,9 @@ public class ElasticSearchUtils {
 			Class superClass = resultClass.getSuperclass();
 			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
 					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-					&& !superClass.equals(HashMap.class) && !resultClass.equals(Map.class)
-					&& !superClass.equals(Map.class) && !superClass.equals(LinkedHashMap.class)
-					&& !resultClass.equals(ConcurrentHashMap.class) && !superClass.equals(ConcurrentHashMap.class)) {
+					&& !resultClass.equals(ConcurrentHashMap.class) && !resultClass.equals(Map.class)
+					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
+					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
 				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}

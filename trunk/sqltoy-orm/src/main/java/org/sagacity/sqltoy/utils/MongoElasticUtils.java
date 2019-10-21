@@ -404,9 +404,9 @@ public class MongoElasticUtils {
 		}
 		String[] aliasNames = CommonUtils.humpFieldNames(aliasFields);
 		Class superClass = resultType.getSuperclass();
-		if (resultType.equals(HashMap.class) || HashMap.class.equals(superClass)
-				|| LinkedHashMap.class.equals(superClass) || resultType.equals(ConcurrentHashMap.class)
-				|| ConcurrentHashMap.class.equals(superClass) || resultType.equals(Map.class)
+		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
+				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
+				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
 				|| Map.class.equals(superClass)) {
 			List result = new ArrayList();
 			List rowList;

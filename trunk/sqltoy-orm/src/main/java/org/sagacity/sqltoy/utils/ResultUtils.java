@@ -1059,9 +1059,9 @@ public class ResultUtils {
 			return queryResultRows;
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
-		if (resultType.equals(HashMap.class) || HashMap.class.equals(superClass)
-				|| LinkedHashMap.class.equals(superClass) || resultType.equals(ConcurrentHashMap.class)
-				|| ConcurrentHashMap.class.equals(superClass) || resultType.equals(Map.class)
+		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
+				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
+				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
 				|| Map.class.equals(superClass)) {
 			int width = labelNames.length;
 			List result = new ArrayList();

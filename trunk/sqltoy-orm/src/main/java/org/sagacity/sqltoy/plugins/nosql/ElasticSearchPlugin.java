@@ -156,13 +156,13 @@ public class ElasticSearchPlugin {
 			for (int i = 0; i < fields.length; i++)
 				fields[i] = array[i].toString();
 		} else if (resultClass != null) {
+			Class superClass = resultClass.getSuperclass();
 			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
 					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-					&& !resultClass.equals(Map.class) && !resultClass.getSuperclass().equals(HashMap.class)
-					&& !resultClass.getSuperclass().equals(Map.class)
-					&& !resultClass.getSuperclass().equals(LinkedHashMap.class)
-					&& !resultClass.equals(ConcurrentHashMap.class)
-					&& !resultClass.getSuperclass().equals(ConcurrentHashMap.class)) {
+					&& !resultClass.equals(Map.class) && !resultClass.equals(ConcurrentHashMap.class)
+					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
+					&& !LinkedHashMap.class.equals(superClass)
+					&& !ConcurrentHashMap.class.equals(superClass)) {
 				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
