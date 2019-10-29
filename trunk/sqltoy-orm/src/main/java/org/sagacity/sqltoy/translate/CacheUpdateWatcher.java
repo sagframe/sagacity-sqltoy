@@ -60,19 +60,19 @@ public class CacheUpdateWatcher extends Thread {
 	 * 延时检测时长
 	 */
 	private int delaySeconds = 30;
-	
+
 	/**
 	 * 集群的节点时间差异(秒)
 	 */
-	private int deviationSeconds=0;
+	private int deviationSeconds = 0;
 
 	public CacheUpdateWatcher(SqlToyContext sqlToyContext, TranslateCacheManager translateCacheManager,
-			List<CheckerConfigModel> updateCheckers, int delaySeconds,int deviationSeconds) {
+			List<CheckerConfigModel> updateCheckers, int delaySeconds, int deviationSeconds) {
 		this.sqlToyContext = sqlToyContext;
 		this.translateCacheManager = translateCacheManager;
 		this.updateCheckers = updateCheckers;
 		this.delaySeconds = delaySeconds;
-		this.deviationSeconds=deviationSeconds;
+		this.deviationSeconds = deviationSeconds;
 		// 初始化检测时间
 		if (updateCheckers != null && !updateCheckers.isEmpty()) {
 			Long checkTime = DateUtil.parse(System.currentTimeMillis(), dateFmt).getTime();
@@ -129,7 +129,7 @@ public class CacheUpdateWatcher extends Thread {
 				// 一秒钟监测一次是否有到时的检测任务
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				logger.warn("sql文件变更监测程序进程异常,监测将终止!{}", e.getMessage(), e);
+				logger.warn("缓存翻译检测缓存变更异常,检测线程将终止!{}", e.getMessage(), e);
 				isRun = false;
 			}
 		}
@@ -172,7 +172,7 @@ public class CacheUpdateWatcher extends Thread {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				logger.error("doCheck clearCache error:{}", e.getMessage());
+				logger.error("缓存变更检测检测到更新后,清除缓存发生异常:{}", e.getMessage());
 			}
 		}
 	}
