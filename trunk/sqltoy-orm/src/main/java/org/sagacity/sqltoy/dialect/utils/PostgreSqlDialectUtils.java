@@ -242,66 +242,64 @@ public class PostgreSqlDialectUtils {
 		if (entityMeta.getIdArray() == null)
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
-		else {
-			// 是否全部是ID
-			boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
-			// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
-			StringBuilder sql = new StringBuilder("insert into ");
-			StringBuilder values = new StringBuilder();
-			sql.append(realTable);
-			sql.append(" AS t1 (");
-			for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
-				if (i > 0) {
-					sql.append(",");
-					values.append(",");
-				}
-				sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
-				values.append("?");
+		// 是否全部是ID
+		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
+		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
+		StringBuilder sql = new StringBuilder("insert into ");
+		StringBuilder values = new StringBuilder();
+		sql.append(realTable);
+		sql.append(" AS t1 (");
+		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
+			if (i > 0) {
+				sql.append(",");
+				values.append(",");
 			}
-			sql.append(") values (");
-			sql.append(values);
-			sql.append(") ");
-			// 非全部是主键
-			if (!allIds) {
-				sql.append(" ON CONFLICT ON ");
-				if (entityMeta.getPkConstraint() != null) {
-					sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
-				} else {
-					sql.append(" (");
-					for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-						if (i > 0) {
-							sql.append(",");
-						}
-						sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
-					}
-					sql.append(" ) ");
-				}
-
-				sql.append(" DO UPDATE SET ");
-				// 需要被强制修改的字段
-				HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
-				if (forceUpdateFields != null) {
-					for (String forceUpdatefield : forceUpdateFields)
-						forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
-				}
-				String columnName;
-				for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-					columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-					if (i > 0)
-						sql.append(",");
-					sql.append(columnName).append("=");
-					// 强制修改
-					if (forceUpdateColumnMap.containsKey(columnName)) {
-						sql.append("excluded.").append(columnName);
-					} else {
-						sql.append("COALESCE(excluded.");
-						sql.append(columnName).append(",t1.");
-						sql.append(columnName).append(")");
-					}
-				}
-			}
-			return sql.toString();
+			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			values.append("?");
 		}
+		sql.append(") values (");
+		sql.append(values);
+		sql.append(") ");
+		// 非全部是主键
+		if (!allIds) {
+			sql.append(" ON CONFLICT ON ");
+			if (entityMeta.getPkConstraint() != null) {
+				sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
+			} else {
+				sql.append(" (");
+				for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+					if (i > 0) {
+						sql.append(",");
+					}
+					sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+				}
+				sql.append(" ) ");
+			}
+
+			sql.append(" DO UPDATE SET ");
+			// 需要被强制修改的字段
+			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
+			if (forceUpdateFields != null) {
+				for (String forceUpdatefield : forceUpdateFields)
+					forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
+			}
+			String columnName;
+			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
+				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
+				if (i > 0)
+					sql.append(",");
+				sql.append(columnName).append("=");
+				// 强制修改
+				if (forceUpdateColumnMap.containsKey(columnName)) {
+					sql.append("excluded.").append(columnName);
+				} else {
+					sql.append("COALESCE(excluded.");
+					sql.append(columnName).append(",t1.");
+					sql.append(columnName).append(")");
+				}
+			}
+		}
+		return sql.toString();
 	}
 
 	/**
