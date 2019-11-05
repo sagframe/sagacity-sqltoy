@@ -38,6 +38,9 @@ public class ToChar extends IFunction {
 			format = format.replace("hh24", "%H").replace("hh", "%h").replace("mi", "%i").replace("ss", "%s");
 			return "date_format(" + args[0] + "," + format + ")";
 		}
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL11:
+		case DBType.POSTGRESQL10:
 		case DBType.ORACLE:
 		case DBType.ORACLE12: {
 			// 日期

@@ -26,7 +26,7 @@ public class DateFormat extends IFunction {
 	@Override
 	public String dialects() {
 		// TODO Auto-generated method stub
-		return "oracle12c,mysql8";
+		return "oracle12c,mysql8,postgresql";
 	}
 
 	/*
@@ -49,6 +49,9 @@ public class DateFormat extends IFunction {
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String format;
 		switch (dialect) {
+		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL11:
+		case DBType.POSTGRESQL10:
 		case DBType.ORACLE:
 		case DBType.ORACLE12: {
 			// 日期
