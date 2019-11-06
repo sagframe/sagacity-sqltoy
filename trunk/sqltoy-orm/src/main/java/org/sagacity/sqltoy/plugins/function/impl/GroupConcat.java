@@ -29,7 +29,7 @@ public class GroupConcat extends IFunction {
 			if (args.length > 1)
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
 			else
-				return " array_to_string(ARRAY_AGG(" + args[0] + "),',')";
+				return " array_to_string(ARRAY_AGG(" + args[0] + "),',') ";
 		}
 		return null;
 	}
