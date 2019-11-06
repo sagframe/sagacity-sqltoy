@@ -24,7 +24,8 @@ public class FunctionUtils {
 	private final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
-			funPackage.concat("Length"), funPackage.concat("ToChar") };
+			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
+			funPackage.concat("GroupConcat") };
 
 	private static List<IFunction> functionConverts = new ArrayList<IFunction>();
 
@@ -115,8 +116,7 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
+	 * @param functionConverts the functionConverts to set
 	 */
 	public static void setFunctionConverts(List<String> functionAry) {
 		List<IFunction> converts = new ArrayList<IFunction>();

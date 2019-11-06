@@ -15,7 +15,7 @@ public class GroupConcat extends IFunction {
 
 	@Override
 	public String dialects() {
-		return "";
+		return "postgresql";
 	}
 
 	@Override
