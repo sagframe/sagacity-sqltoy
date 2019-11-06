@@ -15,7 +15,7 @@ public class GroupConcat extends IFunction {
 
 	@Override
 	public String dialects() {
-		return "postgresql";
+		return "";
 	}
 
 	@Override
@@ -28,9 +28,14 @@ public class GroupConcat extends IFunction {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL10) {
 			if (args.length > 1)
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
-			else
+			else {
 				return " array_to_string(ARRAY_AGG(" + args[0] + "),',') ";
-		}
+			}
+		} /*
+			 * else if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
+			 * 
+			 * }
+			 */
 		return null;
 	}
 
