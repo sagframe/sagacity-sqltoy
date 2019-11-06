@@ -30,7 +30,7 @@ public class If extends IFunction {
 		}
 		if (args.length < 3)
 			return null;
-		return " case when " + args[0] + " then " + args[1] + " else " + args[2] + " end";
+		return " case when " + args[0] + " then " + args[1] + " else " + args[2] + " end ";
 	}
 
 }
