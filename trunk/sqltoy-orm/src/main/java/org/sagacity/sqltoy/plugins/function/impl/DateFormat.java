@@ -70,7 +70,7 @@ public class DateFormat extends IFunction {
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		default:
-			return null;
+			return super.IGNORE;
 		}
 	}
 

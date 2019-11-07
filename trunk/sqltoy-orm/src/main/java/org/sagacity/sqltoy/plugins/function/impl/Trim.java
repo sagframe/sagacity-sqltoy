@@ -24,7 +24,7 @@ public class Trim extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "oracle12c,db2,mysql8";
+		return ALL;
 	}
 
 	/*
@@ -49,6 +49,6 @@ public class Trim extends IFunction {
 				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019) {
 			return "rtrim(ltrim(" + args[0] + "))";
 		}
-		return null;
+		return super.IGNORE;
 	}
 }

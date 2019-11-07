@@ -24,7 +24,7 @@ public class Instr extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	/*
@@ -65,6 +65,6 @@ public class Instr extends IFunction {
 				return result.append(")").toString();
 			}
 		}
-		return null;
+		return super.IGNORE;
 	}
 }

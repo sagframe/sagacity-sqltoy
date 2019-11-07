@@ -24,7 +24,7 @@ public class Length extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	/*
@@ -70,7 +70,7 @@ public class Length extends IFunction {
 			else
 				return wrapArgs("length", args);
 		}
-		return null;
+		return super.IGNORE;
 	}
 
 }

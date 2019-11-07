@@ -18,7 +18,7 @@ public class ToChar extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_char\\(");
 
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	/*
@@ -51,7 +51,7 @@ public class ToChar extends IFunction {
 			return "to_char(" + args[0] + "," + format + ")";
 		}
 		default:
-			return null;
+			return super.IGNORE;
 		}
 	}
 

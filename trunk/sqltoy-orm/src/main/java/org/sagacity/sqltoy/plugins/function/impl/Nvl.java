@@ -26,7 +26,7 @@ public class Nvl extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	/*
@@ -62,7 +62,7 @@ public class Nvl extends IFunction {
 			return wrapArgs("ifnull", args);
 		else if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12)
 			return wrapArgs("nvl", args);
-		return null;
+		return super.IGNORE;
 	}
 
 }

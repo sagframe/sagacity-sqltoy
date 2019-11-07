@@ -28,7 +28,7 @@ public class Decode extends IFunction {
 	}
 
 	public String dialects() {
-		return "mysql8";
+		return super.ALL;
 	}
 
 	/*
@@ -38,9 +38,24 @@ public class Decode extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
-			return wrapArgs("ELT", args);
+		/*
+		 * if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) { return
+		 * wrapArgs("ELT", args); } else
+		 */
+		// oracle支持decode
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
+			return super.IGNORE;
 		}
-		return null;
+		// decode(param,a1,a11,a2,a21,other)
+		String param = args[0];
+		StringBuilder sql = new StringBuilder(" case ");
+		int loopSize = (args.length - 1) / 2;
+		for (int i = 0; i < loopSize; i++) {
+			sql.append(" when ").append(param).append("=").append(args[1 + i * 2]).append(" then ")
+					.append(args[1 + i * 2 + 1]);
+		}
+		sql.append(" else ").append(args[args.length - 1]);
+		sql.append(" end ");
+		return sql.toString();
 	}
 }

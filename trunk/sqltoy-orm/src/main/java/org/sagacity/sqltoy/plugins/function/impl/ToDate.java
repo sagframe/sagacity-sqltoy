@@ -37,6 +37,6 @@ public class ToDate extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		return null;
+		return super.IGNORE;
 	}
 }

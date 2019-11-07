@@ -59,6 +59,6 @@ public class Concat extends IFunction {
 				return result.toString();
 			}
 		}
-		return null;
+		return super.IGNORE;
 	}
 }

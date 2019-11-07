@@ -21,7 +21,7 @@ public class SubStr extends IFunction {
 	 * 本身就支持substr的数据库
 	 */
 	public String dialects() {
-		return "mysql8,oracle12c,db2,postgresql";
+		return ALL;
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class SubStr extends IFunction {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改
-		return null;
+		return super.IGNORE;
 	}
 
 	/**

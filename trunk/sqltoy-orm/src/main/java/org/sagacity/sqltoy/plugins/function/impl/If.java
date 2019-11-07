@@ -15,7 +15,7 @@ public class If extends IFunction {
 
 	@Override
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	@Override
@@ -26,10 +26,10 @@ public class If extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
-			return null;
+			return super.IGNORE;
 		}
 		if (args.length < 3)
-			return null;
+			return super.IGNORE;
 		return " case when " + args[0] + " then " + args[1] + " else " + args[2] + " end ";
 	}
 

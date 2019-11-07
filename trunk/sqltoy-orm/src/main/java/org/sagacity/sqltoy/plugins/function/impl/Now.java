@@ -24,7 +24,7 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "";
+		return ALL;
 	}
 
 	/*
@@ -59,6 +59,6 @@ public class Now extends IFunction {
 			else
 				return "getdate()";
 		}
-		return null;
+		return super.IGNORE;
 	}
 }

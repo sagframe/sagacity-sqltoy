@@ -46,7 +46,7 @@ public class ConcatWs extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (args.length < 2)
-			return null;
+			return super.IGNORE;
 		// 只针对oracle数据库,其他数据库原样返回
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
 			StringBuilder result = new StringBuilder();
@@ -59,7 +59,7 @@ public class ConcatWs extends IFunction {
 			}
 			return result.toString();
 		}
-		return null;
+		return super.IGNORE;
 	}
 
 }

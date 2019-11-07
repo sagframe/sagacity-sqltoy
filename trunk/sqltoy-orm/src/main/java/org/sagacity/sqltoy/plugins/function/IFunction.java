@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
  */
 public abstract class IFunction {
 
+	public final String ALL = "";
+
+	public final String IGNORE = null;
+
 	/**
 	 * @todo 函数适配的数据库方言,用逗号分隔,返回空或null表示适配所有数据库
 	 * @return
