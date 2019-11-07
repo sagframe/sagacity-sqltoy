@@ -246,12 +246,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * @todo 获取service并调用其指定方法获取报表数据
 	 * @param beanName
-	 * @param motheded
+	 * @param method
 	 * @param args
 	 * @return
 	 */
-	public Object getServiceData(String beanName, String motheded, Object[] args) {
-		if (StringUtil.isBlank(beanName) || StringUtil.isBlank(motheded))
+	public Object getServiceData(String beanName, String method, Object[] args) {
+		if (StringUtil.isBlank(beanName) || StringUtil.isBlank(method))
 			return null;
 		try {
 			Object beanDefine = null;
@@ -262,7 +262,7 @@ public class SqlToyContext implements ApplicationContextAware {
 			} else {
 				return null;
 			}
-			return BeanUtil.invokeMethod(beanDefine, motheded, args);
+			return BeanUtil.invokeMethod(beanDefine, method, args);
 		} catch (BeansException e) {
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
