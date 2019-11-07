@@ -258,8 +258,8 @@ public class BeanUtil {
 	public static boolean equals(Object target, Object compared) {
 		if (null == target) {
 			return target == compared;
-		} else
-			return target.equals(compared);
+		}
+		return target.equals(compared);
 	}
 
 	/**
@@ -276,8 +276,7 @@ public class BeanUtil {
 			return target.equals(compared);
 		if (ignoreCase)
 			return target.toString().equalsIgnoreCase(compared.toString());
-		else
-			return target.toString().equals(compared.toString());
+		return target.toString().equals(compared.toString());
 	}
 
 	/**
@@ -291,10 +290,9 @@ public class BeanUtil {
 			if (typeName.equals("int") || typeName.equals("long") || typeName.equals("double")
 					|| typeName.equals("float") || typeName.equals("short"))
 				return 0;
-			else if (typeName.equals("boolean") || typeName.equals("java.lang.boolean"))
+			if (typeName.equals("boolean") || typeName.equals("java.lang.boolean"))
 				return false;
-			else
-				return null;
+			return null;
 		}
 		// 转换为小写
 		typeName = typeName.toLowerCase();
@@ -991,5 +989,4 @@ public class BeanUtil {
 				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
 	}
 
-	
 }
