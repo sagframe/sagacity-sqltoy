@@ -13,8 +13,14 @@ import java.util.regex.Pattern;
  */
 public abstract class IFunction {
 
+	/**
+	 * 表示支持全部数据库类型
+	 */
 	public final String ALL = "";
 
+	/**
+	 * 返回null,表示忽视函数转换处理，原样输出
+	 */
 	public final String IGNORE = null;
 
 	/**
