@@ -308,15 +308,15 @@ public class BeanUtil {
 			} else
 				return valueStr;
 		} else if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
-			return Integer.valueOf(valueStr);
+			return Integer.valueOf(convertBoolean(valueStr));
 		} else if (typeName.equals("int")) {
-			return Integer.valueOf(valueStr).intValue();
+			return Integer.valueOf(convertBoolean(valueStr)).intValue();
 		} else if (typeName.equals("java.lang.long")) {
-			return Long.valueOf(valueStr);
+			return Long.valueOf(convertBoolean(valueStr));
 		} else if (typeName.equals("long")) {
-			return Long.valueOf(valueStr).longValue();
+			return Long.valueOf(convertBoolean(valueStr)).longValue();
 		} else if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal")) {
-			return new BigDecimal(valueStr);
+			return new BigDecimal(convertBoolean(valueStr));
 		} else if (typeName.equals("java.util.date") || typeName.equals("date")) {
 			if (paramValue instanceof java.sql.Date)
 				return new java.util.Date(((java.sql.Date) paramValue).getTime());
@@ -347,15 +347,17 @@ public class BeanUtil {
 		} else if (typeName.equals("double")) {
 			return Double.valueOf(valueStr).doubleValue();
 		} else if (typeName.equals("java.lang.short")) {
-			return Short.valueOf(valueStr);
+			return Short.valueOf(convertBoolean(valueStr));
 		} else if (typeName.equals("short")) {
-			return Short.valueOf(valueStr).shortValue();
+			return Short.valueOf(convertBoolean(valueStr)).shortValue();
 		} else if (typeName.equals("java.lang.float")) {
 			return Float.valueOf(valueStr);
 		} else if (typeName.equals("float")) {
 			return Float.valueOf(valueStr).floatValue();
 		} else if (typeName.equals("java.lang.boolean") || typeName.equals("boolean")) {
-			return Boolean.valueOf(valueStr);
+			if (valueStr.equalsIgnoreCase("true") || valueStr.equals("1"))
+				return Boolean.TRUE;
+			return Boolean.FALSE;
 		} else if (typeName.equals("java.sql.timestamp") || typeName.equals("timestamp")) {
 			if (paramValue instanceof java.sql.Timestamp)
 				return (java.sql.Timestamp) paramValue;
@@ -428,6 +430,14 @@ public class BeanUtil {
 				return valueStr.toCharArray();
 		} else
 			return paramValue;
+	}
+
+	private static String convertBoolean(String var) {
+		if (var.equals("true"))
+			return "1";
+		if (var.equals("false"))
+			return "0";
+		return var;
 	}
 
 	private static Timestamp oracleTimeStampConvert(Object obj) throws Exception {
