@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *
  */
 public class GroupConcat extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wgroup_concat\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\Wgroup_concat|string_agg\\(");
 	private static Pattern separtorPattern = Pattern.compile("\\Wseparator\\W");
 
 	@Override
@@ -39,7 +39,12 @@ public class GroupConcat extends IFunction {
 			} else {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
+		} else if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
+			if (functionName.equalsIgnoreCase("group_concat"))
+				return super.IGNORE;
+			return " group_concat(" + args[0] + " separator " + args[1] + ") ";
 		}
+
 		return super.IGNORE;
 	}
 
