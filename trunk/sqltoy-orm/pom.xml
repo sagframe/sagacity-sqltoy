@@ -18,13 +18,13 @@
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.10</httpclient.version>
 		<httpclient-core.version>4.4.12</httpclient-core.version>
-		<elastic-rest-client.version>7.4.1</elastic-rest-client.version>
+		<elastic-rest-client.version>7.4.2</elastic-rest-client.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<mongo.version>3.11.0</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<junit.version>4.12</junit.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.0.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.1.RELEASE</spring-boot.version>
 	</properties>
 
 	<repositories>
