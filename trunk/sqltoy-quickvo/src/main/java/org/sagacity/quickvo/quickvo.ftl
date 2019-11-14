@@ -102,6 +102,7 @@ public class ${quickVO.voName} extends Abstract${quickVO.voName} {
 	/**
      *@todo vo columns to String
      */
+    @Override
 	public String toString() {
 		return super.toString();
 	}
@@ -111,6 +112,7 @@ public class ${quickVO.voName} extends Abstract${quickVO.voName} {
 	 * 
 	 * @see java.lang.Object#clone()
 	 */
+	@Override
 	public ${quickVO.voName} clone() {
 		try {
 			return (${quickVO.voName}) super.clone();

@@ -160,6 +160,7 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	/**
      * @todo vo columns to String
      */
+    @Override
 	public String toString() {
 		StringBuilder columnsBuffer=new StringBuilder();
 		<#list quickVO.columns as column>
