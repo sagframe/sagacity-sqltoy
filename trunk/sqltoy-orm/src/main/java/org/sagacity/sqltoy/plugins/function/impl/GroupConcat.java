@@ -32,7 +32,7 @@ public class GroupConcat extends IFunction {
 		int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(), separtorPattern);
 		if (matchIndex > 0)
 			sign = tmp.substring(matchIndex + 11).trim();
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL10) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL12) {
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
 			if (args.length > 1) {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";

@@ -17,7 +17,7 @@ public class ToDate extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_date\\(");
 
 	public String dialects() {
-		return "oracle12c";
+		return "oracle";
 	}
 
 	/*

@@ -56,8 +56,9 @@ public class DataSourceUtils {
 		public final static String MARIADB = "mariadb";
 
 		public final static String POSTGRESQL = "postgresql";
-		public final static String POSTGRESQL10 = "postgresql10";
+		// public final static String POSTGRESQL10 = "postgresql10";
 		public final static String POSTGRESQL11 = "postgresql11";
+		public final static String POSTGRESQL12 = "postgresql12";
 
 		// 华为gaussdb(源于postgresql)
 		public final static String GAUSSDB = "gaussdb";
@@ -101,8 +102,9 @@ public class DataSourceUtils {
 		public final static int SAP_HANA = 50;
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 60;
-		public final static int POSTGRESQL10 = 61;
+		// public final static int POSTGRESQL10 = 61;
 		public final static int POSTGRESQL11 = 62;
+		public final static int POSTGRESQL12 = 63;
 
 		// gaussdb
 		public final static int GAUSSDB = 70;
@@ -132,8 +134,9 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
-		DBNameTypeMap.put(Dialect.POSTGRESQL10, DBType.POSTGRESQL10);
+		// DBNameTypeMap.put(Dialect.POSTGRESQL10, DBType.POSTGRESQL10);
 		DBNameTypeMap.put(Dialect.POSTGRESQL11, DBType.POSTGRESQL11);
+		DBNameTypeMap.put(Dialect.POSTGRESQL12, DBType.POSTGRESQL12);
 
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
@@ -157,10 +160,10 @@ public class DataSourceUtils {
 			return Dialect.ORACLE12;
 		case DBType.POSTGRESQL:
 			return Dialect.POSTGRESQL;
-		case DBType.POSTGRESQL10:
-			return Dialect.POSTGRESQL10;
 		case DBType.POSTGRESQL11:
 			return Dialect.POSTGRESQL11;
+		case DBType.POSTGRESQL12:
+			return Dialect.POSTGRESQL12;
 		case DBType.SQLITE:
 			return Dialect.SQLITE;
 		case DBType.SQLSERVER:
@@ -333,11 +336,11 @@ public class DataSourceUtils {
 			// 9.5以上为标准支持模式
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				dbType = DBType.POSTGRESQL;
-				// 10+版本
-				if (majorVersion >= 11)
-					dbType = DBType.POSTGRESQL11;
+				// 12+版本
+				if (majorVersion >= 12)
+					dbType = DBType.POSTGRESQL12;
 				else if (majorVersion >= 10)
-					dbType = DBType.POSTGRESQL10;
+					dbType = DBType.POSTGRESQL11;
 			}
 			// sybase IQ
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
@@ -377,8 +380,8 @@ public class DataSourceUtils {
 		case DBType.ORACLE12:
 			return "select 1 from dual";
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL10:
 		case DBType.POSTGRESQL11:
+		case DBType.POSTGRESQL12:
 		case DBType.GAUSSDB:
 			return "select version()";
 		default:

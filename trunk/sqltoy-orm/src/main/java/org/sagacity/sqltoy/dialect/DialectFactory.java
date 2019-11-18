@@ -146,8 +146,8 @@ public class DialectFactory {
 			}
 			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
 			case DBType.POSTGRESQL:
-			case DBType.POSTGRESQL10:
 			case DBType.POSTGRESQL11:
+			case DBType.POSTGRESQL12:
 			case DBType.GAUSSDB: {
 				dialectSqlWrapper = new PostgreSqlDialect();
 				break;

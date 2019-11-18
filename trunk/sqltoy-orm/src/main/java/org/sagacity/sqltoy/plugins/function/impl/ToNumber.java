@@ -27,7 +27,7 @@ public class ToNumber extends IFunction {
 	}
 
 	public String dialects() {
-		return "db2,oracle12c";
+		return "db2,oracle";
 	}
 
 	/*

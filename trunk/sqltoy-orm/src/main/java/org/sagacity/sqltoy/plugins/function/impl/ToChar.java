@@ -40,7 +40,7 @@ public class ToChar extends IFunction {
 		}
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL11:
-		case DBType.POSTGRESQL10:
+		case DBType.POSTGRESQL12:
 		case DBType.ORACLE:
 		case DBType.ORACLE12: {
 			// 日期

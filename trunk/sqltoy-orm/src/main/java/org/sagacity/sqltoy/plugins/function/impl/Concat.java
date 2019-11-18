@@ -24,7 +24,7 @@ public class Concat extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		return "oracle12c";
+		return "oracle";
 	}
 
 	/*

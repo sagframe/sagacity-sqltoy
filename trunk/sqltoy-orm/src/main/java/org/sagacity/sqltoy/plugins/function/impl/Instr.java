@@ -56,7 +56,7 @@ public class Instr extends IFunction {
 			}
 		} else if (dialect == DBType.DB2 || dialect == DBType.DB2_11 || dialect == DBType.ORACLE
 				|| dialect == DBType.ORACLE12 || dialect == DBType.MYSQL || dialect == DBType.MYSQL8
-				|| dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL10) {
+				|| dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL12) {
 			if (functionName.equalsIgnoreCase("charindex")) {
 				StringBuilder result = new StringBuilder();
 				result.append("instr(").append(args[1]).append(",").append(args[0]);
