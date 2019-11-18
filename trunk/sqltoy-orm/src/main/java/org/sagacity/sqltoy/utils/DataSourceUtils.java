@@ -55,15 +55,15 @@ public class DataSourceUtils {
 		public final static String INNOSQL = "innosql";
 		public final static String MARIADB = "mariadb";
 
+		//9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
-		// public final static String POSTGRESQL10 = "postgresql10";
 		public final static String POSTGRESQL11 = "postgresql11";
 		public final static String POSTGRESQL12 = "postgresql12";
 
 		// 华为gaussdb(源于postgresql)
 		public final static String GAUSSDB = "gaussdb";
 
-		// 以15.4为基准起始版
+		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
 
 		// 暂不支持

@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -218,7 +219,7 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
-		
+
 		/**
 		 * 初始化翻译器
 		 */
@@ -469,8 +470,29 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDialect(String dialect) {
 		if (StringUtil.isNotBlank(dialect)) {
-			this.dialect = dialect;
-			scriptLoader.setDialect(dialect);
+			// 规范数据库方言命名(避免方言和版本一起定义)
+			String tmp = dialect.toLowerCase();
+			if (tmp.startsWith(Dialect.MYSQL))
+				this.dialect = Dialect.MYSQL;
+			else if (tmp.startsWith(Dialect.ORACLE))
+				this.dialect = Dialect.ORACLE;
+			else if (tmp.startsWith(Dialect.POSTGRESQL))
+				this.dialect = Dialect.POSTGRESQL;
+			else if (tmp.startsWith(Dialect.DB2))
+				this.dialect = Dialect.DB2;
+			else if (tmp.startsWith(Dialect.SQLSERVER))
+				this.dialect = Dialect.SQLSERVER;
+			else if (tmp.startsWith(Dialect.SQLITE))
+				this.dialect = Dialect.SQLITE;
+			else if (tmp.startsWith(Dialect.GAUSSDB))
+				this.dialect = Dialect.GAUSSDB;
+			else if (tmp.startsWith(Dialect.MARIADB))
+				this.dialect = Dialect.MARIADB;
+			else if (tmp.startsWith(Dialect.SAP_HANA))
+				this.dialect = Dialect.SAP_HANA;
+			else
+				this.dialect = dialect;
+			scriptLoader.setDialect(this.dialect);
 		}
 	}
 
