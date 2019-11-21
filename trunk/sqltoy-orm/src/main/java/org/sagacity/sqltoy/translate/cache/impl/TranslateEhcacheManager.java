@@ -76,8 +76,10 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 								.newCacheConfigurationBuilder(String.class, HashMap.class,
 										ResourcePoolsBuilder.heap(heap).offheap(cacheConfig.getOffHeap(), MemoryUnit.MB)
 												.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true))
-								.withExpiry(ExpiryPolicyBuilder
-										.timeToLiveExpiration(Duration.ofSeconds(cacheConfig.getKeepAlive())))
+								.withExpiry(cacheConfig.getKeepAlive() > 0
+										? ExpiryPolicyBuilder
+												.timeToLiveExpiration(Duration.ofSeconds(cacheConfig.getKeepAlive()))
+										: ExpiryPolicyBuilder.noExpiration())
 								.build());
 			}
 			// 清除缓存

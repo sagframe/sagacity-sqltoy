@@ -91,9 +91,9 @@ public class TranslateConfigParse {
 								}
 								index++;
 							}
-							// 过期时长
-							if (translateCacheModel.getKeepAlive() <= 0) {
-								translateCacheModel.setKeepAlive(SqlToyConstants.getCacheExpireSeconds());
+							// local 缓存 默认缓存不失效
+							if (translateType.equals("local") && elt.attribute("keep-alive") == null) {
+								translateCacheModel.setKeepAlive(-1);
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
 							logger.debug("已经加载缓存翻译:cache={},type={}", translateCacheModel.getCache(), translateType);
