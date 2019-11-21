@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *
  */
 public class GroupConcat extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wgroup_concat|string_agg\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(group_concat|string_agg)\\(");
 	private static Pattern separtorPattern = Pattern.compile("\\Wseparator\\W");
 
 	@Override

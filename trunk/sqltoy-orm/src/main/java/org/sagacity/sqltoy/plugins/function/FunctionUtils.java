@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.plugins.function;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -166,5 +167,13 @@ public class FunctionUtils {
 			e.printStackTrace();
 		}
 		functionConverts = converts;
+	}
+
+	public static void main(String[] args) {
+		FunctionUtils.setFunctionConverts(Arrays.asList(FunctionUtils.functions));
+		String sql = "select group_concat(name separator ',') from table";
+
+		String dialectSql = FunctionUtils.getDialectSql(sql, "mysql");
+		System.err.println(dialectSql);
 	}
 }
