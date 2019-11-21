@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 public class FunctionUtils {
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 	// 提供默认函数配置
-	private final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
+	public final static String[] functions = { funPackage.concat("SubStr"), funPackage.concat("Trim"),
 			funPackage.concat("Instr"), funPackage.concat("Concat"), funPackage.concat("ConcatWs"),
 			funPackage.concat("Nvl"), funPackage.concat("DateFormat"), funPackage.concat("Now"),
 			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
@@ -169,11 +169,5 @@ public class FunctionUtils {
 		functionConverts = converts;
 	}
 
-	public static void main(String[] args) {
-		FunctionUtils.setFunctionConverts(Arrays.asList(FunctionUtils.functions));
-		String sql = "select group_concat(name separator ',') from table";
-
-		String dialectSql = FunctionUtils.getDialectSql(sql, "mysql");
-		System.err.println(dialectSql);
-	}
+	
 }
