@@ -27,6 +27,8 @@ public class GroupConcat extends IFunction {
 
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		if (args == null || args.length == 0)
+			return super.IGNORE;
 		String tmp = args[args.length - 1];
 		String sign = "','";
 		int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(), separtorPattern);
