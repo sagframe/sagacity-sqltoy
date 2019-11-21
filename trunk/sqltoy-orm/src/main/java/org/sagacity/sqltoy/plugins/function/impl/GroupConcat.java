@@ -39,7 +39,11 @@ public class GroupConcat extends IFunction {
 			if (args.length > 1) {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
 			} else {
-				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
+				if (matchIndex > 0) {
+					return " array_to_string(ARRAY_AGG(" + args[0].substring(0, matchIndex) + ")," + sign + ") ";
+				} else {
+					return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
+				}
 			}
 		} else if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
 			if (functionName.equalsIgnoreCase("group_concat"))
