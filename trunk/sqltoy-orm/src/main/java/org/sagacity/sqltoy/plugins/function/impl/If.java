@@ -6,9 +6,10 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
- * 
- * @author zhongxuchen
- *
+ * @project sqltoy-orm
+ * @description 将在mysql中使用的if函数转换成case when 通用模式
+ * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:If.java,Revision:v1.0,Date:2019-10-21
  */
 public class If extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wif\\(");
