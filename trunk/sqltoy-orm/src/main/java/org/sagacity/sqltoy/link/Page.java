@@ -23,6 +23,11 @@ import org.sagacity.sqltoy.model.PaginationModel;
 public class Page extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3406616717764570698L;
+
+	/**
 	 * 分页模型
 	 */
 	private PaginationModel pageModel = new PaginationModel();

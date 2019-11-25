@@ -19,6 +19,11 @@ import org.sagacity.sqltoy.model.LockMode;
  */
 public class Load extends BaseLink {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9187056738357750608L;
+
+	/**
 	 * 锁表模式类型
 	 */
 	private LockMode lockMode;

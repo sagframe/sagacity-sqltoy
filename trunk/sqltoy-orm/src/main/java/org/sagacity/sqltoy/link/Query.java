@@ -24,6 +24,11 @@ import org.sagacity.sqltoy.model.QueryResult;
 public class Query extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8128694559008281052L;
+
+	/**
 	 * sql语句或者sqlId
 	 */
 	private String sql;

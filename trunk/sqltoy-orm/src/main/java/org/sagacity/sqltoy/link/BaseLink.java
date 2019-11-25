@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.link;
 
+import java.io.Serializable;
+
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -15,7 +17,12 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:BaseLink.java,Revision:v1.0,Date:2017年10月9日
  */
-public abstract class BaseLink {
+public abstract class BaseLink implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6032935116286610811L;
+
 	/**
 	 * 数据源
 	 */

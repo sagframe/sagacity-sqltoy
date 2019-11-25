@@ -20,6 +20,11 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
  */
 public class Update extends BaseLink {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5391575924738181611L;
+
+	/**
 	 * 强制修改的字段属性
 	 */
 	private String[] forceUpdateProps;

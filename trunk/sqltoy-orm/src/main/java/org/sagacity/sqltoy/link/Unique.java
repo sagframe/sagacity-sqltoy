@@ -18,6 +18,11 @@ import org.sagacity.sqltoy.executor.UniqueExecutor;
  */
 public class Unique extends BaseLink {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1489170834481063214L;
+
+	/**
 	 * 判断唯一性的对象实体
 	 */
 	private Serializable entity;

@@ -22,6 +22,11 @@ import org.sagacity.sqltoy.config.model.SqlType;
 public class Batch extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3564526241047940595L;
+
+	/**
 	 * 批量处理的数据集合
 	 */
 	private List<?> dataSet;

@@ -38,6 +38,11 @@ import com.mongodb.client.AggregateIterable;
  */
 public class Mongo extends BaseLink {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4443964509492022973L;
+
 	private final String ERROR_MESSAGE = "mongo查询请使用<mql id=\"\" collection=\"\" fields=\"\"></mql>配置,请确定相关配置正确性!";
 
 	/**

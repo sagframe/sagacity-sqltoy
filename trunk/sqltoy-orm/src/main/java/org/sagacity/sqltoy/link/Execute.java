@@ -21,6 +21,11 @@ import org.sagacity.sqltoy.config.model.SqlType;
  */
 public class Execute extends BaseLink {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6336692505147861983L;
+
+	/**
 	 * 具体执行的sql
 	 */
 	private String sql;

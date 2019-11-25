@@ -19,6 +19,11 @@ import org.sagacity.sqltoy.model.StoreResult;
 public class Store extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8055671388714803899L;
+
+	/**
 	 * 输入参数值
 	 */
 	private Object[] inParamsValue;

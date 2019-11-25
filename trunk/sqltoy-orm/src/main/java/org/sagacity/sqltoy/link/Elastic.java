@@ -24,6 +24,11 @@ import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
  * @version id:Elastic.java,Revision:v1.0,Date:2018年1月1日
  */
 public class Elastic extends BaseLink {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3963816230256439625L;
+
 	private final String ERROR_MESSAGE = "ES查询请使用<eql></eql>配置!";
 
 	/**

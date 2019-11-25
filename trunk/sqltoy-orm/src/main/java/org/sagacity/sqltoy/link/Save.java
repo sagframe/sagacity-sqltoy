@@ -21,6 +21,11 @@ import org.sagacity.sqltoy.model.SaveMode;
 public class Save extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3086927739096637361L;
+
+	/**
 	 * 记录已经存在时的处理策略
 	 */
 	private SaveMode saveMode = SaveMode.APPEND;

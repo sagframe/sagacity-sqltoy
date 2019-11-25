@@ -16,6 +16,10 @@ import org.sagacity.sqltoy.model.TreeTableModel;
  */
 public class TreeTable extends BaseLink {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2471677449407100687L;
+	/**
 	 * 树结构表模型
 	 */
 	private TreeTableModel treeModel;

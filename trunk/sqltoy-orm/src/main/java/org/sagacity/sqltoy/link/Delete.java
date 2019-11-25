@@ -19,6 +19,11 @@ import org.sagacity.sqltoy.SqlToyContext;
 public class Delete extends BaseLink {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3342119854878262119L;
+
+	/**
 	 * 批次处理的记录数量
 	 */
 	private int batchSize = 0;
