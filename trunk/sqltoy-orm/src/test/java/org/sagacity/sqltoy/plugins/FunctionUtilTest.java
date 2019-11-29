@@ -22,7 +22,7 @@ public class FunctionUtilTest {
 		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
 		String sql = "select group_concat(distinct(name) separator ',') from table";
 
-		String dialectSql = FunctionUtils.getDialectSql(sql, "postgresql");
+		String dialectSql = FunctionUtils.getDialectSql(sql, "mysql");
 		System.err.println(dialectSql);
 	}
 }
