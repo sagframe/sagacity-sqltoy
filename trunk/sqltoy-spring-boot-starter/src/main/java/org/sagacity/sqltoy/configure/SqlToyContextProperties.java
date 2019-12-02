@@ -33,12 +33,8 @@ public class SqlToyContextProperties {
 
 	private List<ElasticEndpoint> elasticConfigs = new ArrayList<ElasticEndpoint>();
 
-	/**
-	 * 缓存管理器
-	 */
-	private String cacheManager;
-
 	private String debug;
+
 	private int batchSize;
 
 	/**
@@ -74,21 +70,6 @@ public class SqlToyContextProperties {
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
-	}
-
-	/**
-	 * @return the cacheManager
-	 */
-	public String getCacheManager() {
-		return cacheManager;
-	}
-
-	/**
-	 * @param cacheManager
-	 *            the cacheManager to set
-	 */
-	public void setCacheManager(String cacheManager) {
-		this.cacheManager = cacheManager;
 	}
 
 	/**
