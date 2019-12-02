@@ -35,7 +35,7 @@ public class SqlToyContextProperties {
 
 	private String debug;
 
-	private int batchSize;
+	private Integer batchSize;
 
 	/**
 	 * 统一字段处理器
@@ -90,7 +90,7 @@ public class SqlToyContextProperties {
 	/**
 	 * @return the batchSize
 	 */
-	public int getBatchSize() {
+	public Integer getBatchSize() {
 		return batchSize;
 	}
 
@@ -98,7 +98,7 @@ public class SqlToyContextProperties {
 	 * @param batchSize
 	 *            the batchSize to set
 	 */
-	public void setBatchSize(int batchSize) {
+	public void setBatchSize(Integer batchSize) {
 		this.batchSize = batchSize;
 	}
 

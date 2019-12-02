@@ -32,9 +32,11 @@ public class SqltoyAutoConfiguration {
 	SqlToyContext sqlToyContext() {
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		BeanUtils.copyProperties(properties, sqlToyContext);
-		sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
+		if (properties.getPackagesToScan() != null)
+			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
 		sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
-		sqlToyContext.setBatchSize(properties.getBatchSize());
+		if (properties.getBatchSize() != null)
+			sqlToyContext.setBatchSize(properties.getBatchSize());
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		sqlToyContext.setUnifyFieldsHandler(properties.getUnifyFieldsHandler());
 		sqlToyContext.setElasticEndpoints(properties.getElasticConfigs());
