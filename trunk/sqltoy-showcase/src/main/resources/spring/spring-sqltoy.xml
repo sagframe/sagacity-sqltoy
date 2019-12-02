@@ -56,6 +56,7 @@
 		<property name="printSqlStrategy" value="debug" />
 	</bean>
 
+	
 	<bean id="sqlToyLazyDaoShard1" name="sqlToyLazyDaoShard1"
 		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl">
 		<property name="dataSource" ref="sharding1" />
