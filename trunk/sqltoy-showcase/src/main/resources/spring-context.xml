@@ -11,9 +11,11 @@
 		location="classpath:application.properties" />
 
 	<!-- 让Spring通过自动扫描来查询和管理Bean -->
-	<context:component-scan	base-package="org.sagacity.sqltoy" />
+	<context:component-scan
+		base-package="org.sagacity.sqltoy" />
 	<!-- 项目包 -->
-	<context:component-scan	base-package="com.sagframe.sqltoy" />
+	<context:component-scan
+		base-package="com.sagframe.sqltoy" />
 	<!-- 基本dataSource的配置 -->
 	<import resource="classpath:spring/spring-datasource.xml" />
 	<!-- 数据库事务配置 -->
@@ -21,7 +23,7 @@
 
 	<!-- redis配置 -->
 	<import resource="classpath:spring/spring-redis.xml" />
-	<!-- sqltoy-orm的配置 -->
+	<!-- sqltoy-orm的配置,根据项目复杂度选择配置模式,普通项目参照spring-sqltoy-simple配置 -->
 	<import resource="classpath:spring/spring-sqltoy.xml" />
 
 	<!-- sqltoy分库分表的配置 -->

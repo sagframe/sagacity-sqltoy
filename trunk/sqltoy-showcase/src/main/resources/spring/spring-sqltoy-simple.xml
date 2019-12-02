@@ -9,32 +9,16 @@
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
 		<property name="sqlResourcesDir"
 			value="classpath:com/sagframe/sqltoy/showcase" />
-		<!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
+		<!--非必须属性: 跨数据库函数自动替换,适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default" />
-		<!-- 可以这样自行根据需要进行定义和扩展 <property name="functionConverts"> <list> <value>org.sagacity.sqltoy.plugins.function.impl.Nvl</value> 
-			<value>org.sagacity.sqltoy.plugins.function.impl.SubStr</value> <value>org.sagacity.sqltoy.plugins.function.impl.Now</value> 
-			<value>org.sagacity.sqltoy.plugins.function.impl.Length</value> </list> </property> -->
-
 		<!--非必须属性: 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
 			<bean
 				class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
-		<!-- 缓存翻译管理器,非必须属性 -->
+		<!-- 非必须属性:缓存翻译管理器 -->
 		<property name="translateConfig"
 			value="classpath:sqltoy-translate.xml" />
-		<!-- 非必须属性:集成elasticsearch,可以配置多个地址 -->
-		<property name="elasticEndpoints">
-			<list>
-				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
-					<constructor-arg value="${es.default.url}" />
-					<property name="id" value="default" />
-					<!-- 6.3.x 版本支持xpack sql查询 <property name="enableSql" value="true" /> -->
-					<!-- <property name="username" value="" /> <property name="password" 
-						value="" /> -->
-				</bean>
-			</list>
-		</property>
 
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
@@ -44,17 +28,9 @@
 		<property name="dialect" value="${sqltoy.dialect}" />
 		<!-- 默认值为:100000,设置分页查询最大的提取数据记录量,防止恶意提取数据造成系统内存压力以及保障数据安全 -->
 		<property name="pageFetchSizeLimit" value="50000" />
-		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
+		<!-- 非必填项:便于为dao设置基本的数据源 -->
 		<property name="defaultDataSource" ref="dataSource" />
+		<!-- 非必填项:默认值为error,只打印执行异常的sql -->
 		<property name="printSqlStrategy" value="debug" />
-	</bean>
-
-	<bean id="sqlToyLazyDaoShard1" name="sqlToyLazyDaoShard1"
-		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl">
-		<property name="dataSource" ref="sharding1" />
-	</bean>
-	<bean id="sqlToyLazyDaoShard2" name="sqlToyLazyDaoShard2"
-		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl">
-		<property name="dataSource" ref="sharding2" />
 	</bean>
 </beans>
