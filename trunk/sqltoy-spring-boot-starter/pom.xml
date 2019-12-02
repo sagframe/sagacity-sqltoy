@@ -5,10 +5,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.5.2</version>
+	<version>4.8.8</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>2.1.8.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.1.RELEASE</spring-boot.version>
 	</properties>
 	<repositories>
 		<repository>

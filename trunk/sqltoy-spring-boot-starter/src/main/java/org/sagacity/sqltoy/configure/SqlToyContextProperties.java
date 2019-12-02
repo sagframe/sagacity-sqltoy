@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
-import org.sagacity.sqltoy.plugin.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
