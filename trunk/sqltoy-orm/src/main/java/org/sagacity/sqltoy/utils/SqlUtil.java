@@ -561,6 +561,7 @@ public class SqlUtil {
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param conn
+	 * @param dbType
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
@@ -585,6 +586,7 @@ public class SqlUtil {
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param conn
+	 * @param dbType
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
@@ -705,6 +707,8 @@ public class SqlUtil {
 	 * @param updateTypes
 	 * @param autoCommit
 	 * @param conn
+	 * @param dbType
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long batchUpdateByJdbc(final String updateSql, final Collection rowDatas, final int batchSize,
@@ -798,6 +802,7 @@ public class SqlUtil {
 	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
 	 * @param treeTableModel
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
@@ -936,6 +941,7 @@ public class SqlUtil {
 	 * @param ids
 	 * @param nodeLevel
 	 * @param conn
+	 * @param dbType
 	 * @throws Exception
 	 */
 	private static void processNextLevel(final String updateLevelAndRoute, final String nextNodeQueryStr,
@@ -1100,7 +1106,7 @@ public class SqlUtil {
 		// 存在order by
 		if (orderByIndex > lastBracketIndex)
 			result = true;
-		// 特殊处理 order by，通过ORder这种非常规写法代表
+		// 特殊处理 order by，通过ORder这种非常规写法代表分页时是否进行外层包裹(建议废弃使用)
 		if (judgeUpcase) {
 			int upcaseOrderBy = StringUtil.matchLastIndex(sql, UPCASE_ORDER_PATTERN);
 			if (upcaseOrderBy > lastBracketIndex)
@@ -1143,7 +1149,9 @@ public class SqlUtil {
 	 * @param params
 	 * @param paramsType
 	 * @param conn
+	 * @param dbType
 	 * @param autoCommit
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
