@@ -886,7 +886,6 @@ public class ResultUtils {
 		String label;
 		String keyIndex;
 		boolean allNull = true;
-		// try {
 		for (int i = 0; i < size; i++) {
 			label = labelNames[i];
 			fieldValue = rs.getObject(label);
