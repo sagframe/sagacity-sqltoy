@@ -64,8 +64,10 @@ public class CommonUtils {
 
 	/**
 	 * @todo 产生随机数数组
-	 * @param maxValue 随机数的最大值
-	 * @param size     随机数的个数
+	 * @param maxValue
+	 *            随机数的最大值
+	 * @param size
+	 *            随机数的个数
 	 * @return
 	 */
 	public static Object[] randomArray(int maxValue, int size) {
@@ -120,7 +122,8 @@ public class CommonUtils {
 
 	/**
 	 * @todo 获得指定路径的文件
-	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
+	 * @param file
+	 *            文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
@@ -456,9 +459,9 @@ public class CommonUtils {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 *
-	 * @param closeables 可关闭的流对象列表
+	 * @todo 关闭一个或多个流对象
+	 * @param closeables
+	 *            可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -472,9 +475,9 @@ public class CommonUtils {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 *
-	 * @param closeables 可关闭的流对象列表
+	 * @todo 关闭一个或多个流对象
+	 * @param closeables
+	 *            可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
