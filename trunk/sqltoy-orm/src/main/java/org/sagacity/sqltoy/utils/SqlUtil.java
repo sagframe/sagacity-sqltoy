@@ -190,17 +190,18 @@ public class SqlUtil {
 	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			Integer[] paramsType, int fromIndex) throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
-		// 一般情况fromIndex 都是零
+		// 一般情况fromIndex 都是0
 		if (null != params && params.length > 0) {
 			int n = params.length;
+			int startIndex = fromIndex + 1;
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, fromIndex + 1 + i);
+					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], paramsType[i], fromIndex + 1 + i);
+					setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + i);
 				}
 			}
 		}
