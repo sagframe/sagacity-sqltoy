@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10 下午10:27:57
+ * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
