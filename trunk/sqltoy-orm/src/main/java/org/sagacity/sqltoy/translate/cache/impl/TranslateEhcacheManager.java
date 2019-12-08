@@ -39,7 +39,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	private String diskStorePath = "./translateCaches";
 
 	/**
-	 * @param diskStorePath the diskStorePath to set
+	 * @param diskStorePath
+	 *            the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -82,7 +83,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 										: ExpiryPolicyBuilder.noExpiration())
 								.build());
 			}
-			// 清除缓存
+			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
 			if (cacheValue == null) {
 				if (StringUtil.isBlank(cacheKey)) {
 					cache.clear();
