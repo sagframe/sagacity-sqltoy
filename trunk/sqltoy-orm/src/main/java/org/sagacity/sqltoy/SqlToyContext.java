@@ -24,12 +24,12 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 
 /**
  * @project sagacity-sqltoy4.0
