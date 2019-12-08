@@ -190,6 +190,7 @@ public class SqlUtil {
 	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			Integer[] paramsType, int fromIndex) throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
+		// 一般情况fromIndex 都是零
 		if (null != params && params.length > 0) {
 			int n = params.length;
 			if (null == paramsType || paramsType.length == 0) {
