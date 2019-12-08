@@ -34,6 +34,7 @@ public class ParallelUtils {
 	 * @todo 将集合进行根据sharding字段的值提取sharding策略并按照策略将集合分组，然后并行执行
 	 * @param sqlToyContext
 	 * @param entities
+	 * @param wrapIdValue
 	 * @param dataSource
 	 * @param handler
 	 * @return
