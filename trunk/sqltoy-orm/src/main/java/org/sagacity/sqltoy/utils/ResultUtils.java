@@ -94,7 +94,8 @@ public class ResultUtils {
 			try {
 				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, rowCnt,
 						labelIndexMap, labelNames, startColIndex));
-			} catch (ArrayIndexOutOfBoundsException oie) {
+			} // update 2019-09-11 此处增加数组溢出异常是因为经常有缓存cache-indexs写错误，为了增加错误提示信息的友好性增加此处理
+			catch (ArrayIndexOutOfBoundsException oie) {
 				oie.printStackTrace();
 				logger.error("sql={} 的缓存翻译数组越界:{},请检查其<translate cache-indexs 配置是否正确,index值必须跟缓存数据的列对应!",
 						sqlToyConfig.getId(), oie.getMessage());
