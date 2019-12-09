@@ -298,7 +298,8 @@ public class SqliteDialect implements Dialect {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select * from ");
+		loadSql.append("select ").append(entityMeta.getAllFields());
+		loadSql.append(" from ");
 		loadSql.append(entityMeta.getSchemaTable());
 		loadSql.append(" where ");
 		String field;

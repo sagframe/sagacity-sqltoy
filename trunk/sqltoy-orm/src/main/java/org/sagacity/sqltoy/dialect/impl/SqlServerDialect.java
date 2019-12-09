@@ -291,7 +291,8 @@ public class SqlServerDialect implements Dialect {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select * from ");
+		loadSql.append("select ").append(entityMeta.getAllFields());
+		loadSql.append(" from ");
 		loadSql.append(tableName == null ? entityMeta.getSchemaTable() : tableName);
 		if (lockMode != null) {
 			switch (lockMode) {
