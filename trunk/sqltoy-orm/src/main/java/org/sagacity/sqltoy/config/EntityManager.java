@@ -253,6 +253,13 @@ public class EntityManager {
 				if (idList.size() > 0) {
 					entityMeta.setIdArray(idList.toArray(new String[idList.size()]));
 					fieldList.addAll(idList);
+				}
+				// 内部存在逻辑设置allFields
+				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
+				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
+				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllFields()).concat(" from ")
+						.concat(entityMeta.getSchemaTable()));
+				if (idList.size() > 0) {
 					// 注解未定义load sql则提供主键为条件的查询为loadsql
 					if (StringUtil.isBlank(entityMeta.getLoadSql(null))) {
 						entityMeta.setLoadSql(entityMeta.getLoadAllSql().concat(loadNamedWhereSql.toString()));
@@ -261,11 +268,6 @@ public class EntityManager {
 					entityMeta.setDeleteByIdsSql(
 							"delete from ".concat(entityMeta.getSchemaTable()).concat(loadArgWhereSql.toString()));
 				}
-				// 内部存在逻辑设置allFields
-				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
-				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
-				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllFields()).concat(" from ")
-						.concat(entityMeta.getSchemaTable()));
 
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
