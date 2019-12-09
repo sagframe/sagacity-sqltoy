@@ -194,6 +194,11 @@ public class EntityMeta implements Serializable {
 	private boolean bizIdEqPK = false;
 
 	/**
+	 * 全部字段信息
+	 */
+	private String allFields = "*";
+
+	/**
 	 * @return the loadAllSql
 	 */
 	public String getLoadAllSql() {
@@ -306,10 +311,15 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
+		StringBuilder fieldsStr = new StringBuilder();
 		for (int i = 0; i < fieldsArray.length; i++) {
+			if (i > 0) {
+				fieldsStr.append(",");
+			}
+			fieldsStr.append(fieldsArray[i]);
 			fieldIndexs.put(fieldsArray[i].replaceAll("\\_", "").toLowerCase(), i);
 		}
-
+		this.allFields = fieldsStr.toString();
 		if (this.bizIdRelatedColumns != null) {
 			this.bizIdRelatedColIndex = new Integer[bizIdRelatedColumns.length];
 			for (int i = 0; i < bizIdRelatedColumns.length; i++) {
@@ -385,8 +395,7 @@ public class EntityMeta implements Serializable {
 	public String getDeleteByIdsSql(String tableName) {
 		if (StringUtil.isBlank(tableName))
 			return deleteByIdsSql;
-		else
-			return "delete from ".concat(tableName).concat(" ").concat(idArgWhereSql);
+		return "delete from ".concat(tableName).concat(" ").concat(idArgWhereSql);
 	}
 
 	/**
@@ -487,7 +496,7 @@ public class EntityMeta implements Serializable {
 	public String getLoadSql(String tableName) {
 		if (tableName == null)
 			return loadSql;
-		return "select * from ".concat(tableName).concat(" ").concat(this.idNameWhereSql);
+		return "select ".concat(allFields).concat(" from ").concat(tableName).concat(" ").concat(this.idNameWhereSql);
 	}
 
 	/**
@@ -739,11 +748,18 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdEqPK the bizIdEqPK to set
+	 * @param bizIdEqPK
+	 *            the bizIdEqPK to set
 	 */
 	public void setBizIdEqPK(boolean bizIdEqPK) {
 		this.bizIdEqPK = bizIdEqPK;
 	}
 
-	
+	/**
+	 * @return the allFields
+	 */
+	public String getAllFields() {
+		return allFields;
+	}
+
 }

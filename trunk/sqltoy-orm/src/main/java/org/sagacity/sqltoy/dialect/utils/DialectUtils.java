@@ -1189,11 +1189,15 @@ public class DialectUtils {
 			StringBuilder subTableSql = new StringBuilder();
 			List items;
 			SqlToyResult subToyResult;
+			EntityMeta mappedMeta;
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
+					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
-					subTableSql.append("select * from ").append(oneToMany.getMappedTable()).append(" where ");
+					// 构造查询语句,update 2019-12-09 使用完整字段
+					subTableSql.append("select ").append(mappedMeta.getAllFields()).append(" from ")
+							.append(oneToMany.getMappedTable()).append(" where ");
 					for (int i = 0; i < idSize; i++) {
 						if (i > 0) {
 							subTableSql.append(" and ");

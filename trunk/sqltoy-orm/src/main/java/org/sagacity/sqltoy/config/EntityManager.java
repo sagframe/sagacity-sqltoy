@@ -206,8 +206,6 @@ public class EntityManager {
 				}
 				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
 						.concat(entity.tableName()));
-				// 表全量查询语句
-				entityMeta.setLoadAllSql("select * from ".concat(entityMeta.getSchemaTable()));
 
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
@@ -225,12 +223,13 @@ public class EntityManager {
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
 				StringBuilder loadArgWhereSql = new StringBuilder("");
+
 				for (Field field : allFields) {
 					// 解析对象字段属性跟数据库表字段的对应关系
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, loadNamedWhereSql,
 							loadArgWhereSql);
 					// oneToMany解析
-					parseOneToMany(entityMeta, entity, field, idList);
+					parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
 				}
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
@@ -262,8 +261,12 @@ public class EntityManager {
 					entityMeta.setDeleteByIdsSql(
 							"delete from ".concat(entityMeta.getSchemaTable()).concat(loadArgWhereSql.toString()));
 				}
-
+				// 内部存在逻辑设置allFields
 				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
+				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
+				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllFields()).concat(" from ")
+						.concat(entityMeta.getSchemaTable()));
+
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
 			}
@@ -525,12 +528,14 @@ public class EntityManager {
 
 	/**
 	 * @todo 解析主键关联的子表信息配置(外键关联)
+	 * @param sqlToyContext
 	 * @param entityMeta
 	 * @param entity
 	 * @param field
 	 * @param idList
 	 */
-	private void parseOneToMany(EntityMeta entityMeta, Entity entity, Field field, List<String> idList) {
+	private void parseOneToMany(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
+			List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
 		if (oneToMany == null)
@@ -585,7 +590,12 @@ public class EntityManager {
 		boolean matchedWhere = false;
 		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
 		oneToManyModel.setLoad(true);
-		oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql));
+
+		// 获取子表的信息(存在递归调用)
+		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToManyModel.getMappedType());
+		// update 2019-12-09 将select * 转变为select 完整字段
+		oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllFields()).concat(" from ")
+				.concat(subSchemaTable).concat(subWhereSql));
 		// 自动加载
 		if (StringUtil.isNotBlank(oneToMany.load())) {
 			// 是否是:xxx形式的参数条件
@@ -600,8 +610,8 @@ public class EntityManager {
 				if (matchedWhere) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				} else {
-					oneToManyModel.setLoadSubTableSql("select * from ".concat(subSchemaTable).concat(subWhereSql)
-							.concat(" and ").concat(oneToMany.load()));
+					oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllFields()).concat(" from ")
+							.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
 				}
 			}
 		}

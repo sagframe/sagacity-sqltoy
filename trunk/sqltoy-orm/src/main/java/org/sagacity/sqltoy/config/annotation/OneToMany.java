@@ -33,6 +33,7 @@ public @interface OneToMany {
 
 	/**
 	 * 关联表对应对象的属性
+	 * 
 	 * @return
 	 */
 	String[] mappedFields();
@@ -43,9 +44,10 @@ public @interface OneToMany {
 	 * @return
 	 */
 	String load() default "";
-	
+
 	/**
 	 * 是否级联删除
+	 * 
 	 * @return
 	 */
 	boolean delete() default true;
