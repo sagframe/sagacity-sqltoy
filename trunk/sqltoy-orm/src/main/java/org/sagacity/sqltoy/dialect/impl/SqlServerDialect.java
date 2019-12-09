@@ -293,7 +293,8 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllFields());
 		loadSql.append(" from ");
-		loadSql.append(tableName == null ? entityMeta.getSchemaTable() : tableName);
+		// sharding 分表情况下会传递表名
+		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:

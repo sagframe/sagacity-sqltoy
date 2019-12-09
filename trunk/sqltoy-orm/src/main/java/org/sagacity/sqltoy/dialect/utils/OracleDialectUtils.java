@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 import oracle.jdbc.OracleTypes;
 
@@ -79,7 +80,7 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
 		if (null == entities || entities.isEmpty())
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -91,7 +92,8 @@ public class OracleDialectUtils {
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllFields());
 		loadSql.append(" from ");
-		loadSql.append(entityMeta.getSchemaTable());
+		// sharding 分表情况下会传递表名
+		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
 		loadSql.append(" where ");
 		String field;
 		// 用in 的方式加载全量数据(在实际应用过程中应该注意in () 形式有1000个参数的限制)
