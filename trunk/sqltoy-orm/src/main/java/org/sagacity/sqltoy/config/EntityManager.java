@@ -223,14 +223,26 @@ public class EntityManager {
 				StringBuilder loadNamedWhereSql = new StringBuilder("");
 				// where 主键字段=? 形式，用于构建delete功能操作的sql
 				StringBuilder loadArgWhereSql = new StringBuilder("");
-
+				List<String> allColumnNames = new ArrayList<String>();
 				for (Field field : allFields) {
 					// 解析对象字段属性跟数据库表字段的对应关系
-					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, loadNamedWhereSql,
-							loadArgWhereSql);
+					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
+							loadNamedWhereSql, loadArgWhereSql);
 					// oneToMany解析
 					parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
 				}
+				// 设置数据库表所有字段信息
+				StringBuilder allColNames = new StringBuilder();
+				for (int i = 0; i < allColumnNames.size(); i++) {
+					if (i > 0)
+						allColNames.append(",");
+					allColNames.append(allColumnNames.get(i));
+				}
+				entityMeta.setAllColumnNames(allColNames.toString());
+				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
+				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+						.concat(entityMeta.getSchemaTable()));
+
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
 
@@ -253,13 +265,6 @@ public class EntityManager {
 				if (idList.size() > 0) {
 					entityMeta.setIdArray(idList.toArray(new String[idList.size()]));
 					fieldList.addAll(idList);
-				}
-				// 内部存在逻辑设置allFields
-				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
-				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
-				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllFields()).concat(" from ")
-						.concat(entityMeta.getSchemaTable()));
-				if (idList.size() > 0) {
 					// 注解未定义load sql则提供主键为条件的查询为loadsql
 					if (StringUtil.isBlank(entityMeta.getLoadSql(null))) {
 						entityMeta.setLoadSql(entityMeta.getLoadAllSql().concat(loadNamedWhereSql.toString()));
@@ -268,6 +273,8 @@ public class EntityManager {
 					entityMeta.setDeleteByIdsSql(
 							"delete from ".concat(entityMeta.getSchemaTable()).concat(loadArgWhereSql.toString()));
 				}
+				// 内部存在逻辑设置allFields
+				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
 
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
@@ -424,13 +431,14 @@ public class EntityManager {
 	 * @param entityMeta
 	 * @param field
 	 * @param rejectIdFieldList
+	 * @param allFieldAry
 	 * @param loadNamedWhereSql
 	 * @param loadArgWhereSql
 	 * @throws Exception
 	 */
 	private void parseFieldMeta(SqlToyContext sqlToyContext, EntityMeta entityMeta, Field field,
-			List<String> rejectIdFieldList, StringBuilder loadNamedWhereSql, StringBuilder loadArgWhereSql)
-			throws Exception {
+			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
+			StringBuilder loadArgWhereSql) throws Exception {
 		Column column = field.getAnnotation(Column.class);
 		if (column == null)
 			return;
@@ -439,6 +447,8 @@ public class EntityManager {
 				StringUtil.isNotBlank(column.defaultValue()) ? column.defaultValue() : null, column.type(),
 				column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(), column.precision(),
 				column.scale());
+		// 增加字段
+		allFieldAry.add(column.name());
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		entityMeta.addFieldMeta(fieldMeta);
@@ -596,7 +606,7 @@ public class EntityManager {
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToManyModel.getMappedType());
 		// update 2019-12-09 将select * 转变为select 完整字段
-		oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllFields()).concat(" from ")
+		oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
 		// 自动加载
 		if (StringUtil.isNotBlank(oneToMany.load())) {
@@ -612,8 +622,9 @@ public class EntityManager {
 				if (matchedWhere) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				} else {
-					oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllFields()).concat(" from ")
-							.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
+					oneToManyModel.setLoadSubTableSql(
+							"select ".concat(subTableMeta.getAllColumnNames()).concat(" from ").concat(subSchemaTable)
+									.concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
 				}
 			}
 		}

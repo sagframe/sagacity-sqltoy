@@ -299,7 +299,7 @@ public class SqliteDialect implements Dialect {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
 		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(entityMeta.getAllFields());
+		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
 		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);

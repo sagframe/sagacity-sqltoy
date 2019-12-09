@@ -196,7 +196,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 全部字段信息
 	 */
-	private String allFields = "*";
+	private String allColumnNames = "*";
 
 	/**
 	 * @return the loadAllSql
@@ -311,15 +311,9 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
-		StringBuilder fieldsStr = new StringBuilder();
 		for (int i = 0; i < fieldsArray.length; i++) {
-			if (i > 0) {
-				fieldsStr.append(",");
-			}
-			fieldsStr.append(fieldsArray[i]);
 			fieldIndexs.put(fieldsArray[i].replaceAll("\\_", "").toLowerCase(), i);
 		}
-		this.allFields = fieldsStr.toString();
 		if (this.bizIdRelatedColumns != null) {
 			this.bizIdRelatedColIndex = new Integer[bizIdRelatedColumns.length];
 			for (int i = 0; i < bizIdRelatedColumns.length; i++) {
@@ -497,7 +491,8 @@ public class EntityMeta implements Serializable {
 		if (tableName == null)
 			return loadSql;
 		// 针对sharding 分表情况使用重新组织表名
-		return "select ".concat(allFields).concat(" from ").concat(tableName).concat(" ").concat(this.idNameWhereSql);
+		return "select ".concat(allColumnNames).concat(" from ").concat(tableName).concat(" ")
+				.concat(this.idNameWhereSql);
 	}
 
 	/**
@@ -757,10 +752,19 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @return the allFields
+	 * @return the allColumnNames
 	 */
-	public String getAllFields() {
-		return allFields;
+	public String getAllColumnNames() {
+		return allColumnNames;
 	}
+
+	/**
+	 * @param allColumnNames the allColumnNames to set
+	 */
+	public void setAllColumnNames(String allColumnNames) {
+		this.allColumnNames = allColumnNames;
+	}
+
+	
 
 }

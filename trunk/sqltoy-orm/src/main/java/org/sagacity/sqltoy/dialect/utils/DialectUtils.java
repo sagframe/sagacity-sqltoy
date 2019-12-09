@@ -1196,7 +1196,7 @@ public class DialectUtils {
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
 					// 构造查询语句,update 2019-12-09 使用完整字段
-					subTableSql.append("select ").append(mappedMeta.getAllFields()).append(" from ")
+					subTableSql.append("select ").append(mappedMeta.getAllColumnNames()).append(" from ")
 							.append(oneToMany.getMappedTable()).append(" where ");
 					for (int i = 0; i < idSize; i++) {
 						if (i > 0) {
