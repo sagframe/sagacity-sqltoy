@@ -496,6 +496,7 @@ public class EntityMeta implements Serializable {
 	public String getLoadSql(String tableName) {
 		if (tableName == null)
 			return loadSql;
+		// 针对sharding 分表情况使用重新组织表名
 		return "select ".concat(allFields).concat(" from ").concat(tableName).concat(" ").concat(this.idNameWhereSql);
 	}
 
