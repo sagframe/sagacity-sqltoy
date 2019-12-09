@@ -27,8 +27,8 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
