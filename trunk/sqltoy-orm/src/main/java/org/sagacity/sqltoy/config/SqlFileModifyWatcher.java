@@ -68,7 +68,7 @@ public class SqlFileModifyWatcher extends Thread {
 		boolean isRun = true;
 		while (isRun) {
 			if (debug) {
-				System.out.println("检测sql文件是否发生变更!");
+				logger.debug("检测sql文件是否发生变更!");
 			}
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, filesLastModifyMap, sqlCache, encoding, dialect);

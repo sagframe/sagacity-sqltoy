@@ -1457,8 +1457,9 @@ public class DialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("batch insert sql:{}", insertSql);
+		}
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
@@ -1497,8 +1498,9 @@ public class DialectUtils {
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null)
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("update last execute sql:{}", updateSql);
+		}
 		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
 	}
 
@@ -1630,10 +1632,12 @@ public class DialectUtils {
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
-		if (updateSql == null)
+		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
-		if (sqlToyContext.isDebug())
+		}
+		if (sqlToyContext.isDebug()) {
 			logger.debug("updateAll last execute sql:{}", updateSql);
+		}
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
@@ -1682,8 +1686,9 @@ public class DialectUtils {
 				}
 			}
 		}
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug(entityMeta.getDeleteByIdsSql(tableName));
+		}
 		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn,
 				dbType, null);
 	}
@@ -1705,8 +1710,9 @@ public class DialectUtils {
 		if (null == entities || entities.isEmpty())
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+		}
 		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
 				0);
 		// 判断主键值是否存在空
@@ -1714,8 +1720,9 @@ public class DialectUtils {
 		for (int i = 0, n = idValues.size(); i < n; i++) {
 			idsValue = idValues.get(i);
 			for (Object obj : idsValue) {
-				if (StringUtil.isBlank(obj))
+				if (StringUtil.isBlank(obj)) {
 					throw new IllegalArgumentException("第[" + i + "]行数据主键值存在空,批量删除以主键为依据，主键不能为空!");
+				}
 			}
 		}
 		int idsLength = entityMeta.getIdArray().length;
@@ -1727,15 +1734,17 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					if (sqlToyContext.isDebug())
+					if (sqlToyContext.isDebug()) {
 						logger.debug("cascade batch delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
+					}
 					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues,
 							sqlToyContext.getBatchSize(), parameterTypes, null, conn, dbType);
 				}
 			}
 		}
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("根据主键批量删除表sql:{}", entityMeta.getDeleteByIdsSql(tableName));
+		}
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
 				parameterTypes, autoCommit, conn, dbType);
 	}
@@ -1874,8 +1883,9 @@ public class DialectUtils {
 			if (!isComplexQuery) {
 				// 截取select 到 from之间的字段
 				String tmpColumn = tmpQuery.substring(0, fromIndex);
-				if (tmpColumn.indexOf(" top ") != -1 || tmpColumn.indexOf(" distinct ") != -1)
+				if (tmpColumn.indexOf(" top ") != -1 || tmpColumn.indexOf(" distinct ") != -1) {
 					isComplexQuery = true;
+				}
 			}
 		}
 		return isComplexQuery;
@@ -1902,8 +1912,9 @@ public class DialectUtils {
 		StringBuilder lastSql = new StringBuilder(sql);
 		// 找到第一个select 所对称的from位置，排除掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
-		if (fromIndex != -1)
+		if (fromIndex != -1) {
 			lastSql.delete(0, fromIndex);
+		}
 		// 删除所有对称的括号中的内容
 		int start = lastSql.indexOf("(");
 		int symMarkEnd;
@@ -1912,8 +1923,9 @@ public class DialectUtils {
 			if (symMarkEnd != -1) {
 				lastSql.delete(start, symMarkEnd + 1);
 				start = lastSql.indexOf("(");
-			} else
+			} else {
 				break;
+			}
 		}
 		return lastSql.toString();
 	}
@@ -1938,8 +1950,9 @@ public class DialectUtils {
 			if (symMarkEnd != -1) {
 				lastSql.delete(start + 1, symMarkEnd + 5);
 				start = StringUtil.matchIndex(lastSql.toString(), SELECT_REGEX);
-			} else
+			} else {
 				break;
+			}
 		}
 		return lastSql.toString();
 	}
@@ -1984,8 +1997,9 @@ public class DialectUtils {
 
 				// 注册输出参数
 				if (outCount != 0) {
-					if (isFirstResult)
+					if (isFirstResult) {
 						callStat.registerOutParameter(1, outParamTypes[0]);
+					}
 					for (int i = addIndex; i < outCount; i++) {
 						callStat.registerOutParameter(i + inCount + 1, outParamTypes[i]);
 					}
@@ -2008,8 +2022,9 @@ public class DialectUtils {
 				// 有返回参数如:(?=call (? in,? out) )
 				if (outCount != 0) {
 					Object[] outParams = new Object[outCount];
-					if (isFirstResult)
+					if (isFirstResult) {
 						outParams[0] = callStat.getObject(1);
+					}
 					for (int i = addIndex; i < outCount; i++) {
 						outParams[i] = callStat.getObject(i + inCount + 1);
 					}

@@ -103,15 +103,15 @@ public class SqlExecuteStat {
 				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
-				System.out.println("执行:" + sqlTrace.getType() + " 类型sql,sqlId=" + sqlTrace.getId());
+				logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
 			}
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
 			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
-			System.out.println("sqlScript:" + sql);
-			System.out.println("sqlParams:" + paramStr);
+			logger.debug("sqlScript:{}", sql);
+			logger.debug("sqlParams:{}", paramStr);
 		}
 	}
 
@@ -153,21 +153,24 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
+	 * @param printSqlStrategy
+	 *            the printSqlStrategy to set
 	 */
 	public static void setPrintSqlStrategy(String printSqlStrategy) {
 		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
-	 * @param debug the debug to set
+	 * @param debug
+	 *            the debug to set
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis
+	 *            the printSqlTimeoutMillis to set
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;

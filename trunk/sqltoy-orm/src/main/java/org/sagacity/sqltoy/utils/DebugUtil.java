@@ -36,10 +36,11 @@ public class DebugUtil {
 	 */
 	public static void printAry(Object obj, String appendStr, boolean newLine) {
 		if (obj == null) {
-			if (newLine)
+			if (newLine) {
 				out.println(obj);
-			else
+			} else {
 				out.print(obj + appendStr);
+			}
 		} else {
 			Object rowData;
 			if (obj.getClass().isArray()) {
@@ -50,10 +51,11 @@ public class DebugUtil {
 						out.println();
 						printAry(rowData, appendStr, false);
 					} else {
-						if (newLine)
+						if (newLine) {
 							out.println(rowData);
-						else
+						} else {
 							out.print(rowData + ((i == tmp.length - 1) ? "" : appendStr));
+						}
 					}
 				}
 			} else if (obj instanceof Collection) {
@@ -67,10 +69,11 @@ public class DebugUtil {
 						out.println();
 						printAry(rowData, appendStr, false);
 					} else {
-						if (newLine)
+						if (newLine) {
 							out.println(rowData);
-						else
+						} else {
 							out.print(rowData + (index == size ? "" : appendStr));
+						}
 					}
 				}
 			} else if (obj instanceof Set) {
@@ -86,12 +89,14 @@ public class DebugUtil {
 					} else {
 						if (newLine) {
 							out.println(rowData);
-						} else
+						} else {
 							out.print(rowData + (index == size ? "" : appendStr));
+						}
 					}
 				}
-			} else
+			} else {
 				out.println(obj);
+			}
 		}
 	}
 
@@ -103,8 +108,9 @@ public class DebugUtil {
 		long nowTime = System.nanoTime();
 		if (transactionId == null) {
 			orderTime.set(Long.valueOf(nowTime));
-		} else
+		} else {
 			timeMap.put(transactionId, nowTime);
+		}
 	}
 
 	/**
