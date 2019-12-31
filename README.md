@@ -351,9 +351,20 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
+## 2.8 五种非数据库相关主键生成策略
+    主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
+### 2.8.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
+### 2.8.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
+### 2.8.3 uuid:32 位uuid
+### 2.8.4 SnowflakeId 雪花算法ID
+### 2.8.5 redisId  基于redis 来产生规则的ID主键
+   根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
+   订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
+   最终会生成单号为:SI191120001 
+   
 
-## 2.8 elastic原生查询支持
-## 2.9 elasticsearch-sql 插件模式sql模式支持
+## 2.9 elastic原生查询支持
+## 2.10 elasticsearch-sql 插件模式sql模式支持
 
 # 3. sqltoy框架介绍
 
