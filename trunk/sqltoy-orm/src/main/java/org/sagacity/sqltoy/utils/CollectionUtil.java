@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 数组集合的公用方法
@@ -97,7 +98,8 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
-	 * @param arySource Object
+	 * @param arySource
+	 *            Object
 	 * @return List
 	 */
 	public static List arrayToDeepList(Object arySource) {
@@ -123,8 +125,9 @@ public class CollectionUtil {
 			if (arySource.getClass().isArray()) {
 				Object[] aryObject = convertArray(arySource);
 				if (null != aryObject && 0 < aryObject.length) {
-					for (int i = 0, n = aryObject.length; i < n; i++)
+					for (int i = 0, n = aryObject.length; i < n; i++) {
 						resultList.add(aryObject[i]);
+					}
 				}
 			} else {
 				logger.error("error define the Array! please sure the array is one or two dimension!");
@@ -135,7 +138,8 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
-	 * @param arySource Object
+	 * @param arySource
+	 *            Object
 	 * @return List
 	 */
 	public static List arrayToList(Object arySource) {
@@ -149,8 +153,9 @@ public class CollectionUtil {
 		if (arySource.getClass().isArray()) {
 			Object[] aryObject = convertArray(arySource);
 			if (null != aryObject && 0 < aryObject.length) {
-				for (int i = 0, n = aryObject.length; i < n; i++)
+				for (int i = 0, n = aryObject.length; i < n; i++) {
 					resultList.add(aryObject[i]);
+				}
 			}
 		} else {
 			logger.warn("arySource is not Array! it type is :" + arySource.getClass());
@@ -173,10 +178,11 @@ public class CollectionUtil {
 			Object jData;
 			// 1:string,2:数字;3:日期
 			Integer dataType = 1;
-			if (aryData[0] instanceof java.util.Date)
+			if (aryData[0] instanceof java.util.Date) {
 				dataType = 3;
-			else if (aryData[0] instanceof java.lang.Number)
+			} else if (aryData[0] instanceof java.lang.Number) {
 				dataType = 2;
+			}
 			boolean lessThen = false;
 			for (int i = 0; i < length - 1; i++) {
 				for (int j = i + 1; j < length; j++) {
@@ -186,8 +192,9 @@ public class CollectionUtil {
 						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
 					} else if (dataType == 3) {
 						lessThen = ((Date) iData).before((Date) jData);
-					} else
+					} else {
 						lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
+					}
 					// 小于
 					if ((descend && lessThen) || (!descend && !lessThen)) {
 						aryData[i] = jData;
@@ -211,9 +218,9 @@ public class CollectionUtil {
 		if (begin + length > sourceAry.length || length == 0)
 			return sourceAry;
 		Object[] distinctAry = new Object[sourceAry.length - length];
-		if (begin == 0)
+		if (begin == 0) {
 			System.arraycopy(sourceAry, length, distinctAry, 0, sourceAry.length - length);
-		else {
+		} else {
 			System.arraycopy(sourceAry, 0, distinctAry, 0, begin);
 			System.arraycopy(sourceAry, begin + length, distinctAry, begin, sourceAry.length - length - begin);
 		}
@@ -320,10 +327,12 @@ public class CollectionUtil {
 		Integer[] categCol;
 		if (categoryCol == null) {
 			categCol = new Integer[categCompareCol.length];
-			for (int i = 0; i < categCompareCol.length; i++)
+			for (int i = 0; i < categCompareCol.length; i++) {
 				categCol[i] = i;
-		} else
+			}
+		} else {
 			categCol = categoryCol;
+		}
 		boolean isTwoDimensionCategory = (categorys.get(0) instanceof Collection
 				|| categorys.get(0).getClass().isArray());
 		// 多维旋转参照数据行数跟参照列的数量要一致
@@ -354,9 +363,9 @@ public class CollectionUtil {
 		for (int i = 0; i < rowSize; i++) {
 			rowList = (List) data.get(i);
 			pkColumnsEqual = true;
-			if (i == 0)
+			if (i == 0) {
 				pkColumnsEqual = false;
-			else {
+			} else {
 				for (int k = 0; k < indexLength; k++) {
 					pkColValue = rowList.get(pkColumns[k]);
 					if (pkColValue == null)
@@ -373,13 +382,15 @@ public class CollectionUtil {
 			// 不同指标，构建新的行数据
 			if (!pkColumnsEqual) {
 				compareRow = rowList;
-				if (i != 0)
+				if (i != 0) {
 					result.add(rowData);
+				}
 				rowData = new Object[lastRowWidth];
 				// 设置旋转部分的数据的默认值
 				if (defaultValue != null) {
-					for (int j = 0; j < rotateTotalCount; j++)
+					for (int j = 0; j < rotateTotalCount; j++) {
 						rowData[dataWidth - rotateWith - categCompareCol.length + j] = defaultValue;
+					}
 				}
 				count = 0;
 				for (int k = 0; k < dataWidth; k++) {
@@ -409,8 +420,9 @@ public class CollectionUtil {
 					if (compareValue == null)
 						compareValue = "null";
 					if (BeanUtil.equalsIgnoreType(pkColValue, compareValue, false)) {
-						for (int t = 0; t < rotateWith; t++)
+						for (int t = 0; t < rotateWith; t++) {
 							rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
+						}
 					}
 				} else {
 					categoryColEqual = true;
@@ -425,14 +437,17 @@ public class CollectionUtil {
 						categoryColEqual = categoryColEqual
 								&& BeanUtil.equalsIgnoreType(pkColValue, compareValue, false);
 					}
-					if (categoryColEqual)
-						for (int t = 0; t < rotateWith; t++)
+					if (categoryColEqual) {
+						for (int t = 0; t < rotateWith; t++) {
 							rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
+						}
+					}
 				}
 			}
 			// 最后一行
-			if (i == rowSize - 1)
+			if (i == rowSize - 1) {
 				result.add(rowData);
+			}
 		}
 		innerArrayToList(result);
 		return result;
@@ -443,7 +458,8 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr  将key统一转成字符串
+	 * @param keyToStr
+	 *            将key统一转成字符串
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
@@ -455,8 +471,10 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr     将key统一转成字符串
-	 * @param isLinkedHash 返回的是否为LinkedHashMap
+	 * @param keyToStr
+	 *            将key统一转成字符串
+	 * @param isLinkedHash
+	 *            返回的是否为LinkedHashMap
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
@@ -478,9 +496,10 @@ public class CollectionUtil {
 		try {
 			List<List> hashValues = null;
 			String[] hashProperties = null;
-			if (isBean)
+			if (isBean) {
 				hashProperties = (valueProperty == null) ? new String[] { keyProperty }
 						: new String[] { keyProperty, valueProperty };
+			}
 			switch (dimen) {
 			case -1:
 				break;
@@ -560,8 +579,9 @@ public class CollectionUtil {
 			for (int i = 0, n = source.size(); i < n; i++) {
 				List rowList = new ArrayList();
 				rowAry = convertArray(source.get(i));
-				for (int j = 0, k = rowAry.length; j < k; j++)
+				for (int j = 0, k = rowAry.length; j < k; j++) {
 					rowList.add(rowAry[j]);
+				}
 				source.remove(i);
 				source.add(i, rowList);
 			}
@@ -616,9 +636,11 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs
+	 *            {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite
+	 *            存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -680,8 +702,9 @@ public class CollectionUtil {
 				if (!BeanUtil.equals(nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]),
 						preGroupCompareIndexs.get((Integer) groupIndexs[j][0]))) {
 					// 最后一条
-					if (j == groupTotal - 1)
+					if (j == groupTotal - 1) {
 						isEqual = true;
+					}
 					sumData.addAll(i,
 							createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
 									(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],
@@ -693,13 +716,16 @@ public class CollectionUtil {
 					groupSumMap.put((Integer) groupIndexs[j][0], new Object[columns]);
 					// 同时存在汇总和平均
 					if (groupIndexs[j][1] != null && groupIndexs[j][2] != null
-							&& (groupIndexs[j][3].equals("top") || groupIndexs[j][3].equals("bottom")))
+							&& (groupIndexs[j][3].equals("top") || groupIndexs[j][3].equals("bottom"))) {
 						i = i + 2;
+					}
 					// (必须要有一个汇总或平均)
-					else
+					else {
 						i++;
-				} else
+					}
+				} else {
 					break;
+				}
 			}
 			// 汇总计算（含求平均）
 			calculateTotal(groupSumMap, rowList, sumColumns, radixSize);
@@ -722,16 +748,17 @@ public class CollectionUtil {
 		}
 		// 存在总的求和或平均
 		if (hasTotalSum) {
-			if (totalSumReverse)
+			if (totalSumReverse) {
 				sumData.addAll(0, createSummaryRow((Object[]) groupSumMap.get(-1), (List) sumData.get(preIndex),
 						globalSumSite,
 						new Object[] { -1, totalLabel, averageLabel, sumRecordSite == null ? "bottom" : sumRecordSite },
 						dataSize, radixSize));
-			else
+			} else {
 				sumData.addAll(createSummaryRow((Object[]) groupSumMap.get(-1), (List) sumData.get(preIndex),
 						globalSumSite,
 						new Object[] { -1, totalLabel, averageLabel, sumRecordSite == null ? "bottom" : sumRecordSite },
 						dataSize, radixSize));
+			}
 		}
 	}
 
@@ -744,7 +771,8 @@ public class CollectionUtil {
 	 * @param totalTitle
 	 * @param hasAverage
 	 * @param averageTitle
-	 * @param radixSize        小数位长度
+	 * @param radixSize
+	 *            小数位长度
 	 * @param firstSummary
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
@@ -840,7 +868,8 @@ public class CollectionUtil {
 	 * @param groupIndex
 	 * @param title
 	 * @param rowCount
-	 * @param radixSize      小数位长度
+	 * @param radixSize
+	 *            小数位长度
 	 * @return
 	 */
 	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
@@ -871,23 +900,26 @@ public class CollectionUtil {
 			// 平均数据加入新的数据行中
 			Double averageValue;
 			for (int i = 0, n = rowSummaryData.length; i < n; i++) {
-				if (rowSummaryData[i] == null)
+				if (rowSummaryData[i] == null) {
 					average.add(i, null);
-				else {
+				} else {
 					averageValue = Double.valueOf(rowSummaryData[i].toString().replace(",", "")) / rowCount;
-					if (radixSize >= 0)
+					if (radixSize >= 0) {
 						average.add(i, BigDecimal.valueOf(averageValue).setScale(radixSize, RoundingMode.FLOOR));
-					else
+					} else {
 						average.add(i, BigDecimal.valueOf(averageValue));
+					}
 				}
 			}
 			// 设置分组列前面的数据
-			for (int i = 0; i <= titleIndex; i++)
+			for (int i = 0; i <= titleIndex; i++) {
 				average.set(i, rowList.get(i));
+			}
 
 			// 设置标题
-			if (title[2] != null && !title[2].toString().trim().equals(""))
+			if (title[2] != null && !title[2].toString().trim().equals("")) {
 				average.set(titleIndex, title[2]);
+			}
 		}
 		// 汇总或求平均
 		if (summary == null || average == null) {
@@ -899,10 +931,11 @@ public class CollectionUtil {
 			if (title[3].equals("top") || title[3].equals("bottom")) {
 				result.add(summary);
 				// 平均数据优先显示
-				if (title[3].equals("bottom"))
+				if (title[3].equals("bottom")) {
 					result.add(0, average);
-				else
+				} else {
 					result.add(average);
+				}
 			} else {
 				// 汇总数据是否左边显示
 				boolean isLeft = title[3].equals("left");
@@ -949,17 +982,18 @@ public class CollectionUtil {
 				columnIndex = summaryColumns[i];
 				sumCellValue = groupSums[columnIndex];
 				cellValue = rowList.get(columnIndex);
-				if (radixSize >= 0)
+				if (radixSize >= 0) {
 					groupSums[columnIndex] = new BigDecimal(
 							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
 									.add(new BigDecimal(StringUtil.isBlank(cellValue) ? "0"
 											: cellValue.toString().replace(",", "")))
 									.setScale(radixSize, RoundingMode.FLOOR);
-				else
+				} else {
 					groupSums[columnIndex] = new BigDecimal(
 							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
 									.add(new BigDecimal(StringUtil.isBlank(cellValue) ? "0"
 											: cellValue.toString().replace(",", "")));
+				}
 			}
 		}
 	}
@@ -967,7 +1001,8 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndex
+	 *            保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {
@@ -977,8 +1012,9 @@ public class CollectionUtil {
 		int newResultRowCnt = 0;
 		if (colIndex == null) {
 			newResultRowCnt = innerAry ? convertArray(data.get(0)).length : ((List) data.get(0)).size();
-		} else
+		} else {
 			newResultRowCnt = colIndex.length;
+		}
 
 		/**
 		 * 构造结果集

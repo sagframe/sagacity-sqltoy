@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -1613,15 +1614,18 @@ public class DialectUtils {
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
 		// 累计多少行为空
-		int count = 0;
-		for (Object[] rowValues : paramsValues) {
+		int skipCount = 0;
+		Iterator<Object[]> iter = paramsValues.iterator();
+		Object[] rowValues;
+		while (iter.hasNext()) {
+			rowValues = iter.next();
 			for (int i = pkIndex; i < end; i++) {
 				// 判断主键值是否为空
 				if (StringUtil.isBlank(rowValues[i])) {
 					// 跳过主键值为空的
 					if (skipNull) {
-						paramsValues.remove(index - count);
-						count++;
+						skipCount++;
+						iter.remove();
 						break;
 					} else {
 						throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
@@ -1630,6 +1634,26 @@ public class DialectUtils {
 			}
 			index++;
 		}
+		if (skipCount > 0) {
+			logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
+		}
+		// for (Object[] rowValues : paramsValues) {
+		// for (int i = pkIndex; i < end; i++) {
+		// // 判断主键值是否为空
+		// if (StringUtil.isBlank(rowValues[i])) {
+		// // 跳过主键值为空的
+		// if (skipNull) {
+		// paramsValues.remove(index - count);
+		// skipCount++;
+		// break;
+		// } else {
+		// throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index +
+		// " 条记录主键为null!");
+		// }
+		// }
+		// }
+		// index++;
+		// }
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
@@ -1777,11 +1801,13 @@ public class DialectUtils {
 				for (int i = 0; i < fieldValues.length; i++) {
 					if (null != fieldValues[i]) {
 						// 非主键字段
-						if (i < rejectIdFieldsSize)
+						if (i < rejectIdFieldsSize) {
 							hasNoPkField = true;
+						}
 						// 存在主键字段，则主键值仅仅作为返回结果的比较，判断是否是记录本身
-						if (i >= rejectIdFieldsSize && hasNoPkField)
+						if (i >= rejectIdFieldsSize && hasNoPkField) {
 							break;
+						}
 						paramNames.add(fieldsArray[i]);
 						paramValueList.add(fieldValues[i]);
 					}
@@ -1813,10 +1839,11 @@ public class DialectUtils {
 
 			// 防止数据量过大，先用count方式查询提升效率
 			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn, dbType);
-			if (recordCnt == 0)
+			if (recordCnt == 0) {
 				return true;
-			else if (recordCnt > 1)
+			} else if (recordCnt > 1) {
 				return false;
+			}
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0)
