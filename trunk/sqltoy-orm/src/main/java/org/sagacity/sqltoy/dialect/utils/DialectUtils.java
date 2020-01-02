@@ -1637,23 +1637,7 @@ public class DialectUtils {
 		if (skipCount > 0) {
 			logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
-		// for (Object[] rowValues : paramsValues) {
-		// for (int i = pkIndex; i < end; i++) {
-		// // 判断主键值是否为空
-		// if (StringUtil.isBlank(rowValues[i])) {
-		// // 跳过主键值为空的
-		// if (skipNull) {
-		// paramsValues.remove(index - count);
-		// skipCount++;
-		// break;
-		// } else {
-		// throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index +
-		// " 条记录主键为null!");
-		// }
-		// }
-		// }
-		// index++;
-		// }
+
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
