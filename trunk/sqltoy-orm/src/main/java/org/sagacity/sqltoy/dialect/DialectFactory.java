@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 import javax.sql.DataSource;
 
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -72,7 +72,7 @@ public class DialectFactory {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(DialectFactory.class);
+	protected final Logger logger = LoggerFactory.getLogger(DialectFactory.class);
 
 	/**
 	 * 不同数据库方言的处理器实例

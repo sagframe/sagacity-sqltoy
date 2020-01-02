@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -46,7 +46,7 @@ public class SqlServerDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(SqlServerDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(SqlServerDialect.class);
 
 	/**
 	 * 判定为null的函数

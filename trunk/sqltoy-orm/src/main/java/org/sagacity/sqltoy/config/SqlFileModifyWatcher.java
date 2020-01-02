@@ -3,8 +3,8 @@ package org.sagacity.sqltoy.config;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 
 /**
@@ -18,7 +18,7 @@ public class SqlFileModifyWatcher extends Thread {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(SqlFileModifyWatcher.class);
+	private final static Logger logger = LoggerFactory.getLogger(SqlFileModifyWatcher.class);
 
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache;
 	private ConcurrentHashMap<String, Long> filesLastModifyMap;

@@ -5,8 +5,8 @@ package org.sagacity.sqltoy;
 
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 
@@ -20,7 +20,7 @@ public class SqlExecuteStat {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(SqlExecuteStat.class);
+	private final static Logger logger = LoggerFactory.getLogger(SqlExecuteStat.class);
 
 	/**
 	 * 输出sql的策略

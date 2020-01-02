@@ -10,8 +10,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -29,7 +29,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(QueryExecutor.class);
+	protected final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
 
 	/**
 	 * 

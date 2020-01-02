@@ -14,8 +14,8 @@ import java.util.List;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -39,7 +39,7 @@ public class SapIQDialectUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(SapIQDialectUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(SapIQDialectUtils.class);
 
 	/**
 	 * @todo 保存对象(sybase iq支持sequence)

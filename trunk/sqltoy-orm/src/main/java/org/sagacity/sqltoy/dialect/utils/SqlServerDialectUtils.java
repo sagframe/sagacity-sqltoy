@@ -16,8 +16,8 @@ import java.util.List;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
@@ -48,7 +48,7 @@ public class SqlServerDialectUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(SqlServerDialectUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(SqlServerDialectUtils.class);
 
 	/**
 	 * @todo 取随机记录

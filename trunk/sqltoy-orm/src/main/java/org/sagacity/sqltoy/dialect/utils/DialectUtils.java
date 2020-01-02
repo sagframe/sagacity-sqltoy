@@ -22,8 +22,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -75,7 +75,7 @@ public class DialectUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(DialectUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(DialectUtils.class);
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");

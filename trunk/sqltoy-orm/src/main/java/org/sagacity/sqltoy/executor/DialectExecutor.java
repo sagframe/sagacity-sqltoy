@@ -5,8 +5,8 @@ package org.sagacity.sqltoy.executor;
 
 import java.util.concurrent.Callable;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
@@ -23,7 +23,7 @@ public class DialectExecutor implements Callable<ShardingResult> {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(DialectExecutor.class);
+	protected final Logger logger = LoggerFactory.getLogger(DialectExecutor.class);
 
 	/**
 	 * sqltoy上下文

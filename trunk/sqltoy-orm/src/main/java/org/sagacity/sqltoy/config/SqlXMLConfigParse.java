@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -57,7 +57,7 @@ public class SqlXMLConfigParse {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(SqlXMLConfigParse.class);
+	protected final static Logger logger = LoggerFactory.getLogger(SqlXMLConfigParse.class);
 
 	/**
 	 * es判断是否有聚合的表达式

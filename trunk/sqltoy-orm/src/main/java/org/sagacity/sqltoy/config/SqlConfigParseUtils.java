@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
@@ -60,7 +60,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(SqlConfigParseUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(SqlConfigParseUtils.class);
 
 	/**
 	 * sql伪指令开始标记,#[]符号等于 null==?判断

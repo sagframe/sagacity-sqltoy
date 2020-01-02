@@ -7,8 +7,8 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -29,7 +29,7 @@ public class SqlScriptLoader {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(SqlScriptLoader.class);
+	private final static Logger logger = LoggerFactory.getLogger(SqlScriptLoader.class);
 
 	// 设置默认的缓存
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache = new ConcurrentHashMap<String, SqlToyConfig>(256);

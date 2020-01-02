@@ -10,8 +10,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -27,6 +25,8 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -43,7 +43,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(SqlToyContext.class);
+	protected final Logger logger = LoggerFactory.getLogger(SqlToyContext.class);
 
 	/**
 	 * sqlToy 配置解析插件
@@ -73,7 +73,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	private TranslateCacheManager translateCacheManager;
 
 	/**
-	 * @param unifyFieldsHandler the unifyFieldsHandler to set
+	 * @param unifyFieldsHandler
+	 *            the unifyFieldsHandler to set
 	 */
 	public void setUnifyFieldsHandler(IUnifyFieldsHandler unifyFieldsHandler) {
 		this.unifyFieldsHandler = unifyFieldsHandler;
@@ -184,14 +185,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int scriptCheckIntervalSeconds = 3;
 
 	/**
-	 * @param workerId the workerId to set
+	 * @param workerId
+	 *            the workerId to set
 	 */
 	public void setWorkerId(Integer workerId) {
 		this.workerId = workerId;
 	}
 
 	/**
-	 * @param dataCenterId the dataCenterId to set
+	 * @param dataCenterId
+	 *            the dataCenterId to set
 	 */
 	public void setDataCenterId(Integer dataCenterId) {
 		this.dataCenterId = dataCenterId;
@@ -381,7 +384,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param batchSize the batchSize to set
+	 * @param batchSize
+	 *            the batchSize to set
 	 */
 	public void setBatchSize(int batchSize) {
 		// 必须要大于零
@@ -408,7 +412,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param shardingStrategys the shardingStrategys to set
+	 * @param shardingStrategys
+	 *            the shardingStrategys to set
 	 */
 	public void setShardingStrategys(HashMap<String, ShardingStrategy> shardingStrategys) {
 		this.shardingStrategys = shardingStrategys;
@@ -452,7 +457,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param dataSourcesMap the dataSourcesMap to set
+	 * @param dataSourcesMap
+	 *            the dataSourcesMap to set
 	 */
 	public void setDataSourcesMap(HashMap<String, DataSource> dataSourcesMap) {
 		this.dataSourcesMap = dataSourcesMap;
@@ -466,7 +472,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param dialect the dialect to set
+	 * @param dialect
+	 *            the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		if (StringUtil.isNotBlank(dialect)) {
@@ -504,14 +511,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param debug the debug to set
+	 * @param debug
+	 *            the debug to set
 	 */
 	public void setDebug(boolean debug) {
 		this.debug = debug;
 	}
 
 	/**
-	 * @param packagesToScan the packagesToScan to set
+	 * @param packagesToScan
+	 *            the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		entityManager.setPackagesToScan(packagesToScan);
@@ -525,28 +534,32 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param pageFetchSizeLimit the pageFetchSizeLimit to set
+	 * @param pageFetchSizeLimit
+	 *            the pageFetchSizeLimit to set
 	 */
 	public void setPageFetchSizeLimit(int pageFetchSizeLimit) {
 		this.pageFetchSizeLimit = pageFetchSizeLimit;
 	}
 
 	/**
-	 * @param recursive the recursive to set
+	 * @param recursive
+	 *            the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		entityManager.setRecursive(recursive);
 	}
 
 	/**
-	 * @param annotatedClasses the annotatedClasses to set
+	 * @param annotatedClasses
+	 *            the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		entityManager.setAnnotatedClasses(annotatedClasses);
 	}
 
 	/**
-	 * @param dialectProperties the dialectProperties to set
+	 * @param dialectProperties
+	 *            the dialectProperties to set
 	 */
 	public void setDialectProperties(Object dialectProperties) {
 		if (dialectProperties == null)
@@ -571,7 +584,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param functionConverts the functionConverts to set
+	 * @param functionConverts
+	 *            the functionConverts to set
 	 */
 	public void setFunctionConverts(Object functionConverts) {
 		if (functionConverts == null)
@@ -589,14 +603,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param translateConfig the translateConfig to set
+	 * @param translateConfig
+	 *            the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		translateManager.setTranslateConfig(translateConfig);
 	}
 
 	/**
-	 * @param nocacheKeyResult the nocacheKeyResult to set
+	 * @param nocacheKeyResult
+	 *            the nocacheKeyResult to set
 	 */
 	public void setUncachedKeyResult(String uncachedKeyResult) {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
@@ -607,7 +623,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param serverId the serverId to set
+	 * @param serverId
+	 *            the serverId to set
 	 */
 	public void setServerId(Integer serverId) {
 		this.serverId = serverId;
@@ -621,14 +638,16 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param defaultDataSource the defaultDataSource to set
+	 * @param defaultDataSource
+	 *            the defaultDataSource to set
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
 	}
 
 	/**
-	 * @param mongoDbFactory the mongoDbFactory to set
+	 * @param mongoDbFactory
+	 *            the mongoDbFactory to set
 	 */
 	public void setMongoFactoryName(String mongoFactoryName) {
 		this.mongoFactoryName = mongoFactoryName;
@@ -642,7 +661,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param elasticConfigs the elasticConfigs to set
+	 * @param elasticConfigs
+	 *            the elasticConfigs to set
 	 */
 	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpointList) {
 		if (elasticEndpointList != null && !elasticEndpointList.isEmpty()) {
@@ -677,7 +697,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
+	 * @param printSqlStrategy
+	 *            the printSqlStrategy to set
 	 */
 	public void setPrintSqlStrategy(String printSqlStrategy) {
 		this.printSqlStrategy = printSqlStrategy;
@@ -691,28 +712,32 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis
+	 *            the printSqlTimeoutMillis to set
 	 */
 	public void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		this.printSqlTimeoutMillis = printSqlTimeoutMillis;
 	}
 
 	/**
-	 * @param keywordSign the keywordSign to set
+	 * @param keywordSign
+	 *            the keywordSign to set
 	 */
 	public void setKeywordSign(String keywordSign) {
 		SqlToyConstants.keywordSign = keywordSign;
 	}
 
 	/**
-	 * @param showScriptCheck the showScriptCheck to set
+	 * @param showScriptCheck
+	 *            the showScriptCheck to set
 	 */
 	public void setShowScriptCheck(boolean showScriptCheck) {
 		this.showScriptCheck = showScriptCheck;
 	}
 
 	/**
-	 * @param scriptCheckIntervalSeconds the scriptCheckIntervalSeconds to set
+	 * @param scriptCheckIntervalSeconds
+	 *            the scriptCheckIntervalSeconds to set
 	 */
 	public void setScriptCheckIntervalSeconds(int scriptCheckIntervalSeconds) {
 		this.scriptCheckIntervalSeconds = scriptCheckIntervalSeconds;
