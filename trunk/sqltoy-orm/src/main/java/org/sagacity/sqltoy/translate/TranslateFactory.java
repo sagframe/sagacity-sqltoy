@@ -12,8 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -26,6 +24,8 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -41,7 +41,7 @@ public class TranslateFactory {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(TranslateFactory.class);
+	protected final static Logger logger = LoggerFactory.getLogger(TranslateFactory.class);
 
 	/**
 	 * @todo 执行检测,返回缓存相关数据最后修改时间,便于比较是否发生变化

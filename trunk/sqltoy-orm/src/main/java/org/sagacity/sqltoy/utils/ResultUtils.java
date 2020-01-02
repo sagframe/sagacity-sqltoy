@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -37,6 +35,8 @@ import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -50,7 +50,7 @@ public class ResultUtils {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(ResultUtils.class);
+	private final static Logger logger = LoggerFactory.getLogger(ResultUtils.class);
 
 	/**
 	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据

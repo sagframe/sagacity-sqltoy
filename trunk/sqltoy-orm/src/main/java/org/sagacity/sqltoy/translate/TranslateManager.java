@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -20,6 +18,8 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -33,7 +33,7 @@ public class TranslateManager {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(TranslateManager.class);
+	protected final static Logger logger = LoggerFactory.getLogger(TranslateManager.class);
 
 	/**
 	 * 翻译缓存管理器，默认提供基于ehcache的实现，用户可以另行定义

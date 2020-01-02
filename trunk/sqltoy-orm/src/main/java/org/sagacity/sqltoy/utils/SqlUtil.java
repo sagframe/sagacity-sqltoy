@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -40,6 +38,8 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -62,7 +62,7 @@ public class SqlUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(SqlUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(SqlUtil.class);
 
 	/**
 	 * sql中的单行注释

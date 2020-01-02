@@ -6,13 +6,13 @@ package org.sagacity.sqltoy.plugins.id.impl;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,7 +29,7 @@ public class RedisIdGenerator implements IdGenerator {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(RedisIdGenerator.class);
+	protected final static Logger logger = LoggerFactory.getLogger(RedisIdGenerator.class);
 	private static RedisIdGenerator me = new RedisIdGenerator();
 
 	/**

@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -31,7 +31,7 @@ public class NumberUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(NumberUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(NumberUtil.class);
 
 	/**
 	 * 整数数字正则表达式

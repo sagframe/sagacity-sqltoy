@@ -22,8 +22,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -57,6 +55,8 @@ import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm

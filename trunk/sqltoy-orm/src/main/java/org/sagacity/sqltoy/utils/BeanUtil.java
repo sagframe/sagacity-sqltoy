@@ -19,10 +19,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joda.time.LocalDate;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -36,7 +36,7 @@ public class BeanUtil {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(BeanUtil.class);
+	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
 
 	/**
 	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误

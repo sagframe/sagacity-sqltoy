@@ -14,9 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 数组集合的公用方法
@@ -29,7 +28,7 @@ public class CollectionUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(CollectionUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(CollectionUtil.class);
 
 	/**
 	 * @todo 转换数组类型数据为对象数组,解决原始类型无法强制转换的问题

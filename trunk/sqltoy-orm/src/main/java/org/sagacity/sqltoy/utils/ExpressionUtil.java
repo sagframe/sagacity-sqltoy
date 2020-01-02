@@ -7,8 +7,8 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -21,7 +21,7 @@ public class ExpressionUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(ExpressionUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(ExpressionUtil.class);
 
 	public static final String OPTS = "+-*/%><][!|&=#";
 

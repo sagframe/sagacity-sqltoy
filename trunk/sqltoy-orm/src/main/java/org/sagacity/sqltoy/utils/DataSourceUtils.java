@@ -9,11 +9,11 @@ import java.util.HashMap;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -25,7 +25,7 @@ public class DataSourceUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(DataSourceUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(DataSourceUtils.class);
 
 	/**
 	 * 数据库方言定义

@@ -6,8 +6,6 @@ package org.sagacity.sqltoy.translate.cache.impl;
 import java.time.Duration;
 import java.util.HashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
@@ -19,6 +17,8 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -31,7 +31,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(TranslateEhcacheManager.class);
+	protected final static Logger logger = LoggerFactory.getLogger(TranslateEhcacheManager.class);
 
 	/**
 	 * 缓存大小超出范围后存储磁盘路径

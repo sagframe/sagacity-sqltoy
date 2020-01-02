@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.1
@@ -35,7 +35,7 @@ public class MongoElasticUtils {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(MongoElasticUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(MongoElasticUtils.class);
 
 	/**
 	 * sql伪指令开始标记,#[]符号等于 null==?判断
