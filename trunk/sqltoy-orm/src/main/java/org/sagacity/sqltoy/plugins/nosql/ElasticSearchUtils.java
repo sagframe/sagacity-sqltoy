@@ -169,8 +169,9 @@ public class ElasticSearchUtils {
 		for (int i = 0; i < valuePath.length - 1; i++) {
 			if (root != null)
 				root = root.getJSONObject(valuePath[i]);
-			else
+			else {
 				return resultModel;
+			}
 		}
 		Object realRoot = root.get(lastKey);
 		if (realRoot == null)
@@ -252,8 +253,9 @@ public class ElasticSearchUtils {
 				processRow(result, (JSONObject) tmp, realFields, true);
 			}
 		}
-		if (result != null)
+		if (result != null) {
 			resultModel.setTotalCount(Long.valueOf(result.size()));
+		}
 		resultModel.setRows(result);
 		resultModel.setLabelNames(translateFields);
 		return resultModel;
@@ -290,8 +292,9 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].equalsIgnoreCase("aggregations"))
+		if (!rootPath[0].equalsIgnoreCase("aggregations")) {
 			root = ((JSONObject) root).get("aggregations");
+		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
 		}
@@ -334,8 +337,9 @@ public class ElasticSearchUtils {
 				processRow(result, (JSONObject) tmp, realFields, false);
 			}
 		}
-		if (result != null)
+		if (result != null) {
 			resultModel.setTotalCount(Long.valueOf(result.size()));
+		}
 		resultModel.setRows(result);
 		resultModel.setLabelNames(translateFields);
 		return resultModel;
@@ -354,8 +358,9 @@ public class ElasticSearchUtils {
 			if ((json.containsKey("key") && json.containsKey("doc_count"))) {
 				if (isRoot(json, realFields)) {
 					addRow(result, json, realFields);
-				} else
+				} else {
 					processRow(result, json, realFields, isSuggest);
+				}
 			} else {
 				addRow(result, json, realFields);
 			}
@@ -376,8 +381,9 @@ public class ElasticSearchUtils {
 	private static boolean isRoot(JSONObject json, String[] realFields) {
 		int mapCnt = 0;
 		for (String key : realFields) {
-			if (json.containsKey(key))
+			if (json.containsKey(key)) {
 				mapCnt = mapCnt + 1;
+			}
 		}
 		if (mapCnt == 0)
 			return false;
@@ -400,8 +406,9 @@ public class ElasticSearchUtils {
 			cell = rowJson.get(str);
 			if (cell instanceof JSONObject) {
 				row.add(((JSONObject) cell).get("value"));
-			} else
+			} else {
 				row.add(cell);
+			}
 		}
 		result.add(row);
 	}
@@ -418,27 +425,30 @@ public class ElasticSearchUtils {
 			return result;
 		result = rowJson.get("buckets");
 		if (result != null) {
-			if (result instanceof JSONArray)
+			if (result instanceof JSONArray) {
 				return result;
-			else if (result instanceof JSONObject)
+			} else if (result instanceof JSONObject) {
 				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			}
 		}
 		result = rowJson.get("hits");
 		if (result != null) {
-			if (result instanceof JSONArray)
+			if (result instanceof JSONArray) {
 				return result;
-			else if (result instanceof JSONObject)
+			} else if (result instanceof JSONObject) {
 				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+			}
 		}
 
 		// suggest模式
 		if (isSuggest) {
 			result = rowJson.get("options");
 			if (result != null) {
-				if (result instanceof JSONArray)
+				if (result instanceof JSONArray) {
 					return result;
-				else if (result instanceof JSONObject)
+				} else if (result instanceof JSONObject) {
 					return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+				}
 			}
 		}
 		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
@@ -458,10 +468,11 @@ public class ElasticSearchUtils {
 			if (rowJson.keySet().iterator().next().equalsIgnoreCase(realFields[0]) && realFields.length == 1)
 				return rowJson;
 			result = rowJson.values().iterator().next();
-			if (result instanceof JSONObject)
+			if (result instanceof JSONObject) {
 				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
-			else if (result instanceof JSONArray)
+			} else if (result instanceof JSONArray) {
 				return result;
+			}
 		}
 		return rowJson;
 	}
