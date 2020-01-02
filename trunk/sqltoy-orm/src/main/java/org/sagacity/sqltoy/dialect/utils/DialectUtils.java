@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -1612,16 +1613,20 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
+
 		// 累计多少行为空
-		int count = 0;
-		for (Object[] rowValues : paramsValues) {
+		int skipCount = 0;
+		Iterator<Object[]> iter = paramsValues.iterator();
+		Object[] rowValues;
+		while (iter.hasNext()) {
+			rowValues = iter.next();
 			for (int i = pkIndex; i < end; i++) {
 				// 判断主键值是否为空
 				if (StringUtil.isBlank(rowValues[i])) {
 					// 跳过主键值为空的
 					if (skipNull) {
-						paramsValues.remove(index - count);
-						count++;
+						skipCount++;
+						iter.remove();
 						break;
 					} else {
 						throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
@@ -1630,6 +1635,29 @@ public class DialectUtils {
 			}
 			index++;
 		}
+		if (skipCount > 0) {
+			logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
+		}
+
+		//
+		// int count = 0;
+		// for (Object[] rowValues : paramsValues) {
+		// for (int i = pkIndex; i < end; i++) {
+		// // 判断主键值是否为空
+		// if (StringUtil.isBlank(rowValues[i])) {
+		// // 跳过主键值为空的
+		// if (skipNull) {
+		// paramsValues.remove(index - count);
+		// count++;
+		// break;
+		// } else {
+		// throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index +
+		// " 条记录主键为null!");
+		// }
+		// }
+		// }
+		// index++;
+		// }
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
