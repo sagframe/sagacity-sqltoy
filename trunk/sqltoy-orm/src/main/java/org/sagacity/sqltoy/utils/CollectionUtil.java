@@ -837,8 +837,9 @@ public class CollectionUtil {
 					groupPreIndexMap.put(groupIndexs[j][0], i);
 					// 汇总之后重新置值
 					groupSumMap.put((Integer) groupIndexs[j][0], new Object[columns]);
-				} else
+				} else {
 					break;
+				}
 			}
 			calculateTotal(groupSumMap, rowList, sumColumns, radixSize);
 			if (isEqual) {
@@ -891,8 +892,9 @@ public class CollectionUtil {
 				summary.set(i, rowList.get(i));
 
 			// 设置标题
-			if (title[1] != null && !title[1].toString().trim().equals(""))
+			if (title[1] != null && !title[1].toString().trim().equals("")) {
 				summary.set(titleIndex, title[1]);
+			}
 		}
 		// 平均
 		if (title[2] != null || (title[3].equals("left") || title[3].equals("right"))) {
@@ -1023,10 +1025,11 @@ public class CollectionUtil {
 		Object[] rowAry = null;
 		List rowList = null;
 		for (int i = 0, n = data.size(); i < n; i++) {
-			if (innerAry)
+			if (innerAry) {
 				rowAry = convertArray(data.get(i));
-			else
+			} else {
 				rowList = (List) data.get(i);
+			}
 			if (colIndex != null) {
 				for (int j = 0, k = colIndex.length; j < k; j++) {
 					resultAry[j][i] = innerAry ? rowAry[colIndex[j]] : rowList.get(colIndex[j]);
@@ -1059,10 +1062,12 @@ public class CollectionUtil {
 			return false;
 		for (String s : compareAry) {
 			if (ignoreCase) {
-				if (compareStr.equalsIgnoreCase(s))
+				if (compareStr.equalsIgnoreCase(s)) {
 					return true;
-			} else if (compareStr.equals(s))
+				}
+			} else if (compareStr.equals(s)) {
 				return true;
+			}
 		}
 		return false;
 	}
