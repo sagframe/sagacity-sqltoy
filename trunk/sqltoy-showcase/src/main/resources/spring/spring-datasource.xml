@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
 	default-lazy-init="true" default-autowire="byName">
 
-	<!-- 数据源的配置 报表库 -->
+	<!-- 数据源的配置 报表库(请根据各自的偏好来选择连接池组件,可以选配阿里的druid等) -->
 	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
 		<property name="driverClassName" value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.url}" />

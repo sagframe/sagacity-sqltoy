@@ -8,16 +8,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description
- *              <p>
- * 				请在此说明类的功能
- *              </p>
+ * @description 请在此说明类的功能
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DBUtils.java,Revision:v1.0,Date:2017年12月9日
  */
@@ -25,8 +22,8 @@ public class DBUtils {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(DBUtils.class);
-	
+	private final static Logger logger = LoggerFactory.getLogger(DBUtils.class);
+
 	/**
 	 * url like:jdbc:sqlserver://localhost:1433;databasename=PMCenter_CCB
 	 */
@@ -79,7 +76,7 @@ public class DBUtils {
 		}
 		return conn;
 	}
-	
+
 	/**
 	 * @todo 去除掉sql中的所有对称的select 和 from 中的内容，排除干扰
 	 * @param sql
@@ -95,30 +92,30 @@ public class DBUtils {
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, lastSql.toString(), start);
 			if (symMarkEnd != -1) {
-				lastSql.delete(start+1, symMarkEnd + 5);
+				lastSql.delete(start + 1, symMarkEnd + 5);
 				start = StringUtil.matchIndex(lastSql.toString(), SELECT_REGEX);
 			} else
 				break;
 		}
 		return lastSql.toString();
 	}
-	
-	public static void main(String[] args)
-	{
+
+	public static void main(String[] args) {
 		Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*[a-z|A-Z]+\\w+(\\.\\w+)*\\s*");
-		//Pattern NAME_PATTERN = Pattern.compile("\\W\\:\\s*((\\d*[a-z|A-Z]+\\d*)+[\\.|\\_]?(\\d*[a-z|A-Z]+\\d*)?)\\s*");
-		Boolean result= StringUtil.matches("1990-10-05 23:10:45", PARAM_NAME_PATTERN);
+		// Pattern NAME_PATTERN =
+		// Pattern.compile("\\W\\:\\s*((\\d*[a-z|A-Z]+\\d*)+[\\.|\\_]?(\\d*[a-z|A-Z]+\\d*)?)\\s*");
+		Boolean result = StringUtil.matches("1990-10-05 23:10:45", PARAM_NAME_PATTERN);
 		System.err.println(result);
-		Boolean result1= StringUtil.matches(" :1begin", PARAM_NAME_PATTERN);
+		Boolean result1 = StringUtil.matches(" :1begin", PARAM_NAME_PATTERN);
 		System.err.println(result1);
-		Boolean result2= StringUtil.matches(" :be23gin", PARAM_NAME_PATTERN);
+		Boolean result2 = StringUtil.matches(" :be23gin", PARAM_NAME_PATTERN);
 		System.err.println(result2);
 		String SELECT_REGEX = "select\\s+";
 		String FROM_REGEX = "\\s+from[\\(|\\s+]";
-		String sql="select (select a    from table) as col,col2,(select b from table1) as col3 from tableA";
+		String sql = "select (select a    from table) as col,col2,(select b from table1) as col3 from tableA";
 		int sql_from_index = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
-		int selectIndex= StringUtil.matchIndex(sql, SELECT_REGEX);
-		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex+6, sql_from_index).toLowerCase();
-		System.err.println("1="+clearSymSelectFromSql(selectFields));
+		int selectIndex = StringUtil.matchIndex(sql, SELECT_REGEX);
+		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex + 6, sql_from_index).toLowerCase();
+		System.err.println("1=" + clearSymSelectFromSql(selectFields));
 	}
 }

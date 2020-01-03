@@ -27,14 +27,14 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -48,7 +48,7 @@ public class XMLUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(XMLUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(XMLUtil.class);
 
 	// xml 忽视验证的特性
 	private final static String NO_VALIDATOR_FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";

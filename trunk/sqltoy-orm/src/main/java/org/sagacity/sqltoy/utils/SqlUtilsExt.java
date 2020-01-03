@@ -11,9 +11,9 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -26,7 +26,7 @@ public class SqlUtilsExt {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(SqlUtilsExt.class);
+	private final static Logger logger = LoggerFactory.getLogger(SqlUtilsExt.class);
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据

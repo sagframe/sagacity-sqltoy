@@ -10,9 +10,9 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -26,7 +26,7 @@ public class IdleConnectionMonitor extends Thread {
 	/**
 	 * 定义日志
 	 */
-	private final Logger logger = LogManager.getLogger(IdleConnectionMonitor.class);
+	private final Logger logger = LoggerFactory.getLogger(IdleConnectionMonitor.class);
 
 	private Object[][] dataSourceWeightConfig;
 	/**

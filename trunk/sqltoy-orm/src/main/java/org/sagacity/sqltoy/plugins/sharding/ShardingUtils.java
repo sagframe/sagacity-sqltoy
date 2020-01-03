@@ -16,8 +16,6 @@ import java.util.regex.Pattern;
 import javax.sql.DataSource;
 
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
@@ -32,6 +30,8 @@ import org.sagacity.sqltoy.model.ShardingModel;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -45,7 +45,7 @@ public class ShardingUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(ShardingUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(ShardingUtils.class);
 
 	/**
 	 * @todo 单个对象sharding策略处理,适用于load、save、update、delete单对象操作

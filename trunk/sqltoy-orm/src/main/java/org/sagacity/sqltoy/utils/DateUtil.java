@@ -22,8 +22,8 @@ import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.Locale;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -41,7 +41,7 @@ public class DateUtil {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(DateUtil.class);
+	private final static Logger logger = LoggerFactory.getLogger(DateUtil.class);
 
 	private static final String[] CHINA_DATE_KEYS = { "○", "О", "0", "Ο", "O", "零", "一", "二", "三", "四", "五", "六", "七",
 			"八", "九", "十", "年", "月", "日", "时", "分", "秒" };

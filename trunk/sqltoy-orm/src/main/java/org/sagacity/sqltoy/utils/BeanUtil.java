@@ -19,10 +19,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joda.time.LocalDate;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -36,7 +36,7 @@ public class BeanUtil {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(BeanUtil.class);
+	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
 
 	/**
 	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误
@@ -396,14 +396,16 @@ public class BeanUtil {
 				return DateUtil.parseString(valueStr);
 		} // byte数组
 		else if (typeName.equals("[b")) {
-			if (paramValue instanceof byte[])
+			if (paramValue instanceof byte[]) {
 				return (byte[]) paramValue;
+			}
 			// blob类型处理
 			else if (paramValue instanceof java.sql.Blob) {
 				java.sql.Blob blob = (java.sql.Blob) paramValue;
 				return blob.getBytes(1, (int) blob.length());
-			} else
+			} else {
 				return valueStr.getBytes();
+			}
 		} else if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
 			BufferedReader in = new BufferedReader(clob.getCharacterStream());
@@ -507,8 +509,9 @@ public class BeanUtil {
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
-				for (int i = 0; i < methodLength; i++)
+				for (int i = 0; i < methodLength; i++) {
 					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
 			for (int i = 0, n = datas.size(); i < n; i++) {
@@ -520,13 +523,15 @@ public class BeanUtil {
 						inited = true;
 					}
 					List dataList = new ArrayList();
-					if (hasSequence)
+					if (hasSequence) {
 						dataList.add(StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength));
+					}
 					for (int j = 0; j < methodLength; j++) {
-						if (realMethods[j] != null)
+						if (realMethods[j] != null) {
 							dataList.add(realMethods[j].invoke(rowObject, params));
-						else
+						} else {
 							dataList.add(null);
+						}
 					}
 					// 反调对数据值进行加工处理
 					if (hasHandler) {
@@ -534,8 +539,9 @@ public class BeanUtil {
 						reflectPropertyHandler.setRowList(dataList);
 						reflectPropertyHandler.process();
 						resultList.add(reflectPropertyHandler.getRowList());
-					} else
+					} else {
 						resultList.add(dataList);
+					}
 				} else {
 					logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null!", i);
 					resultList.add(null);
@@ -599,8 +605,9 @@ public class BeanUtil {
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
-				for (int i = 0; i < methodLength; i++)
+				for (int i = 0; i < methodLength; i++) {
 					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
 			// 逐行提取属性数据
@@ -614,19 +621,22 @@ public class BeanUtil {
 					}
 					Object[] dataAry = new Object[methodLength + start];
 					// 存在流水列
-					if (hasSequence)
+					if (hasSequence) {
 						dataAry[0] = StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength);
+					}
 					// 通过反射提取属性getMethod返回的数据值
 					for (int j = 0; j < methodLength; j++) {
 						if (null != realMethods[j]) {
 							dataAry[start + j] = realMethods[j].invoke(rowObject, params);
-							if (null == dataAry[start + j] && null != defaultValues)
+							if (null == dataAry[start + j] && null != defaultValues) {
 								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+							}
 						} else {
-							if (defaultValues == null)
+							if (defaultValues == null) {
 								dataAry[start + j] = null;
-							else
+							} else {
 								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+							}
 						}
 					}
 					// 反调对数据值进行加工处理
@@ -635,8 +645,9 @@ public class BeanUtil {
 						reflectPropertyHandler.setRowData(dataAry);
 						reflectPropertyHandler.process();
 						resultList.add(reflectPropertyHandler.getRowData());
-					} else
+					} else {
 						resultList.add(dataAry);
+					}
 				} else {
 					logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null!", i);
 					resultList.add(null);
@@ -654,8 +665,9 @@ public class BeanUtil {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
-			for (int i = 0; i < indexs.length; i++)
+			for (int i = 0; i < indexs.length; i++) {
 				indexs[i] = i;
+			}
 		}
 		return reflectListToBean(datas, indexs, properties, voClass, true);
 	}
@@ -709,8 +721,9 @@ public class BeanUtil {
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
-					if (null != realMethods[i])
+					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+					}
 				}
 			}
 
@@ -721,8 +734,9 @@ public class BeanUtil {
 				if (rowObject != null) {
 					bean = voClass.getDeclaredConstructor().newInstance();
 					if (meter == 0) {
-						if (rowObject instanceof Object[])
+						if (rowObject instanceof Object[]) {
 							isArray = true;
+						}
 					}
 					if (isArray) {
 						rowArray = (Object[]) rowObject;
@@ -772,7 +786,8 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate     强制更新
+	 * @param forceUpdate
+	 *            强制更新
 	 * @throws Exception
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
@@ -797,8 +812,9 @@ public class BeanUtil {
 						realMethods = matchSetMethods(bean.getClass(), properties);
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
-								if (realMethods[i] != null)
+								if (realMethods[i] != null) {
 									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+								}
 							}
 						}
 						inited = true;
@@ -859,16 +875,18 @@ public class BeanUtil {
 						realMethods = matchSetMethods(bean.getClass(), properties);
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
-								if (realMethods[i] != null)
+								if (realMethods[i] != null) {
 									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+								}
 							}
 						}
 						inited = true;
 					}
 					for (int i = 0; i < indexSize; i++) {
-						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null))
+						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
 							realMethods[i].invoke(bean, autoConvertType ? convertType(rowData[index[i]], methodTypes[i])
 									: rowData[index[i]]);
+						}
 					}
 				}
 				rowIndex++;
@@ -882,19 +900,23 @@ public class BeanUtil {
 
 	/**
 	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans   源对象数据集合
-	 * @param fromProps   源对象的属性
-	 * @param targetProps 目标对象的属性
-	 * @param newClass    目标对象类型
+	 * @param fromBeans
+	 *            源对象数据集合
+	 * @param fromProps
+	 *            源对象的属性
+	 * @param targetProps
+	 *            目标对象的属性
+	 * @param newClass
+	 *            目标对象类型
 	 * @return
 	 * @throws Exception
 	 */
 	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass)
 			throws Exception {
-		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0))
+		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
 			return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, true);
-		else
-			return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, false);
+		}
+		return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, false);
 	}
 
 	/**
@@ -903,7 +925,8 @@ public class BeanUtil {
 	 * @param fromProps
 	 * @param targetProps
 	 * @param newClass
-	 * @param autoMapping 是否自动匹配
+	 * @param autoMapping
+	 *            是否自动匹配
 	 * @return
 	 * @throws Exception
 	 */
@@ -923,13 +946,15 @@ public class BeanUtil {
 				Integer index;
 				for (int i = 0; i < properties.length; i++) {
 					index = matchIndex.get(properties[i].toLowerCase());
-					if (index == null || index >= fromProps.length)
+					if (index == null || index >= fromProps.length) {
 						getProperties[i] = properties[i];
-					else
+					} else {
 						getProperties[i] = fromProps[index];
+					}
 				}
-			} else
+			} else {
 				getProperties = properties;
+			}
 			List result = reflectBeansToList(fromBeans, getProperties);
 			return reflectListToBean(result, properties, newClass);
 		}

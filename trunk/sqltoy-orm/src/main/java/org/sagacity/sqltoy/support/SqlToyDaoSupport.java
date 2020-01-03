@@ -14,8 +14,6 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -40,6 +38,8 @@ import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -71,7 +71,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LogManager.getLogger(SqlToyDaoSupport.class);
+	protected final Logger logger = LoggerFactory.getLogger(SqlToyDaoSupport.class);
 
 	/**
 	 * 数据源

@@ -18,10 +18,10 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -37,7 +37,7 @@ public class ScanEntityAndSqlResource {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(ScanEntityAndSqlResource.class);
+	protected final static Logger logger = LoggerFactory.getLogger(ScanEntityAndSqlResource.class);
 
 	/**
 	 * 默认的sql定义文件后缀名,便于区分和查找加载

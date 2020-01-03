@@ -7,14 +7,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -28,7 +28,7 @@ public class CacheUpdateWatcher extends Thread {
 	/**
 	 * 定义日志
 	 */
-	private final Logger logger = LogManager.getLogger(CacheUpdateWatcher.class);
+	private final Logger logger = LoggerFactory.getLogger(CacheUpdateWatcher.class);
 
 	/**
 	 * 最后检测时间

@@ -16,11 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -33,7 +33,7 @@ public class ParamFilterUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(ParamFilterUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(ParamFilterUtils.class);
 
 	// 默认日期格式
 	private static final String DAY_FORMAT = "yyyy-MM-dd";

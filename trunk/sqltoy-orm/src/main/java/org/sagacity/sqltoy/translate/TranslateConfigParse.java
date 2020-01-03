@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -24,6 +22,8 @@ import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -35,7 +35,7 @@ public class TranslateConfigParse {
 	/**
 	 * 定义全局日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(TranslateConfigParse.class);
+	protected final static Logger logger = LoggerFactory.getLogger(TranslateConfigParse.class);
 
 	private final static String TRANSLATE_SUFFIX = "-translate";
 	private final static String CHECKER_SUFFIX = "-checker";

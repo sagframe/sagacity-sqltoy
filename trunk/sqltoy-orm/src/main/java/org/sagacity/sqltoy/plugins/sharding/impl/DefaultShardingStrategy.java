@@ -10,8 +10,6 @@ import java.util.Map.Entry;
 
 import javax.sql.DataSource;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
@@ -19,6 +17,8 @@ import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -30,7 +30,7 @@ import org.springframework.context.ApplicationContextAware;
  * @version id:DefaultShardingStrategy.java,Revision:v1.0,Date: 2017年1月3日
  */
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {
-	private final static Logger logger = LogManager.getLogger(DefaultShardingStrategy.class);
+	private final static Logger logger = LoggerFactory.getLogger(DefaultShardingStrategy.class);
 
 	private HashMap<String, String> tableNamesMap = new HashMap<String, String>();
 
