@@ -23,8 +23,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -58,6 +56,8 @@ import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
@@ -76,7 +76,7 @@ public class DialectUtils {
 	/**
 	 * 定义日志
 	 */
-	protected final static Logger logger = LogManager.getLogger(DialectUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(DialectUtils.class);
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
@@ -1638,6 +1638,7 @@ public class DialectUtils {
 		if (skipCount > 0) {
 			logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
 		}
+
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
@@ -1785,11 +1786,13 @@ public class DialectUtils {
 				for (int i = 0; i < fieldValues.length; i++) {
 					if (null != fieldValues[i]) {
 						// 非主键字段
-						if (i < rejectIdFieldsSize)
+						if (i < rejectIdFieldsSize) {
 							hasNoPkField = true;
+						}
 						// 存在主键字段，则主键值仅仅作为返回结果的比较，判断是否是记录本身
-						if (i >= rejectIdFieldsSize && hasNoPkField)
+						if (i >= rejectIdFieldsSize && hasNoPkField) {
 							break;
+						}
 						paramNames.add(fieldsArray[i]);
 						paramValueList.add(fieldValues[i]);
 					}
@@ -1821,10 +1824,11 @@ public class DialectUtils {
 
 			// 防止数据量过大，先用count方式查询提升效率
 			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn, dbType);
-			if (recordCnt == 0)
+			if (recordCnt == 0) {
 				return true;
-			else if (recordCnt > 1)
+			} else if (recordCnt > 1) {
 				return false;
+			}
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0)
