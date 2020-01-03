@@ -714,7 +714,7 @@ public class SqlUtil {
 	public static Long batchUpdateByJdbc(final String updateSql, final Collection rowDatas, final int batchSize,
 			final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes, final Boolean autoCommit,
 			final Connection conn, final Integer dbType) throws Exception {
-		if (rowDatas == null) {
+		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return 0L;
 		}
