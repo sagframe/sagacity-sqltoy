@@ -3,28 +3,29 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
-	<version>4.8.10</version>
+	<version>4.9.0</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.2.1.RELEASE</spring-framework.version>
-		<spring-data-redis.version>2.2.1.RELEASE</spring-data-redis.version>
-		<spring-data-mongo.version>2.2.1.RELEASE</spring-data-mongo.version>
-		<log4j.version>2.12.1</log4j.version>
+		<spring-framework.version>5.2.2.RELEASE</spring-framework.version>
+		<spring-data-redis.version>2.2.3.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>2.2.3.RELEASE</spring-data-mongo.version>
+		<log4j.version>2.13.0</log4j.version>
 		<mysql.version>8.0.18</mysql.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.10</httpclient.version>
 		<httpclient-core.version>4.4.12</httpclient-core.version>
-		<elastic-rest-client.version>7.4.2</elastic-rest-client.version>
+		<elastic-rest-client.version>7.5.1</elastic-rest-client.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<mongo.version>3.11.0</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<junit.version>4.12</junit.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.1.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.2.RELEASE</spring-boot.version>
+		<slf4j.version>1.7.30</slf4j.version>
 	</properties>
 
 	<repositories>
@@ -156,16 +157,7 @@
 			<version>${spring-framework.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>${log4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>${log4j.version}</version>
-		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-redis -->
 		<dependency>
 			<groupId>org.springframework.data</groupId>
@@ -232,8 +224,41 @@
 			<artifactId>elasticsearch-rest-high-level-client</artifactId>
 			<version>${elastic-rest-client.version}</version>
 			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency> <!-- 桥接：告诉Slf4j使用Log4j2 -->
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j.version}</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- <dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${log4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>${log4j.version}</version>
+		</dependency> -->
 	</dependencies>
 	<build>
 		<resources>
