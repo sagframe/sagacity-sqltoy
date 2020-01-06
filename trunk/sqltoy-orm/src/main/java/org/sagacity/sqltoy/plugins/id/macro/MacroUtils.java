@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
+import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -51,6 +52,8 @@ public class MacroUtils {
 		macros.put("@df", new DateFormat());
 		macros.put("@day", new DateFormat());
 		macros.put("@case", new Case());
+		macros.put("@substr", new SubString());
+		macros.put("@substring", new SubString());
 	}
 
 	/**
