@@ -8,7 +8,6 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 
 /**
- * 
  * @project sqltoy-orm
  * @description sharding 策略接口
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>

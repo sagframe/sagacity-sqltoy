@@ -33,10 +33,11 @@ public class Case extends AbstractMacro {
 		String baseParam = params[0].trim();
 		String baseValue = null;
 		// ${paramName} 格式
-		if (baseParam.contains("$"))
+		if (baseParam.contains("$")) {
 			baseValue = MacroUtils.replaceParams(baseParam, keyValues);
-		else
+		} else {
 			baseValue = keyValues.get(baseParam.toLowerCase()).toString();
+		}
 		// 默认最后一个值为结果
 		String result = params[paramSize - 1];
 		// {base,a,a1,b,b1,c,c1,other}

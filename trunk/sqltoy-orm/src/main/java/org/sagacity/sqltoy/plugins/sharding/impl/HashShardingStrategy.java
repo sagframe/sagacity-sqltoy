@@ -78,8 +78,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 		if (mode == 0) {
 			mode = dataSourceMap.size();
 		}
-		if (tableMode == 0)
+		if (tableMode == 0) {
 			tableMode = tableMap.size();
+		}
 	}
 
 	/**

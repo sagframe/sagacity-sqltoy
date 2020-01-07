@@ -935,29 +935,28 @@ public class BeanUtil {
 		if (autoMapping == false) {
 			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
 			return reflectListToBean(result, targetProps == null ? fromProps : targetProps, newClass);
-		} else {
-			// 获取set方法
-			String[] properties = matchSetMethodNames(newClass);
-			String[] getProperties = new String[properties.length];
-			HashMap<String, Integer> matchIndex = new HashMap<String, Integer>();
-			if (targetProps != null && fromProps != null) {
-				for (int i = 0; i < targetProps.length; i++)
-					matchIndex.put(targetProps[i].toLowerCase(), i);
-				Integer index;
-				for (int i = 0; i < properties.length; i++) {
-					index = matchIndex.get(properties[i].toLowerCase());
-					if (index == null || index >= fromProps.length) {
-						getProperties[i] = properties[i];
-					} else {
-						getProperties[i] = fromProps[index];
-					}
-				}
-			} else {
-				getProperties = properties;
-			}
-			List result = reflectBeansToList(fromBeans, getProperties);
-			return reflectListToBean(result, properties, newClass);
 		}
+		// 获取set方法
+		String[] properties = matchSetMethodNames(newClass);
+		String[] getProperties = new String[properties.length];
+		HashMap<String, Integer> matchIndex = new HashMap<String, Integer>();
+		if (targetProps != null && fromProps != null) {
+			for (int i = 0; i < targetProps.length; i++)
+				matchIndex.put(targetProps[i].toLowerCase(), i);
+			Integer index;
+			for (int i = 0; i < properties.length; i++) {
+				index = matchIndex.get(properties[i].toLowerCase());
+				if (index == null || index >= fromProps.length) {
+					getProperties[i] = properties[i];
+				} else {
+					getProperties[i] = fromProps[index];
+				}
+			}
+		} else {
+			getProperties = properties;
+		}
+		List result = reflectBeansToList(fromBeans, getProperties);
+		return reflectListToBean(result, properties, newClass);
 	}
 
 	public static String[] matchSetMethodNames(Class voClass) {

@@ -240,12 +240,13 @@ public class CollectionUtil {
 		Object obj;
 		for (Iterator iter = source.iterator(); iter.hasNext();) {
 			obj = iter.next();
-			if (obj instanceof Collection)
+			if (obj instanceof Collection) {
 				result[index] = ((Collection) obj).toArray();
-			else if (obj.getClass().isArray())
+			} else if (obj.getClass().isArray()) {
 				result[index] = convertArray(obj);
-			else if (obj instanceof Map)
+			} else if (obj instanceof Map) {
 				result[index] = ((Map) obj).values().toArray();
+			}
 			index++;
 		}
 		return result;
@@ -879,17 +880,20 @@ public class CollectionUtil {
 		List summary = null;
 		List average = null;
 		int titleIndex = groupIndex;
-		if (title.length == 5 && title[4] != null)
+		if (title.length == 5 && title[4] != null) {
 			titleIndex = (Integer) title[4];
+		}
 		// 汇总
 		if (title[1] != null || (title[3].equals("left") || title[3].equals("right"))) {
 			summary = new ArrayList();
 			// 汇总数据加入新的数据行中
-			for (int i = 0, n = rowSummaryData.length; i < n; i++)
+			for (int i = 0, n = rowSummaryData.length; i < n; i++) {
 				summary.add(i, rowSummaryData[i]);
+			}
 			// 设置分组列前面的数据
-			for (int i = 0; i <= titleIndex; i++)
+			for (int i = 0; i <= titleIndex; i++) {
 				summary.set(i, rowList.get(i));
+			}
 
 			// 设置标题
 			if (title[1] != null && !title[1].toString().trim().equals("")) {
@@ -925,10 +929,12 @@ public class CollectionUtil {
 		}
 		// 汇总或求平均
 		if (summary == null || average == null) {
-			if (summary != null)
+			if (summary != null) {
 				result.add(summary);
-			if (average != null)
+			}
+			if (average != null) {
 				result.add(average);
+			}
 		} else {
 			if (title[3].equals("top") || title[3].equals("bottom")) {
 				result.add(summary);
@@ -944,8 +950,9 @@ public class CollectionUtil {
 				String sumCellValue;
 				String averageValue;
 				String linkSign = " / ";
-				if (title.length == 6 && title[5] != null)
+				if (title.length == 6 && title[5] != null) {
 					linkSign = title[5].toString();
+				}
 				summary.set(titleIndex, isLeft ? (summary.get(titleIndex) + linkSign + average.get(titleIndex))
 						: (average.get(titleIndex) + linkSign + summary.get(titleIndex)));
 				for (int i = 0, n = rowSummaryData.length; i < n; i++) {

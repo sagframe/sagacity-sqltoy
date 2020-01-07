@@ -125,8 +125,9 @@ public class MacroUtils {
 	private static boolean isMacro(String matchedStr, boolean isStart) {
 		int index = matchedStr.indexOf("(");
 		if (matchedStr.startsWith("@") && index != -1) {
-			if (macros.containsKey(matchedStr.substring(0, index)))
+			if (macros.containsKey(matchedStr.substring(0, index))) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -162,8 +163,9 @@ public class MacroUtils {
 			for (Iterator<Map.Entry<String, String>> iter = paramsMap.entrySet().iterator(); iter.hasNext();) {
 				entry = iter.next();
 				value = keyValues.get(entry.getValue());
-				if (value != null)
+				if (value != null) {
 					result = replaceAllStr(result, entry.getKey().toString(), value.toString());
+				}
 			}
 		}
 		return result;

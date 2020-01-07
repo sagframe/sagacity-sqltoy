@@ -280,9 +280,8 @@ public class ShardingUtils {
 				sqlToyConfig.getDataSourceShardingStrategyValue(), realDataMap);
 		if (shardingDBModel.getDataSource() != null) {
 			return shardingDBModel.getDataSource();
-		} else {
-			return sqlToyContext.getDataSource(shardingDBModel.getDataSourceName());
 		}
+		return sqlToyContext.getDataSource(shardingDBModel.getDataSourceName());
 	}
 
 	/**
@@ -433,8 +432,9 @@ public class ShardingUtils {
 			start = m.end() - 1;
 			tailSql = sql.substring(start);
 		}
-		if (!isFind)
+		if (!isFind) {
 			return sql;
+		}
 		return lastSql.append(tailSql).toString();
 	}
 

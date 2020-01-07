@@ -55,7 +55,7 @@ public class DataSourceUtils {
 		public final static String INNOSQL = "innosql";
 		public final static String MARIADB = "mariadb";
 
-		//9.5+ 开始
+		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
 		public final static String POSTGRESQL11 = "postgresql11";
 		public final static String POSTGRESQL12 = "postgresql12";
@@ -278,6 +278,7 @@ public class DataSourceUtils {
 		try {
 			result = conn.getMetaData().getDatabaseMajorVersion();
 		} catch (Exception e) {
+			// e.printStackTrace();
 		}
 		return result;
 	}
@@ -330,17 +331,19 @@ public class DataSourceUtils {
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				dbType = DBType.MYSQL;
-				if (majorVersion > 5)
+				if (majorVersion > 5) {
 					dbType = DBType.MYSQL8;
+				}
 			}
 			// 9.5以上为标准支持模式
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				dbType = DBType.POSTGRESQL;
 				// 12+版本
-				if (majorVersion >= 12)
+				if (majorVersion >= 12) {
 					dbType = DBType.POSTGRESQL12;
-				else if (majorVersion >= 10)
+				} else if (majorVersion >= 10) {
 					dbType = DBType.POSTGRESQL11;
+				}
 			}
 			// sybase IQ
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1

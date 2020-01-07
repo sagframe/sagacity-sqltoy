@@ -70,8 +70,9 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Collection mappingSet(Collection dataSet) throws Exception {
-		if (dataSet != null && !dataSet.isEmpty())
+		if (dataSet != null && !dataSet.isEmpty()) {
 			BeanUtil.batchSetProperties(dataSet, names, values, false);
+		}
 		return dataSet;
 	}
 

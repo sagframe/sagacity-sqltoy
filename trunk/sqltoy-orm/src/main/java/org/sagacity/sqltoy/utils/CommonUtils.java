@@ -98,13 +98,15 @@ public class CommonUtils {
 	 */
 	public static int getProbabilityIndex(int[] probabilities) {
 		int total = 0;
-		for (int probabilitiy : probabilities)
+		for (int probabilitiy : probabilities) {
 			total = total + probabilitiy;
+		}
 		int randomData = (int) (Math.random() * total) + 1;
 		int base = 0;
 		for (int i = 0; i < probabilities.length; i++) {
-			if (randomData > base && randomData <= base + probabilities[i])
+			if (randomData > base && randomData <= base + probabilities[i]) {
 				return i;
+			}
 			base = base + probabilities[i];
 		}
 		return 0;
