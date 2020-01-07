@@ -322,9 +322,10 @@ public class MySqlDialect implements Dialect {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length < 1)
+		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length < 1) {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
