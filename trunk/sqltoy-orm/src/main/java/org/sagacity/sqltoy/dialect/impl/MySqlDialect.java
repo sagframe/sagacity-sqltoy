@@ -91,9 +91,9 @@ public class MySqlDialect implements Dialect {
 		sql.append(" order by sag_random_table1.sag_row_number limit ");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -119,8 +119,9 @@ public class MySqlDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" , ");
@@ -150,8 +151,9 @@ public class MySqlDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 
@@ -291,8 +293,9 @@ public class MySqlDialect implements Dialect {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8))
+		if (dbType.equals(DBType.MYSQL8)) {
 			lockSql = " for update skip locked ";
+		}
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
@@ -331,8 +334,9 @@ public class MySqlDialect implements Dialect {
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			field = entityMeta.getIdArray()[i];
-			if (i > 0)
+			if (i > 0) {
 				loadSql.append(" and ");
+			}
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
@@ -476,8 +480,9 @@ public class MySqlDialect implements Dialect {
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8))
+		if (dbType.equals(DBType.MYSQL8)) {
 			lockSql = " for update skip locked ";
+		}
 		String realSql = sql.concat(lockSql);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
@@ -496,8 +501,9 @@ public class MySqlDialect implements Dialect {
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8))
+		if (dbType.equals(DBType.MYSQL8)) {
 			lockSql = " for update skip locked ";
+		}
 		String realSql = sql + " limit " + topSize + lockSql;
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
@@ -518,8 +524,9 @@ public class MySqlDialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		String realSql = sql + " order by rand() limit " + random + " for update";
-		if (dbType.equals(DBType.MYSQL8))
+		if (dbType.equals(DBType.MYSQL8)) {
 			realSql = realSql + " skip locked ";
+		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
