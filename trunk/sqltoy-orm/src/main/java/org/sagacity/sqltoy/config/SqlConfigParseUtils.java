@@ -230,10 +230,10 @@ public class SqlConfigParseUtils {
 	 */
 	public static Object[] matchNamedParam(String[] sqlParamsName, String[] paramsNameOrder, Object[] paramsValue) {
 		if (null == sqlParamsName || sqlParamsName.length == 0) {
-			if (null == paramsNameOrder || paramsNameOrder.length == 0)
+			if (null == paramsNameOrder || paramsNameOrder.length == 0) {
 				return paramsValue;
-			else
-				return null;
+			}
+			return null;
 		}
 		Object[] result = new Object[sqlParamsName.length];
 		if (null != paramsNameOrder && paramsNameOrder.length > 0) {
@@ -276,8 +276,9 @@ public class SqlConfigParseUtils {
 			start = m.end();
 		}
 		// 没有别名参数
-		if (start == 0)
+		if (start == 0) {
 			return sqlParam;
+		}
 		// 添加尾部sql
 		lastSql.append(queryStr.substring(start));
 		sqlParam.setSql(lastSql.toString());
@@ -385,7 +386,7 @@ public class SqlConfigParseUtils {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
 					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
 					int logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
-					//update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
+					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
 					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {

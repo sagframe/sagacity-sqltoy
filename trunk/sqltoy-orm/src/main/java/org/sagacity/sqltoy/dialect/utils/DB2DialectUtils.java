@@ -42,24 +42,26 @@ public class DB2DialectUtils {
 			final String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
-
+		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		// 存在order 或union 则在sql外包裹一层
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append("select sag_random_table.* from (");
+		}
 		sql.append(innerSql);
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append(") sag_random_table ");
+		}
 		sql.append(" order by rand() fetch first ");
 		sql.append(randomCount);
 		sql.append(" rows only ");
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -165,8 +167,9 @@ public class DB2DialectUtils {
 				// 需要被强制修改的字段
 				HashMap<String, String> fupc = new HashMap<String, String>();
 				if (forceUpdateFields != null) {
-					for (String field : forceUpdateFields)
+					for (String field : forceUpdateFields) {
 						fupc.put(entityMeta.getColumnName(field), "1");
+					}
 				}
 
 				// update 只针对非主键字段进行修改
@@ -196,8 +199,9 @@ public class DB2DialectUtils {
 						DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
-					} else
+					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
 			}
 			// 主键未匹配上则进行插入操作
@@ -356,8 +360,9 @@ public class DB2DialectUtils {
 					DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 							fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
-				} else
+				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
+				}
 			}
 		}
 		// 主键未匹配上则进行插入操作

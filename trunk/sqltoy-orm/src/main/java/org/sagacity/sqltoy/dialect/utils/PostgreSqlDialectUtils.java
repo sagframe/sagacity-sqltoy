@@ -56,20 +56,23 @@ public class PostgreSqlDialectUtils {
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		StringBuilder sql = new StringBuilder();
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		// 存在order 或union 则在sql外包裹一层
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append("select sag_random_table.* from (");
+		}
 		sql.append(innerSql);
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append(") sag_random_table ");
+		}
 		sql.append(" order by random() limit ");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -98,8 +101,9 @@ public class PostgreSqlDialectUtils {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -134,14 +138,15 @@ public class PostgreSqlDialectUtils {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -239,9 +244,10 @@ public class PostgreSqlDialectUtils {
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String sequence, String[] forceUpdateFields, String tableName) {
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
-		if (entityMeta.getIdArray() == null)
+		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
+		}
 		// 是否全部是ID
 		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
@@ -286,8 +292,9 @@ public class PostgreSqlDialectUtils {
 			String columnName;
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-				if (i > 0)
+				if (i > 0) {
 					sql.append(",");
+				}
 				sql.append(columnName).append("=");
 				// 强制修改
 				if (forceUpdateColumnMap.containsKey(columnName)) {

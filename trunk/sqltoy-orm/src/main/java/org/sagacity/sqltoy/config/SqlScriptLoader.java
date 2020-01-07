@@ -140,8 +140,9 @@ public class SqlScriptLoader {
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey, SqlType type) {
 		SqlToyConfig result = sqlCache.get(sqlKey);
-		if (null == result)
+		if (null == result) {
 			result = codeSqlCache.get(sqlKey);
+		}
 		if (null != result)
 			return result;
 		// 判断是否是sqlId,非在xml中定义id的sql

@@ -313,8 +313,9 @@ public class DialectUtils {
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
 			boolean isInnerGroup = false;
-			if (groupIndex != -1)
+			if (groupIndex != -1) {
 				isInnerGroup = clearDisturbSql(query_tmp.substring(groupIndex + 1)).lastIndexOf(")") != -1;
+			}
 			final StringBuilder countQueryStr = new StringBuilder();
 			// 是否包含union,update 2012-11-21
 			boolean hasUnion = StringUtil.matches(query_tmp, UNION_PATTERN);
@@ -1688,8 +1689,9 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					if (sqlToyContext.isDebug())
+					if (sqlToyContext.isDebug()) {
 						logger.debug("cascade delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
+					}
 					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, dbType,
 							null);
 				}
@@ -1831,10 +1833,11 @@ public class DialectUtils {
 			}
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
-			if (result.size() == 0)
+			if (result.size() == 0) {
 				return true;
-			else if (result.size() > 1)
+			} else if (result.size() > 1) {
 				return false;
+			}
 			// 表没有主键,单条记录算重复
 			if (null == entityMeta.getIdArray())
 				return false;
@@ -1888,8 +1891,10 @@ public class DialectUtils {
 			int fromWhereIndex = StringUtil.getSymMarkMatchIndex(FROM_REGEX, WHERE_REGEX, tmpQuery, fromIndex - 1);
 			String fromLastStr = (fromWhereIndex == -1) ? tmpQuery.substring(fromIndex)
 					: tmpQuery.substring(fromIndex, fromWhereIndex);
-			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1 || fromLastStr.indexOf("(") != -1)
+			if (fromLastStr.indexOf(",") != -1 || fromLastStr.indexOf(" join ") != -1
+					|| fromLastStr.indexOf("(") != -1) {
 				isComplexQuery = true;
+			}
 
 			// 不存在union且非复杂关联查询
 			if (!isComplexQuery) {

@@ -165,12 +165,14 @@ public class Elastic extends BaseLink {
 	 */
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
-		if (entity != null)
+		if (entity != null) {
 			queryExecutor = new QueryExecutor(sql, entity);
-		else
+		} else {
 			queryExecutor = new QueryExecutor(sql, names, values);
-		if (resultType != null)
+		}
+		if (resultType != null) {
 			queryExecutor.resultType(resultType);
+		}
 		return queryExecutor;
 	}
 }

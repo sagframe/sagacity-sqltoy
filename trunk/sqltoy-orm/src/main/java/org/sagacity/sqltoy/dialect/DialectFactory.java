@@ -782,8 +782,9 @@ public class DialectFactory {
 							unionSqls[i], 0);
 					countSql.append(" select count(1) row_count ")
 							.append((sql_from_index != -1 ? unionSqls[i].substring(sql_from_index) : unionSqls[i]));
-					if (i < unionSqlSize - 1)
+					if (i < unionSqlSize - 1) {
 						countSql.append(" union all ");
+					}
 				}
 				countSql.append(" ) ");
 				sql = countSql.toString();

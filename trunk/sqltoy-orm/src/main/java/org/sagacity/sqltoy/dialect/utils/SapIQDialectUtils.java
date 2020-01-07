@@ -143,8 +143,9 @@ public class SapIQDialectUtils {
 		// 无主键直接返回null
 		if (noPK)
 			return null;
-		if (result == null)
+		if (result == null) {
 			result = fullParamValues[pkIndex];
+		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
 			BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
@@ -189,11 +190,13 @@ public class SapIQDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String insertSql = DialectUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 				null, "@mySeqVariable", false, tableName);
-		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE))
+		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 			insertSql = "DECLARE @mySeqVariable decimal(20) select @mySeqVariable=" + entityMeta.getSequence()
 					+ ".NEXTVAL " + insertSql;
-		if (sqlToyContext.isDebug())
+		}
+		if (sqlToyContext.isDebug()) {
 			logger.debug("batch insert sql:{}", insertSql);
+		}
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType);
 	}
@@ -276,8 +279,9 @@ public class SapIQDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("batch insert sql:{}", insertSql);
+		}
 		if (entityMeta.isHasDefaultValue()) {
 			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn, dbType);
 		}

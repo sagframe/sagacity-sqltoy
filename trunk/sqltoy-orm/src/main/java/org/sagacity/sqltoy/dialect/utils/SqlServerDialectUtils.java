@@ -72,8 +72,9 @@ public class SqlServerDialectUtils {
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		StringBuilder sql = new StringBuilder();
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
 			sql.append("select top " + randomCount);
@@ -82,12 +83,14 @@ public class SqlServerDialectUtils {
 		} else {
 			sql.append(innerSql.replaceFirst("(?i)select ", "select top " + randomCount + " "));
 		}
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append(") sag_random_table ");
+		}
 		sql.append(" order by NEWID() ");
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+		}
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
 				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -171,13 +174,15 @@ public class SqlServerDialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			if (i > 0)
+			if (i > 0) {
 				sql.append(",");
+			}
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		if (StringUtil.isNotBlank(fromTable))
+		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
+		}
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -321,8 +326,9 @@ public class SqlServerDialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			if (i > 0)
+			if (i > 0) {
 				sql.append(",");
+			}
 			sql.append("? as ");
 			sql.append(columnName);
 		}
@@ -575,11 +581,13 @@ public class SqlServerDialectUtils {
 
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
 					null, conn, dbType, true);
-		if (sqlToyContext.isDebug())
+		}
+		if (sqlToyContext.isDebug()) {
 			logger.debug(insertSql);
+		}
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -766,8 +774,9 @@ public class SqlServerDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug("batch insert sql:{}", insertSql);
+		}
 		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
@@ -936,8 +945,9 @@ public class SqlServerDialectUtils {
 			String fromPart = loadSql.substring(fromIndex);
 			String[] sqlChips = fromPart.trim().split("\\s+");
 			String realTableName = (tableName == null) ? sqlChips[1] : tableName;
-			if (realTableName.indexOf(",") != -1)
+			if (realTableName.indexOf(",") != -1) {
 				realTableName = realTableName.substring(0, realTableName.indexOf(","));
+			}
 			String tmp;
 			int chipSize = sqlChips.length;
 			String replaceStr = realTableName;

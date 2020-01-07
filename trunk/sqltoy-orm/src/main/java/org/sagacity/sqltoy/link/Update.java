@@ -142,12 +142,14 @@ public class Update extends BaseLink {
 			throw new IllegalArgumentException("update operate entity is null!");
 		boolean cascade = false;
 		if ((forceCascadeClasses != null && forceCascadeClasses.length > 0)
-				|| (subTableForceUpdateProps != null && !subTableForceUpdateProps.isEmpty()))
+				|| (subTableForceUpdateProps != null && !subTableForceUpdateProps.isEmpty())) {
 			cascade = true;
+		}
 		String[] forceUpdate = forceUpdateProps;
 		// 深度修改
-		if (deeply)
+		if (deeply) {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdate, cascade, forceCascadeClasses,
 				subTableForceUpdateProps, dataSource);
 	}

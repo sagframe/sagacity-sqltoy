@@ -108,8 +108,9 @@ public class ScanEntityAndSqlResource {
 									Class entityClass = Thread.currentThread().getContextClassLoader()
 											.loadClass(loadClass);
 									// 判定是否是sqltoy实体对象
-									if (isSqlToyEntity(entityClass))
+									if (isSqlToyEntity(entityClass)) {
 										entities.add(entityClass);
+									}
 								} catch (ClassNotFoundException e) {
 									e.printStackTrace();
 								}
@@ -164,8 +165,9 @@ public class ScanEntityAndSqlResource {
 					// 加载class 并判定是否为sqltoy的实体类
 					Class entityClass = Thread.currentThread().getContextClassLoader()
 							.loadClass(packageName.concat(".").concat(className));
-					if (isSqlToyEntity(entityClass))
+					if (isSqlToyEntity(entityClass)) {
 						entities.add(entityClass);
+					}
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
@@ -215,8 +217,9 @@ public class ScanEntityAndSqlResource {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						if (url.getProtocol().equals("jar")) {
-							if (realRes.charAt(0) == '/')
+							if (realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
+							}
 							JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
 							Enumeration<JarEntry> entries = jar.entries();
 							// 同样的进行循环迭代
@@ -252,15 +255,18 @@ public class ScanEntityAndSqlResource {
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
-							if (realRes.charAt(0) == '/')
+							if (realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
+							}
 							if (url.getProtocol().equals("jar")) {
-								if (!result.contains(realRes))
+								if (!result.contains(realRes)) {
 									result.add(realRes);
+								}
 							} else {
 								file = new File(url.toURI());
-								if (!result.contains(file))
+								if (!result.contains(file)) {
 									result.add(file);
+								}
 							}
 						}
 					}
@@ -289,13 +295,15 @@ public class ScanEntityAndSqlResource {
 				v.add(file.toURI().toURL());
 				urls = v.elements();
 			} else {
-				if (resource.charAt(0) == '/')
+				if (resource.charAt(0) == '/') {
 					resource = resource.substring(1);
+				}
 				urls = Thread.currentThread().getContextClassLoader().getResources(resource);
 			}
 		} else {
-			if (resource.charAt(0) == '/')
+			if (resource.charAt(0) == '/') {
 				resource = resource.substring(1);
+			}
 			urls = Thread.currentThread().getContextClassLoader().getResources(resource);
 		}
 		return urls;

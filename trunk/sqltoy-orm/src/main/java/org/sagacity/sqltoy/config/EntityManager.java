@@ -145,8 +145,9 @@ public class EntityManager {
 			for (String annotationClass : annotatedClasses) {
 				try {
 					entityClass = Thread.currentThread().getContextClassLoader().loadClass(annotationClass);
-					if (ScanEntityAndSqlResource.isSqlToyEntity(entityClass))
+					if (ScanEntityAndSqlResource.isSqlToyEntity(entityClass)) {
 						entities.add(entityClass);
+					}
 				} catch (ClassNotFoundException e) {
 					// log.error("添加用户自定义实体POJO类错误 找不到此类的.class文件");
 					e.printStackTrace();
@@ -234,8 +235,9 @@ public class EntityManager {
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
 				for (int i = 0; i < allColumnNames.size(); i++) {
-					if (i > 0)
+					if (i > 0) {
 						allColNames.append(",");
+					}
 					allColNames.append(allColumnNames.get(i));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());

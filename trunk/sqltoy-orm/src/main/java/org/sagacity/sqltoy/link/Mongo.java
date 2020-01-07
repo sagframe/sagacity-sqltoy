@@ -140,10 +140,10 @@ public class Mongo extends BaseLink {
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
 				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
-						realMql, (Class)queryExecutor.getResultType());
+						realMql, (Class) queryExecutor.getResultType());
 			} else {
 				return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-						realMql, (Class)queryExecutor.getResultType());
+						realMql, (Class) queryExecutor.getResultType());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -167,7 +167,7 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-					realMql, (Class)queryExecutor.getResultType());
+					realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -190,7 +190,7 @@ public class Mongo extends BaseLink {
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-					realMql, (Class)queryExecutor.getResultType());
+					realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -203,12 +203,14 @@ public class Mongo extends BaseLink {
 	 */
 	private QueryExecutor build() {
 		QueryExecutor queryExecutor = null;
-		if (entity != null)
+		if (entity != null) {
 			queryExecutor = new QueryExecutor(sql, entity);
-		else
+		} else {
 			queryExecutor = new QueryExecutor(sql, names, values);
-		if (resultType != null)
+		}
+		if (resultType != null) {
 			queryExecutor.resultType(resultType);
+		}
 		return queryExecutor;
 	}
 
@@ -233,8 +235,9 @@ public class Mongo extends BaseLink {
 		// 设置分页
 		if (result.getPageNo() == -1) {
 			query.skip(0).limit(Long.valueOf(result.getRecordCount()).intValue());
-		} else
+		} else {
 			query.skip((pageModel.getPageNo() - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
+		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
 		if (rs == null || rs.isEmpty())
@@ -256,9 +259,9 @@ public class Mongo extends BaseLink {
 			Class resultClass) throws Exception {
 		BasicQuery query = new BasicQuery(mql);
 		if (topSize != null) {
-			if (topSize > 1)
+			if (topSize > 1) {
 				query.limit(topSize.intValue());
-			else {
+			} else {
 				// 按比例提取
 				long count = mongoTemplate.count(query, sqlToyConfig.getNoSqlConfigModel().getCollection());
 				query.limit(Double.valueOf(count * topSize.floatValue()).intValue());
@@ -282,15 +285,18 @@ public class Mongo extends BaseLink {
 	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, Class resultClass)
 			throws Exception {
 		String realMql = mql.trim();
-		if (realMql.startsWith("{") && realMql.endsWith("}"))
+		if (realMql.startsWith("{") && realMql.endsWith("}")) {
 			realMql = realMql.substring(1, realMql.length() - 1).trim();
-		if (realMql.startsWith("[") && realMql.endsWith("]"))
+		}
+		if (realMql.startsWith("[") && realMql.endsWith("]")) {
 			realMql = realMql.substring(1, realMql.length() - 1);
+		}
 		String[] aggregates = StringUtil.splitExcludeSymMark(realMql, ",", SqlToyConstants.filters);
 		List<Bson> dbObjects = new ArrayList<Bson>();
 		for (String json : aggregates) {
-			if (StringUtil.isNotBlank(json))
+			if (StringUtil.isNotBlank(json)) {
 				dbObjects.add(Document.parse(json));
+			}
 		}
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
