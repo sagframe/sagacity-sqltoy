@@ -91,21 +91,23 @@ public class SqlServerDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		// 判断是否存在order by
 		int lastFromIndex = StringUtil.matchLastIndex(sqlToyConfig.getSql(dialect), FROM);
 		// 没有order by 自动补充
-		if (lastFromIndex > 0 && !StringUtil.matches(sqlToyConfig.getSql(dialect).substring(lastFromIndex), ORDER_BY))
+		if (lastFromIndex > 0 && !StringUtil.matches(sqlToyConfig.getSql(dialect).substring(lastFromIndex), ORDER_BY)) {
 			sql.append(" order by NEWID() ");
+		}
 		sql.append(" offset ");
 		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" rows fetch next ");
 		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		sql.append(" rows only");
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -134,19 +136,20 @@ public class SqlServerDialect implements Dialect {
 			minSql = sqlWith.getRejectWithSql();
 		}
 		boolean hasUnion = false;
-		if (sqlToyConfig.isHasUnion())
+		if (sqlToyConfig.isHasUnion()) {
 			hasUnion = SqlUtil.hasUnion(minSql, false);
+		}
 		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" SAG_Paginationtable.* from (");
 			sql.append(minSql);
 			sql.append(") as SAG_Paginationtable ");
-		} else
+		} else {
 			sql.append(minSql.replaceFirst("(?i)select ", partSql));
-
-		if (sqlToyConfig.isHasFast())
+		}
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -230,9 +233,10 @@ public class SqlServerDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
 					null, conn, dbType, true);
+		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -246,9 +250,10 @@ public class SqlServerDialect implements Dialect {
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isIdentity && openIdentity)
+		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
 					null, conn, dbType, true);
+		}
 		return updateCount;
 	}
 
@@ -287,9 +292,10 @@ public class SqlServerDialect implements Dialect {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
@@ -307,8 +313,9 @@ public class SqlServerDialect implements Dialect {
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			field = entityMeta.getIdArray()[i];
-			if (i > 0)
+			if (i > 0) {
 				loadSql.append(" and ");
+			}
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}

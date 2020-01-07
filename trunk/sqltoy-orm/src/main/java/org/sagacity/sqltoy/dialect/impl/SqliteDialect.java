@@ -69,23 +69,25 @@ public class SqliteDialect implements Dialect {
 			final String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
-
+		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		// 存在order 或union 则在sql外包裹一层
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append("select sag_random_table.* from (");
+		}
 		sql.append(innerSql);
-		if (hasOrderOrUnion)
+		if (hasOrderOrUnion) {
 			sql.append(") sag_random_table ");
+		}
 		sql.append(" order by random() limit ");
 		sql.append(randomCount);
 
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -111,8 +113,9 @@ public class SqliteDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -142,8 +145,9 @@ public class SqliteDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 
@@ -295,9 +299,10 @@ public class SqliteDialect implements Dialect {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
@@ -307,8 +312,9 @@ public class SqliteDialect implements Dialect {
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			field = entityMeta.getIdArray()[i];
-			if (i > 0)
+			if (i > 0) {
 				loadSql.append(" and ");
+			}
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}

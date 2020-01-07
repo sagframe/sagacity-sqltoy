@@ -133,10 +133,11 @@ public class SybaseIQDialect implements Dialect {
 					int index = 0;
 					for (int i = sqlToyConfig.getFastWithIndex() + 1; i < sqlWith.getWithSqlSet().size(); i++) {
 						aliasTableAs = sqlWith.getWithSqlSet().get(i);
-						if (index == 0)
+						if (index == 0) {
 							sql.append("with ");
-						else
+						} else {
 							sql.append(",");
+						}
 						sql.append(aliasTableAs[0]);
 						sql.append(" as ").append(aliasTableAs[1]);
 						sql.append(" (");
@@ -181,8 +182,9 @@ public class SybaseIQDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -218,18 +220,20 @@ public class SybaseIQDialect implements Dialect {
 			minSql = sqlWith.getRejectWithSql();
 		}
 		boolean hasUnion = false;
-		if (sqlToyConfig.isHasUnion())
+		if (sqlToyConfig.isHasUnion()) {
 			hasUnion = SqlUtil.hasUnion(minSql, false);
+		}
 		if (hasUnion) {
 			sql.append(partSql);
 			sql.append(" SAG_Paginationtable.* from (");
 			sql.append(minSql);
 			sql.append(") as SAG_Paginationtable ");
-		} else
+		} else {
 			sql.append(minSql.replaceFirst("(?i)select ", partSql));
-
-		if (sqlToyConfig.isHasFast())
+		}
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -297,10 +301,11 @@ public class SybaseIQDialect implements Dialect {
 		boolean isIdentity = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
-		if (isOpenIdentity)
+		if (isOpenIdentity) {
 			DialectUtils.executeSql(sqlToyContext,
 					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
 					dbType, true);
+		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -309,9 +314,10 @@ public class SybaseIQDialect implements Dialect {
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isOpenIdentity)
+		if (isOpenIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType,
 					true);
+		}
 		return updateCount;
 	}
 
@@ -332,10 +338,11 @@ public class SybaseIQDialect implements Dialect {
 		boolean isIdentity = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
-		if (isOpenIdentity)
+		if (isOpenIdentity) {
 			DialectUtils.executeSql(sqlToyContext,
 					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
 					dbType, true);
+		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
@@ -344,9 +351,10 @@ public class SybaseIQDialect implements Dialect {
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isOpenIdentity)
+		if (isOpenIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType,
 					true);
+		}
 		return updateCount;
 	}
 
@@ -381,9 +389,10 @@ public class SybaseIQDialect implements Dialect {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException(
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
@@ -393,8 +402,9 @@ public class SybaseIQDialect implements Dialect {
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			field = entityMeta.getIdArray()[i];
-			if (i > 0)
+			if (i > 0) {
 				loadSql.append(" and ");
+			}
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}

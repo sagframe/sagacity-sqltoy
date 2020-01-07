@@ -87,22 +87,25 @@ public class Oracle12Dialect implements Dialect {
 		// 是否有order by,update 2017-5-22
 		boolean hasOrderBy = SqlUtil.hasOrderBy(
 				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		// order by 外包裹一层,确保查询结果是按排序
-		if (hasOrderBy)
+		if (hasOrderBy) {
 			sql.append(" select SAG_Paginationtable.* from (");
+		}
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
-		if (hasOrderBy)
+		if (hasOrderBy) {
 			sql.append(") SAG_Paginationtable ");
+		}
 		sql.append(" offset ");
 		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" rows fetch next ");
 		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		sql.append(" rows only ");
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
@@ -124,20 +127,23 @@ public class Oracle12Dialect implements Dialect {
 		// 是否有order by
 		boolean hasOrderBy = SqlUtil.hasOrderBy(
 				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		// order by 外包裹一层,确保查询结果是按排序
-		if (hasOrderBy)
+		if (hasOrderBy) {
 			sql.append("select SAG_Paginationtable.* from (");
+		}
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
-		if (hasOrderBy)
+		if (hasOrderBy) {
 			sql.append(") SAG_Paginationtable ");
+		}
 		sql.append(" fetch first ");
 		sql.append(topSize);
 		sql.append(" rows only");
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
-
+		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),

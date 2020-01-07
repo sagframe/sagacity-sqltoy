@@ -342,8 +342,9 @@ public class MySqlDialect implements Dialect {
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8))
+		if (dbType.equals(DBType.MYSQL8)) {
 			lockSql = " for update skip locked ";
+		}
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
