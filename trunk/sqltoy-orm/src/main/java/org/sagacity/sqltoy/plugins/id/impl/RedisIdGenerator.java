@@ -52,10 +52,11 @@ public class RedisIdGenerator implements IdGenerator {
 	public static IdGenerator getInstance(SqlToyContext sqlToyContext) {
 		if (me.getRedisTemplate() == null) {
 			Object template = sqlToyContext.getBean("redisTemplate");
-			if (template == null)
+			if (template == null) {
 				logger.error("RedisIdGenerator 未定义redisTemplate!");
-			else
+			} else {
 				me.setRedisTemplate((RedisTemplate<?, ?>) template);
+			}
 		}
 		return me;
 	}
@@ -152,13 +153,14 @@ public class RedisIdGenerator implements IdGenerator {
 		RedisAtomicLong counter = new RedisAtomicLong(GLOBAL_ID_PREFIX.concat(key),
 				redisTemplate.getConnectionFactory());
 		// 设置过期时间
-		if (expireTime != null)
+		if (expireTime != null) {
 			counter.expireAt(expireTime);
+		}
 		// 设置提取多个数量
-		if (increment > 1)
+		if (increment > 1) {
 			return counter.addAndGet(increment);
-		else
-			return counter.incrementAndGet();
+		}
+		return counter.incrementAndGet();
 	}
 
 	/**
