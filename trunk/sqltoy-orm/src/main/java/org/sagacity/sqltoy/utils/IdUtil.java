@@ -121,22 +121,25 @@ public class IdUtil {
 			// 最后一个IP地址(一般机器可能存在多个IP地址)
 			String ipLastNumStr = ipaddress.get(ipaddress.size() - 1);
 			// 避免ipv6 中的%部分字符
-			if (ipLastNumStr.indexOf("%") != -1)
+			if (ipLastNumStr.indexOf("%") != -1) {
 				ipLastNumStr = ipLastNumStr.substring(0, ipLastNumStr.indexOf("%"));
+			}
 			// 替换IP地址中的非数字字符
 			ipLastNumStr = ipLastNumStr.replaceAll("\\.", "").replaceAll("\\:", "");
 			// 保留4位
-			if (ipLastNumStr.length() > size)
+			if (ipLastNumStr.length() > size) {
 				ipLastNumStr = ipLastNumStr.substring(ipLastNumStr.length() - size);
-
+			}
 			// ipv6 16进制
-			if (ipv6)
+			if (ipv6) {
 				serverIdentity = Integer.toString(Integer.parseInt(ipLastNumStr, 16));
-			else
+			} else {
 				serverIdentity = ipLastNumStr;
+			}
 			// 最终保留指定的位数
-			if (serverIdentity.length() > size)
+			if (serverIdentity.length() > size) {
 				serverIdentity = serverIdentity.substring(serverIdentity.length() - size);
+			}
 			// 补足位数
 			serverIdentity = StringUtil.addLeftZero2Len(ipLastNumStr, size);
 		}
