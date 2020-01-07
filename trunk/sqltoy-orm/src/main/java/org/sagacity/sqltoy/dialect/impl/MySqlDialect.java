@@ -84,9 +84,9 @@ public class MySqlDialect implements Dialect {
 			sql.append("select rand() as sag_row_number,sag_random_table.* from (");
 			sql.append(innerSql);
 			sql.append(") sag_random_table ");
-		} else
+		} else {
 			sql.append(innerSql.replaceFirst("(?i)select", "select rand() as sag_row_number,"));
-
+		}
 		sql.append(" )  as sag_random_table1 ");
 		sql.append(" order by sag_random_table1.sag_row_number limit ");
 		sql.append(randomCount);

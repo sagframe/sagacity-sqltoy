@@ -272,8 +272,9 @@ public class DB2Dialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" offset ");
@@ -304,8 +305,9 @@ public class DB2Dialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
-		} else
+		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 

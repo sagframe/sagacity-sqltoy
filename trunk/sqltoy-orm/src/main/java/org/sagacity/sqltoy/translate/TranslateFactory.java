@@ -158,8 +158,9 @@ public class TranslateFactory {
 				row = (Object[]) result.get(i);
 				CacheCheckResult item = new CacheCheckResult();
 				item.setCacheName((String) row[0]);
-				if (row.length > 1)
+				if (row.length > 1) {
 					item.setCacheType((String) row[1]);
+				}
 				checkResult.add(item);
 			}
 			return checkResult;
@@ -169,8 +170,9 @@ public class TranslateFactory {
 				row = (List) result.get(i);
 				CacheCheckResult item = new CacheCheckResult();
 				item.setCacheName((String) row.get(0));
-				if (row.size() > 1)
+				if (row.size() > 1) {
 					item.setCacheType((String) row.get(1));
+				}
 				checkResult.add(item);
 			}
 			return checkResult;
@@ -181,8 +183,9 @@ public class TranslateFactory {
 			for (Object[] row : tmp) {
 				CacheCheckResult item = new CacheCheckResult();
 				item.setCacheName((String) row[0]);
-				if (hasType)
+				if (hasType) {
 					item.setCacheType((String) row[1]);
+				}
 				checkResult.add(item);
 			}
 			return checkResult;
