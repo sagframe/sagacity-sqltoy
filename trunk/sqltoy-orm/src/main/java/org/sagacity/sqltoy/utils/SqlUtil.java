@@ -666,8 +666,9 @@ public class SqlUtil {
 					fieldValue = rs.getObject(i + 1);
 					if (fieldValue != null) {
 						allNull = false;
-						if (fieldValue instanceof java.sql.Clob)
+						if (fieldValue instanceof java.sql.Clob) {
 							fieldValue = clobToString((java.sql.Clob) fieldValue);
+						}
 					}
 					rowData.add(fieldValue);
 				}
@@ -1088,8 +1089,9 @@ public class SqlUtil {
 			}
 		}
 		// 恢复conn原始autoCommit默认值
-		if (hasSetAutoCommit)
+		if (hasSetAutoCommit) {
 			conn.setAutoCommit(!autoCommit);
+		}
 	}
 
 	/**
@@ -1104,13 +1106,15 @@ public class SqlUtil {
 		boolean result = false;
 		int orderByIndex = StringUtil.matchLastIndex(sql, ORDER_BY_PATTERN);
 		// 存在order by
-		if (orderByIndex > lastBracketIndex)
+		if (orderByIndex > lastBracketIndex) {
 			result = true;
+		}
 		// 特殊处理 order by，通过ORder这种非常规写法代表分页时是否进行外层包裹(建议废弃使用)
 		if (judgeUpcase) {
 			int upcaseOrderBy = StringUtil.matchLastIndex(sql, UPCASE_ORDER_PATTERN);
-			if (upcaseOrderBy > lastBracketIndex)
+			if (upcaseOrderBy > lastBracketIndex) {
 				result = false;
+			}
 		}
 		return result;
 	}
@@ -1137,10 +1141,10 @@ public class SqlUtil {
 		} finally {
 			closeQuietly(clobStream);
 		}
-		if (sb == null)
+		if (sb == null) {
 			return null;
-		else
-			return sb.toString();
+		}
+		return sb.toString();
 	}
 
 	/**

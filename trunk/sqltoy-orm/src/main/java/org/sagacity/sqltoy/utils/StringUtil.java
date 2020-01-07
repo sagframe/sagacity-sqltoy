@@ -158,14 +158,17 @@ public class StringUtil {
 		int addSize = length - source.length();
 		StringBuilder addStr = new StringBuilder();
 		// 右边
-		if (leftOrRight == 1)
+		if (leftOrRight == 1) {
 			addStr.append(source);
+		}
 		String sign = (flag == 1) ? " " : "0";
-		for (int i = 0; i < addSize; i++)
+		for (int i = 0; i < addSize; i++) {
 			addStr.append(sign);
+		}
 		// 左边
-		if (leftOrRight == 0)
+		if (leftOrRight == 0) {
 			addStr.append(source);
+		}
 		return addStr.toString();
 	}
 
@@ -183,8 +186,9 @@ public class StringUtil {
 		if (loopSize == 1)
 			return source;
 		StringBuilder result = new StringBuilder(source);
-		for (int i = 1; i < loopSize; i++)
+		for (int i = 1; i < loopSize; i++) {
 			result.append(sign).append(source);
+		}
 		return result.toString();
 	}
 
@@ -203,13 +207,15 @@ public class StringUtil {
 			length = source.length();
 			tmpStr = source;
 		}
-		if (!isLeft)
+		if (!isLeft) {
 			addStr.append(tmpStr);
+		}
 		for (int i = 0; i < size - length; i++) {
 			addStr.append(sign);
 		}
-		if (isLeft)
+		if (isLeft) {
 			addStr.append(tmpStr);
+		}
 		return addStr.toString();
 	}
 
@@ -226,22 +232,25 @@ public class StringUtil {
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
 		int beginSignIndex = source.indexOf(beginMarkSign, startIndex);
 
-		if (beginSignIndex == -1)
+		if (beginSignIndex == -1) {
 			return source.indexOf(endMarkSign, startIndex);
+		}
 		int endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
 		int tmpIndex = 0;
 		while (endIndex > beginSignIndex) {
 			// 寻找下一个开始符号
 			beginSignIndex = source.indexOf(beginMarkSign, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
 			// 找不到或则下一个开始符号位置大于截止符号则返回
-			if (beginSignIndex == -1 || beginSignIndex > endIndex)
+			if (beginSignIndex == -1 || beginSignIndex > endIndex) {
 				return endIndex;
+			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
 			endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
 			// 找不到则返回
-			if (endIndex == -1)
+			if (endIndex == -1) {
 				return tmpIndex;
+			}
 		}
 		return endIndex;
 	}
@@ -274,8 +283,9 @@ public class StringUtil {
 		Pattern startP = Pattern.compile(beginMarkSign);
 		Pattern endP = Pattern.compile(endMarkSign);
 		int[] beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
-		if (beginSignIndex[0] == -1)
+		if (beginSignIndex[0] == -1) {
 			return StringUtil.matchIndex(source, endP, startIndex)[0];
+		}
 		int[] endIndex = StringUtil.matchIndex(source, endP, beginSignIndex[1] + 1);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
@@ -283,14 +293,16 @@ public class StringUtil {
 			beginSignIndex = StringUtil.matchIndex(source, startP,
 					(symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
 			// 找不到或则下一个开始符号位置大于截止符号则返回
-			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0])
+			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0]) {
 				return endIndex[0];
+			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
 			endIndex = StringUtil.matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
 			// 找不到则返回
-			if (endIndex[0] == -1)
+			if (endIndex[0] == -1) {
 				return tmpIndex[0];
+			}
 		}
 		return endIndex[0];
 	}
@@ -434,7 +446,8 @@ public class StringUtil {
 	/**
 	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
 	 * @param source
-	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
+	 * @param splitSign
+	 *            如逗号、分号、冒号或具体字符串,非正则表达式
 	 * @param filter
 	 * @return
 	 */
@@ -516,8 +529,9 @@ public class StringUtil {
 			}
 		}
 		String[] resultStr = new String[splitResults.size()];
-		for (int j = 0; j < splitResults.size(); j++)
+		for (int j = 0; j < splitResults.size(); j++) {
 			resultStr[j] = (String) splitResults.get(j);
+		}
 		return resultStr;
 	}
 
@@ -537,10 +551,11 @@ public class StringUtil {
 		for (int i = 0; i < humpAry.length; i++) {
 			cell = humpAry[i];
 			// 全大写或全小写
-			if (cell.toUpperCase().equals(cell))
+			if (cell.toUpperCase().equals(cell)) {
 				result.append(firstToUpperOtherToLower(cell));
-			else
+			} else {
 				result.append(firstToUpperCase(cell));
+			}
 		}
 		// 首字母变大写
 		if (firstIsUpperCase)
@@ -599,8 +614,9 @@ public class StringUtil {
 				uperCaseCnt = 0;
 			}
 			// 连续大写
-			if (uperCaseCnt == 1 && i != 0)
+			if (uperCaseCnt == 1 && i != 0) {
 				result.append(split);
+			}
 			result.append(Character.toString(chars[i]));
 		}
 		return result.toString();

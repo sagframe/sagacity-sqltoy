@@ -138,8 +138,9 @@ public class SqlUtilsExt {
 				}
 			}
 			// 恢复conn原始autoCommit默认值
-			if (hasSetAutoCommit)
+			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw e;
@@ -194,23 +195,24 @@ public class SqlUtilsExt {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
-			if (jdbcType == java.sql.Types.DATE || jdbcType == java.sql.Types.TIME)
+			if (jdbcType == java.sql.Types.DATE || jdbcType == java.sql.Types.TIME) {
 				realValue = new Date();
-			else if (jdbcType == java.sql.Types.TIMESTAMP)
+			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 				realValue = DateUtil.getTimestamp(null);
-			else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
-					|| jdbcType == java.sql.Types.TINYINT)
+			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
+					|| jdbcType == java.sql.Types.TINYINT) {
 				realValue = Integer.valueOf(defaultValue);
-			else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC)
+			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
 				realValue = new BigDecimal(defaultValue);
-			else if (jdbcType == java.sql.Types.DOUBLE)
+			} else if (jdbcType == java.sql.Types.DOUBLE) {
 				realValue = Double.valueOf(defaultValue);
-			else if (jdbcType == java.sql.Types.BOOLEAN)
+			} else if (jdbcType == java.sql.Types.BOOLEAN) {
 				realValue = Boolean.parseBoolean(defaultValue);
-			else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL)
+			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
-			else
+			} else {
 				realValue = defaultValue;
+			}
 		}
 		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
 	}
