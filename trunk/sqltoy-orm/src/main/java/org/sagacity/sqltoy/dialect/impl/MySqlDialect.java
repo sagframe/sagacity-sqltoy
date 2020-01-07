@@ -75,9 +75,9 @@ public class MySqlDialect implements Dialect {
 		 * row_number 再排序方式性能稍好 同时也可以保证通用性
 		 */
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
-
+		}
 		sql.append("select sag_random_table1.* from (");
 		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
 		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
