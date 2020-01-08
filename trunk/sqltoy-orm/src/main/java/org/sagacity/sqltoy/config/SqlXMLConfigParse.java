@@ -211,13 +211,15 @@ public class SqlXMLConfigParse {
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
 		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql"))
 			return null;
+		String id = sqlElt.attributeValue("id");
+		if (id == null) {
+			throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
+		}
 		// 判断是否xml为精简模式即只有<sql id=""><![CDATA[]]></sql>模式
 		String sqlContent = (sqlElt.isTextOnly()) ? sqlElt.getText() : sqlElt.elementText("value");
-		if (StringUtil.isBlank(sqlContent))
-			throw new RuntimeException("请检查sql配置,没有正确填写sql内容!");
-		String id = sqlElt.attributeValue("id");
-		if (id == null)
-			throw new RuntimeException("请检查sql配置,没有给定sql id!");
+		if (StringUtil.isBlank(sqlContent)) {
+			throw new RuntimeException("请检查sql-id='" + id + "' 的配置,没有正确填写sql内容!");
+		}
 		String countSql = (sqlElt.element("count-sql") == null) ? null : sqlElt.elementText("count-sql");
 
 		// 替换全角空格
