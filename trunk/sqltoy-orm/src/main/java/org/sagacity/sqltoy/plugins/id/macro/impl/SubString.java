@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.plugins.id.macro.impl;
 import java.util.HashMap;
 
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -19,10 +20,16 @@ public class SubString extends AbstractMacro {
 	public String execute(String[] params, HashMap<String, Object> keyValues) {
 		if (params == null || params.length < 3)
 			return "";
-		Object value = keyValues.get(params[0].toLowerCase());
-		if (StringUtil.isBlank(value))
+		String baseParam = params[0].trim();
+		String paramValue = null;
+		// ${paramName} 格式
+		if (baseParam.contains("$")) {
+			paramValue = MacroUtils.replaceParams(baseParam, keyValues);
+		} else {
+			paramValue = keyValues.get(baseParam.toLowerCase()).toString();
+		}
+		if (StringUtil.isBlank(paramValue))
 			return "";
-		String paramValue = value.toString();
 
 		int strLength = paramValue.length();
 		int start = Integer.parseInt(params[1]);
