@@ -113,9 +113,9 @@ public class HttpClientUtils {
 	 */
 	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
-		if (esConfig.getUrl() == null) {
+		if (esConfig.getUrl() == null)
 			throw new IllegalArgumentException("请正确配置sqltoyContext elasticConfigs 指定es的服务地址!");
-		}
+
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
 		HttpEntity httpEntity = null;
 		// sql 模式
@@ -138,10 +138,9 @@ public class HttpClientUtils {
 		HttpEntity reponseEntity = null;
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig.getPath(), esConfig.isEnableSql(), nosqlConfig);
-			if (sqltoyContext.isDebug()) {
+			if (sqltoyContext.isDebug())
 				logger.debug("esRestClient执行:URL=[{}],Path={},执行的JSON=[{}]", esConfig.getUrl(), realUrl,
 						JSON.toJSONString(postValue));
-			}
 			// 默认采用post请求
 			RestClient restClient = null;
 			try {
@@ -156,9 +155,8 @@ public class HttpClientUtils {
 			} catch (Exception e) {
 				throw e;
 			} finally {
-				if (restClient != null) {
+				if (restClient != null)
 					restClient.close();
-				}
 			}
 		} else {
 			realUrl = wrapUrl(esConfig.getUrl(), esConfig.isEnableSql(), nosqlConfig);

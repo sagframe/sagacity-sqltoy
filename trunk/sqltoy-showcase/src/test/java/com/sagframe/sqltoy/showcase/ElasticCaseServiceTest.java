@@ -3,6 +3,8 @@
  */
 package com.sagframe.sqltoy.showcase;
 
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -10,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.showcase.vo.CompanyInfoVO;
 
 /**
  * @project sqltoy-showcase
@@ -29,7 +33,12 @@ public class ElasticCaseServiceTest {
 	 */
 	@Test
 	public void testSearch() {
-
+		String sql = "es_find_company";
+		List<CompanyInfoVO> result = (List<CompanyInfoVO>) sqlToyLazyDao.elastic().sql(sql)
+				.resultType(CompanyInfoVO.class).find();
+		for (CompanyInfoVO company : result) {
+			System.err.println(JSON.toJSONString(company));
+		}
 	}
 
 	/**

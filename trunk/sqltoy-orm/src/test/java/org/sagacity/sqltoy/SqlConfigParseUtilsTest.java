@@ -1,15 +1,13 @@
 package org.sagacity.sqltoy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.utils.CommonUtils;
 
 import com.alibaba.fastjson.JSON;
 
-import junit.framework.TestCase;
-
-public class SqlConfigParseUtilsTest extends TestCase {
+public class SqlConfigParseUtilsTest  {
 
 	@Test
 	public void testProcessSql() {

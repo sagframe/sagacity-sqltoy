@@ -9,12 +9,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
-import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-
-import junit.framework.TestCase;
+import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * @project sqltoy-orm
@@ -23,7 +21,7 @@ import junit.framework.TestCase;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MySqlDialectTest.java,Revision:v1.0,Date:2015年2月13日
  */
-public class MySqlDialectTest extends TestCase {
+public class MySqlDialectTest {
 	@Test
 	public void testInsertDefaultValue() {
 		try {

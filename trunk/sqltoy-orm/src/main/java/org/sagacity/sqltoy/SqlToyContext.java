@@ -331,11 +331,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	private void setWorkerAndDataCenterId() {
 		try {
 			String keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.workerId");
-			if (workerId == null && keyValue != null)
+			if (workerId == null && keyValue != null) {
 				workerId = Integer.parseInt(keyValue);
+			}
 			keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.dataCenterId");
-			if (dataCenterId == null && keyValue != null)
+			if (dataCenterId == null && keyValue != null) {
 				dataCenterId = Integer.parseInt(keyValue);
+			}
 			if (workerId != null && (workerId.intValue() > 0 && workerId.intValue() < 32)) {
 				SqlToyConstants.WORKER_ID = workerId.intValue();
 			} else {
@@ -345,8 +347,9 @@ public class SqlToyContext implements ApplicationContextAware {
 					// 个位作为workerId
 					SqlToyConstants.WORKER_ID = id % 10;
 					// 十位数作为dataCenterId
-					if (dataCenterId == null)
+					if (dataCenterId == null) {
 						SqlToyConstants.DATA_CENTER_ID = id / 10;
+					}
 				} else {
 					SqlToyConstants.WORKER_ID = id;
 				}
@@ -389,8 +392,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setBatchSize(int batchSize) {
 		// 必须要大于零
-		if (batchSize > 0)
+		if (batchSize > 0) {
 			this.batchSize = batchSize;
+		}
 	}
 
 	/**
@@ -479,26 +483,27 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isNotBlank(dialect)) {
 			// 规范数据库方言命名(避免方言和版本一起定义)
 			String tmp = dialect.toLowerCase();
-			if (tmp.startsWith(Dialect.MYSQL))
+			if (tmp.startsWith(Dialect.MYSQL)) {
 				this.dialect = Dialect.MYSQL;
-			else if (tmp.startsWith(Dialect.ORACLE))
+			} else if (tmp.startsWith(Dialect.ORACLE)) {
 				this.dialect = Dialect.ORACLE;
-			else if (tmp.startsWith(Dialect.POSTGRESQL))
+			} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
 				this.dialect = Dialect.POSTGRESQL;
-			else if (tmp.startsWith(Dialect.DB2))
+			} else if (tmp.startsWith(Dialect.DB2)) {
 				this.dialect = Dialect.DB2;
-			else if (tmp.startsWith(Dialect.SQLSERVER))
+			} else if (tmp.startsWith(Dialect.SQLSERVER)) {
 				this.dialect = Dialect.SQLSERVER;
-			else if (tmp.startsWith(Dialect.SQLITE))
+			} else if (tmp.startsWith(Dialect.SQLITE)) {
 				this.dialect = Dialect.SQLITE;
-			else if (tmp.startsWith(Dialect.GAUSSDB))
+			} else if (tmp.startsWith(Dialect.GAUSSDB)) {
 				this.dialect = Dialect.GAUSSDB;
-			else if (tmp.startsWith(Dialect.MARIADB))
+			} else if (tmp.startsWith(Dialect.MARIADB)) {
 				this.dialect = Dialect.MARIADB;
-			else if (tmp.startsWith(Dialect.SAP_HANA))
+			} else if (tmp.startsWith(Dialect.SAP_HANA)) {
 				this.dialect = Dialect.SAP_HANA;
-			else
+			} else {
 				this.dialect = dialect;
+			}
 			scriptLoader.setDialect(this.dialect);
 		}
 	}
@@ -685,8 +690,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
 		if (result == null)
 			return new ElasticEndpoint(id);
-		else
-			return result;
+		return result;
 	}
 
 	/**

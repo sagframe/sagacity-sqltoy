@@ -8,28 +8,23 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.utils.DateUtil;
-
-import junit.framework.TestCase;
 
 /**
  * @project sqltoy-orm
- * @description <p>
- *              本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy 相关增删改操作全部基于对象完成，
- *              请勿以为实际使用sqltoy需要如此复杂的写sql
- *              </p>
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @description 本处测试类仅仅是开发过程中验证不同数据库方言针对sqltoy后台对象操作具体语法实现,实际sqltoy
+ *              相关增删改操作全部基于对象完成， 请勿以为实际使用sqltoy需要如此复杂的写sql
+s * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:OracleDialectTest.java,Revision:v1.0,Date:2015年2月13日
  */
-public class OracleDialectTest extends TestCase {
+public class OracleDialectTest {
 	@Test
 	public void testInsertDefaultValue() {
 		try {
 			String saveOrUpdateSql = "insert into SAG_PK_SEQUENCE (id,name,create_time,sallary) values(SEQ_SAG_PK_ID.nextval,?,?,?)";
 			Connection conn = DBUtils.getConnection(DBUtils.DRIVER_ORACLE,
-					"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM",
-					"lakala", "lakala");
+					"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM", "lakala", "lakala");
 
 			PreparedStatement pst = null;
 			try {
@@ -55,18 +50,16 @@ public class OracleDialectTest extends TestCase {
 	public void testMergeInto() {
 		StringBuilder saveOrUpdateSql = new StringBuilder();
 		saveOrUpdateSql.append("merge into SAG_TEST t1 ");
-		saveOrUpdateSql
-				.append("using (select ? as STAFF_ID,? as NAME,? as CREATE_TIME from dual) t2 ");
+		saveOrUpdateSql.append("using (select ? as STAFF_ID,? as NAME,? as CREATE_TIME from dual) t2 ");
 		saveOrUpdateSql.append("   on (t1.STAFF_ID=t2.STAFF_ID) ");
 		saveOrUpdateSql.append(" when matched then ");
 		saveOrUpdateSql
 				.append("  update set t1.NAME=nvl(t2.NAME,t1.NAME),t1.CREATE_TIME=nvl(t2.CREATE_TIME,t1.CREATE_TIME) ");
 		saveOrUpdateSql.append(" when not matched then ");
-		saveOrUpdateSql
-				.append("  insert (STAFF_ID,NAME,CREATE_TIME) VALUES (nvl(t2.STAFF_ID,SEQ_SAG_TEST.nextval),t2.NAME,t2.CREATE_TIME) ");
+		saveOrUpdateSql.append(
+				"  insert (STAFF_ID,NAME,CREATE_TIME) VALUES (nvl(t2.STAFF_ID,SEQ_SAG_TEST.nextval),t2.NAME,t2.CREATE_TIME) ");
 		Connection conn = DBUtils.getConnection(DBUtils.DRIVER_ORACLE,
-				"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM", "lakala",
-				"lakala");
+				"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM", "lakala", "lakala");
 		List datas = new ArrayList();
 		for (int i = 0; i < 5; i++) {
 			List row = new ArrayList();

@@ -346,8 +346,7 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @param uncachedKeyResult
-	 *            the uncachedKeyResult to set
+	 * @param uncachedKeyResult the uncachedKeyResult to set
 	 */
 	public static void setUncachedKeyResult(String uncachedKeyResult) {
 		UNCACHED_KEY_RESULT = uncachedKeyResult;
@@ -376,7 +375,7 @@ public class SqlToyConstants {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * @todo 获取elasticsearch-sql插件路径
 	 * @return
@@ -384,5 +383,4 @@ public class SqlToyConstants {
 	public static String getESSqlPluginPath() {
 		return getKeyValue("sqltoy.elastic.sql.path", "_nlpcn/sql");
 	}
-
 }
