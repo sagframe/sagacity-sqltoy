@@ -226,6 +226,10 @@ public class HttpClientUtils {
 	private static String wrapUrl(String url, boolean enableSql, NoSqlConfigModel nosqlConfig) {
 		if (nosqlConfig.isSqlMode()) {
 			// elasticsearch6.3.x 通过xpack支持sql查询
+			// 6.3 /_xpack/sql
+			// 7.x /_sql
+			// elasticsearch-sql7.4 /_sql
+			// elasticsearch-sql7.5+ /_nlpcn/sql
 			if (enableSql) {
 				// 判断url中是否已经包含相应路径
 				if (!url.toLowerCase().contains("/_xpack/sql")) {
