@@ -139,10 +139,10 @@
 				]]>
 		</value>
 	</sql>
-	<eql id="es_find_company" fields="" mode="sql">
+	<eql id="es_find_company" fields="company_id,company_name,company_type" mode="sql">
 		<value>
 		<![CDATA[
-		select * from cc_company_info t where t.company_type='1'
+		select * from cc_company_info where company_type='1' limit 10
 		]]>
 		
 		</value>
