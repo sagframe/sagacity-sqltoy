@@ -44,8 +44,8 @@ public class ElasticCaseServiceTest {
 	/**
 	 * 演示分页查询
 	 */
-	@Test
-	public void testFindPage() {
-
-	}
+	// @Test
+	// public void testFindPage() {
+	//
+	// }
 }
