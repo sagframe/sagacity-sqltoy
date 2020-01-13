@@ -81,10 +81,11 @@ public class ElasticSearchUtils {
 		}
 
 		DataSetResult resultSet = null;
-		if (esSql)
+		if (esSql) {
 			resultSet = extractSqlFieldValue(sqlToyContext, sqlToyConfig, json, fields);
-		else
+		} else {
 			resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
+		}
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
@@ -149,9 +150,9 @@ public class ElasticSearchUtils {
 	public static DataSetResult extractFieldValue(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			JSONObject json, String[] fields) {
 		// 聚合数据提取
-		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs() || json.getJSONObject("aggregations") != null)
+		if (sqlToyConfig.getNoSqlConfigModel().isHasAggs() || json.getJSONObject("aggregations") != null) {
 			return extractAggsFieldValue(sqlToyContext, sqlToyConfig, json, fields);
-		else if (json.containsKey("suggest")) {
+		} else if (json.containsKey("suggest")) {
 			return extractSuggestFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		}
 		DataSetResult resultModel = new DataSetResult();
@@ -172,9 +173,9 @@ public class ElasticSearchUtils {
 		JSONObject root = json;
 		String lastKey = valuePath[valuePath.length - 1];
 		for (int i = 0; i < valuePath.length - 1; i++) {
-			if (root != null)
+			if (root != null) {
 				root = root.getJSONObject(valuePath[i]);
-			else {
+			} else {
 				return resultModel;
 			}
 		}
@@ -240,8 +241,9 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].equalsIgnoreCase("suggest"))
+		if (!rootPath[0].equalsIgnoreCase("suggest")) {
 			root = ((JSONObject) root).get("suggest");
+		}
 		for (String str : rootPath) {
 			root = ((JSONObject) root).get(str);
 		}
@@ -463,8 +465,9 @@ public class ElasticSearchUtils {
 			for (Object key : keys) {
 				if (!key.equals("key") && !key.equals("doc_count")) {
 					result = rowJson.get(key.toString());
-					if (result instanceof JSONObject)
+					if (result instanceof JSONObject) {
 						return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+					}
 					return result;
 				}
 			}

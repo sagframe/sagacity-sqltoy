@@ -146,23 +146,24 @@ public class ElasticSearchPlugin {
 			// 没有设置显示字段,且是非聚合查询时将配置的fields设置到查询json中
 			if (!hasFields && !noSqlModel.isHasAggs()) {
 				JSONArray array = new JSONArray();
-				for (String field : fields)
+				for (String field : fields) {
 					array.add(field);
+				}
 				jsonQuery.fluentPut("_source", array);
 			}
 		} else if (hasFields) {
 			Object[] array = (Object[]) jsonQuery.getJSONArray(source).toArray();
 			fields = new String[array.length];
-			for (int i = 0; i < fields.length; i++)
+			for (int i = 0; i < fields.length; i++) {
 				fields[i] = array[i].toString();
+			}
 		} else if (resultClass != null) {
 			Class superClass = resultClass.getSuperclass();
 			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
 					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
 					&& !resultClass.equals(Map.class) && !resultClass.equals(ConcurrentHashMap.class)
 					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
-					&& !LinkedHashMap.class.equals(superClass)
-					&& !ConcurrentHashMap.class.equals(superClass)) {
+					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
 				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
