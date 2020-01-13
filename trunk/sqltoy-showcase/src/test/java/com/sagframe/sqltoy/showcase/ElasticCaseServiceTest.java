@@ -33,7 +33,7 @@ public class ElasticCaseServiceTest {
 	 * 演示普通的查询
 	 */
 	@Test
-	public void testSearch() {
+	public void testSqlSearch() {
 		String sql = "es_find_company";
 		List<CompanyInfoVO> result = (List<CompanyInfoVO>) sqlToyLazyDao.elastic().sql(sql)
 				.resultType(CompanyInfoVO.class).find();
@@ -46,11 +46,38 @@ public class ElasticCaseServiceTest {
 	 * 演示分页查询
 	 */
 	@Test
-	public void testFindPage() {
+	public void testSqlFindPage() {
 		String sql = "es_find_company_page";
 		PaginationModel pageModel = new PaginationModel();
 		PaginationModel result = (PaginationModel) sqlToyLazyDao.elastic().sql(sql).resultType(CompanyInfoVO.class)
 				.findPage(pageModel);
+		System.err.println("resultCount=" + result.getRecordCount());
+		for (CompanyInfoVO company : (List<CompanyInfoVO>) result.getRows()) {
+			System.err.println(JSON.toJSONString(company));
+		}
+	}
+
+	@Test
+	public void testJsonSearch() {
+		String sql = "sys_elastic_test_json";
+		String[] paramNames = { "companyTypes" };
+		Object[] paramValues = { new Object[] { "1", "2" } };
+
+		List<CompanyInfoVO> result = (List<CompanyInfoVO>) sqlToyLazyDao.elastic().sql(sql).names(paramNames)
+				.values(paramValues).resultType(CompanyInfoVO.class).find();
+		for (CompanyInfoVO company : result) {
+			System.err.println(JSON.toJSONString(company));
+		}
+	}
+
+	@Test
+	public void testJsonFindPage() {
+		String sql = "sys_elastic_test_json";
+		String[] paramNames = { "companyTypes" };
+		Object[] paramValues = { new Object[] { "1", "2" } };
+		PaginationModel pageModel = new PaginationModel();
+		PaginationModel result = (PaginationModel) sqlToyLazyDao.elastic().sql(sql).names(paramNames)
+				.values(paramValues).resultType(CompanyInfoVO.class).findPage(pageModel);
 		System.err.println("resultCount=" + result.getRecordCount());
 		for (CompanyInfoVO company : (List<CompanyInfoVO>) result.getRows()) {
 			System.err.println(JSON.toJSONString(company));
