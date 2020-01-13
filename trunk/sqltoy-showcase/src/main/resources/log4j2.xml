@@ -2,15 +2,17 @@
 <Configuration status="DEBUG">
 	<Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
 		</Console>
-		<File name="log" fileName="./sqltoy-showcase.log" append="false">
-			<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %msg%n" />
-		</File>
-		<RollingFile name="RollingFile" filename="./sqltoy-showcase.log" filepattern="./sqltoy-showcase_%d{yyyyMMdd}.log">
-			<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %msg%n" />
+		<RollingFile name="RollingFile"
+			filename="./sqltoy-showcase.log"
+			filepattern="./sqltoy-showcase_%d{yyyyMMdd}.log">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %msg%n" />
 			<Policies>
-				<TimeBasedTriggeringPolicy interval="1"	modulate="true" />
+				<TimeBasedTriggeringPolicy interval="1"
+					modulate="true" />
 			</Policies>
 			<DefaultRolloverStrategy max="3" />
 		</RollingFile>
@@ -18,7 +20,7 @@
 	<Loggers>
 		<Root level="DEBUG">
 			<AppenderRef ref="Console" />
-			<AppenderRef ref="log" />
+			<AppenderRef ref="RollingFile" />
 		</Root>
 	</Loggers>
 </Configuration>
