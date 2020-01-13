@@ -19,7 +19,7 @@ import com.sagframe.sqltoy.showcase.vo.CompanyInfoVO;
 
 /**
  * @project sqltoy-showcase
- * @description 演示elasticsearch5.x+ 版本的使用
+ * @description 演示elasticsearch5.x+ 版本的使用,sql请安装elasticsearch-sql插件
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ElasticCaseServiceTest.java,Revision:v1.0,Date:2019年7月12日
  */
@@ -34,6 +34,7 @@ public class ElasticCaseServiceTest {
 	 */
 	@Test
 	public void testSqlSearch() {
+		// elasticsearch-sql https://github.com/NLPchina/elasticsearch-sql
 		String sql = "es_find_company";
 		List<CompanyInfoVO> result = (List<CompanyInfoVO>) sqlToyLazyDao.elastic().sql(sql)
 				.resultType(CompanyInfoVO.class).find();
@@ -43,10 +44,11 @@ public class ElasticCaseServiceTest {
 	}
 
 	/**
-	 * 演示分页查询
+	 * 演示分页查询，基于sql分页请使用elasticsearch-sql插件
 	 */
 	@Test
 	public void testSqlFindPage() {
+		// elasticsearch-sql https://github.com/NLPchina/elasticsearch-sql
 		String sql = "es_find_company_page";
 		PaginationModel pageModel = new PaginationModel();
 		PaginationModel result = (PaginationModel) sqlToyLazyDao.elastic().sql(sql).resultType(CompanyInfoVO.class)
