@@ -95,8 +95,9 @@ public class Elastic extends BaseLink {
 	 */
 	public Object getOne() {
 		List<?> result = find();
-		if (result != null && !result.isEmpty())
+		if (result != null && !result.isEmpty()) {
 			return result.get(0);
+		}
 		return null;
 	}
 
@@ -107,8 +108,9 @@ public class Elastic extends BaseLink {
 	public List<?> find() {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
-		if (sqlToyConfig.getNoSqlConfigModel() == null)
+		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
 			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
 				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
@@ -127,11 +129,13 @@ public class Elastic extends BaseLink {
 	public List<?> findTop(final int topSize) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
-		if (sqlToyConfig.getNoSqlConfigModel() == null)
+		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
+			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, topSize);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -147,11 +151,13 @@ public class Elastic extends BaseLink {
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
-		if (sqlToyConfig.getNoSqlConfigModel() == null)
+		if (sqlToyConfig.getNoSqlConfigModel() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 				return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			}
 			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 		} catch (Exception e) {
 			e.printStackTrace();
