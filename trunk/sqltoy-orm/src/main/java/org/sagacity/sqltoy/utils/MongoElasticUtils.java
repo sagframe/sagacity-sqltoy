@@ -60,10 +60,11 @@ public class MongoElasticUtils {
 		String mql = sqlToyConfig.getSql(null);
 		// 提取条件参数
 		String[] fullNames = null;
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 			fullNames = SqlConfigParseUtils.getSqlParamsName(mql, false);
-		else
+		} else {
 			fullNames = SqlConfigParseUtils.getNoSqlParamsName(mql, false);
+		}
 		// 提取参数值
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
 		return processNullConditions(mql, fullParamValues, sqlToyConfig.getNoSqlConfigModel().isSqlMode());
@@ -85,10 +86,12 @@ public class MongoElasticUtils {
 			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
 		String mongoJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'").trim();
 		// json格式补全
-		if (!mongoJson.startsWith("{"))
+		if (!mongoJson.startsWith("{")) {
 			mongoJson = "{".concat(mongoJson);
-		if (!mongoJson.endsWith("}"))
+		}
+		if (!mongoJson.endsWith("}")) {
 			mongoJson = mongoJson.concat("}");
+		}
 		return mongoJson;
 	}
 
@@ -105,14 +108,17 @@ public class MongoElasticUtils {
 		}
 		SqlToyResult sqlToyResult = wrapNoSql(sqlToyConfig, paramNames, paramValues);
 		// 替换mql中的参数(双引号)
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
+		}
 		String elasticJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "\"").trim();
 		// json格式补全
-		if (!elasticJson.startsWith("{"))
+		if (!elasticJson.startsWith("{")) {
 			elasticJson = "{".concat(elasticJson);
-		if (!elasticJson.endsWith("}"))
+		}
+		if (!elasticJson.endsWith("}")) {
 			elasticJson = elasticJson.concat("}");
+		}
 		return elasticJson;
 	}
 
@@ -130,8 +136,9 @@ public class MongoElasticUtils {
 		if (queryStr.indexOf(SQL_PSEUDO_START_MARK) == -1 && queryStr.indexOf(MQL_PSEUDO_START_MARK) == -1)
 			return sqlToyResult;
 		boolean isMqlMark = false;
-		if (queryStr.indexOf(MQL_PSEUDO_START_MARK) != -1)
+		if (queryStr.indexOf(MQL_PSEUDO_START_MARK) != -1) {
 			isMqlMark = true;
+		}
 		// 兼容#[] 和<#></#> 两种模式配置
 		String startMark = isMqlMark ? MQL_PSEUDO_START_MARK : SQL_PSEUDO_START_MARK;
 		String endMark = isMqlMark ? MQL_PSEUDO_END_MARK : SQL_PSEUDO_END_MARK;
@@ -174,13 +181,15 @@ public class MongoElasticUtils {
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
 						markContentSql = BLANK;
-						for (int k = paramCnt; k > 0; k--)
+						for (int k = paramCnt; k > 0; k--) {
 							paramValuesList.remove(k + preParamCnt - 1);
+						}
 					} else {
 						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
 						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
-						for (int k = 0; k < logicParamCnt; k++)
+						for (int k = 0; k < logicParamCnt; k++) {
 							paramValuesList.remove(preParamCnt);
+						}
 						paramCnt = paramCnt - logicParamCnt;
 					}
 				}
@@ -196,13 +205,14 @@ public class MongoElasticUtils {
 						beginIndex = endIndex;
 						endIndex = StringUtil.matchIndex(markContentSql.substring(beginIndex), namedPattern);
 						isNull = false;
-						if (null == value)
+						if (null == value) {
 							isNull = true;
-						else if (null != value) {
-							if (value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0)
+						} else if (null != value) {
+							if (value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0) {
 								isNull = true;
-							else if ((value instanceof Collection) && ((Collection) value).isEmpty())
+							} else if ((value instanceof Collection) && ((Collection) value).isEmpty()) {
 								isNull = true;
+							}
 						}
 
 						// 1、参数值为null且非is 条件sql语句
@@ -210,8 +220,9 @@ public class MongoElasticUtils {
 						if (isNull) {
 							// sql中剔除最后部分的#[]内容
 							markContentSql = BLANK;
-							for (int k = paramCnt; k > 0; k--)
+							for (int k = paramCnt; k > 0; k--) {
 								paramValuesList.remove(k + preParamCnt - 1);
+							}
 							break;
 						}
 					}
@@ -241,14 +252,17 @@ public class MongoElasticUtils {
 		StringBuilder result = new StringBuilder();
 		String fragment;
 		for (int i = 0; i < sqlSlice.length; i++) {
-			if (i > 0)
+			if (i > 0) {
 				result.append(" , ");
+			}
 			fragment = sqlSlice[i].trim();
-			if (fragment.startsWith(","))
+			if (fragment.startsWith(",")) {
 				fragment = fragment.substring(1);
+			}
 			// 剔除掉最后的逗号
-			if (fragment.endsWith(","))
+			if (fragment.endsWith(",")) {
 				fragment = fragment.substring(0, fragment.length() - 1);
+			}
 			result.append(fragment);
 		}
 		return result.toString();
@@ -289,12 +303,14 @@ public class MongoElasticUtils {
 					ary = new Object[] { value };
 					isAry = false;
 				}
-				if (isAry)
+				if (isAry) {
 					realMql.append("[");
+				}
 				int i = 0;
 				for (Object var : ary) {
-					if (i > 0)
+					if (i > 0) {
 						realMql.append(",");
+					}
 					if (var instanceof Number) {
 						realMql.append(var.toString());
 					} else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
@@ -309,8 +325,9 @@ public class MongoElasticUtils {
 					}
 					i++;
 				}
-				if (isAry)
+				if (isAry) {
 					realMql.append("]");
+				}
 			}
 			index++;
 			// realMql.append(BLANK);
@@ -340,20 +357,21 @@ public class MongoElasticUtils {
 			start = m.end();
 			value = paramValues[index];
 			Object[] ary = null;
-			if (value.getClass().isArray())
+			if (value.getClass().isArray()) {
 				ary = CollectionUtil.convertArray(value);
-			else if (value instanceof Collection)
+			} else if (value instanceof Collection) {
 				ary = ((Collection) value).toArray();
-			else {
+			} else {
 				ary = new Object[] { value };
 			}
 			int i = 0;
 			for (Object var : ary) {
-				if (i > 0)
+				if (i > 0) {
 					realMql.append(",");
-				if (var instanceof Number)
+				}
+				if (var instanceof Number) {
 					realMql.append(var.toString());
-				else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
+				} else if ((var instanceof Date) || (var instanceof LocalDateTime)) {
 					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd HH:mm:ss")).append(charSign);
 				} else if (var instanceof LocalDate) {
 					realMql.append(charSign).append(DateUtil.formatDate(var, "yyyy-MM-dd")).append(charSign);
@@ -473,8 +491,9 @@ public class MongoElasticUtils {
 		int index = 0;
 		SqlTranslate translateModel;
 		HashMap<String, Integer> map = new HashMap<String, Integer>();
-		for (int i = 0; i < fields.length; i++)
+		for (int i = 0; i < fields.length; i++) {
 			map.put(fields[i].toLowerCase(), i);
+		}
 		for (int i = 0; i < fields.length; i++) {
 			field = fields[i].toLowerCase();
 			if (translateMap.containsKey(field)) {
