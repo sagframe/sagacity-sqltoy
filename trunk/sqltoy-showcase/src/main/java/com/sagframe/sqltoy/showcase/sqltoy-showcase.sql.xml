@@ -139,12 +139,22 @@
 				]]>
 		</value>
 	</sql>
-	<eql id="es_find_company" fields="company_id,company_name,company_type" mode="sql">
+	<eql id="es_find_company"
+		fields="company_id,company_name,company_type" mode="sql">
 		<value>
 		<![CDATA[
 		select * from cc_company_info where company_type='1' limit 10
 		]]>
 		
+		</value>
+	</eql>
+
+	<eql id="es_find_company_page"
+		fields="company_id,company_name,company_type" mode="sql">
+		<value>
+		<![CDATA[
+		select * from cc_company_info where company_type='1' 
+		]]>
 		</value>
 	</eql>
 </sqltoy>

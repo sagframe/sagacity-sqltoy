@@ -28,6 +28,7 @@
 			<list>
 				<bean class="org.sagacity.sqltoy.config.model.ElasticEndpoint">
 					<constructor-arg value="${es.default.url}" />
+					<constructor-arg value="${es.version}" />
 					<property name="id" value="default" />
 					<!-- 6.3.x 版本支持xpack sql查询 <property name="enableSql" value="true" /> -->
 					<property name="username" value="${es.username}" />
