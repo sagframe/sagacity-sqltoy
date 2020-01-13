@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.model.PaginationModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -44,8 +45,15 @@ public class ElasticCaseServiceTest {
 	/**
 	 * 演示分页查询
 	 */
-	// @Test
-	// public void testFindPage() {
-	//
-	// }
+	@Test
+	public void testFindPage() {
+		String sql = "es_find_company_page";
+		PaginationModel pageModel = new PaginationModel();
+		PaginationModel result = (PaginationModel) sqlToyLazyDao.elastic().sql(sql).resultType(CompanyInfoVO.class)
+				.findPage(pageModel);
+		System.err.println("resultCount=" + result.getRecordCount());
+		for (CompanyInfoVO company : (List<CompanyInfoVO>) result.getRows()) {
+			System.err.println(JSON.toJSONString(company));
+		}
+	}
 }
