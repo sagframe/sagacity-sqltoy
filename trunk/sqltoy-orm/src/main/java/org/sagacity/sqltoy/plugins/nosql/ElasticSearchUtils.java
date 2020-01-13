@@ -156,9 +156,14 @@ public class ElasticSearchUtils {
 		}
 		DataSetResult resultModel = new DataSetResult();
 		// 设置总记录数量
-		if (json.getJSONObject("hits") != null) {
-			Long total = json.getJSONObject("hits").getLong("total");
-			resultModel.setTotalCount(total);
+		JSONObject hits = json.getJSONObject("hits");
+		if (hits != null && hits.containsKey("total")) {
+			Object total = hits.get("total");
+			if (total instanceof JSONObject) {
+				resultModel.setTotalCount(((JSONObject) total).getLong("value"));
+			} else {
+				resultModel.setTotalCount(Long.parseLong(total.toString()));
+			}
 		}
 		NoSqlConfigModel nosqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		List result = new ArrayList();
