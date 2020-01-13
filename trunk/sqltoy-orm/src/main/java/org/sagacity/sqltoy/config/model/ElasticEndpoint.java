@@ -37,8 +37,26 @@ public class ElasticEndpoint implements Serializable {
 
 	private RestClient restClient;
 
+	/**
+	 * 默认版本为6.3
+	 * 
+	 * @param url
+	 */
 	public ElasticEndpoint(String url) {
 		this.url = url;
+		this.version = "6.3";
+		this.majorVersion = 6;
+		this.minorVersion = 3;
+	}
+
+	public ElasticEndpoint(String url, String version) {
+		this.url = url;
+		this.version = StringUtil.isBlank(version) ? "6.3" : version;
+		String[] vers = this.version.trim().split("\\.");
+		this.majorVersion = Integer.parseInt(vers[0]);
+		if (vers.length > 1) {
+			this.minorVersion = Integer.parseInt(vers[1]);
+		}
 	}
 
 	/**
@@ -90,11 +108,26 @@ public class ElasticEndpoint implements Serializable {
 	 * 整个连接超时时长,默认3分钟
 	 */
 	private int socketTimeout = 180000;
-	
+
+	/**
+	 * 版本
+	 */
+	private String version;
+
+	/**
+	 * 主版本
+	 */
+	private int majorVersion = 6;
+
+	/**
+	 * 次版本
+	 */
+	private int minorVersion = 0;
+
 	/**
 	 * _xpack sql(6.3.x 版本开始支持sql)
 	 */
-	private boolean enableSql=false;
+	private boolean nativeSql = false;
 
 	/**
 	 * @return the path
@@ -262,8 +295,9 @@ public class ElasticEndpoint implements Serializable {
 			return;
 		if (restClient == null) {
 			String splitSign = ";";
-			if (this.getUrl().indexOf(";") == -1)
+			if (this.getUrl().indexOf(";") == -1) {
 				splitSign = ",";
+			}
 			String[] urls = this.getUrl().split(splitSign);
 			// 当为单一地址时使用httpclient直接调用
 			if (urls.length < 2)
@@ -301,8 +335,9 @@ public class ElasticEndpoint implements Serializable {
 					public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
 						httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
 								.setDefaultRequestConfig(requestConfig);
-						if (hasCrede)
+						if (hasCrede) {
 							httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+						}
 						return httpClientBuilder;
 					}
 				});
@@ -312,17 +347,39 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @return the enableSql
+	 * @return the nativeSql
 	 */
-	public boolean isEnableSql() {
-		return enableSql;
+	public boolean isNativeSql() {
+		return nativeSql;
 	}
 
 	/**
-	 * @param enableSql the enableSql to set
+	 * @param nativeSql
+	 *            the nativeSql to set
 	 */
-	public void setEnableSql(boolean enableSql) {
-		this.enableSql = enableSql;
+	public void setNativeSql(boolean nativeSql) {
+		this.nativeSql = nativeSql;
+	}
+
+	/**
+	 * @return the version
+	 */
+	public String getVersion() {
+		return version;
+	}
+
+	/**
+	 * @return the majorVersion
+	 */
+	public int getMajorVersion() {
+		return majorVersion;
+	}
+
+	/**
+	 * @return the minorVersion
+	 */
+	public int getMinorVersion() {
+		return minorVersion;
 	}
 
 	public static void main(String args[]) {

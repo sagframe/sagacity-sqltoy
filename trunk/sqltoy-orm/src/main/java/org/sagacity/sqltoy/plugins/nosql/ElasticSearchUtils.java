@@ -52,7 +52,8 @@ public class ElasticSearchUtils {
 			Class resultClass) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
-		boolean esSql = (esConfig.isEnableSql() && noSqlModel.isSqlMode());
+		// 原生sql支持(7.5.1 还未支持分页)
+		boolean nativeSql = (esConfig.isNativeSql() && noSqlModel.isSqlMode());
 		// 执行请求并返回json结果
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, sql);
 		if (json == null || json.isEmpty()) {
@@ -70,7 +71,7 @@ public class ElasticSearchUtils {
 			}
 		}
 
-		if (fields == null && esSql) {
+		if (fields == null && nativeSql) {
 			JSONArray cols = json.getJSONArray("columns");
 			fields = new String[cols.size()];
 			int index = 0;
@@ -81,7 +82,7 @@ public class ElasticSearchUtils {
 		}
 
 		DataSetResult resultSet = null;
-		if (esSql) {
+		if (nativeSql) {
 			resultSet = extractSqlFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		} else {
 			resultSet = extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);

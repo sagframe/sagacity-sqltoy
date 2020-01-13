@@ -26,7 +26,6 @@ import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
@@ -61,7 +60,7 @@ public class HttpClientUtils {
 
 	private final static String CONTENT_TYPE = "application/json";
 
-	private final static String GET = "GET";
+	// private final static String GET = "GET";
 
 	private final static String POST = "POST";
 
@@ -121,7 +120,7 @@ public class HttpClientUtils {
 		// sql 模式
 		if (nosqlConfig.isSqlMode()) {
 			// 6.3.x 版本支持xpack sql查询
-			if (esConfig.isEnableSql()) {
+			if (esConfig.isNativeSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
 				httpEntity = new StringEntity(JSON.toJSONString(map), charset);
@@ -137,7 +136,7 @@ public class HttpClientUtils {
 		// 返回结果
 		HttpEntity reponseEntity = null;
 		if (esConfig.getRestClient() != null) {
-			realUrl = wrapUrl(esConfig.getPath(), esConfig.isEnableSql(), nosqlConfig);
+			realUrl = wrapUrl(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
 				logger.debug("esRestClient执行:URL=[{}],Path={},执行的JSON=[{}]", esConfig.getUrl(), realUrl,
 						JSON.toJSONString(postValue));
@@ -161,10 +160,11 @@ public class HttpClientUtils {
 				}
 			}
 		} else {
-			realUrl = wrapUrl(esConfig.getUrl(), esConfig.isEnableSql(), nosqlConfig);
+			realUrl = wrapUrl(esConfig, nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
-			if (sqltoyContext.isDebug())
+			if (sqltoyContext.isDebug()) {
 				logger.debug("httpClient执行URL=[{}],执行的JSON=[{}]", realUrl, JSON.toJSONString(postValue));
+			}
 			httpPost.setEntity(httpEntity);
 
 			// 设置connection是否自动关闭
@@ -218,27 +218,34 @@ public class HttpClientUtils {
 
 	/**
 	 * @todo 重新组织url
-	 * @param url
-	 * @param enableSql
+	 * @param esConfig
 	 * @param nosqlConfig
 	 * @return
 	 */
-	private static String wrapUrl(String url, boolean enableSql, NoSqlConfigModel nosqlConfig) {
+	private static String wrapUrl(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
+		String url = esConfig.getUrl();
+		String nativePath = "_xpack/sql";
+		String sqlPluginPath = "_sql";
+		if (esConfig.getMajorVersion() >= 7) {
+			nativePath = "_sql";
+			if (esConfig.getMajorVersion() > 7 || esConfig.getMinorVersion() >= 5) {
+				sqlPluginPath = "_nlpcn/sql";
+			}
+		}
 		if (nosqlConfig.isSqlMode()) {
 			// elasticsearch6.3.x 通过xpack支持sql查询
 			// 6.3 /_xpack/sql
 			// 7.x /_sql
 			// elasticsearch-sql7.4 /_sql
 			// elasticsearch-sql7.5+ /_nlpcn/sql
-			if (enableSql) {
+			if (esConfig.isNativeSql()) {
 				// 判断url中是否已经包含相应路径
-				if (!url.toLowerCase().contains("/_xpack/sql")) {
-					url = url.concat(url.endsWith("/") ? "_xpack/sql" : "/_xpack/sql");
+				if (!url.toLowerCase().contains(nativePath)) {
+					url = url.concat(url.endsWith("/") ? nativePath : "/".concat(nativePath));
 				}
 			} else {
-				String esPath = SqlToyConstants.getESSqlPluginPath();
-				if (!url.toLowerCase().contains(esPath)) {
-					url = url.concat(url.endsWith("/") ? esPath : "/".concat(esPath));
+				if (!url.toLowerCase().contains(sqlPluginPath)) {
+					url = url.concat(url.endsWith("/") ? sqlPluginPath : "/".concat(sqlPluginPath));
 				}
 			}
 		} else {

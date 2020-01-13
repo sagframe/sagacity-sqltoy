@@ -306,9 +306,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			return null;
 		if (dataSourcesMap.containsKey(dataSourceName)) {
 			return dataSourcesMap.get(dataSourceName);
-		} else {
-			return (DataSource) applicationContext.getBean(dataSourceName);
 		}
+		return (DataSource) applicationContext.getBean(dataSourceName);
 	}
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey) {
@@ -673,13 +672,14 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (elasticEndpointList != null && !elasticEndpointList.isEmpty()) {
 			// 第一个作为默认值
 			defaultElastic = elasticEndpointList.get(0).getId();
-			boolean esEnableSql = Boolean
-					.parseBoolean(SqlToyConstants.getKeyValue("elasticsearch.enable.sql", "false"));
+			boolean nativeSql = Boolean
+					.parseBoolean(SqlToyConstants.getKeyValue("sqltoy.elasticsearch.native.sql", "false"));
 			for (ElasticEndpoint config : elasticEndpointList) {
 				// 初始化restClient
 				config.initRestClient();
-				if (!config.isEnableSql())
-					config.setEnableSql(esEnableSql);
+				if (!config.isNativeSql()) {
+					config.setNativeSql(nativeSql);
+				}
 				elasticEndpoints.put(config.getId().toLowerCase(), config);
 			}
 		}
@@ -688,8 +688,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	public ElasticEndpoint getElasticEndpoint(String id) {
 		ElasticEndpoint result = elasticEndpoints.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase());
 		// 取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
-		if (result == null)
+		if (result == null) {
 			return new ElasticEndpoint(id);
+		}
 		return result;
 	}
 

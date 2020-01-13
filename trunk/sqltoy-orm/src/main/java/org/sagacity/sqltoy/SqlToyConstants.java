@@ -377,12 +377,4 @@ public class SqlToyConstants {
 		return result;
 	}
 
-	/**
-	 * @todo 获取elasticsearch-sql插件路径
-	 * @return
-	 */
-	public static String getESSqlPluginPath() {
-		return getKeyValue("sqltoy.elastic.sql.path", "_nlpcn/sql");
-	}
-
 }
