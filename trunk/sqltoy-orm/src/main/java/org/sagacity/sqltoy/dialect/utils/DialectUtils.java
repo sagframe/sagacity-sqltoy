@@ -131,8 +131,9 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
 		String[] paramsNamed = queryExecutor.getParamsName(sqlToyConfig);
 		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
-		if (startIndex == null && endIndex == null)
+		if (startIndex == null && endIndex == null) {
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
+		}
 		String[] realParamNamed = null;
 		Object[] realParamValue = null;
 		int paramLength;
@@ -206,10 +207,12 @@ public class DialectUtils {
 		// 打印sql
 		SqlExecuteStat.showSql(sql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-		if (fetchSize > 0)
+		if (fetchSize > 0) {
 			pst.setFetchSize(fetchSize);
-		if (maxRows > 0)
+		}
+		if (maxRows > 0) {
 			pst.setMaxRows(maxRows);
+		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
@@ -1173,8 +1176,9 @@ public class DialectUtils {
 				value = rowList.get(j);
 				// 验证主键值是否合法
 				if (StringUtil.isBlank(value)) {
-					throw new IllegalArgumentException("loadAll method must assign value for pk,row:" + i + " pk field:"
-							+ entityMeta.getIdArray()[j]);
+					throw new IllegalArgumentException(
+							entityMeta.getSchemaTable() + " loadAll method must assign value for pk,row:" + i
+									+ " pk field:" + entityMeta.getIdArray()[j]);
 				}
 				if (!idValues[j].contains(value)) {
 					idValues[j].add(value);
@@ -1686,8 +1690,8 @@ public class DialectUtils {
 			}
 		}
 		if (!validator) {
-			throw new IllegalArgumentException(
-					"delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
+			throw new IllegalArgumentException(entityMeta.getSchemaTable()
+					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
 		if (!entityMeta.getOneToManys().isEmpty()) {
