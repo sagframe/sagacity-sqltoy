@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @description 字符串处理常用功能
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:StringUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM
+ * @Modification {Date:2020-01-14,优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class StringUtil {
@@ -25,10 +26,15 @@ public class StringUtil {
 	 * 字符串中包含中文的表达式
 	 */
 	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
-
-	// String regex = "(^\")|([^\\\\]\")";
-	// String regex = "(^\\')|([^\\\\]\\')";
+	
+	/**
+	 * 单引号匹配正则表达式
+	 */
 	private static Pattern quotaPattern = Pattern.compile("(^\\')|([^\\\\]\\')");
+
+	/**
+	 * 双引号匹配正则表达式
+	 */
 	private static Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
 
 	/**
