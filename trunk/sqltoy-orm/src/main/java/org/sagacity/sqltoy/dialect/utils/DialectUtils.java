@@ -1496,7 +1496,7 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
-				throw new IllegalArgumentException("通过对象进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException("通过对象对表:" + entityMeta.getTableName() + "进行update操作,主键字段必须要赋值!");
 			}
 		}
 		// 构建update语句
@@ -1633,7 +1633,8 @@ public class DialectUtils {
 						iter.remove();
 						break;
 					} else {
-						throw new IllegalArgumentException("通过对象进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+						throw new IllegalArgumentException("通过对象对表" + entityMeta.getSchemaTable()
+								+ "进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
 					}
 				}
 			}
@@ -1735,7 +1736,8 @@ public class DialectUtils {
 			idsValue = idValues.get(i);
 			for (Object obj : idsValue) {
 				if (StringUtil.isBlank(obj)) {
-					throw new IllegalArgumentException("第[" + i + "]行数据主键值存在空,批量删除以主键为依据，主键不能为空!");
+					throw new IllegalArgumentException(
+							"第[" + i + "]行数据主键值存在空,批量删除以主键为依据，表:" + entityMeta.getSchemaTable() + " 主键不能为空!");
 				}
 			}
 		}
