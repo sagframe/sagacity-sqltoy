@@ -471,6 +471,7 @@ public class StringUtil {
 			beginSign = (String) entry.getKey();
 			endSign = (String) entry.getValue();
 			beginSignIndex = source.indexOf(beginSign);
+
 			if (beginSignIndex != -1 && source.indexOf(endSign, beginSignIndex + 1) != -1) {
 				filters[count][0] = beginSign;
 				filters[count][1] = endSign;
@@ -685,4 +686,12 @@ public class StringUtil {
 		}
 		return beforeStr.concat(replaceBody).concat(endStr);
 	}
+
+	// public static void main(String[] args) {
+	// String tmp = CommonUtils.readFileAsString("classpath:/showcase.txt",
+	// "UTF-8");
+	// System.err.println(tmp.charAt(1));
+	// int index = StringUtil.matchIndex(tmp, "^\\\"");
+	// System.err.println(index);
+	// }
 }
