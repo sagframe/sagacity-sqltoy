@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
@@ -23,8 +25,11 @@ public class StringUtil {
 	 * 字符串中包含中文的表达式
 	 */
 	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
-	private static Pattern quotaPattern = Pattern.compile("[^\\\\]?\\'");
-	private static Pattern twoQuotaPattern = Pattern.compile("[^\\\\]?\"");
+
+	// String regex = "(^\")|([^\\\\]\")";
+	// String regex = "(^\\')|([^\\\\]\\')";
+	private static Pattern quotaPattern = Pattern.compile("(^\\')|([^\\\\]\\')");
+	private static Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -244,6 +249,7 @@ public class StringUtil {
 			beginSignIndex = source.indexOf(beginMarkSign, startIndex);
 		} else {
 			beginSignIndex = StringUtil.matchIndex(source, pattern, startIndex)[0];
+			// 转义符号占一位,开始位后移一位
 			if (beginSignIndex > startIndex) {
 				beginSignIndex = beginSignIndex + 1;
 			}
@@ -256,6 +262,7 @@ public class StringUtil {
 			endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
 		} else {
 			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+			// 转义符号占一位,开始位后移一位
 			if (endIndex > beginSignIndex + 1) {
 				endIndex = endIndex + 1;
 			}
@@ -267,6 +274,7 @@ public class StringUtil {
 				beginSignIndex = source.indexOf(beginMarkSign, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
 			} else {
 				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
+				// 转义符号占一位,开始位后移一位
 				if (beginSignIndex > endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
 				}
@@ -282,6 +290,7 @@ public class StringUtil {
 				endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
 			} else {
 				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+				// 转义符号占一位,开始位后移一位
 				if (endIndex > beginSignIndex + 1) {
 					endIndex = endIndex + 1;
 				}
@@ -770,21 +779,21 @@ public class StringUtil {
 
 	public static void main(String[] args) {
 		String tmp = CommonUtils.readFileAsString("classpath:/showcase.txt", "UTF-8");
-		System.err.println(tmp);
-		String regex = "[^\\\\]?\"";
-		// System.err.println(tmp.m);
-		// String regex = "\\'";
-		// System.err.println(tmp.indexOf(str));
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(tmp);
-		while (m.find()) {
-			System.err.println(m.start());
-			System.err.println(m.group());
-			// System.err.println(m.group().substring(1));
-			// System.err.println(tmp.charAt(m.start() - 1));
+		String[] strs = StringUtil.splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
+		for (String s : strs) {
+			System.err.println("[" + s + "]");
 		}
-		// return m.start();
-		// int index = StringUtil.matchIndex(tmp, "^[^\\]\'");
-		// System.err.println(index);
+		// System.err.println(tmp);
+		// String regex = "(^\")|([^\\\\]\")";
+		// // String regex = "(^\\')|([^\\\\]\\')";
+		// Pattern p = Pattern.compile(regex);
+		// Matcher m = p.matcher(tmp);
+		// while (m.find()) {
+		// System.err.println(m.start());
+		// System.err.println(m.group());
+		// // System.err.println(m.group().substring(1));
+		// // System.err.println(tmp.charAt(m.start() - 1));
+		// }
+
 	}
 }
