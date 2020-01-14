@@ -23,6 +23,8 @@ public class StringUtil {
 	 * 字符串中包含中文的表达式
 	 */
 	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
+	private static Pattern dotPattern = Pattern.compile("[^\\\\]?\\'");
+	private static Pattern twoDotPattern = Pattern.compile("[^\\\\]?\"");
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -228,25 +230,62 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int getSymMarkIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
+		Pattern pattern = null;
+		// 单引号和双引号，排除\' 和 \"
+		if (beginMarkSign.equals("'")) {
+			pattern = dotPattern;
+		} else if (beginMarkSign.equals("\"")) {
+			pattern = twoDotPattern;
+		}
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
-		int beginSignIndex = source.indexOf(beginMarkSign, startIndex);
-
+		int beginSignIndex = -1;
+		if (pattern == null) {
+			beginSignIndex = source.indexOf(beginMarkSign, startIndex);
+		} else {
+			beginSignIndex = StringUtil.matchIndex(source, pattern, startIndex)[0];
+			if (beginSignIndex > startIndex) {
+				beginSignIndex = beginSignIndex + 1;
+			}
+		}
 		if (beginSignIndex == -1) {
 			return source.indexOf(endMarkSign, startIndex);
 		}
-		int endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
+		int endIndex = -1;
+		if (pattern == null) {
+			endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
+		} else {
+			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+			if (endIndex > beginSignIndex + 1) {
+				endIndex = endIndex + 1;
+			}
+		}
 		int tmpIndex = 0;
 		while (endIndex > beginSignIndex) {
 			// 寻找下一个开始符号
-			beginSignIndex = source.indexOf(beginMarkSign, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
+			if (pattern == null) {
+				beginSignIndex = source.indexOf(beginMarkSign, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
+			} else {
+				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
+				if (beginSignIndex > endIndex + 1) {
+					beginSignIndex = beginSignIndex + 1;
+				}
+			}
+
 			// 找不到或则下一个开始符号位置大于截止符号则返回
 			if (beginSignIndex == -1 || beginSignIndex > endIndex) {
 				return endIndex;
 			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
+			if (pattern == null) {
+				endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
+			} else {
+				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+				if (endIndex > beginSignIndex + 1) {
+					endIndex = endIndex + 1;
+				}
+			}
 			// 找不到则返回
 			if (endIndex == -1) {
 				return tmpIndex;
@@ -465,23 +504,51 @@ public class StringUtil {
 		String beginSign;
 		String endSign;
 		int beginSignIndex;
+		int endSignIndex;
 		Map.Entry entry;
+		Pattern pattern;
+		// 排除不存在的过滤对称符号
 		while (iter.hasNext()) {
 			entry = (Map.Entry) iter.next();
 			beginSign = (String) entry.getKey();
 			endSign = (String) entry.getValue();
-			beginSignIndex = source.indexOf(beginSign);
 
-			if (beginSignIndex != -1 && source.indexOf(endSign, beginSignIndex + 1) != -1) {
+			pattern = null;
+			if (beginSign.equals("'")) {
+				pattern = dotPattern;
+			} else if (beginSign.equals("\"")) {
+				pattern = twoDotPattern;
+			}
+			endSignIndex = -1;
+			if (pattern == null) {
+				beginSignIndex = source.indexOf(beginSign);
+				if (beginSignIndex != -1) {
+					endSignIndex = source.indexOf(endSign, beginSignIndex + 1);
+				}
+			} else {
+				beginSignIndex = StringUtil.matchIndex(source, pattern);
+				// 转义符号占一位,开始位后移一位
+				if (beginSignIndex > 0) {
+					beginSignIndex = beginSignIndex + 1;
+				}
+				if (beginSignIndex >= 0) {
+					endSignIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+					// 转义符号占一位,开始位后移一位
+					if (endSignIndex > beginSignIndex + 1) {
+						endSignIndex = endSignIndex + 1;
+					}
+				}
+			}
+			if (beginSignIndex != -1 && endSignIndex != -1) {
 				filters[count][0] = beginSign;
 				filters[count][1] = endSign;
 				count++;
 			}
 		}
 		// 没有对称符合过滤则直接返回分割结果
-		if (count == 0)
+		if (count == 0) {
 			return source.split(splitSign);
-
+		}
 		ArrayList splitResults = new ArrayList();
 		int preSplitIndex = 0;
 		int splitSignLength = splitSign.length();
@@ -497,7 +564,21 @@ public class StringUtil {
 			minEndIndex = -1;
 			meter = 0;
 			for (int i = 0; i < count; i++) {
-				symBeginIndex = source.indexOf(filters[i][0], skipIndex);
+				pattern = null;
+				if (filters[i][0].equals("'")) {
+					pattern = dotPattern;
+				} else if (filters[i][0].equals("\"")) {
+					pattern = twoDotPattern;
+				}
+				if (pattern == null) {
+					symBeginIndex = source.indexOf(filters[i][0], skipIndex);
+				} else {
+					symBeginIndex = StringUtil.matchIndex(source, pattern);
+					// 正则表达式有一个转义符号占一位
+					if (symBeginIndex > 0) {
+						symBeginIndex = symBeginIndex + 1;
+					}
+				}
 				symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skipIndex);
 				if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBegin))) {
 					minBegin = symBeginIndex;
@@ -687,11 +768,23 @@ public class StringUtil {
 		return beforeStr.concat(replaceBody).concat(endStr);
 	}
 
-	// public static void main(String[] args) {
-	// String tmp = CommonUtils.readFileAsString("classpath:/showcase.txt",
-	// "UTF-8");
-	// System.err.println(tmp.charAt(1));
-	// int index = StringUtil.matchIndex(tmp, "^\\\"");
-	// System.err.println(index);
-	// }
+	public static void main(String[] args) {
+		String tmp = CommonUtils.readFileAsString("classpath:/showcase.txt", "UTF-8");
+		System.err.println(tmp);
+		String regex = "[^\\\\]?\"";
+		// System.err.println(tmp.m);
+		// String regex = "\\'";
+		// System.err.println(tmp.indexOf(str));
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(tmp);
+		while (m.find()) {
+			System.err.println(m.start());
+			System.err.println(m.group());
+			// System.err.println(m.group().substring(1));
+			// System.err.println(tmp.charAt(m.start() - 1));
+		}
+		// return m.start();
+		// int index = StringUtil.matchIndex(tmp, "^[^\\]\'");
+		// System.err.println(index);
+	}
 }
