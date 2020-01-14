@@ -23,8 +23,8 @@ public class StringUtil {
 	 * 字符串中包含中文的表达式
 	 */
 	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
-	private static Pattern dotPattern = Pattern.compile("[^\\\\]?\\'");
-	private static Pattern twoDotPattern = Pattern.compile("[^\\\\]?\"");
+	private static Pattern quotaPattern = Pattern.compile("[^\\\\]?\\'");
+	private static Pattern twoQuotaPattern = Pattern.compile("[^\\\\]?\"");
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -233,9 +233,9 @@ public class StringUtil {
 		Pattern pattern = null;
 		// 单引号和双引号，排除\' 和 \"
 		if (beginMarkSign.equals("'")) {
-			pattern = dotPattern;
+			pattern = quotaPattern;
 		} else if (beginMarkSign.equals("\"")) {
-			pattern = twoDotPattern;
+			pattern = twoQuotaPattern;
 		}
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
@@ -515,9 +515,9 @@ public class StringUtil {
 
 			pattern = null;
 			if (beginSign.equals("'")) {
-				pattern = dotPattern;
+				pattern = quotaPattern;
 			} else if (beginSign.equals("\"")) {
-				pattern = twoDotPattern;
+				pattern = twoQuotaPattern;
 			}
 			endSignIndex = -1;
 			if (pattern == null) {
@@ -566,9 +566,9 @@ public class StringUtil {
 			for (int i = 0; i < count; i++) {
 				pattern = null;
 				if (filters[i][0].equals("'")) {
-					pattern = dotPattern;
+					pattern = quotaPattern;
 				} else if (filters[i][0].equals("\"")) {
-					pattern = twoDotPattern;
+					pattern = twoQuotaPattern;
 				}
 				if (pattern == null) {
 					symBeginIndex = source.indexOf(filters[i][0], skipIndex);
