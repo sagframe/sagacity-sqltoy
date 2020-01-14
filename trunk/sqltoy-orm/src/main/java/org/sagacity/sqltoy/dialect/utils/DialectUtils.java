@@ -1092,8 +1092,8 @@ public class DialectUtils {
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
 			if (StringUtil.isBlank(pkValues[i])) {
-				throw new IllegalArgumentException(
-						"load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
+				throw new IllegalArgumentException(entityMeta.getSchemaTable()
+						+ "load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
@@ -1295,8 +1295,9 @@ public class DialectUtils {
 			}
 		}
 
-		if (sqlToyContext.isDebug())
+		if (sqlToyContext.isDebug()) {
 			logger.debug(insertSql);
+		}
 
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
@@ -1358,10 +1359,10 @@ public class DialectUtils {
 			EntityMeta subTableEntityMeta;
 			String insertSubTableSql;
 			SavePKStrategy savePkStrategy;
-			logger.info("执行save操作的级联子表批量保存!");
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				final String[] mappedFields = oneToMany.getMappedFields();
 				subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+				logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 				subTableData = (List) PropertyUtils.getProperty(entity, oneToMany.getProperty());
 				if (subTableData != null && !subTableData.isEmpty()) {
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
