@@ -2194,8 +2194,9 @@ public class DialectUtils {
 			return paramCnt;
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
 		String sign = "?";
-		if (queryStr.indexOf("?") == -1)
+		if (queryStr.indexOf("?") == -1) {
 			sign = ":";
+		}
 		int index = 0;
 		while ((index = queryStr.indexOf(sign, index + 1)) != -1) {
 			paramCnt++;
