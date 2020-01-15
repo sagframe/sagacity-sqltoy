@@ -20,7 +20,7 @@
 		<repository>
 			<id>sagframe-release</id>
 			<name>sagframe-release</name>
-			<url>http://www.sagframe.com:8081/repository/public</url>
+			<url>http://www.sagframe.com/nexus/repository/sagframe-release</url>
 		</repository>
 		<repository>
 			<id>nexus-aliyun</id>
@@ -32,8 +32,9 @@
 
 	<distributionManagement>
 
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com:8081/repository/maven-releases</url> 
+		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
 			</repository> -->
+
 		<repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
@@ -110,11 +111,8 @@
 			<version>${mysql.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc8 -->
-		<!-- <dependency>
-			<groupId>com.github.noraui</groupId>
-			<artifactId>ojdbc8</artifactId>
-			<version>${ojdbc.version}</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>com.github.noraui</groupId> <artifactId>ojdbc8</artifactId> 
+			<version>${ojdbc.version}</version> </dependency> -->
 		<dependency>
 			<groupId>com.oracle.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
