@@ -13,7 +13,7 @@
 		<beanutils.version>1.9.4</beanutils.version>
 		<freemarker.version>2.3.29</freemarker.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
-		<postgresql.version>42.2.6</postgresql.version>
+		<postgresql.version>42.2.9</postgresql.version>
 		<mssql.version>7.4.1.jre8</mssql.version>
 	</properties>
 	<repositories>
@@ -32,10 +32,10 @@
 
 	<distributionManagement>
 
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
-			</repository> -->
+		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
+			</repository>
 
-		<repository>
+		<!-- <repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
@@ -45,7 +45,7 @@
 			<name>Department 
 			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository>
+		</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.dom4j/dom4j -->
@@ -110,9 +110,7 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.github.noraui/ojdbc8 -->
-		<!-- <dependency> <groupId>com.github.noraui</groupId> <artifactId>ojdbc8</artifactId> 
-			<version>${ojdbc.version}</version> </dependency> -->
+	
 		<dependency>
 			<groupId>com.oracle.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
@@ -124,12 +122,14 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
+			<optional>true</optional>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
+		
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 	</dependencies>
