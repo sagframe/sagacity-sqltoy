@@ -117,6 +117,11 @@ public class EntityMeta implements Serializable {
 	private Integer bizIdLength;
 
 	/**
+	 * 流水部分长度
+	 */
+	private Integer bizIdSequenceSize = -1;
+
+	/**
 	 * id产生策略
 	 */
 	private PKStrategy idStrategy;
@@ -699,6 +704,21 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
+	 * @return the bizIdSequenceSize
+	 */
+	public Integer getBizIdSequenceSize() {
+		return bizIdSequenceSize;
+	}
+
+	/**
+	 * @param bizIdSequenceSize
+	 *            the bizIdSequenceSize to set
+	 */
+	public void setBizIdSequenceSize(Integer bizIdSequenceSize) {
+		this.bizIdSequenceSize = bizIdSequenceSize;
+	}
+
+	/**
 	 * @param bizIdSignature
 	 *            the bizIdSignature to set
 	 */
@@ -759,12 +779,11 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param allColumnNames the allColumnNames to set
+	 * @param allColumnNames
+	 *            the allColumnNames to set
 	 */
 	public void setAllColumnNames(String allColumnNames) {
 		this.allColumnNames = allColumnNames;
 	}
-
-	
 
 }

@@ -7,7 +7,8 @@
 	<xsd:element name="quickvo">
 		<xsd:complexType>
 			<xsd:choice maxOccurs="unbounded">
-				<xsd:element name="field-keywords" maxOccurs="1" minOccurs="0">
+				<xsd:element name="field-keywords" maxOccurs="1"
+					minOccurs="0">
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[字段命名关键词,用逗号分隔]]></xsd:documentation>
 					</xsd:annotation>
@@ -138,6 +139,7 @@
 									<xsd:attribute name="column" use="required"
 										type="xsd:string" />
 									<xsd:attribute name="length" type="xsd:int" />
+									<xsd:attribute name="sequence-size" type="xsd:int" />
 									<xsd:attribute name="signature" type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>

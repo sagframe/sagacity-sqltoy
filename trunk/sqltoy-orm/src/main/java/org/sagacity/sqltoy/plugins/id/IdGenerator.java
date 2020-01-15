@@ -14,14 +14,18 @@ import java.util.Date;
 public interface IdGenerator {
 	/**
 	 * @todo <b>返回id</b>
-	 * @param tableName       为特殊的主键生成策略预留表名
-	 * @param signature       识别符号
-	 * @param relatedColValue 关联字段的值
+	 * @param tableName
+	 *            为特殊的主键生成策略预留表名
+	 * @param signature
+	 *            识别符号
+	 * @param relatedColValue
+	 *            关联字段的值
 	 * @param bizDate
 	 * @param jdbcType
 	 * @param length
+	 * @param sequencSize
 	 * @return
 	 */
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length);
+			Date bizDate, int jdbcType, int length, int sequencSize);
 }

@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.6</version>
+	<version>4.9</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dom4j.version>2.1.1</dom4j.version>
-		<log4j.version>2.12.1</log4j.version>
-		<mysql.version>8.0.17</mysql.version>
-		<beanutils.version>1.9.3</beanutils.version>
+		<log4j.version>2.13.0</log4j.version>
+		<mysql.version>8.0.18</mysql.version>
+		<beanutils.version>1.9.4</beanutils.version>
 		<freemarker.version>2.3.29</freemarker.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<postgresql.version>42.2.6</postgresql.version>

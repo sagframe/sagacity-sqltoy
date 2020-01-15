@@ -527,14 +527,15 @@ public class DialectUtils {
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
+							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength);
+							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
@@ -602,14 +603,15 @@ public class DialectUtils {
 				}
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
+							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength);
+							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
@@ -1287,13 +1289,14 @@ public class DialectUtils {
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
 				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
-						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength);
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength,
+						entityMeta.getBizIdSequenceSize());
 				needUpdatePk = true;
 			}
 			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
 				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-						bizIdLength);
+						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
 				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
@@ -1451,12 +1454,13 @@ public class DialectUtils {
 				if (StringUtil.isBlank(rowData[pkIndex])) {
 					isAssigned = false;
 					rowData[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength);
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
+							entityMeta.getBizIdSequenceSize());
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
-							bizIdLength);
+							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
 					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}

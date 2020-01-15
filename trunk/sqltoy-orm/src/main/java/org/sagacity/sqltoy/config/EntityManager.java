@@ -485,6 +485,7 @@ public class EntityManager {
 			entityMeta.setBizIdLength(bizId.length());
 			entityMeta.setBizIdSignature(bizId.signature());
 			entityMeta.setHasBizIdConfig(true);
+			entityMeta.setBizIdSequenceSize(bizId.sequenceSize());
 			entityMeta.setBusinessIdField(field.getName());
 			// 生成业务主键关联的字段(主键值生成需要其他字段的值进行组合,入交易业务ID组合交易类别码等)
 			if (bizId.relatedColumns() != null && bizId.relatedColumns().length > 0) {

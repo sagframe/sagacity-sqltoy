@@ -491,8 +491,9 @@ public class ShardingUtils {
 		if (idGenerator != null) {
 			String table = entityMeta.getSchemaTable();
 			int idType = entityMeta.getIdType();
+			// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
 			int idLength = entityMeta.getIdLength();
-
+			int sequenceSize = entityMeta.getBizIdSequenceSize();
 			String[] reflectColumns = entityMeta.getFieldsArray();
 			// 标识符
 			String signature = entityMeta.getBizIdSignature();
@@ -519,7 +520,7 @@ public class ShardingUtils {
 						}
 					}
 					PropertyUtils.setProperty(entities.get(i), pks[0], idGenerator.getId(table, signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idType, idLength));
+							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idType, idLength, sequenceSize));
 				}
 			}
 		}

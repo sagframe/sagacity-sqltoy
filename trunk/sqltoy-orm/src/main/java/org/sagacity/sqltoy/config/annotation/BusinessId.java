@@ -30,7 +30,14 @@ public @interface BusinessId {
 	 * 
 	 * @return
 	 */
-	int length() default 16;
+	int length() default -1;
+
+	/**
+	 * 流水长度
+	 * 
+	 * @return
+	 */
+	int sequenceSize() default -1;
 
 	/**
 	 * 关联字段

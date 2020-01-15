@@ -1050,10 +1050,9 @@ public class SqlToyDaoSupport {
 		}
 		IdGenerator idGenerator = (entityMeta.getBusinessIdGenerator() == null) ? entityMeta.getIdGenerator()
 				: entityMeta.getBusinessIdGenerator();
-		return idGenerator
-				.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(), entityMeta.getBizIdRelatedColumns(),
-						relatedColValue, new Date(), businessIdType, entityMeta.getBizIdLength())
-				.toString();
+		return idGenerator.getId(entityMeta.getTableName(), entityMeta.getBizIdSignature(),
+				entityMeta.getBizIdRelatedColumns(), relatedColValue, new Date(), businessIdType,
+				entityMeta.getBizIdLength(), entityMeta.getBizIdSequenceSize()).toString();
 	}
 
 	/**

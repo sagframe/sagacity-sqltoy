@@ -87,7 +87,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length) {
+			Date bizDate, int jdbcType, int length, int sequencSize) {
 		String key = (signature == null ? "" : signature);
 		// 主键生成依赖业务的相关字段值
 		HashMap<String, Object> keyValueMap = new HashMap<String, Object>();
@@ -100,8 +100,8 @@ public class RedisIdGenerator implements IdGenerator {
 		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
 		// 没有宏
 		if (realKey.equals(key)) {
-			// 长度够放下6位日期
-			if (length - realKey.length() > 6) {
+			// 长度够放下6位日期 或没有设置长度且流水长度小于6,则默认增加一个6位日期作为前置
+			if ((length <= 0 && sequencSize < 6) || (length - realKey.length() > 6)) {
 				Date realBizDate = (bizDate == null ? new Date() : bizDate);
 				realKey = realKey
 						.concat(DateUtil.formatDate(realBizDate, (dateFormat == null) ? "yyMMdd" : dateFormat));
@@ -120,7 +120,8 @@ public class RedisIdGenerator implements IdGenerator {
 		} else {
 			result = generateId(realKey);
 		}
-		return realKey.concat(StringUtil.addLeftZero2Len("" + result, length - realKey.length()));
+		return realKey.concat(
+				StringUtil.addLeftZero2Len("" + result, (sequencSize > 0) ? sequencSize : length - realKey.length()));
 	}
 
 	/**

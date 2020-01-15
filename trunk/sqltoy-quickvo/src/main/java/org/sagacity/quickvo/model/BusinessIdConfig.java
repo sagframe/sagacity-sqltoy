@@ -38,6 +38,11 @@ public class BusinessIdConfig implements Serializable {
 	private int length;
 
 	/**
+	 * 流水长度
+	 */
+	private int sequenceSize = -1;
+
+	/**
 	 * 关联字段
 	 */
 	private String[] relatedColumns;
@@ -135,6 +140,20 @@ public class BusinessIdConfig implements Serializable {
 	 */
 	public void setGenerator(String generator) {
 		this.generator = generator;
+	}
+
+	/**
+	 * @return the sequenceSize
+	 */
+	public int getSequenceSize() {
+		return sequenceSize;
+	}
+
+	/**
+	 * @param sequenceSize the sequenceSize to set
+	 */
+	public void setSequenceSize(int sequenceSize) {
+		this.sequenceSize = sequenceSize;
 	}
 
 }

@@ -69,22 +69,25 @@ public class XMLConfigLoader {
 		Element tasks = root.element("tasks");
 
 		// 输出路径
-		if (tasks.attribute("dist") != null)
+		if (tasks.attribute("dist") != null) {
 			configModel.setTargetDir(QuickVOConstants.replaceConstants(tasks.attributeValue("dist")));
-		else
+		} else {
 			configModel.setTargetDir(QuickVOConstants.BASE_LOCATE);
+		}
 		// 判断指定的目标路径是否是根路径
 		if (!FileUtil.isRootPath(configModel.getTargetDir())) {
 			configModel.setTargetDir(FileUtil.skipPath(QuickVOConstants.BASE_LOCATE, configModel.getTargetDir()));
 		}
 
 		// 设置抽象类路径
-		if (tasks.attribute("abstractPath") != null)
+		if (tasks.attribute("abstractPath") != null) {
 			configModel.setAbstractPath(QuickVOConstants.replaceConstants(tasks.attributeValue("abstractPath")));
+		}
 
 		// 设置编码格式
-		if (tasks.attribute("encoding") != null)
+		if (tasks.attribute("encoding") != null) {
 			configModel.setEncoding(QuickVOConstants.replaceConstants(tasks.attributeValue("encoding")));
+		}
 
 		List quickVOs = tasks.elements("task");
 		if (quickVOs == null || quickVOs.isEmpty())
@@ -98,19 +101,23 @@ public class XMLConfigLoader {
 		for (int i = 0; i < quickVOs.size(); i++) {
 			quickvo = (Element) quickVOs.get(i);
 			active = true;
-			if (quickvo.attribute("active") != null)
+			if (quickvo.attribute("active") != null) {
 				active = Boolean.parseBoolean(quickvo.attributeValue("active"));
+			}
 			// 生效的任务
 			if (active) {
 				QuickModel quickModel = new QuickModel();
-				if (quickvo.attribute("author") != null)
+				if (quickvo.attribute("author") != null) {
 					quickModel.setAuthor(quickvo.attributeValue("author"));
-				if (quickvo.attribute("datasource") != null)
+				}
+				if (quickvo.attribute("datasource") != null) {
 					quickModel.setDataSource(quickvo.attributeValue("datasource"));
-				else if (quickvo.attribute("dataSource") != null)
+				} else if (quickvo.attribute("dataSource") != null) {
 					quickModel.setDataSource(quickvo.attributeValue("dataSource"));
-				if (quickvo.attribute("swagger-model") != null)
+				}
+				if (quickvo.attribute("swagger-model") != null) {
 					quickModel.setSwaggerApi(Boolean.parseBoolean(quickvo.attributeValue("swagger-model")));
+				}
 				vo = quickvo.element("vo");
 				dao = quickvo.element("dao");
 				if (quickvo.attribute("include") != null) {
@@ -125,21 +132,25 @@ public class XMLConfigLoader {
 					quickModel.setExcludeTables(QuickVOConstants.replaceConstants(quickvo.attributeValue("exclude")));
 				}
 				// 实体对象包可以统一用参数定义
-				if (quickvo.attribute("package") == null)
+				if (quickvo.attribute("package") == null) {
 					quickModel.setEntityPackage(QuickVOConstants.getPropertyValue("entity.package"));
-				else
+				} else {
 					quickModel.setEntityPackage(QuickVOConstants.replaceConstants(quickvo.attributeValue("package")));
+				}
 				quickModel.setVoPackage(QuickVOConstants.replaceConstants(vo.attributeValue("package")));
-				if (vo.attribute("substr") != null)
+				if (vo.attribute("substr") != null) {
 					quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.attributeValue("substr")));
+				}
 				quickModel.setVoName(QuickVOConstants.replaceConstants(vo.attributeValue("name")));
 				if (dao != null && (dao.attribute("active") == null || dao.attributeValue("active").equals("true"))) {
 					quickModel.setDaoPackage(QuickVOConstants.replaceConstants(dao.attributeValue("package")));
 					quickModel.setDaoName(QuickVOConstants.replaceConstants(dao.attributeValue("name")));
-					if (dao.attribute("include") != null)
+					if (dao.attribute("include") != null) {
 						quickModel.setDaoInclude(QuickVOConstants.replaceConstants(dao.attributeValue("include")));
-					if (dao.attribute("exclude") != null)
+					}
+					if (dao.attribute("exclude") != null) {
 						quickModel.setDaoExclude(QuickVOConstants.replaceConstants(dao.attributeValue("exclude")));
+					}
 				}
 				quickModels.add(quickModel);
 			}
@@ -176,14 +187,16 @@ public class XMLConfigLoader {
 					generator = table.attributeValue("generator");
 					strategy = "generator";
 					sequence = null;
-					if (generator.equalsIgnoreCase("default"))
+					if (generator.equalsIgnoreCase("default")) {
 						generator = QuickVOConstants.PK_DEFAULT_GENERATOR;
+					}
 				}
 
 				PrimaryKeyStrategy primaryKeyStrategy = new PrimaryKeyStrategy(name, strategy, sequence, generator);
 				// force没有必要
-				if (table.attribute("force") != null)
+				if (table.attribute("force") != null) {
 					primaryKeyStrategy.setForce(Boolean.parseBoolean(table.attributeValue("force")));
+				}
 				configModel.addPkGeneratorStrategy(primaryKeyStrategy);
 			}
 		}
@@ -202,8 +215,9 @@ public class XMLConfigLoader {
 					// 兼容老版本
 					colTypeMapping.putNativeTypes(type.attributeValue("native-types").split("\\,"));
 
-					if (type.attribute("jdbc-type") != null)
+					if (type.attribute("jdbc-type") != null) {
 						colTypeMapping.setJdbcType(type.attributeValue("jdbc-type"));
+					}
 
 					if (type.attribute("precision") != null) {
 						if (StringUtil.isNotBlank(type.attributeValue("precision"))) {
@@ -234,10 +248,11 @@ public class XMLConfigLoader {
 					// 对应的java类型
 					javaType = type.attributeValue("java-type");
 					colTypeMapping.setJavaType(javaType);
-					if (javaType.indexOf(".") != -1)
+					if (javaType.indexOf(".") != -1) {
 						colTypeMapping.setResultType(javaType.substring(javaType.lastIndexOf(".") + 1));
-					else
+					} else {
 						colTypeMapping.setResultType(javaType);
+					}
 					typeMapping.add(colTypeMapping);
 				}
 				configModel.setTypeMapping(typeMapping);
@@ -259,15 +274,18 @@ public class XMLConfigLoader {
 					cascadeElt = (Element) cascades.get(i);
 					CascadeModel cascade = new CascadeModel();
 					cascade.setTableName(cascadeElt.attributeValue("name"));
-					if (cascadeElt.attribute("delete") != null)
+					if (cascadeElt.attribute("delete") != null) {
 						cascade.setDelete(Boolean.parseBoolean(cascadeElt.attributeValue("delete")));
+					}
 					// lazy load 的特定sql，可以自行定义,如:enabled=1附加条件
-					if (cascadeElt.attribute("load") != null)
+					if (cascadeElt.attribute("load") != null) {
 						cascade.setLoad(cascadeElt.attributeValue("load"));
+					}
 
 					// 新的配置模式
-					if (cascadeElt.attribute("update-cascade") != null)
+					if (cascadeElt.attribute("update-cascade") != null) {
 						cascade.setUpdateSql(cascadeElt.attributeValue("update-cascade"));
+					}
 					cascadeModelList.add(cascade);
 				}
 				configModel.addCascadeConfig(mainTable, cascadeModelList);
@@ -287,8 +305,9 @@ public class XMLConfigLoader {
 				bizIdConfig.setTableName(tableElt.attributeValue("name"));
 				bizIdConfig.setColumn(tableElt.attributeValue("column"));
 				bizIdConfig.setGenerator(tableElt.attributeValue("generator"));
-				if (bizIdConfig.getGenerator() != null && bizIdConfig.getGenerator().equalsIgnoreCase("redis"))
+				if (bizIdConfig.getGenerator() != null && bizIdConfig.getGenerator().equalsIgnoreCase("redis")) {
 					bizIdConfig.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
+				}
 				if (tableElt.attribute("related-column") != null) {
 					String relatedColumn = tableElt.attributeValue("related-column");
 					// 统一分割符
@@ -300,10 +319,15 @@ public class XMLConfigLoader {
 					bizIdConfig.setRelatedColumns(
 							relatedColumns.replaceAll("\\;", ",").replaceAll("\\，", ",").split("\\,"));
 				}
-				if (tableElt.attribute("signature") != null)
+				if (tableElt.attribute("signature") != null) {
 					bizIdConfig.setSignature(tableElt.attributeValue("signature"));
-				if (tableElt.attribute("length") != null)
+				}
+				if (tableElt.attribute("length") != null) {
 					bizIdConfig.setLength(Integer.parseInt(tableElt.attributeValue("length")));
+				}
+				if (tableElt.attribute("sequence-size") != null) {
+					bizIdConfig.setSequenceSize(Integer.parseInt(tableElt.attributeValue("sequence-size")));
+				}
 				configModel.addBusinessId(bizIdConfig);
 			}
 		}
