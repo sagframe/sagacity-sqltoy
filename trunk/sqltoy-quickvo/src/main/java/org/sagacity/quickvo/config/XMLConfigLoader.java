@@ -175,8 +175,9 @@ public class XMLConfigLoader {
 				sequence = null;
 				strategy = "assign";
 				generator = null;
-				if (table.attribute("strategy") != null)
+				if (table.attribute("strategy") != null) {
 					strategy = table.attributeValue("strategy");
+				}
 				if (table.attribute("sequence") != null) {
 					sequence = table.attributeValue("sequence");
 					strategy = "sequence";
