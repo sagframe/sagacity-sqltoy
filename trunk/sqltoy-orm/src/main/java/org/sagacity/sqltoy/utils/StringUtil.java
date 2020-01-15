@@ -271,7 +271,7 @@ public class StringUtil {
 				endIndex = endIndex + 1;
 			}
 		}
-		int tmpIndex = 0;
+		int preEndIndex = 0;
 		while (endIndex > beginSignIndex) {
 			// 寻找下一个开始符号
 			if (pattern == null) {
@@ -288,7 +288,8 @@ public class StringUtil {
 			if (beginSignIndex == -1 || beginSignIndex > endIndex) {
 				return endIndex;
 			}
-			tmpIndex = endIndex;
+			// 记录上一个截止位置
+			preEndIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
 			if (pattern == null) {
 				endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
@@ -299,9 +300,9 @@ public class StringUtil {
 					endIndex = endIndex + 1;
 				}
 			}
-			// 找不到则返回
+			// 找不到则返回上一个截止位置
 			if (endIndex == -1) {
-				return tmpIndex;
+				return preEndIndex;
 			}
 		}
 		return endIndex;
