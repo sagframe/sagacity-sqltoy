@@ -26,7 +26,7 @@ public class StringUtil {
 	 * 字符串中包含中文的表达式
 	 */
 	private static Pattern chinaPattern = Pattern.compile("[\u4e00-\u9fa5]");
-	
+
 	/**
 	 * 单引号匹配正则表达式
 	 */
@@ -588,7 +588,7 @@ public class StringUtil {
 				if (pattern == null) {
 					symBeginIndex = source.indexOf(filters[i][0], skipIndex);
 				} else {
-					symBeginIndex = StringUtil.matchIndex(source, pattern);
+					symBeginIndex = StringUtil.matchIndex(source, pattern, skipIndex)[0];
 					// 正则表达式有一个转义符号占一位
 					if (symBeginIndex > 0) {
 						symBeginIndex = symBeginIndex + 1;
@@ -783,5 +783,4 @@ public class StringUtil {
 		return beforeStr.concat(replaceBody).concat(endStr);
 	}
 
-	
 }
