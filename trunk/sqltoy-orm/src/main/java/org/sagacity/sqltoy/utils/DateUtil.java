@@ -544,8 +544,9 @@ public class DateUtil {
 			tmp = tmp.replaceAll(CHINA_DATE_KEYS[i], CHINA_DATE_KEY_MAP[i]);
 		}
 		tmp = tmp.replace("整", "").trim();
-		if (tmp.endsWith("-") || tmp.endsWith(":"))
+		if (tmp.endsWith("-") || tmp.endsWith(":")) {
 			tmp = tmp.substring(0, tmp.length() - 1);
+		}
 		if (StringUtil.isBlank(fmt))
 			return tmp.toString();
 		return formatDate(tmp, fmt);
