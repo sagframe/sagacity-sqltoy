@@ -361,17 +361,21 @@ public class ParamFilterUtils {
 		if (filterType.equals("blank")) {
 			result = paramValue;
 			if (paramValue instanceof String) {
-				if (paramValue.toString().trim().equals(""))
+				if (paramValue.toString().trim().equals("")) {
 					result = null;
+				}
 			} else if (paramValue instanceof Collection) {
-				if (((Collection) paramValue).isEmpty())
+				if (((Collection) paramValue).isEmpty()) {
 					result = null;
+				}
 			} else if (paramValue instanceof Map) {
-				if (((Map) paramValue).isEmpty())
+				if (((Map) paramValue).isEmpty()) {
 					result = null;
+				}
 			} else if (paramValue.getClass().isArray()) {
-				if (CollectionUtil.convertArray(paramValue).length == 0)
+				if (CollectionUtil.convertArray(paramValue).length == 0) {
 					result = null;
+				}
 			}
 		} else if (filterType.equals("eq")) {
 			result = filterEquals(paramValue, paramFilterModel.getValues());
@@ -484,8 +488,9 @@ public class ParamFilterUtils {
 			return null;
 		}
 		if (paramValue instanceof String) {
-			if (isFirst)
+			if (isFirst) {
 				return paramValue.toString().replaceFirst(regex, value);
+			}
 			return paramValue.toString().replaceAll(regex, value);
 		}
 		return paramValue;
@@ -535,12 +540,14 @@ public class ParamFilterUtils {
 		// 原本就是数组
 		if (paramValue.getClass().isArray() || paramValue instanceof Collection) {
 			result = CollectionUtil.convertArray(paramValue);
-			if (dataType == null)
+			if (dataType == null) {
 				return result;
+			}
 		} else {
 			String[] arrays = paramValue.toString().split(splitSign);
-			if (dataType == null || dataType.equals("string"))
+			if (dataType == null || dataType.equals("string")) {
 				return arrays;
+			}
 			result = new Object[arrays.length];
 			System.arraycopy(arrays, 0, result, 0, arrays.length);
 		}
@@ -548,18 +555,19 @@ public class ParamFilterUtils {
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (null != result[i]) {
 				value = result[i].toString();
-				if (dataType.equals("integer") || dataType.equals("int"))
+				if (dataType.equals("integer") || dataType.equals("int")) {
 					result[i] = Integer.valueOf(value);
-				else if (dataType.equals("long"))
+				} else if (dataType.equals("long")) {
 					result[i] = Long.valueOf(value);
-				else if (dataType.equals("float"))
+				} else if (dataType.equals("float")) {
 					result[i] = Float.valueOf(value);
-				else if (dataType.equals("double"))
+				} else if (dataType.equals("double")) {
 					result[i] = Double.valueOf(value);
-				else if (dataType.equals("decimal") || dataType.equals("number"))
+				} else if (dataType.equals("decimal") || dataType.equals("number")) {
 					result[i] = new BigDecimal(value);
-				else if (dataType.equals("date"))
+				} else if (dataType.equals("date")) {
 					result[i] = DateUtil.parseString(value);
+				}
 			}
 		}
 		return result;
@@ -581,18 +589,19 @@ public class ParamFilterUtils {
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (result[i] != null) {
 				value = result[i].toString();
-				if (dataType.equals("integer") || dataType.equals("int"))
+				if (dataType.equals("integer") || dataType.equals("int")) {
 					result[i] = Integer.valueOf(value);
-				else if (dataType.equals("long"))
+				} else if (dataType.equals("long")) {
 					result[i] = Long.valueOf(value);
-				else if (dataType.equals("float"))
+				} else if (dataType.equals("float")) {
 					result[i] = Float.valueOf(value);
-				else if (dataType.equals("double"))
+				} else if (dataType.equals("double")) {
 					result[i] = Double.valueOf(value);
-				else if (dataType.equals("decimal") || dataType.equals("number"))
+				} else if (dataType.equals("decimal") || dataType.equals("number")) {
 					result[i] = new BigDecimal(value);
-				else if (dataType.equals("string"))
+				} else if (dataType.equals("string")) {
 					result[i] = value;
+				}
 			}
 		}
 		return result;
@@ -610,16 +619,17 @@ public class ParamFilterUtils {
 		if (dataType == null) {
 			result = value;
 		} else {
-			if (dataType.equals("integer") || dataType.equals("int"))
+			if (dataType.equals("integer") || dataType.equals("int")) {
 				result = Integer.valueOf(value.intValue());
-			else if (dataType.equals("long"))
+			} else if (dataType.equals("long")) {
 				result = Long.valueOf(value.longValue());
-			else if (dataType.equals("float"))
+			} else if (dataType.equals("float")) {
 				result = Float.valueOf(value.floatValue());
-			else if (dataType.equals("double"))
+			} else if (dataType.equals("double")) {
 				result = Double.valueOf(value.doubleValue());
-			else
+			} else {
 				result = value;
+			}
 		}
 		return result;
 	}
@@ -662,10 +672,11 @@ public class ParamFilterUtils {
 			result = ca.getTime();
 		} else {
 			result = DateUtil.convertDateObject(paramValue);
-			if (StringUtil.isNotBlank(format))
+			if (StringUtil.isNotBlank(format)) {
 				realFmt = format;
-			else
+			} else {
 				realFmt = null;
+			}
 		}
 		// 存在日期加减
 		if (paramFilterModel.getIncrementDays() != 0) {
