@@ -28,14 +28,14 @@ public class SqlWithAnalysis implements Serializable {
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
 	private final Pattern withPattern = Pattern.compile(
-			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+(not\\s+)?materialized)?\\s*\\(");
+			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	// private final Pattern withPattern = Pattern.compile(
 	// "(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
 
 	// with 下面多个as
 	private final Pattern otherWithPattern = Pattern.compile(
-			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+(not\\s+)?materialized)?\\s*\\(");
+			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	// private final Pattern otherWithPattern = Pattern.compile(
 	// "(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
