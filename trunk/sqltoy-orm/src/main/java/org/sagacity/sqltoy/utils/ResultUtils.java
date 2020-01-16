@@ -363,8 +363,9 @@ public class ResultUtils {
 					} else {
 						rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
 					}
-					if (rowTemp != null)
+					if (rowTemp != null) {
 						items.add(rowTemp);
+					}
 					preIdentity = identity;
 				} else {
 					if (linkBuffer.length() > 0) {
@@ -391,8 +392,9 @@ public class ResultUtils {
 		} else {
 			// 修改操作不支持link操作
 			boolean isUpdate = false;
-			if (updateRowHandler != null)
+			if (updateRowHandler != null) {
 				isUpdate = true;
+			}
 
 			// 循环通过java reflection将rs中的值映射到VO中
 			if (hasTranslate) {
@@ -780,8 +782,9 @@ public class ResultUtils {
 				} else {
 					colIndex = (new BigDecimal(ExpressionUtil.calculate(column).toString())).intValue();
 				}
-				if (!sumColList.contains(colIndex))
+				if (!sumColList.contains(colIndex)) {
 					sumColList.add(colIndex);
+				}
 			}
 		}
 		Integer[] summaryCols = new Integer[sumColList.size()];

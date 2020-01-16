@@ -849,10 +849,11 @@ public class ParamFilterUtils {
 			return null;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate"))
+			if (contrast.equalsIgnoreCase("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
-			else
+			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
+			}
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) > 0)
 				return null;
 		} else if (param instanceof LocalTime) {
@@ -878,10 +879,11 @@ public class ParamFilterUtils {
 			return null;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate"))
+			if (contrast.equalsIgnoreCase("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
-			else
+			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
+			}
 			if (DateUtil.convertDateObject(param).compareTo(compareDate) >= 0)
 				return null;
 		} else if (param instanceof LocalTime) {
