@@ -134,9 +134,9 @@ public class SybaseIQDialect implements Dialect {
 					for (int i = sqlToyConfig.getFastWithIndex() + 1; i < sqlWith.getWithSqlSet().size(); i++) {
 						aliasTableAs = sqlWith.getWithSqlSet().get(i);
 						if (index == 0) {
-							sql.append("with ");
+							sql.append("with ").append(aliasTableAs[3]);
 						} else {
-							sql.append(",");
+							sql.append(",").append(aliasTableAs[3]);
 						}
 						sql.append(aliasTableAs[0]);
 						sql.append(" as ").append(aliasTableAs[1]);

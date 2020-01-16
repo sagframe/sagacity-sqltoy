@@ -18,23 +18,24 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version Revision:v1.0,Date:2013-6-20
  * @Modification Date:2019-7-22 优化with as 语法解析格式 ,其格式包含:with xx as (); with xx
  *               as xx () ; with xxx(p1,p2) as () 三种形态
+ * @Modification Date:2020-1-16 支持mysql8.0.19 开始的with recursive cte as
  */
 public class SqlWithAnalysis implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -5841684922722930298L;
-
+	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
 	private final Pattern withPattern = Pattern.compile(
-			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
+			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+(not\\s+)?materialized)?\\s*\\(");
 
 	// private final Pattern withPattern = Pattern.compile(
 	// "(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
 
 	// with 下面多个as
 	private final Pattern otherWithPattern = Pattern.compile(
-			"(?i)\\s*\\,\\s*[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
+			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+(not\\s+)?materialized)?\\s*\\(");
 
 	// private final Pattern otherWithPattern = Pattern.compile(
 	// "(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
@@ -109,7 +110,10 @@ public class SqlWithAnalysis implements Serializable {
 		Matcher withAsMatcher = withPattern.matcher(tailSql);
 		String groupStr;
 		String groupLow;
+		String withAfter;
+		String[] params;
 		if (withAsMatcher.find()) {
+			withAfter = "";
 			headSql = tailSql.substring(0, withAsMatcher.start());
 			hasWith = true;
 			withSqlBuffer = new StringBuilder();
@@ -117,12 +121,17 @@ public class SqlWithAnalysis implements Serializable {
 			groupStr = withAsMatcher.group();
 			groupLow = groupStr.toLowerCase();
 			asIndex = StringUtil.matchIndex(groupLow, asPattern) + 1;
+			params = groupStr.substring(groupLow.indexOf("with") + 4, asIndex).trim().split("\\s+");
 			// 剔除with
-			aliasTable = groupStr.substring(groupLow.indexOf("with") + 4, asIndex).trim();
+			aliasTable = params[params.length - 1];
+			if (params.length > 1) {
+				withAfter = params[0];
+			}
 			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
 			endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start() + asIndex);
 			withSqlBuffer.append(tailSql.substring(withAsMatcher.start(), endWith + 1));
-			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith) });
+			withSqlSet
+					.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter });
 			tailSql = tailSql.substring(endWith + 1);
 		} else
 			return;
@@ -131,14 +140,19 @@ public class SqlWithAnalysis implements Serializable {
 		while (otherMatcher.find()) {
 			if (otherMatcher.start() != 0)
 				break;
+			withAfter = "";
 			groupStr = otherMatcher.group();
 			groupLow = groupStr.toLowerCase();
 			asIndex = StringUtil.matchIndex(groupLow, asPattern) + 1;
-			aliasTable = groupStr.substring(groupStr.indexOf(",") + 1, asIndex).trim();
+			params = groupStr.substring(groupStr.indexOf(",") + 1, asIndex).trim().split("\\s+");
+			aliasTable = params[params.length - 1];
+			if (params.length > 1) {
+				withAfter = params[0];
+			}
 			ext = groupStr.substring(asIndex + 2, groupStr.indexOf("(", asIndex));
 			endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, otherMatcher.start() + asIndex);
 			withSqlBuffer.append(tailSql.substring(0, endWith + 1));
-			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(otherMatcher.end(), endWith) });
+			withSqlSet.add(new String[] { aliasTable, ext, tailSql.substring(otherMatcher.end(), endWith), withAfter });
 			tailSql = tailSql.substring(endWith + 1);
 			otherMatcher.reset(tailSql);
 		}
