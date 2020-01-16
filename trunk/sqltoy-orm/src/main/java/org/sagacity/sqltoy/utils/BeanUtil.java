@@ -185,44 +185,45 @@ public class BeanUtil {
 						&& (methodName.equals("get".concat(property)) || methodName.equals("is".concat(property))
 								|| (methodName.startsWith("is") && methodName.equals(property)))) {
 					typeName = method.getReturnType().getSimpleName().toLowerCase();
-					if (typeName.equals("string"))
+					if (typeName.equals("string")) {
 						fieldsType[i] = java.sql.Types.VARCHAR;
-					else if (typeName.equals("integer"))
+					} else if (typeName.equals("integer")) {
 						fieldsType[i] = java.sql.Types.INTEGER;
-					else if (typeName.equals("bigdecimal"))
+					} else if (typeName.equals("bigdecimal")) {
 						fieldsType[i] = java.sql.Types.DECIMAL;
-					else if (typeName.equals("date"))
+					} else if (typeName.equals("date")) {
 						fieldsType[i] = java.sql.Types.DATE;
-					else if (typeName.equals("timestamp"))
+					} else if (typeName.equals("timestamp")) {
 						fieldsType[i] = java.sql.Types.TIMESTAMP;
-					else if (typeName.equals("int"))
+					} else if (typeName.equals("int")) {
 						fieldsType[i] = java.sql.Types.INTEGER;
-					else if (typeName.equals("long"))
+					} else if (typeName.equals("long")) {
 						fieldsType[i] = java.sql.Types.NUMERIC;
-					else if (typeName.equals("double"))
+					} else if (typeName.equals("double")) {
 						fieldsType[i] = java.sql.Types.DOUBLE;
-					else if (typeName.equals("clob"))
+					} else if (typeName.equals("clob")) {
 						fieldsType[i] = java.sql.Types.CLOB;
-					else if (typeName.equals("blob"))
+					} else if (typeName.equals("blob")) {
 						fieldsType[i] = java.sql.Types.BLOB;
-					else if (typeName.equals("[b"))
+					} else if (typeName.equals("[b")) {
 						fieldsType[i] = java.sql.Types.BINARY;
-					else if (typeName.equals("boolean"))
+					} else if (typeName.equals("boolean")) {
 						fieldsType[i] = java.sql.Types.BOOLEAN;
-					else if (typeName.equals("char"))
+					} else if (typeName.equals("char")) {
 						fieldsType[i] = java.sql.Types.CHAR;
-					else if (typeName.equals("number"))
+					} else if (typeName.equals("number")) {
 						fieldsType[i] = java.sql.Types.NUMERIC;
-					else if (typeName.equals("short"))
+					} else if (typeName.equals("short")) {
 						fieldsType[i] = java.sql.Types.NUMERIC;
-					else if (typeName.equals("float"))
+					} else if (typeName.equals("float")) {
 						fieldsType[i] = java.sql.Types.FLOAT;
-					else if (typeName.equals("datetime"))
+					} else if (typeName.equals("datetime")) {
 						fieldsType[i] = java.sql.Types.DATE;
-					else if (typeName.equals("time"))
+					} else if (typeName.equals("time")) {
 						fieldsType[i] = java.sql.Types.TIME;
-					else
+					} else {
 						fieldsType[i] = java.sql.Types.NULL;
+					}
 					break;
 				}
 			}
@@ -306,8 +307,9 @@ public class BeanUtil {
 				return clob.getSubString((long) 1, (int) clob.length());
 			} else if (paramValue instanceof java.util.Date) {
 				return DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
-			} else
+			} else {
 				return valueStr;
+			}
 		} else if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
 			return Integer.valueOf(convertBoolean(valueStr));
 		} else if (typeName.equals("int")) {
@@ -319,18 +321,19 @@ public class BeanUtil {
 		} else if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal")) {
 			return new BigDecimal(convertBoolean(valueStr));
 		} else if (typeName.equals("java.util.date") || typeName.equals("date")) {
-			if (paramValue instanceof java.sql.Date)
+			if (paramValue instanceof java.sql.Date) {
 				return new java.util.Date(((java.sql.Date) paramValue).getTime());
-			else if (paramValue instanceof java.util.Date)
+			} else if (paramValue instanceof java.util.Date) {
 				return (java.util.Date) paramValue;
-			else if (paramValue instanceof java.sql.Timestamp)
+			} else if (paramValue instanceof java.sql.Timestamp) {
 				return new java.util.Date(((java.sql.Timestamp) paramValue).getTime());
-			else if (paramValue instanceof Number)
+			} else if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
-			else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP"))
+			} else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.util.Date(oracleDateConvert(paramValue).getTime());
-			else
+			} else {
 				return DateUtil.parseString(valueStr);
+			}
 		} else if (typeName.equals("java.time.localdate")) {
 			if (paramValue instanceof LocalDate)
 				return (LocalDate) paramValue;
@@ -360,40 +363,43 @@ public class BeanUtil {
 				return Boolean.TRUE;
 			return Boolean.FALSE;
 		} else if (typeName.equals("java.sql.timestamp") || typeName.equals("timestamp")) {
-			if (paramValue instanceof java.sql.Timestamp)
+			if (paramValue instanceof java.sql.Timestamp) {
 				return (java.sql.Timestamp) paramValue;
-			else if (paramValue instanceof java.sql.Date)
+			} else if (paramValue instanceof java.sql.Date) {
 				return new Timestamp(((java.sql.Date) paramValue).getTime());
-			else if (paramValue instanceof java.util.Date)
+			} else if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
-			else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP"))
+			} else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return oracleTimeStampConvert(paramValue);
-			else
+			} else {
 				return new Timestamp(DateUtil.parseString(valueStr).getTime());
+			}
 		} else if (typeName.equals("java.sql.date")) {
-			if (paramValue instanceof java.sql.Date)
+			if (paramValue instanceof java.sql.Date) {
 				return (java.sql.Date) paramValue;
-			else if (paramValue instanceof java.util.Date)
+			} else if (paramValue instanceof java.util.Date) {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
-			else if (paramValue instanceof java.sql.Timestamp)
+			} else if (paramValue instanceof java.sql.Timestamp) {
 				return new java.sql.Date(((java.sql.Timestamp) paramValue).getTime());
-			else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP"))
+			} else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
-			else
+			} else {
 				return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
+			}
 		} else if (typeName.equals("char")) {
 			return valueStr.charAt(0);
 		} else if (typeName.equals("java.sql.time") || typeName.equals("time")) {
-			if (paramValue instanceof java.sql.Time)
+			if (paramValue instanceof java.sql.Time) {
 				return (java.sql.Time) paramValue;
-			else if (paramValue instanceof java.util.Date)
+			} else if (paramValue instanceof java.util.Date) {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
-			else if (paramValue instanceof java.sql.Timestamp)
+			} else if (paramValue instanceof java.sql.Timestamp) {
 				return new java.sql.Time(((java.sql.Timestamp) paramValue).getTime());
-			else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP"))
+			} else if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
-			else
+			} else {
 				return DateUtil.parseString(valueStr);
+			}
 		} // byte数组
 		else if (typeName.equals("[b")) {
 			if (paramValue instanceof byte[]) {
@@ -420,7 +426,7 @@ public class BeanUtil {
 		else if (typeName.equals("[c")) {
 			if (paramValue instanceof char[])
 				return (char[]) paramValue;
-			else if (paramValue instanceof java.sql.Clob) {
+			if (paramValue instanceof java.sql.Clob) {
 				java.sql.Clob clob = (java.sql.Clob) paramValue;
 				BufferedReader in = new BufferedReader(clob.getCharacterStream());
 				StringWriter out = new StringWriter();
@@ -429,10 +435,12 @@ public class BeanUtil {
 					out.write(c);
 				}
 				return out.toString();
-			} else
+			} else {
 				return valueStr.toCharArray();
-		} else
+			}
+		} else {
 			return paramValue;
+		}
 	}
 
 	private static String convertBoolean(String var) {

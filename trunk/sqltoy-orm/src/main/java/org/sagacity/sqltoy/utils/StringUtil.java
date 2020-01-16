@@ -436,8 +436,8 @@ public class StringUtil {
 
 	/**
 	 * @todo 获取匹配成功的个数
-	 * @param Pattern
 	 * @param source
+	 * @param p
 	 * @return
 	 */
 	public static int matchCnt(String source, Pattern p) {
@@ -662,8 +662,8 @@ public class StringUtil {
 	/**
 	 * @todo 通过特殊符号对字符进行安全模糊化处理
 	 * @param value
-	 * @param preSize
-	 * @param tailSize
+	 * @param preLength
+	 * @param tailLength
 	 * @param maskStr
 	 * @return
 	 */
