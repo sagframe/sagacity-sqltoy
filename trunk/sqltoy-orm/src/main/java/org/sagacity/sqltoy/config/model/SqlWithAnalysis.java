@@ -27,6 +27,8 @@ public class SqlWithAnalysis implements Serializable {
 	private static final long serialVersionUID = -5841684922722930298L;
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
+	// with aliasTable as materialized () 
+	// with aliasTable as not materialized ()
 	private final Pattern withPattern = Pattern.compile(
 			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
