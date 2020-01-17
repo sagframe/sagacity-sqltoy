@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -596,10 +597,22 @@ public class DateUtil {
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
+	public static Date asSqlDate(LocalDate localDate) {
+		if (localDate == null)
+			return null;
+		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+	}
+
 	public static Date asDate(LocalTime localTime) {
 		if (localTime == null)
 			return null;
 		return DateUtil.parseString(localTime.toString());
+	}
+
+	public static Time asTime(LocalTime localTime) {
+		if (localTime == null)
+			return null;
+		return java.sql.Time.valueOf(localTime);
 	}
 
 	public static Date asDate(LocalDateTime localDateTime) {
