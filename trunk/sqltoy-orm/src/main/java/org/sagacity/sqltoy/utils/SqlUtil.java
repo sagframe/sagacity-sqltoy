@@ -250,6 +250,12 @@ public class SqlUtil {
 				pst.setDouble(paramIndex, ((Double) paramValue));
 			} else if (paramValue instanceof java.sql.Timestamp) {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
+			} else if (paramValue instanceof java.time.LocalDate) {
+				pst.setDate(paramIndex, DateUtil.getSqlDate(paramValue));
+			} else if (paramValue instanceof java.time.LocalDateTime) {
+				pst.setTimestamp(paramIndex, DateUtil.getTimestamp(paramValue));
+			} else if (paramValue instanceof java.time.LocalTime) {
+				pst.setTimestamp(paramIndex, DateUtil.getTimestamp(paramValue));
 			} else if (paramValue instanceof java.sql.Time) {
 				pst.setTime(paramIndex, (java.sql.Time) paramValue);
 			} else if (paramValue instanceof java.util.Date) {
