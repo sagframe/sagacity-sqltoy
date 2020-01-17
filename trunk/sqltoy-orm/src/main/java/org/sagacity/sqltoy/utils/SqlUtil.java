@@ -276,7 +276,7 @@ public class SqlUtil {
 				Blob tmp = (java.sql.Blob) paramValue;
 				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
 			} else if (paramValue instanceof java.sql.Date) {
-				pst.setTimestamp(paramIndex, new Timestamp(((java.sql.Date) paramValue).getTime()));
+				pst.setDate(paramIndex, (java.sql.Date) paramValue);
 			} else if (paramValue instanceof java.lang.Character) {
 				tmpStr = ((Character) paramValue).toString();
 				pst.setString(paramIndex, tmpStr);
