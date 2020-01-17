@@ -22,6 +22,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -251,11 +254,11 @@ public class SqlUtil {
 			} else if (paramValue instanceof java.sql.Timestamp) {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			} else if (paramValue instanceof java.time.LocalDate) {
-				pst.setDate(paramIndex, DateUtil.getSqlDate(paramValue));
+				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 			} else if (paramValue instanceof java.time.LocalDateTime) {
-				pst.setTimestamp(paramIndex, DateUtil.getTimestamp(paramValue));
+				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 			} else if (paramValue instanceof java.time.LocalTime) {
-				pst.setTimestamp(paramIndex, DateUtil.getTimestamp(paramValue));
+				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
 			} else if (paramValue instanceof java.sql.Time) {
 				pst.setTime(paramIndex, (java.sql.Time) paramValue);
 			} else if (paramValue instanceof java.util.Date) {
