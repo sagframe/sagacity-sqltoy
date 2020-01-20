@@ -648,7 +648,7 @@ public class DialectUtils {
 		FieldMeta fieldMeta;
 		String field;
 		boolean isStart = true;
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
+		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
@@ -672,7 +672,7 @@ public class DialectUtils {
 						values.append(",");
 					}
 					sql.append(fieldMeta.getColumnName());
-					if (isAssignPK && isSupportNUL) {
+					if (isAssignPK && isSupportNULL) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
 					} else {
@@ -694,7 +694,7 @@ public class DialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());

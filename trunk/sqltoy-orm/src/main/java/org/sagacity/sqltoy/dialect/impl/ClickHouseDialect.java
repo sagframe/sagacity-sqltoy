@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
+import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
@@ -182,16 +183,19 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		String insertSql = ClickHouseDialectUtils.generateInsertSql(entityMeta, tableName);
+		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, insertSql, entity, conn, dbType);
 	}
 
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		String insertSql = ClickHouseDialectUtils.generateInsertSql(entityMeta, tableName);
+		return ClickHouseDialectUtils.saveAll(sqlToyContext, entityMeta, insertSql, entities, batchSize,
+				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	@Override
@@ -278,5 +282,4 @@ public class ClickHouseDialect implements Dialect {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
-
 }
