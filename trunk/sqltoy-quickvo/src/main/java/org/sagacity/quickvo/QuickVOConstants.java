@@ -153,8 +153,7 @@ public class QuickVOConstants implements Serializable {
 		String maxScale = getKeyValue("max.scale.length");
 		if (maxScale == null)
 			return -1;
-		else
-			return Integer.parseInt(maxScale);
+		return Integer.parseInt(maxScale);
 	}
 
 	/**
@@ -173,12 +172,13 @@ public class QuickVOConstants implements Serializable {
 			for (int i = 0; i < paramElts.size(); i++) {
 				elt = (Element) paramElts.get(i);
 				if (elt.attribute("name") != null) {
-					if (elt.attribute("value") != null)
+					if (elt.attribute("value") != null) {
 						constantMap.put(elt.attributeValue("name"), replaceConstants(
 								StringUtil.replaceAllStr(elt.attributeValue("value"), GLOBA_IDENTITY, guid)));
-					else
+					} else {
 						constantMap.put(elt.attributeValue("name"),
 								replaceConstants(StringUtil.replaceAllStr(elt.getText(), GLOBA_IDENTITY, guid)));
+					}
 				} else if (elt.attribute("file") != null) {
 					loadPropertyFile(replaceConstants(
 							StringUtil.replaceAllStr(elt.attributeValue("file"), GLOBA_IDENTITY, guid)));
@@ -216,10 +216,11 @@ public class QuickVOConstants implements Serializable {
 		if (StringUtil.isNotBlank(propertyFile)) {
 			File propFile;
 			// 判断根路径
-			if (FileUtil.isRootPath(propertyFile))
+			if (FileUtil.isRootPath(propertyFile)) {
 				propFile = new File(propertyFile);
-			else
+			} else {
 				propFile = new File(FileUtil.skipPath(QuickVOConstants.BASE_LOCATE, propertyFile));
+			}
 			if (!propFile.exists()) {
 				throw new Exception("参数文件:" + propertyFile + "不存在,请确认!");
 			}
@@ -244,11 +245,9 @@ public class QuickVOConstants implements Serializable {
 			return key;
 		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w|\\.]+\\}$"))
 			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
-		else {
-			if (getKeyValue(key) != null)
-				return getKeyValue(key);
-			return key;
-		}
+		if (getKeyValue(key) != null)
+			return getKeyValue(key);
+		return key;
 	}
 
 	/**

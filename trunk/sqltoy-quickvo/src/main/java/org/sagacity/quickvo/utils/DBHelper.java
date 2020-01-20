@@ -60,12 +60,15 @@ public class DBHelper {
 		for (Element datasouceElt : datasouceElts) {
 			DataSourceModel dbModel = new DataSourceModel();
 			String name = null;
-			if (datasouceElt.attribute("name") != null)
+			if (datasouceElt.attribute("name") != null) {
 				name = datasouceElt.attributeValue("name");
-			if (datasouceElt.attribute("catalog") != null)
+			}
+			if (datasouceElt.attribute("catalog") != null) {
 				dbModel.setCatalog(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("catalog")));
-			if (datasouceElt.attribute("schema") != null)
+			}
+			if (datasouceElt.attribute("schema") != null) {
 				dbModel.setSchema(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("schema")));
+			}
 			dbModel.setUrl(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("url")));
 			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("driver")));
 			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("username")));
@@ -141,15 +144,17 @@ public class DBHelper {
 		else if (dbType == DbType.MYSQL || dbType == DbType.MYSQL8) {
 			StringBuilder queryStr = new StringBuilder("SELECT TABLE_NAME,TABLE_SCHEMA,TABLE_TYPE,TABLE_COMMENT ");
 			queryStr.append(" FROM INFORMATION_SCHEMA.TABLES where 1=1 ");
-			if (dbConfig.getSchema() != null)
+			if (dbConfig.getSchema() != null) {
 				queryStr.append(" and TABLE_SCHEMA='").append(dbConfig.getSchema()).append("'");
-			else if (dbConfig.getCatalog() != null)
+			} else if (dbConfig.getCatalog() != null) {
 				queryStr.append(" and TABLE_SCHEMA='").append(dbConfig.getCatalog()).append("'");
+			}
 			if (types != null) {
 				queryStr.append(" and (");
 				for (int i = 0; i < types.length; i++) {
-					if (i > 0)
+					if (i > 0) {
 						queryStr.append(" or ");
+					}
 					queryStr.append(" TABLE_TYPE like '%").append(types[i]).append("'");
 				}
 				queryStr.append(")");
@@ -298,17 +303,20 @@ public class DBHelper {
 								colMeta = new TableColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setColRemark(rs.getString("REMARKS"));
-							} else
+							} else {
 								colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
-						} else
+							}
+						} else {
 							colMeta = new TableColumnMeta();
+						}
 						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("column_def"))));
 						colMeta.setDataType(rs.getInt("data_type"));
 						colMeta.setTypeName(rs.getString("type_name"));
-						if (rs.getInt("char_octet_length") != 0)
+						if (rs.getInt("char_octet_length") != 0) {
 							colMeta.setLength(rs.getInt("char_octet_length"));
-						else
+						} else {
 							colMeta.setLength(rs.getInt("precision"));
+						}
 						colMeta.setPrecision(colMeta.getLength());
 						// 字段名称
 						colMeta.setColName(rs.getString("column_name"));
@@ -320,17 +328,20 @@ public class DBHelper {
 									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
 									|| isAutoIncrement.equals("1"))) {
 								colMeta.setAutoIncrement(true);
-							} else
+							} else {
 								colMeta.setAutoIncrement(false);
+							}
 						} catch (Exception e) {
 						}
-						if (colMeta.getTypeName().toLowerCase().indexOf("identity") != -1)
+						if (colMeta.getTypeName().toLowerCase().indexOf("identity") != -1) {
 							colMeta.setAutoIncrement(true);
+						}
 						// 是否可以为空
-						if (rs.getInt("nullable") == 1)
+						if (rs.getInt("nullable") == 1) {
 							colMeta.setNullable(true);
-						else
+						} else {
 							colMeta.setNullable(false);
+						}
 						result.add(colMeta);
 					}
 					this.setResult(result);
@@ -369,10 +380,11 @@ public class DBHelper {
 		}
 
 		final HashMap metaMap = filedsComments;
-		if (dbType == DbType.MYSQL || dbType == DbType.MYSQL8)
+		if (dbType == DbType.MYSQL || dbType == DbType.MYSQL8) {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, "%");
-		else
+		} else {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, null);
+		}
 		return (List) DBUtil.preparedStatementProcess(metaMap, null, rs, new PreparedStatementResultHandler() {
 
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
@@ -385,8 +397,9 @@ public class DBHelper {
 						colMeta.setColName(rs.getString("COLUMN_NAME"));
 						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 						colMeta.setColRemark(rs.getString("REMARKS"));
-					} else
+					} else {
 						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
+					}
 					if (colMeta != null) {
 						colMeta.setDataType(rs.getInt("DATA_TYPE"));
 						colMeta.setTypeName(rs.getString("TYPE_NAME"));
@@ -400,8 +413,9 @@ public class DBHelper {
 									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
 									|| isAutoIncrement.equals("1"))) {
 								colMeta.setAutoIncrement(true);
-							} else
+							} else {
 								colMeta.setAutoIncrement(false);
+							}
 						} catch (Exception e) {
 						}
 						if (dbType == DbType.ORACLE12) {
@@ -411,10 +425,11 @@ public class DBHelper {
 								colMeta.setColDefault(colMeta.getColDefault().replaceAll("\"", "\\\\\""));
 							}
 						}
-						if (rs.getInt("NULLABLE") == 1)
+						if (rs.getInt("NULLABLE") == 1) {
 							colMeta.setNullable(true);
-						else
+						} else {
 							colMeta.setNullable(false);
+						}
 						result.add(colMeta);
 					}
 				}
@@ -436,11 +451,11 @@ public class DBHelper {
 		if (defaultValue.indexOf("(") != -1 && defaultValue.indexOf(")") != -1 && defaultValue.indexOf("::") != -1) {
 			return defaultValue.substring(defaultValue.indexOf("(") + 1, defaultValue.indexOf("::"));
 		}
-		if (defaultValue.startsWith("((") && defaultValue.endsWith("))"))
+		if (defaultValue.startsWith("((") && defaultValue.endsWith("))")) {
 			return defaultValue.substring(2, defaultValue.length() - 2);
-		else if (defaultValue.startsWith("(") && defaultValue.endsWith(")"))
+		} else if (defaultValue.startsWith("(") && defaultValue.endsWith(")")) {
 			return defaultValue.substring(1, defaultValue.length() - 1);
-
+		}
 		return defaultValue;
 	}
 
