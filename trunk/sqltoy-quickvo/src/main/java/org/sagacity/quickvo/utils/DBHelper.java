@@ -377,7 +377,8 @@ public class DBHelper {
 		// clickhouse 数据库
 		if (dbType == DbType.CLICKHOUSE) {
 			StringBuilder queryStr = new StringBuilder();
-			queryStr.append("select name COLUMN_NAME,comment COMMENTS from system.columns t where t.table=?");
+			queryStr.append(
+					"select name COLUMN_NAME,comment COMMENTS,is_in_primary_key PRIMARY_KEY from system.columns t where t.table=?");
 			pst = conn.prepareStatement(queryStr.toString());
 			pst.setString(1, tableName);
 			rs = pst.executeQuery();
@@ -389,6 +390,10 @@ public class DBHelper {
 								TableColumnMeta colMeta = new TableColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setColRemark(rs.getString("COMMENTS"));
+								// 是否主键
+								if (rs.getString("PRIMARY_KEY").equals("1")) {
+									colMeta.setIsPrimaryKey(true);
+								}
 								filedHash.put(rs.getString("COLUMN_NAME"), colMeta);
 							}
 							this.setResult(filedHash);
@@ -544,7 +549,14 @@ public class DBHelper {
 	 * @throws SQLException
 	 */
 	public static List getTablePrimaryKeys(String tableName) throws Exception {
-		ResultSet rs = conn.getMetaData().getPrimaryKeys(dbConfig.getCatalog(), dbConfig.getSchema(), tableName);
+		final int dbType = DBUtil.getDbType(conn);
+		ResultSet rs;
+		if (dbType == DbType.CLICKHOUSE) {
+			rs = conn.createStatement().executeQuery(
+					"select t.name COLUMN_NAME from system.columns t where t.table='" + tableName + "' and t.is_in_primary_key=1");
+		} else {
+			rs = conn.getMetaData().getPrimaryKeys(dbConfig.getCatalog(), dbConfig.getSchema(), tableName);
+		}
 		List pkList = (List) DBUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 				List result = new ArrayList();
