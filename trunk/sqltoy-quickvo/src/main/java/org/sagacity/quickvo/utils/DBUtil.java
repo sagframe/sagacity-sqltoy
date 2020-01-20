@@ -32,11 +32,9 @@ public class DBUtil {
 		// 基本不支持(用access为什么不用mysql呢?)
 		public final static String ACCESS = "access";
 
-		// oracle10、11g(11g为主体)
+		// oracle11g+
 		public final static String ORACLE = "oracle";
 
-		// oracle12c或以上版本
-		public final static String ORACLE12 = "oracle12";
 		// 9.7为基础
 		public final static String DB2 = "db2";
 
@@ -89,7 +87,6 @@ public class DBUtil {
 	static {
 		DBNameTypeMap.put(Dialect.DB2, DbType.DB2);
 		DBNameTypeMap.put(Dialect.ORACLE, DbType.ORACLE);
-		DBNameTypeMap.put(Dialect.ORACLE12, DbType.ORACLE12);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DbType.SQLSERVER);
 		DBNameTypeMap.put(Dialect.MYSQL, DbType.MYSQL);
 		// mariaDB的方言以mysql为基准

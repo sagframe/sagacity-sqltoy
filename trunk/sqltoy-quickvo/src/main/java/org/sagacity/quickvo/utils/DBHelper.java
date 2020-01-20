@@ -602,4 +602,7 @@ public class DBHelper {
 		return DBUtil.getDbType(conn);
 	}
 
+	public static String getDBDialect() throws Exception {
+		return DBUtil.getCurrentDBDialect(conn);
+	}
 }

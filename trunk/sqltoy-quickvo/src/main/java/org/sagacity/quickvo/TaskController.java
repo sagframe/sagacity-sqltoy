@@ -33,6 +33,7 @@ import org.sagacity.quickvo.model.TableColumnMeta;
 import org.sagacity.quickvo.model.TableConstractModel;
 import org.sagacity.quickvo.model.TableMeta;
 import org.sagacity.quickvo.utils.DBHelper;
+import org.sagacity.quickvo.utils.DBUtil;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 
@@ -141,6 +142,8 @@ public class TaskController {
 		if (quickModel.getIncludeTables() != null) {
 			includes = new String[] { "(?i)".concat(quickModel.getIncludeTables()) };
 		}
+		int dbType = DBHelper.getDBType();
+		String dialect = DBHelper.getDBDialect();
 		// (?i)忽略大小写
 		List tables = DBHelper.getTableAndView(includes, quickModel.getExcludeTables() == null ? null
 				: new String[] { "(?i)".concat(quickModel.getExcludeTables()) });
@@ -224,7 +227,7 @@ public class TaskController {
 			// vo中需要import的数据类型
 			List impList = new ArrayList();
 			List colList = processTableCols(configModel, DBHelper.getTableColumnMeta(tableName),
-					isTable ? DBHelper.getTableImpForeignKeys(tableName) : null, impList);
+					isTable ? DBHelper.getTableImpForeignKeys(tableName) : null, impList, dbType, dialect);
 			List exportKeys = DBHelper.getTableExportKeys(tableName);
 			// 处理主键被其它表作为外键关联
 			processExportTables(quickVO, exportKeys, quickModel);
@@ -421,10 +424,12 @@ public class TaskController {
 	 * @param cols
 	 * @param fks
 	 * @param impList
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
-	private static List processTableCols(ConfigModel configModel, List cols, List fks, List impList) throws Exception {
+	private static List processTableCols(ConfigModel configModel, List cols, List fks, List impList, int dbType,
+			String dialect) throws Exception {
 		List quickColMetas = new ArrayList();
 		TableColumnMeta colMeta;
 		String sqlType = "";
@@ -449,7 +454,7 @@ public class TaskController {
 			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
-			jdbcType = QuickVOConstants.getJdbcType(jdbcType);
+			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);
 			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
@@ -473,15 +478,14 @@ public class TaskController {
 			quickColMeta.setNullable(colMeta.isNullable() ? "1" : "0");
 			sqlType = jdbcType;
 			importType = null;
-			// 数据库类别
-			String dbType = Integer.toString(DBHelper.getDBType());
+
 			// 默认数据类型进行匹配
 			String[] jdbcTypeMap;
 			for (int k = 0; k < QuickVOConstants.jdbcTypMapping.length; k++) {
 				jdbcTypeMap = QuickVOConstants.jdbcTypMapping[k];
 				if (sqlType.equalsIgnoreCase(jdbcTypeMap[0])) {
 					// 针对一些数据库要求提供数据库类型和数据类型双重判断
-					if ((jdbcTypeMap.length == 4 && dbType.equals(jdbcTypeMap[3])) || jdbcTypeMap.length == 3) {
+					if ((jdbcTypeMap.length == 4 && dialect.equals(jdbcTypeMap[3])) || jdbcTypeMap.length == 3) {
 						quickColMeta.setResultType(jdbcTypeMap[1]);
 						// vo中需要import的类
 						if (StringUtil.isNotBlank(jdbcTypeMap[2])) {

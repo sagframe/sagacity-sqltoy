@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.dom4j.Element;
+import org.sagacity.quickvo.utils.DBUtil;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 
@@ -132,7 +133,7 @@ public class QuickVOConstants implements Serializable {
 			{ "STRING", "String", "" }, { "FixedSTRING", "String", "" }, { "CHAR", "String", "" },
 			{ "CHARACTER", "String", "" }, { "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" },
 			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
-			{ "CLOB", "CLOB", "oracle.sql.CLOB", "10" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "10" },
+			{ "CLOB", "CLOB", "oracle.sql.CLOB", "oracle" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "oracle" },
 			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
 			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "Serializable", "java.io.Serializable" } };
 
@@ -142,7 +143,7 @@ public class QuickVOConstants implements Serializable {
 	public static final String[][] prototype = { { "int", "1" }, { "short", "1" }, { "long", "1" }, { "float", "1" },
 			{ "double", "1" }, { "char", "2" }, { "byte", "2" }, { "boolean", "2" } };
 
-	public static final String[][] jdbcAry = { { "DateTime", "TIMESTAMP" }, { "Int", "INTEGER" }, { "Int8", "INTEGER" },
+	public static final String[][] jdbcAry = { { "DateTime", "DATE" }, { "Int", "INTEGER" }, { "Int8", "INTEGER" },
 			{ "Int16", "INTEGER" }, { "Int32", "BIGINT" }, { "Int64", "BIGINT" }, { "Enum8", "INTEGER" },
 			{ "Enum16", "INTEGER" }, { "UInt8", "INTEGER" }, { "UInt16", "INTEGER" }, { "UInt32", "BIGINT" },
 			{ "UInt64", "BIGINT" }, { "FLOAT32", "FLOAT" }, { "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" },
@@ -293,7 +294,9 @@ public class QuickVOConstants implements Serializable {
 		}
 	}
 
-	public static String getJdbcType(String jdbcType) {
+	public static String getJdbcType(String jdbcType, int dbType) {
+		if (dbType == DBUtil.DbType.CLICKHOUSE && jdbcType.equalsIgnoreCase("datetime"))
+			return "TIMESTAMP";
 		for (String[] types : jdbcAry) {
 			if (jdbcType.equalsIgnoreCase(types[0])) {
 				return types[1];
