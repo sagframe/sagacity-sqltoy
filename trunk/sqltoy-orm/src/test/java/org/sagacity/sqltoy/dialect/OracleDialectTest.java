@@ -23,7 +23,7 @@ public class OracleDialectTest {
 	public void testInsertDefaultValue() {
 		try {
 			String saveOrUpdateSql = "insert into SAG_PK_SEQUENCE (id,name,create_time,sallary) values(SEQ_SAG_PK_ID.nextval,?,?,?)";
-			Connection conn = DBUtils.getConnection(DBUtils.DRIVER_ORACLE,
+			Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_ORACLE,
 					"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM", "lakala", "lakala");
 
 			PreparedStatement pst = null;
@@ -58,7 +58,7 @@ public class OracleDialectTest {
 		saveOrUpdateSql.append(" when not matched then ");
 		saveOrUpdateSql.append(
 				"  insert (STAFF_ID,NAME,CREATE_TIME) VALUES (nvl(t2.STAFF_ID,SEQ_SAG_TEST.nextval),t2.NAME,t2.CREATE_TIME) ");
-		Connection conn = DBUtils.getConnection(DBUtils.DRIVER_ORACLE,
+		Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_ORACLE,
 				"jdbc:oracle:thin:@192.168.56.109:1521:lakalaCRM", "lakala", "lakala");
 		List datas = new ArrayList();
 		for (int i = 0; i < 5; i++) {

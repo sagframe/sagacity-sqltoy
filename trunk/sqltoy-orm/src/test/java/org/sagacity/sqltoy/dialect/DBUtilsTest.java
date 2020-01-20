@@ -18,11 +18,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DBUtils.java,Revision:v1.0,Date:2017年12月9日
  */
-public class DBUtils {
+public class DBUtilsTest {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(DBUtils.class);
+	private final static Logger logger = LoggerFactory.getLogger(DBUtilsTest.class);
 
 	/**
 	 * url like:jdbc:sqlserver://localhost:1433;databasename=PMCenter_CCB

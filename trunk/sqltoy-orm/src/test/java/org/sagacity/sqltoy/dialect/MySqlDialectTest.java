@@ -26,7 +26,7 @@ public class MySqlDialectTest {
 	public void testInsertDefaultValue() {
 		try {
 			String saveOrUpdateSql = "insert into SAG_PK_IDENTITY (name,create_time,sallary) values(?,ifnull(?,'2015-01-01'),?)";
-			Connection conn = DBUtils.getConnection(DBUtils.DRIVER_MYSQL,
+			Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_MYSQL,
 					"jdbc:mysql://192.168.56.109:3306/sagacity?useUnicode=true&characterEncoding=utf-8", "root",
 					"root");
 
@@ -71,7 +71,7 @@ public class MySqlDialectTest {
 		query.append("where t1.STAFF_NAME like ?");
 		query.append(" order by t1.STAFF_NAME");
 		Object[] paramValues = { 1, "POST_TYPE", 1, "SEAT_SKILL_LEVEL", "王%" };
-		Connection conn = DBUtils.getConnection(DBUtils.DRIVER_MYSQL,
+		Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_MYSQL,
 				"jdbc:mysql://192.168.56.109:3306/vxiplatform?useUnicode=true&characterEncoding=utf-8", "root", "root");
 		MySqlDialect dialect = new MySqlDialect();
 		try {
@@ -86,7 +86,7 @@ public class MySqlDialectTest {
 	@Test
 	public void testSaveOrUpdate() {
 		String saveOrUpdateSql = "replace into SAG_TEST (STAFF_ID, NAME,CREATE_TIME) values(?,?,?)";
-		Connection conn = DBUtils.getConnection(DBUtils.DRIVER_MYSQL,
+		Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_MYSQL,
 				"jdbc:mysql://192.168.56.109:3306/vxiplatform?useUnicode=true&characterEncoding=utf-8", "root", "root");
 		List datas = new ArrayList();
 		for (int i = 0; i < 5; i++) {
@@ -128,7 +128,7 @@ public class MySqlDialectTest {
 	public void testSqlServer() {
 		try {
 			String saveOrUpdateSql = "select * from SYS_BIG_LOB";
-			Connection conn = DBUtils.getConnection(DBUtils.DRIVER_SQLSERVER,
+			Connection conn = DBUtilsTest.getConnection(DBUtilsTest.DRIVER_SQLSERVER,
 					"jdbc:sqlserver://192.168.56.1:1433;databaseName=sqltoy", "sa", "sqltoy");
 
 			PreparedStatement pst = null;

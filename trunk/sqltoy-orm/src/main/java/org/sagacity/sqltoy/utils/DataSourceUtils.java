@@ -74,6 +74,10 @@ public class DataSourceUtils {
 
 		public final static String MONGO = "mongo";
 		public final static String ES = "elastic";
+
+		// 19.x版本
+		public final static String CLICKHOUSE = "clickhouse";
+
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -114,6 +118,7 @@ public class DataSourceUtils {
 
 		public final static int MONGO = 110;
 		public final static int ES = 120;
+		public final static int CLICKHOUSE = 130;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -144,6 +149,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
+		DBNameTypeMap.put(Dialect.CLICKHOUSE, DBType.CLICKHOUSE);
 	}
 
 	public static String getDialect(Integer dbType) {
@@ -182,6 +188,8 @@ public class DataSourceUtils {
 			return Dialect.SAP_HANA;
 		case DBType.ES:
 			return Dialect.ES;
+		case DBType.CLICKHOUSE:
+			return Dialect.CLICKHOUSE;
 		case DBType.MONGO:
 			return Dialect.MONGO;
 		case DBType.SYBASE_IQ:
