@@ -409,8 +409,7 @@ public class EntityMeta implements Serializable {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
 		if (fieldMeta == null)
 			return null;
-		else
-			return fieldMeta.getColumnName();
+		return fieldMeta.getColumnName();
 	}
 
 	/**
@@ -422,16 +421,14 @@ public class EntityMeta implements Serializable {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
 		if (fieldMeta == null)
 			return null;
-		else
-			return fieldMeta.getColumnOptName();
+		return fieldMeta.getColumnOptName();
 	}
 
 	public int getColumnType(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
 		if (fieldMeta == null)
 			return -1;
-		else
-			return fieldMeta.getType();
+		return fieldMeta.getType();
 	}
 
 	/**
@@ -493,7 +490,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getLoadSql(String tableName) {
-		if (tableName == null)
+		if (tableName == null || tableName.equals(schemaTable))
 			return loadSql;
 		// 针对sharding 分表情况使用重新组织表名
 		return "select ".concat(allColumnNames).concat(" from ").concat(tableName).concat(" ")
