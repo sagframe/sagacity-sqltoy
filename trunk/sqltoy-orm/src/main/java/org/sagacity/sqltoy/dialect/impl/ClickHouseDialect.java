@@ -10,14 +10,17 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -140,15 +143,40 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public Serializable load(SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
+		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, sqlToyConfig.getSql(dialect), entityMeta,
+				entity, cascadeTypes, conn, dbType);
 	}
 
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
 			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		if (null == entities || entities.isEmpty())
+			return null;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// 判断是否存在主键
+		if (null == entityMeta.getIdArray()) {
+			throw new IllegalArgumentException(
+					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
+		}
+		StringBuilder loadSql = new StringBuilder();
+		loadSql.append("select ").append(entityMeta.getAllColumnNames());
+		loadSql.append(" from ");
+		// sharding 分表情况下会传递表名
+		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(" where ");
+		String field;
+		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+			field = entityMeta.getIdArray()[i];
+			if (i > 0) {
+				loadSql.append(" and ");
+			}
+			loadSql.append(entityMeta.getColumnName(field));
+			loadSql.append(" in (:").append(field).append(") ");
+		}
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	@Override
