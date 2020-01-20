@@ -141,7 +141,7 @@ public class DBHelper {
 			rs = pst.executeQuery();
 			commentName = "COMMENTS";
 		} // mysql数据库
-		else if (dbType == DbType.MYSQL || dbType == DbType.MYSQL8) {
+		else if (dbType == DbType.MYSQL) {
 			StringBuilder queryStr = new StringBuilder("SELECT TABLE_NAME,TABLE_SCHEMA,TABLE_TYPE,TABLE_COMMENT ");
 			queryStr.append(" FROM INFORMATION_SCHEMA.TABLES where 1=1 ");
 			if (dbConfig.getSchema() != null) {
@@ -218,8 +218,7 @@ public class DBHelper {
 		ResultSet rs;
 		// sybase or sqlserver
 		String tableComment = null;
-		if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012 || dbType == DbType.SQLSERVER2014
-				|| dbType == DbType.SQLSERVER2016) {
+		if (dbType == DbType.SQLSERVER) {
 			StringBuilder queryStr = new StringBuilder();
 			queryStr.append("select cast(isnull(f.value,'') as varchar(1000)) COMMENTS");
 			queryStr.append(" from syscolumns a");
@@ -253,10 +252,8 @@ public class DBHelper {
 		ResultSet rs;
 		HashMap filedsComments = null;
 		// sybase or sqlserver
-		if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012 || dbType == DbType.SQLSERVER2014
-				|| dbType == DbType.SQLSERVER2016 || dbType == DbType.SYBASE) {
-			if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012 || dbType == DbType.SQLSERVER2014
-					|| dbType == DbType.SQLSERVER2016) {
+		if (dbType == DbType.SQLSERVER) {
+			if (dbType == DbType.SQLSERVER) {
 				StringBuilder queryStr = new StringBuilder();
 				queryStr.append("SELECT a.name COLUMN_NAME,");
 				queryStr.append(" cast(isnull(g.[value],'') as varchar(1000)) as COMMENTS");
@@ -297,8 +294,7 @@ public class DBHelper {
 					String isAutoIncrement;
 					while (rs.next()) {
 						TableColumnMeta colMeta;
-						if (dbType == DbType.SQLSERVER || dbType == DbType.SQLSERVER2012
-								|| dbType == DbType.SQLSERVER2014 || dbType == DbType.SQLSERVER2016) {
+						if (dbType == DbType.SQLSERVER) {
 							if (metaMap == null) {
 								colMeta = new TableColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
@@ -380,7 +376,7 @@ public class DBHelper {
 		}
 
 		final HashMap metaMap = filedsComments;
-		if (dbType == DbType.MYSQL || dbType == DbType.MYSQL8) {
+		if (dbType == DbType.MYSQL) {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, "%");
 		} else {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, null);

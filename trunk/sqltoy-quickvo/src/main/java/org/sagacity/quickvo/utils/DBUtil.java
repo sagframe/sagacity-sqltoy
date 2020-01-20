@@ -39,33 +39,19 @@ public class DBUtil {
 		public final static String ORACLE12 = "oracle12";
 		// 9.7为基础
 		public final static String DB2 = "db2";
-		// db2 10.x以上版本
-		public final static String DB2_10 = "db2_10";
 
 		// sqlserver建议采用2012或以上版本
 		// 2005版本或以上版本,以2008为支持主体
 		public final static String SQLSERVER = "sqlserver";
-		
-		@Deprecated
-		public final static String SQLSERVER2012 = "sqlserver2012";
-		// 暂时未启用
-		public final static String SQLSERVER2014 = "sqlserver2014";
-		public final static String SQLSERVER2016 = "sqlserver2016";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
-		public final static String MYSQL8 = "mysql8";
 		public final static String INNOSQL = "innosql";
 		public final static String MARIADB = "mariadb";
-		// 以12.x为基准版
-		public final static String INFORMIX = "informix";
 		public final static String POSTGRESQL = "postgresql";
-		
-		@Deprecated
-		public final static String POSTGRESQL94 = "postgresql94";
 
-		// 以15.7为基准起始版
-		public final static String SYBASE = "sybase";
+		public final static String CLICKHOUSE = "clickhouse";
+
 		// 以15.4为基准起始版
 		public final static String SYBASE_IQ = "sybase_iq";
 
@@ -87,51 +73,33 @@ public class DBUtil {
 		public final static int ORACLE = 10;
 		public final static int ORACLE12 = 12;
 		public final static int DB2 = 20;
-		public final static int DB2_10 = 21;
 		// 不再支持sqlserver2000
 		public final static int SQLSERVER = 30;
-		// public final static int SQLSERVER2005 = 31;
-		@Deprecated
-		public final static int SQLSERVER2012 = 32;
-		public final static int SQLSERVER2014 = 33;
-		public final static int SQLSERVER2016 = 34;
 		public final static int MYSQL = 40;
-		public final static int MYSQL8 = 42;
-		public final static int INFORMIX9_10 = 50;
-		public final static int INFORMIX = 51;
 
-		@Deprecated
-		public final static int POSTGRESQL94 = 60;
 		public final static int POSTGRESQL = 61;
 
-		public final static int SYBASE = 70;
 		public final static int SYBASE_IQ = 80;
 		public final static int SQLITE = 90;
 		public final static int SAP_HANA = 100;
+		public final static int CLICKHOUSE = 130;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
 	static {
 		DBNameTypeMap.put(Dialect.DB2, DbType.DB2);
-		DBNameTypeMap.put(Dialect.DB2_10, DbType.DB2_10);
 		DBNameTypeMap.put(Dialect.ORACLE, DbType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE12, DbType.ORACLE12);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DbType.SQLSERVER);
-		DBNameTypeMap.put(Dialect.SQLSERVER2012, DbType.SQLSERVER2012);
-		DBNameTypeMap.put(Dialect.SQLSERVER2014, DbType.SQLSERVER2014);
-		DBNameTypeMap.put(Dialect.SQLSERVER2016, DbType.SQLSERVER2016);
 		DBNameTypeMap.put(Dialect.MYSQL, DbType.MYSQL);
-		DBNameTypeMap.put(Dialect.MYSQL8, DbType.MYSQL8);
 		// mariaDB的方言以mysql为基准
 		DBNameTypeMap.put(Dialect.MARIADB, DbType.MYSQL);
 		DBNameTypeMap.put(Dialect.INNOSQL, DbType.MYSQL);
 
-		DBNameTypeMap.put(Dialect.INFORMIX, DbType.INFORMIX);
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DbType.POSTGRESQL);
-		DBNameTypeMap.put(Dialect.POSTGRESQL94, DbType.POSTGRESQL94);
-		DBNameTypeMap.put(Dialect.SYBASE, DbType.SYBASE);
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DbType.SYBASE_IQ);
 		DBNameTypeMap.put(Dialect.SAP_HANA, DbType.SAP_HANA);
+		DBNameTypeMap.put(Dialect.CLICKHOUSE, DbType.CLICKHOUSE);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DbType.UNDEFINE);
 	}
 
@@ -146,39 +114,41 @@ public class DBUtil {
 		if (null != conn) {
 			String dbDialect = conn.getMetaData().getDatabaseProductName();
 			// oracle
-			if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.ORACLE) != -1)
+			if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.ORACLE) != -1) {
 				return DBUtil.Dialect.ORACLE;
+			}
 			// db2
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.DB2) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.DB2) != -1) {
 				return DBUtil.Dialect.DB2;
+			}
 			// sqlserver,只支持2000或以上版本
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.SQLSERVER) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1) {
 				return DBUtil.Dialect.SQLSERVER;
+			}
 			// mysql以及mysql的分支数据库
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.MYSQL) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.MARIADB) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.INNOSQL) != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.INNOSQL) != -1) {
 				return DBUtil.Dialect.MYSQL;
-			// informix,只支持9以上版本
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.INFORMIX) != -1)
-				return DBUtil.Dialect.INFORMIX;
+			}
 			// sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.SQLITE) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.SQLITE) != -1) {
 				return DBUtil.Dialect.SQLITE;
+			}
 			// postgresql
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.POSTGRESQL) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.POSTGRESQL) != -1) {
 				return DBUtil.Dialect.POSTGRESQL;
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.CLICKHOUSE) != -1) {
+				return DBUtil.Dialect.CLICKHOUSE;
+			}
 			// sybase iq
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1
 					|| (StringUtil.indexOfIgnoreCase(dbDialect, "sap") != -1
-							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1))
+							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1)) {
 				return DBUtil.Dialect.SYBASE_IQ;
-			// sybase
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, DBUtil.Dialect.SYBASE) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Adaptive Server Enterprise") != -1)
-				return DBUtil.Dialect.SYBASE;
+			}
 		}
 		return DBUtil.Dialect.UNDEFINE;
 	}
@@ -217,64 +187,45 @@ public class DBUtil {
 			// oracle
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				dbType = DbType.ORACLE;
-				if (majorVersion >= 12)
+				if (majorVersion >= 12) {
 					dbType = DbType.ORACLE12;
+				}
 			}
 			// db2
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
 				dbType = DbType.DB2;
-				if (majorVersion >= 10)
-					dbType = DbType.DB2_10;
 			}
 			// sqlserver,只支持2008或以上版本
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Microsoft SQL Server") != -1) {
 				dbType = DbType.SQLSERVER;
-				// 2012版本,2014版本也归为2012
-				if (majorVersion >= 2016)
-					dbType = DbType.SQLSERVER2016;
-				else if (majorVersion >= 2014)
-					dbType = DbType.SQLSERVER2014;
-				else if (majorVersion >= 2012)
-					dbType = DbType.SQLSERVER2012;
 			}
 			// mysql以及mysql的分支数据库
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MYSQL) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				dbType = DbType.MYSQL;
-				if (majorVersion > 5)
-					dbType = DbType.MYSQL8;
-			}
-			// informix,只支持9以上版本
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INFORMIX) != -1) {
-				dbType = DbType.INFORMIX;
-				// 9、10版本采用游标方式
-				if (majorVersion <= 10)
-					dbType = DbType.INFORMIX9_10;
 			}
 			// postgresql
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
-				dbType = DbType.POSTGRESQL94;
-				int minorVersion = conn.getMetaData().getDatabaseMinorVersion();
-				// 9.5以上为标准支持模式
-				if (majorVersion >= 9 && minorVersion >= 5)
-					dbType = DbType.POSTGRESQL;
+				dbType = DbType.POSTGRESQL;
+			} // postgresql
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
+				dbType = DbType.CLICKHOUSE;
 			}
 			// sybase IQ
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1)
+					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1) {
 				dbType = DbType.SYBASE_IQ;
-			// sybase ASE
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "Adaptive Server Enterprise") != -1)
-				dbType = DbType.SYBASE;
+			}
 			// sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				dbType = DbType.SQLITE;
+			}
 			// access
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ACCESS) != -1)
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ACCESS) != -1) {
 				dbType = DbType.ACCESS;
+			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}
 		return DBNameTypeMap.get(dbKey);

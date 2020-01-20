@@ -5,11 +5,9 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,11 +53,21 @@ public class DataSourceUtilTest {
 		String user = "default";
 		String password = "SagFrame@123";
 		Connection conn = getConnection(driver, url, user, password);
+		String[] types = new String[] { "TABLE" };
+		String tableName;
 		try {
-			System.err.println(conn.getMetaData().getDatabaseProductName());
-
-			System.err.println(conn.getMetaData().getDatabaseMajorVersion());
-			System.err.println(conn.getMetaData().getDatabaseMinorVersion());
+			ResultSet rs = conn.getMetaData().getColumns("default", null, "TRADE_ORDER_INFO_2", null);
+			while (rs.next()) {
+				System.err.println("columnName=" + rs.getString("COLUMN_NAME"));
+				System.err.println(rs.getString("COLUMN_DEF"));
+				System.err.println("备注:=" + rs.getString("REMARKS") + rs.getString("COMMENT"));
+				System.err.println(rs.getInt("DATA_TYPE"));
+				System.err.println(rs.getString("TYPE_NAME"));
+				System.err.println(rs.getInt("COLUMN_SIZE"));
+				System.err.println(rs.getInt("DECIMAL_DIGITS"));
+				System.err.println(rs.getInt("NUM_PREC_RADIX"));
+				System.err.println(rs.getInt("NULLABLE"));
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
