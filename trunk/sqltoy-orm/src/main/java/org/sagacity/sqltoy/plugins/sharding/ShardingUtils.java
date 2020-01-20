@@ -61,10 +61,11 @@ public class ShardingUtils {
 		ShardingModel shardingModel = new ShardingModel();
 		shardingModel.setDataSource(dataSource);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		shardingModel.setTableName(entityMeta.getSchemaTable());
 		// 主键值需要提前按照主键策略赋予(sequence 和assign模式的不会实际执行赋值)
-		if (wrapIdValue)
+		if (wrapIdValue) {
 			assignPK(sqlToyContext, entityMeta, entity);
-
+		}
 		ShardingConfig shardingConfig = entityMeta.getShardingConfig();
 		if (shardingConfig == null) {
 			return shardingModel;
@@ -519,8 +520,9 @@ public class ShardingUtils {
 							}
 						}
 					}
-					PropertyUtils.setProperty(entities.get(i), pks[0], idGenerator.getId(table, signature,
-							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idType, idLength, sequenceSize));
+					PropertyUtils.setProperty(entities.get(i), pks[0],
+							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
+									null, idType, idLength, sequenceSize));
 				}
 			}
 		}
