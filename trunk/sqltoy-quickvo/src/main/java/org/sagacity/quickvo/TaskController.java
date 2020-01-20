@@ -233,16 +233,19 @@ public class TaskController {
 			// 默认设置为运行部分列为空
 			quickVO.setFullNotNull("0");
 			// 全部为空
-			if (notNullCnt == colList.size())
+			if (notNullCnt == colList.size()) {
 				quickVO.setFullNotNull("1");
+			}
 			// 表
 			if (isTable) {
 				pks = DBHelper.getTablePrimaryKeys(tableName);
 				// 主键字段长度等于表字段长度，设置所有字段为主键标志为1
-				if (pks.size() == colList.size())
+				if (pks.size() == colList.size()) {
 					quickVO.setPkIsAllColumn("1");
-				if (pks != null && notNullCnt == pks.size())
+				}
+				if (pks != null && notNullCnt == pks.size()) {
 					quickVO.setPkSizeEqualNotNullSize("1");
+				}
 				// 单主键
 				if (pks.size() == 1) {
 					quickVO.setSinglePk("1");
@@ -352,11 +355,6 @@ public class TaskController {
 											quickColMeta.setStrategy("generator");
 											quickColMeta.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
 										}
-										//
-										// else if (quickColMeta.getPrecision() == 32) {
-										// quickColMeta.setStrategy("generator");
-										// quickColMeta.setGenerator(QuickVOConstants.PK_UUID_GENERATOR);
-										// }
 									} else if ("long".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "integer".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "decimal".equalsIgnoreCase(quickColMeta.getDataType())
@@ -450,8 +448,9 @@ public class TaskController {
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
 			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
 			// 是否关键词
-			if (QuickVOConstants.isKeyword(colMeta.getColName()))
+			if (QuickVOConstants.isKeyword(colMeta.getColName())) {
 				quickColMeta.setKeyword("true");
+			}
 			quickColMeta.setJdbcType(colMeta.getTypeName());
 			quickColMeta.setPrecision(colMeta.getPrecision());
 			quickColMeta.setScale(colMeta.getScale());
@@ -497,8 +496,9 @@ public class TaskController {
 			if (typeMappSize > 0) {
 				precision = colMeta.getPrecision();
 				scale = colMeta.getScale();
-				if (maxScale != -1 && scale > maxScale)
+				if (maxScale != -1 && scale > maxScale) {
 					scale = maxScale;
+				}
 				// 逆向进行匹配
 				for (int j = typeMappSize - 1; j >= 0; j--) {
 					colTypeMapping = (ColumnTypeMapping) configModel.getTypeMapping().get(j);
