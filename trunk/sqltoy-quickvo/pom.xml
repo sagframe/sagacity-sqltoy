@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.9</version>
+	<version>4.10</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dom4j.version>2.1.1</dom4j.version>
@@ -15,6 +15,9 @@
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<postgresql.version>42.2.9</postgresql.version>
 		<mssql.version>7.4.1.jre8</mssql.version>
+		<clickhouse-jdbc.version>0.2.3</clickhouse-jdbc.version>
+		<httpcomponents.version>4.5.11</httpcomponents.version>
+		<slf4j.version>1.7.30</slf4j.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -32,20 +35,15 @@
 
 	<distributionManagement>
 
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
-			</repository>
-
-		<!-- <repository>
-			<id>nexus-release</id>
-			<name>3rd party</name>
-			<url>https://nexus.1chemic.com/repository/releases/</url>
+		<repository>
+			<id>sagframe-release</id>
+			<url>http://www.sagframe.com/nexus/repository/sagframe-release</url>
 		</repository>
-		<snapshotRepository>
-			<id>nexus-snapshots</id>
-			<name>Department 
-			Repository</name>
-			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository> -->
+
+		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
+			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
+			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
+			</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.dom4j/dom4j -->
@@ -93,6 +91,22 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency> <!-- 桥接：告诉Slf4j使用Log4j2 -->
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j.version}</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.freemarker/freemarker -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
@@ -111,13 +125,13 @@
 			<version>${mysql.version}</version>
 			<optional>true</optional>
 		</dependency>
-	
+
 		<dependency>
 			<groupId>com.oracle.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
-			
+
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -125,14 +139,43 @@
 			<version>${postgresql.version}</version>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql.version}</version>
 			<optional>true</optional>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/ru.yandex.clickhouse/clickhouse-jdbc -->
+		<dependency>
+			<groupId>ru.yandex.clickhouse</groupId>
+			<artifactId>clickhouse-jdbc</artifactId>
+			<version>${clickhouse-jdbc.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${httpcomponents.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpmime</artifactId>
+			<version>${httpcomponents.version}</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>sqltoy-quickvo-${version}</finalName>
