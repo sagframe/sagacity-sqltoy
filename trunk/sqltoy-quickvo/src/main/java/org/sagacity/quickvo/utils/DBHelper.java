@@ -374,7 +374,27 @@ public class DBHelper {
 						}
 					});
 		}
-
+		// clickhouse 数据库
+		if (dbType == DbType.CLICKHOUSE) {
+			StringBuilder queryStr = new StringBuilder();
+			queryStr.append("select name COLUMN_NAME,comment COMMENTS from system.columns t where t.table=?");
+			pst = conn.prepareStatement(queryStr.toString());
+			pst.setString(1, tableName);
+			rs = pst.executeQuery();
+			filedsComments = (HashMap) DBUtil.preparedStatementProcess(null, pst, rs,
+					new PreparedStatementResultHandler() {
+						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
+							HashMap filedHash = new HashMap();
+							while (rs.next()) {
+								TableColumnMeta colMeta = new TableColumnMeta();
+								colMeta.setColName(rs.getString("COLUMN_NAME"));
+								colMeta.setColRemark(rs.getString("COMMENTS"));
+								filedHash.put(rs.getString("COLUMN_NAME"), colMeta);
+							}
+							this.setResult(filedHash);
+						}
+					});
+		}
 		final HashMap metaMap = filedsComments;
 		if (dbType == DbType.MYSQL) {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, "%");
@@ -395,6 +415,9 @@ public class DBHelper {
 						colMeta.setColRemark(rs.getString("REMARKS"));
 					} else {
 						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
+						if (colMeta.getColDefault() == null) {
+							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
+						}
 					}
 					if (colMeta != null) {
 						colMeta.setDataType(rs.getInt("DATA_TYPE"));
@@ -450,6 +473,10 @@ public class DBHelper {
 		if (defaultValue.startsWith("((") && defaultValue.endsWith("))")) {
 			return defaultValue.substring(2, defaultValue.length() - 2);
 		} else if (defaultValue.startsWith("(") && defaultValue.endsWith(")")) {
+			return defaultValue.substring(1, defaultValue.length() - 1);
+		} else if (defaultValue.startsWith("'") && defaultValue.endsWith("'")) {
+			return defaultValue.substring(1, defaultValue.length() - 1);
+		} else if (defaultValue.startsWith("\"") && defaultValue.endsWith("\"")) {
 			return defaultValue.substring(1, defaultValue.length() - 1);
 		}
 		return defaultValue;

@@ -30,9 +30,8 @@ public class StringUtil {
 	public static boolean isBlank(Object str) {
 		if (null == str || str.toString().trim().equals("")) {
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	public static String trim(String str) {
@@ -187,16 +186,16 @@ public class StringUtil {
 		for (int i = 0; i < humpAry.length; i++) {
 			cell = humpAry[i];
 			// 全大写或全小写
-			if (cell.toUpperCase().equals(cell))
+			if (cell.toUpperCase().equals(cell)) {
 				result.append(firstToUpperOtherToLower(cell));
-			else
+			} else {
 				result.append(firstToUpperCase(cell));
+			}
 		}
 		// 首字母变大写
 		if (firstIsUpperCase)
 			return firstToUpperCase(result.toString());
-		else
-			return firstToLowerCase(result.toString());
+		return firstToLowerCase(result.toString());
 	}
 
 	public static String[] trimArray(String[] source) {

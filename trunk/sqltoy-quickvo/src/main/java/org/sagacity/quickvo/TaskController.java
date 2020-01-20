@@ -110,8 +110,9 @@ public class TaskController {
 		// 初始化模板的内容
 		init();
 		// 设置编码格式
-		if (StringUtil.isBlank(configModel.getEncoding()))
+		if (StringUtil.isBlank(configModel.getEncoding())) {
 			TemplateGenerator.getInstance().setEncoding(configModel.getEncoding());
+		}
 		// 循环执行任务
 		QuickModel quickModel;
 		int i = 0;
@@ -137,8 +138,9 @@ public class TaskController {
 	 */
 	public static void createTask(QuickModel quickModel) throws Exception {
 		String[] includes = null;
-		if (quickModel.getIncludeTables() != null)
+		if (quickModel.getIncludeTables() != null) {
 			includes = new String[] { "(?i)".concat(quickModel.getIncludeTables()) };
+		}
 		// (?i)忽略大小写
 		List tables = DBHelper.getTableAndView(includes, quickModel.getExcludeTables() == null ? null
 				: new String[] { "(?i)".concat(quickModel.getExcludeTables()) });
@@ -189,23 +191,26 @@ public class TaskController {
 			quickVO.setTableName(tableName);
 			quickVO.setSchema(tableMeta.getSchema());
 			if (QuickVOConstants.getKeyValue("include.schema") == null
-					|| !QuickVOConstants.getKeyValue("include.schema").equalsIgnoreCase("true"))
+					|| !QuickVOConstants.getKeyValue("include.schema").equalsIgnoreCase("true")) {
 				quickVO.setSchema(null);
+			}
 			// 针对sqlserver
 			if (StringUtil.isBlank(tableMeta.getTableRemark())) {
 				quickVO.setTableRemark(DBHelper.getTableRemark(tableName));
-			} else
+			} else {
 				quickVO.setTableRemark(tableMeta.getTableRemark());
+			}
 			quickVO.setEntityName(entityName);
 			quickVO.setEntityPackage(quickModel.getEntityPackage());
 			quickVO.setVoPackage(quickModel.getVoPackage());
 			// 截取VO前面的模块标识名称(一般数据库表名前缀为特定的模块名称)
-			if (quickModel.getVoSubstr() != null)
+			if (quickModel.getVoSubstr() != null) {
 				quickVO.setVoName(StringUtil.firstToUpperCase(StringUtil.replaceStr(quickModel.getVoName(),
 						"#{subName}", StringUtil.replaceStr(entityName, quickModel.getVoSubstr(), ""))));
-			else
+			} else {
 				quickVO.setVoName(StringUtil
 						.firstToUpperCase(StringUtil.replaceStr(quickModel.getVoName(), "#{subName}", entityName)));
+			}
 			quickVO.setDaoPackage(quickModel.getDaoPackage());
 			quickVO.setDaoName(StringUtil.firstToUpperCase(StringUtil.replaceStr(quickModel.getDaoName(), "#{subName}",
 					StringUtil.replaceStr(entityName, quickModel.getVoSubstr(), ""))));
@@ -290,36 +295,42 @@ public class TaskController {
 												|| strategy.equalsIgnoreCase("sequence")) {
 											quickColMeta.setStrategy(strategy);
 											if (strategy.equalsIgnoreCase("sequence")) {
-												if (StringUtil.isBlank(sequence))
+												if (StringUtil.isBlank(sequence)) {
 													throw new Exception("please give a sequence for" + tableName
 															+ " where primary key strategy is sequence!");
-												else
-													quickColMeta.setSequence(sequence);
+												}
+												quickColMeta.setSequence(sequence);
 											}
 											if (strategy.equalsIgnoreCase("generator")) {
 												if (StringUtil.isNotBlank(generator))
 													quickColMeta.setGenerator(generator);
 												// 设置default generator
 												if (StringUtil.isBlank(generator)
-														|| generator.equalsIgnoreCase("default"))
+														|| generator.equalsIgnoreCase("default")) {
 													quickColMeta.setGenerator(QuickVOConstants.PK_DEFAULT_GENERATOR);
+												}
 												// uuid
-												else if (generator.equalsIgnoreCase("UUID"))
+												else if (generator.equalsIgnoreCase("UUID")) {
 													quickColMeta.setGenerator(QuickVOConstants.PK_UUID_GENERATOR);
+												}
 												// 雪花算法
-												else if (generator.equalsIgnoreCase("snowflake"))
+												else if (generator.equalsIgnoreCase("snowflake")) {
 													quickColMeta.setGenerator(QuickVOConstants.PK_SNOWFLAKE_GENERATOR);
+												}
 												// 纳秒
-												else if (generator.equalsIgnoreCase("nanotime"))
+												else if (generator.equalsIgnoreCase("nanotime")) {
 													quickColMeta
 															.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
+												}
 												// 基于redis的主键策略
-												else if (generator.equalsIgnoreCase("redis"))
+												else if (generator.equalsIgnoreCase("redis")) {
 													quickColMeta.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
+												}
 											}
-										} else
+										} else {
 											throw new Exception("please check primaryKey Strategy for table of "
 													+ tableName + ",must like:sequence、assign、generator、identity");
+										}
 									}
 								} else if (isIdentity) {
 									quickColMeta.setStrategy("identity");
@@ -427,8 +438,9 @@ public class TaskController {
 		int maxScale = QuickVOConstants.getMaxScale();
 		int typeMappSize = 0;
 
-		if (configModel.getTypeMapping() != null && !configModel.getTypeMapping().isEmpty())
+		if (configModel.getTypeMapping() != null && !configModel.getTypeMapping().isEmpty()) {
 			typeMappSize = configModel.getTypeMapping().size();
+		}
 		for (int i = 0; i < cols.size(); i++) {
 			colMeta = (TableColumnMeta) cols.get(i);
 			QuickColMeta quickColMeta = new QuickColMeta();
@@ -454,10 +466,11 @@ public class TaskController {
 			quickColMeta.setNullable(colMeta.isNullable() ? "1" : "0");
 
 			// 判断是否为数字类型设置对应标识，并转换
-			if (colMeta.getTypeName().indexOf(".") != -1)
+			if (colMeta.getTypeName().indexOf(".") != -1) {
 				sqlType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);
-			else
+			} else {
 				sqlType = colMeta.getTypeName();
+			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			sqlType = sqlType.toLowerCase().replaceFirst("\\s+identity", "");
 			importType = null;
@@ -494,8 +507,9 @@ public class TaskController {
 						boolean mapped = false;
 						// 不判断长度
 						if (colTypeMapping.getPrecisionMax() == -1 && colTypeMapping.getScaleMax() == -1) {
-							if (null != colTypeMapping.getJdbcType())
+							if (null != colTypeMapping.getJdbcType()) {
 								quickColMeta.setDataType(colTypeMapping.getJdbcType());
+							}
 							quickColMeta.setResultType(colTypeMapping.getResultType());
 							mapped = true;
 						}
@@ -503,8 +517,9 @@ public class TaskController {
 						// 判断小数
 						if (colTypeMapping.getPrecisionMax() == -1 && colTypeMapping.getScaleMax() != -1) {
 							if (colTypeMapping.getScaleMax() >= scale && colTypeMapping.getScaleMin() <= scale) {
-								if (null != colTypeMapping.getJdbcType())
+								if (null != colTypeMapping.getJdbcType()) {
 									quickColMeta.setDataType(colTypeMapping.getJdbcType());
+								}
 								quickColMeta.setResultType(colTypeMapping.getResultType());
 								mapped = true;
 							}
@@ -527,8 +542,9 @@ public class TaskController {
 							if (colTypeMapping.getPrecisionMax() >= precision
 									&& colTypeMapping.getPrecisionMin() <= precision
 									&& colTypeMapping.getScaleMax() >= scale && colTypeMapping.getScaleMin() <= scale) {
-								if (null != colTypeMapping.getJdbcType())
+								if (null != colTypeMapping.getJdbcType()) {
 									quickColMeta.setDataType(colTypeMapping.getJdbcType());
+								}
 								quickColMeta.setResultType(colTypeMapping.getResultType());
 								mapped = true;
 							}
@@ -575,8 +591,9 @@ public class TaskController {
 				}
 			}
 			// 增加类引入类型对象
-			if (importType != null && importType.indexOf(".") != -1 && !impList.contains(importType))
+			if (importType != null && importType.indexOf(".") != -1 && !impList.contains(importType)) {
 				impList.add(importType);
+			}
 			quickColMetas.add(quickColMeta);
 		}
 		return quickColMetas;
@@ -622,8 +639,9 @@ public class TaskController {
 		for (int i = 0; i < columns.size(); i++) {
 			quickColMeta = (QuickColMeta) columns.get(i);
 			// 不为空
-			if (!quickColMeta.getNullable().equalsIgnoreCase("1"))
+			if (!quickColMeta.getNullable().equalsIgnoreCase("1")) {
 				notNullCnt++;
+			}
 		}
 		return notNullCnt;
 
@@ -662,12 +680,13 @@ public class TaskController {
 							.concat(StringUtil.firstToUpperCase(pkRefColJavaName)).concat("())"));
 				} else {
 					subTablesMap.put(refTable, exportKey);
-					if (quickModel.getVoSubstr() != null)
+					if (quickModel.getVoSubstr() != null) {
 						refJavaTable = StringUtil.firstToUpperCase(StringUtil.replaceStr(quickModel.getVoName(),
 								"#{subName}", StringUtil.replaceStr(refJavaTable, quickModel.getVoSubstr(), "")));
-					else
+					} else {
 						refJavaTable = StringUtil.firstToUpperCase(
 								StringUtil.replaceStr(quickModel.getVoName(), "#{subName}", refJavaTable));
+					}
 					exportKey.setPkRefTableJavaName(refJavaTable);
 
 					exportKey.setPkColName("\"" + exportKey.getPkColName() + "\"");
@@ -749,12 +768,9 @@ public class TaskController {
 		// 文件存在判断是否相等，不相等则生成
 		if (generateFile.exists())
 			return;
-		else {
-			logger.info("正在生成文件:{}", file);
-			quickVO.setDateTime(formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"));
-			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
-					file);
-		}
+		logger.info("正在生成文件:{}", file);
+		quickVO.setDateTime(formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"));
+		TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template, file);
 	}
 
 	/**
@@ -794,14 +810,17 @@ public class TaskController {
 			if (!cleanConstructor.equals(compareConstructor)) {
 				logger.info("修改vo:" + quickVO.getVoName());
 				constructor = constructor.trim();
-				if (constructor.indexOf("\n") == constructor.length() - 1)
+				if (constructor.indexOf("\n") == constructor.length() - 1) {
 					constructor = constructor.substring(0, constructor.length() - 1);
-				if (constructor.indexOf("\r") == constructor.length() - 1)
+				}
+				if (constructor.indexOf("\r") == constructor.length() - 1) {
 					constructor = constructor.substring(0, constructor.length() - 1);
+				}
 				FileUtil.putStringToFile(before + constructor + after, file, charset);
 			}
-		} else
+		} else {
 			logger.error("vo 文件中的构造函数默认开始结束符号被修改!表发生修改无法更新vo!");
+		}
 	}
 
 	/**
@@ -853,8 +872,9 @@ public class TaskController {
 		// 以最后的为准
 		for (PrimaryKeyStrategy primaryKeyStrategy : pkGeneratorStrategyList) {
 			// 不区分大小写
-			if (tableName.matches("(?i)".concat(primaryKeyStrategy.getName())))
+			if (tableName.matches("(?i)".concat(primaryKeyStrategy.getName()))) {
 				result = primaryKeyStrategy;
+			}
 		}
 		return result;
 	}
@@ -887,10 +907,11 @@ public class TaskController {
 		StringBuilder buffer = new StringBuilder();
 		BufferedReader in = null;
 		try {
-			if (StringUtil.isNotBlank(encoding))
+			if (StringUtil.isNotBlank(encoding)) {
 				in = new BufferedReader(new InputStreamReader(is, encoding));
-			else
+			} else {
 				in = new BufferedReader(new InputStreamReader(is));
+			}
 			String line = "";
 			while ((line = in.readLine()) != null) {
 				buffer.append(line);

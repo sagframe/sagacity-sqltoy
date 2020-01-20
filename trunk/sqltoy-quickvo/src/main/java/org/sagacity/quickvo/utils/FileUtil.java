@@ -40,8 +40,7 @@ public class FileUtil {
 		byte[] fileBytes = readAsByteArray(file);
 		if (StringUtil.isBlank(charset))
 			return new String(fileBytes);
-		else
-			return new String(fileBytes, charset);
+		return new String(fileBytes, charset);
 	}
 
 	/**
@@ -113,10 +112,11 @@ public class FileUtil {
 			File writeFile = new File(fileName);
 			createFolder(writeFile.getParent());
 			fos = new FileOutputStream(writeFile);
-			if (charset != null)
+			if (charset != null) {
 				osw = new OutputStreamWriter(fos, charset);
-			else
+			} else {
 				osw = new OutputStreamWriter(fos);
+			}
 			writer = new BufferedWriter(osw);
 			writer.write(content);
 			writer.flush();
@@ -135,7 +135,7 @@ public class FileUtil {
 	 * @param filter
 	 */
 	public static void getPathFiles(File parentFile, List fileList, String[] filters) {
-		//文件为空或不存在退出处理
+		// 文件为空或不存在退出处理
 		if (parentFile == null || !parentFile.exists())
 			return;
 		if (parentFile.isDirectory()) {
@@ -143,8 +143,9 @@ public class FileUtil {
 			for (int loop = 0; loop < files.length; loop++) {
 				if (!files[loop].isDirectory()) {
 					matchFilters(fileList, files[loop], filters);
-				} else
+				} else {
 					getPathFiles(files[loop], fileList, filters);
+				}
 			}
 		} else {
 			matchFilters(fileList, parentFile, filters);
@@ -164,8 +165,9 @@ public class FileUtil {
 		File file;
 		if (baseDir instanceof String) {
 			file = getFile((String) baseDir);
-		} else
+		} else {
 			file = (File) baseDir;
+		}
 		getPathFiles(file, fileList, filters);
 		return fileList;
 	}
@@ -247,15 +249,18 @@ public class FileUtil {
 
 		if (!firstPath.equals("")) {
 			if (firstPath.substring(firstPath.length() - 1).equals("/")
-					|| firstPath.substring(firstPath.length() - 1).equals("\\"))
+					|| firstPath.substring(firstPath.length() - 1).equals("\\")) {
 				firstPath = firstPath.substring(0, firstPath.length() - 1) + separator;
-			else
+			} else {
 				firstPath += separator;
-		} else
+			}
+		} else {
 			firstPath += separator;
+		}
 		if (!secondPath.equals("")
-				&& (secondPath.substring(0, 1).equals("/") || secondPath.substring(0, 1).equals("\\")))
+				&& (secondPath.substring(0, 1).equals("/") || secondPath.substring(0, 1).equals("\\"))) {
 			secondPath = secondPath.substring(1);
+		}
 		return firstPath.concat(secondPath);
 	}
 
@@ -282,8 +287,9 @@ public class FileUtil {
 		File result = null;
 		if (fileName.trim().toLowerCase().startsWith("classpath:")) {
 			String realPath = fileName.trim().substring(10).trim();
-			if (realPath.charAt(0) == '/')
+			if (realPath.charAt(0) == '/') {
 				realPath = realPath.substring(1);
+			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realPath);
 			if (url != null && url.getProtocol().equals("file"))
 				try {
@@ -291,8 +297,9 @@ public class FileUtil {
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
 				}
-		} else
+		} else {
 			result = new File(fileName);
+		}
 		return result;
 	}
 
@@ -306,8 +313,9 @@ public class FileUtil {
 	 */
 	public static String skipPath(String basePath, String skipFile) {
 		String realFile = FileUtil.formatPath(skipFile).trim();
-		if (realFile.indexOf("." + File.separator) == 0)
+		if (realFile.indexOf("." + File.separator) == 0) {
 			realFile = realFile.substring(2);
+		}
 		String pattern = ".." + File.separator;
 		int index = realFile.indexOf(pattern);
 		File tmpFile = new File(basePath);
@@ -337,8 +345,9 @@ public class FileUtil {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						result = new FileInputStream(url.getFile());
-						if (result != null)
+						if (result != null) {
 							break;
+						}
 					}
 				}
 			} catch (Exception e) {

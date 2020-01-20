@@ -48,8 +48,9 @@ public class QuickVOStart {
 		try {
 			out.println("=========  welcome use sagacity-quickvo version:4.9  支持jdk8 日期 ==========");
 			String realLogFile = logFile;
-			if (realLogFile.charAt(0) == '/')
+			if (realLogFile.charAt(0) == '/') {
 				realLogFile = realLogFile.substring(1);
+			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realLogFile);
 			InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(realLogFile);
 			ConfigurationSource source = new ConfigurationSource(stream, url);
@@ -118,10 +119,11 @@ public class QuickVOStart {
 		if (args != null && args.length > 0)
 			QuickVOConstants.QUICK_CONFIG_FILE = args[0];
 		String baseDir;
-		if (args != null && args.length > 1)
+		if (args != null && args.length > 1) {
 			baseDir = args[1];
-		else
+		} else {
 			baseDir = System.getProperty("user.dir");
+		}
 		QuickVOConstants.BASE_LOCATE = baseDir;
 		// 测试使用(真实场景不起作用)
 		if (args == null || args.length == 0) {
