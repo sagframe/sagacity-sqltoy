@@ -443,7 +443,14 @@ public class TaskController {
 			colMeta = (TableColumnMeta) cols.get(i);
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
-			quickColMeta.setDataType(colMeta.getTypeName());
+			String jdbcType = colMeta.getTypeName();
+			if (colMeta.getTypeName().indexOf(".") != -1) {
+				jdbcType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);
+			}
+			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
+			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
+			jdbcType = QuickVOConstants.getJdbcType(jdbcType);
+			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
 			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
@@ -451,7 +458,8 @@ public class TaskController {
 			if (QuickVOConstants.isKeyword(colMeta.getColName())) {
 				quickColMeta.setKeyword("true");
 			}
-			quickColMeta.setJdbcType(colMeta.getTypeName());
+
+			quickColMeta.setJdbcType(jdbcType);
 			quickColMeta.setPrecision(colMeta.getPrecision());
 			quickColMeta.setScale(colMeta.getScale());
 			quickColMeta.setDefaultValue(StringUtil.trim(colMeta.getColDefault()));
@@ -463,15 +471,7 @@ public class TaskController {
 				}
 			}
 			quickColMeta.setNullable(colMeta.isNullable() ? "1" : "0");
-
-			// 判断是否为数字类型设置对应标识，并转换
-			if (colMeta.getTypeName().indexOf(".") != -1) {
-				sqlType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);
-			} else {
-				sqlType = colMeta.getTypeName();
-			}
-			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
-			sqlType = sqlType.toLowerCase().replaceFirst("\\s+identity", "");
+			sqlType = jdbcType;
 			importType = null;
 			// 数据库类别
 			String dbType = Integer.toString(DBHelper.getDBType());

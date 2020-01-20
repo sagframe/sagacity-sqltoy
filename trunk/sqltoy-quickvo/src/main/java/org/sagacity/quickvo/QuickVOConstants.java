@@ -118,11 +118,10 @@ public class QuickVOConstants implements Serializable {
 	public static final String[][] jdbcTypMapping = {
 			// jdbc.type java.type importType precision(数据长度) scale(小数位)
 			{ "REAL", "Float", "" }, { "TINYINT", "Short", "" }, { "SHORT", "Short", "" }, { "SMALLINT", "Short", "" },
-			{ "BIGINT", "Long", "" }, { "INT", "Integer", "" }, { "INTEGER", "Integer", "" },
-			{ "Int8", "Integer", "" }, { "Int16", "Integer", "" }, { "Int32", "Long", "" },
-			{ "Enum8", "Integer", "" }, { "Enum16", "Integer", "" }, { "Int64", "Long", "" },
-			{ "UInt8", "Integer", "" }, { "UInt16", "Integer", "" }, { "UInt32", "Long", "" },
-			{ "UInt64", "Long", "" }, { "SERIAL", "Integer", "" }, { "FLOAT", "Float", "" },
+			{ "BIGINT", "Long", "" }, { "INT", "Integer", "" }, { "INTEGER", "Integer", "" }, { "Int8", "Integer", "" },
+			{ "Int16", "Integer", "" }, { "Int32", "Long", "" }, { "Int64", "Long", "" }, { "Enum8", "Integer", "" },
+			{ "Enum16", "Integer", "" }, { "UInt8", "Integer", "" }, { "UInt16", "Integer", "" },
+			{ "UInt32", "Long", "" }, { "UInt64", "Long", "" }, { "SERIAL", "Integer", "" }, { "FLOAT", "Float", "" },
 			{ "FLOAT32", "Float", "" }, { "FLOAT64", "Double", "" }, { "DOUBLE", "Double", "" },
 			{ "NUMBER", "BigDecimal", "java.math.BigDecimal" }, { "NUMERIC", "BigDecimal", "java.math.BigDecimal" },
 			{ "DECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "TIMESTAMP", "Timestamp", "java.sql.Timestamp" },
@@ -143,6 +142,11 @@ public class QuickVOConstants implements Serializable {
 	public static final String[][] prototype = { { "int", "1" }, { "short", "1" }, { "long", "1" }, { "float", "1" },
 			{ "double", "1" }, { "char", "2" }, { "byte", "2" }, { "boolean", "2" } };
 
+	public static final String[][] jdbcAry = { { "Int8", "INTEGER" }, { "Int16", "INTEGER" }, { "Int32", "BIGINT" },
+			{ "Int64", "BIGINT" }, { "Enum8", "INTEGER" }, { "Enum16", "INTEGER" }, { "UInt8", "INTEGER" },
+			{ "UInt16", "INTEGER" }, { "UInt32", "BIGINT" }, { "UInt64", "BIGINT" }, { "FLOAT32", "FLOAT" },
+			{ "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" }, { "FixedSTRING", "VARCHAR" } };
+
 	/**
 	 * 全局常量map
 	 */
@@ -161,7 +165,6 @@ public class QuickVOConstants implements Serializable {
 	}
 
 	/**
-	 * 
 	 * @todo 加载xml中的参数
 	 * @param paramElts
 	 * @throws Exception
@@ -263,8 +266,9 @@ public class QuickVOConstants implements Serializable {
 		if (StringUtil.isBlank(key))
 			return key;
 		String value = (String) constantMap.get(key);
-		if (null == value)
+		if (null == value) {
 			value = System.getProperty(key);
+		}
 		return value;
 	}
 
@@ -288,4 +292,12 @@ public class QuickVOConstants implements Serializable {
 		}
 	}
 
+	public static String getJdbcType(String jdbcType) {
+		for (String[] types : jdbcAry) {
+			if (jdbcType.equalsIgnoreCase(types[0])) {
+				return types[1];
+			}
+		}
+		return jdbcType;
+	}
 }

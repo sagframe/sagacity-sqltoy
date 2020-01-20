@@ -17,8 +17,12 @@
 		password="${jdbc.connection.password}" />
 	<tasks dist="../../src/main/java" encoding="UTF-8">
 		<!-- 4.0.6之后增加datasource属性适应多数据库配置 -->
-		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy">
+		<task active="false" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy">
 			<vo package="${project.package}.showcase.vo" substr="Sqltoy" name="#{subName}VO" />
+			<dao package="${project.package}.showcase.dao" name="#{subName}Dao" active="false" />
+		</task>
+		<task active="true" author="zhongxuchen" include="^TRADE_\w+" datasource="sqltoy">
+			<vo package="${project.package}.showcase.vo" substr="Trade" name="#{subName}VO" />
 			<dao package="${project.package}.showcase.dao" name="#{subName}Dao" active="false" />
 		</task>
 		<task active="false" author="zhongxuchen" include="^SYS_\w+" datasource="sqltoy">
