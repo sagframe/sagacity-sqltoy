@@ -119,19 +119,23 @@ public class QuickVOConstants implements Serializable {
 			// jdbc.type java.type importType precision(数据长度) scale(小数位)
 			{ "REAL", "Float", "" }, { "TINYINT", "Short", "" }, { "SHORT", "Short", "" }, { "SMALLINT", "Short", "" },
 			{ "BIGINT", "Long", "" }, { "INT", "Integer", "" }, { "INTEGER", "Integer", "" },
-			{ "SERIAL", "Integer", "" }, { "FLOAT", "Float", "" }, { "DOUBLE", "Double", "" },
+			{ "Int8", "Integer", "" }, { "Int16", "Integer", "" }, { "Int32", "Long", "" },
+			{ "Enum8", "Integer", "" }, { "Enum16", "Integer", "" }, { "Int64", "Long", "" },
+			{ "UInt8", "Integer", "" }, { "UInt16", "Integer", "" }, { "UInt32", "Long", "" },
+			{ "UInt64", "Long", "" }, { "SERIAL", "Integer", "" }, { "FLOAT", "Float", "" },
+			{ "FLOAT32", "Float", "" }, { "FLOAT64", "Double", "" }, { "DOUBLE", "Double", "" },
 			{ "NUMBER", "BigDecimal", "java.math.BigDecimal" }, { "NUMERIC", "BigDecimal", "java.math.BigDecimal" },
 			{ "DECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "TIMESTAMP", "Timestamp", "java.sql.Timestamp" },
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "LocalDate", "java.time.LocalDate" },
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
 			{ "VARCHAR", "String", "" }, { "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" },
 			{ "LONGVARCHAR", "String", "" }, { "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" },
-			{ "STRING", "String", "" }, { "CHAR", "String", "" }, { "CHARACTER", "String", "" },
-			{ "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" }, { "Clob", "Clob", "java.sql.Clob" },
-			{ "NCLOB", "Clob", "java.sql.Clob" }, { "CLOB", "CLOB", "oracle.sql.CLOB", "10" },
-			{ "BLOB", "BLOB", "oracle.sql.BLOB", "10" }, { "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" },
-			{ "LONGTEXT", "String", "" }, { "IMAGE", "byte[]", "" },
-			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
+			{ "STRING", "String", "" }, { "FixedSTRING", "String", "" }, { "CHAR", "String", "" },
+			{ "CHARACTER", "String", "" }, { "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" },
+			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
+			{ "CLOB", "CLOB", "oracle.sql.CLOB", "10" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "10" },
+			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
+			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "Serializable", "java.io.Serializable" } };
 
 	/**
 	 * 原始类型
