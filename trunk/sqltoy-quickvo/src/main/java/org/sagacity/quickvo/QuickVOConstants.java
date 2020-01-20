@@ -142,10 +142,10 @@ public class QuickVOConstants implements Serializable {
 	public static final String[][] prototype = { { "int", "1" }, { "short", "1" }, { "long", "1" }, { "float", "1" },
 			{ "double", "1" }, { "char", "2" }, { "byte", "2" }, { "boolean", "2" } };
 
-	public static final String[][] jdbcAry = { { "Int8", "INTEGER" }, { "Int16", "INTEGER" }, { "Int32", "BIGINT" },
-			{ "Int64", "BIGINT" }, { "Enum8", "INTEGER" }, { "Enum16", "INTEGER" }, { "UInt8", "INTEGER" },
-			{ "UInt16", "INTEGER" }, { "UInt32", "BIGINT" }, { "UInt64", "BIGINT" }, { "FLOAT32", "FLOAT" },
-			{ "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" }, { "FixedSTRING", "VARCHAR" } };
+	public static final String[][] jdbcAry = { { "Int", "INTEGER" }, { "Int8", "INTEGER" }, { "Int16", "INTEGER" },
+			{ "Int32", "BIGINT" }, { "Int64", "BIGINT" }, { "Enum8", "INTEGER" }, { "Enum16", "INTEGER" },
+			{ "UInt8", "INTEGER" }, { "UInt16", "INTEGER" }, { "UInt32", "BIGINT" }, { "UInt64", "BIGINT" },
+			{ "FLOAT32", "FLOAT" }, { "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" }, { "FixedSTRING", "VARCHAR" } };
 
 	/**
 	 * 全局常量map
