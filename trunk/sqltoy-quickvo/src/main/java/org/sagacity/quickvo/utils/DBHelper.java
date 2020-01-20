@@ -549,11 +549,11 @@ public class DBHelper {
 	 * @throws SQLException
 	 */
 	public static List getTablePrimaryKeys(String tableName) throws Exception {
-		final int dbType = DBUtil.getDbType(conn);
+		int dbType = DBUtil.getDbType(conn);
 		ResultSet rs;
 		if (dbType == DbType.CLICKHOUSE) {
-			rs = conn.createStatement().executeQuery(
-					"select t.name COLUMN_NAME from system.columns t where t.table='" + tableName + "' and t.is_in_primary_key=1");
+			rs = conn.createStatement().executeQuery("select t.name COLUMN_NAME from system.columns t where t.table='"
+					+ tableName + "' and t.is_in_primary_key=1");
 		} else {
 			rs = conn.getMetaData().getPrimaryKeys(dbConfig.getCatalog(), dbConfig.getSchema(), tableName);
 		}
@@ -581,6 +581,9 @@ public class DBHelper {
 	 */
 	public static String getTablePKConstraint(String tableName) throws Exception {
 		String pkName = null;
+		int dbType = DBUtil.getDbType(conn);
+		if (dbType == DbType.CLICKHOUSE)
+			return pkName;
 		try {
 			ResultSet rs = conn.getMetaData().getPrimaryKeys(dbConfig.getCatalog(), dbConfig.getSchema(), tableName);
 			pkName = (String) DBUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
