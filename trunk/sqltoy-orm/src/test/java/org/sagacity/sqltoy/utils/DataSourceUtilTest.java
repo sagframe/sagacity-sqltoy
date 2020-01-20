@@ -56,7 +56,11 @@ public class DataSourceUtilTest {
 		String[] types = new String[] { "TABLE" };
 		String tableName;
 		try {
-			ResultSet rs = conn.getMetaData().getColumns("default", null, "TRADE_ORDER_INFO_3", null);
+			ResultSet rs = conn.getMetaData().getPrimaryKeys("default", null, "TRADE_ORDER_INFO_3");
+			while (rs.next()) {
+				System.err.println("pk=" + rs.getString("COLUMN_NAME"));
+			}
+			rs = conn.getMetaData().getColumns("default", null, "TRADE_ORDER_INFO_3", null);
 			while (rs.next()) {
 				System.err.println("columnName=" + rs.getString("COLUMN_NAME"));
 				System.err.println("默认值" + rs.getString("COLUMN_DEF"));
