@@ -255,7 +255,12 @@ public class DataSourceUtils {
 			// postgresql
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
-			} // GAUSSDB
+			}
+			// clickhouse
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
+				return Dialect.CLICKHOUSE;
+			}
+			// GAUSSDB
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
 				return Dialect.GAUSSDB;
 			}
@@ -353,11 +358,16 @@ public class DataSourceUtils {
 					dbType = DBType.POSTGRESQL11;
 				}
 			}
+			// CLICKHOUSE
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
+				dbType = DBType.CLICKHOUSE;
+			}
 			// sybase IQ
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "Sybase IQ") != -1) {
 				dbType = DBType.SYBASE_IQ;
-			} // GAUSSDB
+			}
+			// GAUSSDB
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
 				dbType = DBType.GAUSSDB;
 			}

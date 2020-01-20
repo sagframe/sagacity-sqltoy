@@ -29,6 +29,7 @@
 		<slf4j.version>1.7.30</slf4j.version>
 		<httpclient.version>4.5.10</httpclient.version>
 		<httpclient-core.version>4.4.12</httpclient-core.version>
+		<junit-platform.version>1.5.2</junit-platform.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -87,11 +88,7 @@
 			<version>${commons-dbcp2.version}</version>
 			<optional>true</optional>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
-		<!-- <dependency> <groupId>com.alibaba</groupId> <artifactId>druid</artifactId> 
-			<version>${druid.version}</version> <optional>true</optional> </dependency> -->
 
-		<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
@@ -127,7 +124,7 @@
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>
-			<version>1.5.2</version>
+			<version>${junit-platform.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->

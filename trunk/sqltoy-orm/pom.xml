@@ -23,6 +23,7 @@
 		<mongo.version>3.11.0</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<junit.version>5.5.2</junit.version>
+		<junit-platform.version>1.5.2</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<spring-boot.version>2.2.2.RELEASE</spring-boot.version>
 		<slf4j.version>1.7.30</slf4j.version>
@@ -71,6 +72,13 @@
 			<version>${spring-boot.version}</version>
 			<optional>true</optional>
 		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -78,7 +86,12 @@
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>${junit-platform.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>

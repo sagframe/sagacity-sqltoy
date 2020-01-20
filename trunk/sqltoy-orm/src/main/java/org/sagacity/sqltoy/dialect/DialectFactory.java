@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle12Dialect;
@@ -156,6 +157,11 @@ public class DialectFactory {
 			case DBType.DB2:
 			case DBType.DB2_11: {
 				dialectSqlWrapper = new DB2Dialect();
+				break;
+			}
+			// clickhouse 19.x 版本开始支持
+			case DBType.CLICKHOUSE: {
+				dialectSqlWrapper = new ClickHouseDialect();
 				break;
 			}
 			// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
