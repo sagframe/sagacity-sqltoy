@@ -74,27 +74,27 @@ public class QuickVOConstants implements Serializable {
 	/**
 	 * 主键默认生成策略
 	 */
-	public static String PK_DEFAULT_GENERATOR = "org.sagacity.sqltoy.plugin.id.DefaultIdGenerator";
+	public static String PK_DEFAULT_GENERATOR = "org.sagacity.sqltoy.plugins.id.DefaultIdGenerator";
 
 	/**
 	 * uuid主键策略
 	 */
-	public static String PK_UUID_GENERATOR = "org.sagacity.sqltoy.plugin.id.UUIDGenerator";
+	public static String PK_UUID_GENERATOR = "org.sagacity.sqltoy.plugins.id.UUIDGenerator";
 
 	/**
 	 * twitter的雪花id算法
 	 */
-	public static String PK_SNOWFLAKE_GENERATOR = "org.sagacity.sqltoy.plugin.id.SnowflakeIdGenerator";
+	public static String PK_SNOWFLAKE_GENERATOR = "org.sagacity.sqltoy.plugins.id.SnowflakeIdGenerator";
 
 	/**
 	 * 26位纳秒时序ID产生策略
 	 */
-	public static String PK_NANOTIME_ID_GENERATOR = "org.sagacity.sqltoy.plugin.id.NanoTimeIdGenerator";
+	public static String PK_NANOTIME_ID_GENERATOR = "org.sagacity.sqltoy.plugins.id.NanoTimeIdGenerator";
 
 	/**
 	 * 基于redis产生id
 	 */
-	public static String PK_REDIS_ID_GENERATOR = "org.sagacity.sqltoy.plugin.id.RedisIdGenerator";
+	public static String PK_REDIS_ID_GENERATOR = "org.sagacity.sqltoy.plugins.id.RedisIdGenerator";
 
 	public static String constructorBegin = "/*---begin-constructor-area---don't-update-this-area--*/";
 	public static String constructorEnd = "/*---end-constructor-area---don't-update-this-area--*/";
