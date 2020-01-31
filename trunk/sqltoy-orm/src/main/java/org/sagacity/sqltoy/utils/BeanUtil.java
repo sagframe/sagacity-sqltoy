@@ -10,6 +10,7 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -19,7 +20,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.joda.time.LocalDate;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
