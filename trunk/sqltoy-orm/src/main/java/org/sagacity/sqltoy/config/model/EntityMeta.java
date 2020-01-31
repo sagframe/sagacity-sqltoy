@@ -438,6 +438,12 @@ public class EntityMeta implements Serializable {
 		return schemaTable;
 	}
 
+	public String getSchemaTable(String tableName) {
+		if (StringUtil.isNotBlank(tableName))
+			return tableName;
+		return schemaTable;
+	}
+
 	/**
 	 * @param schemaTable
 	 *            the schemaTable to set
