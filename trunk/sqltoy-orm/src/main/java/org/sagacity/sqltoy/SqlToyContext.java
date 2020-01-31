@@ -500,6 +500,8 @@ public class SqlToyContext implements ApplicationContextAware {
 				this.dialect = Dialect.MARIADB;
 			} else if (tmp.startsWith(Dialect.SAP_HANA)) {
 				this.dialect = Dialect.SAP_HANA;
+			} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
+				this.dialect = Dialect.CLICKHOUSE;
 			} else {
 				this.dialect = dialect;
 			}

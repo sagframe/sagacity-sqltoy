@@ -42,7 +42,7 @@
 		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
 		<property name="batchSize" value="${sqltoy.batchSize}" />
 		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
-		<property name="dialect" value="${sqltoy.dialect}" />
+		<!-- <property name="dialect" value="${sqltoy.dialect}" /> -->
 		<!-- 默认值为:100000,设置分页查询最大的提取数据记录量,防止恶意提取数据造成系统内存压力以及保障数据安全 -->
 		<property name="pageFetchSizeLimit" value="50000" />
 		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
