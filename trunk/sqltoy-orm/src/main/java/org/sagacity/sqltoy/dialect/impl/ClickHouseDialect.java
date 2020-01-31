@@ -164,7 +164,7 @@ public class ClickHouseDialect implements Dialect {
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
-		loadSql.append(tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
