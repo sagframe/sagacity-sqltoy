@@ -13,8 +13,10 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -297,33 +299,69 @@ public class ClickHouseDialectUtils {
 		if (null == entities || entities.isEmpty())
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + "没有主键,请检查表设计!");
 		}
-		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
-				0);
-		// 判断主键值是否存在空
-		Object[] idsValue;
-		for (int i = 0, n = idValues.size(); i < n; i++) {
-			idsValue = idValues.get(i);
-			for (Object obj : idsValue) {
-				if (StringUtil.isBlank(obj)) {
-					throw new IllegalArgumentException(
-							"第[" + i + "]行数据主键值存在空,批量删除以主键为依据，表:" + entityMeta.getSchemaTable() + " 主键不能为空!");
+
+		// 主键值
+		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
+		int idSize = entityMeta.getIdArray().length;
+		int loopSize = pkValues.size();
+		// 构造内部的listz(如果复合主键，形成{p1v1,p1v2,p1v3},{p2v1,p2v2,p2v3}) 格式，然后一次查询出结果
+		List[] idValues = new List[idSize];
+		for (int i = 0; i < idSize; i++) {
+			idValues[i] = new ArrayList();
+		}
+		List rowList;
+		// 检查主键值,主键值必须不为null
+		Object value;
+		for (int i = 0, n = loopSize; i < n; i++) {
+			rowList = (List) pkValues.get(i);
+			for (int j = 0; j < idSize; j++) {
+				value = rowList.get(j);
+				// 验证主键值是否合法
+				if (StringUtil.isBlank(value)) {
+					throw new IllegalArgumentException(realTable + " loadAll method must assign value for pk,row:" + i
+							+ " pk field:" + entityMeta.getIdArray()[j]);
+				}
+				if (!idValues[j].contains(value)) {
+					idValues[j].add(value);
 				}
 			}
 		}
-		int idsLength = entityMeta.getIdArray().length;
-		Integer[] parameterTypes = new Integer[idsLength];
-		for (int i = 0, n = idsLength; i < n; i++) {
-			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+
+		Integer[] paramTypes = new Integer[idSize * loopSize];
+		Integer idType;
+		for (int i = 0; i < idSize; i++) {
+			idType = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+			for (int j = 0; j < loopSize; j++) {
+				paramTypes[loopSize * i + j] = idType;
+			}
 		}
 
-		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
-				.concat(entityMeta.getIdArgWhereSql());
+		StringBuilder deleteSql = new StringBuilder();
+		deleteSql.append("alter table ");
+		deleteSql.append(realTable);
+		deleteSql.append(" delete where ");
+
+		String field;
+		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+			field = entityMeta.getIdArray()[i];
+			if (i > 0) {
+				deleteSql.append(" and ");
+			}
+			deleteSql.append(entityMeta.getColumnName(field));
+			deleteSql.append(" in (:").append(field).append(") ");
+		}
+
 		if (sqlToyContext.isDebug()) {
 			logger.debug("根据主键批量删除表sql:{}", deleteSql);
 		}
-		return SqlUtilsExt.batchUpdateByJdbc(deleteSql, idValues, batchSize, parameterTypes, autoCommit, conn, dbType);
+
+		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
+				idValues);
+		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,
+				autoCommit);
 	}
 }
