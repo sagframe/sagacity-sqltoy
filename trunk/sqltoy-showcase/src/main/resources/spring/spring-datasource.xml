@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd"
 	default-lazy-init="true" default-autowire="byName">
 
 	<!-- 数据源的配置 报表库(请根据各自的偏好来选择连接池组件,可以选配阿里的druid等) -->
-	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
-		<property name="driverClassName" value="${jdbc.connection.driver_class}" />
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName"
+			value="${jdbc.connection.driver_class}" />
 		<property name="url" value="${jdbc.connection.url}" />
 		<property name="username" value="${jdbc.connection.username}" />
 		<property name="password" value="${jdbc.connection.password}" />
@@ -16,18 +19,21 @@
 		<property name="maxIdle" value="${jdbc.maxActive}" />
 		<property name="minIdle" value="${jdbc.minIdle}" />
 		<property name="initialSize" value="${jdbc.initialSize}" />
-		<property name="defaultAutoCommit" value="${jdbc.defaultAutoCommit}" />
+		<property name="defaultAutoCommit"
+			value="${jdbc.defaultAutoCommit}" />
 
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="true" />
 		<property name="testOnReturn" value="false" />
-		<property name="validationQuery" value="${jdbc.validationQuery}" />
+		<property name="validationQuery"
+			value="${jdbc.validationQuery}" />
 		<!-- 超过时间限制是否回收 -->
 		<property name="removeAbandonedOnBorrow" value="true" />
 		<!-- 超时时间；单位为秒。180秒=3分钟 -->
 		<property name="removeAbandonedTimeout" value="300" />
 		<!-- 代表每次检查链接的数量，建议设置和maxActive一样大 -->
-		<property name="numTestsPerEvictionRun"	value="${jdbc.numTestsPerEvictionRun}" />
+		<property name="numTestsPerEvictionRun"
+			value="${jdbc.numTestsPerEvictionRun}" />
 		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,2分钟 -->
 		<property name="timeBetweenEvictionRunsMillis" value="120000" />
 		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒,10分钟 -->
@@ -108,7 +114,7 @@
 			value="${jdbc.numTestsPerEvictionRun}" />
 		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒,2分钟 -->
 		<property name="timeBetweenEvictionRunsMillis" value="120000" />
-		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 10分钟-->
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位是毫秒 10分钟 -->
 		<property name="minEvictableIdleTimeMillis" value="600000" />
 		<property name="connectionProperties"
 			value="defaultRowPrefetch=${jdbc.fetch_size};defaultBatchValue=${jdbc.batch_size};config.decrypt=false;rewriteBatchedStatements=true;useServerPrepStmts=true;cachePrepStmts=true;prepStmtCacheSize=250;prepStmtCacheSqlLimit=2048" />

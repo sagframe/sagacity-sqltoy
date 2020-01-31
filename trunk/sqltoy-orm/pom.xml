@@ -9,23 +9,23 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.2.2.RELEASE</spring-framework.version>
-		<spring-data-redis.version>2.2.3.RELEASE</spring-data-redis.version>
-		<spring-data-mongo.version>2.2.3.RELEASE</spring-data-mongo.version>
+		<spring-framework.version>5.2.3.RELEASE</spring-framework.version>
+		<spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>2.2.4.RELEASE</spring-data-mongo.version>
 		<log4j.version>2.13.0</log4j.version>
 		<mysql.version>8.0.18</mysql.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
-		<httpclient.version>4.5.10</httpclient.version>
-		<httpclient-core.version>4.4.12</httpclient-core.version>
-		<elastic-rest-client.version>7.5.1</elastic-rest-client.version>
+		<httpclient.version>4.5.11</httpclient.version>
+		<httpclient-core.version>4.4.13</httpclient-core.version>
+		<elastic-rest-client.version>7.5.2</elastic-rest-client.version>
 		<fastjson.version>1.2.62</fastjson.version>
-		<mongo.version>3.11.0</mongo.version>
+		<mongo.version>3.12.1</mongo.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<junit.version>5.5.2</junit.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.2.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.3.RELEASE</spring-boot.version>
 		<slf4j.version>1.7.30</slf4j.version>
 		<clickhouse-jdbc.version>0.2.3</clickhouse-jdbc.version>
 	</properties>

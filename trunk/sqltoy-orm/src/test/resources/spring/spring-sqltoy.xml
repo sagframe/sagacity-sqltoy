@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd"
 	default-autowire="byName" default-lazy-init="true">
 	<!-- 配置辅助sql处理工具用于sql查询条件的处理 -->
-	<bean id="sqlToyContext" name="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
-		init-method="initialize">
+	<bean id="sqlToyContext" name="sqlToyContext"
+		class="org.sagacity.sqltoy.SqlToyContext" init-method="initialize">
 		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
-		<property name="sqlResourcesDir" value="classpath:org/sagacity/demo" />
+		<property name="sqlResourcesDir"
+			value="classpath:org/sagacity/demo" />
 		<!-- 针对不同数据库函数进行转换,非必须属性 -->
-		<property name="functionConverts" value="default"/>
+		<property name="functionConverts" value="default" />
 		<!-- pojo 包路径,非必须属性 -->
 		<property name="packagesToScan">
 			<list>
@@ -22,7 +23,8 @@
 				class="org.sagacity.sqltoy.demo.plugins.SqltoyUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
+		<property name="translateConfig"
+			value="classpath:sqltoy-translate.xml" />
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
 		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->

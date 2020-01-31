@@ -4,9 +4,9 @@
 	xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:aop="http://www.springframework.org/schema/aop"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans 
-	http://www.springframework.org/schema/beans/spring-beans.xsd 
-	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd 
-	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
+	https://www.springframework.org/schema/beans/spring-beans.xsd 
+	http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd 
+	http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd"
 	default-lazy-init="true" default-autowire="byName">
 	<!-- 事务管理器定义 -->
 	<bean id="txManager"
@@ -15,8 +15,9 @@
 	</bean>
 
 	<!-- 支持事务注解方式 springboot 默认已经开启,再次定义就会报错 -->
-	<!-- 在application.properties 中定义spring.main.allow-bean-definition-overriding=true  -->
-	<tx:annotation-driven transaction-manager="txManager" />
+	<!-- 在application.properties 中定义spring.main.allow-bean-definition-overriding=true -->
+	<tx:annotation-driven
+		transaction-manager="txManager" />
 
 	<!-- 事务处理的AOP配置 // -->
 	<aop:config proxy-target-class="true">
@@ -24,10 +25,9 @@
 			pointcut="execution(* org.sagframe.sqltoy.showcase..*ServiceImpl.*(..)) || execution(* org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl.*(..))"
 			advice-ref="txAdvice" />
 	</aop:config>
-	
+
 	<!-- 事务AOP处理的方法和事务类型定义 -->
-	<tx:advice id="txAdvice"
-		transaction-manager="txManager">
+	<tx:advice id="txAdvice" transaction-manager="txManager">
 		<tx:attributes>
 			<!-- 查询,只读事务 -->
 			<tx:method name="get*" propagation="NOT_SUPPORTED"
