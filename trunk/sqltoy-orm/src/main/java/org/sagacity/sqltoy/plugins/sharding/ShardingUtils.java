@@ -125,21 +125,20 @@ public class ShardingUtils {
 			EntityMeta entityMeta, DataSource dataSource) throws Exception {
 		ShardingConfig shardingConfig = entityMeta.getShardingConfig();
 		ShardingModel shardingModel = null;
-
+		String entityTable = entityMeta.getSchemaTable();
 		// 没有sharding配置，则作为单个分组返回
 		if (shardingConfig == null) {
 			Collection<ShardingGroupModel> result = new ArrayList<ShardingGroupModel>();
 			ShardingGroupModel model = new ShardingGroupModel();
 			shardingModel = new ShardingModel();
 			shardingModel.setDataSource(dataSource);
+			shardingModel.setTableName(entityTable);
 			model.setShardingModel(shardingModel);
 			model.setEntities(entities);
 			result.add(model);
 			return result;
 		}
-		Class entityClass = entities.get(0).getClass();
-		String entityTable = entityMeta.getSchemaTable();
-
+		Class entityClass = entityMeta.getEntityClass();
 		// 分库
 		boolean hasDB = false;
 		ShardingStrategy dbStrategy = null;
