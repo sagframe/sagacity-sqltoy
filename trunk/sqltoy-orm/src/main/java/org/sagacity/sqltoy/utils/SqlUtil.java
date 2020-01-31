@@ -1187,10 +1187,12 @@ public class SqlUtil {
 				this.setResult(Long.valueOf(pst.getUpdateCount()));
 			}
 		});
-		if (result != null)
+		if (result != null) {
 			updateCounts = (Long) result;
-		if (hasSetAutoCommit && autoCommit != null)
+		}
+		if (hasSetAutoCommit && autoCommit != null) {
 			conn.setAutoCommit(!autoCommit);
+		}
 		return updateCounts;
 	}
 
