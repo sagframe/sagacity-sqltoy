@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -239,15 +238,14 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		return ClickHouseDialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		return ClickHouseDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit,
+				tableName);
 	}
 
 	@Override

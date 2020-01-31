@@ -236,4 +236,94 @@ public class ClickHouseDialectUtils {
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
+
+	/**
+	 * @todo 删除单个对象以及其级联表数据
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param conn
+	 * @param dbType
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
+	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
+			final String tableName) throws Exception {
+		if (entity == null)
+			return 0L;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		if (null == entityMeta.getIdArray()) {
+			throw new IllegalArgumentException("delete table:" + entityMeta.getSchemaTable(tableName)
+					+ " no primary key,please check table design!");
+		}
+		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		Integer[] parameterTypes = new Integer[idValues.length];
+		boolean validator = true;
+		// 判断主键值是否为空
+		for (int i = 0, n = idValues.length; i < n; i++) {
+			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+			if (StringUtil.isBlank(idValues[i])) {
+				validator = false;
+				break;
+			}
+		}
+		if (!validator) {
+			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName)
+					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
+		}
+
+		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
+				.concat(entityMeta.getIdArgWhereSql());
+		if (sqlToyContext.isDebug()) {
+			logger.debug(deleteSql);
+		}
+		return DialectUtils.executeSql(sqlToyContext, deleteSql, idValues, parameterTypes, conn, dbType, null);
+	}
+
+	/**
+	 * @todo 批量删除对象并级联删除掉子表数据
+	 * @param sqlToyContext
+	 * @param entities
+	 * @param batchSize
+	 * @param conn
+	 * @param dbType
+	 * @param autoCommit
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
+	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
+		if (null == entities || entities.isEmpty())
+			return 0L;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		if (null == entityMeta.getIdArray()) {
+			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+		}
+		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
+				0);
+		// 判断主键值是否存在空
+		Object[] idsValue;
+		for (int i = 0, n = idValues.size(); i < n; i++) {
+			idsValue = idValues.get(i);
+			for (Object obj : idsValue) {
+				if (StringUtil.isBlank(obj)) {
+					throw new IllegalArgumentException(
+							"第[" + i + "]行数据主键值存在空,批量删除以主键为依据，表:" + entityMeta.getSchemaTable() + " 主键不能为空!");
+				}
+			}
+		}
+		int idsLength = entityMeta.getIdArray().length;
+		Integer[] parameterTypes = new Integer[idsLength];
+		for (int i = 0, n = idsLength; i < n; i++) {
+			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+		}
+
+		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
+				.concat(entityMeta.getIdArgWhereSql());
+		if (sqlToyContext.isDebug()) {
+			logger.debug("根据主键批量删除表sql:{}", deleteSql);
+		}
+		return SqlUtilsExt.batchUpdateByJdbc(deleteSql, idValues, batchSize, parameterTypes, autoCommit, conn, dbType);
+	}
 }
