@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sqltoy-boot-showcase</artifactId>
@@ -17,7 +17,7 @@
 		<ehcache.version>3.8.1</ehcache.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<lettuce-core.version>5.2.1.RELEASE</lettuce-core.version>
-		<elastic-rest-client.version>7.5.1</elastic-rest-client.version>
+		<elastic-rest-client.version>7.5.2</elastic-rest-client.version>
 		<elastic.version>7.5.1</elastic.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.4</beanutils.version>
@@ -27,8 +27,8 @@
 		<mysql.version>8.0.18</mysql.version>
 		<druid.version>1.1.21</druid.version>
 		<slf4j.version>1.7.30</slf4j.version>
-		<httpclient.version>4.5.10</httpclient.version>
-		<httpclient-core.version>4.4.12</httpclient-core.version>
+		<httpclient.version>4.5.11</httpclient.version>
+		<httpclient-core.version>4.4.13</httpclient-core.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 	</properties>
 	<repositories>
