@@ -30,7 +30,7 @@ public abstract class AbstractOrderInfoVO implements Serializable,
 	 */
 	private static final long serialVersionUID = 5994210541297827801L;
 	
-	@Id(strategy="assign")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugin.id.DefaultIdGenerator")
 	@Column(name="ORDER_ID",length=0L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String orderId;
 	

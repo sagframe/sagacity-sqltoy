@@ -33,7 +33,7 @@ public abstract class AbstractOrderInfo3VO implements Serializable,
 	/**
 	 * 订单号
 	 */
-	@Id(strategy="assign")
+	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.DefaultIdGenerator")
 	@Column(name="ORDER_ID",length=0L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String orderId;
 	
