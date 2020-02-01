@@ -243,7 +243,7 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String sequence, String[] forceUpdateFields, String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
@@ -320,7 +320,7 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static String getSaveIgnoreExist(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String sequence, String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);

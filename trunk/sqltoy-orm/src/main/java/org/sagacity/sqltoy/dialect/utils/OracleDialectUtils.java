@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 import oracle.jdbc.OracleTypes;
 
@@ -93,7 +92,7 @@ public class OracleDialectUtils {
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
-		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		// 用in 的方式加载全量数据(在实际应用过程中应该注意in () 形式有1000个参数的限制)

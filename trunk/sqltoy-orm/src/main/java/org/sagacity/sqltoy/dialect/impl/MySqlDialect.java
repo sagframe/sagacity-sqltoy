@@ -330,7 +330,7 @@ public class MySqlDialect implements Dialect {
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
-		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {

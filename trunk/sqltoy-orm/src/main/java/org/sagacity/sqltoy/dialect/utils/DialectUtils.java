@@ -643,7 +643,7 @@ public class DialectUtils {
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append("insert into ");
-		sql.append(tableName == null ? entityMeta.getSchemaTable() : tableName);
+		sql.append(entityMeta.getSchemaTable(tableName));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;
@@ -1041,7 +1041,7 @@ public class DialectUtils {
 			return null;
 		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
 		sql.append(" update  ");
-		sql.append(tableName == null ? entityMeta.getSchemaTable() : tableName);
+		sql.append(entityMeta.getSchemaTable(tableName));
 		sql.append(" set ");
 		String columnName;
 		// 需要被强制修改的字段
@@ -1495,7 +1495,7 @@ public class DialectUtils {
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
 			throw new IllegalArgumentException(
-					"表:" + entityMeta.getTableName() + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+					"表:" + entityMeta.getSchemaTable(tableName) + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1505,13 +1505,15 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
-				throw new IllegalArgumentException("通过对象对表:" + entityMeta.getTableName() + "进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException(
+						"通过对象对表:" + entityMeta.getSchemaTable(tableName) + "进行update操作,主键字段必须要赋值!");
 			}
 		}
 		// 构建update语句
 		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
-		if (updateSql == null)
+		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+		}
 		if (sqlToyContext.isDebug()) {
 			logger.debug("update last execute sql:{}", updateSql);
 		}
@@ -1681,7 +1683,7 @@ public class DialectUtils {
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		if (null == entityMeta.getIdArray())
-			throw new IllegalArgumentException("delete 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete 操作,表:" + entityMeta.getSchemaTable(tableName) + "没有主键,请检查表设计!");
 		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		Integer[] parameterTypes = new Integer[idValues.length];
 		boolean validator = true;
@@ -1694,7 +1696,7 @@ public class DialectUtils {
 			}
 		}
 		if (!validator) {
-			throw new IllegalArgumentException(entityMeta.getSchemaTable()
+			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName)
 					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
@@ -1735,7 +1737,8 @@ public class DialectUtils {
 			return 0L;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + entityMeta.getSchemaTable() + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException(
+					"delete/deleteAll 操作,表:" + entityMeta.getSchemaTable(tableName) + "没有主键,请检查表设计!");
 		}
 		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
 				0);
@@ -1746,7 +1749,7 @@ public class DialectUtils {
 			for (Object obj : idsValue) {
 				if (StringUtil.isBlank(obj)) {
 					throw new IllegalArgumentException(
-							"第[" + i + "]行数据主键值存在空,批量删除以主键为依据，表:" + entityMeta.getSchemaTable() + " 主键不能为空!");
+							"第[" + i + "]行数据主键值存在空,批量删除以主键为依据，表:" + entityMeta.getSchemaTable(tableName) + " 主键不能为空!");
 				}
 			}
 		}
@@ -1829,7 +1832,7 @@ public class DialectUtils {
 				}
 			}
 			queryStr.append(" from ");
-			queryStr.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+			queryStr.append(entityMeta.getSchemaTable(tableName));
 			queryStr.append(" where  ");
 			for (int i = 0; i < realParamNamed.length; i++) {
 				if (i > 0) {

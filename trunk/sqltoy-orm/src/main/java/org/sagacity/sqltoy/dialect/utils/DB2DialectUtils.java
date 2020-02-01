@@ -85,7 +85,7 @@ public class DB2DialectUtils {
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
 			String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK,
@@ -267,7 +267,7 @@ public class DB2DialectUtils {
 	 */
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK,

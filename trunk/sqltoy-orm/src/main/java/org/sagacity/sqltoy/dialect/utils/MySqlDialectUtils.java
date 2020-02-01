@@ -24,7 +24,7 @@ public class MySqlDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
 					realTable);

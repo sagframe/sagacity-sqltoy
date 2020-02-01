@@ -116,14 +116,15 @@ public class DB2Dialect implements Dialect {
 			return null;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
-		if (null == entityMeta.getIdArray())
+		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
+					entityMeta.getEntityClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
+		}
 		StringBuilder loadSql = new StringBuilder();
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
-		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {

@@ -47,7 +47,7 @@ public class ClickHouseDialectUtils {
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append("insert into ");
-		sql.append(tableName == null ? entityMeta.getSchemaTable() : tableName);
+		sql.append(entityMeta.getSchemaTable(tableName));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;

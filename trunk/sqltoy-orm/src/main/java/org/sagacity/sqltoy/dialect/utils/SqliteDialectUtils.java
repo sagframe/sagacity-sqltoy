@@ -24,7 +24,7 @@ public class SqliteDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		// 无主键表全部采用insert机制
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
@@ -90,7 +90,7 @@ public class SqliteDialectUtils {
 	 */
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, String tableName) {
 		// 无主键表全部采用insert机制
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
 			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
 					realTable);

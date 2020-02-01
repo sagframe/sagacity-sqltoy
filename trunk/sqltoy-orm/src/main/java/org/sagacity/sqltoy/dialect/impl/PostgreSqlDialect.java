@@ -26,7 +26,6 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,7 +175,7 @@ public class PostgreSqlDialect implements Dialect {
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
-		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {

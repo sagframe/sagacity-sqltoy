@@ -332,8 +332,9 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		if (StringUtil.isNotBlank(fromTable))
+		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
+		}
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -475,8 +476,9 @@ public class SqlServerDialectUtils {
 					if (isAssignPK) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
-					} else
+					} else {
 						values.append(sequence);
+					}
 					isStart = false;
 				} else if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
 					if (!isStart) {
@@ -498,8 +500,9 @@ public class SqlServerDialectUtils {
 					values.append("(?,");
 					DialectUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
-				} else
+				} else {
 					values.append("?");
+				}
 				isStart = false;
 			}
 		}
@@ -847,8 +850,9 @@ public class SqlServerDialectUtils {
 				}
 			}
 			// updateCount = new Long(pst.getUpdateCount());
-			if (hasSetAutoCommit)
+			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			e.printStackTrace();

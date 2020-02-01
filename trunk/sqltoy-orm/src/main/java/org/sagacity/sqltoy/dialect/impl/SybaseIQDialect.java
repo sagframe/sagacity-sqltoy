@@ -157,8 +157,9 @@ public class SybaseIQDialect implements Dialect {
 			throw e;
 		} finally {
 			// 删除临时表
-			if (hasCreateTmp)
+			if (hasCreateTmp) {
 				DialectUtils.executeSql(sqlToyContext, "drop table ".concat(tmpTable), null, null, conn, dbType, true);
+			}
 		}
 		return queryResult;
 	}
@@ -397,7 +398,7 @@ public class SybaseIQDialect implements Dialect {
 		loadSql.append("select ").append(entityMeta.getAllColumnNames());
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
-		loadSql.append(StringUtil.isBlank(tableName) ? entityMeta.getSchemaTable() : tableName);
+		loadSql.append(entityMeta.getSchemaTable(tableName));
 		loadSql.append(" where ");
 		String field;
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
