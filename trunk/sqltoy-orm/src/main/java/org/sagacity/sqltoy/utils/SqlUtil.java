@@ -262,7 +262,7 @@ public class SqlUtil {
 			} else if (paramValue instanceof java.sql.Time) {
 				pst.setTime(paramIndex, (java.sql.Time) paramValue);
 			} else if (paramValue instanceof java.util.Date) {
-				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
 			} else if (paramValue instanceof java.lang.Long) {
 				pst.setLong(paramIndex, ((Long) paramValue));
 			} else if (paramValue instanceof java.lang.Boolean) {

@@ -24,7 +24,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 
 /**
  * @project sqltoy-orm
- * @description clickhouse 19.x版本
+ * @description clickhouse 19.x版本,clickhouse 不支持update,更多面向查询
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ClickHouseDialect.java,Revision:v1.0,Date:2020年1月20日
  */
