@@ -701,6 +701,8 @@ public class ParamFilterUtils {
 			return java.sql.Timestamp.valueOf(DateUtil.asLocalDateTime((Date) result));
 		if (type.equals("localtime"))
 			return DateUtil.asLocalTime((Date) result);
+		if (type.equals("time"))
+			return java.sql.Time.valueOf(DateUtil.asLocalTime((Date) result));
 		return result;
 	}
 
