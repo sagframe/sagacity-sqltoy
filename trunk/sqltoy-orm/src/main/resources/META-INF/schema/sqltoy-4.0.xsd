@@ -82,10 +82,10 @@
 					<xsd:attribute name="roundingMode">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="HALF_UP"/>
-								<xsd:enumeration value="HALF_DOWN"/>
-								<xsd:enumeration value="ROUND_DOWN"/>
-								<xsd:enumeration value="ROUND_UP"/>
+								<xsd:enumeration value="HALF_UP" />
+								<xsd:enumeration value="HALF_DOWN" />
+								<xsd:enumeration value="ROUND_DOWN" />
+								<xsd:enumeration value="ROUND_UP" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
@@ -392,6 +392,7 @@
 								<xsd:enumeration value="localDate" />
 								<xsd:enumeration value="localDateTime" />
 								<xsd:enumeration value="localTime" />
+								<xsd:enumeration value="time" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
@@ -446,7 +447,8 @@
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="single-quote" type="xsd:boolean" default="true" />
+					<xsd:attribute name="single-quote" type="xsd:boolean"
+						default="true" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0"
@@ -481,11 +483,11 @@
 					<xsd:attribute name="cache-mapping-max"
 						type="xsd:integer" default="500" />
 					<xsd:attribute name="cache-not-matched-value"
-						type="xsd:string"/>
+						type="xsd:string" />
 					<xsd:attribute name="alias-name" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
-			
+
 			<xsd:element name="exclusive" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
