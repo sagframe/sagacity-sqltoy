@@ -13,7 +13,7 @@
 		<spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
 		<spring-data-mongo.version>2.2.4.RELEASE</spring-data-mongo.version>
 		<log4j.version>2.13.0</log4j.version>
-		<mysql.version>8.0.18</mysql.version>
+		<mysql.version>8.0.19</mysql.version>
 		<ojdbc.version>12.2.0.1</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.11</httpclient.version>
