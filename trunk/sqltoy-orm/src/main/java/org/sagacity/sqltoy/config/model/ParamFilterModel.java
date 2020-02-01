@@ -122,7 +122,7 @@ public class ParamFilterModel implements Serializable {
 	 * 互斥型filter 对比的值
 	 */
 	private String[] compareValues = null;
-	
+
 	/**
 	 * 未被缓存转换匹配上赋予的默认值
 	 */
@@ -147,12 +147,17 @@ public class ParamFilterModel implements Serializable {
 	 * 缓存条件过滤配置
 	 */
 	private CacheFilterModel[] cacheFilters;
-	
+
+	/**
+	 * to-date 的日期类型
+	 */
+	private String type;
+
 	/**
 	 * to-in-arg 是否增加单引号
 	 */
-	private boolean singleQuote=true;
-	
+	private boolean singleQuote = true;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -462,7 +467,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheFilters the cacheFilters to set
+	 * @param cacheFilters
+	 *            the cacheFilters to set
 	 */
 	public void setCacheFilters(CacheFilterModel[] cacheFilters) {
 		this.cacheFilters = cacheFilters;
@@ -476,7 +482,8 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param singleQuote the singleQuote to set
+	 * @param singleQuote
+	 *            the singleQuote to set
 	 */
 	public void setSingleQuote(boolean singleQuote) {
 		this.singleQuote = singleQuote;
@@ -490,11 +497,25 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheNotMatchedValue the cacheNotMatchedValue to set
+	 * @param cacheNotMatchedValue
+	 *            the cacheNotMatchedValue to set
 	 */
 	public void setCacheNotMatchedValue(String cacheNotMatchedValue) {
 		this.cacheNotMatchedValue = cacheNotMatchedValue;
 	}
-	
-	
+
+	/**
+	 * @return the type
+	 */
+	public String getType() {
+		return type;
+	}
+
+	/**
+	 * @param type the type to set
+	 */
+	public void setType(String type) {
+		this.type = type;
+	}
+
 }

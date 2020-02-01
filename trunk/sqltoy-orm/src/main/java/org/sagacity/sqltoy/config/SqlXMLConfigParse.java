@@ -641,6 +641,10 @@ public class SqlXMLConfigParse {
 		if (filter.attribute("format") != null) {
 			filterModel.setFormat(filter.attributeValue("format"));
 		}
+		// to-date 中设置type类型
+		if (filter.attribute("type") != null) {
+			filterModel.setType(filter.attributeValue("type"));
+		}
 		// regex(replace filter)
 		if (filter.attribute("regex") != null) {
 			filterModel.setRegex(filter.attributeValue("regex"));

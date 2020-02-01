@@ -145,17 +145,10 @@
 				<xsd:restriction base="xsd:string">
 					<xsd:enumeration value="db2" />
 					<xsd:enumeration value="oracle" />
-					<xsd:enumeration value="oracle12" />
-					<xsd:enumeration value="oracle18" />
 					<xsd:enumeration value="sqlserver" />
-					<xsd:enumeration value="sqlserver2014" />
-					<xsd:enumeration value="sqlserver2016" />
-					<xsd:enumeration value="sqlserver2017" />
 					<xsd:enumeration value="mysql" />
-					<xsd:enumeration value="mysql8" />
 					<xsd:enumeration value="postgresql" />
-					<xsd:enumeration value="postgresql10" />
-					<xsd:enumeration value="postgresql11" />
+					<xsd:enumeration value="clickhouse" />
 					<xsd:enumeration value="sybase_iq" />
 					<xsd:enumeration value="sqlite" />
 				</xsd:restriction>
@@ -388,6 +381,17 @@
 								<xsd:enumeration value="last_year_day" />
 								<xsd:enumeration value="first_week_day" />
 								<xsd:enumeration value="last_week_day" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="type">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="date" />
+								<xsd:enumeration value="timestamp" />
+								<xsd:enumeration value="localDate" />
+								<xsd:enumeration value="localDateTime" />
+								<xsd:enumeration value="localTime" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>

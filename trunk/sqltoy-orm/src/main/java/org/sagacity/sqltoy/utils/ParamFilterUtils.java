@@ -22,6 +22,8 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.Timestamp;
+
 /**
  * @project sagacity-sqltoy
  * @description sql查询参数过滤
@@ -645,6 +647,13 @@ public class ParamFilterUtils {
 		String format = (paramFilterModel.getFormat() == null) ? "" : paramFilterModel.getFormat();
 		String compare = format.toLowerCase();
 		String realFmt = DAY_FORMAT;
+		String type = paramFilterModel.getType().toLowerCase();
+		if (StringUtil.isBlank(type)) {
+			type = "localdate";
+			if (compare.contains("hhmmss") || compare.contains("hh:mm:ss")) {
+				type = "localdatetime";
+			}
+		}
 		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
 		if (compare.equals("first_day") || compare.equals("first_month_day")) {
@@ -685,6 +694,14 @@ public class ParamFilterUtils {
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
 		}
+		if (type.equals("localdate"))
+			return DateUtil.asLocalDate((Date) result);
+		if (type.equals("localdatetime"))
+			return DateUtil.asLocalDateTime((Date) result);
+		if (type.equals("timestamp"))
+			return java.sql.Timestamp.valueOf(DateUtil.asLocalDateTime((Date) result));
+		if (type.equals("localtime"))
+			return DateUtil.asLocalTime((Date) result);
 		return result;
 	}
 
