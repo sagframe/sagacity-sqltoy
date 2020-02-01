@@ -643,7 +643,7 @@ public class SqlXMLConfigParse {
 		}
 		// to-date 中设置type类型
 		if (filter.attribute("type") != null) {
-			filterModel.setType(filter.attributeValue("type"));
+			filterModel.setType(filter.attributeValue("type").toLowerCase());
 		}
 		// regex(replace filter)
 		if (filter.attribute("regex") != null) {
