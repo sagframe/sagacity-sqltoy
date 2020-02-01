@@ -648,9 +648,14 @@ public class ParamFilterUtils {
 		// 解析时已经转小写
 		String type = paramFilterModel.getType();
 		if (StringUtil.isBlank(type)) {
+			// 默认为日期格式
 			type = "localdate";
 			if (compare.contains("hhmmss") || compare.contains("hh:mm:ss")) {
-				type = "localdatetime";
+				if (compare.equals("hhmmss") || compare.equals("hh:mm:ss")) {
+					type = "localtime";
+				} else {
+					type = "localdatetime";
+				}
 			}
 		}
 		// 代码有冗余,暂不需优化
