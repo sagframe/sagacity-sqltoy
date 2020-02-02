@@ -15,8 +15,8 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy4.0
