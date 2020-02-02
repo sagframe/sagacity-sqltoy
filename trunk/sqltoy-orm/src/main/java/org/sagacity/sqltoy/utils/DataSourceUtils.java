@@ -46,7 +46,7 @@ public class DataSourceUtils {
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
-		public final static String MYSQL8 = "mysql8";
+		public final static String MYSQL57 = "mysql57";
 		public final static String INNOSQL = "innosql";
 		public final static String MARIADB = "mariadb";
 
@@ -90,7 +90,7 @@ public class DataSourceUtils {
 		public final static int SQLSERVER = 30;
 		public final static int SQLSERVER2008 = 31;
 		public final static int MYSQL = 40;
-		public final static int MYSQL8 = 42;
+		public final static int MYSQL57 = 42;
 
 		public final static int SAP_HANA = 50;
 		// 默认9.5+版本
@@ -115,7 +115,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
 		DBNameTypeMap.put(Dialect.SQLSERVER2008, DBType.SQLSERVER2008);
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
-		DBNameTypeMap.put(Dialect.MYSQL8, DBType.MYSQL8);
+		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
 		DBNameTypeMap.put(Dialect.MARIADB, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
@@ -134,8 +134,8 @@ public class DataSourceUtils {
 		switch (dbType) {
 		case DBType.MYSQL:
 			return Dialect.MYSQL;
-		case DBType.MYSQL8:
-			return Dialect.MYSQL8;
+		case DBType.MYSQL57:
+			return Dialect.MYSQL57;
 		case DBType.ORACLE:
 			return Dialect.ORACLE;
 		case DBType.POSTGRESQL:
@@ -288,8 +288,8 @@ public class DataSourceUtils {
 			// mysql以及mysql的分支数据库
 			else if (dbDialect.equals(Dialect.MYSQL)) {
 				dbType = DBType.MYSQL;
-				if (majorVersion > 5) {
-					dbType = DBType.MYSQL8;
+				if (majorVersion <= 5) {
+					dbType = DBType.MYSQL57;
 				}
 			}
 			// 9.5以上为标准支持模式

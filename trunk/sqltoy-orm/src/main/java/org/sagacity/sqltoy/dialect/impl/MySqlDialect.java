@@ -291,15 +291,11 @@ public class MySqlDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
 		String loadSql = sqlToyConfig.getSql(dialect);
-		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8)) {
-			lockSql = " for update skip locked ";
-		}
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql = loadSql.concat(lockSql);
+				loadSql = loadSql.concat(getLockSql(dbType));
 				break;
 			}
 		}
@@ -340,15 +336,11 @@ public class MySqlDialect implements Dialect {
 			loadSql.append(entityMeta.getColumnName(field));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
-		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8)) {
-			lockSql = " for update skip locked ";
-		}
 		if (lockMode != null) {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql.append(lockSql);
+				loadSql.append(getLockSql(dbType));
 				break;
 			}
 		}
@@ -480,11 +472,7 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
-		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8)) {
-			lockSql = " for update skip locked ";
-		}
-		String realSql = sql.concat(lockSql);
+		String realSql = sql.concat(getLockSql(dbType));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -501,11 +489,7 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String lockSql = " for update ";
-		if (dbType.equals(DBType.MYSQL8)) {
-			lockSql = " for update skip locked ";
-		}
-		String realSql = sql + " limit " + topSize + lockSql;
+		String realSql = sql + " limit " + topSize + getLockSql(dbType);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -524,10 +508,7 @@ public class MySqlDialect implements Dialect {
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		String realSql = sql + " order by rand() limit " + random + " for update";
-		if (dbType.equals(DBType.MYSQL8)) {
-			realSql = realSql + " skip locked ";
-		}
+		String realSql = sql + " order by rand() limit " + random + getLockSql(dbType);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -556,4 +537,10 @@ public class MySqlDialect implements Dialect {
 		return true;
 	}
 
+	private String getLockSql(Integer dbType) {
+		if (dbType.equals(DBType.MYSQL57)) {
+			return " for update ";
+		}
+		return " for update skip locked ";
+	}
 }

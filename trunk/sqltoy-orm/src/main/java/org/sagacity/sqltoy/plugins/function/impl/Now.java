@@ -45,7 +45,7 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8 || dialect == DBType.POSTGRESQL) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.POSTGRESQL) {
 			return wrapArgs("now", args);
 		}
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {

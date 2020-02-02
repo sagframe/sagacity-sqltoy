@@ -60,7 +60,7 @@ public class DateFormat extends IFunction {
 			return "to_char(" + args[0] + "," + format + ")";
 		}
 		case DBType.MYSQL:
-		case DBType.MYSQL8: {
+		case DBType.MYSQL57: {
 			// 日期
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
 			// 时间处理

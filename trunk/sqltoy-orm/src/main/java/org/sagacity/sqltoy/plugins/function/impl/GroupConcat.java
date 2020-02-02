@@ -47,7 +47,7 @@ public class GroupConcat extends IFunction {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
 			if (functionName.equalsIgnoreCase("group_concat"))
 				return super.IGNORE;
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";

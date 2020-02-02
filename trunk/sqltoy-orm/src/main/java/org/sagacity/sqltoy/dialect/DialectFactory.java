@@ -130,7 +130,7 @@ public class DialectFactory {
 			// 8.x+(支持with as语法)
 			// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
 			case DBType.MYSQL:
-			case DBType.MYSQL8: {
+			case DBType.MYSQL57: {
 				dialectSqlWrapper = new MySqlDialect();
 				break;
 			}

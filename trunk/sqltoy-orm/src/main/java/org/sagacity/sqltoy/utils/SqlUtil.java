@@ -901,7 +901,7 @@ public class SqlUtil {
 			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
 			// int dbType = DataSourceUtils.getDbType(conn);
 			// 支持mysql8 update 2018-5-11
-			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL8) {
+			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
 				// update sys_organ_info a inner join (select t.organ_pid from
 				// sys_organ_info t) b
 				// on a.organ_id=b.organ_pid set IS_LEAF=0

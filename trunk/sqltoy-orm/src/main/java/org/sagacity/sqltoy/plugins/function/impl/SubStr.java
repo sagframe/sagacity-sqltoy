@@ -39,7 +39,7 @@ public class SubStr extends IFunction {
 				|| dialect == DBType.SYBASE_IQ) {
 			return wrapArgs("substring", args);
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.MYSQL || dialect == DBType.MYSQL8 || dialect == DBType.ORACLE
+		if (dialect == DBType.DB2 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.ORACLE
 				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("substr", args);
 		}
