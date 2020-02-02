@@ -200,11 +200,6 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ORACLE) != -1) {
 				return Dialect.ORACLE;
 			}
-			// db2
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
-				return Dialect.DB2;
-			}
-
 			// mysql以及mysql的分支数据库
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MYSQL) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
@@ -220,6 +215,10 @@ public class DataSourceUtils {
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "mssql") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "microsoftsqlserver") != -1) {
 				return Dialect.SQLSERVER;
+			}
+			// db2
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
+				return Dialect.DB2;
 			}
 			// clickhouse
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
