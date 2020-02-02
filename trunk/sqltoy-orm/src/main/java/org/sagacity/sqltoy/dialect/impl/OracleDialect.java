@@ -36,9 +36,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description oracle11g以及以下版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
- * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:OracleDialect.java,Revision:v1.0,Date:2013-3-21
+ * @description oracle12c+以及更高版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
+ * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version Revision:v1.0,Date:2013-8-29
+ * @Modification Date:2017-5-22 修复分页和top在order by 情况下的bug
  */
 @SuppressWarnings({ "rawtypes" })
 public class OracleDialect implements Dialect {
@@ -51,10 +52,6 @@ public class OracleDialect implements Dialect {
 	 * 判定为null的函数
 	 */
 	public static final String NVL_FUNCTION = "nvl";
-
-	public static final String NEXTVAL = ".nextval";
-
-	public static final String DUAL = "dual";
 
 	/*
 	 * (non-Javadoc)
@@ -87,41 +84,32 @@ public class OracleDialect implements Dialect {
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
-		boolean isNamed = sqlToyConfig.isNamedParam();
-		int startIndex = 1;
+		// 是否有order by,update 2017-5-22
+		boolean hasOrderBy = SqlUtil.hasOrderBy(
+				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (");
-			startIndex = 0;
+			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
 		}
-		sql.append("SELECT * FROM (SELECT ROWNUM page_row_id,SAG_Paginationtable.* FROM ( ");
+		// order by 外包裹一层,确保查询结果是按排序
+		if (hasOrderBy) {
+			sql.append(" select SAG_Paginationtable.* from (");
+		}
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
-		sql.append(") SAG_Paginationtable ");
-		/*
-		 * 判断sql中是否存在排序，因为oracle排序查询的机制通过ROWNUM<=?每次查出的结果可能不一样 ， 请参见ROWNUM机制以及oracle
-		 * SORT ORDER BY STOPKEY
-		 */
-		if (SqlToyConstants.oraclePageIgnoreOrder() || !SqlUtil.hasOrderBy(
-				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true)) {
-			sql.append(" where ROWNUM <=");
-			sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-			sql.append(" ) WHERE page_row_id>");
-			sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
-		} else {
-			sql.append(" ) WHERE page_row_id<=");
-			sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-			sql.append(" and page_row_id >");
-			sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
+		if (hasOrderBy) {
+			sql.append(") SAG_Paginationtable ");
 		}
-
+		sql.append(" offset ");
+		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
+		sql.append(" rows fetch next ");
+		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
+		sql.append(" rows only ");
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
-
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, startIndex, queryExecutor.getFetchSize(),
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
+		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -136,22 +124,30 @@ public class OracleDialect implements Dialect {
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		// 是否有order by
+		boolean hasOrderBy = SqlUtil.hasOrderBy(
+				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
 		}
-		sql.append("SELECT SAG_Paginationtable.* FROM ( ");
+		// order by 外包裹一层,确保查询结果是按排序
+		if (hasOrderBy) {
+			sql.append("select SAG_Paginationtable.* from (");
+		}
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
-		sql.append(") SAG_Paginationtable where ROWNUM <=");
-		sql.append(Double.valueOf(topSize).intValue());
-
+		if (hasOrderBy) {
+			sql.append(") SAG_Paginationtable ");
+		}
+		sql.append(" fetch first ");
+		sql.append(topSize);
+		sql.append(" rows only");
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
+		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -215,13 +211,13 @@ public class OracleDialect implements Dialect {
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + NEXTVAL;
+						String sequence = entityMeta.getSequence() + ".nextval";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
-								DUAL, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -237,18 +233,18 @@ public class OracleDialect implements Dialect {
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + NEXTVAL;
+						String sequence = entityMeta.getSequence() + ".nextval";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE12, entityMeta, pkStrategy, DUAL,
+						return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE, entityMeta, pkStrategy, "dual",
 								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
@@ -291,7 +287,7 @@ public class OracleDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence() + NEXTVAL;
+		String sequence = entityMeta.getSequence().concat(".nextval");
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -300,11 +296,9 @@ public class OracleDialect implements Dialect {
 				isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy),
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
-					// 通过反调方式提供oracle insert语句
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + NEXTVAL;
-						// oracle sequence主键策略
+						String sequence = entityMeta.getSequence().concat(".nextval");
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -337,7 +331,7 @@ public class OracleDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence() + NEXTVAL;
+		String sequence = entityMeta.getSequence().concat(".nextval");
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
@@ -357,22 +351,22 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] emptyCascadeClasses,
+			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + NEXTVAL;
+						String sequence = entityMeta.getSequence().concat(".nextval");
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
 						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
-								DUAL, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
-				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
+				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
@@ -419,7 +413,7 @@ public class OracleDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
 	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
@@ -428,7 +422,7 @@ public class OracleDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
-		String realSql = sql + " for update nowait";
+		String realSql = sql.concat(" for update nowait");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -445,14 +439,10 @@ public class OracleDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// StringBuilder query = new StringBuilder();
-		// query.append("select SAG_Paginationtable.* FROM ( ");
-		// query.append(sql);
-		// query.append(") SAG_Paginationtable where ROWNUM<=" + topSize);
-		// query.append(" for update nowait");
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// query.toString(), paramsValue, updateRowHandler, conn, 0);
+		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String realSql = sql + " fetch first " + topSize + " rows only for update nowait";
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+				dbType, 0);
 	}
 
 	/*
@@ -468,11 +458,10 @@ public class OracleDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// String realSql = sql + " order by dbms_random.random fetch first "
-		// + random + " rows only for update nowait";
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// realSql, paramsValue, updateRowHandler, conn, 0);
+		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update nowait";
+		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
+				dbType, 0);
 	}
 
 	/*

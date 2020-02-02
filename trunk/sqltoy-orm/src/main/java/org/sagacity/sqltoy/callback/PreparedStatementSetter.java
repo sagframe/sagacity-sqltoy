@@ -14,7 +14,6 @@ import java.sql.SQLException;
  */
 public abstract class PreparedStatementSetter {
 	/**
-	 * 
 	 * @todo <b>demo:new PreparedStatementSetter(pst){public void
 	 *       setter(pst.set(1,xx)};</b>
 	 * @author zhongxuchen

@@ -48,7 +48,7 @@ public class ConcatWs extends IFunction {
 		if (args.length < 2)
 			return super.IGNORE;
 		// 只针对oracle数据库,其他数据库原样返回
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
 			StringBuilder result = new StringBuilder();
 			String split = args[0].replace("\\'", "''");
 			for (int i = 1; i < args.length; i++) {

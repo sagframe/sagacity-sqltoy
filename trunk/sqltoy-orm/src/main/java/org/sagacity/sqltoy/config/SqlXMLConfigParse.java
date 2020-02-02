@@ -925,7 +925,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析列日期、数据格式化配置
+	 * @todo 解析对结果字段类型为日期、数字格式化处理配置
 	 * @param sqlToyConfig
 	 * @param dfElts
 	 * @param nfElts
@@ -981,7 +981,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析对sqltoy查询结果的处理逻辑定义
+	 * @todo 解析对sqltoy查询结果的计算处理逻辑定义(包含:旋转、汇总等)
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 */

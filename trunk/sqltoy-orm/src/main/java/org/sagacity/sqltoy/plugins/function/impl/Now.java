@@ -45,19 +45,19 @@ public class Now extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8 || dialect == DBType.POSTGRESQL
-				|| dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL12) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8 || dialect == DBType.POSTGRESQL) {
 			return wrapArgs("now", args);
-		} else if (dialect == DBType.ORACLE || dialect == DBType.ORACLE12) {
+		}
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
 			return "sysdate";
-		} else if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2017 || dialect == DBType.SQLSERVER2014
-				|| dialect == DBType.SQLSERVER2016 || dialect == DBType.SQLSERVER2019) {
+		}
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008) {
 			return wrapArgs("getdate", args);
-		} else if (dialect == DBType.SYBASE_IQ) {
+		}
+		if (dialect == DBType.SYBASE_IQ) {
 			if (hasArgs)
 				return wrapArgs(functionName, args);
-			else
-				return "getdate()";
+			return "getdate()";
 		}
 		return super.IGNORE;
 	}

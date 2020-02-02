@@ -15,6 +15,7 @@ public abstract class GenerateSqlHandler {
 	/**
 	 * @todo 根据pojo的meta产生特定的诸如：insert、update等sql
 	 * @param entityMeta
+	 * @param forceUpdateFields
 	 * @return
 	 */
 	public abstract String generateSql(EntityMeta entityMeta,

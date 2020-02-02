@@ -66,10 +66,10 @@ public abstract class ReflectPropertyHandler {
 	public Object getValue(String property) {
 		String key = property.toLowerCase();
 		if (propertyIndexMap.containsKey(key)) {
-			if (isArray)
+			if (isArray) {
 				return rowData[propertyIndexMap.get(key)];
-			else
-				return rowList.get(propertyIndexMap.get(key));
+			}
+			return rowList.get(propertyIndexMap.get(key));
 		}
 		return null;
 	}
@@ -92,7 +92,7 @@ public abstract class ReflectPropertyHandler {
 	public HashMap<String, Integer> getPropertyIndexMap() {
 		return propertyIndexMap;
 	}
-	
+
 	/**
 	 * 取回
 	 * 
@@ -135,13 +135,15 @@ public abstract class ReflectPropertyHandler {
 	 */
 	public void setEqualNull(Object value, String... properties) {
 		for (String property : properties) {
-			if (this.getValue(property) != null && this.getValue(property).equals(value))
+			if (this.getValue(property) != null && this.getValue(property).equals(value)) {
 				this.setValue(property, null);
+			}
 		}
 	}
 
 	public void setEqualNull(Object value, String property) {
-		if (this.getValue(property) != null && this.getValue(property).equals(value))
+		if (this.getValue(property) != null && this.getValue(property).equals(value)) {
 			this.setValue(property, null);
+		}
 	}
 }

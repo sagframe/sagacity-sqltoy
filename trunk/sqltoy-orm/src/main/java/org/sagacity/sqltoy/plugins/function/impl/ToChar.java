@@ -39,10 +39,8 @@ public class ToChar extends IFunction {
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.POSTGRESQL:
-		case DBType.POSTGRESQL11:
-		case DBType.POSTGRESQL12:
 		case DBType.ORACLE:
-		case DBType.ORACLE12: {
+		case DBType.ORACLE11: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");
 			// 时间处理

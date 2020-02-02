@@ -33,25 +33,25 @@ public class GroupConcat extends IFunction {
 		String tmp = args[args.length - 1];
 		String sign = "','";
 		int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(), separtorPattern);
-		if (matchIndex > 0)
+		if (matchIndex > 0) {
 			sign = tmp.substring(matchIndex + 11).trim();
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL11 || dialect == DBType.POSTGRESQL12) {
+		}
+		if (dialect == DBType.POSTGRESQL) {
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
 			if (args.length > 1) {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
-			} else {
-				if (matchIndex > 0) {
-					return " array_to_string(ARRAY_AGG(" + args[0].substring(0, matchIndex) + ")," + sign + ") ";
-				} else {
-					return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
-				}
 			}
-		} else if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
+			if (matchIndex > 0) {
+				return " array_to_string(ARRAY_AGG(" + args[0].substring(0, matchIndex) + ")," + sign + ") ";
+			} else {
+				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
+			}
+		}
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL8) {
 			if (functionName.equalsIgnoreCase("group_concat"))
 				return super.IGNORE;
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";
 		}
-
 		return super.IGNORE;
 	}
 

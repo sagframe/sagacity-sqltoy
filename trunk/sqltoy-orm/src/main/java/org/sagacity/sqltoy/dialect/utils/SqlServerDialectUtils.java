@@ -118,7 +118,7 @@ public class SqlServerDialectUtils {
 		boolean isIdentity = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		// 2012 默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
+		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		/**
 		 * sqlserver2008 identity 模式必须要先执行set identity_insert tableName on
 		 * 从2012版本后则无需进行设置
@@ -584,7 +584,7 @@ public class SqlServerDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 
 		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
+		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
 					null, conn, dbType, true);
@@ -687,7 +687,7 @@ public class SqlServerDialectUtils {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 
 		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
+		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
 					null, conn, dbType, true);

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -172,8 +173,9 @@ public class SqlToyConstants {
 	 */
 	public static String getKeyValue(String key, String defaultValue) {
 		String result = PROP_ELEMENTS.getProperty(key);
-		if (result == null)
+		if (result == null) {
 			result = System.getProperty(key);
+		}
 		if (StringUtil.isNotBlank(result))
 			return result;
 		return defaultValue;
@@ -253,8 +255,10 @@ public class SqlToyConstants {
 	 *       ，2012版本之后无需执行此语句
 	 * @return
 	 */
-	public static boolean sqlServerIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.sqlserver.identity.open", "false"));
+	public static boolean sqlServerIdentityOpen(int dbType) {
+		if (dbType == DBType.SQLSERVER2008)
+			return true;
+		return false;
 	}
 
 	/**
@@ -303,8 +307,9 @@ public class SqlToyConstants {
 			e.printStackTrace();
 		} finally {
 			try {
-				if (fis != null)
+				if (fis != null) {
 					fis.close();
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -126,8 +126,9 @@ public class SqlServerDialect implements Dialect {
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		String partSql = " select top " + topSize + " ";
 		if (sqlToyConfig.isHasWith()) {
@@ -232,7 +233,7 @@ public class SqlServerDialect implements Dialect {
 		boolean isIdentity = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen();
+		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		if (isIdentity && openIdentity) {
 			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
 					null, conn, dbType, true);
