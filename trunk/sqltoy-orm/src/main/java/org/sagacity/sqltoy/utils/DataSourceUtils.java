@@ -176,7 +176,7 @@ public class DataSourceUtils {
 		try {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
-			if (dbType == DBType.SYBASE_IQ || dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2008) {
+			if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2008 || dbType == DBType.SYBASE_IQ) {
 				return " go ";
 			}
 		} catch (Exception e) {
