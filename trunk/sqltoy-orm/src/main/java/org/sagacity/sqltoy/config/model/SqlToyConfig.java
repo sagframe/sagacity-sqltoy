@@ -168,7 +168,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasUnion the hasUnion to set
+	 * @param hasUnion
+	 *            the hasUnion to set
 	 */
 	public void setHasUnion(boolean hasUnion) {
 		this.hasUnion = hasUnion;
@@ -213,7 +214,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param ignoreEmpty the ignoreEmpty to set
+	 * @param ignoreEmpty
+	 *            the ignoreEmpty to set
 	 */
 	public void setIgnoreEmpty(boolean ignoreEmpty) {
 		this.ignoreEmpty = ignoreEmpty;
@@ -243,7 +245,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param id the id to set
+	 * @param id
+	 *            the id to set
 	 */
 	public void setId(String id) {
 		this.id = id;
@@ -262,7 +265,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param sql the sql to set
+	 * @param sql
+	 *            the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -276,7 +280,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasFastPage the hasFastPage to set
+	 * @param hasFastPage
+	 *            the hasFastPage to set
 	 */
 	public void setHasFast(boolean hasFast) {
 		this.hasFast = hasFast;
@@ -290,7 +295,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param isUnionAllCount the isUnionAllCount to set
+	 * @param isUnionAllCount
+	 *            the isUnionAllCount to set
 	 */
 	public void setUnionAllCount(boolean isUnionAllCount) {
 		this.isUnionAllCount = isUnionAllCount;
@@ -304,14 +310,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param paramsName the paramsName to set
+	 * @param paramsName
+	 *            the paramsName to set
 	 */
 	public void setParamsName(String[] paramsName) {
 		this.paramsName = paramsName;
 	}
 
 	/**
-	 * @param filterMap the filterMap to set
+	 * @param filterMap
+	 *            the filterMap to set
 	 */
 	public void setFilters(ParamFilterModel[] filters) {
 		this.filters = filters;
@@ -329,7 +337,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param translateMap the translateMap to set
+	 * @param translateMap
+	 *            the translateMap to set
 	 */
 	public void setTranslateMap(HashMap<String, SqlTranslate> translateMap) {
 		this.translateMap = translateMap;
@@ -343,7 +352,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param linkModel the linkModel to set
+	 * @param linkModel
+	 *            the linkModel to set
 	 */
 	public void setLinkModel(LinkModel linkModel) {
 		this.linkModel = linkModel;
@@ -357,7 +367,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param resultProcessor the resultProcessor to set
+	 * @param resultProcessor
+	 *            the resultProcessor to set
 	 */
 	public void setResultProcessor(List resultProcessor) {
 		this.resultProcessor = resultProcessor;
@@ -371,7 +382,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param dataSourceShardingStragety the dataSourceShardingStragety to set
+	 * @param dataSourceShardingStragety
+	 *            the dataSourceShardingStragety to set
 	 */
 	public void setDataSourceShardingStragety(String dataSourceShardingStragety) {
 		this.dataSourceShardingStragety = dataSourceShardingStragety;
@@ -385,7 +397,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param dataSourceShardingParams the dataSourceShardingParams to set
+	 * @param dataSourceShardingParams
+	 *            the dataSourceShardingParams to set
 	 */
 	public void setDataSourceShardingParams(String[] dataSourceShardingParams) {
 		this.dataSourceShardingParams = dataSourceShardingParams;
@@ -399,7 +412,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param tablesShardings the tablesShardings to set
+	 * @param tablesShardings
+	 *            the tablesShardings to set
 	 */
 	public void setTablesShardings(List<QueryShardingModel> tablesShardings) {
 		this.tablesShardings = tablesShardings;
@@ -413,7 +427,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param hasWith the hasWith to set
+	 * @param hasWith
+	 *            the hasWith to set
 	 */
 	public void setHasWith(boolean hasWith) {
 		this.hasWith = hasWith;
@@ -427,7 +442,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param fastSql the fastSql to set
+	 * @param fastSql
+	 *            the fastSql to set
 	 */
 	public void setFastSql(String fastSql) {
 		this.fastSql = fastSql;
@@ -441,7 +457,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param fastWithSql the fastWithSql to set
+	 * @param fastWithSql
+	 *            the fastWithSql to set
 	 */
 	public void setFastWithSql(String fastWithSql) {
 		this.fastWithSql = fastWithSql;
@@ -455,7 +472,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param fastPreSql the fastPreSql to set
+	 * @param fastPreSql
+	 *            the fastPreSql to set
 	 */
 	public void setFastPreSql(String fastPreSql) {
 		this.fastPreSql = fastPreSql;
@@ -469,7 +487,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param fastTailSql the fastTailSql to set
+	 * @param fastTailSql
+	 *            the fastTailSql to set
 	 */
 	public void setFastTailSql(String fastTailSql) {
 		this.fastTailSql = fastTailSql;
@@ -493,7 +512,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param fastWithIndex the fastWithIndex to set
+	 * @param fastWithIndex
+	 *            the fastWithIndex to set
 	 */
 	public void setFastWithIndex(int fastWithIndex) {
 		this.fastWithIndex = fastWithIndex;
@@ -507,7 +527,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param countSql the countSql to set
+	 * @param countSql
+	 *            the countSql to set
 	 */
 	public void setCountSql(String countSql) {
 		this.countSql = countSql;
@@ -521,14 +542,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param sqlType the sqlType to set
+	 * @param sqlType
+	 *            the sqlType to set
 	 */
 	public void setSqlType(SqlType sqlType) {
 		this.sqlType = sqlType;
 	}
 
 	/**
-	 * @param dataSourceShardingParamsAlias the dataSourceShardingParamsAlias to set
+	 * @param dataSourceShardingParamsAlias
+	 *            the dataSourceShardingParamsAlias to set
 	 */
 	public void setDataSourceShardingParamsAlias(String[] dataSourceShardingParamsAlias) {
 		this.dataSourceShardingParamsAlias = dataSourceShardingParamsAlias;
@@ -549,7 +572,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param tableShardingParams the tableShardingParams to set
+	 * @param tableShardingParams
+	 *            the tableShardingParams to set
 	 */
 	public void setTableShardingParams(String[] tableShardingParams) {
 		this.tableShardingParams = tableShardingParams;
@@ -563,7 +587,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param dataSource the dataSource to set
+	 * @param dataSource
+	 *            the dataSource to set
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -585,7 +610,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param pageOptimize the pageOptimize to set
+	 * @param pageOptimize
+	 *            the pageOptimize to set
 	 */
 	public void setPageOptimize(boolean pageOptimize) {
 		this.pageOptimize = pageOptimize;
@@ -599,17 +625,20 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param pageAliveMax the pageAliveMax to set
+	 * @param pageAliveMax
+	 *            the pageAliveMax to set
 	 */
 	public void setPageAliveMax(int pageAliveMax) {
 		// 最大不超过5000
-		if (pageAliveMax > 5000)
+		if (pageAliveMax > 5000) {
 			this.pageAliveMax = 5000;
+		}
 		// 最小20
-		else if (pageAliveMax < 20)
+		else if (pageAliveMax < 20) {
 			this.pageAliveMax = 20;
-		else
+		} else {
 			this.pageAliveMax = pageAliveMax;
+		}
 	}
 
 	/**
@@ -620,17 +649,20 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param pageAliveSeconds the pageAliveSeconds to set
+	 * @param pageAliveSeconds
+	 *            the pageAliveSeconds to set
 	 */
 	public void setPageAliveSeconds(int pageAliveSeconds) {
 		// 最小保持30秒
-		if (pageAliveSeconds < 30)
+		if (pageAliveSeconds < 30) {
 			this.pageAliveSeconds = 30;
+		}
 		// 不超过24小时
-		else if (pageAliveSeconds > 3600 * 24)
+		else if (pageAliveSeconds > 3600 * 24) {
 			this.pageAliveSeconds = 1800;
-		else
+		} else {
 			this.pageAliveSeconds = pageAliveSeconds;
+		}
 	}
 
 	/**
@@ -641,7 +673,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param secureMasks the secureMasks to set
+	 * @param secureMasks
+	 *            the secureMasks to set
 	 */
 	public void setSecureMasks(SecureMask[] secureMasks) {
 		this.secureMasks = secureMasks;
@@ -655,7 +688,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param noSqlConfigModel the noSqlConfigModel to set
+	 * @param noSqlConfigModel
+	 *            the noSqlConfigModel to set
 	 */
 	public void setNoSqlConfigModel(NoSqlConfigModel noSqlConfigModel) {
 		this.noSqlConfigModel = noSqlConfigModel;
@@ -669,7 +703,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param showSql the showSql to set
+	 * @param showSql
+	 *            the showSql to set
 	 */
 	public void setShowSql(boolean showSql) {
 		this.showSql = showSql;
@@ -683,7 +718,8 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param formatModels the formatModels to set
+	 * @param formatModels
+	 *            the formatModels to set
 	 */
 	public void setFormatModels(FormatModel[] formatModels) {
 		this.formatModels = formatModels;
@@ -700,8 +736,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void addCacheArgParam(String name) {
 		String param = name.toLowerCase();
-		if (!this.cacheArgNames.contains(param))
+		if (!this.cacheArgNames.contains(param)) {
 			this.cacheArgNames.add(param);
+		}
 	}
 
 	public List<String> getCacheArgNames() {
@@ -711,20 +748,21 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public String[] getFullParamNames() {
 		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
 			return this.paramsName;
-		} else {
-			List<String> tmp = new ArrayList<String>();
-			if (this.paramsName != null && this.paramsName.length > 0) {
-				for (String item : this.paramsName) {
-					if (!tmp.contains(item.toLowerCase()))
-						tmp.add(item.toLowerCase());
+		}
+		List<String> tmp = new ArrayList<String>();
+		if (this.paramsName != null && this.paramsName.length > 0) {
+			for (String item : this.paramsName) {
+				if (!tmp.contains(item.toLowerCase())) {
+					tmp.add(item.toLowerCase());
 				}
 			}
-			for (String item : this.cacheArgNames) {
-				if (!tmp.contains(item.toLowerCase()))
-					tmp.add(item.toLowerCase());
-			}
-			return tmp.toArray(new String[tmp.size()]);
 		}
+		for (String item : this.cacheArgNames) {
+			if (!tmp.contains(item.toLowerCase())) {
+				tmp.add(item.toLowerCase());
+			}
+		}
+		return tmp.toArray(new String[tmp.size()]);
 	}
 
 	/**

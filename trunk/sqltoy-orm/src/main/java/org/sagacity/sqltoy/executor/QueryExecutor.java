@@ -211,12 +211,12 @@ public class QueryExecutor implements Serializable {
 	 */
 	public String[] getParamsName(SqlToyConfig sqlToyConfig) {
 		if (this.entity == null) {
-			if (paramsName == null || paramsName.length == 0)
+			if (paramsName == null || paramsName.length == 0) {
 				return sqlToyConfig.getParamsName();
-			else
-				return paramsName;
-		} else
-			return sqlToyConfig.getFullParamNames();
+			}
+			return paramsName;
+		}
+		return sqlToyConfig.getFullParamNames();
 	}
 
 	/**
@@ -225,12 +225,12 @@ public class QueryExecutor implements Serializable {
 	 */
 	public String[] getTableShardingParamsName(SqlToyConfig sqlToyConfig) {
 		if (this.entity == null) {
-			if (paramsName == null || paramsName.length == 0)
+			if (paramsName == null || paramsName.length == 0) {
 				return sqlToyConfig.getParamsName();
-			else
-				return paramsName;
-		} else
-			return sqlToyConfig.getTableShardingParams();
+			}
+			return paramsName;
+		}
+		return sqlToyConfig.getTableShardingParams();
 	}
 
 	/**
@@ -239,12 +239,12 @@ public class QueryExecutor implements Serializable {
 	 */
 	public String[] getDataSourceShardingParamsName(SqlToyConfig sqlToyConfig) {
 		if (this.entity == null) {
-			if (paramsName == null || paramsName.length == 0)
+			if (paramsName == null || paramsName.length == 0) {
 				return sqlToyConfig.getParamsName();
-			else
-				return paramsName;
-		} else
-			return sqlToyConfig.getDataSourceShardingParams();
+			}
+			return paramsName;
+		}
+		return sqlToyConfig.getDataSourceShardingParams();
 	}
 
 	/**
@@ -278,8 +278,9 @@ public class QueryExecutor implements Serializable {
 			}
 			extracted = true;
 		}
-		if (paramsValue != null)
+		if (paramsValue != null) {
 			realValues = paramsValue.clone();
+		}
 		// 过滤加工参数值
 		if (realValues != null) {
 			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
@@ -343,13 +344,6 @@ public class QueryExecutor implements Serializable {
 		return resultType;
 	}
 
-//	public String getResultTypeName() {
-//		if (null != resultType)
-//			return resultType.getTypeName();
-//		else
-//	return null;
-//	}
-
 	/**
 	 * @return the humpMapLabel
 	 */
@@ -376,8 +370,9 @@ public class QueryExecutor implements Serializable {
 	 * @param sqlToyConfig
 	 */
 	public void optimizeArgs(SqlToyConfig sqlToyConfig) {
-		if (sqlToyConfig.getCacheArgNames().isEmpty() || this.entity != null)
+		if (sqlToyConfig.getCacheArgNames().isEmpty() || this.entity != null) {
 			return;
+		}
 		// 只有这种场景下需要校正参数
 		if (this.paramsName != null && this.paramsValue != null) {
 			List<String> tmp = new ArrayList<String>();
@@ -390,11 +385,13 @@ public class QueryExecutor implements Serializable {
 						break;
 					}
 				}
-				if (!exist)
+				if (!exist) {
 					tmp.add(comp);
+				}
 			}
-			if (tmp.isEmpty())
+			if (tmp.isEmpty()) {
 				return;
+			}
 			// 补全额外的参数名称,对应的值则为null
 			String[] realParams = new String[this.paramsName.length + tmp.size()];
 			Object[] realValues = new Object[this.paramsValue.length + tmp.size()];
