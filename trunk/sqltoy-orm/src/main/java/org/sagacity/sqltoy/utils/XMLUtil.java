@@ -39,7 +39,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 /**
- * @project sagacity-core
+ * @project sagacity-sqltoy
  * @description xml处理的工具类,提供xml对应schema validator等功能
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:XMLUtil.java,Revision:v1.0,Date:2009-4-27 上午11:57:58
