@@ -104,44 +104,47 @@ public class DB2DialectUtils {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 				fieldType = fieldMeta.getType();
 				columnName = fieldMeta.getColumnName();
-				if (i > 0)
+				if (i > 0) {
 					sql.append(",");
-				if (fieldType == java.sql.Types.VARCHAR)
+				}
+				if (fieldType == java.sql.Types.VARCHAR) {
 					sql.append("cast(? as varchar(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.CHAR)
+				} else if (fieldType == java.sql.Types.CHAR) {
 					sql.append("cast(? as char(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.DATE)
+				} else if (fieldType == java.sql.Types.DATE) {
 					sql.append("cast(? as date)");
-				else if (fieldType == java.sql.Types.NUMERIC)
+				} else if (fieldType == java.sql.Types.NUMERIC) {
 					sql.append("cast(? as numeric)");
-				else if (fieldType == java.sql.Types.DECIMAL)
+				} else if (fieldType == java.sql.Types.DECIMAL) {
 					sql.append("cast(? as decimal)");
-				else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
-						|| fieldType == java.sql.Types.TINYINT)
+				} else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
+						|| fieldType == java.sql.Types.TINYINT) {
 					sql.append("cast(? as integer)");
-				else if (fieldType == java.sql.Types.TIMESTAMP)
+				} else if (fieldType == java.sql.Types.TIMESTAMP) {
 					sql.append("cast(? as timestamp)");
-				else if (fieldType == java.sql.Types.DOUBLE)
+				} else if (fieldType == java.sql.Types.DOUBLE) {
 					sql.append("cast(? as double)");
-				else if (fieldType == java.sql.Types.FLOAT)
+				} else if (fieldType == java.sql.Types.FLOAT) {
 					sql.append("cast(? as float)");
-				else if (fieldType == java.sql.Types.TIME)
+				} else if (fieldType == java.sql.Types.TIME) {
 					sql.append("cast(? as time)");
-				else if (fieldType == java.sql.Types.CLOB)
+				} else if (fieldType == java.sql.Types.CLOB) {
 					sql.append("cast(? as clob(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.BOOLEAN)
+				} else if (fieldType == java.sql.Types.BOOLEAN) {
 					sql.append("cast(? as boolean)");
-				else if (fieldType == java.sql.Types.BINARY)
+				} else if (fieldType == java.sql.Types.BINARY) {
 					sql.append("cast(? as BINARY LARGE OBJECT(" + fieldMeta.getLength() + "))");
-				else if (fieldType == java.sql.Types.BLOB)
+				} else if (fieldType == java.sql.Types.BLOB) {
 					sql.append("cast(? as blob(" + fieldMeta.getLength() + "))");
-				else
+				} else {
 					sql.append("?");
+				}
 				sql.append(" as ");
 				sql.append(columnName);
 			}
-			if (StringUtil.isNotBlank(fromTable))
+			if (StringUtil.isNotBlank(fromTable)) {
 				sql.append(" from ").append(fromTable);
+			}
 			sql.append(") tv on (");
 			StringBuilder idColumns = new StringBuilder();
 			// 组织on部分的主键条件判断
@@ -286,44 +289,47 @@ public class DB2DialectUtils {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldType = fieldMeta.getType();
 			columnName = fieldMeta.getColumnName();
-			if (i > 0)
+			if (i > 0) {
 				sql.append(",");
-			if (fieldType == java.sql.Types.VARCHAR)
+			}
+			if (fieldType == java.sql.Types.VARCHAR) {
 				sql.append("cast(? as varchar(" + fieldMeta.getLength() + "))");
-			else if (fieldType == java.sql.Types.CHAR)
+			} else if (fieldType == java.sql.Types.CHAR) {
 				sql.append("cast(? as char(" + fieldMeta.getLength() + "))");
-			else if (fieldType == java.sql.Types.DATE)
+			} else if (fieldType == java.sql.Types.DATE) {
 				sql.append("cast(? as date)");
-			else if (fieldType == java.sql.Types.NUMERIC)
+			} else if (fieldType == java.sql.Types.NUMERIC) {
 				sql.append("cast(? as numeric)");
-			else if (fieldType == java.sql.Types.DECIMAL)
+			} else if (fieldType == java.sql.Types.DECIMAL) {
 				sql.append("cast(? as decimal)");
-			else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
-					|| fieldType == java.sql.Types.TINYINT)
+			} else if (fieldType == java.sql.Types.INTEGER || fieldType == java.sql.Types.BIGINT
+					|| fieldType == java.sql.Types.TINYINT) {
 				sql.append("cast(? as integer)");
-			else if (fieldType == java.sql.Types.TIMESTAMP)
+			} else if (fieldType == java.sql.Types.TIMESTAMP) {
 				sql.append("cast(? as timestamp)");
-			else if (fieldType == java.sql.Types.DOUBLE)
+			} else if (fieldType == java.sql.Types.DOUBLE) {
 				sql.append("cast(? as double)");
-			else if (fieldType == java.sql.Types.FLOAT)
+			} else if (fieldType == java.sql.Types.FLOAT) {
 				sql.append("cast(? as float)");
-			else if (fieldType == java.sql.Types.TIME)
+			} else if (fieldType == java.sql.Types.TIME) {
 				sql.append("cast(? as time)");
-			else if (fieldType == java.sql.Types.CLOB)
+			} else if (fieldType == java.sql.Types.CLOB) {
 				sql.append("cast(? as clob(" + fieldMeta.getLength() + "))");
-			else if (fieldType == java.sql.Types.BOOLEAN)
+			} else if (fieldType == java.sql.Types.BOOLEAN) {
 				sql.append("cast(? as boolean)");
-			else if (fieldType == java.sql.Types.BINARY)
+			} else if (fieldType == java.sql.Types.BINARY) {
 				sql.append("cast(? as BINARY LARGE OBJECT(" + fieldMeta.getLength() + "))");
-			else if (fieldType == java.sql.Types.BLOB)
+			} else if (fieldType == java.sql.Types.BLOB) {
 				sql.append("cast(? as blob(" + fieldMeta.getLength() + "))");
-			else
+			} else {
 				sql.append("?");
+			}
 			sql.append(" as ");
 			sql.append(columnName);
 		}
-		if (StringUtil.isNotBlank(fromTable))
+		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
+		}
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
