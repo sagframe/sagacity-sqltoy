@@ -44,6 +44,8 @@ public class SqlToyConstants {
 
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "It is not support this function!";
+	
+	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
 	/**
 	 * 判断sql中是否存在union all的表达式

@@ -171,10 +171,10 @@ public class DialectFactory {
 				dialectSqlWrapper = new SybaseIQDialect();
 				break;
 			}
-			// 如果匹配不上使用mysql类型
+			// 如果匹配不上抛出异常
 			default:
-				dialectSqlWrapper = new MySqlDialect();
-				break;
+				// 不支持
+				throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
 			}
 			dialects.put(dbType, dialectSqlWrapper);
 			return dialectSqlWrapper;
