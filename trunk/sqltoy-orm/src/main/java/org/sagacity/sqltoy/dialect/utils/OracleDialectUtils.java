@@ -75,6 +75,7 @@ public class OracleDialectUtils {
 	 * @param lockMode
 	 * @param conn
 	 * @param dbType
+	 * @param tableName
 	 * @return
 	 * @throws Exception
 	 */

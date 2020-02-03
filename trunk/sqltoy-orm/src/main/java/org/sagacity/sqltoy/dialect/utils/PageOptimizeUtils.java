@@ -50,8 +50,9 @@ public class PageOptimizeUtils {
 			return sqlToyConfig.getId();
 		StringBuilder cacheKey = new StringBuilder();
 		boolean isParamsNamed = true;
-		if (null == paramNames || paramNames.length == 0)
+		if (null == paramNames || paramNames.length == 0) {
 			isParamsNamed = false;
+		}
 		int i = 0;
 		// 循环查询条件的值构造key
 		for (Object value : paramValues) {

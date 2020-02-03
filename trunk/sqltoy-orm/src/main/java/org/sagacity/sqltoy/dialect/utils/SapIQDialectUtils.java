@@ -113,10 +113,12 @@ public class SapIQDialectUtils {
 
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-		if (isIdentity)
+		if (isIdentity) {
 			insertSql = insertSql + " select @@IDENTITY ";
-		if (sqlToyContext.isDebug())
+		}
+		if (sqlToyContext.isDebug()) {
 			logger.debug(insertSql);
+		}
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {

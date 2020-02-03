@@ -330,7 +330,7 @@ public class ClickHouseDialectUtils {
 				}
 			}
 		}
-
+		// 构造主键值对应的类型
 		Integer[] paramTypes = new Integer[idSize * loopSize];
 		Integer idType;
 		for (int i = 0; i < idSize; i++) {
@@ -340,6 +340,7 @@ public class ClickHouseDialectUtils {
 			}
 		}
 
+		//构造delete 语句(clickhouse 记录删除语法特殊)
 		StringBuilder deleteSql = new StringBuilder();
 		deleteSql.append("alter table ");
 		deleteSql.append(realTable);
@@ -356,7 +357,7 @@ public class ClickHouseDialectUtils {
 		}
 
 		if (sqlToyContext.isDebug()) {
-			logger.debug("根据主键批量删除表sql:{}", deleteSql);
+			logger.debug("根据主键批量删除数据 sql:{}", deleteSql);
 		}
 
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),

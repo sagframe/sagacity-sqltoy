@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 
 /**
  * @project sqltoy-orm
- * @description SqlToy3.0版本采用针对不同数据库单独进行特定封装处理，改变原先在一个方法中
+ * @description SqlToy3.0版本开始采用针对不同数据库单独进行特定封装处理，改变原先在一个方法中
  *              判断数据库并进行sql封装的模式，使得整个结构更加清晰
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-8-29
