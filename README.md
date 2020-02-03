@@ -15,6 +15,17 @@
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
+   支持以下数据库:
+   * oracle
+   * db2
+   * mysql
+   * postgresql
+   * sqlserver
+   * sqlite
+   * sybase_iq
+   * elasticsearch (查询)
+   * clickhouse
+   * mongodb (查询)
 ## 1.2 是否重复造轮子
    写开源项目是一个非常不易的事情，原则上优势太小千万不要折腾，创新不易，坚持更难！
    很显然sqltoy虽然名字很toy，但经过多年发展和项目实践已然成了一个非常有趣非常有特色的big toy!
