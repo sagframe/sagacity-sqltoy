@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
@@ -195,7 +196,7 @@ public class SqlUtilsExt {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
-			if (jdbcType == java.sql.Types.DATE || jdbcType == java.sql.Types.TIME) {
+			if (jdbcType == java.sql.Types.DATE) {
 				realValue = new Date();
 			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 				realValue = DateUtil.getTimestamp(null);
@@ -210,6 +211,8 @@ public class SqlUtilsExt {
 				realValue = Boolean.parseBoolean(defaultValue);
 			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
 				realValue = Float.valueOf(defaultValue);
+			} else if (jdbcType == java.sql.Types.TIME) {
+				realValue = java.sql.Time.valueOf(LocalTime.now());
 			} else {
 				realValue = defaultValue;
 			}
