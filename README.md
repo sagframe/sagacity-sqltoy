@@ -16,16 +16,16 @@
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
    支持以下数据库:
-   * oracle
-   * db2
-   * mysql
-   * postgresql
-   * sqlserver
+   * oracle 从oracle11g到19c
+   * db2 9.5+,建议从10.5 开始
+   * mysql 支持5.6、5.7、8.0 版本
+   * postgresql 支持9.5 以及以上版本
+   * sqlserver 支持2008到2019版本，建议使用2012或以上版本
    * sqlite
-   * sybase_iq
-   * elasticsearch (查询)
-   * clickhouse
-   * mongodb (查询)
+   * sybase_iq 支持15.4以上版本，建议使用16版本
+   * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
+   * clickhouse 
+   * mongodb (只支持查询)
 ## 1.2 是否重复造轮子
    我也希望能用一个现成的好用的框架从而将精力用于其他方向，但mybatis、hibernate、jpa、jdbctemplate、jooq等等太工程化了，全是硬功夫的产物，有智无慧，尤其是在查询领域缺少灵魂，没有不同类型项目不同开发者适用视角！要么是简单的问题整复杂了(比如mybatis的分页，那么基础的东西还整出个自定义插件)，要么是复杂的问题想简单了，很少能有点哲学观！
    
