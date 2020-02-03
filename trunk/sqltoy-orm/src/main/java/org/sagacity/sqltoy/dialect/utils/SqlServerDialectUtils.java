@@ -849,7 +849,6 @@ public class SqlServerDialectUtils {
 					}
 				}
 			}
-			// updateCount = new Long(pst.getUpdateCount());
 			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
 			}
