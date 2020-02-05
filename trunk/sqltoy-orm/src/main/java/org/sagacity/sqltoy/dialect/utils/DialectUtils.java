@@ -1655,7 +1655,7 @@ public class DialectUtils {
 		}
 
 		// 构建update语句
-		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, realTable);
+		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
