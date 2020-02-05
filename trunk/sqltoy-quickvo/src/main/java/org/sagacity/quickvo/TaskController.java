@@ -70,8 +70,7 @@ public class TaskController {
 	private static ConfigModel configModel;
 
 	/**
-	 * @param configModel
-	 *            the configModel to set
+	 * @param configModel the configModel to set
 	 */
 	public static void setConfigModel(ConfigModel configModel) {
 		TaskController.configModel = configModel;
@@ -453,6 +452,8 @@ public class TaskController {
 			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
+			// 提取原始类型
+			sqlType = jdbcType;
 			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);
 			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
@@ -475,7 +476,7 @@ public class TaskController {
 				}
 			}
 			quickColMeta.setNullable(colMeta.isNullable() ? "1" : "0");
-			sqlType = jdbcType;
+
 			importType = null;
 
 			// 默认数据类型进行匹配
