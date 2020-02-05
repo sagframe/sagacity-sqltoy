@@ -51,7 +51,7 @@ public class Now extends IFunction {
 		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
 			return "sysdate";
 		}
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012) {
 			return wrapArgs("getdate", args);
 		}
 		if (dialect == DBType.SYBASE_IQ) {

@@ -45,7 +45,7 @@ public class Trim extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012) {
 			return "rtrim(ltrim(" + args[0] + "))";
 		}
 		return super.IGNORE;

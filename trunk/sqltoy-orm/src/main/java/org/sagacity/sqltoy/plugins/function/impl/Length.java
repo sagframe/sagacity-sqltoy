@@ -45,7 +45,7 @@ public class Length extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012) {
 			if (functionName.equalsIgnoreCase("datalength"))
 				return wrapArgs("datalength", args);
 			return wrapArgs("len", args);

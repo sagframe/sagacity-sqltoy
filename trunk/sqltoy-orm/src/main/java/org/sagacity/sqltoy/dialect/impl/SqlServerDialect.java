@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  * @description sqlserver2012以及更新版本的数据库操作实现
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlServerDialect.java,Revision:v1.0,Date:2013-3-21
+ * @Modification Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlServerDialect implements Dialect {
@@ -229,15 +230,7 @@ public class SqlServerDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isIdentity = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		final String realTable = entityMeta.getSchemaTable(tableName);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " ON", null, null, conn, dbType,
-					true);
-		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -253,10 +246,6 @@ public class SqlServerDialect implements Dialect {
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " OFF", null, null, conn,
-					dbType, true);
-		}
 		return updateCount;
 	}
 

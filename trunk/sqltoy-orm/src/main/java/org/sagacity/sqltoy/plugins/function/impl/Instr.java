@@ -45,7 +45,7 @@ public class Instr extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008 || dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012 || dialect == DBType.SYBASE_IQ) {
 			if (functionName.equalsIgnoreCase("instr")) {
 				StringBuilder result = new StringBuilder();
 				result.append("charindex(").append(args[1]).append(",").append(args[0]);

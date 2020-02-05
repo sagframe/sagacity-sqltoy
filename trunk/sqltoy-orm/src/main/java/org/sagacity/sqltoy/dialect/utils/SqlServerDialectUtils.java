@@ -16,7 +16,6 @@ import java.util.List;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供基于sqlserver这种广泛应用的数据库通用的逻辑处理,避免大量重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlServerDialectUtils.java,Revision:v1.0,Date:2014年12月26日
+ * @Modification Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlServerDialectUtils {
@@ -115,19 +115,6 @@ public class SqlServerDialectUtils {
 			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isIdentity = (entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
-		// 2012 默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
-		/**
-		 * sqlserver2008 identity 模式必须要先执行set identity_insert tableName on
-		 * 从2012版本后则无需进行设置
-		 */
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext,
-					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " ON", null, null, conn, dbType,
-					true);
-		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
@@ -143,11 +130,7 @@ public class SqlServerDialectUtils {
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext,
-					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " OFF", null, null, conn, dbType,
-					true);
-		}
+
 		return updateCount;
 	}
 
@@ -470,8 +453,7 @@ public class SqlServerDialectUtils {
 						values.append("?");
 						isStart = false;
 					}
-				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					if (!isStart) {
 						sql.append(",");
 						values.append(",");
@@ -587,13 +569,6 @@ public class SqlServerDialectUtils {
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 
-		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext,
-					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " ON", null, null, conn, dbType,
-					true);
-		}
 		if (sqlToyContext.isDebug()) {
 			logger.debug(insertSql);
 		}
@@ -660,11 +635,6 @@ public class SqlServerDialectUtils {
 				}
 			}
 		}
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext,
-					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " OFF", null, null, conn, dbType,
-					true);
-		}
 		return result;
 	}
 
@@ -685,28 +655,14 @@ public class SqlServerDialectUtils {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-
 		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
 				"@mySeqVariable", isAssignPK);
 		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 			insertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence() + " "
 					+ insertSql;
 		}
-		boolean isIdentity = entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-		String realTable = entityMeta.getSchemaTable(tableName);
-		// sqlserver2012 开始默认为false
-		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " ON", null, null, conn, dbType,
-					true);
-		}
 		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, reflectPropertyHandler, conn, dbType, autoCommit);
-		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " OFF", null, null, conn,
-					dbType, true);
-		}
 		return updateCount;
 	}
 

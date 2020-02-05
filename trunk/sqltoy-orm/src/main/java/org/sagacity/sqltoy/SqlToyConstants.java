@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -44,7 +43,7 @@ public class SqlToyConstants {
 
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "It is not support this function!";
-	
+
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
 	/**
@@ -250,17 +249,6 @@ public class SqlToyConstants {
 	 */
 	public static boolean sybaseIQIdentityOpen() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.sybase.iq.identity.open", "false"));
-	}
-
-	/**
-	 * @todo sqlserver identity主键是否要开启 SET IDENTITY_INSERT=tableName ON
-	 *       ，2012版本之后无需执行此语句
-	 * @return
-	 */
-	public static boolean sqlServerIdentityOpen(int dbType) {
-		if (dbType == DBType.SQLSERVER2008)
-			return true;
-		return false;
 	}
 
 	/**

@@ -136,7 +136,7 @@ public class DialectFactory {
 			}
 			// sqlserver2012 以后分页方式更简单
 			case DBType.SQLSERVER:
-			case DBType.SQLSERVER2008: {
+			case DBType.SQLSERVER2012: {
 				dialectSqlWrapper = new SqlServerDialect();
 				break;
 			}

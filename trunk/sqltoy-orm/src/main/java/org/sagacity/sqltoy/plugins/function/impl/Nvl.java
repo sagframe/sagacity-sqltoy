@@ -47,7 +47,7 @@ public class Nvl extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2008)
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012)
 			return wrapArgs("isnull", args);
 		if (dialect == DBType.DB2 || dialect == DBType.POSTGRESQL)
 			return wrapArgs("coalesce", args);

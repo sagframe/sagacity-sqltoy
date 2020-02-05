@@ -40,9 +40,8 @@ public class DataSourceUtils {
 		public final static String DB2 = "db2";
 
 		// sqlserver建议采用2012或以上版本
-		// 2005版本或以上版本,以2008为支持主体
 		public final static String SQLSERVER = "sqlserver";
-		public final static String SQLSERVER2008 = "sqlserver2008";
+		public final static String SQLSERVER2012 = "sqlserver2012";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
@@ -86,9 +85,10 @@ public class DataSourceUtils {
 		public final static int ORACLE11 = 11;
 		// 10.x版本
 		public final static int DB2 = 20;
-		// 2012及以上版本
+		// 2017及以上版本
 		public final static int SQLSERVER = 30;
-		public final static int SQLSERVER2008 = 31;
+		public final static int SQLSERVER2012 = 35;
+
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
 
@@ -113,7 +113,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
-		DBNameTypeMap.put(Dialect.SQLSERVER2008, DBType.SQLSERVER2008);
+		DBNameTypeMap.put(Dialect.SQLSERVER2012, DBType.SQLSERVER2012);
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
@@ -160,8 +160,8 @@ public class DataSourceUtils {
 			return Dialect.SAP_HANA;
 		case DBType.ORACLE11:
 			return Dialect.ORACLE11;
-		case DBType.SQLSERVER2008:
-			return Dialect.SQLSERVER2008;
+		case DBType.SQLSERVER2012:
+			return Dialect.SQLSERVER2012;
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -176,7 +176,7 @@ public class DataSourceUtils {
 		try {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2008 || dbType == DBType.SYBASE_IQ) {
+			if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2012 || dbType == DBType.SYBASE_IQ) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -297,11 +297,11 @@ public class DataSourceUtils {
 			}
 			// sqlserver,只支持2012或以上版本
 			else if (dbDialect.equals(Dialect.SQLSERVER)) {
-				// 2012+
+				// 2014+
 				dbType = DBType.SQLSERVER;
-				// 2008
-				if (majorVersion <= 2008) {
-					dbType = DBType.SQLSERVER2008;
+				// 2012
+				if (majorVersion <= 2012) {
+					dbType = DBType.SQLSERVER2012;
 				}
 			}
 			// db2 10+版本
