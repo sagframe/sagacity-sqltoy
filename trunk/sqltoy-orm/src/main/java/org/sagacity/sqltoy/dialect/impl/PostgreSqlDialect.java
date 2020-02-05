@@ -299,12 +299,6 @@ public class PostgreSqlDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		// 判断postgresql是否原生支持
-		// if (SqlToyConstants.postgresqlSupportSaveOrUpdate()) {
-		// return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize,
-		// reflectPropertyHandler, forceUpdateFields,
-		// conn, autoCommit, tableName);
-		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
@@ -315,30 +309,6 @@ public class PostgreSqlDialect implements Dialect {
 				dialect, autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
-	}
-
-	/**
-	 * 暂时postgresql 不支持原生的saveOrUpdate
-	 */
-	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
-						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
-								forceUpdateFields, tableName);
-					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
