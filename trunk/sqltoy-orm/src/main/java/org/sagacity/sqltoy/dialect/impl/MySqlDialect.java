@@ -222,12 +222,6 @@ public class MySqlDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		// mysql是否支持原生saveOrUpdate
-		// if (SqlToyConstants.mysqlSupportSaveOrUpdate()) {
-		// return saveOrUpdateAllBySelf(sqlToyContext, entities, batchSize,
-		// reflectPropertyHandler, forceUpdateFields,
-		// conn, autoCommit, tableName);
-		// }
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);
@@ -238,19 +232,6 @@ public class MySqlDialect implements Dialect {
 				dialect, autoCommit, tableName);
 		logger.debug("新建记录数为:{}", saveCnt);
 		return updateCnt + saveCnt;
-	}
-
-	// mysql DUPLICATE key update 在对非空字段操作是报异常
-	private Long saveOrUpdateAllBySelf(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, forceUpdateFields, tableName);
-					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
