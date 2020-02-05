@@ -29,7 +29,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -446,13 +445,6 @@ public class Oracle11gDialect implements Dialect {
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// StringBuilder query = new StringBuilder();
-		// query.append("select SAG_Paginationtable.* FROM ( ");
-		// query.append(sql);
-		// query.append(") SAG_Paginationtable where ROWNUM<=" + topSize);
-		// query.append(" for update nowait");
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// query.toString(), paramsValue, updateRowHandler, conn, 0);
 	}
 
 	/*
@@ -469,10 +461,6 @@ public class Oracle11gDialect implements Dialect {
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		// String realSql = sql + " order by dbms_random.random fetch first "
-		// + random + " rows only for update nowait";
-		// return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig,
-		// realSql, paramsValue, updateRowHandler, conn, 0);
 	}
 
 	/*
