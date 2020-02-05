@@ -136,7 +136,7 @@ public class Save extends BaseLink {
 			throw new IllegalArgumentException("saveAll entities is null or empty!");
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
-			return dialectFactory.saveAllNotExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
 					dataSource, autoCommit);
 		} else if (saveMode == SaveMode.UPDATE) {
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,

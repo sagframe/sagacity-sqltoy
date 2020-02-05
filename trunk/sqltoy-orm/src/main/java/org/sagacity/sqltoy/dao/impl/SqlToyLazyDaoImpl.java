@@ -308,6 +308,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.saveAll(entities);
 	}
 
+	@Override
+	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities) {
+		return super.saveAllIgnoreExist(entities);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

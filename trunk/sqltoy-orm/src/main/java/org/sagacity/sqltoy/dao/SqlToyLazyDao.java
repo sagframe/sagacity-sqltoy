@@ -95,6 +95,8 @@ public interface SqlToyLazyDao {
 	public Object save(Serializable serializableVO);
 
 	public <T extends Serializable> Long saveAll(List<T> entities);
+	
+	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
 	/**
 	 * @todo 批量保存数据

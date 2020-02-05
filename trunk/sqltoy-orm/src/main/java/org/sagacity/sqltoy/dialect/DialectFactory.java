@@ -893,7 +893,7 @@ public class DialectFactory {
 	 * @param dataSource
 	 * @param autoCommit
 	 */
-	public Long saveAllNotExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
+	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty())

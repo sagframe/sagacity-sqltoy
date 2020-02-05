@@ -84,6 +84,12 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.saveAll(entities, null);
 	}
 
+	@Override
+	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities) {
+		// TODO Auto-generated method stub
+		return sqlToyLazyDao.saveAllIgnoreExist(entities);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

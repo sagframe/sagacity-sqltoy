@@ -130,8 +130,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @param sqlToyContext
-	 *            the sqlToyContext to set
+	 * @param sqlToyContext the sqlToyContext to set
 	 */
 	@Autowired
 	@Qualifier(value = "sqlToyContext")
@@ -224,8 +223,7 @@ public class SqlToyDaoSupport {
 	 * @param storeNameOrKey
 	 * @param inParamsValue
 	 * @param outParamsType(可以为null)
-	 * @param resultType
-	 *            (VOClass,HashMap或null)
+	 * @param resultType             (VOClass,HashMap或null)
 	 * @param dataSource
 	 * @return
 	 */
@@ -424,8 +422,7 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit
-	 *            是否自动提交
+	 * @param autoCommit    是否自动提交
 	 * @param dataSource
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
@@ -686,8 +683,13 @@ public class SqlToyDaoSupport {
 	 * @param entity
 	 * @return
 	 */
+	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities) {
+		return this.saveAllIgnoreExist(entities, null, null);
+	}
+
+	@Deprecated
 	protected <T extends Serializable> Long saveAllNotExist(final List<T> entities) {
-		return this.saveAllNotExist(entities, null, null);
+		return this.saveAllIgnoreExist(entities, null, null);
 	}
 
 	/**
@@ -696,8 +698,13 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
+	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities, final DataSource dataSource) {
+		return this.saveAllIgnoreExist(entities, null, dataSource);
+	}
+
+	@Deprecated
 	protected <T extends Serializable> Long saveAllNotExist(final List<T> entities, final DataSource dataSource) {
-		return this.saveAllNotExist(entities, null, dataSource);
+		return this.saveAllIgnoreExist(entities, null, dataSource);
 	}
 
 	/**
@@ -706,9 +713,9 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected <T extends Serializable> Long saveAllNotExist(final List<T> entities,
+	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
-		return dialectFactory.saveAllNotExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
+		return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
 
@@ -744,8 +751,7 @@ public class SqlToyDaoSupport {
 	 * @todo 修改对象,并通过指定级联的子对象做级联修改
 	 * @param entity
 	 * @param forceUpdateProps
-	 * @param forceCascadeClasses
-	 *            (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
+	 * @param forceCascadeClasses      (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
 	 * @param subTableForceUpdateProps
 	 */
 	protected Long updateCascade(final Serializable entity, final String[] forceUpdateProps,

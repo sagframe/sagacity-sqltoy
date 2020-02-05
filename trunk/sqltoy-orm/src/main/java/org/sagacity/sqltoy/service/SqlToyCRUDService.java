@@ -42,6 +42,12 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> Long saveAll(List<T> entities);
 
 	/**
+	 * @todo 批量保存对象
+	 * @param entities
+	 */
+	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
+
+	/**
 	 * @todo 非深度修改对象
 	 * @param entity
 	 */
