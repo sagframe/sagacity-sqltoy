@@ -248,8 +248,7 @@ public class MySqlDialect implements Dialect {
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields,
-								tableName);
+						return MySqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, forceUpdateFields, tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -270,7 +269,7 @@ public class MySqlDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectUtils
-				.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
@@ -359,15 +358,15 @@ public class MySqlDialect implements Dialect {
 		// mysql只支持identity,sequence 值忽略,mysql identity可以手工插入
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
-				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.GENERATED_KEYS
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
 				insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						return DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
+						return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
@@ -393,8 +392,8 @@ public class MySqlDialect implements Dialect {
 		// mysql只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(DBType.MYSQL, entityMeta, entityMeta.getIdStrategy(),
-				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -414,7 +413,7 @@ public class MySqlDialect implements Dialect {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return MySqlDialectUtils.getSaveOrUpdateSql(DBType.MYSQL, entityMeta, forceUpdateFields, null);
+						return MySqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

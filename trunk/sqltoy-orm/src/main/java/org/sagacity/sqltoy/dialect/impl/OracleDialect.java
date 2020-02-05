@@ -29,7 +29,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,7 +215,7 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
 								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
@@ -244,8 +243,8 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE, entityMeta, pkStrategy, "dual",
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", NVL_FUNCTION,
+								sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -292,7 +291,7 @@ public class OracleDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy),
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
@@ -303,8 +302,8 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION,
-								sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					public SavePKStrategy generate(EntityMeta entityMeta) {
@@ -336,7 +335,7 @@ public class OracleDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
@@ -363,7 +362,7 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
 								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);

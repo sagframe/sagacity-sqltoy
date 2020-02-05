@@ -33,7 +33,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CommonUtils;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -310,7 +309,7 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
@@ -347,8 +346,8 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveIgnoreExistSql(DBType.SYBASE_IQ, entityMeta,
-								entityMeta.getIdStrategy(), null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
+						return DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, entityMeta.getIdStrategy(), null,
+								NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);

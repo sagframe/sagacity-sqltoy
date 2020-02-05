@@ -220,8 +220,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
-								DUAL, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields, DUAL,
+								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -248,8 +248,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveIgnoreExistSql(DBType.ORACLE11, entityMeta, pkStrategy, DUAL,
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, DUAL, NVL_FUNCTION,
+								sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -296,7 +296,7 @@ public class Oracle11gDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy),
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
@@ -309,8 +309,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION,
-								sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					public SavePKStrategy generate(EntityMeta entityMeta) {
@@ -342,7 +342,7 @@ public class Oracle11gDialect implements Dialect {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
-		String insertSql = DialectUtils.generateInsertSql(DBType.ORACLE, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPKValue(pkStrategy), tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
@@ -369,8 +369,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(DBType.ORACLE, entityMeta, pkStrategy, forceUpdateFields,
-								DUAL, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields, DUAL,
+								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

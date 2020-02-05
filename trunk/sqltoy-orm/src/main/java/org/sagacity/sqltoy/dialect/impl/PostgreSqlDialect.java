@@ -25,7 +25,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -248,8 +247,8 @@ public class PostgreSqlDialect implements Dialect {
 									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
 									+ ")";
 						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
-								sequence, forceUpdateFields, null);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
+								forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -336,8 +335,8 @@ public class PostgreSqlDialect implements Dialect {
 									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
 									+ ")";
 						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
-								sequence, forceUpdateFields, tableName);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
+								forceUpdateFields, tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -366,8 +365,8 @@ public class PostgreSqlDialect implements Dialect {
 									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
 									+ ")";
 						}
-						return PostgreSqlDialectUtils.getSaveIgnoreExist(DBType.POSTGRESQL, entityMeta, pkStrategy,
-								sequence, tableName);
+						return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence,
+								tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 

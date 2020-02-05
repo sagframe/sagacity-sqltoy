@@ -31,7 +31,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,15 +159,15 @@ public class DB2Dialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		// db2 identity 和sequence 都支持手工赋值
-		String insertSql = DialectUtils.generateInsertSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
-				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.PREPARD_ID
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
 				isAssignPKValue(entityMeta.getIdStrategy()), returnPkType, insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						return DialectUtils.generateInsertSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
+						return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
@@ -193,8 +192,8 @@ public class DB2Dialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
-				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -216,7 +215,7 @@ public class DB2Dialect implements Dialect {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DB2DialectUtils.getSaveOrUpdateSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
+						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
 								null);
@@ -391,7 +390,7 @@ public class DB2Dialect implements Dialect {
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DB2DialectUtils.getSaveOrUpdateSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
+						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
 								tableName);
@@ -416,7 +415,7 @@ public class DB2Dialect implements Dialect {
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DB2DialectUtils.getSaveIgnoreExistSql(DBType.DB2, entityMeta, entityMeta.getIdStrategy(),
+						return DB2DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}

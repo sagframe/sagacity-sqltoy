@@ -196,7 +196,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static boolean db2WithUR() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.db2.search.with.ur", "false"));
+		return Boolean.parseBoolean(getKeyValue("sqltoy.db2.search.with.ur", "true"));
 	}
 
 	/**
