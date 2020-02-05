@@ -108,6 +108,7 @@ public class SqlServerDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @param tableName
 	 * @return
 	 * @throws Exception
 	 */
@@ -140,7 +141,7 @@ public class SqlServerDialectUtils {
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param forceUpdateFields
-	 * @param fromTable
+	 * @param tableName
 	 * @param isNullFunction
 	 * @param sequence
 	 * @param isAssignPK
@@ -291,7 +292,7 @@ public class SqlServerDialectUtils {
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
-	 * @param fromTable
+	 * @param tableName
 	 * @param isNullFunction
 	 * @param sequence
 	 * @param isAssignPK
@@ -505,6 +506,7 @@ public class SqlServerDialectUtils {
 	 * @param entity
 	 * @param conn
 	 * @param dbType
+	 * @param tableName
 	 * @return
 	 * @throws Exception
 	 */
