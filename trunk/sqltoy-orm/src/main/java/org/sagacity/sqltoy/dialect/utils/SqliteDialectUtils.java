@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
  */
 public class SqliteDialectUtils {
 	/**
-	 * @todo 处理加工对象基于mysql的saveOrUpdateSql
+	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法,但只能用于关联子表更新
 	 * @param dbType
 	 * @param entityMeta
 	 * @param forceUpdateFields
@@ -53,7 +53,14 @@ public class SqliteDialectUtils {
 		sql.append(") values (").append(values).append(") ");
 		// 非全部是主键
 		if (!allIds) {
-			sql.append("ON DUPLICATE KEY UPDATE ");
+			sql.append(" ON CONFLICT (");
+			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+				if (i > 0) {
+					sql.append(",");
+				}
+				sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+			}
+			sql.append(" ) DO UPDATE SET ");
 			// 需要被强制修改的字段
 			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
 			if (forceUpdateFields != null) {
@@ -70,10 +77,10 @@ public class SqliteDialectUtils {
 				sql.append(columnName).append("=");
 				// 强制修改
 				if (forceUpdateColumnMap.containsKey(columnName)) {
-					sql.append("values(").append(columnName).append(")");
+					sql.append("excluded.").append(columnName);
 				} else {
-					sql.append("ifnull(values(");
-					sql.append(columnName).append("),");
+					sql.append("ifnull(excluded.");
+					sql.append(columnName).append(",");
 					sql.append(columnName).append(")");
 				}
 			}
