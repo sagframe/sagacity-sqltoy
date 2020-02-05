@@ -570,7 +570,7 @@ public class SqlServerDialectUtils {
 			}
 			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
 				// id通过generator机制产生，设置generator产生的值
-				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getSchemaTable(), signature,
+				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
 						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength,
 						entityMeta.getBizIdSequenceSize());
 				needUpdatePk = true;
@@ -590,8 +590,9 @@ public class SqlServerDialectUtils {
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " ON", null, null, conn, dbType,
+					true);
 		}
 		if (sqlToyContext.isDebug()) {
 			logger.debug(insertSql);
@@ -660,8 +661,9 @@ public class SqlServerDialectUtils {
 			}
 		}
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " OFF", null, null, conn, dbType,
+					true);
 		}
 		return result;
 	}
