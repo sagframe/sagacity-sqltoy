@@ -1492,10 +1492,10 @@ public class DialectUtils {
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, EntityMeta entityMeta,
 			String nullFunction, String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName)
 			throws Exception {
+		String realTable = entityMeta.getSchemaTable(tableName);
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException(
-					"表:" + entityMeta.getSchemaTable(tableName) + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			throw new IllegalArgumentException("表:" + realTable + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1505,8 +1505,7 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
-				throw new IllegalArgumentException(
-						"通过对象对表:" + entityMeta.getSchemaTable(tableName) + "进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException("通过对象对表:" + realTable + "进行update操作,主键字段必须要赋值!");
 			}
 		}
 		// 构建update语句
@@ -1618,7 +1617,7 @@ public class DialectUtils {
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
 			throw new IllegalArgumentException(
-					"表:" + entityMeta.getSchemaTable() + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+					"表:" + entityMeta.getSchemaTable(tableName) + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler);

@@ -113,7 +113,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final Boolean autoCommit) throws Exception {
+			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isIdentity = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
@@ -124,15 +124,17 @@ public class SqlServerDialectUtils {
 		 * 从2012版本后则无需进行设置
 		 */
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " ON", null, null, conn, dbType,
+					true);
 		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
-								entityMeta.getIdStrategy(), forceUpdateFields, null, "isnull", "@mySeqVariable", false);
+								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
+								false);
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -142,8 +144,9 @@ public class SqlServerDialectUtils {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext,
+					"SET IDENTITY_INSERT " + entityMeta.getSchemaTable(tableName) + " OFF", null, null, conn, dbType,
+					true);
 		}
 		return updateCount;
 	}
@@ -161,16 +164,17 @@ public class SqlServerDialectUtils {
 	 * @return
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK) {
+			String[] forceUpdateFields, String tableName, String isNullFunction, String sequence, boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK);
+			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
 		}
+		String realTable = entityMeta.getSchemaTable(tableName);
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
 		sql.append("merge into ");
-		sql.append(entityMeta.getSchemaTable());
+		sql.append(realTable);
 		sql.append(" ta ");
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
@@ -181,9 +185,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		if (StringUtil.isNotBlank(fromTable)) {
-			sql.append(" from ").append(fromTable);
-		}
+		sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -313,16 +315,17 @@ public class SqlServerDialectUtils {
 	 * @return
 	 */
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String fromTable, String isNullFunction, String sequence, boolean isAssignPK) {
+			String tableName, String isNullFunction, String sequence, boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK);
+			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
+		String realTable = entityMeta.getSchemaTable(tableName);
 		String columnName;
 		sql.append("merge into ");
-		sql.append(entityMeta.getSchemaTable());
+		sql.append(realTable);
 		sql.append(" ta ");
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
@@ -333,9 +336,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		if (StringUtil.isNotBlank(fromTable)) {
-			sql.append(" from ").append(fromTable);
-		}
+		sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -436,19 +437,20 @@ public class SqlServerDialectUtils {
 	 * @todo 产生对象对应的insert sql语句
 	 * @param dbType
 	 * @param entityMeta
+	 * @param tableName
 	 * @param pkStrategy
 	 * @param isNullFunction
 	 * @param sequence
 	 * @param isAssignPK
 	 * @return
 	 */
-	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String isNullFunction, String sequence, boolean isAssignPK) {
+	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, String tableName,
+			PKStrategy pkStrategy, String isNullFunction, String sequence, boolean isAssignPK) {
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append(" insert into ");
-		sql.append(entityMeta.getSchemaTable());
+		sql.append(entityMeta.getSchemaTable(tableName));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;
@@ -525,15 +527,15 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Object save(SqlToyContext sqlToyContext, Serializable entity, final Connection conn,
-			final Integer dbType) throws Exception {
+			final Integer dbType, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		final boolean isIdentity = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		final boolean isSequence = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
 
-		String insertSql = generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull", "@mySeqVariable",
-				isIdentity ? false : true);
+		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
+				"@mySeqVariable", isIdentity ? false : true);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR "
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
@@ -653,7 +655,7 @@ public class SqlServerDialectUtils {
 								this.setValue(mappedFields[i], idValues[i]);
 							}
 						}
-					}, conn, dbType, null);
+					}, conn, dbType, null, null);
 				}
 			}
 		}
@@ -672,33 +674,36 @@ public class SqlServerDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @param tableName
+	 * @return
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit) throws Exception {
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 
-		String insertSql = generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull", "@mySeqVariable",
-				isAssignPK);
-		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE))
+		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
+				"@mySeqVariable", isAssignPK);
+		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 			insertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence() + " "
 					+ insertSql;
+		}
 		boolean isIdentity = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
-
+		String realTable = entityMeta.getSchemaTable(tableName);
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " ON", null, null, conn, dbType,
+					true);
 		}
 		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " OFF", null, null, conn,
+					dbType, true);
 		}
 		return updateCount;
 	}
@@ -889,7 +894,7 @@ public class SqlServerDialectUtils {
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] emptyCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
-			String tableName) throws Exception {
+			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, "isnull", forceUpdateFields, conn,
 				dbType, tableName);
@@ -931,7 +936,7 @@ public class SqlServerDialectUtils {
 										this.setValue(mappedFields[i], IdValues[i]);
 									}
 								}
-							}, forceUpdateProps, conn, dbType, null);
+							}, forceUpdateProps, conn, dbType, null, null);
 				}
 			}
 		}

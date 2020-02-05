@@ -29,7 +29,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -214,7 +213,7 @@ public class SqlServerDialect implements Dialect {
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
-				forceUpdateFields, conn, DBType.SQLSERVER, autoCommit);
+				forceUpdateFields, conn, dbType, autoCommit, tableName);
 	}
 
 	/*
@@ -234,17 +233,18 @@ public class SqlServerDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		// sqlserver2012 开始默认为false
 		boolean openIdentity = SqlToyConstants.sqlServerIdentityOpen(dbType);
+		final String realTable = entityMeta.getSchemaTable(tableName);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " ON", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " ON", null, null, conn, dbType,
+					true);
 		}
 		// sqlserver merge into must end with ";" charater
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(DBType.SQLSERVER, entityMeta,
-								entityMeta.getIdStrategy(), null, "isnull", "@mySeqVariable", false);
-						//2012 版本
+						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta,
+								entityMeta.getIdStrategy(), realTable, "isnull", "@mySeqVariable", false);
+						// 2012 版本
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -254,8 +254,8 @@ public class SqlServerDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isIdentity && openIdentity) {
-			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + entityMeta.getSchemaTable() + " OFF", null,
-					null, conn, dbType, true);
+			DialectUtils.executeSql(sqlToyContext, "SET IDENTITY_INSERT " + realTable + " OFF", null, null, conn,
+					dbType, true);
 		}
 		return updateCount;
 	}
@@ -275,7 +275,7 @@ public class SqlServerDialect implements Dialect {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
 		String loadSql = sqlToyConfig.getSql(dialect);
 		if (lockMode != null) {
-			loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getTableName(), lockMode);
+			loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName), lockMode);
 		}
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -334,7 +334,7 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return SqlServerDialectUtils.save(sqlToyContext, entity, conn, DBType.SQLSERVER);
+		return SqlServerDialectUtils.save(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
 	/*
@@ -348,8 +348,8 @@ public class SqlServerDialect implements Dialect {
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		return SqlServerDialectUtils.saveAll(sqlToyContext, entities, reflectPropertyHandler, conn, DBType.SQLSERVER,
-				autoCommit);
+		return SqlServerDialectUtils.saveAll(sqlToyContext, entities, reflectPropertyHandler, conn, dbType, autoCommit,
+				tableName);
 	}
 
 	/*
@@ -365,7 +365,7 @@ public class SqlServerDialect implements Dialect {
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		return SqlServerDialectUtils.update(sqlToyContext, entity, forceUpdateFields, cascade, emptyCascadeClasses,
-				subTableForceUpdateProps, conn, DBType.SQLSERVER, tableName);
+				subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	/*
