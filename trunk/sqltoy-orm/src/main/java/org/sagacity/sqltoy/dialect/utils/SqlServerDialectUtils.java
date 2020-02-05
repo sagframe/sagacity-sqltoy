@@ -134,9 +134,10 @@ public class SqlServerDialectUtils {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, null, "isnull", "@mySeqVariable", false);
 						if (entityMeta.getIdStrategy() != null
-								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE))
+								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
 									+ " " + sql;
+						}
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
@@ -377,8 +378,9 @@ public class SqlServerDialectUtils {
 						DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
-					} else
+					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
+					}
 				}
 			}
 		}

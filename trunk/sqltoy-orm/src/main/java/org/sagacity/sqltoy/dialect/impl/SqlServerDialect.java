@@ -244,10 +244,12 @@ public class SqlServerDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(DBType.SQLSERVER, entityMeta,
 								entityMeta.getIdStrategy(), null, "isnull", "@mySeqVariable", false);
+						//2012 版本
 						if (entityMeta.getIdStrategy() != null
-								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE))
+								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
 									+ " " + sql;
+						}
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
