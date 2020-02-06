@@ -12,7 +12,7 @@
 		<mysql.version>8.0.19</mysql.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<freemarker.version>2.3.29</freemarker.version>
-		<ojdbc.version>12.2.0.1</ojdbc.version>
+		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<postgresql.version>42.2.9</postgresql.version>
 		<mssql.version>7.4.1.jre8</mssql.version>
 		<clickhouse-jdbc.version>0.2.3</clickhouse-jdbc.version>
@@ -125,9 +125,8 @@
 			<version>${mysql.version}</version>
 			<optional>true</optional>
 		</dependency>
-
 		<dependency>
-			<groupId>com.oracle.jdbc</groupId>
+			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
