@@ -126,6 +126,7 @@ public class QuickVOConstants implements Serializable {
 			{ "FLOAT32", "Float", "" }, { "FLOAT64", "Double", "" }, { "DOUBLE", "Double", "" },
 			{ "NUMBER", "BigDecimal", "java.math.BigDecimal" }, { "NUMERIC", "BigDecimal", "java.math.BigDecimal" },
 			{ "DECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "TIMESTAMP", "Timestamp", "java.sql.Timestamp" },
+			{ "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "LocalDate", "java.time.LocalDate" },
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
 			{ "VARCHAR", "String", "" }, { "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" },
@@ -134,7 +135,8 @@ public class QuickVOConstants implements Serializable {
 			{ "CHARACTER", "String", "" }, { "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" },
 			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
 			{ "CLOB", "CLOB", "oracle.sql.CLOB", "oracle" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "oracle" },
-			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
+			{ "Blob", "Blob", "java.sql.Blob" }, { "LONGBLOB", "Blob", "java.sql.Blob" },
+			{ "MEDIUMBLOB", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
 			{ "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
 			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
 
@@ -148,7 +150,13 @@ public class QuickVOConstants implements Serializable {
 			{ "Int16", "INTEGER" }, { "Int32", "BIGINT" }, { "Int64", "BIGINT" }, { "Enum8", "INTEGER" },
 			{ "Enum16", "INTEGER" }, { "UInt8", "INTEGER" }, { "UInt16", "INTEGER" }, { "UInt32", "BIGINT" },
 			{ "UInt64", "BIGINT" }, { "FLOAT32", "FLOAT" }, { "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" },
-			{ "FixedSTRING", "VARCHAR" }, { "LONG VARGRAPHIC", "CLOB" }, { "LONG VARCHAR", "VARCHAR" } };
+			{ "FixedSTRING", "VARCHAR" }, { "LONG VARGRAPHIC", "CLOB" }, { "LONG VARCHAR", "VARCHAR" },
+			{ "DATE", "DATE" }, { "DATETIME", "DATE" }, { "TIMESTAMP", "TIMESTAMP" }, { "TIMESTAMP(6)", "TIMESTAMP" },
+			{ "TIME", "TIME" }, { "CHAR", "CHAR" }, { "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "LONGBLOB", "BLOB" },
+			{ "MEDIUMBLOB", "BLOB" }, { "LONGTEXT", "VARCHAR" }, { "MEDIUMTEXT", "VARCHAR" }, { "TEXT", "VARCHAR" },
+			{ "VARCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" }, { "INT", "INTEGER" },
+			{ "INTEGER", "INTEGER" }, { "BIGINT", "INTEGER" }, { "BIT", "BIT" }, { "NUMBER", "DECIMAL" },
+			{ "DECIMAL", "DECIMAL" }, { "NUMERIC", "DECIMAL" }, { "IMAGE", "LONGVARBINARY" } };
 
 	/**
 	 * 全局常量map
