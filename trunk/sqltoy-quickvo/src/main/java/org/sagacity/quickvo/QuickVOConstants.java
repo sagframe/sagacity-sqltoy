@@ -135,7 +135,8 @@ public class QuickVOConstants implements Serializable {
 			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
 			{ "CLOB", "CLOB", "oracle.sql.CLOB", "oracle" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "oracle" },
 			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
-			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "Serializable", "java.io.Serializable" } };
+			{ "LONG VARGRAPHIC", "String", "" },{ "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
+			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
 
 	/**
 	 * 原始类型
