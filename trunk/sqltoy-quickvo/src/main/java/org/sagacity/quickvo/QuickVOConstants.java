@@ -135,7 +135,7 @@ public class QuickVOConstants implements Serializable {
 			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
 			{ "CLOB", "CLOB", "oracle.sql.CLOB", "oracle" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "oracle" },
 			{ "Blob", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
-			{ "LONG VARGRAPHIC", "String", "" },{ "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
+			{ "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
 			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
 
 	/**
@@ -148,7 +148,7 @@ public class QuickVOConstants implements Serializable {
 			{ "Int16", "INTEGER" }, { "Int32", "BIGINT" }, { "Int64", "BIGINT" }, { "Enum8", "INTEGER" },
 			{ "Enum16", "INTEGER" }, { "UInt8", "INTEGER" }, { "UInt16", "INTEGER" }, { "UInt32", "BIGINT" },
 			{ "UInt64", "BIGINT" }, { "FLOAT32", "FLOAT" }, { "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" },
-			{ "FixedSTRING", "VARCHAR" } };
+			{ "FixedSTRING", "VARCHAR" }, { "LONG VARGRAPHIC", "CLOB" }, { "LONG VARCHAR", "VARCHAR" } };
 
 	/**
 	 * 全局常量map
