@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.8.8</version>
+	<version>4.9.6</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>2.2.1.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.3.RELEASE</spring-boot.version>
 	</properties>
 	<repositories>
 		<repository>
 			<id>sagframe-release</id>
 			<name>sagframe-release</name>
-			<url>http://www.sagframe.com:8081/repository/public</url>
+			<url>http://www.sagframe.com/nexus/repository/sagframe-release</url>
 		</repository>
 		<repository>
 			<id>nexus-aliyun</id>
@@ -26,7 +25,7 @@
 
 		<repository>
 			<id>sagframe-release</id>
-			<url>http://www.sagframe.com:8081/repository/maven-releases</url>
+			<url>http://www.sagframe.com/nexus/repository/sagframe-release</url>
 		</repository>
 		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
 			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
