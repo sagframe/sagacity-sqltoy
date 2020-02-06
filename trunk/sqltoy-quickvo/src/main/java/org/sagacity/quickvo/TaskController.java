@@ -445,9 +445,6 @@ public class TaskController {
 		}
 		for (int i = 0; i < cols.size(); i++) {
 			colMeta = (TableColumnMeta) cols.get(i);
-			if (colMeta.getColName().equalsIgnoreCase("status")) {
-				System.err.println("测试");
-			}
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
 			String jdbcType = colMeta.getTypeName();
