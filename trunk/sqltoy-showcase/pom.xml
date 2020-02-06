@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
@@ -17,12 +16,11 @@
 		<ehcache.version>3.8.1</ehcache.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<lettuce-core.version>5.2.1.RELEASE</lettuce-core.version>
-		<elastic-rest-client.version>7.5.2</elastic-rest-client.version>
-		<elastic.version>7.5.2</elastic.version>
+		<elastic-rest-client.version>7.5.1</elastic-rest-client.version>
+		<elastic.version>7.5.1</elastic.version>
 		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<commons-pool2.version>2.8.0</commons-pool2.version>
-		<commons-dbcp2.version>2.7.0</commons-dbcp2.version>
 		<aspectjweaver.version>1.9.5</aspectjweaver.version>
 		<mysql.version>8.0.19</mysql.version>
 		<druid.version>1.1.21</druid.version>
@@ -30,6 +28,8 @@
 		<httpclient.version>4.5.11</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
+		<db2jcc4.version>11.5.0.0</db2jcc4.version>
+		<druid.version>1.1.21</druid.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -81,13 +81,6 @@
 			<artifactId>commons-pool2</artifactId>
 			<version>${commons-pool2.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2 -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-dbcp2</artifactId>
-			<version>${commons-dbcp2.version}</version>
-			<optional>true</optional>
-		</dependency>
 
 		<dependency>
 			<groupId>org.aspectj</groupId>
@@ -133,6 +126,14 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.ibm.db2/jcc -->
+		<dependency>
+			<groupId>com.ibm.db2</groupId>
+			<artifactId>jcc</artifactId>
+			<version>${db2jcc4.version}</version>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
@@ -404,7 +405,11 @@
 			<artifactId>httpasyncclient</artifactId>
 			<version>4.1.4</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>${druid.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<resources>
