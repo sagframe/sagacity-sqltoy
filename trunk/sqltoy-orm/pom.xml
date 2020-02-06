@@ -26,7 +26,7 @@
 		<junit.version>5.5.2</junit.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.3.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.4.RELEASE</spring-boot.version>
 		<slf4j.version>1.7.30</slf4j.version>
 		<clickhouse-jdbc.version>0.2.3</clickhouse-jdbc.version>
 	</properties>
