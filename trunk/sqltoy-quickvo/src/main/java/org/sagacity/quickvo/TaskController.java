@@ -188,7 +188,7 @@ public class TaskController {
 			quickVO.setVersion(QuickVOConstants.getPropertyValue("project.version"));
 			quickVO.setProjectName(QuickVOConstants.getPropertyValue("project.name"));
 			quickVO.setAuthor(quickModel.getAuthor());
-			quickVO.setDateTime(formatDate(getNowTime(), "yyyy-MM-dd mm:hh:ss"));
+			quickVO.setDateTime(formatDate(getNowTime(), "yyyy-MM-dd HH:mm:ss"));
 			quickVO.setTableName(tableName);
 			quickVO.setSchema(tableMeta.getSchema());
 			if (QuickVOConstants.getKeyValue("include.schema") == null
