@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
@@ -14,7 +13,9 @@
 		<spring-data-mongo.version>2.2.4.RELEASE</spring-data-mongo.version>
 		<log4j.version>2.13.0</log4j.version>
 		<mysql.version>8.0.19</mysql.version>
-		<ojdbc.version>12.2.0.1</ojdbc.version>
+
+
+		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.11</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
@@ -25,7 +26,7 @@
 		<junit.version>5.5.2</junit.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.3.RELEASE</spring-boot.version>
+		<spring-boot.version>2.2.4.RELEASE</spring-boot.version>
 		<slf4j.version>1.7.30</slf4j.version>
 		<clickhouse-jdbc.version>0.2.3</clickhouse-jdbc.version>
 	</properties>
@@ -55,7 +56,8 @@
 		<snapshotRepository>
 			<id>nexus-snapshots</id>
 			<name>Department
-				Repository</name>
+				Repository
+			</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
@@ -99,9 +101,9 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/com.oracle.jdbc/ojdbc8 -->
+		<!-- https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8 -->
 		<dependency>
-			<groupId>com.oracle.jdbc</groupId>
+			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
