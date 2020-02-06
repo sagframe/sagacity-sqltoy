@@ -124,13 +124,24 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql.version}</version>
 			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
-
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
