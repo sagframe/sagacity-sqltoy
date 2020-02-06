@@ -70,7 +70,8 @@ public class TaskController {
 	private static ConfigModel configModel;
 
 	/**
-	 * @param configModel the configModel to set
+	 * @param configModel
+	 *            the configModel to set
 	 */
 	public static void setConfigModel(ConfigModel configModel) {
 		TaskController.configModel = configModel;
@@ -444,6 +445,9 @@ public class TaskController {
 		}
 		for (int i = 0; i < cols.size(); i++) {
 			colMeta = (TableColumnMeta) cols.get(i);
+			if (colMeta.getColName().equalsIgnoreCase("status")) {
+				System.err.println("测试");
+			}
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
 			String jdbcType = colMeta.getTypeName();
@@ -453,7 +457,7 @@ public class TaskController {
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
 			// 提取原始类型
-			sqlType = jdbcType;
+			sqlType = jdbcType.toLowerCase();
 			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);
 			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
@@ -506,7 +510,7 @@ public class TaskController {
 				// 逆向进行匹配
 				for (int j = typeMappSize - 1; j >= 0; j--) {
 					colTypeMapping = (ColumnTypeMapping) configModel.getTypeMapping().get(j);
-					// 类型一致
+					// 类型一致(小写)
 					if (colTypeMapping.getNativeTypes().containsKey(sqlType)) {
 						boolean mapped = false;
 						// 不判断长度
