@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:schemaLocation="http://www.sagframe.com/schema/sqltoy/sqltoy-4.0.xsd">
-	<sql id="showcase_search_organ_info">
-
-	</sql>
-</sqltoy>
