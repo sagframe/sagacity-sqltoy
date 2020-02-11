@@ -196,6 +196,10 @@ public class DialectFactory {
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
 			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
+		if (dataSet == null || dataSet.isEmpty()) {
+			logger.warn("batchUpdate dataSet is null or empty,please check!");
+			return 0L;
+		}
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
@@ -811,6 +815,7 @@ public class DialectFactory {
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
 			final String[] forceUpdateProps, final DataSource dataSource) {
 		if (entity == null) {
+			logger.warn("saveOrUpdate entity is null,please check!");
 			return 0L;
 		}
 		try {
@@ -844,8 +849,10 @@ public class DialectFactory {
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
 			return 0L;
+		}
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -896,8 +903,10 @@ public class DialectFactory {
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
+		}
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -947,8 +956,10 @@ public class DialectFactory {
 	 */
 	public <T extends Serializable> T load(final SqlToyContext sqlToyContext, final T entity,
 			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
-		if (entity == null)
+		if (entity == null) {
+			logger.warn("load entity is null,please check!");
 			return null;
+		}
 		try {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -980,8 +991,10 @@ public class DialectFactory {
 	 */
 	public <T extends Serializable> List<T> loadAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final Class[] cascadeTypes, final LockMode lockMode, final DataSource dataSource) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("loadAll entities is null or empty,please check!");
 			return entities;
+		}
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll", null);
 			// 分库分表并行执行,并返回结果
@@ -1017,8 +1030,10 @@ public class DialectFactory {
 	 */
 	public Serializable save(final SqlToyContext sqlToyContext, final Serializable entity,
 			final DataSource dataSource) {
-		if (entity == null)
+		if (entity == null) {
+			logger.warn("save entity is null,please check!");
 			return null;
+		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1048,8 +1063,10 @@ public class DialectFactory {
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
+		}
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1100,8 +1117,10 @@ public class DialectFactory {
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, final DataSource dataSource) {
-		if (entity == null)
+		if (entity == null) {
+			logger.warn("update entity is null,please check!");
 			return 0L;
+		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1133,8 +1152,10 @@ public class DialectFactory {
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("updateAll entities is null or empty,please check!");
 			return 0L;
+		}
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
@@ -1180,8 +1201,10 @@ public class DialectFactory {
 	 * @param dataSource
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
-		if (entity == null)
+		if (entity == null) {
+			logger.warn("delete entity is null,please check!");
 			return 0L;
+		}
 		try {
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
@@ -1210,8 +1233,10 @@ public class DialectFactory {
 	 */
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
+			logger.warn("deleteAll entities is null or empty,please check!");
 			return 0L;
+		}
 		try {
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
