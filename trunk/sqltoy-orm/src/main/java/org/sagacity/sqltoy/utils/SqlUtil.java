@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,7 +263,11 @@ public class SqlUtil {
 			} else if (paramValue instanceof java.sql.Time) {
 				pst.setTime(paramIndex, (java.sql.Time) paramValue);
 			} else if (paramValue instanceof java.util.Date) {
-				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+				if (dbType == DBType.CLICKHOUSE) {
+					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+				} else {
+					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+				}
 			} else if (paramValue instanceof java.lang.Long) {
 				pst.setLong(paramIndex, ((Long) paramValue));
 			} else if (paramValue instanceof java.lang.Boolean) {
