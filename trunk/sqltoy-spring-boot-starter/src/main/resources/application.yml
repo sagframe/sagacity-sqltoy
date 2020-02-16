@@ -1,0 +1,4 @@
+spring:
+   sqltoy:
+      elastic:
+            - 

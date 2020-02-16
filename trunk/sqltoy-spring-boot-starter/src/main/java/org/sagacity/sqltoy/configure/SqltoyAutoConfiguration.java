@@ -3,8 +3,10 @@ package org.sagacity.sqltoy.configure;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -29,22 +31,32 @@ public class SqltoyAutoConfiguration {
 
 	@Bean(name = "sqlToyContext")
 	@ConditionalOnMissingBean
-	SqlToyContext sqlToyContext() {
+	SqlToyContext sqlToyContext() throws Exception {
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		BeanUtils.copyProperties(properties, sqlToyContext);
-		if (properties.getPackagesToScan() != null)
+		if (properties.getPackagesToScan() != null) {
 			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
-		sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
-		if (properties.getBatchSize() != null)
-			sqlToyContext.setBatchSize(properties.getBatchSize());
-		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
-		sqlToyContext.setUnifyFieldsHandler(properties.getUnifyFieldsHandler());
-		sqlToyContext.setElasticEndpoints(properties.getElasticConfigs());
-		try {
-			sqlToyContext.initialize();
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
+		if (properties.getBatchSize() != null) {
+			sqlToyContext.setBatchSize(properties.getBatchSize());
+		}
+		sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
+		sqlToyContext.setDialect(properties.getDialect());
+		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
+		// 设置公共统一属性的处理器
+		String unfiyHandler = properties.getUnifyFieldsHandler();
+		if (StringUtil.isNotBlank(unfiyHandler)) {
+			IUnifyFieldsHandler handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor()
+					.newInstance();
+			sqlToyContext.setUnifyFieldsHandler(handler);
+		}
+		// 设置elastic连接
+		if (properties.getElastic() != null && properties.getElastic().getEndpoints() != null
+				&& !properties.getElastic().getEndpoints().isEmpty()) {
+
+		}
+		// sqlToyContext.setElasticEndpoints(properties.getElastic());
+		sqlToyContext.initialize();
 		return sqlToyContext;
 	}
 

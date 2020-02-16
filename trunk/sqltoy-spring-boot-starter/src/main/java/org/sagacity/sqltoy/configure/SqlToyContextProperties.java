@@ -1,14 +1,10 @@
 package org.sagacity.sqltoy.configure;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
-import org.sagacity.sqltoy.config.model.ElasticEndpoint;
-import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "sqltoy.context.config")
+@ConfigurationProperties(prefix = "spring.sqltoy")
 public class SqlToyContextProperties {
 
 	/**
@@ -24,23 +20,32 @@ public class SqlToyContextProperties {
 	/**
 	 * 针对不同数据库函数进行转换,非必须属性
 	 */
-	private List<String> functionConverts;
+	private Object functionConverts;
+
+	/**
+	 * 数据库方言
+	 */
+	private String dialect;
 
 	/**
 	 * SqltoyEntity包路径,非必须属性
 	 */
 	private String[] packagesToScan;
 
-	private List<ElasticEndpoint> elasticConfigs = new ArrayList<ElasticEndpoint>();
+	private Elastic elastic;
 
 	private String debug;
 
 	private Integer batchSize;
 
+	private Integer pageSizeLimit;
+
 	/**
 	 * 统一字段处理器
 	 */
 	private String unifyFieldsHandler;
+
+	private Map<String, String> dialectProperties;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -50,8 +55,7 @@ public class SqlToyContextProperties {
 	}
 
 	/**
-	 * @param sqlResourcesDir
-	 *            the sqlResourcesDir to set
+	 * @param sqlResourcesDir the sqlResourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
@@ -65,8 +69,7 @@ public class SqlToyContextProperties {
 	}
 
 	/**
-	 * @param translateConfig
-	 *            the translateConfig to set
+	 * @param translateConfig the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
@@ -80,8 +83,7 @@ public class SqlToyContextProperties {
 	}
 
 	/**
-	 * @param debug
-	 *            the debug to set
+	 * @param debug the debug to set
 	 */
 	public void setDebug(String debug) {
 		this.debug = debug;
@@ -95,25 +97,17 @@ public class SqlToyContextProperties {
 	}
 
 	/**
-	 * @param batchSize
-	 *            the batchSize to set
+	 * @param batchSize the batchSize to set
 	 */
 	public void setBatchSize(Integer batchSize) {
 		this.batchSize = batchSize;
 	}
 
-	/**
-	 * @return the functionConverts
-	 */
-	public List<String> getFunctionConverts() {
+	public Object getFunctionConverts() {
 		return functionConverts;
 	}
 
-	/**
-	 * @param functionConverts
-	 *            the functionConverts to set
-	 */
-	public void setFunctionConverts(List<String> functionConverts) {
+	public void setFunctionConverts(Object functionConverts) {
 		this.functionConverts = functionConverts;
 	}
 
@@ -125,8 +119,7 @@ public class SqlToyContextProperties {
 	}
 
 	/**
-	 * @param packagesToScan
-	 *            the packagesToScan to set
+	 * @param packagesToScan the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -135,36 +128,47 @@ public class SqlToyContextProperties {
 	/**
 	 * @return the unifyFieldsHandler
 	 */
-	public IUnifyFieldsHandler getUnifyFieldsHandler() {
-		try {
-			if (StringUtil.isNotBlank(unifyFieldsHandler))
-				return (IUnifyFieldsHandler) Class.forName(unifyFieldsHandler).getDeclaredConstructor().newInstance();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+	public String getUnifyFieldsHandler() {
+		return this.unifyFieldsHandler;
 	}
 
 	/**
-	 * @param unifyFieldsHandler
-	 *            the unifyFieldsHandler to set
+	 * @param unifyFieldsHandler the unifyFieldsHandler to set
 	 */
 	public void setUnifyFieldsHandler(String unifyFieldsHandler) {
 		this.unifyFieldsHandler = unifyFieldsHandler;
 	}
 
-	/**
-	 * @return the elasticConfigs
-	 */
-	public List<ElasticEndpoint> getElasticConfigs() {
-		return elasticConfigs;
+	public Elastic getElastic() {
+		return elastic;
 	}
 
-	/**
-	 * @param elasticConfigs
-	 *            the elasticConfigs to set
-	 */
-	public void setElasticConfigs(List<ElasticEndpoint> elasticConfigs) {
-		this.elasticConfigs = elasticConfigs;
+	public void setElastic(Elastic elastic) {
+		this.elastic = elastic;
 	}
+
+	public String getDialect() {
+		return dialect;
+	}
+
+	public void setDialect(String dialect) {
+		this.dialect = dialect;
+	}
+
+	public Map<String, String> getDialectProperties() {
+		return dialectProperties;
+	}
+
+	public void setDialectProperties(Map<String, String> dialectProperties) {
+		this.dialectProperties = dialectProperties;
+	}
+
+	public Integer getPageSizeLimit() {
+		return pageSizeLimit;
+	}
+
+	public void setPageSizeLimit(Integer pageSizeLimit) {
+		this.pageSizeLimit = pageSizeLimit;
+	}
+
 }
