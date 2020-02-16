@@ -36,6 +36,8 @@ public class ElasticConfig implements Serializable {
 
 	private Integer socketTimeout;
 
+	private String charset;
+
 	public String getUrl() {
 		return url;
 	}
@@ -114,6 +116,14 @@ public class ElasticConfig implements Serializable {
 
 	public void setSocketTimeout(Integer socketTimeout) {
 		this.socketTimeout = socketTimeout;
+	}
+
+	public String getCharset() {
+		return charset;
+	}
+
+	public void setCharset(String charset) {
+		this.charset = charset;
 	}
 
 }
