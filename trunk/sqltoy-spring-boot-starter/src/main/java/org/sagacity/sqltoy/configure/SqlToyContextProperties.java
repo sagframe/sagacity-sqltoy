@@ -40,6 +40,8 @@ public class SqlToyContextProperties implements Serializable {
 
 	private String[] annotatedClasses;
 
+	private String[] sqlResources;
+
 	private Elastic elastic;
 
 	private boolean debug;
@@ -245,6 +247,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDelayCheckSeconds(Integer delayCheckSeconds) {
 		this.delayCheckSeconds = delayCheckSeconds;
+	}
+
+	public String[] getSqlResources() {
+		return sqlResources;
+	}
+
+	public void setSqlResources(String[] sqlResources) {
+		this.sqlResources = sqlResources;
 	}
 
 }

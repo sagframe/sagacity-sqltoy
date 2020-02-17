@@ -36,10 +36,22 @@ public class SqltoyAutoConfiguration {
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
 		SqlToyContext sqlToyContext = new SqlToyContext();
+		// sql 文件资源路径
+		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
+		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
+			List<String> resList = new ArrayList<String>();
+			for (String s : properties.getSqlResources()) {
+				resList.add(s);
+			}
+			sqlToyContext.setSqlResources(resList);
+		}
+
+		// pojo 扫描路径
 		if (properties.getPackagesToScan() != null) {
 			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
 		}
 
+		// 特定pojo类加载
 		if (properties.getAnnotatedClasses() != null) {
 			sqlToyContext.setAnnotatedClasses(properties.getAnnotatedClasses());
 		}
@@ -52,10 +64,6 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setPageFetchSizeLimit(properties.getPageFetchSizeLimit());
 		}
 
-		if (properties.getPrintSqlTimeoutMillis() != null) {
-			sqlToyContext.setPrintSqlTimeoutMillis(properties.getPrintSqlTimeoutMillis());
-		}
-
 		if (properties.getScriptCheckIntervalSeconds() != null) {
 			sqlToyContext.setScriptCheckIntervalSeconds(properties.getScriptCheckIntervalSeconds());
 		}
@@ -64,13 +72,28 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDelayCheckSeconds(properties.getDelayCheckSeconds());
 		}
 
+		// sql执行打印策略(默认为error时打印)
+		sqlToyContext.setDebug(properties.isDebug());
 		if (properties.getPrintSqlStrategy() != null) {
 			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
 		}
-		sqlToyContext.setDebug(properties.isDebug());
-		sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
+		// sql执行超过多长时间则打印提醒(默认30秒)
+		if (properties.getPrintSqlTimeoutMillis() != null) {
+			sqlToyContext.setPrintSqlTimeoutMillis(properties.getPrintSqlTimeoutMillis());
+		}
+
+		// sql函数转换器
+		if (properties.getFunctionConverts() != null) {
+			sqlToyContext.setFunctionConverts(properties.getFunctionConverts());
+		}
+
+		if (properties.getTranslateConfig() != null) {
+			sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
+		}
+		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
-		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
+		sqlToyContext.setDialectProperties(properties.getDialectProperties());
+
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
@@ -79,7 +102,6 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setUnifyFieldsHandler(handler);
 		}
 
-		sqlToyContext.setDialectProperties(properties.getDialectProperties());
 		// 设置elastic连接
 		Elastic es = properties.getElastic();
 		if (es != null && es.getEndpoints() != null && !es.getEndpoints().isEmpty()) {
