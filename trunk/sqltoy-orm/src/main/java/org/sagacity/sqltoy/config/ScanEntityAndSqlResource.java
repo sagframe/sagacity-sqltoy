@@ -204,7 +204,8 @@ public class ScanEntityAndSqlResource {
 		boolean startClasspath = false;
 		if (StringUtil.isNotBlank(resourceDir)) {
 			// 统一全角半角，用逗号分隔
-			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\;", ",").split("\\,");
+			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
+					.split("\\,");
 			for (String dir : dirSet) {
 				realRes = dir.trim();
 				startClasspath = false;

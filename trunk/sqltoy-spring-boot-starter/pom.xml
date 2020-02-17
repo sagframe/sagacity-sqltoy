@@ -24,9 +24,9 @@
 	</repositories>
 	<distributionManagement>
 
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
-			</repository> -->
-		<repository>
+		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
+			</repository>
+		<!-- <repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
@@ -36,7 +36,7 @@
 			<name>Department 
 			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository>
+		</snapshotRepository> -->
 
 	</distributionManagement>
 	<dependencyManagement>

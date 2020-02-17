@@ -137,8 +137,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param path
-	 *            the path to set
+	 * @param path the path to set
 	 */
 	public void setPath(String path) {
 		this.path = path;
@@ -152,8 +151,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param url
-	 *            the url to set
+	 * @param url the url to set
 	 */
 	public void setUrl(String url) {
 		this.url = url;
@@ -167,8 +165,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param username
-	 *            the username to set
+	 * @param username the username to set
 	 */
 	public void setUsername(String username) {
 		this.username = username;
@@ -182,8 +179,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param password
-	 *            the password to set
+	 * @param password the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
@@ -197,8 +193,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param keyStore
-	 *            the keyStore to set
+	 * @param keyStore the keyStore to set
 	 */
 	public void setKeyStore(String keyStore) {
 		this.keyStore = keyStore;
@@ -212,8 +207,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param id
-	 *            the id to set
+	 * @param id the id to set
 	 */
 	public void setId(String id) {
 		this.id = id;
@@ -227,8 +221,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param charset
-	 *            the charset to set
+	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
@@ -242,8 +235,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param requestTimeout
-	 *            the requestTimeout to set
+	 * @param requestTimeout the requestTimeout to set
 	 */
 	public void setRequestTimeout(int requestTimeout) {
 		this.requestTimeout = requestTimeout;
@@ -257,8 +249,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param connectTimeout
-	 *            the connectTimeout to set
+	 * @param connectTimeout the connectTimeout to set
 	 */
 	public void setConnectTimeout(int connectTimeout) {
 		this.connectTimeout = connectTimeout;
@@ -272,8 +263,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param socketTimeout
-	 *            the socketTimeout to set
+	 * @param socketTimeout the socketTimeout to set
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
@@ -287,18 +277,15 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param restClient
-	 *            the restClient to set
+	 * @param restClient the restClient to set
 	 */
 	public void initRestClient() {
 		if (StringUtil.isBlank(this.getUrl()))
 			return;
 		if (restClient == null) {
-			String splitSign = ";";
-			if (this.getUrl().indexOf(";") == -1) {
-				splitSign = ",";
-			}
-			String[] urls = this.getUrl().split(splitSign);
+			// 替换全角字符
+			String[] urls = this.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
+					.split("\\,");
 			// 当为单一地址时使用httpclient直接调用
 			if (urls.length < 2)
 				return;
@@ -354,8 +341,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @param nativeSql
-	 *            the nativeSql to set
+	 * @param nativeSql the nativeSql to set
 	 */
 	public void setNativeSql(boolean nativeSql) {
 		this.nativeSql = nativeSql;

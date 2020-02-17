@@ -45,7 +45,10 @@ public class SqltoyAutoConfiguration {
 			}
 			sqlToyContext.setSqlResources(resList);
 		}
-
+		// sql文件解析的编码格式,默认utf-8
+		if (properties.getEncoding() != null) {
+			sqlToyContext.setEncoding(properties.getEncoding());
+		}
 		// pojo 扫描路径
 		if (properties.getPackagesToScan() != null) {
 			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
