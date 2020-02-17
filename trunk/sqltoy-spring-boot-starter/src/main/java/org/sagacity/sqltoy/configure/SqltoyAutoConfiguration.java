@@ -3,6 +3,9 @@ package org.sagacity.sqltoy.configure;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnClass(SqlToyLazyDaoImpl.class)
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
+	@Resource
+	private ApplicationContext applicationContext;
 
 	@Autowired
 	SqlToyContextProperties properties;
@@ -139,8 +145,12 @@ public class SqltoyAutoConfiguration {
 		if (properties.getMongoFactoryName() != null) {
 			sqlToyContext.setMongoFactoryName(properties.getMongoFactoryName());
 		}
+		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
-			sqlToyContext.setDefaultDataSource(properties.getDefaultDataSource());
+			if (applicationContext.containsBean(properties.getDefaultDataSource())) {
+				sqlToyContext.setDefaultDataSource(
+						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
+			}
 		}
 		// sqlToyContext.initialize();
 		return sqlToyContext;
