@@ -6,7 +6,7 @@
 	<!-- 配置sqltoy框架的上下文 -->
 	<bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
 		init-method="initialize" destroy-method="destroy">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找 -->
+		<!-- 指定sql.xml 文件的路径实现目录的递归查找，可以用逗号或分号指定多个路径 -->
 		<property name="sqlResourcesDir"
 			value="classpath:com/sagframe/sqltoy/showcase" />
 		<!-- 非必须属性:跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
