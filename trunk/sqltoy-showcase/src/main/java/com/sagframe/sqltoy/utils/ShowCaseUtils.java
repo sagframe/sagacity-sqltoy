@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-boot-showcase
@@ -32,7 +32,7 @@ public class ShowCaseUtils {
 	/**
 	 * 定义日志
 	 */
-	private final static Logger logger = LogManager.getLogger(ShowCaseUtils.class);
+	protected final static Logger logger = LoggerFactory.getLogger(ShowCaseUtils.class);
 
 	/**
 	 * @TODO 加载文件
@@ -117,8 +117,7 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -133,8 +132,7 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
@@ -146,8 +144,7 @@ public class ShowCaseUtils {
 
 	/**
 	 * @TODO 获得指定路径的文件
-	 * @param file
-	 *            文件路径like:classpath:xxx.xml或xxx.xml
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
