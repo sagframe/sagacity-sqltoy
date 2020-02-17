@@ -73,7 +73,9 @@ public class SqltoyAutoConfiguration {
 		}
 
 		// sql执行打印策略(默认为error时打印)
-		sqlToyContext.setDebug(properties.isDebug());
+		if (properties.getDebug() != null) {
+			sqlToyContext.setDebug(properties.getDebug());
+		}
 		if (properties.getPrintSqlStrategy() != null) {
 			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
 		}

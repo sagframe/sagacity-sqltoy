@@ -44,7 +44,7 @@ public class SqlToyContextProperties implements Serializable {
 
 	private Elastic elastic;
 
-	private boolean debug;
+	private Boolean debug;
 
 	private Integer batchSize;
 
@@ -103,11 +103,11 @@ public class SqlToyContextProperties implements Serializable {
 		this.translateConfig = translateConfig;
 	}
 
-	public boolean isDebug() {
+	public Boolean getDebug() {
 		return debug;
 	}
 
-	public void setDebug(boolean debug) {
+	public void setDebug(Boolean debug) {
 		this.debug = debug;
 	}
 
