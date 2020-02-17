@@ -60,6 +60,10 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setScriptCheckIntervalSeconds(properties.getScriptCheckIntervalSeconds());
 		}
 
+		if (properties.getDelayCheckSeconds() != null) {
+			sqlToyContext.setDelayCheckSeconds(properties.getDelayCheckSeconds());
+		}
+
 		if (properties.getPrintSqlStrategy() != null) {
 			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
 		}
