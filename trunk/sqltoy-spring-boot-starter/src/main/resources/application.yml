@@ -1,10 +1,10 @@
 ## 备注前面有单个# 的表示默认无需配置
-## 正常情况下只需配置sqlResourcesDir
+## 正常情况下只需配置sqlResourcesDir\translateConfig\unifyFieldsHandler\debug 四个参数即可
 spring:
    sqltoy:
       ## sqlResourcesDir 常用配置，如多个路径用;符号分割
       sqlResourcesDir: /com/sagframe/modules
-      ## translateConfig 常用配置
+      ## translateConfig 常用配置,使用缓存翻译时需要配置
       translateConfig: classpath:sqltoy-translate.xml
       ## 开发阶段设置debug,便于打印执行的sql,默认为false
       debug: true
@@ -16,7 +16,8 @@ spring:
       #dialect: mysql
       ## 默认batchSize为200
       #batchSize: 200
-      pageFetchSizeLimit: 50000
+      ## 设置分页查询最大提取数据记录,防止过多数据获取,默认100000
+      #pageFetchSizeLimit: 50000
       #printSqlStrategy: error
       ## sql执行多少毫秒需要打印,默认30秒
       #printSqlTimeoutMillis: 30000
