@@ -60,6 +60,8 @@ public class SqlToyContextProperties implements Serializable {
 
 	private Integer scriptCheckIntervalSeconds;
 
+	private Integer delayCheckSeconds;
+
 	private String encoding;
 
 	/**
@@ -235,6 +237,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setScriptCheckIntervalSeconds(Integer scriptCheckIntervalSeconds) {
 		this.scriptCheckIntervalSeconds = scriptCheckIntervalSeconds;
+	}
+
+	public Integer getDelayCheckSeconds() {
+		return delayCheckSeconds;
+	}
+
+	public void setDelayCheckSeconds(Integer delayCheckSeconds) {
+		this.delayCheckSeconds = delayCheckSeconds;
 	}
 
 }
