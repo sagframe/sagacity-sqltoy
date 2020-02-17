@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.13.0</log4j.version>
-		<sagacity-sqltoy.version>4.9.6</sagacity-sqltoy.version>
+		<sagacity-sqltoy.version>4.9.7</sagacity-sqltoy.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<lettuce-core.version>5.2.1.RELEASE</lettuce-core.version>
@@ -29,7 +29,6 @@
 		<httpclient-core.version>4.4.13</httpclient-core.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 		<db2jcc4.version>11.5.0.0</db2jcc4.version>
-		<druid.version>1.1.21</druid.version>
 	</properties>
 	<repositories>
 		<repository>
