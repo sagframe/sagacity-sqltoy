@@ -264,10 +264,10 @@ public class SqlToyContext implements ApplicationContextAware {
 				return null;
 			}
 			return BeanUtil.invokeMethod(beanDefine, method, args);
-		} catch (BeansException e) {
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
+		} catch (BeansException be) {
+			be.printStackTrace();
+		} catch (IllegalStateException ie) {
+			ie.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
