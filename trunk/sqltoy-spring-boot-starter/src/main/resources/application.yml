@@ -1,4 +1,24 @@
 spring:
    sqltoy:
+      sqlResourcesDir: /com/sagframe/modules
+      translateConfig: classpath:sqltoy-translate.xml
+      #functionConverts: default
+      #unifyFieldsHandler: com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+      #dialect: mysql
+      debug: true
+      batchSize: 200
+      pageFetchSizeLimit: 50000
+      printSqlTimeoutMillis: 30000
       elastic:
-            - 
+         defaultId: default
+         endpoints:
+               -id: default
+               url: http://192.168.56.104:9200
+               version: 7.5
+               username: elastic
+               password: elastic
+               
+            
+                  
+             
+              

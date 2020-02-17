@@ -3,6 +3,8 @@ package org.sagacity.sqltoy.configure;
 import java.io.Serializable;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "spring.sqltoy")
@@ -74,6 +76,8 @@ public class SqlToyContextProperties implements Serializable {
 	private Map<String, String> dialectProperties;
 
 	private String mongoFactoryName;
+
+	private DataSource defaultDataSource;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -255,6 +259,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setSqlResources(String[] sqlResources) {
 		this.sqlResources = sqlResources;
+	}
+
+	public DataSource getDefaultDataSource() {
+		return defaultDataSource;
+	}
+
+	public void setDefaultDataSource(DataSource defaultDataSource) {
+		this.defaultDataSource = defaultDataSource;
 	}
 
 }

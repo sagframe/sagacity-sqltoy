@@ -32,7 +32,7 @@ public class SqltoyAutoConfiguration {
 	@Autowired
 	SqlToyContextProperties properties;
 
-	@Bean(name = "sqlToyContext")
+	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
 		SqlToyContext sqlToyContext = new SqlToyContext();
@@ -136,7 +136,10 @@ public class SqltoyAutoConfiguration {
 		if (properties.getMongoFactoryName() != null) {
 			sqlToyContext.setMongoFactoryName(properties.getMongoFactoryName());
 		}
-		sqlToyContext.initialize();
+		if (properties.getDefaultDataSource() != null) {
+			sqlToyContext.setDefaultDataSource(properties.getDefaultDataSource());
+		}
+		// sqlToyContext.initialize();
 		return sqlToyContext;
 	}
 
