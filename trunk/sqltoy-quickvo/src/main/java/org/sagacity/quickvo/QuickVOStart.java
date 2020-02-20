@@ -47,6 +47,7 @@ public class QuickVOStart {
 	private void loadEnv() {
 		try {
 			out.println("=========  welcome use sagacity-quickvo version:4.11  支持jdk8 日期 ==========");
+			out.println("======   jdk9 以上注意使用java -Djava.ext.dirs=drivers/ 来实现驱动加载     =========");
 			String realLogFile = logFile;
 			if (realLogFile.charAt(0) == '/') {
 				realLogFile = realLogFile.substring(1);
@@ -91,8 +92,7 @@ public class QuickVOStart {
 					new String[] { "[\\w|\\-|\\.]+\\.jar$" });
 			// jdk9 之后加载类的方式不一样
 			if (javaVersion >= 9) {
-				logger.info("请将jdbc driver jar放入classpath中!");
-				// ClassLoaderUtil.loadJarFiles(jars);
+				logger.info("请使用java -Djava.ext.dirs=drivers 方式加载额外依赖jar!");
 			} else {
 				ClassLoaderUtil.loadJarFiles(jars);
 			}

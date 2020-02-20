@@ -46,7 +46,6 @@
 			</snapshotRepository> -->
 	</distributionManagement>
 	<dependencies>
-		<!-- https://mvnrepository.com/artifact/org.dom4j/dom4j -->
 		<dependency>
 			<groupId>org.dom4j</groupId>
 			<artifactId>dom4j</artifactId>
@@ -91,7 +90,18 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<dependency> <!-- 桥接：告诉Slf4j使用Log4j2 -->
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>${freemarker.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- <dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
 			<version>${log4j.version}</version>
@@ -107,95 +117,33 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.freemarker/freemarker -->
-		<dependency>
-			<groupId>org.freemarker</groupId>
-			<artifactId>freemarker</artifactId>
-			<version>${freemarker.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${mysql.version}</version>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.oracle.ojdbc</groupId>
-			<artifactId>ojdbc8</artifactId>
-			<version>${ojdbc.version}</version>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>${postgresql.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>com.microsoft.sqlserver</groupId>
-			<artifactId>mssql-jdbc</artifactId>
-			<version>${mssql.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/ru.yandex.clickhouse/clickhouse-jdbc -->
-		<dependency>
-			<groupId>ru.yandex.clickhouse</groupId>
-			<artifactId>clickhouse-jdbc</artifactId>
-			<version>${clickhouse-jdbc.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-annotations</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
 			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>${httpcomponents.version}</version>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpmime</artifactId>
-			<version>${httpcomponents.version}</version>
-			<optional>true</optional>
-		</dependency>
+		</dependency> -->
+		
+		<!-- <dependency> <groupId>mysql</groupId> <artifactId>mysql-connector-java</artifactId> 
+			<version>${mysql.version}</version> <optional>true</optional> <exclusions> 
+			<exclusion> <groupId>*</groupId> <artifactId>*</artifactId> </exclusion> 
+			</exclusions> </dependency> <dependency> <groupId>com.oracle.ojdbc</groupId> 
+			<artifactId>ojdbc8</artifactId> <version>${ojdbc.version}</version> <optional>true</optional> 
+			<exclusions> <exclusion> <groupId>*</groupId> <artifactId>*</artifactId> 
+			</exclusion> </exclusions> </dependency> <dependency> <groupId>org.postgresql</groupId> 
+			<artifactId>postgresql</artifactId> <version>${postgresql.version}</version> 
+			<optional>true</optional> </dependency> <dependency> <groupId>com.microsoft.sqlserver</groupId> 
+			<artifactId>mssql-jdbc</artifactId> <version>${mssql.version}</version> <optional>true</optional> 
+			</dependency> <dependency> <groupId>ru.yandex.clickhouse</groupId> <artifactId>clickhouse-jdbc</artifactId> 
+			<version>${clickhouse-jdbc.version}</version> <exclusions> <exclusion> <groupId>org.slf4j</groupId> 
+			<artifactId>slf4j-api</artifactId> </exclusion> <exclusion> <groupId>com.fasterxml.jackson.core</groupId> 
+			<artifactId>jackson-annotations</artifactId> </exclusion> </exclusions> </dependency> 
+			<dependency> <groupId>org.apache.httpcomponents</groupId> <artifactId>httpclient</artifactId> 
+			<version>${httpcomponents.version}</version> <optional>true</optional> <exclusions> 
+			<exclusion> <groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> 
+			</exclusion> </exclusions> </dependency> <dependency> <groupId>org.apache.httpcomponents</groupId> 
+			<artifactId>httpmime</artifactId> <version>${httpcomponents.version}</version> 
+			<optional>true</optional> </dependency> -->
 	</dependencies>
 	<build>
 		<finalName>sqltoy-quickvo-${version}</finalName>
