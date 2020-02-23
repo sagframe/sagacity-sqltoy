@@ -6,14 +6,10 @@ package org.sagacity.quickvo;
 import static java.lang.System.out;
 
 import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.sagacity.quickvo.config.XMLConfigLoader;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.ConfigModel;
@@ -28,47 +24,21 @@ import org.sagacity.quickvo.utils.FileUtil;
  */
 public class QuickVOStart {
 	/**
-	 * 日志参数定义文件
-	 */
-	private final static String logFile = "org/sagacity/quickvo/log4j2.xml";
-
-	/**
 	 * 数据库驱动文件路径
 	 */
 	private String DB_DRIVER_FILE = "drivers/";
 
-	private Logger logger = null;
+	private Logger logger = LogManager.getLogger(getClass());
 
 	private ConfigModel configModel;
-
-	/**
-	 * 加载log4j环境
-	 */
-	private void loadEnv() {
-		try {
-			out.println("=========  welcome use sagacity-quickvo version:4.11  支持jdk8 日期 ==========");
-			out.println("======   jdk9 以上注意使用java -Djava.ext.dirs=drivers/ 来实现驱动加载     =========");
-			String realLogFile = logFile;
-			if (realLogFile.charAt(0) == '/') {
-				realLogFile = realLogFile.substring(1);
-			}
-			URL url = Thread.currentThread().getContextClassLoader().getResource(realLogFile);
-			InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(realLogFile);
-			ConfigurationSource source = new ConfigurationSource(stream, url);
-			Configurator.initialize(null, source);
-			out.println("log4j properties is loaded");
-		} catch (Exception io) {
-			io.printStackTrace();
-		}
-	}
 
 	/**
 	 * 初始化，解析配置文件
 	 */
 	public void init() {
 		try {
-			loadEnv();
-			logger = LogManager.getLogger(getClass());
+			out.println("=========  welcome use sagacity-quickvo version:4.12  支持jdk8 日期 ==========");
+			out.println("======       请使用java -cp jarPath mainClass args模式启动                          =========");
 			configModel = XMLConfigLoader.parse();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -85,15 +55,15 @@ public class QuickVOStart {
 		if (configModel == null)
 			return;
 		try {
-			// 加载位于driver目录下的jdbc驱动程序类库
-			logger.info("Begin load jdbc driver jar path from ./drivers!");
 			int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
-			List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
-					new String[] { "[\\w|\\-|\\.]+\\.jar$" });
 			// jdk9 之后加载类的方式不一样
 			if (javaVersion >= 9) {
-				logger.info("请使用java -Djava.ext.dirs=drivers 方式加载额外依赖jar!");
+				logger.info("请使用java -cp jarPath mainClass args 模式启动!");
 			} else {
+				// 加载位于driver目录下的jdbc驱动程序类库
+				logger.info("Begin load jdbc driver jar path from ./drivers!");
+				List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
+						new String[] { "[\\w|\\-|\\.]+\\.jar$" });
 				ClassLoaderUtil.loadJarFiles(jars);
 			}
 			TaskController.setConfigModel(configModel);
@@ -116,8 +86,9 @@ public class QuickVOStart {
 	 */
 	public static void main(String[] args) {
 		QuickVOStart quickStart = new QuickVOStart();
-		if (args != null && args.length > 0)
+		if (args != null && args.length > 0) {
 			QuickVOConstants.QUICK_CONFIG_FILE = args[0];
+		}
 		String baseDir;
 		if (args != null && args.length > 1) {
 			baseDir = args[1];

@@ -1,4 +1,4 @@
 ﻿@echo ============== start generate vo and abstractvo file ==================
-java -Djava.ext.dirs=./drivers -jar sqltoy-quickvo-4.11.jar quickvo.xml
+java -cp ./libs/* org.sagacity.quickvo.QuickVOStart quickvo.xml
 @echo ============== end generate vo and abstractvo file ====================
 cmd
