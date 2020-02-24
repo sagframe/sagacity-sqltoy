@@ -327,6 +327,7 @@ public class QuickVOConstants implements Serializable {
 		typeMapping1.setPrecisionMin(1);
 		typeMapping1.setScaleMin(0);
 		typeMapping1.setScaleMax(0);
+		typeMapping1.setResultType("Integer");
 		typeMapping.add(typeMapping1);
 		ColumnTypeMapping typeMapping2 = new ColumnTypeMapping();
 		typeMapping2.putNativeTypes(new String[] { "NUMBER", "DECIMAL", "NUMERIC" });
@@ -336,6 +337,7 @@ public class QuickVOConstants implements Serializable {
 		typeMapping2.setPrecisionMin(9);
 		typeMapping2.setScaleMin(0);
 		typeMapping2.setScaleMax(0);
+		typeMapping2.setResultType("Long");
 		typeMapping.add(typeMapping2);
 	}
 }
