@@ -202,10 +202,11 @@ public class XMLConfigLoader {
 			}
 		}
 		// 自定义数据匹配类型
+		List<ColumnTypeMapping> typeMapping = new ArrayList<ColumnTypeMapping>();
+		QuickVOConstants.addDefaultTypeMapping(typeMapping);
 		if (root.element("type-mapping") != null) {
 			List jdbcTypes = root.element("type-mapping").elements("sql-type");
 			if (jdbcTypes != null && !jdbcTypes.isEmpty()) {
-				List typeMapping = new ArrayList();
 				Element type;
 				String javaType;
 				String[] precision;
@@ -256,9 +257,9 @@ public class XMLConfigLoader {
 					}
 					typeMapping.add(colTypeMapping);
 				}
-				configModel.setTypeMapping(typeMapping);
 			}
 		}
+		configModel.setTypeMapping(typeMapping);
 		// 级联操作设置
 		if (root.elements("cascade") != null) {
 			List<Element> mainCascades = root.elements("cascade");

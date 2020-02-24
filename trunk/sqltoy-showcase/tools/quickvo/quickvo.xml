@@ -53,19 +53,11 @@
 	<!-- 数据类型对应关系，native-types表示特定数据库返回的字段类型; jdbc-type：表示对应jdbc标准的类型(见:java.sql.Types), 
 		主要用于vo @Column注解中，设置其类型,方便操作数据库插入或修改时设置类型;java-type:表示对应java对象的属性类型 -->
 	<type-mapping>
-		<sql-type native-types="DATE" jdbc-type="DATE"	java-type="java.time.LocalDate" />
-		<sql-type native-types="DATETIME" jdbc-type="DATE" java-type="java.time.LocalDateTime" />
-		<sql-type native-types="TIME" jdbc-type="TIME"	java-type="java.time.LocalTime" />
-		<sql-type native-types="TIMESTAMP(6),TIMESTAMP"	jdbc-type="TIMESTAMP" java-type="java.sql.Timestamp" />
-		<sql-type native-types="CHAR,CLOB" java-type="String" />
-		<sql-type native-types="LONGTEXT,MEDIUMTEXT,TEXT,VARCHAR,VARCHAR2" jdbc-type="VARCHAR" java-type="String" />
-		<sql-type native-types="TINYINT,INT,INTEGER" java-type="Integer" />
-		<sql-type native-types="BIGINT" scale="0" java-type="Long" />
+		
+
+	
 		<sql-type native-types="NUMBER,DECIMAL,NUMERIC"	precision="1..8" scale="0" jdbc-type="INTEGER" java-type="Integer" />
 		<sql-type native-types="NUMBER,DECIMAL,NUMERIC"	precision="9..18" scale="0" jdbc-type="INTEGER" java-type="Long" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC"	precision="2..14" scale="1..4" jdbc-type="DECIMAL" java-type="java.math.BigDecimal" />
-		<sql-type native-types="NUMBER,DECIMAL,NUMERIC"	precision="19..38" scale="0..6" jdbc-type="DECIMAL"	java-type="java.math.BigDecimal" />
-		<sql-type native-types="image" java-type="byte[]" />
-		<sql-type native-types="BLOB,LONGBLOB,MEDIUMBLOB" jdbc-type="BLOB" java-type="byte[]" />
+		
 	</type-mapping>
 </quickvo>
