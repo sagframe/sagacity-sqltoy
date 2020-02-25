@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.dom4j.Element;
+import org.sagacity.quickvo.model.ColumnTypeMapping;
 import org.sagacity.quickvo.utils.DBUtil;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
@@ -129,16 +130,16 @@ public class QuickVOConstants implements Serializable {
 			{ "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "LocalDate", "java.time.LocalDate" },
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
-			{ "VARCHAR", "String", "" }, { "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" },
-			{ "LONGVARCHAR", "String", "" }, { "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" },
-			{ "STRING", "String", "" }, { "FixedSTRING", "String", "" }, { "CHAR", "String", "" },
-			{ "CHARACTER", "String", "" }, { "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" },
-			{ "Clob", "Clob", "java.sql.Clob" }, { "NCLOB", "Clob", "java.sql.Clob" },
-			{ "CLOB", "CLOB", "oracle.sql.CLOB", "oracle" }, { "BLOB", "BLOB", "oracle.sql.BLOB", "oracle" },
-			{ "Blob", "Blob", "java.sql.Blob" }, { "LONGBLOB", "Blob", "java.sql.Blob" },
-			{ "MEDIUMBLOB", "Blob", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
+			{ "VARCHAR", "String", "" }, { "MEDIUMTEXT", "String", "" }, { "VARCHAR2", "String", "" },
+			{ "LONG VARCHAR", "String", "" }, { "LONGVARCHAR", "String", "" }, { "LONGNVARCHAR", "String", "" },
+			{ "NCHAR", "String", "" }, { "STRING", "String", "" }, { "FixedSTRING", "String", "" },
+			{ "CHAR", "String", "" }, { "CHARACTER", "String", "" }, { "BIT", "Boolean", "" },
+			{ "BOOLEAN", "Boolean", "" }, { "Clob", "String", "java.sql.Clob" }, { "NCLOB", "String", "java.sql.Clob" },
+			{ "CLOB", "String", "oracle.sql.CLOB", "oracle" }, { "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" },
+			{ "Blob", "byte[]", "java.sql.Blob" }, { "LONGBLOB", "byte[]", "java.sql.Blob" },
+			{ "MEDIUMBLOB", "byte[]", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
 			{ "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
-			{ "VARBINARY", "Serializable", "java.io.Serializable" } };
+			{ "VARBINARY", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
 
 	/**
 	 * 原始类型
@@ -291,8 +292,7 @@ public class QuickVOConstants implements Serializable {
 	}
 
 	/**
-	 * @param keywords
-	 *            the keywords to set
+	 * @param keywords the keywords to set
 	 */
 	public static void setKeywords(String keywordStr) {
 		if (StringUtil.isNotBlank(keywordStr)) {
@@ -312,5 +312,32 @@ public class QuickVOConstants implements Serializable {
 			}
 		}
 		return jdbcType;
+	}
+
+	/**
+	 * @todo 设置默认类型匹配
+	 * @param typeMapping
+	 */
+	public static void addDefaultTypeMapping(List<ColumnTypeMapping> typeMapping) {
+		ColumnTypeMapping typeMapping1 = new ColumnTypeMapping();
+		typeMapping1.putNativeTypes(new String[] { "NUMBER", "DECIMAL", "NUMERIC" });
+		typeMapping1.setJdbcType("INTEGER");
+		typeMapping1.setJavaType("Integer");
+		typeMapping1.setPrecisionMax(8);
+		typeMapping1.setPrecisionMin(1);
+		typeMapping1.setScaleMin(0);
+		typeMapping1.setScaleMax(0);
+		typeMapping1.setResultType("Integer");
+		typeMapping.add(typeMapping1);
+		ColumnTypeMapping typeMapping2 = new ColumnTypeMapping();
+		typeMapping2.putNativeTypes(new String[] { "NUMBER", "DECIMAL", "NUMERIC" });
+		typeMapping2.setJdbcType("INTEGER");
+		typeMapping2.setJavaType("Long");
+		typeMapping2.setPrecisionMax(64);
+		typeMapping2.setPrecisionMin(9);
+		typeMapping2.setScaleMin(0);
+		typeMapping2.setScaleMax(0);
+		typeMapping2.setResultType("Long");
+		typeMapping.add(typeMapping2);
 	}
 }
