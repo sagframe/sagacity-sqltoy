@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.sagacity</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.9.7</version>
+	<version>4.9.8</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-boot.version>2.2.4.RELEASE</spring-boot.version>
@@ -24,9 +24,9 @@
 	</repositories>
 	<distributionManagement>
 
-		<!-- <repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
-			</repository> -->
-		<repository>
+		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
+			</repository>
+		<!-- <repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
@@ -36,7 +36,7 @@
 			<name>Department 
 			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository>
+		</snapshotRepository> -->
 
 	</distributionManagement>
 	<dependencyManagement>

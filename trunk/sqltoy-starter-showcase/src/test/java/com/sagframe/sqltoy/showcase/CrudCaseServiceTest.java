@@ -40,9 +40,9 @@ public class CrudCaseServiceTest {
 	@Test
 	public void saveStaffInfo() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
-		staffInfo.setStaffId("S190715003");
-		staffInfo.setStaffCode("S190715003");
-		staffInfo.setStaffName("测试员工3");
+		staffInfo.setStaffId("S190715004");
+		staffInfo.setStaffCode("S190715004");
+		staffInfo.setStaffName("测试员工4");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test3@aliyun.com");
 		staffInfo.setEntryDate(LocalDate.now());

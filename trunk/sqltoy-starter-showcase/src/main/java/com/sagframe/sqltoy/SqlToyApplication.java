@@ -6,7 +6,6 @@ package com.sagframe.sqltoy;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -14,7 +13,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *
  */
 @SpringBootApplication
-@ImportResource(locations = { "classpath:spring/spring-aop.xml" })
+//使用SqlToyCRUDService 自身在类上加了事务注解,所以无需通过xml aop事务配置
+//@ImportResource(locations = { "classpath:spring/spring-aop.xml" })
 @ComponentScan(basePackages = { "org.sagacity.sqltoy", "com.sagframe.sqltoy" })
 @EnableTransactionManagement
 public class SqlToyApplication {
