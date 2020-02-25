@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @author zhongxuchen
- *
+ * @version v1.0,Date:2020年2月20日
  */
 public class ElasticConfig implements Serializable {
 

@@ -5,6 +5,10 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * @author zhongxuchen
+ * @version v1.0,Date:2020年2月20日
+ */
 @ConfigurationProperties(prefix = "spring.sqltoy")
 public class SqlToyContextProperties implements Serializable {
 
@@ -14,12 +18,12 @@ public class SqlToyContextProperties implements Serializable {
 	private static final long serialVersionUID = -8313800149129731930L;
 
 	/**
-	 * 指定sql.xml 文件的路径实现目录的递归查找,非必须属性
+	 * 指定sql.xml 文件路径,多个路径用逗号分隔
 	 */
 	private String sqlResourcesDir;
 
 	/**
-	 * 
+	 * 缓存翻译的配置文件
 	 */
 	private String translateConfig;
 
@@ -29,7 +33,7 @@ public class SqlToyContextProperties implements Serializable {
 	private Object functionConverts;
 
 	/**
-	 * 数据库方言
+	 * 数据库方言，一般无需设置
 	 */
 	private String dialect;
 
@@ -38,14 +42,26 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private String[] packagesToScan;
 
+	/**
+	 * 额外注解class类，已经没有必要
+	 */
 	private String[] annotatedClasses;
 
+	/**
+	 * 具体的sql.xml 文件资源
+	 */
 	private String[] sqlResources;
 
+	/**
+	 * es的配置
+	 */
 	private Elastic elastic;
 
 	private Boolean debug;
 
+	/**
+	 * 批量操作，每批次数量,默认200
+	 */
 	private Integer batchSize;
 
 	private Integer pageFetchSizeLimit;
@@ -71,10 +87,16 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private String unifyFieldsHandler;
 
+	/**
+	 * 数据库方言参数配置
+	 */
 	private Map<String, String> dialectProperties;
 
 	private String mongoFactoryName;
 
+	/**
+	 * sqltoy默认数据库
+	 */
 	private String defaultDataSource;
 
 	/**

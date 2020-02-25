@@ -23,10 +23,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * sqltoy 自动配置类
- * 
+ * @description sqltoy 自动配置类
  * @author wolf
- *
+ * @version v1.0,Date:2018年12月26日
+ * @modify {Date:2020-2-20,完善配置支持es等,实现完整功能}
  */
 @Configuration
 @ConditionalOnClass(SqlToyLazyDaoImpl.class)
@@ -55,12 +55,14 @@ public class SqltoyAutoConfiguration {
 		if (properties.getEncoding() != null) {
 			sqlToyContext.setEncoding(properties.getEncoding());
 		}
-		// pojo 扫描路径
+
+		//sqltoy 已经无需指定扫描pojo类,已经改为用的时候动态加载
+		// pojo 扫描路径,意义不存在
 		if (properties.getPackagesToScan() != null) {
 			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
 		}
 
-		// 特定pojo类加载
+		// 特定pojo类加载，意义已经不存在
 		if (properties.getAnnotatedClasses() != null) {
 			sqlToyContext.setAnnotatedClasses(properties.getAnnotatedClasses());
 		}
@@ -152,7 +154,6 @@ public class SqltoyAutoConfiguration {
 						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
 			}
 		}
-		// sqlToyContext.initialize();
 		return sqlToyContext;
 	}
 
