@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 //使用SqlToyCRUDService 自身在类上加了事务注解,所以无需通过xml aop事务配置
 //@ImportResource(locations = { "classpath:spring/spring-aop.xml" })
-@ComponentScan(basePackages = { "org.sagacity.sqltoy", "com.sagframe.sqltoy" })
+@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
 @EnableTransactionManagement
 public class SqlToyApplication {
 
