@@ -95,7 +95,7 @@ spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHa
 
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测 -->
+		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
 		<sql-checker
 			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
 			datasource="dataSource">
