@@ -114,6 +114,37 @@ spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHa
 	</cache-update-checkers>
 </sagacity>
 ```
+* 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
+另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = SqlToyApplication.class)
+public class CrudCaseServiceTest {
+	@Autowired
+	private SqlToyCRUDService sqlToyCRUDService;
+
+	/**
+	 * 创建一条员工记录
+	 */
+	@Test
+	public void saveStaffInfo() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715005");
+		staffInfo.setStaffCode("S190715005");
+		staffInfo.setStaffName("测试员工4");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test3@aliyun.com");
+		staffInfo.setEntryDate(LocalDate.now());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		sqlToyCRUDService.save(staffInfo);
+	}
+ }
+```
+
   
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
