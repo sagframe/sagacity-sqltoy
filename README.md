@@ -11,7 +11,110 @@
   - 2、通过拉卡拉的业务全场景验证:分库分表；缓存翻译的优势展示；快速分页、分页优化在每一点性能都需要极度优化考虑的场景下价值体现；elasticsearch十亿级别的数据毫秒级查询；
 	
       mongodb在用户画像标签数据场景下的应用。
-      
+
+# 集成说明
+  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
+  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
+  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
+  
+  ```java
+ package com.sagframe.sqltoy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+/**
+ * @author zhongxuchen
+ */
+@SpringBootApplication
+@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
+@EnableTransactionManagement
+public class SqlToyApplication {
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		SpringApplication.run(SqlToyApplication.class, args);
+	}
+}
+
+```
+application.properties sqltoy部分配置
+```javascript
+##  sqltoy 配置 
+# sql.xml 文件的路径,多个路径用;符合分割
+spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
+# 缓存翻译的配置(可选配置)
+spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
+# 是否debug模式,debug 模式会打印执行的sql和参数信息
+spring.sqltoy.debug=true
+# 设置默认使用的datasource(可选配置,不配置会自动注入)
+spring.sqltoy.defaultDataSource=dataSource
+# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
+spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+
+```
+缓存翻译的配置文件sqltoy-translate.xml 
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
+	<cache-translates
+		disk-store-path="./sqltoy-showcase/translateCaches">
+		<!-- 基于sql直接查询的方式获取缓存 -->
+		<sql-translate cache="dictKeyNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.STATUS
+				from SQLTOY_DICT_DETAIL t
+		        where t.DICT_TYPE=:dictType
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+
+		<!-- 员工ID和姓名的缓存 -->
+		<sql-translate cache="staffIdNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select STAFF_ID,STAFF_NAME,STATUS
+				from SQLTOY_STAFF_INFO
+			]]>
+			</sql>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
+	<cache-update-checkers>
+		<!-- 基于sql的缓存更新检测 -->
+		<sql-checker
+			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
+			datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select distinct 'staffIdName' cacheName,null cache_type
+			from SQLTOY_STAFF_INFO t1
+			where t1.UPDATE_TIME >=:lastUpdateTime
+			-- 数据字典key和name缓存检测
+			union all 
+			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
+			from SQLTOY_DICT_DETAIL t2
+			where t2.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-checker>
+	</cache-update-checkers>
+</sagacity>
+```
+  
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
