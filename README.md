@@ -131,68 +131,33 @@ where #[t.ORDER_ID=:orderId]
 	
 ```xml
 <sql id="sqltoy_order_search">
-	<!-- 缓存翻译设备类型 
-	cache:具体的缓存定义的名称
-	cache-type:一般针对数据字典，提供一个分类条件过滤
+	<!-- 缓存翻译设备类型
+        cache:具体的缓存定义的名称，
+        cache-type:一般针对数据字典，提供一个分类条件过滤
 	columns:sql中的查询字段名称，可以逗号分隔对多个字段进行翻译
 	cache-indexs:缓存数据名称对应的列,不填则默认为第二列(从0开始,1则表示第二列)，
 	      例如缓存的数据结构是:key、name、fullName,则第三列表示全称
 	-->
 	<translate cache="dictKeyNameCache" cache-type="DEVICE_TYPE" columns="deviceTypeName" cache-indexs="1"/>
-	<!-- 缓存翻译购销类型 -->
-	<translate cache="dictKeyNameCache" cache-type="PURCHASE_SALE_TYPE" columns="psTypeName" />
-	<!-- 缓存翻译订单状态 -->
-	<translate cache="dictKeyNameCache" cache-type="ORDER_STATUS" columns="statusName" />
 	<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
 	<translate cache="staffIdNameCache" columns="staffName,createName" />
-	<!-- 机构名称翻译 -->
-	<translate cache="organIdNameCache" columns="organName" />
 	<filters>
-		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds">
-			<!--
-			   可选配置:这里的filter是排除的概念,将符合条件的排除掉(可以不使用)
-			   compare-param:可以是具体的一个条件参数名称,也可以是一个固定值
-			   cache-index:针对缓存具体哪一列进行值对比
-			   compare-type:目前分 eq和neq两种情况，这里表示将状态无效的员工过滤掉
-			-->
-			<filter compare-param="0" cache-index="2" compare-type="eq"/>
-		</cache-arg>
-		<!-- 千万不要to_str(trans_date)>=:xxx 模式,sqltoy提供了日期、数字等类型转换,另外了解format的选项可以大幅简化代码处理 -->
-		<to-date params="beginDate" format="yyyy-MM-dd"/>
-		<!-- 对截止日期加1,从而达到类似于 trans_date<='yyyy-MM-dd 23:59:59' 平衡时分秒因素 -->
-		<to-date params="endDate" format="yyyy-MM-dd" increment-days="1"/>
+		<!-- 反向利用缓存通过名称匹配出id用于精确查询 -->
+		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds"/>
 	</filters>
 	<value>
 	<![CDATA[
 	select 	ORDER_ID,
 		DEVICE_TYPE,
 		DEVICE_TYPE deviceTypeName,-- 设备分类名称
-		PS_TYPE,
-		PS_TYPE as psTypeName, -- 购销类别名称
-		TOTAL_CNT,
-		TOTAL_AMT,
-		BUYER,
-		SALER,
-		TRANS_DATE,
-		DELIVERY_TERM,
 		STAFF_ID,
 		STAFF_ID staffName, -- 员工姓名
 		ORGAN_ID,
-		ORGAN_ID organName, -- 机构名称
 		CREATE_BY,
-		CREATE_BY createName, -- 创建人名称
-		CREATE_TIME,
-		UPDATE_BY,
-		UPDATE_TIME,
-		STATUS,
-		STATUS statusName -- 状态名称
+		CREATE_BY createName -- 创建人名称
 	from sqltoy_device_order_info t 
 	where #[t.ORDER_ID=:orderId]
-	      -- 当前用户能够访问的授权组织机构，控制数据访问权限(一般登录后直接放于用户session中)
-		  #[and t.ORGAN_ID in (:authedOrganIds)]
-		  #[and t.STAFF_ID in (:staffIds)]
-		  #[and t.TRANS_DATE>=:beginDate]
-		  #[and t.TRANS_DATE<:endDate]
+	      #[and t.STAFF_ID in (:staffIds)]
 		]]>
 	</value>
 </sql>
@@ -206,17 +171,17 @@ where #[t.ORDER_ID=:orderId]
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
   ```xml
- <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-		<property name="functionConverts" value="default">
-		<!-- 可以这样自行根据需要进行定义和扩展
-		<property name="functionConverts">
-			<list>
-				<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
-				<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugins.function.Now</value>
-				<value>org.sagacity.sqltoy.plugins.function.Length</value>
-			</list>
-		</property> -->
+        <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
+	<property name="functionConverts" value="default">
+	<!-- 也可以这样自行根据需要进行定义和扩展
+	<property name="functionConverts">
+		<list>
+			<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
+			<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
+			<value>org.sagacity.sqltoy.plugins.function.Now</value>
+			<value>org.sagacity.sqltoy.plugins.function.Length</value>
+		</list>
+	</property> -->
 </bean>
 
 ```
