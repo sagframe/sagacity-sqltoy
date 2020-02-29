@@ -488,7 +488,7 @@ public class CrudCaseServiceTest {
 ## 4.1 sqltoy sql最简单规则#[] 对称符号
 * #[] 等于if(中间语句参数是否有null)? true: 剔除#[] 整块代码，false：拿掉#[ 和 ] ,将中间的sql作为执行的一部分。
 * #[] 支持嵌套，如#[t.status=:status  #[and t.createDate>=:createDate]] 会先从内而外执行if(null)逻辑
-* 利用<filters></filters> 中的条件值预处理实现判断null的统一,下面是sqltoy完整提供的条件过滤器和其他函数
+* 利用filters条件值预处理实现判断null的统一,下面是sqltoy完整提供的条件过滤器和其他函数
 
 ```xml
 <sql id="show_case">
