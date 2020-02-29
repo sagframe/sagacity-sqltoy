@@ -489,98 +489,95 @@ public class CrudCaseServiceTest {
 * #[] 等于if(中间语句参数是否有null)? true: 剔除#[] 整块代码，false：拿掉#[ 和 ] ,将中间的sql作为执行的一部分。
 * #[] 支持嵌套，如#[t.status=:status  #[and t.createDate>=:createDate]] 会先从内而外执行if(null)逻辑
 * 利用filters条件值预处理实现判断null的统一,下面是sqltoy完整提供的条件过滤器和其他函数
+  不要被大段的说明吓一跳，99%都用不上，正常filters里面只会用到eq 和 to-date 
 
 ```xml
 <sql id="show_case">
-		<!-- 通过filters里面的逻辑将查询条件转为null，部分逻辑则对参数进行二次转换
-                     默认条件参数为空白、空集合、空数组都转为null
-                -->	
-		<filters>
-			<!-- 等于，如机构类别前端传负一就转为null不参与条件过滤 -->
-			<eq params="organType" value="-1" />
-			<!-- 条件值在某个区间则转为null -->
-			<between params="" start-value="0" end-value="9999" excludes="" />
-			
-			<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
-			 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
-			<to-date params="" format="yyyyMMdd" increment-days="1" />
-			
-			<to-number params="" data-type="decimal" />
-			<!-- 将前端传过来的字符串切割成数组 -->
-			<split data-type="string" params="staffAuthOrgs" split-sign=","/>
-			<!-- 小于等于 -->
-			<lte value="" params="" />
-			<!-- 小于 -->
-			<lt value="" params="" />
-			<!-- 大于等于 -->
-			<gte value="" params="" />
-			<!-- 大于 -->
-			<gt value="" params="" />
-			<!-- 空白转为null -->
-			<blank params="*" excludes="staffName" />
-			<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
-			<replace params="" regex="" value="" is-first="false" />
-			
-			<!-- 首要参数，即当某个参数不为null时，excludes是指被排除之外的参数全部为null -->
-			<primary param="orderId" excludes="organIds" />
-			
-			<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
-			<exclusive param="" compare-type="eq" compare-values=""
-				set-params="" set-value="" />
-			<!-- 通过缓存进行文字模糊匹配获取精确的代码值参与精确查询 -->	
-			<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
-			
-			<!-- 将数组转化成in 的参数条件并增加单引号 -->
-			<to-in-arg params=""/>
-		</filters>
+	<!-- 通过filters里面的逻辑将查询条件转为null，部分逻辑则对参数进行二次转换
+	     默认条件参数为空白、空集合、空数组都转为null
+             parmas 表示可以用逗号写多个参数，param 表示只支持单个参数
+	-->	
+	<filters>
+		<!-- 等于，如机构类别前端传负一就转为null不参与条件过滤 -->
+		<eq params="organType" value="-1" />
+		<!-- 条件值在某个区间则转为null -->
+		<between params="" start-value="0" end-value="9999" />
+
+		<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
+		 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
+		<to-date params="" format="yyyyMMdd" increment-days="1" />
+		<!-- 将参数转为数字 --> 
+		<to-number params="" data-type="decimal" />
+		<!-- 将前端传过来的字符串切割成数组 -->
+		<split data-type="string" params="staffAuthOrgs" split-sign=","/>
+		<!-- 小于等于 -->
+		<lte params="" value=""  />
+		<!-- 小于 -->
+		<lt  params=""  value="" />
+		<!-- 大于等于 -->
+		<gte params="" value=""  />
+		<!-- 大于 -->
+		<gt params="" value=""  />
+		<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
+		<replace params="" regex="" value="" is-first="false" />
+		<!-- 首要参数，即当某个参数不为null时，excludes是指被排除之外的参数全部为null -->
+		<primary param="orderId" excludes="organIds" />
+		<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
+		<exclusive param="" compare-type="eq" compare-values=""
+			set-params="" set-value="" />
+		<!-- 通过缓存进行文字模糊匹配获取精确的代码值参与精确查询 -->	
+		<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
+		<!-- 将数组转化成in 的参数条件并增加单引号 -->
+		<to-in-arg params=""/>
+	</filters>
 		
-		<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
-		<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
-			cache-indexs="1" uncached-template=""/>
-			
-		<!-- 安全掩码:tel\姓名\地址\卡号 -->
-		<!--最简单用法: <secure-mask columns="" type="tel"/> -->
-		<secure-mask columns="" type="name" head-size="3" tail-size="4"
-			mask-code="*****" mask-rate="50" />
-		<!-- 分库策略 -->
-		<sharding-datasource strategy="" />
-		<!-- 分表策略 -->
-		<sharding-table tables="" strategy="" params="" />
-		<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
-		<page-optimize alive-max="100" alive-seconds="600" />
-		<!-- 日期格式化 -->
-		<date-format columns="" format="yyyy-MM-dd HH:mm:ss"/>
-		<!-- 数字格式 -->
-		<number-format columns="" format=""/>
-		<value>
-		<![CDATA[
-		select t1.*,t2.ORGAN_NAME from 
-		@fast(select * from sys_staff_info t
-			  where #[t.sexType=:sexType]
-			        #[and t.JOIN_DATE>:beginDate]
-			        #[and t.STAFF_NAME like :staffName]
-			        -- 是否虚拟员工@if()做逻辑判断
-			        #[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
-			        ) t1,sys_organ_info t2
-	    where t1.ORGAN_ID=t2.ORGAN_ID
-		]]>	
-		</value>
-		
-		<!-- count-sql(只针对分页查询有效,sqltoy分页针对计算count的sql进行了智能处理, 一般不需要额外定义countsql,除极为苛刻的性能优化，sqltoy提供了极度优化的口子) -->
-		<count-sql><![CDATA[]]></count-sql>
-		<!-- 汇总和求平均 -->
-		<summary columns="" radix-size="2" reverse="false" sum-site="left">
-			<global sum-label="" label-column="" />
-			<group sum-label="" label-column="" group-column="" />
-		</summary>
-		<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
-		<link sign="," column="" />
-		<!-- 行转列 (跟unpivot互斥) -->
-		<pivot category-columns="" group-columns="" start-column="" end-column=""
-			default-value="0" />
-		<!-- 列转行 -->
-		<unpivot columns="" values-as-column="" />
-	</sql>
+	<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
+	<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
+		cache-indexs="1" uncached-template=""/>
+
+	<!-- 安全掩码:tel\姓名\地址\卡号 -->
+	<!--最简单用法: <secure-mask columns="" type="tel"/> -->
+	<secure-mask columns="" type="name" head-size="3" tail-size="4"
+		mask-code="*****" mask-rate="50" />
+	<!-- 分库策略 -->
+	<sharding-datasource strategy="" />
+	<!-- 分表策略 -->
+	<sharding-table tables="" strategy="" params="" />
+	<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
+	<page-optimize alive-max="100" alive-seconds="600" />
+	<!-- 日期格式化 -->
+	<date-format columns="" format="yyyy-MM-dd HH:mm:ss"/>
+	<!-- 数字格式 -->
+        <number-format columns="" format=""/>
+	<value>
+	<![CDATA[
+	select t1.*,t2.ORGAN_NAME from 
+	@fast(select * from sys_staff_info t
+		  where #[t.sexType=:sexType]
+			#[and t.JOIN_DATE>:beginDate]
+			#[and t.STAFF_NAME like :staffName]
+			-- 是否虚拟员工@if()做逻辑判断
+			#[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
+			) t1,sys_organ_info t2
+        where t1.ORGAN_ID=t2.ORGAN_ID
+	]]>	
+	</value>
+
+	<!-- 为极致分页提供自定义写sql -->
+	<count-sql><![CDATA[]]></count-sql>
+	<!-- 汇总和求平均，通过算法实现复杂的sql，同时可以变成数据库无关 -->
+	<summary columns="" radix-size="2" reverse="false" sum-site="left">
+		<global sum-label="" label-column="" />
+		<group sum-label="" label-column="" group-column="" />
+	</summary>
+	<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
+	<link sign="," column="" />
+	<!-- 行转列 (跟unpivot互斥)，算法实现数据库无关 -->
+	<pivot category-columns="" group-columns="" start-column="" end-column=""
+		default-value="0" />
+	<!-- 列转行 -->
+	<unpivot columns="" values-as-column="" />
+</sql>
 ```
 
 # 5. sqltoy关键代码说明
