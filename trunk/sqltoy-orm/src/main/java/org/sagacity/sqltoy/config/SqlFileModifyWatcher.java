@@ -39,13 +39,13 @@ public class SqlFileModifyWatcher extends Thread {
 	 */
 	private int sleepSeconds = 1;
 
-	private boolean debug = false;
+	// private boolean debug = false;
 
 	private int delayCheckSeconds;
 
 	public SqlFileModifyWatcher(ConcurrentHashMap<String, SqlToyConfig> sqlCache,
 			ConcurrentHashMap<String, Long> filesLastModifyMap, List realSqlList, String dialect, String encoding,
-			int delayCheckSeconds, int sleepSeconds, boolean debug) {
+			int delayCheckSeconds, int sleepSeconds) {
 		this.sqlCache = sqlCache;
 		this.realSqlList = realSqlList;
 		this.dialect = dialect;
@@ -53,7 +53,7 @@ public class SqlFileModifyWatcher extends Thread {
 		this.filesLastModifyMap = filesLastModifyMap;
 		this.delayCheckSeconds = delayCheckSeconds;
 		this.sleepSeconds = (sleepSeconds >= 1) ? sleepSeconds : 1;
-		this.debug = debug;
+		// this.debug = debug;
 	}
 
 	@Override
@@ -67,9 +67,6 @@ public class SqlFileModifyWatcher extends Thread {
 		}
 		boolean isRun = true;
 		while (isRun) {
-			if (debug) {
-				logger.debug("检测sql文件是否发生变更!");
-			}
 			try {
 				SqlXMLConfigParse.parseXML(realSqlList, filesLastModifyMap, sqlCache, encoding, dialect);
 			} catch (Exception e) {
