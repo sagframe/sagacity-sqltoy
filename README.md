@@ -100,14 +100,6 @@ where #[t.ORDER_ID=:orderId]
 	<!-- 分页优化器,通过缓存实现查询条件一致的情况下在一定时间周期内缓存总记录数量，从而无需每次查询总记录数量 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
 	<page-optimize alive-max="100" alive-seconds="120" />
-	<!-- 安全脱敏,type提供了几种标准的脱敏模式
-		mask-rate:脱敏比例
-		mask-code:自定义脱敏掩码,一般***,默认为***
-		head-size:前面保留多长字符
-		tail-size:尾部保留多长字符
-	 -->
-	<secure-mask columns="address" type="address" />
-	<secure-mask columns="tel_no" type="tel"/>
 	<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME 
@@ -121,8 +113,10 @@ where #[t.ORDER_ID=:orderId]
 		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
 			]]>
 	</value>
+	<font color=red>
 	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
 	<!-- <count-sql></count-sql> -->
+	</font>
 </sql>
 ```
 ## 2.4 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
