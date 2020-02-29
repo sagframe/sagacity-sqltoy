@@ -113,10 +113,10 @@ where #[t.ORDER_ID=:orderId]
 		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
 			]]>
 	</value>
-	<font color=red>
-	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
-	<!-- <count-sql></count-sql> -->
-	</font>
+	
+	<font color=red><!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 --></font>
+	<font color=red><!-- <count-sql></count-sql> --></font>
+	
 </sql>
 ```
 ## 2.4 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
