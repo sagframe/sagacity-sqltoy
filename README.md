@@ -12,140 +12,6 @@
 	
       mongodb在用户画像标签数据场景下的应用。
 
-# 集成说明
-  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
-  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
-  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
-  
-  ```java
- package com.sagframe.sqltoy;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-/**
- * @author zhongxuchen
- */
-@SpringBootApplication
-@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
-@EnableTransactionManagement
-public class SqlToyApplication {
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		SpringApplication.run(SqlToyApplication.class, args);
-	}
-}
-
-```
-application.properties sqltoy部分配置
-```javascript
-##  sqltoy 配置 
-# sql.xml 文件的路径,多个路径用;符合分割
-spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
-# 缓存翻译的配置(可选配置)
-spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
-# 是否debug模式,debug 模式会打印执行的sql和参数信息
-spring.sqltoy.debug=true
-# 设置默认使用的datasource(可选配置,不配置会自动注入)
-spring.sqltoy.defaultDataSource=dataSource
-# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
-spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
-
-```
-缓存翻译的配置文件sqltoy-translate.xml 
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<sagacity
-	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
-	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
-	<cache-translates
-		disk-store-path="./sqltoy-showcase/translateCaches">
-		<!-- 基于sql直接查询的方式获取缓存 -->
-		<sql-translate cache="dictKeyNameCache"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
-		        where t.DICT_TYPE=:dictType
-		        order by t.SHOW_INDEX
-			]]>
-			</sql>
-		</sql-translate>
-
-		<!-- 员工ID和姓名的缓存 -->
-		<sql-translate cache="staffIdNameCache"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select STAFF_ID,STAFF_NAME,STATUS
-				from SQLTOY_STAFF_INFO
-			]]>
-			</sql>
-		</sql-translate>
-	</cache-translates>
-
-	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
-	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
-		<sql-checker
-			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
-			datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			select distinct 'staffIdName' cacheName,null cache_type
-			from SQLTOY_STAFF_INFO t1
-			where t1.UPDATE_TIME >=:lastUpdateTime
-			-- 数据字典key和name缓存检测
-			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
-			from SQLTOY_DICT_DETAIL t2
-			where t2.UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-checker>
-	</cache-update-checkers>
-</sagacity>
-```
-* 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
-另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
-
-```java
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = SqlToyApplication.class)
-public class CrudCaseServiceTest {
-	@Autowired
-	private SqlToyCRUDService sqlToyCRUDService;
-
-	/**
-	 * 创建一条员工记录
-	 */
-	@Test
-	public void saveStaffInfo() {
-		StaffInfoVO staffInfo = new StaffInfoVO();
-		staffInfo.setStaffId("S190715005");
-		staffInfo.setStaffCode("S190715005");
-		staffInfo.setStaffName("测试员工4");
-		staffInfo.setSexType("M");
-		staffInfo.setEmail("test3@aliyun.com");
-		staffInfo.setEntryDate(LocalDate.now());
-		staffInfo.setStatus(1);
-		staffInfo.setOrganId("C0001");
-		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
-		staffInfo.setCountry("86");
-		sqlToyCRUDService.save(staffInfo);
-	}
- }
-```
-
-  
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
@@ -173,7 +39,6 @@ public class CrudCaseServiceTest {
  sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤其是性能优化上不断的挖掘，至于是不是重复的轮子并不重要，希望能够帮到大家！
 
 # 2. 快速特点展示(参见:sqltoy-showcase 中的源码，基于springboot+mysql 的集成演示)
-
 ## 2.1 最优雅直观的sql编写模式
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
@@ -506,9 +371,140 @@ public class UserLogVO extends AbstractUserLogVO {
 ## 2.9 elastic原生查询支持
 ## 2.10 elasticsearch-sql 插件模式sql模式支持
 
-# 3. sqltoy框架介绍
+# 3.集成说明
 
-![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
+  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
+  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
+  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
+  
+  ```java
+ package com.sagframe.sqltoy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+/**
+ * @author zhongxuchen
+ */
+@SpringBootApplication
+@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
+@EnableTransactionManagement
+public class SqlToyApplication {
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		SpringApplication.run(SqlToyApplication.class, args);
+	}
+}
+
+```
+application.properties sqltoy部分配置
+```javascript
+##  sqltoy 配置 
+# sql.xml 文件的路径,多个路径用;符合分割
+spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
+# 缓存翻译的配置(可选配置)
+spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
+# 是否debug模式,debug 模式会打印执行的sql和参数信息
+spring.sqltoy.debug=true
+# 设置默认使用的datasource(可选配置,不配置会自动注入)
+spring.sqltoy.defaultDataSource=dataSource
+# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
+spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+
+```
+缓存翻译的配置文件sqltoy-translate.xml 
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
+	<cache-translates
+		disk-store-path="./sqltoy-showcase/translateCaches">
+		<!-- 基于sql直接查询的方式获取缓存 -->
+		<sql-translate cache="dictKeyNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.STATUS
+				from SQLTOY_DICT_DETAIL t
+		        where t.DICT_TYPE=:dictType
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+
+		<!-- 员工ID和姓名的缓存 -->
+		<sql-translate cache="staffIdNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select STAFF_ID,STAFF_NAME,STATUS
+				from SQLTOY_STAFF_INFO
+			]]>
+			</sql>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
+	<cache-update-checkers>
+		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
+		<sql-checker
+			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
+			datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select distinct 'staffIdName' cacheName,null cache_type
+			from SQLTOY_STAFF_INFO t1
+			where t1.UPDATE_TIME >=:lastUpdateTime
+			-- 数据字典key和name缓存检测
+			union all 
+			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
+			from SQLTOY_DICT_DETAIL t2
+			where t2.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-checker>
+	</cache-update-checkers>
+</sagacity>
+```
+* 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
+另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = SqlToyApplication.class)
+public class CrudCaseServiceTest {
+	@Autowired
+	private SqlToyCRUDService sqlToyCRUDService;
+
+	/**
+	 * 创建一条员工记录
+	 */
+	@Test
+	public void saveStaffInfo() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715005");
+		staffInfo.setStaffCode("S190715005");
+		staffInfo.setStaffName("测试员工4");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test3@aliyun.com");
+		staffInfo.setEntryDate(LocalDate.now());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		sqlToyCRUDService.save(staffInfo);
+	}
+ }
+```
+# 4. sqltoy关键代码说明
 
 * sqltoy-orm 主要分以下几个部分：
   - BaseDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
@@ -522,7 +518,7 @@ public class UserLogVO extends AbstractUserLogVO {
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
   
 
-快速阅读理解sqltoy:
+* 快速阅读理解sqltoy:
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
@@ -530,28 +526,3 @@ public class UserLogVO extends AbstractUserLogVO {
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
   - PageOptimizeCacheImpl:可以看到分页优化默认实现原理。
- 
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
