@@ -38,7 +38,7 @@
  
  sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤其是性能优化上不断的挖掘，至于是不是重复的轮子并不重要，希望能够帮到大家！
 
-# 2. 快速特点展示(参见:sqltoy-showcase 中的源码，基于springboot+mysql 的集成演示)
+# 2. 快速特点说明
 ## 2.1 最优雅直观的sql编写模式
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
@@ -96,8 +96,10 @@ where #[t.ORGAN_ID in (:authedOrganIds)]
       #[and t.TRANS_DATE<:endDate] 
 ```
 * java调用过程
+```java
 sqlToyLazyDao.findBySql(sql, new String[] { "authedOrganIds","beginDate", "endDate"},
 				new Object[] { authedOrganIdAry,beginDate,null}, DeviceOrderInfoVO.class);
+```
 * 最终执行的sql是这样的:
 ```xml
 select 	*
