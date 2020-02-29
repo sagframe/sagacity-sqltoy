@@ -86,9 +86,9 @@ public class SqlScriptLoader {
 	 * @TODO 初始化加载sql文件
 	 * @param debug
 	 * @param delayCheckSeconds
-	 * @param sleepSeconds
+	 * @param scriptCheckIntervalSeconds
 	 */
-	public void initialize(boolean debug, int delayCheckSeconds, int sleepSeconds) {
+	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds) {
 		if (initialized)
 			return;
 		initialized = true;
@@ -121,14 +121,27 @@ public class SqlScriptLoader {
 			e.printStackTrace();
 			logger.error("加载和解析xml过程发生异常!" + e.getMessage(), e);
 		}
-
-		// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
-		if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
-			watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, dialect, encoding,
-					delayCheckSeconds, sleepSeconds, debug);
-			watcher.start();
-		} else {
-			logger.warn("sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
+		// 存在sql文件，启动文件变更检测便于重新加载sql
+		if (realSqlList != null && !realSqlList.isEmpty()) {
+			int sleepSeconds = 0;
+			if (scriptCheckIntervalSeconds == null) {
+				// debug模式下,sql文件每隔一秒检测
+				if (debug) {
+					sleepSeconds = 1;
+				} else {
+					sleepSeconds = 10;
+				}
+			} else {
+				sleepSeconds = scriptCheckIntervalSeconds.intValue();
+			}
+			// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
+			if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
+				watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, dialect, encoding,
+						delayCheckSeconds, sleepSeconds, debug);
+				watcher.start();
+			} else {
+				logger.warn("sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
+			}
 		}
 	}
 
@@ -189,32 +202,28 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @param resourcesDir
-	 *            the resourcesDir to set
+	 * @param resourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
 		this.sqlResourcesDir = sqlResourcesDir;
 	}
 
 	/**
-	 * @param mappingResources
-	 *            the mappingResources to set
+	 * @param mappingResources the mappingResources to set
 	 */
 	public void setSqlResources(List sqlResources) {
 		this.sqlResources = sqlResources;
 	}
 
 	/**
-	 * @param encoding
-	 *            the encoding to set
+	 * @param encoding the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
 
 	/**
-	 * @param dialect
-	 *            the dialect to set
+	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
 		this.dialect = dialect;
