@@ -87,25 +87,27 @@ where #[t.ORDER_ID=:orderId]
 ```
 
 ## 2.2 天然防止sql注入,执行过程:
+* 假设sql语句如下
 ```xml
 select 	*
 from sqltoy_device_order_info t 
 where #[t.ORGAN_ID in (:authedOrganIds)]
       #[and t.TRANS_DATE>=:beginDate]
       #[and t.TRANS_DATE<:endDate] 
+```
+* java调用过程
 sqlToyLazyDao.findBySql(sql, new String[] { "authedOrganIds","beginDate", "endDate"},
 				new Object[] { authedOrganIdAry,beginDate,null}, DeviceOrderInfoVO.class);
-最终执行的sql是这样的:
+* 最终执行的sql是这样的:
+```xml
 select 	*
 from sqltoy_device_order_info t 
 where t.ORDER_ID=?
       and t.ORGAN_ID in (?,?,?)
-      and t.TRANS_DATE>=?			   
-然后通过:
-pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
-
+      and t.TRANS_DATE>=?	
 ```
-    
+* 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
+ 
 ## 2.3 最强大的分页查询
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
