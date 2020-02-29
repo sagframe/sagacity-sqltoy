@@ -61,7 +61,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private TranslateManager translateManager = new TranslateManager();
 
 	/**
-	 * 延时检测时长
+	 * 延时检测时长(避免应用一启动即进行检测,包含:缓存变更检测、sql文件变更检测)
 	 */
 	private int delayCheckSeconds = 30;
 
@@ -70,6 +70,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
 
+	/**
+	 * 缓存管理器
+	 */
 	private TranslateCacheManager translateCacheManager;
 
 	/**
@@ -174,14 +177,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String mongoFactoryName = "mongoDbFactory";
 
 	/**
-	 * 是否显示sql文件变更检测
-	 */
-	private boolean showScriptCheck = false;
-
-	/**
 	 * sql脚本检测间隔时长(默认为3秒)
 	 */
-	private int scriptCheckIntervalSeconds = 3;
+	private Integer scriptCheckIntervalSeconds;
 
 	/**
 	 * @param workerId the workerId to set
@@ -228,7 +226,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		/**
 		 * 初始化脚本加载器
 		 */
-		scriptLoader.initialize(showScriptCheck, delayCheckSeconds, scriptCheckIntervalSeconds);
+		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
 
 		/**
 		 * 初始化实体对象管理器
@@ -711,13 +709,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setKeywordSign(String keywordSign) {
 		SqlToyConstants.keywordSign = keywordSign;
-	}
-
-	/**
-	 * @param showScriptCheck the showScriptCheck to set
-	 */
-	public void setShowScriptCheck(boolean showScriptCheck) {
-		this.showScriptCheck = showScriptCheck;
 	}
 
 	/**
