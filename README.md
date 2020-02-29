@@ -12,140 +12,6 @@
 	
       mongodb在用户画像标签数据场景下的应用。
 
-# 集成说明
-  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
-  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
-  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
-  
-  ```java
- package com.sagframe.sqltoy;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-/**
- * @author zhongxuchen
- */
-@SpringBootApplication
-@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
-@EnableTransactionManagement
-public class SqlToyApplication {
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		SpringApplication.run(SqlToyApplication.class, args);
-	}
-}
-
-```
-application.properties sqltoy部分配置
-```javascript
-##  sqltoy 配置 
-# sql.xml 文件的路径,多个路径用;符合分割
-spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
-# 缓存翻译的配置(可选配置)
-spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
-# 是否debug模式,debug 模式会打印执行的sql和参数信息
-spring.sqltoy.debug=true
-# 设置默认使用的datasource(可选配置,不配置会自动注入)
-spring.sqltoy.defaultDataSource=dataSource
-# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
-spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
-
-```
-缓存翻译的配置文件sqltoy-translate.xml 
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<sagacity
-	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
-	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
-	<cache-translates
-		disk-store-path="./sqltoy-showcase/translateCaches">
-		<!-- 基于sql直接查询的方式获取缓存 -->
-		<sql-translate cache="dictKeyNameCache"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
-		        where t.DICT_TYPE=:dictType
-		        order by t.SHOW_INDEX
-			]]>
-			</sql>
-		</sql-translate>
-
-		<!-- 员工ID和姓名的缓存 -->
-		<sql-translate cache="staffIdNameCache"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select STAFF_ID,STAFF_NAME,STATUS
-				from SQLTOY_STAFF_INFO
-			]]>
-			</sql>
-		</sql-translate>
-	</cache-translates>
-
-	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
-	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
-		<sql-checker
-			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
-			datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			select distinct 'staffIdName' cacheName,null cache_type
-			from SQLTOY_STAFF_INFO t1
-			where t1.UPDATE_TIME >=:lastUpdateTime
-			-- 数据字典key和name缓存检测
-			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
-			from SQLTOY_DICT_DETAIL t2
-			where t2.UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-checker>
-	</cache-update-checkers>
-</sagacity>
-```
-* 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
-另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
-
-```java
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = SqlToyApplication.class)
-public class CrudCaseServiceTest {
-	@Autowired
-	private SqlToyCRUDService sqlToyCRUDService;
-
-	/**
-	 * 创建一条员工记录
-	 */
-	@Test
-	public void saveStaffInfo() {
-		StaffInfoVO staffInfo = new StaffInfoVO();
-		staffInfo.setStaffId("S190715005");
-		staffInfo.setStaffCode("S190715005");
-		staffInfo.setStaffName("测试员工4");
-		staffInfo.setSexType("M");
-		staffInfo.setEmail("test3@aliyun.com");
-		staffInfo.setEntryDate(LocalDate.now());
-		staffInfo.setStatus(1);
-		staffInfo.setOrganId("C0001");
-		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
-		staffInfo.setCountry("86");
-		sqlToyCRUDService.save(staffInfo);
-	}
- }
-```
-
-  
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
@@ -161,19 +27,18 @@ public class CrudCaseServiceTest {
    * clickhouse 
    * mongodb (只支持查询)
    
-## 1.2 是否重复造轮子，我只想首先说四个特性：
- * 根本上杜绝了sql注入问题
+## 1.2 是否重复造轮子，我只想首先说五个特性：
+ * 根本上杜绝了sql注入问题，sql支持写注释、sql文件动态更新检测，开发时sql变更会自动重载
  * 最直观的sql编写模式，当查询条件稍微复杂一点的时候就会体现价值，后期变更维护的时候尤为凸显
  * 极为强大的缓存翻译查询：巧妙的结合缓存减少查询语句表关联，极大简化sql和提升性能。
  * 最强大的分页查询：很多人第一次了解到何为快速分页、分页优化这种极为巧妙的处理，还有在count语句上的极度优化。
+ * 跨数据库函数方言替换，如：isnull/ifnull/nvl、substr/substring 等不同数据库 
  
- 当然这只是sqltoy的关键的4个特点，还有行列转换、分库分表、取随机记录、取top记录，修改并返回记录、跨数据库函数自动替换等这些贴合项目应用的功能，
- 当你真正了解上述特点带来的巨大优势之后，您就会对中国人创造的sqltoy-orm有了信心！
+当然这只是sqltoy其中的五个特点，还有行列转换(俗称数据旋转)、多级分组汇总、统一树结构表(如机构)查询、分库分表sharding、取随机记录、取top记录、修改并返回记录、慢sql提醒等这些贴合项目应用的功能， 当你真正了解上述特点带来的巨大优势之后，您就会对中国人创造的sqltoy-orm有了信心！
  
- sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤其是性能优化上不断的挖掘，至于是不是重复的轮子并不重要，希望能够帮到大家！
+sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤其是性能优化上不断的挖掘，至于是不是重复的轮子并不重要，希望能够帮到大家！
 
-# 2. 快速特点展示(参见:sqltoy-showcase 中的源码，基于springboot+mysql 的集成演示)
-
+# 2. 快速特点说明
 ## 2.1 最优雅直观的sql编写模式
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
@@ -221,8 +86,30 @@ where #[t.ORDER_ID=:orderId]
 </where>
 ```
 
-## 2.2 天然防止sql注入,因为不存在条件语句直接拼接，全部:
-    preparedStatement.set(index,value)
+## 2.2 天然防止sql注入,执行过程:
+* 假设sql语句如下
+```xml
+select 	*
+from sqltoy_device_order_info t 
+where #[t.ORGAN_ID in (:authedOrganIds)]
+      #[and t.TRANS_DATE>=:beginDate]
+      #[and t.TRANS_DATE<:endDate] 
+```
+* java调用过程
+```java
+sqlToyLazyDao.findBySql(sql, new String[] { "authedOrganIds","beginDate", "endDate"},
+				new Object[] { authedOrganIdAry,beginDate,null}, DeviceOrderInfoVO.class);
+```
+* 最终执行的sql是这样的:
+```xml
+select 	*
+from sqltoy_device_order_info t 
+where t.ORDER_ID=?
+      and t.ORGAN_ID in (?,?,?)
+      and t.TRANS_DATE>=?	
+```
+* 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
+ 
 ## 2.3 最强大的分页查询
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
@@ -235,14 +122,6 @@ where #[t.ORDER_ID=:orderId]
 	<!-- 分页优化器,通过缓存实现查询条件一致的情况下在一定时间周期内缓存总记录数量，从而无需每次查询总记录数量 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
 	<page-optimize alive-max="100" alive-seconds="120" />
-	<!-- 安全脱敏,type提供了几种标准的脱敏模式
-		mask-rate:脱敏比例
-		mask-code:自定义脱敏掩码,一般***,默认为***
-		head-size:前面保留多长字符
-		tail-size:尾部保留多长字符
-	 -->
-	<secure-mask columns="address" type="address" />
-	<secure-mask columns="tel_no" type="tel"/>
 	<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME 
@@ -256,6 +135,7 @@ where #[t.ORDER_ID=:orderId]
 		left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
 			]]>
 	</value>
+	
 	<!-- 这里为极特殊情况下提供了自定义count-sql来实现极致性能优化 -->
 	<!-- <count-sql></count-sql> -->
 </sql>
@@ -266,68 +146,33 @@ where #[t.ORDER_ID=:orderId]
 	
 ```xml
 <sql id="sqltoy_order_search">
-	<!-- 缓存翻译设备类型 
-	cache:具体的缓存定义的名称
-	cache-type:一般针对数据字典，提供一个分类条件过滤
+	<!-- 缓存翻译设备类型
+        cache:具体的缓存定义的名称，
+        cache-type:一般针对数据字典，提供一个分类条件过滤
 	columns:sql中的查询字段名称，可以逗号分隔对多个字段进行翻译
 	cache-indexs:缓存数据名称对应的列,不填则默认为第二列(从0开始,1则表示第二列)，
 	      例如缓存的数据结构是:key、name、fullName,则第三列表示全称
 	-->
 	<translate cache="dictKeyNameCache" cache-type="DEVICE_TYPE" columns="deviceTypeName" cache-indexs="1"/>
-	<!-- 缓存翻译购销类型 -->
-	<translate cache="dictKeyNameCache" cache-type="PURCHASE_SALE_TYPE" columns="psTypeName" />
-	<!-- 缓存翻译订单状态 -->
-	<translate cache="dictKeyNameCache" cache-type="ORDER_STATUS" columns="statusName" />
 	<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
 	<translate cache="staffIdNameCache" columns="staffName,createName" />
-	<!-- 机构名称翻译 -->
-	<translate cache="organIdNameCache" columns="organName" />
 	<filters>
-		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds">
-			<!--
-			   可选配置:这里的filter是排除的概念,将符合条件的排除掉(可以不使用)
-			   compare-param:可以是具体的一个条件参数名称,也可以是一个固定值
-			   cache-index:针对缓存具体哪一列进行值对比
-			   compare-type:目前分 eq和neq两种情况，这里表示将状态无效的员工过滤掉
-			-->
-			<filter compare-param="0" cache-index="2" compare-type="eq"/>
-		</cache-arg>
-		<!-- 千万不要to_str(trans_date)>=:xxx 模式,sqltoy提供了日期、数字等类型转换,另外了解format的选项可以大幅简化代码处理 -->
-		<to-date params="beginDate" format="yyyy-MM-dd"/>
-		<!-- 对截止日期加1,从而达到类似于 trans_date<='yyyy-MM-dd 23:59:59' 平衡时分秒因素 -->
-		<to-date params="endDate" format="yyyy-MM-dd" increment-days="1"/>
+		<!-- 反向利用缓存通过名称匹配出id用于精确查询 -->
+		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds"/>
 	</filters>
 	<value>
 	<![CDATA[
 	select 	ORDER_ID,
 		DEVICE_TYPE,
 		DEVICE_TYPE deviceTypeName,-- 设备分类名称
-		PS_TYPE,
-		PS_TYPE as psTypeName, -- 购销类别名称
-		TOTAL_CNT,
-		TOTAL_AMT,
-		BUYER,
-		SALER,
-		TRANS_DATE,
-		DELIVERY_TERM,
 		STAFF_ID,
 		STAFF_ID staffName, -- 员工姓名
 		ORGAN_ID,
-		ORGAN_ID organName, -- 机构名称
 		CREATE_BY,
-		CREATE_BY createName, -- 创建人名称
-		CREATE_TIME,
-		UPDATE_BY,
-		UPDATE_TIME,
-		STATUS,
-		STATUS statusName -- 状态名称
+		CREATE_BY createName -- 创建人名称
 	from sqltoy_device_order_info t 
 	where #[t.ORDER_ID=:orderId]
-	      -- 当前用户能够访问的授权组织机构，控制数据访问权限(一般登录后直接放于用户session中)
-		  #[and t.ORGAN_ID in (:authedOrganIds)]
-		  #[and t.STAFF_ID in (:staffIds)]
-		  #[and t.TRANS_DATE>=:beginDate]
-		  #[and t.TRANS_DATE<:endDate]
+	      #[and t.STAFF_ID in (:staffIds)]
 		]]>
 	</value>
 </sql>
@@ -341,17 +186,17 @@ where #[t.ORDER_ID=:orderId]
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
   ```xml
- <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
-		<property name="functionConverts" value="default">
-		<!-- 可以这样自行根据需要进行定义和扩展
-		<property name="functionConverts">
-			<list>
-				<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
-				<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
-				<value>org.sagacity.sqltoy.plugins.function.Now</value>
-				<value>org.sagacity.sqltoy.plugins.function.Length</value>
-			</list>
-		</property> -->
+        <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
+	<property name="functionConverts" value="default">
+	<!-- 也可以这样自行根据需要进行定义和扩展
+	<property name="functionConverts">
+		<list>
+			<value>org.sagacity.sqltoy.plugins.function.Nvl</value>
+			<value>org.sagacity.sqltoy.plugins.function.SubStr</value>
+			<value>org.sagacity.sqltoy.plugins.function.Now</value>
+			<value>org.sagacity.sqltoy.plugins.function.Length</value>
+		</list>
+	</property> -->
 </bean>
 
 ```
@@ -506,9 +351,238 @@ public class UserLogVO extends AbstractUserLogVO {
 ## 2.9 elastic原生查询支持
 ## 2.10 elasticsearch-sql 插件模式sql模式支持
 
-# 3. sqltoy框架介绍
+# 3.集成说明
 
-![image](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/sqltoy-orm-struts.jpg)
+  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
+  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
+  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
+  
+  ```java
+ package com.sagframe.sqltoy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+/**
+ * @author zhongxuchen
+ */
+@SpringBootApplication
+@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
+@EnableTransactionManagement
+public class SqlToyApplication {
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		SpringApplication.run(SqlToyApplication.class, args);
+	}
+}
+
+```
+application.properties sqltoy部分配置
+```javascript
+##  sqltoy 配置 
+# sql.xml 文件的路径,多个路径用;符合分割(原则上也是可选配置，如果只用对象操作的话,但不建议)
+spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
+# 缓存翻译的配置(可选配置)
+spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
+# 是否debug模式,debug 模式会打印执行的sql和参数信息(可选配置)
+spring.sqltoy.debug=true
+# 设置默认使用的datasource(可选配置,不配置会自动注入)
+spring.sqltoy.defaultDataSource=dataSource
+# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
+spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+# sql执行超过多长时间则进行日志输出(可选配置:默认30秒)，用于监控哪些慢sql
+spring.sqltoy.printSqlTimeoutMillis=30000
+
+```
+缓存翻译的配置文件sqltoy-translate.xml 
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
+	<cache-translates
+		disk-store-path="./sqltoy-showcase/translateCaches">
+		<!-- 基于sql直接查询的方式获取缓存 -->
+		<sql-translate cache="dictKeyNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.STATUS
+				from SQLTOY_DICT_DETAIL t
+		        where t.DICT_TYPE=:dictType
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+
+		<!-- 员工ID和姓名的缓存 -->
+		<sql-translate cache="staffIdNameCache"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select STAFF_ID,STAFF_NAME,STATUS
+				from SQLTOY_STAFF_INFO
+			]]>
+			</sql>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
+	<cache-update-checkers>
+		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
+		<sql-checker
+			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
+			datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select distinct 'staffIdName' cacheName,null cache_type
+			from SQLTOY_STAFF_INFO t1
+			where t1.UPDATE_TIME >=:lastUpdateTime
+			-- 数据字典key和name缓存检测
+			union all 
+			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
+			from SQLTOY_DICT_DETAIL t2
+			where t2.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-checker>
+	</cache-update-checkers>
+</sagacity>
+```
+* 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
+另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = SqlToyApplication.class)
+public class CrudCaseServiceTest {
+	@Autowired
+	private SqlToyCRUDService sqlToyCRUDService;
+
+	/**
+	 * 创建一条员工记录
+	 */
+	@Test
+	public void saveStaffInfo() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715005");
+		staffInfo.setStaffCode("S190715005");
+		staffInfo.setStaffName("测试员工4");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test3@aliyun.com");
+		staffInfo.setEntryDate(LocalDate.now());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		sqlToyCRUDService.save(staffInfo);
+	}
+ }
+```
+# 4. sqltoy sql关键说明
+## 4.1 sqltoy sql最简单规则#[] 对称符号
+* #[] 等于if(中间语句参数是否有null)? true: 剔除#[] 整块代码，false：拿掉#[ 和 ] ,将中间的sql作为执行的一部分。
+* #[] 支持嵌套，如#[t.status=:status  #[and t.createDate>=:createDate]] 会先从内而外执行if(null)逻辑
+* 利用filters条件值预处理实现判断null的统一,下面是sqltoy完整提供的条件过滤器和其他函数
+  不要被大段的说明吓一跳，99%都用不上，正常filters里面只会用到eq 和 to-date 
+
+```xml
+<sql id="show_case">
+	<!-- 通过filters里面的逻辑将查询条件转为null，部分逻辑则对参数进行二次转换
+	     默认条件参数为空白、空集合、空数组都转为null
+             parmas 表示可以用逗号写多个参数，param 表示只支持单个参数
+	-->	
+	<filters>
+		<!-- 等于，如机构类别前端传负一就转为null不参与条件过滤 -->
+		<eq params="organType" value="-1" />
+		<!-- 条件值在某个区间则转为null -->
+		<between params="" start-value="0" end-value="9999" />
+
+		<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
+		 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
+		<to-date params="" format="yyyyMMdd" increment-days="1" />
+		<!-- 将参数转为数字 --> 
+		<to-number params="" data-type="decimal" />
+		<!-- 将前端传过来的字符串切割成数组 -->
+		<split data-type="string" params="staffAuthOrgs" split-sign=","/>
+		<!-- 小于等于 -->
+		<lte params="" value=""  />
+		<!-- 小于 -->
+		<lt  params=""  value="" />
+		<!-- 大于等于 -->
+		<gte params="" value=""  />
+		<!-- 大于 -->
+		<gt params="" value=""  />
+		<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
+		<replace params="" regex="" value="" is-first="false" />
+		<!-- 首要参数，即当某个参数不为null时，excludes是指被排除之外的参数全部为null -->
+		<primary param="orderId" excludes="organIds" />
+		<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
+		<exclusive param="" compare-type="eq" compare-values=""
+			set-params="" set-value="" />
+		<!-- 通过缓存进行文字模糊匹配获取精确的代码值参与精确查询 -->	
+		<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
+		<!-- 将数组转化成in 的参数条件并增加单引号 -->
+		<to-in-arg params=""/>
+	</filters>
+		
+	<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
+	<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
+		cache-indexs="1" uncached-template=""/>
+
+	<!-- 安全掩码:tel\姓名\地址\卡号 -->
+	<!--最简单用法: <secure-mask columns="" type="tel"/> -->
+	<secure-mask columns="" type="name" head-size="3" tail-size="4"
+		mask-code="*****" mask-rate="50" />
+	<!-- 分库策略 -->
+	<sharding-datasource strategy="" />
+	<!-- 分表策略 -->
+	<sharding-table tables="" strategy="" params="" />
+	<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
+	<page-optimize alive-max="100" alive-seconds="600" />
+	<!-- 日期格式化 -->
+	<date-format columns="" format="yyyy-MM-dd HH:mm:ss"/>
+	<!-- 数字格式 -->
+        <number-format columns="" format=""/>
+	<value>
+	<![CDATA[
+	select t1.*,t2.ORGAN_NAME from 
+	@fast(select * from sys_staff_info t
+		  where #[t.sexType=:sexType]
+			#[and t.JOIN_DATE>:beginDate]
+			#[and t.STAFF_NAME like :staffName]
+			-- 是否虚拟员工@if()做逻辑判断
+			#[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
+			) t1,sys_organ_info t2
+        where t1.ORGAN_ID=t2.ORGAN_ID
+	]]>	
+	</value>
+
+	<!-- 为极致分页提供自定义写sql -->
+	<count-sql><![CDATA[]]></count-sql>
+	<!-- 汇总和求平均，通过算法实现复杂的sql，同时可以变成数据库无关 -->
+	<summary columns="" radix-size="2" reverse="false" sum-site="left">
+		<global sum-label="" label-column="" />
+		<group sum-label="" label-column="" group-column="" />
+	</summary>
+	<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
+	<link sign="," column="" />
+	<!-- 行转列 (跟unpivot互斥)，算法实现数据库无关 -->
+	<pivot category-columns="" group-columns="" start-column="" end-column=""
+		default-value="0" />
+	<!-- 列转行 -->
+	<unpivot columns="" values-as-column="" />
+</sql>
+```
+
+# 5. sqltoy关键代码说明
 
 * sqltoy-orm 主要分以下几个部分：
   - BaseDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
@@ -522,7 +596,7 @@ public class UserLogVO extends AbstractUserLogVO {
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
   
 
-快速阅读理解sqltoy:
+* 快速阅读理解sqltoy:
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
@@ -530,28 +604,3 @@ public class UserLogVO extends AbstractUserLogVO {
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
   - PageOptimizeCacheImpl:可以看到分页优化默认实现原理。
- 
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
