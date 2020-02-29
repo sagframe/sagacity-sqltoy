@@ -129,7 +129,7 @@ public class SqlScriptLoader {
 				if (debug) {
 					sleepSeconds = 2;
 				} else {
-					sleepSeconds = 10;
+					sleepSeconds = 15;
 				}
 			} else {
 				sleepSeconds = scriptCheckIntervalSeconds.intValue();
