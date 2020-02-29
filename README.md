@@ -34,7 +34,7 @@
  * 最强大的分页查询：很多人第一次了解到何为快速分页、分页优化这种极为巧妙的处理，还有在count语句上的极度优化。
  * 跨数据库函数方言替换，如：isnull/ifnull/nvl、substr/substring 等不同数据库 
  
-当然这只是sqltoy其中的五个特点，还有行列转换(俗称数据旋转)、多级分组汇总、统一树结构表(如机构)查询、分库分表sharding、取随机记录、取top记录、修改并返回记录等这些贴合项目应用的功能， 当你真正了解上述特点带来的巨大优势之后，您就会对中国人创造的sqltoy-orm有了信心！
+当然这只是sqltoy其中的五个特点，还有行列转换(俗称数据旋转)、多级分组汇总、统一树结构表(如机构)查询、分库分表sharding、取随机记录、取top记录、修改并返回记录、慢sql提醒等这些贴合项目应用的功能， 当你真正了解上述特点带来的巨大优势之后，您就会对中国人创造的sqltoy-orm有了信心！
  
 sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤其是性能优化上不断的挖掘，至于是不是重复的轮子并不重要，希望能够帮到大家！
 
@@ -395,6 +395,8 @@ spring.sqltoy.debug=true
 spring.sqltoy.defaultDataSource=dataSource
 # 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
 spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+# sql执行超过多长时间则进行日志输出(默认30秒)，用于监控哪些慢sql
+spring.sqltoy.printSqlTimeoutMillis=30000
 
 ```
 缓存翻译的配置文件sqltoy-translate.xml 
