@@ -125,9 +125,9 @@ public class SqlScriptLoader {
 		if (realSqlList != null && !realSqlList.isEmpty()) {
 			int sleepSeconds = 0;
 			if (scriptCheckIntervalSeconds == null) {
-				// debug模式下,sql文件每隔一秒检测
+				// debug模式下,sql文件每隔2秒检测
 				if (debug) {
-					sleepSeconds = 1;
+					sleepSeconds = 2;
 				} else {
 					sleepSeconds = 10;
 				}
