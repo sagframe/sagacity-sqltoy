@@ -56,7 +56,7 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setEncoding(properties.getEncoding());
 		}
 
-		//sqltoy 已经无需指定扫描pojo类,已经改为用的时候动态加载
+		// sqltoy 已经无需指定扫描pojo类,已经改为用的时候动态加载
 		// pojo 扫描路径,意义不存在
 		if (properties.getPackagesToScan() != null) {
 			sqlToyContext.setPackagesToScan(properties.getPackagesToScan());
@@ -75,18 +75,22 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setPageFetchSizeLimit(properties.getPageFetchSizeLimit());
 		}
 
+		// sql 检测间隔时长(单位秒)
 		if (properties.getScriptCheckIntervalSeconds() != null) {
 			sqlToyContext.setScriptCheckIntervalSeconds(properties.getScriptCheckIntervalSeconds());
 		}
 
+		// 缓存、sql文件在初始化后延时多少秒开始检测
 		if (properties.getDelayCheckSeconds() != null) {
 			sqlToyContext.setDelayCheckSeconds(properties.getDelayCheckSeconds());
 		}
 
-		// sql执行打印策略(默认为error时打印)
+		// 是否debug模式
 		if (properties.getDebug() != null) {
 			sqlToyContext.setDebug(properties.getDebug());
 		}
+
+		// sql执行打印策略(默认为error时打印)
 		if (properties.getPrintSqlStrategy() != null) {
 			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
 		}
