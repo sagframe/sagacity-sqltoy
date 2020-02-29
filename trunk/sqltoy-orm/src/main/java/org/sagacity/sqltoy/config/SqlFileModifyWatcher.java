@@ -39,8 +39,9 @@ public class SqlFileModifyWatcher extends Thread {
 	 */
 	private int sleepSeconds = 1;
 
-	// private boolean debug = false;
-
+	/**
+	 * 延迟检测时长(秒)
+	 */
 	private int delayCheckSeconds;
 
 	public SqlFileModifyWatcher(ConcurrentHashMap<String, SqlToyConfig> sqlCache,
@@ -53,7 +54,6 @@ public class SqlFileModifyWatcher extends Thread {
 		this.filesLastModifyMap = filesLastModifyMap;
 		this.delayCheckSeconds = delayCheckSeconds;
 		this.sleepSeconds = (sleepSeconds >= 1) ? sleepSeconds : 1;
-		// this.debug = debug;
 	}
 
 	@Override
