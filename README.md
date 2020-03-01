@@ -115,8 +115,8 @@ where t.ORDER_ID=?
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，
 并自动剔除最外层的order by
-* 4、在极特殊情况下sqltoy分页考虑是最优化的，如:with t1 as (),t2 as (select * from table1) select * from xxx
-这种复杂查询的分页的处理，如果分页在t2 as @fast() 上，sqltoy的count查询会是:with t1 as () select count(1) from table1,
+* 4、在极特殊情况下sqltoy分页考虑是最优化的，如:with t1 as (),t2 as @fast(select * from table1) select * from xxx
+这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
 ```xml
