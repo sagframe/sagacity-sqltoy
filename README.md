@@ -185,7 +185,7 @@ where t.ORDER_ID=?
 * 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
-  ```xml
+ ```xml
         <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 	<property name="functionConverts" value="default">
 	<!-- 也可以这样自行根据需要进行定义和扩展
@@ -202,6 +202,7 @@ where t.ORDER_ID=?
 ```
   
 ## 2.5 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+
 ```xml
         <!-- 列转行测试 -->
 	<sql id="sys_unpvoitSearch">
@@ -235,7 +236,7 @@ where t.ORDER_ID=?
 	</sql>
 ```
 ## 2.6 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
-```
+```xml
 	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
 	<sql id="sys_summarySearch">
 		<!-- 数据源sharding，多库将请求压力分摊到多个数据库节点上，支撑更多并发请求 -->	
