@@ -11,10 +11,8 @@
 	<property name="include.schema" value="false" />
 	<!-- oracle支持schema,mysql\DB2:catalog,4.0.6版本之后增加name属性 -->
 	<datasource name="sqltoy" url="${jdbc.connection.url}"
-		driver="${jdbc.connection.driver_class}"
-		catalog="${jdbc.connection.catalog}"
-		username="${jdbc.connection.username}"
-		password="${jdbc.connection.password}" />
+		driver="${jdbc.connection.driver_class}" catalog="${jdbc.connection.catalog}"
+		username="${jdbc.connection.username}"	password="${jdbc.connection.password}" />
 	<tasks dist="../../src/main/java" encoding="UTF-8">
 		<!-- 4.0.6之后增加datasource属性适应多数据库配置 -->
 		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy">
@@ -23,19 +21,15 @@
 		<task active="false" author="zhongxuchen" include="^TRADE_\w+" datasource="sqltoy">
 			<vo package="${project.package}.showcase.vo" substr="Trade" name="#{subName}VO" />
 		</task>
-		<task active="false" author="zhongxuchen" include="^SYS_\w+" datasource="sqltoy">
-			<!-- name 可以${subName}POJO 或${subName}TO,根据实际项目情况而定，不一定是VO  -->
-			<vo package="${project.package}.system.vo" substr="Sys"	name="#{subName}VO" />
-		</task>
 	</tasks>
 	<!-- 主键策略配置:identity类型的会自动产生响应的主键策略，其他场景sqltoy根据主键类型和长度自动分配响应的策略方式. strategy:分:sequence\assign\generator 
 		三种,sequence为数据库sequence模式需要指定具体的sequence名称，assign 为手工赋值，Generator则为指定具体产生策略 
 		generator:主键产生器,目前分:default:22位长度的主键、nanotime:26位纳秒形式;snowflake雪花算法、uuid:32位唯一算法 -->
 	<primary-key>
-		<table name="SQLTOY_\w+|SYS_\w+" strategy="generator"
-			generator="default" />
-		<!-- <table name="xxxTABLE" strategy="sequence" sequence="SEQ_XXXX"/> -->
+		<table name="SQLTOY_\w+|SYS_\w+" strategy="generator" generator="default" />
+		<!--<table name="xxxTABLE" strategy="sequence" sequence="SEQ_XXXX"/> -->
 		<!--<table name="sys_staff_info" strategy="generator" generator="snowflake"/> -->
+		<!-- <table name="sys_staff_info" strategy="generator" generator="redis"/>  -->
 	</primary-key>
 
 	<business-primary-key>
