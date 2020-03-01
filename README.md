@@ -160,7 +160,9 @@ where t.ORDER_ID=?
 		// 第一次调用:执行count 和 取记录两次查询
 		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
-		// 第二次调用:条件一致，不执行count查询
+		// 第二次调用:过滤条件一致，则不会再次执行count查询
+		//设置为第二页
+		pageModel.setPageNo(2);
 		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
 	}
