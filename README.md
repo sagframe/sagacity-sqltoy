@@ -111,6 +111,7 @@ where t.ORDER_ID=?
 * 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
  
 ## 2.3 最强大的分页查询
+### 2.3.1 分页特点说明
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，
@@ -119,6 +120,7 @@ where t.ORDER_ID=?
 这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
+### 2.3.1 分页sql示例
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
@@ -143,6 +145,38 @@ where t.ORDER_ID=?
 	<!-- <count-sql></count-sql> -->
 </sql>
 ```
+### 2.3.3 分页java代码调用
+
+```java
+	/**
+	 *  基于对象传参数模式
+	 */
+	public void findPageByEntity() {
+		PaginationModel pageModel = new PaginationModel();
+		StaffInfoVO staffVO = new StaffInfoVO();
+		// 作为查询条件传参数
+		staffVO.setStaffName("陈");
+		// 使用了分页优化器
+		// 第一次调用:执行count 和 取记录两次查询
+		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		System.err.println(JSON.toJSONString(result));
+		// 第二次调用:条件一致，不执行count查询
+		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		System.err.println(JSON.toJSONString(result));
+	}
+	
+	/**
+	 *  基于参数数组传参数
+	 */
+	public void findPageByParams() {
+		//默认pageSize 为10，pageNo 为1
+		PaginationModel pageModel = new PaginationModel();
+		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", new String[]{"staffName"},new    Object[]{"陈"},StaffInfoVO.class);
+		System.err.println(JSON.toJSONString(result));
+	}
+	
+```
+
 ## 2.4 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
 * 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
