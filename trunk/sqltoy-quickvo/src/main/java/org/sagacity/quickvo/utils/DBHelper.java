@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.dom4j.Element;
 import org.sagacity.quickvo.QuickVOConstants;
 import org.sagacity.quickvo.model.DataSourceModel;
 import org.sagacity.quickvo.model.TableColumnMeta;
@@ -23,6 +22,8 @@ import org.sagacity.quickvo.model.TableConstractModel;
 import org.sagacity.quickvo.model.TableMeta;
 import org.sagacity.quickvo.utils.DBUtil.DbType;
 import org.sagacity.quickvo.utils.callback.PreparedStatementResultHandler;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * @project sagacity-quickvo
@@ -51,30 +52,30 @@ public class DBHelper {
 	 * @param datasouceElts
 	 * @throws Exception
 	 */
-	public static void loadDatasource(List<Element> datasouceElts) throws Exception {
-		if (datasouceElts == null || datasouceElts.isEmpty()) {
+	public static void loadDatasource(NodeList datasouceElts) throws Exception {
+		if (datasouceElts == null || datasouceElts.getLength() == 0) {
 			logger.error("没有配置相应的数据库");
 			throw new Exception("没有配置相应的数据库");
 		}
-		int index = 0;
-		for (Element datasouceElt : datasouceElts) {
+		Element datasouceElt;
+		for (int m = 0; m < datasouceElts.getLength(); m++) {
+			datasouceElt = (Element) datasouceElts.item(m);
 			DataSourceModel dbModel = new DataSourceModel();
 			String name = null;
-			if (datasouceElt.attribute("name") != null) {
-				name = datasouceElt.attributeValue("name");
+			if (datasouceElt.hasAttribute("name")) {
+				name = datasouceElt.getAttribute("name");
 			}
-			if (datasouceElt.attribute("catalog") != null) {
-				dbModel.setCatalog(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("catalog")));
+			if (datasouceElt.hasAttribute("catalog")) {
+				dbModel.setCatalog(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("catalog")));
 			}
-			if (datasouceElt.attribute("schema") != null) {
-				dbModel.setSchema(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("schema")));
+			if (datasouceElt.hasAttribute("schema")) {
+				dbModel.setSchema(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("schema")));
 			}
-			dbModel.setUrl(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("url")));
-			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("driver")));
-			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("username")));
-			dbModel.setPassword(QuickVOConstants.replaceConstants(datasouceElt.attributeValue("password")));
-			dbMaps.put(StringUtil.isBlank(name) ? ("" + index) : name, dbModel);
-			index++;
+			dbModel.setUrl(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("url")));
+			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("driver")));
+			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("username")));
+			dbModel.setPassword(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("password")));
+			dbMaps.put(StringUtil.isBlank(name) ? ("" + m) : name, dbModel);
 		}
 	}
 

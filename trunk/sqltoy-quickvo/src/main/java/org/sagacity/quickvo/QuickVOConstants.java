@@ -14,11 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.dom4j.Element;
 import org.sagacity.quickvo.model.ColumnTypeMapping;
 import org.sagacity.quickvo.utils.DBUtil;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * @project sagacity-quickvo
@@ -176,26 +177,26 @@ public class QuickVOConstants implements Serializable {
 	 * @param paramElts
 	 * @throws Exception
 	 */
-	public static void loadProperties(List paramElts) throws Exception {
+	public static void loadProperties(NodeList paramElts) throws Exception {
 		String guid = System.getProperty(GLOBA_IDENTITY_NAME);
 		if (guid == null)
 			guid = "";
 		// 加载任务配置文件中的参数
-		if (paramElts != null && !paramElts.isEmpty()) {
+		if (paramElts != null && paramElts.getLength() > 0) {
 			Element elt;
-			for (int i = 0; i < paramElts.size(); i++) {
-				elt = (Element) paramElts.get(i);
-				if (elt.attribute("name") != null) {
-					if (elt.attribute("value") != null) {
-						constantMap.put(elt.attributeValue("name"), replaceConstants(
-								StringUtil.replaceAllStr(elt.attributeValue("value"), GLOBA_IDENTITY, guid)));
+			for (int i = 0; i < paramElts.getLength(); i++) {
+				elt = (Element) paramElts.item(i);
+				if (elt.hasAttribute("name")) {
+					if (elt.hasAttribute("value")) {
+						constantMap.put(elt.getAttribute("name"), replaceConstants(
+								StringUtil.replaceAllStr(elt.getAttribute("value"), GLOBA_IDENTITY, guid)));
 					} else {
-						constantMap.put(elt.attributeValue("name"),
-								replaceConstants(StringUtil.replaceAllStr(elt.getText(), GLOBA_IDENTITY, guid)));
+						constantMap.put(elt.getAttribute("name"),
+								replaceConstants(StringUtil.replaceAllStr(elt.getNodeValue(), GLOBA_IDENTITY, guid)));
 					}
-				} else if (elt.attribute("file") != null) {
-					loadPropertyFile(replaceConstants(
-							StringUtil.replaceAllStr(elt.attributeValue("file"), GLOBA_IDENTITY, guid)));
+				} else if (elt.hasAttribute("file")) {
+					loadPropertyFile(
+							replaceConstants(StringUtil.replaceAllStr(elt.getAttribute("file"), GLOBA_IDENTITY, guid)));
 				}
 			}
 		}
