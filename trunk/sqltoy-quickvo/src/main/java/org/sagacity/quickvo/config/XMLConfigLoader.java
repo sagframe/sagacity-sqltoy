@@ -98,6 +98,7 @@ public class XMLConfigLoader {
 		Element quickvo;
 		Element vo;
 		boolean active = true;
+		NodeList nodeList;
 		for (int i = 0; i < quickVOs.getLength(); i++) {
 			quickvo = (Element) quickVOs.item(i);
 			active = true;
@@ -118,29 +119,33 @@ public class XMLConfigLoader {
 				if (quickvo.hasAttribute("swagger-model")) {
 					quickModel.setSwaggerApi(Boolean.parseBoolean(quickvo.getAttribute("swagger-model")));
 				}
-				vo = (Element) quickvo.getElementsByTagName("vo").item(0);
-				if (quickvo.hasAttribute("include")) {
-					// *表示全部,等同于没有include配置
-					if (!quickvo.getAttribute("include").equals("*")) {
-						quickModel.setIncludeTables(QuickVOConstants.replaceConstants(quickvo.getAttribute("include")));
+				nodeList = quickvo.getElementsByTagName("vo");
+				if (nodeList.getLength() > 0) {
+					vo = (Element) nodeList.item(0);
+					if (quickvo.hasAttribute("include")) {
+						// *表示全部,等同于没有include配置
+						if (!quickvo.getAttribute("include").equals("*")) {
+							quickModel.setIncludeTables(
+									QuickVOConstants.replaceConstants(quickvo.getAttribute("include")));
+						}
 					}
+					// 排除的表
+					if (quickvo.hasAttribute("exclude")) {
+						quickModel.setExcludeTables(QuickVOConstants.replaceConstants(quickvo.getAttribute("exclude")));
+					}
+					// 实体对象包可以统一用参数定义
+					if (quickvo.hasAttribute("package")) {
+						quickModel.setEntityPackage(QuickVOConstants.getPropertyValue("entity.package"));
+					} else {
+						quickModel.setEntityPackage(QuickVOConstants.replaceConstants(quickvo.getAttribute("package")));
+					}
+					quickModel.setVoPackage(QuickVOConstants.replaceConstants(vo.getAttribute("package")));
+					if (vo.hasAttribute("substr")) {
+						quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
+					}
+					quickModel.setVoName(QuickVOConstants.replaceConstants(vo.getAttribute("name")));
+					quickModels.add(quickModel);
 				}
-				// 排除的表
-				if (quickvo.hasAttribute("exclude")) {
-					quickModel.setExcludeTables(QuickVOConstants.replaceConstants(quickvo.getAttribute("exclude")));
-				}
-				// 实体对象包可以统一用参数定义
-				if (quickvo.hasAttribute("package")) {
-					quickModel.setEntityPackage(QuickVOConstants.getPropertyValue("entity.package"));
-				} else {
-					quickModel.setEntityPackage(QuickVOConstants.replaceConstants(quickvo.getAttribute("package")));
-				}
-				quickModel.setVoPackage(QuickVOConstants.replaceConstants(vo.getAttribute("package")));
-				if (vo.hasAttribute("substr")) {
-					quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
-				}
-				quickModel.setVoName(QuickVOConstants.replaceConstants(vo.getAttribute("name")));
-				quickModels.add(quickModel);
 			}
 		}
 		if (quickModels.isEmpty()) {
@@ -148,10 +153,10 @@ public class XMLConfigLoader {
 			return null;
 		}
 		configModel.setTasks(quickModels);
+		nodeList = root.getElementsByTagName("primary-key");
 		// 主键设置
-		if (root.getElementsByTagName("primary-key") != null) {
-			NodeList tables = ((Element) root.getElementsByTagName("primary-key").item(0))
-					.getElementsByTagName("table");
+		if (nodeList.getLength() > 0) {
+			NodeList tables = ((Element) nodeList.item(0)).getElementsByTagName("table");
 			Element table;
 			String name;
 			String sequence;
@@ -193,10 +198,10 @@ public class XMLConfigLoader {
 		// 自定义数据匹配类型
 		List<ColumnTypeMapping> typeMapping = new ArrayList<ColumnTypeMapping>();
 		QuickVOConstants.addDefaultTypeMapping(typeMapping);
-		if (root.getElementsByTagName("type-mapping") != null) {
-			NodeList jdbcTypes = ((Element) root.getElementsByTagName("type-mapping").item(0))
-					.getElementsByTagName("sql-type");
-			if (jdbcTypes != null && jdbcTypes.getLength() > 0) {
+		nodeList = root.getElementsByTagName("type-mapping");
+		if (nodeList.getLength() > 0) {
+			NodeList jdbcTypes = ((Element) nodeList.item(0)).getElementsByTagName("sql-type");
+			if (jdbcTypes.getLength() > 0) {
 				Element type;
 				String javaType;
 				String[] precision;
@@ -250,9 +255,10 @@ public class XMLConfigLoader {
 			}
 		}
 		configModel.setTypeMapping(typeMapping);
+		nodeList = root.getElementsByTagName("cascade");
 		// 级联操作设置
-		if (root.getElementsByTagName("cascade") != null) {
-			NodeList mainCascades = root.getElementsByTagName("cascade");
+		if (nodeList.getLength() > 0) {
+			NodeList mainCascades = nodeList;
 			String mainTable;
 			Element mainCasade;
 			for (int m = 0; m < mainCascades.getLength(); m++) {
@@ -286,14 +292,13 @@ public class XMLConfigLoader {
 
 		// 数据库
 		DBHelper.loadDatasource(root.getElementsByTagName("datasource"));
-
+		nodeList = root.getElementsByTagName("business-primary-key");
 		// 表业务主键配置
-		if (root.getElementsByTagName("business-primary-key") != null) {
-			NodeList tables = ((Element) root.getElementsByTagName("business-primary-key").item(0))
-					.getElementsByTagName("table");
+		if (nodeList.getLength() > 0) {
+			NodeList tables = ((Element) nodeList.item(0)).getElementsByTagName("table");
 			Element tableElt;
 			for (int m = 0; m < tables.getLength(); m++) {
-				tableElt = (Element)tables.item(m);
+				tableElt = (Element) tables.item(m);
 				BusinessIdConfig bizIdConfig = new BusinessIdConfig();
 				bizIdConfig.setTableName(tableElt.getAttribute("name"));
 				bizIdConfig.setColumn(tableElt.getAttribute("column"));
