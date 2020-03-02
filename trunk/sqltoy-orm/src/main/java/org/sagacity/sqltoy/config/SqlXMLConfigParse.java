@@ -370,7 +370,7 @@ public class SqlXMLConfigParse {
 		} else {
 			nodeList = sqlElt.getElementsByTagName("fields");
 			if (nodeList.getLength() > 0) {
-				noSqlConfig.setFields(trimParams(nodeList.item(0).getFirstChild().getNodeValue().split("\\,")));
+				noSqlConfig.setFields(trimParams(nodeList.item(0).getTextContent().split("\\,")));
 			}
 		}
 

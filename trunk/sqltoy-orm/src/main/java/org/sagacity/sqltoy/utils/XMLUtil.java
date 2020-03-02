@@ -247,9 +247,8 @@ public class XMLUtil {
 		} else {
 			properties[index] = StringUtil.toHumpStr(name, false);
 		}
-		if (elt.getFirstChild() != null) {
-			values[index] = elt.getFirstChild().getNodeValue();
-		}
+		// 最后一个
+		values[index] = elt.getTextContent();
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;
