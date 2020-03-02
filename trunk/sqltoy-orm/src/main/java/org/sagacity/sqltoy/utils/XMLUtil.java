@@ -222,7 +222,7 @@ public class XMLUtil {
 		for (int i = 0; i < attrs.getLength(); i++) {
 			attr = attrs.item(i);
 			name = attr.getNodeName();
-			value = attr.getFirstChild().getNodeValue();
+			value = attr.getNodeValue();
 			// 对照属性
 			if (realMap.containsKey(name)) {
 				properties[index] = realMap.get(name);
@@ -247,7 +247,9 @@ public class XMLUtil {
 		} else {
 			properties[index] = StringUtil.toHumpStr(name, false);
 		}
-		values[index] = elt.getFirstChild().getNodeValue();
+		if (elt.getFirstChild() != null) {
+			values[index] = elt.getFirstChild().getNodeValue();
+		}
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;
