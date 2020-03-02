@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -140,14 +141,20 @@ public class SqlXMLConfigParse {
 					return;
 				// 解析单个sql
 				SqlToyConfig sqlToyConfig;
+				Element sqlElt;
+				Node obj;
 				for (int i = 0; i < sqlElts.getLength(); i++) {
-					sqlToyConfig = parseSingleSql((Element) sqlElts.item(i), dialect);
-					if (sqlToyConfig != null) {
-						// 去除sql中的注释语句并放入缓存
-						if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
-							logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
+					obj = sqlElts.item(i);
+					if (obj.getNodeType() == Node.ELEMENT_NODE) {
+						sqlElt = (Element) obj;
+						sqlToyConfig = parseSingleSql(sqlElt, dialect);
+						if (sqlToyConfig != null) {
+							// 去除sql中的注释语句并放入缓存
+							if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
+								logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
+							}
+							cache.put(sqlToyConfig.getId(), sqlToyConfig);
 						}
-						cache.put(sqlToyConfig.getId(), sqlToyConfig);
 					}
 				}
 			}
@@ -200,13 +207,14 @@ public class SqlXMLConfigParse {
 		if (id == null) {
 			throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
 		}
+
 		// 判断是否xml为精简模式即只有<sql id=""><![CDATA[]]></sql>模式
 		NodeList nodeList = sqlElt.getElementsByTagName("value");
-		String sqlContent;
+		String sqlContent = null;
 		if (nodeList.getLength() > 0) {
-			sqlContent = nodeList.item(0).getFirstChild().getNodeValue();
+			sqlContent = nodeList.item(0).getTextContent();
 		} else {
-			sqlContent = sqlElt.getFirstChild().getNodeValue();
+			sqlContent = sqlElt.getTextContent();
 		}
 		if (StringUtil.isBlank(sqlContent)) {
 			throw new RuntimeException("请检查sql-id='" + id + "' 的配置,没有正确填写sql内容!");
@@ -214,7 +222,7 @@ public class SqlXMLConfigParse {
 		nodeList = sqlElt.getElementsByTagName("count-sql");
 		String countSql = null;
 		if (nodeList.getLength() > 0) {
-			countSql = nodeList.item(0).getFirstChild().getNodeValue();
+			countSql = nodeList.item(0).getTextContent();
 		}
 		// 替换全角空格
 		sqlContent = sqlContent.replaceAll("\u3000", " ");
@@ -575,36 +583,38 @@ public class SqlXMLConfigParse {
 			boolean blank = false;
 			Element filter;
 			for (int i = 0; i < filterSet.getLength(); i++) {
-				filter = (Element) filterSet.item(i);
-				blank = false;
-				filterType = filter.getNodeName();
-				// 当开发者配置了blank过滤器时，则表示关闭默认将全部空白当做null处理的逻辑
-				if (filterType.equals("blank")) {
-					hasBlank = true;
-					blank = true;
-				}
-				// [非强制且是blank ] 或者 [ 非blank]
-				if ((blank && blankToNull != 1) || !blank) {
-					ParamFilterModel filterModel = new ParamFilterModel();
-					// 统一过滤的类别,避免不同版本和命名差异
-					if (filterType.equals("equals") || filterType.equals("any") || filterType.equals("in")) {
-						filterType = "eq";
-					} else if (filterType.equals("moreThan") || filterType.equals("more")) {
-						filterType = "gt";
-					} else if (filterType.equals("moreEquals") || filterType.equals("more-equals")) {
-						filterType = "gte";
-					} else if (filterType.equals("lessThan") || filterType.equals("less")) {
-						filterType = "lt";
-					} else if (filterType.equals("lessEquals") || filterType.equals("less-equals")) {
-						filterType = "lte";
-					} else if (filterType.equals("not-any")) {
-						filterType = "neq";
-					} else if (filterType.equals("dateFormat")) {
-						filterType = "date-format";
+				if (filterSet.item(i).getNodeType() == Node.ELEMENT_NODE) {
+					filter = (Element) filterSet.item(i);
+					blank = false;
+					filterType = filter.getNodeName();
+					// 当开发者配置了blank过滤器时，则表示关闭默认将全部空白当做null处理的逻辑
+					if (filterType.equals("blank")) {
+						hasBlank = true;
+						blank = true;
 					}
-					filterModel.setFilterType(filterType);
-					parseFilterElt(sqlToyConfig, filterModel, filter);
-					filterModels.add(filterModel);
+					// [非强制且是blank ] 或者 [ 非blank]
+					if ((blank && blankToNull != 1) || !blank) {
+						ParamFilterModel filterModel = new ParamFilterModel();
+						// 统一过滤的类别,避免不同版本和命名差异
+						if (filterType.equals("equals") || filterType.equals("any") || filterType.equals("in")) {
+							filterType = "eq";
+						} else if (filterType.equals("moreThan") || filterType.equals("more")) {
+							filterType = "gt";
+						} else if (filterType.equals("moreEquals") || filterType.equals("more-equals")) {
+							filterType = "gte";
+						} else if (filterType.equals("lessThan") || filterType.equals("less")) {
+							filterType = "lt";
+						} else if (filterType.equals("lessEquals") || filterType.equals("less-equals")) {
+							filterType = "lte";
+						} else if (filterType.equals("not-any")) {
+							filterType = "neq";
+						} else if (filterType.equals("dateFormat")) {
+							filterType = "date-format";
+						}
+						filterModel.setFilterType(filterType);
+						parseFilterElt(sqlToyConfig, filterModel, filter);
+						filterModels.add(filterModel);
+					}
 				}
 			}
 		}
@@ -1003,143 +1013,146 @@ public class SqlXMLConfigParse {
 		String eltName;
 		List resultProcessor = new ArrayList();
 		for (int i = 0; i < elements.getLength(); i++) {
-			elt = (Element) elements.item(i);
-			eltName = elt.getNodeName();
-			// 旋转(只能进行一次旋转)
-			if (eltName.equals("pivot")) {
-				PivotModel pivotModel = new PivotModel();
-				if (elt.hasAttribute("group-columns")) {
-					pivotModel.setGroupCols(trimParams(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
-				}
-				if (elt.hasAttribute("category-columns")) {
-					pivotModel.setCategoryCols(
-							trimParams(elt.getAttribute("category-columns").toLowerCase().split("\\,")));
-				}
-				if (elt.hasAttribute("category-sql")) {
-					pivotModel.setCategorySql(elt.getAttribute("category-sql"));
-				}
-				String[] pivotCols = new String[2];
-				pivotCols[0] = elt.getAttribute("start-column").toLowerCase();
-				if (elt.hasAttribute("end-column")) {
-					pivotCols[1] = elt.getAttribute("end-column").toLowerCase();
-				} else {
-					pivotCols[1] = pivotCols[0];
-				}
-				if (elt.hasAttribute("default-value")) {
-					String defaultValue = elt.getAttribute("default-value");
-					if (elt.hasAttribute("default-type")) {
-						String defaultType = elt.getAttribute("default-type");
-						try {
-							pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+			if (elements.item(i).getNodeType() == Node.ELEMENT_NODE) {
+				elt = (Element) elements.item(i);
+				eltName = elt.getNodeName();
+				// 旋转(只能进行一次旋转)
+				if (eltName.equals("pivot")) {
+					PivotModel pivotModel = new PivotModel();
+					if (elt.hasAttribute("group-columns")) {
+						pivotModel
+								.setGroupCols(trimParams(elt.getAttribute("group-columns").toLowerCase().split("\\,")));
+					}
+					if (elt.hasAttribute("category-columns")) {
+						pivotModel.setCategoryCols(
+								trimParams(elt.getAttribute("category-columns").toLowerCase().split("\\,")));
+					}
+					if (elt.hasAttribute("category-sql")) {
+						pivotModel.setCategorySql(elt.getAttribute("category-sql"));
+					}
+					String[] pivotCols = new String[2];
+					pivotCols[0] = elt.getAttribute("start-column").toLowerCase();
+					if (elt.hasAttribute("end-column")) {
+						pivotCols[1] = elt.getAttribute("end-column").toLowerCase();
 					} else {
-						pivotModel.setDefaultValue(defaultValue);
+						pivotCols[1] = pivotCols[0];
 					}
-				}
-				pivotModel.setPivotCols(pivotCols);
-				resultProcessor.add(pivotModel);
-			} // 列转行
-			else if (eltName.equals("unpivot")) {
-				if (elt.hasAttribute("columns") && elt.hasAttribute("values-as-column")) {
-					UnpivotModel unpivotModel = new UnpivotModel();
-					String[] columns = elt.getAttribute("columns").split("\\,");
-					String[] realCols = new String[columns.length];
-					String[] colsAlias = new String[columns.length];
-					int index = 0;
-					String[] temp;
-					for (String column : columns) {
-						temp = column.split(":");
-						realCols[index] = temp[0].trim().toLowerCase();
-						colsAlias[index] = temp[temp.length - 1];
-						index++;
-					}
-					unpivotModel.setColumns(realCols);
-					unpivotModel.setColsAlias(colsAlias);
-					// 多列变成行时转成的列名称
-					unpivotModel.setAsColumn(elt.getAttribute("values-as-column"));
-					// 变成行的列标题作为的新列名称
-					if (elt.hasAttribute("labels-as-column")) {
-						unpivotModel.setLabelsColumn(elt.getAttribute("labels-as-column"));
-					}
-					// 必须要有2个或以上列
-					if (index > 1) {
-						resultProcessor.add(unpivotModel);
-					}
-				}
-			}
-			// 汇总合计
-			else if (eltName.equals("summary")) {
-				SummaryModel summaryModel = new SummaryModel();
-				// 是否逆向汇总
-				if (elt.hasAttribute("reverse")) {
-					summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
-					summaryModel.setGlobalReverse(summaryModel.isReverse());
-				}
-				// 汇总合计涉及的列
-				if (elt.hasAttribute("columns")) {
-					summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
-				}
-				// 保留小数点位数
-				if (elt.hasAttribute("radix-size")) {
-					summaryModel.setRadixSize(Integer.parseInt(elt.getAttribute("radix-size")));
-				} else {
-					summaryModel.setRadixSize(-1);
-				}
-				// 汇总所在位置
-				if (elt.hasAttribute("sum-site")) {
-					summaryModel.setSumSite(elt.getAttribute("sum-site"));
-				}
-				// sum和average值左右拼接时的连接字符串
-				if (elt.hasAttribute("link-sign")) {
-					summaryModel.setLinkSign(elt.getAttribute("link-sign"));
-				}
-				NodeList nodeList = elt.getElementsByTagName("global");
-				// 全局汇总
-				if (nodeList.getLength() > 0) {
-					Element globalSummary = (Element) nodeList.item(0);
-					if (globalSummary.hasAttribute("label-column")) {
-						summaryModel.setGlobalLabelColumn(globalSummary.getAttribute("label-column").toLowerCase());
-					}
-					if (globalSummary.hasAttribute("average-label")) {
-						summaryModel.setGlobalAverageTitle(globalSummary.getAttribute("average-label"));
-					}
-					// 汇总分组列
-					if (globalSummary.hasAttribute("group-column")) {
-						summaryModel.setGroupColumn(globalSummary.getAttribute("group-column").toLowerCase());
-					}
-					// 全局汇总合计是否逆向
-					if (globalSummary.hasAttribute("reverse")) {
-						summaryModel.setGlobalReverse(Boolean.parseBoolean(globalSummary.getAttribute("reverse")));
-					}
-					if (globalSummary.hasAttribute("sum-label")) {
-						summaryModel.setGlobalSumTitle(globalSummary.getAttribute("sum-label"));
-					}
-				}
-				// 分组汇总
-				nodeList = elt.getElementsByTagName("group");
-				if (nodeList.getLength() > 0) {
-					GroupMeta[] groupMetas = new GroupMeta[nodeList.getLength()];
-					Element groupElt;
-					for (int j = 0; j < nodeList.getLength(); j++) {
-						groupElt = (Element) nodeList.item(j);
-						GroupMeta groupMeta = new GroupMeta();
-						groupMeta.setGroupColumn(groupElt.getAttribute("group-column").toLowerCase());
-						if (groupElt.hasAttribute("average-label")) {
-							groupMeta.setAverageTitle(groupElt.getAttribute("average-label"));
+					if (elt.hasAttribute("default-value")) {
+						String defaultValue = elt.getAttribute("default-value");
+						if (elt.hasAttribute("default-type")) {
+							String defaultType = elt.getAttribute("default-type");
+							try {
+								pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						} else {
+							pivotModel.setDefaultValue(defaultValue);
 						}
-						if (groupElt.hasAttribute("sum-label")) {
-							groupMeta.setSumTitle(groupElt.getAttribute("sum-label"));
-						}
-						if (groupElt.hasAttribute("label-column")) {
-							groupMeta.setLabelColumn(groupElt.getAttribute("label-column"));
-						}
-						groupMetas[j] = groupMeta;
 					}
-					summaryModel.setGroupMeta(groupMetas);
+					pivotModel.setPivotCols(pivotCols);
+					resultProcessor.add(pivotModel);
+				} // 列转行
+				else if (eltName.equals("unpivot")) {
+					if (elt.hasAttribute("columns") && elt.hasAttribute("values-as-column")) {
+						UnpivotModel unpivotModel = new UnpivotModel();
+						String[] columns = elt.getAttribute("columns").split("\\,");
+						String[] realCols = new String[columns.length];
+						String[] colsAlias = new String[columns.length];
+						int index = 0;
+						String[] temp;
+						for (String column : columns) {
+							temp = column.split(":");
+							realCols[index] = temp[0].trim().toLowerCase();
+							colsAlias[index] = temp[temp.length - 1];
+							index++;
+						}
+						unpivotModel.setColumns(realCols);
+						unpivotModel.setColsAlias(colsAlias);
+						// 多列变成行时转成的列名称
+						unpivotModel.setAsColumn(elt.getAttribute("values-as-column"));
+						// 变成行的列标题作为的新列名称
+						if (elt.hasAttribute("labels-as-column")) {
+							unpivotModel.setLabelsColumn(elt.getAttribute("labels-as-column"));
+						}
+						// 必须要有2个或以上列
+						if (index > 1) {
+							resultProcessor.add(unpivotModel);
+						}
+					}
 				}
-				resultProcessor.add(summaryModel);
+				// 汇总合计
+				else if (eltName.equals("summary")) {
+					SummaryModel summaryModel = new SummaryModel();
+					// 是否逆向汇总
+					if (elt.hasAttribute("reverse")) {
+						summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
+						summaryModel.setGlobalReverse(summaryModel.isReverse());
+					}
+					// 汇总合计涉及的列
+					if (elt.hasAttribute("columns")) {
+						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
+					}
+					// 保留小数点位数
+					if (elt.hasAttribute("radix-size")) {
+						summaryModel.setRadixSize(Integer.parseInt(elt.getAttribute("radix-size")));
+					} else {
+						summaryModel.setRadixSize(-1);
+					}
+					// 汇总所在位置
+					if (elt.hasAttribute("sum-site")) {
+						summaryModel.setSumSite(elt.getAttribute("sum-site"));
+					}
+					// sum和average值左右拼接时的连接字符串
+					if (elt.hasAttribute("link-sign")) {
+						summaryModel.setLinkSign(elt.getAttribute("link-sign"));
+					}
+					NodeList nodeList = elt.getElementsByTagName("global");
+					// 全局汇总
+					if (nodeList.getLength() > 0) {
+						Element globalSummary = (Element) nodeList.item(0);
+						if (globalSummary.hasAttribute("label-column")) {
+							summaryModel.setGlobalLabelColumn(globalSummary.getAttribute("label-column").toLowerCase());
+						}
+						if (globalSummary.hasAttribute("average-label")) {
+							summaryModel.setGlobalAverageTitle(globalSummary.getAttribute("average-label"));
+						}
+						// 汇总分组列
+						if (globalSummary.hasAttribute("group-column")) {
+							summaryModel.setGroupColumn(globalSummary.getAttribute("group-column").toLowerCase());
+						}
+						// 全局汇总合计是否逆向
+						if (globalSummary.hasAttribute("reverse")) {
+							summaryModel.setGlobalReverse(Boolean.parseBoolean(globalSummary.getAttribute("reverse")));
+						}
+						if (globalSummary.hasAttribute("sum-label")) {
+							summaryModel.setGlobalSumTitle(globalSummary.getAttribute("sum-label"));
+						}
+					}
+					// 分组汇总
+					nodeList = elt.getElementsByTagName("group");
+					if (nodeList.getLength() > 0) {
+						GroupMeta[] groupMetas = new GroupMeta[nodeList.getLength()];
+						Element groupElt;
+						for (int j = 0; j < nodeList.getLength(); j++) {
+							groupElt = (Element) nodeList.item(j);
+							GroupMeta groupMeta = new GroupMeta();
+							groupMeta.setGroupColumn(groupElt.getAttribute("group-column").toLowerCase());
+							if (groupElt.hasAttribute("average-label")) {
+								groupMeta.setAverageTitle(groupElt.getAttribute("average-label"));
+							}
+							if (groupElt.hasAttribute("sum-label")) {
+								groupMeta.setSumTitle(groupElt.getAttribute("sum-label"));
+							}
+							if (groupElt.hasAttribute("label-column")) {
+								groupMeta.setLabelColumn(groupElt.getAttribute("label-column"));
+							}
+							groupMetas[j] = groupMeta;
+						}
+						summaryModel.setGroupMeta(groupMetas);
+					}
+					resultProcessor.add(summaryModel);
+				}
 			}
 		}
 
