@@ -5,15 +5,12 @@ package org.sagacity.sqltoy.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -27,15 +24,13 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import org.dom4j.Attribute;
-import org.dom4j.Element;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 /**
@@ -161,82 +156,6 @@ public class XMLUtil {
 	}
 
 	/**
-	 * @todo 根据qName 获取节点对象
-	 * @param xmlFile
-	 * @param qName
-	 * @return
-	 * @throws Exception
-	 */
-	public static Object getXPathElement(File xmlFile, String qName) throws Exception {
-		SAXReader saxReader = new SAXReader();
-		InputStream is = new FileInputStream(xmlFile);
-		org.dom4j.Document doc = saxReader.read(is);
-		return doc.getRootElement().selectObject(qName);
-	}
-
-	/**
-	 * @todo 获取节点集合
-	 * @param xmlFile
-	 * @param qName
-	 * @return
-	 * @throws Exception
-	 */
-	@SuppressWarnings("rawtypes")
-	public static List getXPathElements(File xmlFile, String qName) throws Exception {
-		SAXReader saxReader = new SAXReader();
-		InputStream is = new FileInputStream(xmlFile);
-		org.dom4j.Document doc = saxReader.read(is);
-		return doc.getRootElement().elements(qName);
-	}
-
-	/**
-	 * @todo 编辑xml文件
-	 * @param xmlFile
-	 * @param charset
-	 * @param isValidator
-	 * @param handler
-	 * @return
-	 * @throws Exception
-	 */
-	public static boolean updateXML(File xmlFile, String charset, boolean isValidator, XMLCallbackHandler handler)
-			throws Exception {
-		if (handler == null || xmlFile == null || !xmlFile.exists())
-			return false;
-		InputStream is = null;
-		FileOutputStream fos = null;
-		try {
-			SAXReader saxReader = new SAXReader();
-			if (!isValidator)
-				saxReader.setFeature(NO_VALIDATOR_FEATURE, false);
-			if (charset != null)
-				saxReader.setEncoding(charset);
-			is = new FileInputStream(xmlFile);
-			if (null != is) {
-				org.dom4j.Document doc = saxReader.read(is);
-				if (null != doc) {
-					handler.process(doc, doc.getRootElement());
-					OutputFormat format = OutputFormat.createPrettyPrint();
-					if (charset != null)
-						format.setEncoding(charset);
-					fos = new FileOutputStream(xmlFile);
-					XMLWriter output = new XMLWriter(fos, format);
-					output.write(doc);
-				}
-				is.close();
-			}
-		} catch (Exception e) {
-			logger.error("修改XML文件:{}错误:{}!", xmlFile, e.getMessage());
-			throw e;
-		} finally {
-			if (fos != null)
-				fos.close();
-			if (is != null)
-				is.close();
-		}
-		return true;
-	}
-
-	/**
 	 * 读取xml文件
 	 * 
 	 * @param xmlFile
@@ -250,28 +169,23 @@ public class XMLUtil {
 		if (StringUtil.isBlank(xmlFile))
 			return null;
 		InputStream fileIS = null;
-		InputStreamReader ir = null;
 		try {
-			SAXReader saxReader = new SAXReader();
-			if (!isValidator)
-				saxReader.setFeature(NO_VALIDATOR_FEATURE, false);
-			if (StringUtil.isNotBlank(charset))
-				saxReader.setEncoding(charset);
-			if (charset != null)
-				ir = new InputStreamReader(CommonUtils.getFileInputStream(xmlFile), charset);
-			else
-				ir = new InputStreamReader(CommonUtils.getFileInputStream(xmlFile));
-			if (ir != null) {
-				org.dom4j.Document doc = saxReader.read(ir);
-				if (null != doc)
-					return handler.process(doc, doc.getRootElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			if (!isValidator) {
+				factory.setFeature(NO_VALIDATOR_FEATURE, false);
+			}
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			fileIS = CommonUtils.getFileInputStream(xmlFile);
+			if (fileIS != null) {
+				Document doc = builder.parse(fileIS);
+				if (null != doc) {
+					return handler.process(doc, doc.getDocumentElement());
+				}
 			}
 		} catch (Exception e) {
 			logger.error("解析文件:{}错误:{}!", xmlFile, e.getMessage());
 			throw e;
 		} finally {
-			if (ir != null)
-				ir.close();
 			if (fileIS != null)
 				fileIS.close();
 		}
@@ -298,38 +212,42 @@ public class XMLUtil {
 		if (elt == null)
 			return;
 		HashMap<String, String> realMap = asMap(keyValues);
-		List<Attribute> attrs = elt.attributes();
+		NamedNodeMap attrs = elt.getAttributes();
 		String name;
 		String value;
-		String[] properties = new String[attrs.size() + 1];
-		String[] values = new String[attrs.size() + 1];
+		String[] properties = new String[attrs.getLength() + 1];
+		String[] values = new String[attrs.getLength() + 1];
 		int index = 0;
-		for (Attribute attr : attrs) {
-			name = attr.getName();
-			value = attr.getValue();
+		Node attr;
+		for (int i = 0; i < attrs.getLength(); i++) {
+			attr = attrs.item(i);
+			name = attr.getNodeName();
+			value = attr.getFirstChild().getNodeValue();
 			// 对照属性
-			if (realMap.containsKey(name))
+			if (realMap.containsKey(name)) {
 				properties[index] = realMap.get(name);
-			else if (realMap.containsKey(name.toLowerCase()))
+			} else if (realMap.containsKey(name.toLowerCase())) {
 				properties[index] = realMap.get(name.toLowerCase());
-			else if (realMap.containsKey(name.toUpperCase()))
+			} else if (realMap.containsKey(name.toUpperCase())) {
 				properties[index] = realMap.get(name.toUpperCase());
-			else
+			} else {
 				properties[index] = StringUtil.toHumpStr(name, false);
+			}
 			values[index] = value;
 			index++;
 		}
 		// 将元素body中的值作为元素自身
-		name = elt.getName();
-		if (realMap.containsKey(name))
+		name = elt.getNodeName();
+		if (realMap.containsKey(name)) {
 			properties[index] = realMap.get(name);
-		else if (realMap.containsKey(name.toLowerCase()))
+		} else if (realMap.containsKey(name.toLowerCase())) {
 			properties[index] = realMap.get(name.toLowerCase());
-		else if (realMap.containsKey(name.toUpperCase()))
+		} else if (realMap.containsKey(name.toUpperCase())) {
 			properties[index] = realMap.get(name.toUpperCase());
-		else
+		} else {
 			properties[index] = StringUtil.toHumpStr(name, false);
-		values[index] = elt.getText();
+		}
+		values[index] = elt.getFirstChild().getNodeValue();
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;

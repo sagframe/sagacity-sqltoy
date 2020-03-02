@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.dom4j.Document;
-import org.dom4j.Element;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
@@ -24,6 +22,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -61,25 +62,35 @@ public class TranslateConfigParse {
 			@Override
 			public Object process(Document doc, Element root) throws Exception {
 				DefaultConfig defaultConfig = new DefaultConfig();
-				// 解析缓存翻译配置
-				Element node = root.element("cache-translates");
-				if (node == null)
+				NodeList nodeList = root.getElementsByTagName("cache-translates");
+				if (nodeList.getLength() == 0)
 					return defaultConfig;
-				if (node.attribute("disk-store-path") != null)
-					defaultConfig.setDiskStorePath(node.attributeValue("disk-store-path"));
-				List<Element> elts;
+				// 解析缓存翻译配置
+				Element node = (Element) nodeList.item(0);
+				if (node.hasAttribute("disk-store-path")) {
+					defaultConfig.setDiskStorePath(node.getAttribute("disk-store-path"));
+				}
+				NodeList elts;
+				Element elt;
+				NodeList sqlNode;
 				for (String translateType : TRANSLATE_TYPES) {
-					elts = node.elements(translateType.concat(TRANSLATE_SUFFIX));
-					if (elts != null && !elts.isEmpty()) {
-						int index = 1;
-						for (Element elt : elts) {
+					elts = node.getElementsByTagName(translateType.concat(TRANSLATE_SUFFIX));
+					if (elts.getLength() > 0) {
+						for (int i = 0; i < elts.getLength(); i++) {
+							elt = (Element) elts.item(i);
 							TranslateConfigModel translateCacheModel = new TranslateConfigModel();
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
-									String sql = (elt.element("sql") != null) ? elt.elementText("sql") : elt.getText();
-									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + index;
+									String sql;
+									sqlNode = elt.getElementsByTagName("sql");
+									if (sqlNode.getLength() > 0) {
+										sql = sqlNode.item(0).getFirstChild().getNodeValue();
+									} else {
+										sql = elt.getFirstChild().getNodeValue();
+									}
+									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + (i + 1);
 									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
@@ -89,10 +100,9 @@ public class TranslateConfigParse {
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									translateCacheModel.setSql(sqlId);
 								}
-								index++;
 							}
 							// local 缓存 默认缓存不失效
-							if (translateType.equals("local") && elt.attribute("keep-alive") == null) {
+							if (translateType.equals("local") && !elt.hasAttribute("keep-alive")) {
 								translateCacheModel.setKeepAlive(-1);
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
@@ -100,13 +110,14 @@ public class TranslateConfigParse {
 						}
 					}
 				}
+				nodeList = root.getElementsByTagName("cache-update-checkers");
 				// 解析更新检测器
-				node = root.element("cache-update-checkers");
-				if (node == null)
+				if (nodeList.getLength() == 0)
 					return defaultConfig;
+				node = (Element) nodeList.item(0);
 				// 集群节点时间偏差(秒)
-				if (node.attribute("cluster-time-deviation") != null) {
-					defaultConfig.setDeviationSeconds(Integer.parseInt(node.attributeValue("cluster-time-deviation")));
+				if (node.hasAttribute("cluster-time-deviation")) {
+					defaultConfig.setDeviationSeconds(Integer.parseInt(node.getAttribute("cluster-time-deviation")));
 					if (Math.abs(defaultConfig.getDeviationSeconds()) > 60) {
 						logger.debug("您设置的集群节点时间差异参数cluster-time-deviation={} 秒>60秒,将设置为60秒!",
 								defaultConfig.getDeviationSeconds());
@@ -116,17 +127,23 @@ public class TranslateConfigParse {
 					}
 				}
 				for (String translateType : TRANSLATE_TYPES) {
-					elts = node.elements(translateType.concat(CHECKER_SUFFIX));
-					if (elts != null && !elts.isEmpty()) {
-						int index = 1;
-						for (Element elt : elts) {
+					elts = node.getElementsByTagName(translateType.concat(CHECKER_SUFFIX));
+					if (elts.getLength() > 0) {
+						for (int i = 0; i < elts.getLength(); i++) {
+							elt = (Element) elts.item(i);
 							CheckerConfigModel checherConfigModel = new CheckerConfigModel();
 							XMLUtil.setAttributes(elt, checherConfigModel);
 							checherConfigModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
-									String sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + index;
-									String sql = (elt.element("sql") != null) ? elt.elementText("sql") : elt.getText();
+									String sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + (i + 1);
+									String sql;
+									sqlNode = elt.getElementsByTagName("sql");
+									if (sqlNode.getLength() > 0) {
+										sql = sqlNode.item(0).getFirstChild().getNodeValue();
+									} else {
+										sql = elt.getFirstChild().getNodeValue();
+									}
 									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
@@ -136,7 +153,6 @@ public class TranslateConfigParse {
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									checherConfigModel.setSql(sqlId);
 								}
-								index++;
 							}
 							// 剔除tab\回车等特殊字符
 							String frequency = StringUtil.clearMistyChars(checherConfigModel.getCheckFrequency(), "");
@@ -158,10 +174,10 @@ public class TranslateConfigParse {
 								} else {
 									// 归整分割符号统一为逗号,将时间格式由HH:mm 转为HHmm格式
 									String[] sectionsStr = frequency.split("\\,");
-									for (int i = 0; i < sectionsStr.length; i++) {
+									for (int j = 0; j < sectionsStr.length; j++) {
 										TimeSection section = new TimeSection();
 										// 问号切割获取时间区间和时间间隔
-										String[] sectionPhase = sectionsStr[i].split("\\?");
+										String[] sectionPhase = sectionsStr[j].split("\\?");
 										// 获取开始和结束时间点
 										String[] startEnd = sectionPhase[0].split("\\.{2}");
 										section.setIntervalSeconds(Integer.parseInt(sectionPhase[1].trim()));

@@ -3,8 +3,8 @@
  */
 package org.sagacity.sqltoy.callback;
 
-import org.dom4j.Document;
-import org.dom4j.Element;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * @project sagacity-sqltoy
