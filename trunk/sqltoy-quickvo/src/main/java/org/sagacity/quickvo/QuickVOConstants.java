@@ -191,8 +191,8 @@ public class QuickVOConstants implements Serializable {
 						constantMap.put(elt.getAttribute("name"), replaceConstants(
 								StringUtil.replaceAllStr(elt.getAttribute("value"), GLOBA_IDENTITY, guid)));
 					} else {
-						constantMap.put(elt.getAttribute("name"),
-								replaceConstants(StringUtil.replaceAllStr(elt.getNodeValue(), GLOBA_IDENTITY, guid)));
+						constantMap.put(elt.getAttribute("name"), replaceConstants(
+								StringUtil.replaceAllStr(elt.getTextContent().trim(), GLOBA_IDENTITY, guid)));
 					}
 				} else if (elt.hasAttribute("file")) {
 					loadPropertyFile(
