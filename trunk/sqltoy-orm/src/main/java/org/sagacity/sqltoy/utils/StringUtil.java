@@ -51,6 +51,12 @@ public class StringUtil {
 		return isBlank(str);
 	}
 
+	public static String trim(String str) {
+		if (str == null)
+			return null;
+		return str.trim();
+	}
+
 	/**
 	 * @todo 判断字符串是空或者空白
 	 * @param str
@@ -499,8 +505,7 @@ public class StringUtil {
 	/**
 	 * @todo 切割字符串，排除特殊字符对，如a,b,c,dd(a,c),dd(a,c)不能切割
 	 * @param source
-	 * @param splitSign
-	 *            如逗号、分号、冒号或具体字符串,非正则表达式
+	 * @param splitSign 如逗号、分号、冒号或具体字符串,非正则表达式
 	 * @param filter
 	 * @return
 	 */

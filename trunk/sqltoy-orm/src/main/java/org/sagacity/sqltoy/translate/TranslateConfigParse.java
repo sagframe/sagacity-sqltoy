@@ -86,9 +86,9 @@ public class TranslateConfigParse {
 									String sql;
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
-										sql = sqlNode.item(0).getTextContent();
+										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
 									} else {
-										sql = elt.getTextContent();
+										sql = StringUtil.trim(elt.getTextContent());
 									}
 									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + (i + 1);
 									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
@@ -140,9 +140,9 @@ public class TranslateConfigParse {
 									String sql;
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
-										sql = sqlNode.item(0).getTextContent();
+										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
 									} else {
-										sql = elt.getTextContent();
+										sql = StringUtil.trim(elt.getTextContent());
 									}
 									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,

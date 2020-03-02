@@ -248,7 +248,7 @@ public class XMLUtil {
 			properties[index] = StringUtil.toHumpStr(name, false);
 		}
 		// 最后一个
-		values[index] = elt.getTextContent();
+		values[index] = StringUtil.trim(elt.getTextContent());
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;

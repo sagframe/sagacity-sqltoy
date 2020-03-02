@@ -212,9 +212,9 @@ public class SqlXMLConfigParse {
 		NodeList nodeList = sqlElt.getElementsByTagName("value");
 		String sqlContent = null;
 		if (nodeList.getLength() > 0) {
-			sqlContent = nodeList.item(0).getTextContent();
+			sqlContent = StringUtil.trim(nodeList.item(0).getTextContent());
 		} else {
-			sqlContent = sqlElt.getTextContent();
+			sqlContent = StringUtil.trim(sqlElt.getTextContent());
 		}
 		if (StringUtil.isBlank(sqlContent)) {
 			throw new RuntimeException("请检查sql-id='" + id + "' 的配置,没有正确填写sql内容!");
@@ -222,7 +222,7 @@ public class SqlXMLConfigParse {
 		nodeList = sqlElt.getElementsByTagName("count-sql");
 		String countSql = null;
 		if (nodeList.getLength() > 0) {
-			countSql = nodeList.item(0).getTextContent();
+			countSql = StringUtil.trim(nodeList.item(0).getTextContent());
 		}
 		// 替换全角空格
 		sqlContent = sqlContent.replaceAll("\u3000", " ");
