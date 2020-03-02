@@ -65,16 +65,6 @@
 													use="required" />
 											</xsd:complexType>
 										</xsd:element>
-										<xsd:element name="dao" minOccurs="0">
-											<xsd:complexType>
-												<xsd:attribute name="package"
-													type="xsd:string" use="required" />
-												<xsd:attribute name="name" type="xsd:string"
-													use="required" />
-												<xsd:attribute name="active"
-													type="xsd:boolean" />
-											</xsd:complexType>
-										</xsd:element>
 									</xsd:sequence>
 									<xsd:attribute name="datasource"
 										type="xsd:string" />

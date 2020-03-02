@@ -109,8 +109,6 @@ public class QuickColMeta implements Serializable {
 
 	private BusinessIdConfig businessIdConfig;
 
-	private String keyword = "false";
-
 	/**
 	 * default值
 	 */
@@ -443,20 +441,6 @@ public class QuickColMeta implements Serializable {
 		this.businessIdConfig = businessIdConfig;
 	}
 
-	/**
-	 * @return the keyword
-	 */
-	public String getKeyword() {
-		return keyword;
-	}
 
-	/**
-	 * @param keyword the keyword to set
-	 */
-	public void setKeyword(String keyword) {
-		this.keyword = keyword;
-	}
-
-	
 
 }

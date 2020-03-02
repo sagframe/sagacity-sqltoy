@@ -164,11 +164,6 @@ public class QuickVOConstants implements Serializable {
 	 */
 	private static HashMap<String, String> constantMap = new HashMap<String, String>();
 
-	/**
-	 * 关键词
-	 */
-	private static HashMap<String, String> keywords = new HashMap<String, String>();
-
 	public static int getMaxScale() {
 		String maxScale = getKeyValue("max.scale.length");
 		if (maxScale == null)
@@ -282,25 +277,6 @@ public class QuickVOConstants implements Serializable {
 			value = System.getProperty(key);
 		}
 		return value;
-	}
-
-	/**
-	 * @return the keywords
-	 */
-	public static boolean isKeyword(String fieldName) {
-		return keywords.containsKey(fieldName.toUpperCase());
-	}
-
-	/**
-	 * @param keywords the keywords to set
-	 */
-	public static void setKeywords(String keywordStr) {
-		if (StringUtil.isNotBlank(keywordStr)) {
-			String[] keys = keywordStr.split(",");
-			for (String key : keys) {
-				keywords.put(key.toUpperCase(), "1");
-			}
-		}
 	}
 
 	public static String getJdbcType(String jdbcType, int dbType) {

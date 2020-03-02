@@ -50,11 +50,6 @@ public class TaskController {
 	private static String voTemplate;
 
 	/**
-	 * dao的模板内容
-	 */
-	private static String daoTemplate;
-
-	/**
 	 * vo抽象类的模板
 	 */
 	private static String abstractVoTemplate;
@@ -70,8 +65,7 @@ public class TaskController {
 	private static ConfigModel configModel;
 
 	/**
-	 * @param configModel
-	 *            the configModel to set
+	 * @param configModel the configModel to set
 	 */
 	public static void setConfigModel(ConfigModel configModel) {
 		TaskController.configModel = configModel;
@@ -88,8 +82,6 @@ public class TaskController {
 	 */
 	private static void init() {
 		voTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.voTempate),
-				configModel.getEncoding());
-		daoTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.daoTempate),
 				configModel.getEncoding());
 		abstractVoTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.voAbstractTempate),
 				configModel.getEncoding());
@@ -152,7 +144,6 @@ public class TaskController {
 		QuickVO quickVO;
 		String entityName;
 		String voPackageDir;
-		String daoPackageDir = null;
 		String tableName = null;
 		TableMeta tableMeta;
 		List pks = null;
@@ -165,12 +156,6 @@ public class TaskController {
 		// 创建vo abstract包文件
 		FileUtil.createFolder(FileUtil.formatPath(voPackageDir + File.separator + configModel.getAbstractPath()));
 
-		// 创建dao包文件
-		if (quickModel.getDaoPackage() != null) {
-			daoPackageDir = configModel.getTargetDir() + File.separator
-					+ StringUtil.replaceAllStr(quickModel.getDaoPackage(), ".", File.separator);
-			FileUtil.createFolder(FileUtil.formatPath(daoPackageDir));
-		}
 		// 表或视图的标志
 		boolean isTable;
 		BusinessIdConfig businessIdConfig;
@@ -213,9 +198,7 @@ public class TaskController {
 				quickVO.setVoName(StringUtil
 						.firstToUpperCase(StringUtil.replaceStr(quickModel.getVoName(), "#{subName}", entityName)));
 			}
-			quickVO.setDaoPackage(quickModel.getDaoPackage());
-			quickVO.setDaoName(StringUtil.firstToUpperCase(StringUtil.replaceStr(quickModel.getDaoName(), "#{subName}",
-					StringUtil.replaceStr(entityName, quickModel.getVoSubstr(), ""))));
+			
 			isTable = true;
 			// 判断是"表还是视图"
 			if (StringUtil.indexOfIgnoreCase(tableMeta.getTableType(), "TABLE") == -1) {
@@ -404,16 +387,6 @@ public class TaskController {
 			// 创建vo 文件
 			generateVO(voPackageDir + File.separator + quickVO.getVoName() + ".java", quickVO,
 					configModel.getEncoding());
-
-			// 创建dao文件
-			if (daoPackageDir != null) {
-				if ((StringUtil.isBlank(quickModel.getDaoInclude())
-						|| StringUtil.matches(quickModel.getDaoInclude(), quickVO.getTableName()))
-						&& (StringUtil.isBlank(quickModel.getDaoExclude())
-								|| !StringUtil.matches(quickModel.getDaoExclude(), quickVO.getTableName())))
-					generateDao(daoPackageDir + File.separator + quickVO.getDaoName() + ".java", daoTemplate, quickVO,
-							configModel.getEncoding());
-			}
 		}
 	}
 
@@ -460,10 +433,6 @@ public class TaskController {
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
 			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
-			// 是否关键词
-			if (QuickVOConstants.isKeyword(colMeta.getColName())) {
-				quickColMeta.setKeyword("true");
-			}
 
 			quickColMeta.setJdbcType(jdbcType);
 			quickColMeta.setPrecision(colMeta.getPrecision());
@@ -758,24 +727,6 @@ public class TaskController {
 			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
 					file);
 		}
-	}
-
-	/**
-	 * @todo 判断文件内容是否一致，不一致重新生成，主要针对abstractVO和VOFactory
-	 * @param file
-	 * @param template
-	 * @param quickVO
-	 * @param charset
-	 * @throws Exception
-	 */
-	private static void generateDao(String file, String template, QuickVO quickVO, String charset) throws Exception {
-		File generateFile = new File(file);
-		// 文件存在判断是否相等，不相等则生成
-		if (generateFile.exists())
-			return;
-		logger.info("正在生成文件:{}", file);
-		quickVO.setDateTime(formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"));
-		TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template, file);
 	}
 
 	/**

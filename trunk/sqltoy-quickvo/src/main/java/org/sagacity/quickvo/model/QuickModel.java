@@ -22,12 +22,7 @@ public class QuickModel implements Serializable {
 	private String voSubstr;
 	private String voName;
 	private boolean voActive;
-	private String daoPackage;
-	private String daoName;
 	private String voTemplate;
-	private boolean daoActive;
-	private String daoTemplate;
-	private String daoInclude;
 
 	private String dataSource;
 
@@ -37,11 +32,6 @@ public class QuickModel implements Serializable {
 	 * 作者，主要针对Dao层提供任务责任人
 	 */
 	private String author;
-
-	/**
-	 * 排除有些数据库表并不生成Dao
-	 */
-	private String daoExclude;
 
 	/**
 	 * 包含的表
@@ -147,81 +137,6 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @return the daoPackage
-	 */
-	public String getDaoPackage() {
-		return daoPackage;
-	}
-
-	/**
-	 * @param daoPackage
-	 *            the daoPackage to set
-	 */
-	public void setDaoPackage(String daoPackage) {
-		this.daoPackage = daoPackage;
-	}
-
-	/**
-	 * @return the daoName
-	 */
-	public String getDaoName() {
-		return daoName;
-	}
-
-	/**
-	 * @param daoName
-	 *            the daoName to set
-	 */
-	public void setDaoName(String daoName) {
-		this.daoName = daoName;
-	}
-
-	/**
-	 * @return the daoActive
-	 */
-	public boolean isDaoActive() {
-		return daoActive;
-	}
-
-	/**
-	 * @param daoActive
-	 *            the daoActive to set
-	 */
-	public void setDaoActive(boolean daoActive) {
-		this.daoActive = daoActive;
-	}
-
-	/**
-	 * @return the daoTemplate
-	 */
-	public String getDaoTemplate() {
-		return daoTemplate;
-	}
-
-	/**
-	 * @param daoTemplate
-	 *            the daoTemplate to set
-	 */
-	public void setDaoTemplate(String daoTemplate) {
-		this.daoTemplate = daoTemplate;
-	}
-
-	/**
-	 * @return the daoExclude
-	 */
-	public String getDaoExclude() {
-		return daoExclude;
-	}
-
-	/**
-	 * @param daoExclude
-	 *            the daoExclude to set
-	 */
-	public void setDaoExclude(String daoExclude) {
-		this.daoExclude = daoExclude;
-	}
-
-	/**
 	 * @return the author
 	 */
 	public String getAuthor() {
@@ -234,21 +149,6 @@ public class QuickModel implements Serializable {
 	 */
 	public void setAuthor(String author) {
 		this.author = author;
-	}
-
-	/**
-	 * @return the daoInclude
-	 */
-	public String getDaoInclude() {
-		return daoInclude;
-	}
-
-	/**
-	 * @param daoInclude
-	 *            the daoInclude to set
-	 */
-	public void setDaoInclude(String daoInclude) {
-		this.daoInclude = daoInclude;
 	}
 
 	/**

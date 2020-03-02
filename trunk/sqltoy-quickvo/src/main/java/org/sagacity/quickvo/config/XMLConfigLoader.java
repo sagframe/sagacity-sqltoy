@@ -60,11 +60,6 @@ public class XMLConfigLoader {
 		// 加载常量信息
 		QuickVOConstants.loadProperties(root.elements("property"));
 
-		// 关键词
-		if (root.element("field-keywords") != null) {
-			QuickVOConstants.setKeywords(root.attributeValue("field-keywords"));
-		}
-
 		// 任务设置
 		Element tasks = root.element("tasks");
 
@@ -96,7 +91,6 @@ public class XMLConfigLoader {
 		List quickModels = new ArrayList();
 		Element quickvo;
 		Element vo;
-		Element dao;
 		boolean active = true;
 		for (int i = 0; i < quickVOs.size(); i++) {
 			quickvo = (Element) quickVOs.get(i);
@@ -119,7 +113,6 @@ public class XMLConfigLoader {
 					quickModel.setSwaggerApi(Boolean.parseBoolean(quickvo.attributeValue("swagger-model")));
 				}
 				vo = quickvo.element("vo");
-				dao = quickvo.element("dao");
 				if (quickvo.attribute("include") != null) {
 					// *表示全部,等同于没有include配置
 					if (!quickvo.attributeValue("include").equals("*")) {
@@ -142,16 +135,6 @@ public class XMLConfigLoader {
 					quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.attributeValue("substr")));
 				}
 				quickModel.setVoName(QuickVOConstants.replaceConstants(vo.attributeValue("name")));
-				if (dao != null && (dao.attribute("active") == null || dao.attributeValue("active").equals("true"))) {
-					quickModel.setDaoPackage(QuickVOConstants.replaceConstants(dao.attributeValue("package")));
-					quickModel.setDaoName(QuickVOConstants.replaceConstants(dao.attributeValue("name")));
-					if (dao.attribute("include") != null) {
-						quickModel.setDaoInclude(QuickVOConstants.replaceConstants(dao.attributeValue("include")));
-					}
-					if (dao.attribute("exclude") != null) {
-						quickModel.setDaoExclude(QuickVOConstants.replaceConstants(dao.attributeValue("exclude")));
-					}
-				}
 				quickModels.add(quickModel);
 			}
 		}
