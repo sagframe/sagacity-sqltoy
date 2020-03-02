@@ -26,6 +26,9 @@ public class QuickModel implements Serializable {
 
 	private String dataSource;
 
+	/**
+	 * 是否支持swagger 注解
+	 */
 	private boolean swaggerApi = false;
 
 	/**
@@ -51,8 +54,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param voActive
-	 *            the voActive to set
+	 * @param voActive the voActive to set
 	 */
 	public void setVoActive(boolean voActive) {
 		this.voActive = voActive;
@@ -114,8 +116,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param includeTables
-	 *            the includeTables to set
+	 * @param includeTables the includeTables to set
 	 */
 	public void setIncludeTables(String includeTables) {
 		this.includeTables = includeTables;
@@ -129,8 +130,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param excludeTables
-	 *            the excludeTables to set
+	 * @param excludeTables the excludeTables to set
 	 */
 	public void setExcludeTables(String excludeTables) {
 		this.excludeTables = excludeTables;
@@ -144,8 +144,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param author
-	 *            the author to set
+	 * @param author the author to set
 	 */
 	public void setAuthor(String author) {
 		this.author = author;
@@ -159,8 +158,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource
-	 *            the dataSource to set
+	 * @param dataSource the dataSource to set
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -174,8 +172,7 @@ public class QuickModel implements Serializable {
 	}
 
 	/**
-	 * @param swaggerApi
-	 *            the swaggerApi to set
+	 * @param swaggerApi the swaggerApi to set
 	 */
 	public void setSwaggerApi(boolean swaggerApi) {
 		this.swaggerApi = swaggerApi;
