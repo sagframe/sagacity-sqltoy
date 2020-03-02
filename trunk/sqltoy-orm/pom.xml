@@ -11,7 +11,7 @@
 		<spring-framework.version>5.2.3.RELEASE</spring-framework.version>
 		<spring-data-redis.version>2.2.4.RELEASE</spring-data-redis.version>
 		<spring-data-mongo.version>2.2.4.RELEASE</spring-data-mongo.version>
-		<log4j.version>2.13.0</log4j.version>
+		<log4j.version>2.13.1</log4j.version>
 		<mysql.version>8.0.19</mysql.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
@@ -20,7 +20,6 @@
 		<elastic-rest-client.version>7.5.2</elastic-rest-client.version>
 		<fastjson.version>1.2.62</fastjson.version>
 		<mongo.version>3.12.1</mongo.version>
-		<dom4j.version>2.1.1</dom4j.version>
 		<junit.version>5.5.2</junit.version>
 		<junit-platform.version>1.5.2</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
@@ -107,18 +106,6 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.dom4j/dom4j -->
-		<dependency>
-			<groupId>org.dom4j</groupId>
-			<artifactId>dom4j</artifactId>
-			<version>${dom4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
