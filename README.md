@@ -11,7 +11,30 @@
   - 2、通过拉卡拉的业务全场景验证:分库分表；缓存翻译的优势展示；快速分页、分页优化在每一点性能都需要极度优化考虑的场景下价值体现；elasticsearch十亿级别的数据毫秒级查询；
 	
       mongodb在用户画像标签数据场景下的应用。
+      
+# maven集成，sqltoy4.9.9 开始已经加入maven中央仓库
+```xml
+<!-- sqltoy -->
+<dependency>
+	<groupId>com.sagframe</groupId>
+	<artifactId>sagacity-sqltoy</artifactId>
+	<version>4.9.9</version>	
+</dependency>
 
+<!-- sqltoy spring boot starter -->
+<dependency>
+	<groupId>com.sagframe</groupId>
+	<artifactId>sagacity-sqltoy-starter</artifactId>
+	<version>4.9.9</version>	
+</dependency>
+
+<!-- quickvo 请先下载，然后参照sqltoy-showcase/tools/quickvo 下面的配置使用 -->
+<dependency>
+	<groupId>com.sagframe</groupId>
+	<artifactId>sqltoy-quickvo</artifactId>
+	<version>4.9.9</version>	
+</dependency>
+```
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
