@@ -13,6 +13,7 @@
       mongodb在用户画像标签数据场景下的应用。
       
 # maven集成，sqltoy4.9.9 开始已经加入maven中央仓库
+* 普通spring项目集成
 ```xml
 <!-- sqltoy -->
 <dependency>
@@ -20,14 +21,18 @@
 	<artifactId>sagacity-sqltoy</artifactId>
 	<version>4.9.9</version>	
 </dependency>
-
+```
+* 基于spring boot starter模式的集成
+```xml 
 <!-- sqltoy spring boot starter -->
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
 	<version>4.9.9</version>	
 </dependency>
-
+```
+* POJO生成工具类
+```xml
 <!-- quickvo 请先下载，然后参照sqltoy-showcase/tools/quickvo 下面的配置使用 -->
 <dependency>
 	<groupId>com.sagframe</groupId>
