@@ -19,10 +19,10 @@ public abstract class DataSourceCallbackHandler {
 
 	/**
 	 * @todo 基于给定的连接需要实现的方法
-	 * @param conn
-	 * @param dbType
-	 * @param dialect
-	 * @throws Exception
+	 * @param conn    数据库连接
+	 * @param dbType  数据库类型
+	 * @param dialect 数据方言
+	 * @throws Exception 异常
 	 */
 	public abstract void doConnection(Connection conn, Integer dbType, String dialect) throws Exception;
 

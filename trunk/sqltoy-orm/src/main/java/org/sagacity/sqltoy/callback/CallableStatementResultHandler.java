@@ -19,10 +19,10 @@ public abstract class CallableStatementResultHandler {
 	private Object result;
 
 	/**
-	 * @param rowData
-	 * @param pst
-	 * @param rs
-	 * @throws Exception
+	 * @param rowData 数据集合
+	 * @param pst     数据库pst
+	 * @param rs      ResultSet
+	 * @throws Exception 异常抛出
 	 */
 	public abstract void execute(Object rowData, CallableStatement pst, ResultSet rs) throws Exception;
 
