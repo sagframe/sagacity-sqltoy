@@ -3,41 +3,47 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.sagacity</groupId>
+	<groupId>com.sagframe</groupId>
+	<version>4.9.9</version>
+	<name>sagacity-sqltoy-starter</name>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.9.8</version>
+	<description>sqltoy springboot starter</description>
+	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-boot.version>2.2.4.RELEASE</spring-boot.version>
 	</properties>
-	<repositories>
-		<repository>
-			<id>sagframe-release</id>
-			<name>sagframe-release</name>
-			<url>http://www.sagframe.com/nexus/repository/sagframe-release</url>
-		</repository>
-		<repository>
-			<id>nexus-aliyun</id>
-			<name>Nexus aliyun</name>
-			<url>http://maven.aliyun.com/nexus/content/groups/public</url>
-		</repository>
-	</repositories>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/chenrenfei/sagacity-sqltoy.git</connection>
+		<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
+	</scm>
+	<developers>
+		<developer>
+			<name>chenrenfei</name>
+			<id>zhongxuchen</id>
+			<email>zhongxuchen@gmail.com</email>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>+8</timezone>
+		</developer>
+	</developers>
 	<distributionManagement>
-
-		<repository> <id>sagframe-release</id> <url>http://www.sagframe.com/nexus/repository/sagframe-release</url> 
-			</repository>
-		<!-- <repository>
-			<id>nexus-release</id>
-			<name>3rd party</name>
-			<url>https://nexus.1chemic.com/repository/releases/</url>
-		</repository>
 		<snapshotRepository>
-			<id>nexus-snapshots</id>
-			<name>Department 
-			Repository</name>
-			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository> -->
-
+			<id>sonatype-nexus-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>sonatype-nexus-staging</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
 	</distributionManagement>
 	<dependencyManagement>
 		<dependencies>
@@ -60,9 +66,8 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
 		</dependency>
-
 		<dependency>
-			<groupId>org.sagacity</groupId>
+			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy</artifactId>
 			<version>${version}</version>
 		</dependency>
@@ -71,7 +76,6 @@
 			<artifactId>spring-core</artifactId>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<resources>
 			<resource>
@@ -89,28 +93,11 @@
 				</includes>
 			</resource>
 		</resources>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>3.2.1</version>
-					<executions>
-						<execution>
-							<id>attach-sources</id>
-							<goals>
-								<goal>jar</goal>
-							</goals>
-						</execution>
-					</executions>
-
-				</plugin>
-			</plugins>
-		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -123,6 +110,35 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.4</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<additionalparam>-Xdoclint:none</additionalparam>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
