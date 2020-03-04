@@ -13,7 +13,6 @@
 		<spring-framework.version>5.2.4.RELEASE</spring-framework.version>
 		<spring-data-redis.version>2.2.5.RELEASE</spring-data-redis.version>
 		<spring-data-mongo.version>2.2.5.RELEASE</spring-data-mongo.version>
-		<log4j.version>2.13.1</log4j.version>
 		<mysql.version>8.0.19</mysql.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
@@ -22,7 +21,7 @@
 		<elastic-rest-client.version>7.6.0</elastic-rest-client.version>
 		<fastjson.version>1.2.66</fastjson.version>
 		<mongo.version>3.12.1</mongo.version>
-		<junit.version>5.6.0</junit.version>
+		<junit-jupiter.version>5.6.0</junit-jupiter.version>
 		<junit-platform.version>1.6.0</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<spring-boot.version>2.2.5.RELEASE</spring-boot.version>
@@ -76,16 +75,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13</version>
-			<scope>test</scope>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>${junit.version}</version>
+			<version>${junit-jupiter.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -101,7 +93,6 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8 -->
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
@@ -236,30 +227,7 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
-		<dependency> <!-- 桥接：告诉Slf4j使用Log4j2 -->
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
-			<version>${log4j.version}</version>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.logging.log4j</groupId>
-					<artifactId>log4j-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>${log4j.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>${log4j.version}</version>
-			<optional>true</optional>
-		</dependency>
+		
 		<dependency>
 			<groupId>ru.yandex.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
