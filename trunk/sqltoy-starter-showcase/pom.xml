@@ -5,15 +5,15 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.4.RELEASE</version>
+		<version>2.2.5.RELEASE</version>
 	</parent>
 	<groupId>org.sagacity.sqltoy</groupId>
 	<artifactId>sqltoy-starter-showcase</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sagacity-sqltoy.version>4.9.8</sagacity-sqltoy.version>
-		<fastjson.version>1.2.62</fastjson.version>
+		<sagacity-sqltoy.version>4.9.9</sagacity-sqltoy.version>
+		<fastjson.version>1.2.66</fastjson.version>
 		<druid.version>1.1.21</druid.version>
 	</properties>
 	<repositories>
@@ -45,7 +45,7 @@
 			<artifactId>aspectjweaver</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.sagacity</groupId>
+			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy-starter</artifactId>
 			<version>${sagacity-sqltoy.version}</version>
 		</dependency>
