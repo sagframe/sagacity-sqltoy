@@ -99,8 +99,7 @@ public class PaginationModel implements Serializable {
 	public long getPageNo() {
 		if (this.pageNo == 0)
 			return 1;
-		else
-			return this.pageNo;
+		return this.pageNo;
 	}
 
 	/**
@@ -124,16 +123,14 @@ public class PaginationModel implements Serializable {
 		long nextIndex = getStartIndex() + pageSize;
 		if (nextIndex >= recordCount)
 			return getStartIndex();
-		else
-			return nextIndex;
+		return nextIndex;
 	}
 
 	public long getPreviousIndex() {
 		long previousIndex = getStartIndex() - pageSize;
 		if (previousIndex < 0)
 			return 0;
-		else
-			return previousIndex;
+		return previousIndex;
 	}
 
 	/**
@@ -144,9 +141,8 @@ public class PaginationModel implements Serializable {
 	public long getPriorPage() {
 		if (this.pageNo > 1) {
 			return this.pageNo - 1;
-		} else {
-			return this.pageNo;
 		}
+		return this.pageNo;
 	}
 
 	/**
@@ -175,9 +171,8 @@ public class PaginationModel implements Serializable {
 	public long getNextPage() {
 		if (this.pageNo + 1 >= getLastPage()) {
 			return getLastPage();
-		} else {
-			return this.pageNo + 1;
 		}
+		return this.pageNo + 1;
 	}
 
 	/**
