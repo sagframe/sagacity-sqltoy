@@ -386,7 +386,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
 			throw new DataAccessException("findFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@ListSql(\"\")定义查询sql!");
+					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
 		}
 		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
 	}
