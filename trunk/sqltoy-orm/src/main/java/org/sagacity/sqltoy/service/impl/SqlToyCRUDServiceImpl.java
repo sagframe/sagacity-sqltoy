@@ -475,7 +475,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
+		if (StringUtil.isBlank(entityMeta.getListSql())||StringUtil.isBlank(entityMeta.getPageSql())) {
 			throw new DataAccessException("getRandomFromByEntity["+
 					entity.getClass().getName() + "]沒有在类上用注解@ListSql()或@PaginationSql() 定义查询sql!");
 		}
