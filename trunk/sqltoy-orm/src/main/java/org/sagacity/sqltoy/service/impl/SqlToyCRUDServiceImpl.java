@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -262,7 +263,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T load(T entity) {
 		return sqlToyLazyDao.load(entity);
 	}
@@ -274,7 +275,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T loadCascade(T entity) {
 		return sqlToyLazyDao.loadCascade(entity, null);
 	}
@@ -285,7 +286,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#loadAll(java.util.List)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
@@ -331,7 +332,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .Serializable)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public boolean isUnique(Serializable entity) {
 		return sqlToyLazyDao.isUnique(entity, null);
 	}
@@ -343,7 +344,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, java.lang.String[], java.lang.String)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public boolean isUnique(Serializable entity, String[] paramsNamed) {
 		return sqlToyLazyDao.isUnique(entity, paramsNamed);
 	}
@@ -380,9 +381,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("findFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@ListSql(\"\")定义查询sql!");
+		}
 		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
 	}
 
@@ -393,9 +398,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("findFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
+		}
 		return (List<T>) sqlToyLazyDao.findByQuery(
 				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
 				.getRows();
@@ -408,9 +417,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .core.database.model.PaginationModel, java.io.Serializable)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("findPageFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
+		}
 		return sqlToyLazyDao.findPageBySql(paginationModel, entityMeta.getPageSql(), entity);
 	}
 
@@ -422,10 +435,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("findPageFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
+		}
 		return sqlToyLazyDao.findPageByQuery(paginationModel,
 				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
 				.getPageResult();
@@ -438,9 +455,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("findTopFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
+		}
 		return (List<T>) sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
 	}
 
@@ -451,9 +472,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
+		if (StringUtil.isBlank(entityMeta.getListSql())) {
+			throw new DataAccessException("getRandomFromByEntity["+
+					entity.getClass().getName() + "]沒有在类上用注解@ListSql()或@PaginationSql() 定义查询sql!");
+		}
 		return (List<T>) sqlToyLazyDao.getRandomResult(
 				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
 				randomCount);
@@ -491,7 +516,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.sqltoy.plugin.TranslateHandler)
 	 */
 	@Override
-	@Transactional(propagation=Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
 			TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
