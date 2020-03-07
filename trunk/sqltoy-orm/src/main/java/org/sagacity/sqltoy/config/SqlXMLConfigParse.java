@@ -197,7 +197,7 @@ public class SqlXMLConfigParse {
 	 * @return
 	 * @throws Exception
 	 */
-	private static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
+	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
 		String realDialect = dialect;
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
@@ -637,7 +637,7 @@ public class SqlXMLConfigParse {
 	 */
 	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter) {
 		// 没有设置参数名称，则表示全部参数用*表示
-		if (filter.hasAttribute("params")) {
+		if (!filter.hasAttribute("params")) {
 			filterModel.setParams(new String[] { "*" });
 		} else {
 			filterModel.setParams(trimParams(filter.getAttribute("params").toLowerCase().split("\\,")));
