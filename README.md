@@ -12,14 +12,14 @@
 	
       mongodb在用户画像标签数据场景下的应用。
       
-# maven集成，sqltoy4.9.9 开始已经加入maven中央仓库
+# maven集成，sqltoy可以从maven中央仓库获取
 * 普通spring项目集成
 ```xml
 <!-- sqltoy -->
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy</artifactId>
-	<version>4.9.9</version>	
+	<version>4.9.10</version>	
 </dependency>
 ```
 * 基于spring boot starter模式的集成
@@ -28,7 +28,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.9.9</version>	
+	<version>4.9.10</version>	
 </dependency>
 ```
 * POJO生成工具类
