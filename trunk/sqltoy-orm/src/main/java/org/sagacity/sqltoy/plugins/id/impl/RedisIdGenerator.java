@@ -4,9 +4,9 @@
 package org.sagacity.sqltoy.plugins.id.impl;
 
 import java.util.Date;
-import java.util.HashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -90,10 +90,10 @@ public class RedisIdGenerator implements IdGenerator {
 			Date bizDate, int jdbcType, int length, int sequencSize) {
 		String key = (signature == null ? "" : signature);
 		// 主键生成依赖业务的相关字段值
-		HashMap<String, Object> keyValueMap = new HashMap<String, Object>();
+		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
 		if (relatedColumns != null && relatedColumns.length > 0) {
 			for (int i = 0; i < relatedColumns.length; i++) {
-				keyValueMap.put(relatedColumns[i].toLowerCase(), relatedColValue[i]);
+				keyValueMap.put(relatedColumns[i], relatedColValue[i]);
 			}
 		}
 		// 替换signature中的@df() 和@case()等宏表达式

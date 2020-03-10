@@ -3,7 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro;
 
-import java.util.HashMap;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 
 /**
  * @project sqltoy-orm
@@ -18,6 +18,6 @@ public abstract class AbstractMacro {
 	 * @param keyValues
 	 * @return
 	 */
-	public abstract String execute(String[] params, HashMap<String, Object> keyValues);
+	public abstract String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues);
 
 }

@@ -10,9 +10,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -61,12 +63,12 @@ public class MacroUtils {
 	 * @param reportContext
 	 * @param reportId
 	 * @param hasMacroStr
-	 * @param isOuter(isOuter
-	 *            当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
-	 *            然后再执行@abc())
+	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
+	 *                        然后再执行@abc())
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, HashMap<String, Object> keyValues, boolean isOuter) {
+	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues,
+			boolean isOuter) {
 		if (StringUtil.isBlank(hasMacroStr))
 			return hasMacroStr;
 		if (StringUtil.matches(hasMacroStr, macroPattern)) {
@@ -109,8 +111,8 @@ public class MacroUtils {
 			String macroResult = (result == null) ? "" : result;
 			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
 			return replaceMacros(hasMacroStr, keyValues, isOuter);
-		} else
-			return hasMacroStr;
+		}
+		return hasMacroStr;
 	}
 
 	/**
@@ -152,8 +154,8 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceParams(String template, HashMap<String, Object> keyValues) {
-		if (StringUtil.isBlank(template))
+	public static String replaceParams(String template, IgnoreKeyCaseMap<String, Object> keyValues) {
+		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty())
 			return template;
 		LinkedHashMap<String, String> paramsMap = parseParams(template);
 		String result = template;
@@ -200,5 +202,13 @@ public class MacroUtils {
 			index = source.indexOf(template, begin);
 		}
 		return source;
+	}
+
+	public static void main(String[] args) {
+		String macroStr = "@substr(corpId,0,2)-@df(${bizDate},yyMMdd)";
+		IgnoreKeyCaseMap keyValues = new IgnoreKeyCaseMap();
+		keyValues.put("corpId", "HX02");
+		keyValues.put("bizDate", DateUtil.parseString("2020-02-12"));
+		System.err.println(MacroUtils.replaceMacros(macroStr, keyValues, true));
 	}
 }
