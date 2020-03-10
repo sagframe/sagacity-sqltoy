@@ -14,7 +14,6 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
-import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -202,13 +201,5 @@ public class MacroUtils {
 			index = source.indexOf(template, begin);
 		}
 		return source;
-	}
-
-	public static void main(String[] args) {
-		String macroStr = "@substr(corpId,0,2)-@df(${bizDate},yyMMdd)";
-		IgnoreKeyCaseMap keyValues = new IgnoreKeyCaseMap();
-		keyValues.put("corpId", "HX02");
-		keyValues.put("bizDate", DateUtil.parseString("2020-02-12"));
-		System.err.println(MacroUtils.replaceMacros(macroStr, keyValues, true));
 	}
 }
