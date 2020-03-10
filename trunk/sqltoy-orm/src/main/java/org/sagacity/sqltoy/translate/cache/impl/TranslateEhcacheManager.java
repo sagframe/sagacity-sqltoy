@@ -12,6 +12,7 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -39,8 +40,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	private String diskStorePath = null;
 
 	/**
-	 * @param diskStorePath
-	 *            the diskStorePath to set
+	 * @param diskStorePath the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -71,12 +71,17 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
-				int heap = StringUtil.isBlank(cacheKey) ? 1 : cacheConfig.getHeap();
+				ResourcePoolsBuilder resBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
+				//堆内内存大小(默认40MB)
+				resBuilder.heap((cacheConfig.getHeap()<1)?1:cacheConfig.getHeap(), MemoryUnit.MB);
+				if (cacheConfig.getOffHeap() > 0) {
+					resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
+				}
+				if (cacheConfig.getDiskSize() > 0) {
+					resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
+				}
 				cache = cacheManager.createCache(cacheName,
-						CacheConfigurationBuilder
-								.newCacheConfigurationBuilder(String.class, HashMap.class,
-										ResourcePoolsBuilder.heap(heap).offheap(cacheConfig.getOffHeap(), MemoryUnit.MB)
-												.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true))
+						CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, HashMap.class, resBuilder)
 								.withExpiry(cacheConfig.getKeepAlive() > 0
 										? ExpiryPolicyBuilder
 												.timeToLiveExpiration(Duration.ofSeconds(cacheConfig.getKeepAlive()))

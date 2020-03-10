@@ -23,7 +23,7 @@
 									<xsd:attribute name="keep-alive" type="xsd:integer"
 										default="3600" />
 									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
+										default="30" />
 									<xsd:attribute name="off-heap" type="xsd:integer"
 										default="30" />
 									<xsd:attribute name="disk-size" type="xsd:integer"
@@ -42,7 +42,7 @@
 									<xsd:attribute name="keep-alive" type="xsd:integer"
 										default="3600" />
 									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
+										default="30" />
 									<xsd:attribute name="off-heap" type="xsd:integer"
 										default="30" />
 									<xsd:attribute name="disk-size" type="xsd:integer"
@@ -60,7 +60,7 @@
 									<xsd:attribute name="keep-alive" type="xsd:integer"
 										default="3600" />
 									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
+										default="30" />
 									<xsd:attribute name="off-heap" type="xsd:integer"
 										default="30" />
 									<xsd:attribute name="disk-size" type="xsd:integer"
@@ -75,7 +75,7 @@
 									<xsd:attribute name="keep-alive" type="xsd:integer"
 										default="3600" />
 									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
+										default="30" />
 									<xsd:attribute name="off-heap" type="xsd:integer"
 										default="30" />
 									<xsd:attribute name="disk-size" type="xsd:integer"

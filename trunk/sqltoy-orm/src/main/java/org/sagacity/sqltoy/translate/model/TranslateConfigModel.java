@@ -76,19 +76,19 @@ public class TranslateConfigModel implements Serializable {
 	private int keepAlive = 3600;
 
 	/**
-	 * 内存中存放的数量
+	 * 内存中存放的数量(MB)
 	 */
-	private int heap = 400;
+	private int heap = 40;
 
 	/**
-	 * 堆外內存(30M )
+	 * 堆外內存(MB)
 	 */
-	private int offHeap = 30;
+	private int offHeap = 0;
 
 	/**
 	 * 存储磁盘的大小(M)
 	 */
-	private int diskSize = 100;
+	private int diskSize = 0;
 
 	/**
 	 * @return the keepAlive
