@@ -34,9 +34,9 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateEhcacheManager.class);
 
 	/**
-	 * 缓存大小超出范围后存储磁盘路径
+	 * 缓存大小超出范围后存储磁盘路径(默认不存储到文件)
 	 */
-	private String diskStorePath = "./translateCaches";
+	private String diskStorePath = null;
 
 	/**
 	 * @param diskStorePath
