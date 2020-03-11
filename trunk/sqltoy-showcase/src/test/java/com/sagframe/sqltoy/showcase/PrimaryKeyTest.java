@@ -9,14 +9,14 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
@@ -25,14 +25,11 @@ import com.sagframe.sqltoy.showcase.vo.SequenceTableVO;
 
 /**
  * @project sqltoy-showcase
- * @description
- *              <p>
- *              请在此说明类的功能
- *              </p>
+ * @description 请在此说明类的功能
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PrimaryKeyTest.java,Revision:v1.0,Date:2020年2月6日
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
 public class PrimaryKeyTest {
 	@Autowired
@@ -79,7 +76,7 @@ public class PrimaryKeyTest {
 
 		System.err.println(sqlToyCRUDService.saveOrUpdateAll(entities));
 	}
-	
+
 	@Test
 	public void testSaveIgnoreExist() {
 		List<SequenceTableVO> entities = new ArrayList<SequenceTableVO>();
