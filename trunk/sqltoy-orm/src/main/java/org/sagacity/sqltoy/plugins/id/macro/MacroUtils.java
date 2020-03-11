@@ -58,12 +58,23 @@ public class MacroUtils {
 	}
 
 	/**
+	 * @todo 宏替换,默认先执行内部后执行外部
+	 * @param hasMacroStr
+	 * @param keyValues
+	 * @return
+	 */
+	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues) {
+		return replaceMacros(hasMacroStr, keyValues, false);
+	}
+
+	/**
 	 * @todo 递归调用解析字符串中的转换器
 	 * @param reportContext
 	 * @param reportId
 	 * @param hasMacroStr
-	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
-	 *                        然后再执行@abc())
+	 * @param isOuter(isOuter
+	 *            当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
+	 *            然后再执行@abc())
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues,

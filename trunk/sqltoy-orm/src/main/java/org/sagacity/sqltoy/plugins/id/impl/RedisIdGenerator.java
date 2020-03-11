@@ -97,7 +97,7 @@ public class RedisIdGenerator implements IdGenerator {
 			}
 		}
 		// 替换signature中的@df() 和@case()等宏表达式
-		String realKey = MacroUtils.replaceMacros(key, keyValueMap, true);
+		String realKey = MacroUtils.replaceMacros(key, keyValueMap);
 		// 没有宏
 		if (realKey.equals(key)) {
 			// 长度够放下6位日期 或没有设置长度且流水长度小于6,则默认增加一个6位日期作为前置
