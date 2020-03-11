@@ -13,7 +13,6 @@
 		<spring-framework.version>5.2.4.RELEASE</spring-framework.version>
 		<spring-data-redis.version>2.2.5.RELEASE</spring-data-redis.version>
 		<spring-data-mongo.version>2.2.5.RELEASE</spring-data-mongo.version>
-		<mysql.version>8.0.19</mysql.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.11</httpclient.version>
@@ -24,9 +23,7 @@
 		<junit-jupiter.version>5.6.0</junit-jupiter.version>
 		<junit-platform.version>1.6.0</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
-		<spring-boot.version>2.2.5.RELEASE</spring-boot.version>
 		<slf4j.version>1.7.30</slf4j.version>
-		<clickhouse-jdbc.version>0.2.4</clickhouse-jdbc.version>
 	</properties>
 	<licenses>
 		<license>
@@ -62,19 +59,6 @@
 	</distributionManagement>
 	<dependencies>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot</artifactId>
-			<version>${spring-boot.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-autoconfigure</artifactId>
-			<version>${spring-boot.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>${junit-jupiter.version}</version>
@@ -86,18 +70,19 @@
 			<version>${junit-platform.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${mysql.version}</version>
-			<optional>true</optional>
-		</dependency>
+
 
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
 			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -106,12 +91,8 @@
 			<version>${beanutils.version}</version>
 			<exclusions>
 				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>commons-collections</groupId>
-					<artifactId>commons-collections</artifactId>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -122,8 +103,8 @@
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -147,12 +128,7 @@
 			<artifactId>spring-jdbc</artifactId>
 			<version>${spring-framework.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-test</artifactId>
-			<version>${spring-framework.version}</version>
-			<scope>test</scope>
-		</dependency>
+		
 
 		<dependency>
 			<groupId>org.springframework.data</groupId>
@@ -170,13 +146,13 @@
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
 			<version>${spring-data-mongo.version}</version>
+			<optional>true</optional>
 			<exclusions>
 				<exclusion>
 					<artifactId>*</artifactId>
 					<groupId>*</groupId>
 				</exclusion>
 			</exclusions>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
@@ -202,14 +178,12 @@
 			<version>${httpclient-core.version}</version>
 			<optional>true</optional>
 		</dependency>
-
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
 			<optional>true</optional>
 		</dependency>
-
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>elasticsearch-rest-high-level-client</artifactId>
@@ -226,13 +200,6 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>ru.yandex.clickhouse</groupId>
-			<artifactId>clickhouse-jdbc</artifactId>
-			<version>${clickhouse-jdbc.version}</version>
-			<optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>
@@ -298,7 +265,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
