@@ -9,13 +9,37 @@
 		<xsd:attribute name="cache" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="keep-alive" type="xsd:integer"
-			default="3600" />
+			default="3600">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is second]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="heap" type="xsd:integer"
-			default="20000" />
+			default="20000">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is EntryUnit.ENTRIES]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="off-heap" type="xsd:integer"
-			default="50" />
+			default="50">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="disk-size" type="xsd:integer"
-			default="100" />
+			default="100">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:attributeGroup>
 
 	<!-- root -->
@@ -80,7 +104,7 @@
 						<xsd:documentation>
 							<![CDATA[
 							1、返回结果必须是:cacheName,cacheType(可为null) 两列值,请求参数:lastUpdateTime;
-							2、check-frequency:可以是一个数字,或:0..10:20?300,10:20..20?15,20..24?150
+							2、check-frequency:可以是一个数字如5(每个5秒检测一次),也可以分段模式0..10:20?300,10:20..20?15,20..24?150
 							]]>
 						</xsd:documentation>
 					</xsd:annotation>
