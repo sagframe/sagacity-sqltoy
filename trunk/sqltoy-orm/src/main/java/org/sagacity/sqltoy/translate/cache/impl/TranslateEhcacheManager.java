@@ -12,6 +12,7 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -39,7 +40,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	private String diskStorePath = null;
 
 	/**
-	 * @param diskStorePath the diskStorePath to set
+	 * @param diskStorePath
+	 *            the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -71,8 +73,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
 				ResourcePoolsBuilder resBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
-				//堆内内存大小(默认40MB)
-				resBuilder.heap((cacheConfig.getHeap()<1)?1:cacheConfig.getHeap(), MemoryUnit.MB);
+				// 堆内内存大小(20000条)
+				resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(), EntryUnit.ENTRIES);
 				if (cacheConfig.getOffHeap() > 0) {
 					resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
 				}
