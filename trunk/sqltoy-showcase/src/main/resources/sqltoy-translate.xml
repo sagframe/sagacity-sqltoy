@@ -3,18 +3,18 @@
 	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
-	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
-	<cache-translates
-		disk-store-path="./sqltoy-showcase/translateCaches">
+	<!-- 可以通过disk-store-path 设置缓存保存的文件路径 -->
+	<!-- <cache-translates disk-store-path="./translateCaches"> -->
+	<cache-translates>
 		<!-- 可以用spring bean方式来实现缓存:针对数据字典方法可以有一个字典分类的参数 -->
 		<!-- <service-translate cache="dictKeyNameCache"
-			service="dictService" method="getDictByType" keep-alive="30" /> -->
+			service="dictService" method="getDictByType" keep-alive="1800" /> -->
 		<!-- 可以用rest 方式来实现缓存 -->
 		<!-- <rest-translate cache="dictKeyNameCache" url="http://xxxx/common/getDictByType"/> -->
 		
 		<!-- 基于sql直接查询的方式获取缓存 -->
 		<sql-translate cache="dictKeyNameCache"
-			datasource="dataSource">
+			datasource="dataSource" heap="500" off-heap="50" >
 			<sql>
 			<![CDATA[
 				select t.DICT_KEY,t.DICT_NAME,t.STATUS
