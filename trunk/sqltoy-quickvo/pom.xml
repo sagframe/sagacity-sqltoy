@@ -5,7 +5,7 @@
 	<groupId>com.sagframe</groupId>
 	<name>sqltoy-quickvo</name>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.9.12</version>
+	<version>4.10.0</version>
 	<description>sqltoy vo generate tools</description>
 	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
 	<properties>
