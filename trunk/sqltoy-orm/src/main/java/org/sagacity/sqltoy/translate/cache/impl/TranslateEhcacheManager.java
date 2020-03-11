@@ -74,12 +74,13 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			if (cache == null) {
 				ResourcePoolsBuilder resBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
 				// 堆内内存大小(20000条)
-				resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(), EntryUnit.ENTRIES);
+				resBuilder = resBuilder.heap((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap(),
+						EntryUnit.ENTRIES);
 				if (cacheConfig.getOffHeap() > 0) {
-					resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
+					resBuilder = resBuilder.offheap(cacheConfig.getOffHeap(), MemoryUnit.MB);
 				}
 				if (cacheConfig.getDiskSize() > 0) {
-					resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
+					resBuilder = resBuilder.disk(cacheConfig.getDiskSize(), MemoryUnit.MB, true);
 				}
 				cache = cacheManager.createCache(cacheName,
 						CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, HashMap.class, resBuilder)
