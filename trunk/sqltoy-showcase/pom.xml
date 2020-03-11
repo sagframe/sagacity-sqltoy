@@ -19,7 +19,6 @@
 		<lettuce-core.version>5.2.1.RELEASE</lettuce-core.version>
 		<elastic-rest-client.version>7.6.1</elastic-rest-client.version>
 		<elastic.version>7.6.1</elastic.version>
-		<dom4j.version>2.1.1</dom4j.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<commons-pool2.version>2.8.0</commons-pool2.version>
 		<aspectjweaver.version>1.9.5</aspectjweaver.version>
@@ -149,21 +148,6 @@
 				<exclusion>
 					<groupId>commons-collections</groupId>
 					<artifactId>commons-collections</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.dom4j</groupId>
-			<artifactId>dom4j</artifactId>
-			<version>${dom4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>jaxen</groupId>
-					<artifactId>jaxen</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
