@@ -24,29 +24,29 @@ public class DefaultConfig implements Serializable {
 	private String diskStorePath;
 
 	/**
-	 * 集群的节点时间差异(秒)，默认偏离1秒
+	 * 集群的节点时间差异(秒)，默认偏离1秒,xml配置时无需设置为负数,这里是解析后的结果
 	 */
 	private int deviationSeconds = -1;
 
 	/**
 	 * 内存中存放的数量(条)
 	 */
-	private Integer defaultHeap = 10000;
+	private int defaultHeap = 10000;
 
 	/**
 	 * 单位MB
 	 */
-	private Integer defaultOffHeap = 0;
+	private int defaultOffHeap = 0;
 
 	/**
 	 * 单位MB
 	 */
-	private Integer defaultDiskSize = 0;
+	private int defaultDiskSize = 0;
 
 	/**
 	 * 默认缓存有效时长(秒)
 	 */
-	private Integer defaultKeepAlive = 3600;
+	private int defaultKeepAlive = 3600;
 
 	/**
 	 * @return the diskStorePath
@@ -74,7 +74,7 @@ public class DefaultConfig implements Serializable {
 	/**
 	 * @return the defaultHeap
 	 */
-	public Integer getDefaultHeap() {
+	public int getDefaultHeap() {
 		return defaultHeap;
 	}
 
@@ -82,14 +82,14 @@ public class DefaultConfig implements Serializable {
 	 * @param defaultHeap
 	 *            the defaultHeap to set
 	 */
-	public void setDefaultHeap(Integer defaultHeap) {
+	public void setDefaultHeap(int defaultHeap) {
 		this.defaultHeap = defaultHeap;
 	}
 
 	/**
 	 * @return the defaultOffHeap
 	 */
-	public Integer getDefaultOffHeap() {
+	public int getDefaultOffHeap() {
 		return defaultOffHeap;
 	}
 
@@ -97,14 +97,14 @@ public class DefaultConfig implements Serializable {
 	 * @param defaultOffHeap
 	 *            the defaultOffHeap to set
 	 */
-	public void setDefaultOffHeap(Integer defaultOffHeap) {
+	public void setDefaultOffHeap(int defaultOffHeap) {
 		this.defaultOffHeap = defaultOffHeap;
 	}
 
 	/**
 	 * @return the dafaultDiskSize
 	 */
-	public Integer getDefaultDiskSize() {
+	public int getDefaultDiskSize() {
 		return defaultDiskSize;
 	}
 
@@ -112,14 +112,14 @@ public class DefaultConfig implements Serializable {
 	 * @param dafaultDiskSize
 	 *            the dafaultDiskSize to set
 	 */
-	public void setDefaultDiskSize(Integer defaultDiskSize) {
+	public void setDefaultDiskSize(int defaultDiskSize) {
 		this.defaultDiskSize = defaultDiskSize;
 	}
 
 	/**
 	 * @return the defaultKeepAlive
 	 */
-	public Integer getDefaultKeepAlive() {
+	public int getDefaultKeepAlive() {
 		return defaultKeepAlive;
 	}
 
@@ -127,7 +127,7 @@ public class DefaultConfig implements Serializable {
 	 * @param defaultKeepAlive
 	 *            the defaultKeepAlive to set
 	 */
-	public void setDefaultKeepAlive(Integer defaultKeepAlive) {
+	public void setDefaultKeepAlive(int defaultKeepAlive) {
 		this.defaultKeepAlive = defaultKeepAlive;
 	}
 
