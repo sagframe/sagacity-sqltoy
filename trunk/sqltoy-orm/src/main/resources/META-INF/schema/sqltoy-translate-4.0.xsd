@@ -33,7 +33,7 @@
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="disk-size" type="xsd:integer"
-			default="100">
+			default="0">
 			<xsd:annotation>
 				<xsd:documentation>
 				<![CDATA[unit is MemoryUnit.MB]]>
@@ -94,10 +94,34 @@
 						</xsd:choice>
 						<xsd:attribute name="disk-store-path"
 							default="./translateCaches" />
-						<xsd:attribute name="default-keep-alive" type="xsd:integer" default="3600"/>
-						<xsd:attribute name="default-heap" type="xsd:integer" default="10000"/>
-						<xsd:attribute name="default-off-heap" type="xsd:integer" default="0"/>
-						<xsd:attribute name="default-disk-size" type="xsd:integer" default="0"/>
+						<xsd:attribute name="default-keep-alive" type="xsd:integer" default="3600">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is second]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-heap" type="xsd:integer" default="10000">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is EntryUnit.ENTRIES]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-off-heap" type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-disk-size" type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
 					</xsd:complexType>
 
 				</xsd:element>
