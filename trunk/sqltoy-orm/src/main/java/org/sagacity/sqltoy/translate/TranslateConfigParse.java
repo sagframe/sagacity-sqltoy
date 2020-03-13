@@ -67,9 +67,7 @@ public class TranslateConfigParse {
 					return defaultConfig;
 				// 解析缓存翻译配置
 				Element node = (Element) nodeList.item(0);
-				if (node.hasAttribute("disk-store-path")) {
-					defaultConfig.setDiskStorePath(node.getAttribute("disk-store-path"));
-				}
+				XMLUtil.setAttributes(node, defaultConfig);
 				NodeList elts;
 				Element elt;
 				NodeList sqlNode;
@@ -79,6 +77,11 @@ public class TranslateConfigParse {
 						for (int i = 0; i < elts.getLength(); i++) {
 							elt = (Element) elts.item(i);
 							TranslateConfigModel translateCacheModel = new TranslateConfigModel();
+							// 设置默认值
+							translateCacheModel.setHeap(defaultConfig.getDefaultHeap());
+							translateCacheModel.setOffHeap(defaultConfig.getDefaultOffHeap());
+							translateCacheModel.setDiskSize(defaultConfig.getDefaultDiskSize());
+							translateCacheModel.setKeepAlive(defaultConfig.getDefaultKeepAlive());
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
 							if (translateType.equals("sql")) {

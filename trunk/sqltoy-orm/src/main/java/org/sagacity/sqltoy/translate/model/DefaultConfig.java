@@ -29,6 +29,26 @@ public class DefaultConfig implements Serializable {
 	private int deviationSeconds = -1;
 
 	/**
+	 * 内存中存放的数量(条)
+	 */
+	private Integer defaultHeap = 10000;
+
+	/**
+	 * 单位MB
+	 */
+	private Integer defaultOffHeap = 0;
+
+	/**
+	 * 单位MB
+	 */
+	private Integer defaultDiskSize = 0;
+
+	/**
+	 * 默认缓存有效时长(秒)
+	 */
+	private Integer defaultKeepAlive = 3600;
+
+	/**
 	 * @return the diskStorePath
 	 */
 	public String getDiskStorePath() {
@@ -36,7 +56,8 @@ public class DefaultConfig implements Serializable {
 	}
 
 	/**
-	 * @param diskStorePath the diskStorePath to set
+	 * @param diskStorePath
+	 *            the diskStorePath to set
 	 */
 	public void setDiskStorePath(String diskStorePath) {
 		this.diskStorePath = diskStorePath;
@@ -48,6 +69,66 @@ public class DefaultConfig implements Serializable {
 
 	public void setDeviationSeconds(int deviationSeconds) {
 		this.deviationSeconds = deviationSeconds;
+	}
+
+	/**
+	 * @return the defaultHeap
+	 */
+	public Integer getDefaultHeap() {
+		return defaultHeap;
+	}
+
+	/**
+	 * @param defaultHeap
+	 *            the defaultHeap to set
+	 */
+	public void setDefaultHeap(Integer defaultHeap) {
+		this.defaultHeap = defaultHeap;
+	}
+
+	/**
+	 * @return the defaultOffHeap
+	 */
+	public Integer getDefaultOffHeap() {
+		return defaultOffHeap;
+	}
+
+	/**
+	 * @param defaultOffHeap
+	 *            the defaultOffHeap to set
+	 */
+	public void setDefaultOffHeap(Integer defaultOffHeap) {
+		this.defaultOffHeap = defaultOffHeap;
+	}
+
+	/**
+	 * @return the dafaultDiskSize
+	 */
+	public Integer getDefaultDiskSize() {
+		return defaultDiskSize;
+	}
+
+	/**
+	 * @param dafaultDiskSize
+	 *            the dafaultDiskSize to set
+	 */
+	public void setDefaultDiskSize(Integer defaultDiskSize) {
+		this.defaultDiskSize = defaultDiskSize;
+	}
+
+	/**
+	 * @return the defaultKeepAlive
+	 */
+	public Integer getDefaultKeepAlive() {
+		return defaultKeepAlive;
+	}
+
+	/**
+	 * @param defaultKeepAlive
+	 *            the defaultKeepAlive to set
+	 */
+	public void setDefaultKeepAlive(Integer defaultKeepAlive) {
+		this.defaultKeepAlive = defaultKeepAlive;
 	}
 
 }

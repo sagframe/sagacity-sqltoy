@@ -78,7 +78,7 @@ public class TranslateConfigModel implements Serializable {
 	/**
 	 * 内存中存放的数量(条)
 	 */
-	private int heap = 20000;
+	private int heap = 10000;
 
 	/**
 	 * 堆外內存(MB)
