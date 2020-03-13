@@ -6,7 +6,7 @@
 	<!-- 可以通过disk-store-path 设置缓存保存的文件路径 -->
 	<!-- <cache-translates disk-store-path="./translateCaches"> -->
 	<cache-translates default-heap="500"
-		default-off-heap="10" default-keep-alive="1800">
+		default-keep-alive="1800">
 		<!-- 可以用spring bean方式来实现缓存:针对数据字典方法可以有一个字典分类的参数 -->
 		<!-- <service-translate cache="dictKeyNameCache" service="dictService" 
 			method="getDictByType" keep-alive="1800" /> -->
