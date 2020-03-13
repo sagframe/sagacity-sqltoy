@@ -29,8 +29,9 @@ import org.slf4j.LoggerFactory;
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:ScanEntityAndSqlResource.java,Revision:v1.0,Date:2012-6-10
  *          下午10:43:15
- * @Modification {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
- * @Modification {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
+ * @modify {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
+ * @modify {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
+ * @modify {Date:2020-03-13,调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖}
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class ScanEntityAndSqlResource {
@@ -225,14 +226,15 @@ public class ScanEntityAndSqlResource {
 							Enumeration<JarEntry> entries = jar.entries();
 							// 同样的进行循环迭代
 							JarEntry entry;
-							String name;
+							String sqlFile;
 							while (entries.hasMoreElements()) {
 								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
 								entry = entries.nextElement();
-								name = entry.getName();
-								if (name.startsWith(realRes) && name.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+								sqlFile = entry.getName();
+								if (sqlFile.startsWith(realRes) && sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()) {
-									result.add(name);
+									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
+									result.add(0, sqlFile);
 								}
 							}
 						} else {
@@ -259,9 +261,11 @@ public class ScanEntityAndSqlResource {
 							if (realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
+
 							if (url.getProtocol().equals("jar")) {
 								if (!result.contains(realRes)) {
-									result.add(realRes);
+									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
+									result.add(0, realRes);
 								}
 							} else {
 								file = new File(url.toURI());
