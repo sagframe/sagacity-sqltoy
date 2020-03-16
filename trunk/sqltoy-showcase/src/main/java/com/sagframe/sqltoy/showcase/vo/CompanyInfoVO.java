@@ -29,8 +29,6 @@ public class CompanyInfoVO implements Serializable {
 	private String registAddress;
 	
 	private String creditCode;
-	
-	private Integer count;
 
 	/**
 	 * @return the companyId
@@ -115,20 +113,5 @@ public class CompanyInfoVO implements Serializable {
 	public void setCreditCode(String creditCode) {
 		this.creditCode = creditCode;
 	}
-
-	/**
-	 * @return the count
-	 */
-	public Integer getCount() {
-		return count;
-	}
-
-	/**
-	 * @param count the count to set
-	 */
-	public void setCount(Integer count) {
-		this.count = count;
-	}
-	
 	
 }

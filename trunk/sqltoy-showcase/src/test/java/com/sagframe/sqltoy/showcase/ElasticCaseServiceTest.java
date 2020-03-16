@@ -60,16 +60,6 @@ public class ElasticCaseServiceTest {
 	}
 
 	@Test
-	public void testSqlFindPageCount() {
-		// elasticsearch-sql https://github.com/NLPchina/elasticsearch-sql
-		String sql = "es_find_company_page_count";
-		List result = sqlToyLazyDao.elastic().sql(sql).resultType(CompanyInfoVO.class).find();
-		for (CompanyInfoVO company : (List<CompanyInfoVO>) result) {
-			System.err.println(company.getCount());
-		}
-	}
-
-	@Test
 	public void testJsonSearch() {
 		String sql = "sys_elastic_test_json";
 		String[] paramNames = { "companyTypes" };
