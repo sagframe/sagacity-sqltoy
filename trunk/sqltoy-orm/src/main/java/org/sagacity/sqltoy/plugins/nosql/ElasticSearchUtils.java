@@ -478,7 +478,10 @@ public class ElasticSearchUtils {
 				return rowJson;
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject) {
-				return getRealJSONObject((JSONObject) result, realFields, isSuggest);
+				JSONObject tmp = (JSONObject) result;
+				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value"))
+					return rowJson;
+				return getRealJSONObject(tmp, realFields, isSuggest);
 			} else if (result instanceof JSONArray) {
 				return result;
 			}
