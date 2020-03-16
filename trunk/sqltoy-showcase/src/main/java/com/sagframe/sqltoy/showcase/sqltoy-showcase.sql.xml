@@ -157,6 +157,15 @@
 		]]>
 		</value>
 	</eql>
+	
+	<eql id="es_find_company_page_count"
+		fields="company_id,company_name,company_type" mode="sql">
+		<value>
+		<![CDATA[
+		select count(1) count from cc_company_info where company_type='1' 
+		]]>
+		</value>
+	</eql>
 
 	<!-- 基于elasticsearch json rest原生查询,当存在_source 提供了字段时fields属性可以不用填写 -->
 	<eql id="sys_elastic_test_json" fields="" index="cc_company_info">
