@@ -30,7 +30,7 @@
 					<constructor-arg value="${es.default.url}" />
 					<constructor-arg value="${es.version}" />
 					<property name="id" value="default" />
-					<!-- 6.3.x 版本支持xpack sql查询 <property name="enableSql" value="true" /> -->
+					<!-- 6.3.x 版本支持xpack sql查询 <property name="nativeSql" value="true" /> -->
 					<property name="username" value="${es.username}" />
 					<property name="password" value="${es.password}" />
 				</bean>
