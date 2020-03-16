@@ -46,7 +46,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected SqlToyLazyDao sqlToyLazyDao;
 
 	/**
-	 * @param sqlToyLazyDao the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao
+	 *            the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "sqlToyLazyDao")
@@ -385,8 +386,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException("findFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
+			throw new DataAccessException(
+					"findFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
 		}
 		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
 	}
@@ -402,8 +403,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException("findFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
+			throw new DataAccessException(
+					"findFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
 		}
 		return (List<T>) sqlToyLazyDao.findByQuery(
 				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
@@ -420,9 +421,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException("findPageFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
+		if (StringUtil.isBlank(entityMeta.getPageSql())) {
+			throw new DataAccessException(
+					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
 		}
 		return sqlToyLazyDao.findPageBySql(paginationModel, entityMeta.getPageSql(), entity);
 	}
@@ -439,9 +440,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException("findPageFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
+		if (StringUtil.isBlank(entityMeta.getPageSql())) {
+			throw new DataAccessException(
+					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
 		}
 		return sqlToyLazyDao.findPageByQuery(paginationModel,
 				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
@@ -459,8 +460,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException("findTopFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
+			throw new DataAccessException(
+					"findTopFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
 		}
 		return (List<T>) sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
 	}
@@ -475,9 +476,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())||StringUtil.isBlank(entityMeta.getPageSql())) {
-			throw new DataAccessException("getRandomFromByEntity["+
-					entity.getClass().getName() + "]沒有在类上用注解@ListSql()或@PaginationSql() 定义查询sql!");
+		if (StringUtil.isBlank(entityMeta.getListSql()) && StringUtil.isBlank(entityMeta.getPageSql())) {
+			throw new DataAccessException("getRandomFromByEntity[" + entity.getClass().getName()
+					+ "]沒有在类上用注解@ListSql()或@PaginationSql() 定义查询sql!");
 		}
 		return (List<T>) sqlToyLazyDao.getRandomResult(
 				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
