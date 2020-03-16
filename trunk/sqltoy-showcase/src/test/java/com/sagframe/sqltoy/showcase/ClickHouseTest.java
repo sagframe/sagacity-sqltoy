@@ -9,14 +9,14 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
@@ -29,7 +29,7 @@ import com.sagframe.sqltoy.showcase.vo.OrderInfoVO;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ClickHouseTest.java,Revision:v1.0,Date:2020年1月22日
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
 public class ClickHouseTest {
 	@Autowired

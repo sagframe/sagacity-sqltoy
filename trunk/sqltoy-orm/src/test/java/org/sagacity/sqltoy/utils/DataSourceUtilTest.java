@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
  * @author zhong
  *
  */
-// @RunWith(Parameterized.class)
 public class DataSourceUtilTest {
 	/**
 	 * 定义日志

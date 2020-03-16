@@ -4,8 +4,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
 	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
-	<cache-translates
-		disk-store-path="./sqltoy-showcase/translateCaches">
+	<cache-translates>
 		<!-- 可以用spring bean方式来实现缓存:针对数据字典方法可以有一个字典分类的参数 -->
 		<!-- <service-translate cache="dictKeyNameCache"
 			service="dictService" method="getDictByType" keep-alive="30" /> -->

@@ -17,14 +17,15 @@ public class FunctionUtilTest {
 												 * funPackage.concat("Length"), funPackage.concat("ToChar"),
 												 * funPackage.concat("If"),
 												 */
-			funPackage.concat("Concat")
+			funPackage.concat("Instr")
 			// funPackage.concat("GroupConcat")
 	};
 
 	public static void main(String[] args) {
 		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
-		String sql = CommonUtils.readFileAsString("classpath:/showcase.txt", "UTF-8");
-		//String sql = "select concat('\\'', t.`ORGAN_ID`, '\\'') from sys_organ_info t ";
+		String sql = CommonUtils.readFileAsString("classpath:/scripts/instr_function.txt", "UTF-8");
+		// String sql = "select concat('\\'', t.`ORGAN_ID`, '\\'') from sys_organ_info t
+		// ";
 
 		String dialectSql = FunctionUtils.getDialectSql(sql, "oracle");
 		System.err.println(dialectSql);

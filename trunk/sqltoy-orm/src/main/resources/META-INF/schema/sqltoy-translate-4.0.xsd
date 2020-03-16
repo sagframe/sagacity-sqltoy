@@ -1,8 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns="http://www.sagframe.com/schema/sqltoy-translate"
-	xmlns:tns="http://www.sagframe.com/schema/sqltoy-translate" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+<xsd:schema
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	targetNamespace="http://www.sagframe.com/schema/sqltoy-translate"
 	elementFormDefault="qualified">
+	<xsd:attributeGroup name="sqlToyTranslateAttrs">
+		<xsd:attribute name="cache" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="keep-alive" type="xsd:integer"
+			default="3600">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is second]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="heap" type="xsd:integer"
+			default="10000">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is EntryUnit.ENTRIES]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="off-heap" type="xsd:integer"
+			default="0">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="disk-size" type="xsd:integer"
+			default="0">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[unit is MemoryUnit.MB]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:attributeGroup>
+
 	<!-- root -->
 	<xsd:element name="sagacity">
 		<xsd:complexType>
@@ -16,74 +55,73 @@
 									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
-									<xsd:attribute name="cache" type="xsd:string"
-										use="required" />
 									<xsd:attribute name="sql" type="xsd:string" />
-									<xsd:attribute name="datasource" type="xsd:string" />
-									<xsd:attribute name="keep-alive" type="xsd:integer"
-										default="3600" />
-									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
-									<xsd:attribute name="off-heap" type="xsd:integer"
-										default="30" />
-									<xsd:attribute name="disk-size" type="xsd:integer"
-										default="100" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="service-translate" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType>
-									<xsd:attribute name="cache" type="xsd:string"
-										use="required" />
 									<xsd:attribute name="service" type="xsd:string"
 										use="required" />
 									<xsd:attribute name="method" type="xsd:string"
 										use="required" />
-									<xsd:attribute name="keep-alive" type="xsd:integer"
-										default="3600" />
-									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
-									<xsd:attribute name="off-heap" type="xsd:integer"
-										default="30" />
-									<xsd:attribute name="disk-size" type="xsd:integer"
-										default="100" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="rest-translate" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType>
-									<xsd:attribute name="cache" type="xsd:string"
+									<xsd:attribute name="url" type="xsd:string"
 										use="required" />
-									<xsd:attribute name="url" type="xsd:string" use="required" />
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
-									<xsd:attribute name="keep-alive" type="xsd:integer"
-										default="3600" />
-									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
-									<xsd:attribute name="off-heap" type="xsd:integer"
-										default="30" />
-									<xsd:attribute name="disk-size" type="xsd:integer"
-										default="100" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="local-translate" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<xsd:attribute name="cache" type="xsd:string"
-										use="required" />
-									<xsd:attribute name="keep-alive" type="xsd:integer"
-										default="3600" />
-									<xsd:attribute name="heap" type="xsd:integer"
-										default="400" />
-									<xsd:attribute name="off-heap" type="xsd:integer"
-										default="30" />
-									<xsd:attribute name="disk-size" type="xsd:integer"
-										default="100" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:choice>
-						<xsd:attribute name="disk-store-path" default="./translateCaches" />
+						<xsd:attribute name="disk-store-path"
+							default="./translateCaches" />
+						<xsd:attribute name="default-keep-alive" type="xsd:integer" default="3600">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is second]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-heap" type="xsd:integer" default="10000">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is EntryUnit.ENTRIES]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-off-heap" type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
+						<xsd:attribute name="default-disk-size" type="xsd:integer" default="0">
+							<xsd:annotation>
+								<xsd:documentation>
+								<![CDATA[unit is MemoryUnit.MB]]>
+								</xsd:documentation>
+							</xsd:annotation>
+						</xsd:attribute>
 					</xsd:complexType>
 
 				</xsd:element>
@@ -94,7 +132,7 @@
 						<xsd:documentation>
 							<![CDATA[
 							1、返回结果必须是:cacheName,cacheType(可为null) 两列值,请求参数:lastUpdateTime;
-							2、check-frequency:可以是一个数字,或:0..10:20?300,10:20..20?15,20..24?150
+							2、check-frequency:可以是一个数字如5(每个5秒检测一次),也可以分段模式0..10:20?300,10:20..20?15,20..24?150
 							]]>
 						</xsd:documentation>
 					</xsd:annotation>
@@ -107,8 +145,10 @@
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
 									<xsd:attribute name="sql" type="xsd:string" />
-									<xsd:attribute name="check-frequency" type="xsd:string" />
-									<xsd:attribute name="datasource" type="xsd:string" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="service-checker" minOccurs="0"
@@ -118,20 +158,24 @@
 										use="required" />
 									<xsd:attribute name="method" type="xsd:string"
 										use="required" />
-									<xsd:attribute name="check-frequency" type="xsd:string" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="rest-checker" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<xsd:attribute name="url" type="xsd:string" use="required" />
-									<xsd:attribute name="check-frequency" type="xsd:string" />
+									<xsd:attribute name="url" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:choice>
-						<xsd:attribute name="cluster-time-deviation" type="xsd:integer" default="1">
+						<xsd:attribute name="cluster-time-deviation"
+							type="xsd:integer" default="1">
 							<xsd:annotation>
 								<xsd:documentation>
 								<![CDATA[

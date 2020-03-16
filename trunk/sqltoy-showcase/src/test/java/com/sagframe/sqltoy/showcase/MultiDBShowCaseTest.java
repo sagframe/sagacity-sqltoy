@@ -6,13 +6,13 @@ package com.sagframe.sqltoy.showcase;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.model.SaveMode;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.sagframe.sqltoy.SqlToyApplication;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
@@ -24,7 +24,7 @@ import com.sagframe.sqltoy.utils.ShowCaseUtils;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MultiDBShowCaseTest.java,Revision:v1.0,Date:2019年7月23日
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
 public class MultiDBShowCaseTest {
 	@Resource(name = "sqlToyLazyDao")

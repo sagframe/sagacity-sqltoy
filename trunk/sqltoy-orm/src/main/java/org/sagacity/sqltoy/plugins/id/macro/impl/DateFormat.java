@@ -4,9 +4,10 @@
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
 import java.util.Date;
-import java.util.HashMap;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
@@ -24,14 +25,23 @@ public class DateFormat extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugin.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, HashMap<String, Object> keyValues) {
-		Object dateValue = new Date();
+	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
+		Object dateValue = null;
 		String fmt = "yyMMdd";
 		if (params != null) {
 			if (params.length == 1) {
 				fmt = params[0];
+				dateValue = new Date();
 			} else if (params.length > 1) {
-				dateValue = keyValues.get(params[0].toLowerCase());
+				if (params[0].contains("$")) {
+					dateValue = MacroUtils.replaceParams(params[0], keyValues);
+				} else {
+					if (keyValues != null && keyValues.containsKey(params[0])) {
+						dateValue = keyValues.get(params[0]).toString();
+					} else {
+						dateValue=params[0];
+					}
+				}
 				fmt = params[1];
 			}
 		}

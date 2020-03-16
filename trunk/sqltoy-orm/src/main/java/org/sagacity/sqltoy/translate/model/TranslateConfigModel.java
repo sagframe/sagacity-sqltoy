@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @description 翻译配置模型
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-4-8
- * @Modification Date:2013-4-8 {填写修改说明}
+ * @modify Date:2020-3-8=10 修改heap\offheap\diskSize的默认策略
  */
 public class TranslateConfigModel implements Serializable {
 	/**
@@ -76,19 +76,19 @@ public class TranslateConfigModel implements Serializable {
 	private int keepAlive = 3600;
 
 	/**
-	 * 内存中存放的数量
+	 * 内存中存放的数量(条)
 	 */
-	private int heap = 400;
+	private int heap = 10000;
 
 	/**
-	 * 堆外內存(30M )
+	 * 堆外內存(MB)
 	 */
-	private int offHeap = 30;
+	private int offHeap = 0;
 
 	/**
-	 * 存储磁盘的大小(M)
+	 * 存储磁盘的大小(MB)
 	 */
-	private int diskSize = 100;
+	private int diskSize = 0;
 
 	/**
 	 * @return the keepAlive
@@ -98,7 +98,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param keepAlive the keepAlive to set
+	 * @param keepAlive
+	 *            the keepAlive to set
 	 */
 	public void setKeepAlive(int keepAlive) {
 		this.keepAlive = keepAlive;
@@ -112,7 +113,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param heap the heap to set
+	 * @param heap
+	 *            the heap to set
 	 */
 	public void setHeap(int heap) {
 		this.heap = heap;
@@ -126,7 +128,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param offHeap the offHeap to set
+	 * @param offHeap
+	 *            the offHeap to set
 	 */
 	public void setOffHeap(int offHeap) {
 		this.offHeap = offHeap;
@@ -140,7 +143,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param cache the cache to set
+	 * @param cache
+	 *            the cache to set
 	 */
 	public void setCache(String cache) {
 		this.cache = cache;
@@ -154,7 +158,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param sql the sql to set
+	 * @param sql
+	 *            the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -168,7 +173,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param service the service to set
+	 * @param service
+	 *            the service to set
 	 */
 	public void setService(String service) {
 		this.service = service;
@@ -182,7 +188,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param method the method to set
+	 * @param method
+	 *            the method to set
 	 */
 	public void setMethod(String method) {
 		this.method = method;
@@ -196,7 +203,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param keyIndex the keyIndex to set
+	 * @param keyIndex
+	 *            the keyIndex to set
 	 */
 	public void setKeyIndex(int keyIndex) {
 		this.keyIndex = keyIndex;
@@ -210,7 +218,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource the dataSource to set
+	 * @param dataSource
+	 *            the dataSource to set
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
@@ -224,7 +233,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param type the type to set
+	 * @param type
+	 *            the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -238,7 +248,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param url the url to set
+	 * @param url
+	 *            the url to set
 	 */
 	public void setUrl(String url) {
 		this.url = url;
@@ -252,7 +263,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param username the username to set
+	 * @param username
+	 *            the username to set
 	 */
 	public void setUsername(String username) {
 		this.username = username;
@@ -266,7 +278,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param password the password to set
+	 * @param password
+	 *            the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
@@ -280,7 +293,8 @@ public class TranslateConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param diskSize the diskSize to set
+	 * @param diskSize
+	 *            the diskSize to set
 	 */
 	public void setDiskSize(int diskSize) {
 		this.diskSize = diskSize;

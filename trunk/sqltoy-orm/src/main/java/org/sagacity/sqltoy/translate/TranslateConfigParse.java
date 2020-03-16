@@ -63,35 +63,41 @@ public class TranslateConfigParse {
 			public Object process(Document doc, Element root) throws Exception {
 				DefaultConfig defaultConfig = new DefaultConfig();
 				NodeList nodeList = root.getElementsByTagName("cache-translates");
-				if (nodeList.getLength() == 0)
+				if (nodeList.getLength() == 0) {
 					return defaultConfig;
+				}
 				// 解析缓存翻译配置
 				Element node = (Element) nodeList.item(0);
-				if (node.hasAttribute("disk-store-path")) {
-					defaultConfig.setDiskStorePath(node.getAttribute("disk-store-path"));
-				}
+				XMLUtil.setAttributes(node, defaultConfig);
 				NodeList elts;
 				Element elt;
 				NodeList sqlNode;
+				String sql;
+				String sqlId;
+				boolean isShowSql;
 				for (String translateType : TRANSLATE_TYPES) {
 					elts = node.getElementsByTagName(translateType.concat(TRANSLATE_SUFFIX));
 					if (elts.getLength() > 0) {
 						for (int i = 0; i < elts.getLength(); i++) {
 							elt = (Element) elts.item(i);
 							TranslateConfigModel translateCacheModel = new TranslateConfigModel();
+							// 设置默认值
+							translateCacheModel.setHeap(defaultConfig.getDefaultHeap());
+							translateCacheModel.setOffHeap(defaultConfig.getDefaultOffHeap());
+							translateCacheModel.setDiskSize(defaultConfig.getDefaultDiskSize());
+							translateCacheModel.setKeepAlive(defaultConfig.getDefaultKeepAlive());
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
-									String sql;
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
 										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
 									} else {
 										sql = StringUtil.trim(elt.getTextContent());
 									}
-									String sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + (i + 1);
-									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
+									sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + (i + 1);
+									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);
@@ -112,8 +118,9 @@ public class TranslateConfigParse {
 				}
 				nodeList = root.getElementsByTagName("cache-update-checkers");
 				// 解析更新检测器
-				if (nodeList.getLength() == 0)
+				if (nodeList.getLength() == 0) {
 					return defaultConfig;
+				}
 				node = (Element) nodeList.item(0);
 				// 集群节点时间偏差(秒)
 				if (node.hasAttribute("cluster-time-deviation")) {
@@ -136,15 +143,14 @@ public class TranslateConfigParse {
 							checherConfigModel.setType(translateType);
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
-									String sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + (i + 1);
-									String sql;
+									sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + (i + 1);
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
 										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
 									} else {
 										sql = StringUtil.trim(elt.getTextContent());
 									}
-									boolean isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
+									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);

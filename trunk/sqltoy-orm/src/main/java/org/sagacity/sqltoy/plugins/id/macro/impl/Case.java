@@ -3,8 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.id.macro.impl;
 
-import java.util.HashMap;
-
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 
@@ -23,7 +22,7 @@ public class Case extends AbstractMacro {
 	 * org.sagacity.sqltoy.plugin.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
-	public String execute(String[] params, HashMap<String, Object> keyValues) {
+	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
 		if (params == null)
 			return "";
 		int paramSize = params.length;
@@ -36,7 +35,11 @@ public class Case extends AbstractMacro {
 		if (baseParam.contains("$")) {
 			baseValue = MacroUtils.replaceParams(baseParam, keyValues);
 		} else {
-			baseValue = keyValues.get(baseParam.toLowerCase()).toString();
+			if (keyValues != null && keyValues.containsKey(baseParam)) {
+				baseValue = keyValues.get(baseParam).toString();
+			} else {
+				baseValue=baseParam;
+			}
 		}
 		// 默认最后一个值为结果
 		String result = params[paramSize - 1];

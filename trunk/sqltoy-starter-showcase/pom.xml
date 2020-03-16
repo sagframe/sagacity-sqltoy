@@ -12,9 +12,11 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sagacity-sqltoy.version>4.9.9</sagacity-sqltoy.version>
+		<sqltoy-starter.version>4.10.1</sqltoy-starter.version>
 		<fastjson.version>1.2.66</fastjson.version>
 		<druid.version>1.1.21</druid.version>
+		<junit-jupiter.version>5.6.0</junit-jupiter.version>
+		<junit-platform.version>1.6.0</junit-platform.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -32,7 +34,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
@@ -40,20 +47,23 @@
 			<version>${druid.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.aspectj</groupId>
-			<artifactId>aspectjweaver</artifactId>
-		</dependency>
+		
 		<dependency>
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy-starter</artifactId>
-			<version>${sagacity-sqltoy.version}</version>
+			<version>${sqltoy-starter.version}</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/junit/junit -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit-jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>${junit-platform.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -72,12 +82,8 @@
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
-					<groupId>org.apache.logging.log4j</groupId>
-					<artifactId>log4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>

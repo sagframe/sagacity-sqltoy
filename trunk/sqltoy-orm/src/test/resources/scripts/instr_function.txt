@@ -1,0 +1,1 @@
+select position('c' in 'abcdefgc') from sys_organ_info t 

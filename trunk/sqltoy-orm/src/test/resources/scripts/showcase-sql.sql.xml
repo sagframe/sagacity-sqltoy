@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	 <!-- 员工客户信息分页查询(通过缓存直接获取ID作为条件,避免用名称通过关联模糊查询)   -->
+    <sql id="staff_company_queryByPage">
+        <filters>
+            <!-- cache 结构 [companyId,companyName,status]  -->
+            <cache-arg param="companyName" cache-name="companyIdName" alias-name="companyIds">
+            	<filter compare-param="ENABLE" cache-index="2"/>
+            </cache-arg>
+            <!-- 将企业ID数组组成一个逗号分隔的字符串 -->
+            <to-in-arg  params="companyIds" single-quote="true"/>
+        </filters>
+        <value><![CDATA[
+		      select f.*
+			  from cc_staff_company f
+		      where f.STATUS=:status
+              #[and f.company_id in (:companyIds)]
+               order by f.CREATE_TIME desc
+		]]></value>
+    </sql>
+</sqltoy>

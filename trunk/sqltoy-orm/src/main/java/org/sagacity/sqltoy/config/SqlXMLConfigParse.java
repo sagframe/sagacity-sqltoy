@@ -689,7 +689,7 @@ public class SqlXMLConfigParse {
 			filterModel.setExcludesMap(excludeMaps);
 		}
 
-		// exclusive 和primary filter 专用参数
+		// exclusive 和primary filter、cache-arg 专用参数
 		if (filter.hasAttribute("param")) {
 			filterModel.setParam(filter.getAttribute("param").toLowerCase());
 		}

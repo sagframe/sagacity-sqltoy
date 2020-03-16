@@ -1,3 +1,6 @@
+# 使用文档(建设中)
+## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
+
 #  QQ交流群:531812227 
 
 # 使用单位或项目: 宁波农行  山东农信  成都银行   中国建行上海开发中心  合肥农信  浦发电销  拉卡拉   中化壹化网  中化石化销售
@@ -12,14 +15,14 @@
 	
       mongodb在用户画像标签数据场景下的应用。
       
-# maven集成，sqltoy4.9.9 开始已经加入maven中央仓库
+# maven集成，sqltoy可以从maven中央仓库获取
 * 普通spring项目集成
 ```xml
 <!-- sqltoy -->
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy</artifactId>
-	<version>4.9.9</version>	
+	<version>4.10.1</version>	
 </dependency>
 ```
 * 基于spring boot starter模式的集成
@@ -28,7 +31,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.9.9</version>	
+	<version>4.10.1</version>	
 </dependency>
 ```
 * POJO生成工具类
@@ -37,7 +40,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.9.9</version>	
+	<version>4.10.0</version>	
 </dependency>
 ```
 # 1. 前言

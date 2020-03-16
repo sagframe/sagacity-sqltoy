@@ -5,13 +5,13 @@ package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.sagframe.sqltoy.SqlToyApplication;
 import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
@@ -22,7 +22,7 @@ import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:RedisBusinessKeyCaseTest.java,Revision:v1.0,Date:2019年7月16日
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
 public class RedisBusinessKeyCaseTest {
 	@Autowired

@@ -5,14 +5,13 @@
 	<groupId>com.sagframe</groupId>
 	<name>sqltoy-quickvo</name>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.9.9</version>
+	<version>4.10.0</version>
 	<description>sqltoy vo generate tools</description>
 	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.13.1</log4j.version>
-		<beanutils.version>1.9.4</beanutils.version>
-		<freemarker.version>2.3.29</freemarker.version>
+		<freemarker.version>2.3.30</freemarker.version>
 	</properties>
 	<licenses>
 		<license>
@@ -47,17 +46,6 @@
 		</repository>
 	</distributionManagement>
 	<dependencies>
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-			<version>${beanutils.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
@@ -118,7 +106,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -139,8 +127,20 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<!-- <artifactSet> <excludes> <exclude>*/META-INF/*.*</exclude> <exclude>log4j-*</exclude> 
-								</excludes> </artifactSet> -->
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/LICENSE</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+										<exclude>META-INF/maven/*.*</exclude>
+										<exclude>Log4j-*.xsd</exclude>
+										<exclude>Log4j-*.dtd</exclude>
+									</excludes>
+								</filter>
+							</filters>
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Case;
 import org.sagacity.sqltoy.plugins.id.macro.impl.DateFormat;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
@@ -57,6 +58,16 @@ public class MacroUtils {
 	}
 
 	/**
+	 * @todo 宏替换,默认先执行内部后执行外部
+	 * @param hasMacroStr
+	 * @param keyValues
+	 * @return
+	 */
+	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues) {
+		return replaceMacros(hasMacroStr, keyValues, false);
+	}
+
+	/**
 	 * @todo 递归调用解析字符串中的转换器
 	 * @param reportContext
 	 * @param reportId
@@ -66,7 +77,8 @@ public class MacroUtils {
 	 *            然后再执行@abc())
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, HashMap<String, Object> keyValues, boolean isOuter) {
+	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues,
+			boolean isOuter) {
 		if (StringUtil.isBlank(hasMacroStr))
 			return hasMacroStr;
 		if (StringUtil.matches(hasMacroStr, macroPattern)) {
@@ -109,8 +121,8 @@ public class MacroUtils {
 			String macroResult = (result == null) ? "" : result;
 			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
 			return replaceMacros(hasMacroStr, keyValues, isOuter);
-		} else
-			return hasMacroStr;
+		}
+		return hasMacroStr;
 	}
 
 	/**
@@ -152,8 +164,8 @@ public class MacroUtils {
 	 * @param keyValues
 	 * @return
 	 */
-	public static String replaceParams(String template, HashMap<String, Object> keyValues) {
-		if (StringUtil.isBlank(template))
+	public static String replaceParams(String template, IgnoreKeyCaseMap<String, Object> keyValues) {
+		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty())
 			return template;
 		LinkedHashMap<String, String> paramsMap = parseParams(template);
 		String result = template;
