@@ -114,5 +114,4 @@ public class CompanyInfoVO implements Serializable {
 		this.creditCode = creditCode;
 	}
 	
-	
 }

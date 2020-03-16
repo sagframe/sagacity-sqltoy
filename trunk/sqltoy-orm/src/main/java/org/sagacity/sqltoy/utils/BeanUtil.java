@@ -737,6 +737,7 @@ public class BeanUtil {
 
 			Iterator iter = datas.iterator();
 			int index = 0;
+			int size;
 			while (iter.hasNext()) {
 				rowObject = iter.next();
 				if (rowObject != null) {
@@ -748,22 +749,28 @@ public class BeanUtil {
 					}
 					if (isArray) {
 						rowArray = (Object[]) rowObject;
+						size = rowArray.length;
 						for (int i = 0; i < indexSize; i++) {
-							cellData = rowArray[indexs[i]];
-							if (realMethods[i] != null) {
-								propertyName = realMethods[i].getName();
-								realMethods[i].invoke(bean,
-										autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+							if (indexs[i] < size) {
+								cellData = rowArray[indexs[i]];
+								if (realMethods[i] != null) {
+									propertyName = realMethods[i].getName();
+									realMethods[i].invoke(bean,
+											autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+								}
 							}
 						}
 					} else {
 						rowList = (List) rowObject;
+						size = rowList.size();
 						for (int i = 0; i < indexSize; i++) {
-							cellData = rowList.get(indexs[i]);
-							if (realMethods[i] != null) {
-								propertyName = realMethods[i].getName();
-								realMethods[i].invoke(bean,
-										autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+							if (indexs[i] < size) {
+								cellData = rowList.get(indexs[i]);
+								if (realMethods[i] != null) {
+									propertyName = realMethods[i].getName();
+									realMethods[i].invoke(bean,
+											autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+								}
 							}
 						}
 					}
@@ -794,8 +801,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate
-	 *            强制更新
+	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
@@ -908,14 +914,10 @@ public class BeanUtil {
 
 	/**
 	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans
-	 *            源对象数据集合
-	 * @param fromProps
-	 *            源对象的属性
-	 * @param targetProps
-	 *            目标对象的属性
-	 * @param newClass
-	 *            目标对象类型
+	 * @param fromBeans   源对象数据集合
+	 * @param fromProps   源对象的属性
+	 * @param targetProps 目标对象的属性
+	 * @param newClass    目标对象类型
 	 * @return
 	 * @throws Exception
 	 */
@@ -933,8 +935,7 @@ public class BeanUtil {
 	 * @param fromProps
 	 * @param targetProps
 	 * @param newClass
-	 * @param autoMapping
-	 *            是否自动匹配
+	 * @param autoMapping 是否自动匹配
 	 * @return
 	 * @throws Exception
 	 */

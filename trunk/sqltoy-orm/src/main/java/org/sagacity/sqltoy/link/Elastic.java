@@ -9,6 +9,8 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ElasticEndpoint;
+import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -151,12 +153,18 @@ public class Elastic extends BaseLink {
 	public PaginationModel findPage(PaginationModel pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
-		if (sqlToyConfig.getNoSqlConfigModel() == null) {
+		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
+		if (noSqlConfig == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
-				return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			if (noSqlConfig.isSqlMode()) {
+				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
+				if (esConfig.isNativeSql()) {
+					throw new UnsupportedOperationException("elastic native sql pagination is not support!");
+				} else {
+					return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+				}
 			}
 			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 		} catch (Exception e) {

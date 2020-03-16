@@ -60,24 +60,24 @@ public class ElasticSearchUtils {
 			return new DataSetResult();
 		}
 		String[] fields = noSqlModel.getFields();
-		if (fields == null && resultClass != null) {
-			Class superClass = resultClass.getSuperclass();
-			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-					&& !resultClass.equals(ConcurrentHashMap.class) && !resultClass.equals(Map.class)
-					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
-					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
-				fields = BeanUtil.matchSetMethodNames(resultClass);
-			}
-		}
-
-		if (fields == null && nativeSql) {
-			JSONArray cols = json.getJSONArray("columns");
-			fields = new String[cols.size()];
-			int index = 0;
-			for (Object col : cols) {
-				fields[index] = ((JSONObject) col).getString("name");
-				index++;
+		if (fields == null) {
+			if (json.containsKey("columns")) {
+				JSONArray cols = json.getJSONArray("columns");
+				fields = new String[cols.size()];
+				int index = 0;
+				for (Object col : cols) {
+					fields[index] = ((JSONObject) col).getString("name");
+					index++;
+				}
+			} else if (resultClass != null) {
+				Class superClass = resultClass.getSuperclass();
+				if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
+						&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
+						&& !resultClass.equals(ConcurrentHashMap.class) && !resultClass.equals(Map.class)
+						&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
+						&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
+					fields = BeanUtil.matchSetMethodNames(resultClass);
+				}
 			}
 		}
 
@@ -479,6 +479,7 @@ public class ElasticSearchUtils {
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
+				//{value:xxx} 模式
 				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value"))
 					return rowJson;
 				return getRealJSONObject(tmp, realFields, isSuggest);
