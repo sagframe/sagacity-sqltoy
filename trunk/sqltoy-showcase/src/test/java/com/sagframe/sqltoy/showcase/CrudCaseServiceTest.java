@@ -86,7 +86,18 @@ public class CrudCaseServiceTest {
 
 	@Test
 	public void saveOrUpdate() {
-
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715003");
+		staffInfo.setStaffCode("S190715003");
+		staffInfo.setStaffName("测试员工3");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test3@aliyun.com");
+		staffInfo.setEntryDate(LocalDate.now());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		sqlToyCRUDService.saveOrUpdate(staffInfo);
 	}
 
 	@Test
