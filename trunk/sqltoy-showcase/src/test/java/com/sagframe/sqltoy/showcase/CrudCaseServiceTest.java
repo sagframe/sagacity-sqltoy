@@ -148,28 +148,39 @@ public class CrudCaseServiceTest {
 	 */
 	@Test
 	public void cascadeSave() {
+		// 主表记录
 		ComplexpkHeadVO head = new ComplexpkHeadVO();
 		head.setTransDate(LocalDate.now());
 		head.setTransCode("S0001");
 		head.setTotalCnt(BigDecimal.valueOf(10));
 		head.setTotalAmt(BigDecimal.valueOf(10000));
 
-		// List<>
+		// 子表记录1
 		ComplexpkItemVO item1 = new ComplexpkItemVO();
 		item1.setProductId("P01");
 		item1.setPrice(BigDecimal.valueOf(1000));
 		item1.setAmt(BigDecimal.valueOf(5000));
 		item1.setQuantity(BigDecimal.valueOf(5));
-
 		head.getComplexpkItemVOs().add(item1);
 
+		// 子表记录2
 		ComplexpkItemVO item2 = new ComplexpkItemVO();
 		item2.setProductId("P02");
 		item2.setPrice(BigDecimal.valueOf(1000));
 		item2.setAmt(BigDecimal.valueOf(5000));
 		item2.setQuantity(BigDecimal.valueOf(5));
-
 		head.getComplexpkItemVOs().add(item2);
+
 		sqlToyCRUDService.save(head);
+	}
+	
+	/**
+	 * 演示级联加载
+	 */
+	@Test
+	public void cascadeLoad() {
+		ComplexpkHeadVO head = sqlToyCRUDService.loadCascade(new ComplexpkHeadVO(LocalDate.now(), "S0001"));
+		//打印级联加载的字表数据
+		System.err.println(JSON.toJSONString(head.getComplexpkItemVOs()));
 	}
 }
