@@ -149,7 +149,7 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> T loadCascade(T entity);
 
 	/**
-	 * @todo 删除对象
+	 * @todo 删除单条对象
 	 * @param entity
 	 */
 	public Long delete(Serializable entity);
