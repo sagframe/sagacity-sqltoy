@@ -22,7 +22,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy</artifactId>
-	<version>4.10.2</version>	
+	<version>4.10.3</version>	
 </dependency>
 ```
 * 基于spring boot starter模式的集成
@@ -31,7 +31,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.10.2</version>	
+	<version>4.10.3</version>	
 </dependency>
 ```
 * POJO生成工具类
