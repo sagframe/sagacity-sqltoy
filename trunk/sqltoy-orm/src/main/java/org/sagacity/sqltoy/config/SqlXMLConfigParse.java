@@ -229,7 +229,7 @@ public class SqlXMLConfigParse {
 		if (countSql != null) {
 			countSql = countSql.replaceAll("\u3000", " ");
 		}
-		SqlType type = sqlElt.hasAttribute("type") ? SqlType.search : SqlType.getSqlType(sqlElt.getAttribute("type"));
+		SqlType type = sqlElt.hasAttribute("type") ? SqlType.getSqlType(sqlElt.getAttribute("type")) : SqlType.search;
 		// 是否nosql模式
 		boolean isNoSql = false;
 		if (nodeName.equals("mql") || nodeName.equals("eql")) {
@@ -955,7 +955,7 @@ public class SqlXMLConfigParse {
 			for (int i = 0; i < dfElts.getLength(); i++) {
 				df = (Element) dfElts.item(i);
 				String[] columns = df.getAttribute("columns").toLowerCase().split("\\,");
-				String format = df.hasAttribute("format") ? "yyyy-MM-dd" : df.getAttribute("format");
+				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
@@ -970,9 +970,9 @@ public class SqlXMLConfigParse {
 			for (int i = 0; i < nfElts.getLength(); i++) {
 				nf = (Element) nfElts.item(i);
 				String[] columns = nf.getAttribute("columns").toLowerCase().split("\\,");
-				String format = nf.hasAttribute("format") ? "capital" : nf.getAttribute("format");
-				String roundStr = nf.hasAttribute("roundingMode") ? null
-						: nf.getAttribute("roundingMode").toUpperCase();
+				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
+				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
+						: null;
 				RoundingMode roundMode = null;
 				if (roundStr != null) {
 					if (roundStr.equals("HALF_UP")) {
