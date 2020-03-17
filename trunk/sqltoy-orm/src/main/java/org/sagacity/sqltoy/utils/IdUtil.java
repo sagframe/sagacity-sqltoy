@@ -50,14 +50,14 @@ public class IdUtil {
 	}
 
 	/**
-	 * @todo 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
+	 * @todo 获取26位有序安全ID,格式:15位:yyMMddHHmmssSSS+后6位纳秒+2位(线程Id+随机数)+3位主机ID
 	 * @param workerId
 	 * @return
 	 */
 	public static BigDecimal getNanoTimeId(String workerId) {
 		// 当前时间(毫秒)
 		String nowTime = DateUtil.formatDate(new Date(), "yyMMddHHmmssSSS");
-		// 6位纳秒间隔
+		// 后6位纳秒间隔
 		String nanoTime = "" + System.nanoTime();
 		nanoTime = nanoTime.substring(nanoTime.length() - 6);
 		// 1位随机数(防范性措施)
