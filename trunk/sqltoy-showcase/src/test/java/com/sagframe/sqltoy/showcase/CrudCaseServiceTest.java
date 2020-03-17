@@ -111,8 +111,7 @@ public class CrudCaseServiceTest {
 		List<StaffInfoVO> staffs = new ArrayList<StaffInfoVO>();
 		String[] ids = { "S190715001", "S190715002" };
 		for (String id : ids) {
-			StaffInfoVO staff = new StaffInfoVO(id);
-			staffs.add(staff);
+			staffs.add(new StaffInfoVO(id));
 		}
 		sqlToyCRUDService.loadAll(staffs);
 	}
@@ -128,8 +127,7 @@ public class CrudCaseServiceTest {
 		List<StaffInfoVO> staffs = new ArrayList<StaffInfoVO>();
 		String[] ids = { "S190715001", "S190715002" };
 		for (String id : ids) {
-			StaffInfoVO staff = new StaffInfoVO(id);
-			staffs.add(staff);
+			staffs.add(new StaffInfoVO(id));
 		}
 		sqlToyCRUDService.deleteAll(staffs);
 	}
