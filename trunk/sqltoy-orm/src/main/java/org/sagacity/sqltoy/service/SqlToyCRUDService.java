@@ -61,7 +61,7 @@ public interface SqlToyCRUDService {
 	public Long update(Serializable entity, String[] forceUpdateProps);
 
 	/**
-	 * @todo 是否深度修改对象
+	 * @todo 对属性进行强制修改,属性值为null则强制更新数据库字段值
 	 * @param entity
 	 */
 	public Long updateDeeply(Serializable entity);
