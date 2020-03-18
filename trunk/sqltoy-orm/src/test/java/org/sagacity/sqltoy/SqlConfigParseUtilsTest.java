@@ -65,9 +65,4 @@ public class SqlConfigParseUtilsTest {
 		System.err.println(JSON.toJSONString(result));
 	}
 
-//	private InputStream getResourceAsStream(String reasource) {
-//		return Thread.currentThread().getContextClassLoader()
-//				.getResourceAsStream((reasource.charAt(0) == '/') ? reasource.substring(1) : reasource);
-//	}
-
 }
