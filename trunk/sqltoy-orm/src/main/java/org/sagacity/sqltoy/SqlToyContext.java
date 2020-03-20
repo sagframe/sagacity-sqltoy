@@ -427,7 +427,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 提供可以动态增加解析sql片段配置的接口,并返回具体id
+	 * @todo 提供可以动态增加解析sql片段配置的接口,并返回具体id,用于第三方平台集成，如报表平台等
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
