@@ -399,13 +399,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		// hashMap可以事先不赋值,直接定义spring的bean
 		if (shardingStrategys.containsKey(strategyName)) {
 			return shardingStrategys.get(strategyName);
-		} else {
-			ShardingStrategy shardingStrategy = (ShardingStrategy) applicationContext.getBean(strategyName);
-			if (shardingStrategy != null) {
-				shardingStrategys.put(strategyName, shardingStrategy);
-			}
-			return shardingStrategy;
 		}
+		ShardingStrategy shardingStrategy = (ShardingStrategy) applicationContext.getBean(strategyName);
+		if (shardingStrategy != null) {
+			shardingStrategys.put(strategyName, shardingStrategy);
+		}
+		return shardingStrategy;
 	}
 
 	/**
