@@ -587,7 +587,7 @@
 			type="xsd:nonNegativeInteger" default="100" />
 		<!-- 相同查询间隔多久刷新 -->
 		<xsd:attribute name="alive-seconds"
-			type="xsd:nonNegativeInteger" default="600" />
+			type="xsd:nonNegativeInteger" default="90" />
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPivotType">
