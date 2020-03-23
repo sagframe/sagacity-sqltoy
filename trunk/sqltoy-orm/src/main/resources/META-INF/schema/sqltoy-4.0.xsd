@@ -125,7 +125,11 @@
 			</xsd:element>
 			<!-- 分页优化 -->
 			<xsd:element name="page-optimize" minOccurs="0"
-				maxOccurs="1" type="sqltoyPageOptimizeType" />
+				maxOccurs="1" type="sqltoyPageOptimizeType">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[分页优化,通过缓存来保留查询条件一样的分页查询对应count语句查询结果,当下次查询时可以直接获得count记录数]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 		</xsd:choice>
 		<xsd:attribute name="id" type="xsd:string"
 			use="required" />
@@ -587,6 +591,9 @@
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPivotType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[行转列]]></xsd:documentation>
+		</xsd:annotation>
 		<xsd:attribute name="group-columns" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="category-columns" type="xsd:string"
@@ -615,6 +622,9 @@
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyUnpivotType">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[列转行]]></xsd:documentation>
+		</xsd:annotation>
 		<xsd:attribute name="columns" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="values-as-column" type="xsd:string"
