@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,6 +198,8 @@ public class SqlScriptLoader {
 		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
 			if (sqlCache.get(sqlToyConfig.getId()) != null) {
 				logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
+				// 移除分页优化缓存
+				PageOptimizeUtils.remove(sqlToyConfig.getId());
 			}
 			sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
 		}

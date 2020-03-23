@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
+import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -152,6 +153,8 @@ public class SqlXMLConfigParse {
 							// 去除sql中的注释语句并放入缓存
 							if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
 								logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
+								// 移除分页优化缓存
+								PageOptimizeUtils.remove(sqlToyConfig.getId());
 							}
 							cache.put(sqlToyConfig.getId(), sqlToyConfig);
 						}

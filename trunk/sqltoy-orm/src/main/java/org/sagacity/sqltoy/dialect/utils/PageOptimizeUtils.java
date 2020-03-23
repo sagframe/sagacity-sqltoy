@@ -157,4 +157,12 @@ public class PageOptimizeUtils {
 			}
 		}
 	}
+
+	/**
+	 * @todo 清除掉sql对应的分页count缓存
+	 * @param sqlId
+	 */
+	public static void remove(String sqlId) {
+		pageOptimizeCache.remove(sqlId);
+	}
 }
