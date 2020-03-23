@@ -399,13 +399,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		// hashMap可以事先不赋值,直接定义spring的bean
 		if (shardingStrategys.containsKey(strategyName)) {
 			return shardingStrategys.get(strategyName);
-		} else {
-			ShardingStrategy shardingStrategy = (ShardingStrategy) applicationContext.getBean(strategyName);
-			if (shardingStrategy != null) {
-				shardingStrategys.put(strategyName, shardingStrategy);
-			}
-			return shardingStrategy;
 		}
+		ShardingStrategy shardingStrategy = (ShardingStrategy) applicationContext.getBean(strategyName);
+		if (shardingStrategy != null) {
+			shardingStrategys.put(strategyName, shardingStrategy);
+		}
+		return shardingStrategy;
 	}
 
 	/**
@@ -427,7 +426,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 提供可以动态增加解析sql片段配置的接口,并返回具体id
+	 * @todo 提供可以动态增加解析sql片段配置的接口,并返回具体id,用于第三方平台集成，如报表平台等
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception

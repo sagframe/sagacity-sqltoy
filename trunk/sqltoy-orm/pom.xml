@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.10.2</version>
+	<version>4.10.3</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -15,15 +15,16 @@
 		<spring-data-mongo.version>2.2.5.RELEASE</spring-data-mongo.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
-		<httpclient.version>4.5.11</httpclient.version>
+		<httpclient.version>4.5.12</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
 		<elastic-rest-client.version>7.6.1</elastic-rest-client.version>
 		<fastjson.version>1.2.66</fastjson.version>
-		<mongo.version>3.12.1</mongo.version>
+		<mongo.version>3.12.2</mongo.version>
 		<junit-jupiter.version>5.6.0</junit-jupiter.version>
 		<junit-platform.version>1.6.0</junit-platform.version>
 		<beanutils.version>1.9.4</beanutils.version>
 		<slf4j.version>1.7.30</slf4j.version>
+		<log4j.version>2.13.1</log4j.version>
 	</properties>
 	<licenses>
 		<license>
@@ -71,7 +72,12 @@
 			<scope>test</scope>
 		</dependency>
 
-
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit-jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
@@ -128,8 +134,6 @@
 			<artifactId>spring-jdbc</artifactId>
 			<version>${spring-framework.version}</version>
 		</dependency>
-
-
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
@@ -214,11 +218,34 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${log4j.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>${log4j.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency> <!-- 桥接：告诉Slf4j使用Log4j2 -->
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j.version}</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 	<build>

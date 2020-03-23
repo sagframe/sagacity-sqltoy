@@ -61,7 +61,7 @@ public interface SqlToyCRUDService {
 	public Long update(Serializable entity, String[] forceUpdateProps);
 
 	/**
-	 * @todo 是否深度修改对象
+	 * @todo 对属性进行强制修改,属性值为null则强制更新数据库字段值
 	 * @param entity
 	 */
 	public Long updateDeeply(Serializable entity);
@@ -90,21 +90,39 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @todo 批量深度集合修改
-	 * @param entities
+	 * @param entities 批量对象集合
 	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
 
+	/**
+	 * @todo 单条记录保存或修改
+	 * @param entity 实体对象
+	 * @return
+	 */
 	public Long saveOrUpdate(Serializable entity);
 
 	/**
 	 * @todo 修改或保存单条记录
-	 * @param entity
-	 * @param forceUpdateProps
+	 * @param entity 实体对象
+	 * @param forceUpdateProps 强制修改的对象属性
 	 */
 	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps);
 
+	/**
+	 * @todo 批量保存或修改对象
+	 * @param <T>
+	 * @param entities 对象集合
+	 * @return
+	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities);
 
+	/**
+	 * @todo 批量保存或修改对象
+	 * @param <T>
+	 * @param entities 对象集合
+	 * @param forceUpdateProps 需强制修改的属性
+	 * @return
+	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps);
 
 	/**
@@ -131,7 +149,7 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> T loadCascade(T entity);
 
 	/**
-	 * @todo 删除对象
+	 * @todo 删除单条对象
 	 * @param entity
 	 */
 	public Long delete(Serializable entity);

@@ -3,7 +3,17 @@
 
 #  QQ交流群:531812227 
 
-# 使用单位或项目: 宁波农行  山东农信  成都银行   中国建行上海开发中心  合肥农信  浦发电销  拉卡拉   中化壹化网  中化石化销售
+# 使用单位或项目: 
+* 宁波农行  
+* 山东农信 
+* 成都银行   
+* 中国建行上海开发中心 
+* 合肥农信 
+* 浦发电销 
+* 拉卡拉支付集团   
+* 中化壹化网  
+* 中化石化销售
+* 苏州友达光电
 
 # 致谢
 
@@ -22,7 +32,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy</artifactId>
-	<version>4.10.1</version>	
+	<version>4.10.3</version>	
 </dependency>
 ```
 * 基于spring boot starter模式的集成
@@ -31,7 +41,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.10.1</version>	
+	<version>4.10.3</version>	
 </dependency>
 ```
 * POJO生成工具类

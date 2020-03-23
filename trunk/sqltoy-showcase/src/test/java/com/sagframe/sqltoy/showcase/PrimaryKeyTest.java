@@ -37,6 +37,9 @@ public class PrimaryKeyTest {
 	@Resource(name = "sqlToyLazyDao")
 	private SqlToyLazyDao sqlToyLazyDao;
 
+	/**
+	 * 数据库identity模式
+	 */
 	@Test
 	public void testIdentity() {
 		IdentityTableVO vo = new IdentityTableVO();
@@ -45,6 +48,9 @@ public class PrimaryKeyTest {
 		System.err.println(sqlToyCRUDService.save(vo));
 	}
 
+	/**
+	 * 数据库sequence模式
+	 */
 	@Test
 	public void testSequence() {
 		SequenceTableVO vo = new SequenceTableVO();

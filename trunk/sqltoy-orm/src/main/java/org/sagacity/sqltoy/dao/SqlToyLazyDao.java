@@ -51,6 +51,12 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 @SuppressWarnings({ "rawtypes" })
 public interface SqlToyLazyDao {
 
+	/**
+	 * @TODO 获取sql对应的配置模型
+	 * @param sqlKey
+	 * @param sqlType
+	 * @return
+	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType);
 
 	/**
@@ -258,8 +264,21 @@ public interface SqlToyLazyDao {
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
+	/**
+	 * @todo 通过对象实体传参数,框架结合sql中的参数名称来映射对象属性取值
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @return
+	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
 
+	/**
+	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
