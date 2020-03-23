@@ -95,7 +95,7 @@ public class PageOptimizeUtils {
 			return null;
 		}
 		Object[] values = map.get(conditionsKey);
-		// 为null表示条件初次查询
+		// 为null表示条件初次查询或已经全部过期移除
 		if (null == values)
 			return null;
 		// 总记录数
