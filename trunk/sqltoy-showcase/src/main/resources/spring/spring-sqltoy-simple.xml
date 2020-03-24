@@ -6,31 +6,20 @@
 	<!-- 配置sqltoy框架的上下文 -->
 	<bean id="sqlToyContext" class="org.sagacity.sqltoy.SqlToyContext"
 		init-method="initialize" destroy-method="destroy">
-		<!-- 指定sql.xml 文件的路径实现目录的递归查找,非必须属性 -->
+		<!-- 指定sql.xml 文件的路径实现目录的递归查找,多个路径则用逗号分隔 -->
 		<property name="sqlResourcesDir"
 			value="classpath:com/sagframe/sqltoy/showcase" />
 		<!--非必须属性: 跨数据库函数自动替换,适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default" />
-		<!--非必须属性: 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
+		<!--非必须属性: 提供项目对数据库新增、修改操作时完成诸如:
+		                创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
-			<bean
-				class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
+			<bean class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
-		<!-- 非必须属性:缓存翻译管理器 -->
+		<!-- 非必须属性:缓存翻译管理器,默认值为:classpath:sqltoy-translate.xml -->
 		<property name="translateConfig"
 			value="classpath:sqltoy-translate.xml" />
-
-		<!-- 默认值为:false -->
+		<!--非必须属性:默认值为false -->
 		<property name="debug" value="${sqltoy.debug}" />
-		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
-		<property name="batchSize" value="${sqltoy.batchSize}" />
-		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
-		<property name="dialect" value="${sqltoy.dialect}" />
-		<!-- 默认值为:100000,设置分页查询最大的提取数据记录量,防止恶意提取数据造成系统内存压力以及保障数据安全 -->
-		<property name="pageFetchSizeLimit" value="50000" />
-		<!-- 非必填项:便于为dao设置基本的数据源 -->
-		<property name="defaultDataSource" ref="dataSource" />
-		<!-- 非必填项:默认值为error,只打印执行异常的sql -->
-		<property name="printSqlStrategy" value="debug" />
 	</bean>
 </beans>

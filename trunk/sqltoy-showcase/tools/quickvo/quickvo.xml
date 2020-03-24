@@ -12,8 +12,8 @@
 		driver="${jdbc.connection.driver_class}" catalog="${jdbc.connection.catalog}"
 		username="${jdbc.connection.username}"	password="${jdbc.connection.password}" />
 	<tasks dist="../../src/main/java" encoding="UTF-8">
-		<!-- 4.0.6之后增加datasource属性适应多数据库配置 -->
-		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy">
+		<!-- 4.0.6之后增加datasource属性适应多数据库配置,swagger-model:对象是否支持swagger注解 -->
+		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="sqltoy" swagger-model="false">
 			<vo package="${project.package}.showcase.vo" substr="Sqltoy" name="#{subName}VO" />
 		</task>
 	</tasks>
