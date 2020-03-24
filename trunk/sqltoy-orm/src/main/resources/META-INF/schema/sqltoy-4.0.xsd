@@ -130,6 +130,139 @@
 					<xsd:documentation><![CDATA[分页优化,通过缓存来保留查询条件一样的分页查询对应count语句查询结果,当下次查询时可以直接获得count记录数]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
+			<!-- 行数据环比 -->
+			<xsd:element name="rows-chain-relative" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[垂直环比,行数据之间比较]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="reduce-one" type="xsd:boolean"
+						default="false" />
+					<xsd:attribute name="multiply" default="1">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:integer">
+								<xsd:enumeration value="1" />
+								<xsd:enumeration value="100" />
+								<xsd:enumeration value="1000" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="start-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[从第几行开始比较,默认是0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[结束行,写成负数-1 表示倒数第二行,缺省表示到最后一行]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="relative-columns"
+						type="xsd:string" use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[针对哪几列进行比较计算]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="radix-size" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="group-size" type="xsd:integer" />
+					<xsd:attribute name="relative-indexs"
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
+							比较交易笔数、商品数量、交易金额中的交易金额一项,relative-indexs则为2,如比较交易笔数、商品数量、交易金额三项，则,relative-indexs="0,1,2"]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="format" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<!-- 列数据环比 -->
+			<xsd:element name="cols-chain-relative" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[水平同类列数据之间比较]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="reduce-one" type="xsd:boolean"
+						default="false">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[是否减1,(B-A)/A,否则为B/A]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="multiply" default="1">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:integer">
+								<xsd:enumeration value="1" />
+								<xsd:enumeration value="100" />
+								<xsd:enumeration value="1000" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="group-size" type="xsd:integer"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[如月份之间对比(1月~4月),比较交易笔数、商品数量、交易金额，group-size则为3]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="relative-indexs"
+						type="xsd:string" use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[relative-indexs相对于group而言的,如月份之间对比(1月~4月),
+							比较交易笔数、商品数量、交易金额中的交易金额一项,relative-indexs则为2,如比较交易笔数、商品数量、交易金额三项，则,relative-indexs="0,1,2"]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="start-column" type="xsd:integer"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[标记开始比较列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-column" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[截止列,负数表示倒数第几列,如-1表示倒数第二列]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="skip-size" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[每组数据之间的非比较列数量]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="radix-size" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="format" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[百分比:#.00%,千分比:#.00‰]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
+			<!-- 数据反转 -->
+			<xsd:element name="reverse" maxOccurs="2">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[数据逆序排列]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="start-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[从第几行开始比较,默认是0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="end-row" type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[结束行,写成负数-1 表示倒数第二行,缺省表示到最后一行]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 		</xsd:choice>
 		<xsd:attribute name="id" type="xsd:string"
 			use="required" />

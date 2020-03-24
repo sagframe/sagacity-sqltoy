@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description 提供分页优化缓存实现
+ * @description 提供分页优化缓存实现，记录相同查询条件的总记录数,采用FIFO算法保留符合活跃时间和记录规模
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PageOptimizeCache.java,Revision:v1.0,Date:2016年11月24日
  */
