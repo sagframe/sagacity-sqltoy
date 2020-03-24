@@ -11,14 +11,18 @@
 			value="classpath:com/sagframe/sqltoy/showcase" />
 		<!-- 非必须属性:跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 		<property name="functionConverts" value="default" />
-		<!-- 可以这样自行根据需要进行定义和扩展 <property name="functionConverts"> <list> <value>org.sagacity.sqltoy.plugins.function.impl.Nvl</value> 
-			<value>org.sagacity.sqltoy.plugins.function.impl.SubStr</value> <value>org.sagacity.sqltoy.plugins.function.impl.Now</value> 
-			<value>org.sagacity.sqltoy.plugins.function.impl.Length</value> </list> </property> -->
-
+		<!-- 可以这样自行根据需要进行定义和扩展 
+		    <property name="functionConverts"> 
+			    <list> 
+					<value>org.sagacity.sqltoy.plugins.function.impl.Nvl</value> 
+					<value>org.sagacity.sqltoy.plugins.function.impl.SubStr</value> 
+					<value>org.sagacity.sqltoy.plugins.function.impl.Now</value> 
+					<value>org.sagacity.sqltoy.plugins.function.impl.Length</value> 
+		        </list> 
+		    </property> -->
 		<!--非必须属性: 提供项目对数据库新增、修改操作时完成诸如:创建人、创建时间、修改人、修改时间等关键字段统一赋值，减轻开发者每次赋值操作 -->
 		<property name="unifyFieldsHandler">
-			<bean
-				class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
+			<bean class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
 		<property name="translateConfig"
@@ -37,20 +41,13 @@
 				</bean>
 			</list>
 		</property>
-
 		<!-- 默认值为:false -->
 		<property name="debug" value="${sqltoy.debug}" />
-		<!-- 默认值为:50,提供sqltoy批量更新的batch量 -->
-		<property name="batchSize" value="${sqltoy.batchSize}" />
-		<!-- 如果是单一类型的数据库，建议dialect一定要设置,可避免不必要的数据库类型判断 -->
-		<!-- <property name="dialect" value="${sqltoy.dialect}" /> -->
 		<!-- 默认值为:100000,设置分页查询最大的提取数据记录量,防止恶意提取数据造成系统内存压力以及保障数据安全 -->
 		<property name="pageFetchSizeLimit" value="50000" />
 		<!-- 3.3.4 开始增加的参数便于为Dao设置基本的数据源,非必填项 -->
 		<property name="defaultDataSource" ref="dataSource" />
-		<property name="printSqlStrategy" value="debug" />
 	</bean>
-
 
 	<bean id="sqlToyLazyDaoShard1" name="sqlToyLazyDaoShard1"
 		class="org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl">
