@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.config.model.ReverseModel;
  */
 public class ReverseList {
 	/**
-	 * @TODO 集合收尾反转
+	 * @TODO 集合首尾反转
 	 * @param reverseModel
 	 * @param labelIndexMap
 	 * @param result

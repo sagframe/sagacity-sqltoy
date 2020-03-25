@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 public class ColsChainRelative {
 	public static void process(ColsChainRelativeModel colsRelativeModel, HashMap<String, Integer> labelIndexMap,
 			List result) {
-
+		if (result == null || result.isEmpty())
+			return;
 	}
 }

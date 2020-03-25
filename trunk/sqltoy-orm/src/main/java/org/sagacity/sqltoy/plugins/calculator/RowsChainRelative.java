@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
+
 /**
  * @project sqltoy-orm
  * @description 对集合数据以行与行之间的比较(环比计算)
@@ -13,6 +14,7 @@ import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 public class RowsChainRelative {
 	public static void process(RowsChainRelativeModel rowsRelativeModel, HashMap<String, Integer> labelIndexMap,
 			List result) {
-
+		if (result == null || result.size() < 2)
+			return;
 	}
 }
