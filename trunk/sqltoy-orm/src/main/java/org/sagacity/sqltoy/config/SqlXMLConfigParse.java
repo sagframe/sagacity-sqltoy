@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
+import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
@@ -26,6 +27,8 @@ import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
+import org.sagacity.sqltoy.config.model.ReverseModel;
+import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlTranslate;
@@ -38,6 +41,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.XMLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -1010,7 +1014,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 */
-	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt) {
+	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt) throws Exception {
 		NodeList elements = sqlElt.getChildNodes();
 		Element elt;
 		String eltName;
@@ -1155,6 +1159,21 @@ public class SqlXMLConfigParse {
 						summaryModel.setGroupMeta(groupMetas);
 					}
 					resultProcessor.add(summaryModel);
+				} // 列与列进行比较
+				else if (eltName.equals("cols-chain-relative")) {
+					ColsChainRelativeModel colsRelativeModel = new ColsChainRelativeModel();
+					XMLUtil.setAttributes(elt, colsRelativeModel);
+					resultProcessor.add(colsRelativeModel);
+				} // 行与行进行比较
+				else if (eltName.equals("rows-chain-relative")) {
+					RowsChainRelativeModel rowsRelativeModel = new RowsChainRelativeModel();
+					XMLUtil.setAttributes(elt, rowsRelativeModel);
+					resultProcessor.add(rowsRelativeModel);
+				} // 集合数据顺序颠倒
+				else if (eltName.equals("reverse")) {
+					ReverseModel reverseModel = new ReverseModel();
+					XMLUtil.setAttributes(elt, reverseModel);
+					resultProcessor.add(reverseModel);
 				}
 			}
 		}

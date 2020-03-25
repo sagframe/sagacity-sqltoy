@@ -20,10 +20,13 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
+import org.sagacity.sqltoy.config.model.ReverseModel;
+import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -1039,9 +1042,18 @@ public class ResultUtils {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet, debug);
 				} else if (processor instanceof UnpivotModel) {
 					items = unPivotResult((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
-				} else {
+				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					groupSummary((SummaryModel) processor, labelIndexMap, items);
+				} else if (processor instanceof ColsChainRelativeModel) {
+					// 数据汇总合计
+					colsRelative((ColsChainRelativeModel) processor, labelIndexMap, items);
+				} else if (processor instanceof RowsChainRelativeModel) {
+					// 数据汇总合计
+					rowsRelative((RowsChainRelativeModel) processor, labelIndexMap, items);
+				} else if (processor instanceof ReverseModel) {
+					// 数据汇总合计
+					listReverse((ReverseModel) processor, labelIndexMap, items);
 				}
 			}
 			dataSetResult.setRows(items);
@@ -1118,5 +1130,37 @@ public class ResultUtils {
 	private static void warnLog(SqlToyConfig sqlToyConfig, int totalCount) {
 		logger.warn("Large Result:totalCount={},sqlId={},sql={}", totalCount, sqlToyConfig.getId(),
 				sqlToyConfig.getSql(null));
+	}
+
+	/**
+	 * @TODO 行与行数据比较
+	 * @param rowsRelativeModel
+	 * @param labelIndexMap
+	 * @param result
+	 */
+	private static void rowsRelative(RowsChainRelativeModel rowsRelativeModel, HashMap<String, Integer> labelIndexMap,
+			List result) {
+
+	}
+
+	/**
+	 * @TODO 列与列数据进行比较
+	 * @param colsRelativeModel
+	 * @param labelIndexMap
+	 * @param result
+	 */
+	private static void colsRelative(ColsChainRelativeModel colsRelativeModel, HashMap<String, Integer> labelIndexMap,
+			List result) {
+
+	}
+
+	/**
+	 * @TODO 集合倒序反转
+	 * @param reverseModel
+	 * @param labelIndexMap
+	 * @param result
+	 */
+	private static void listReverse(ReverseModel reverseModel, HashMap<String, Integer> labelIndexMap, List result) {
+		
 	}
 }
