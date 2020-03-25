@@ -49,7 +49,7 @@ public class GroupSummary {
 					end = Integer.parseInt(endColumnStr);
 					// 负数表示用列宽减去相应值
 					if (end < 0) {
-						end = dataWidth + end;
+						end = dataWidth + end - 1;
 					}
 				} else {
 					stepIndex = endColumnStr.indexOf("?");
