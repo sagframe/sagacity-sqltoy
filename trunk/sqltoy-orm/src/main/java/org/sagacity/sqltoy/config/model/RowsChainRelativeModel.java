@@ -30,7 +30,7 @@ public class RowsChainRelativeModel implements Serializable {
 	/**
 	 * 分组长度
 	 */
-	private int groupSize;
+	private int groupSize = 1;
 
 	/**
 	 * 环比值是否将insert为新列
@@ -50,12 +50,12 @@ public class RowsChainRelativeModel implements Serializable {
 	/**
 	 * 从第几列开始
 	 */
-	private int startRow = 0;
+	private Integer startRow = 0;
 
 	/**
 	 * 截止行,负数表示倒数第几行
 	 */
-	private int endRow;
+	private Integer endRow;
 
 	/**
 	 * 分组后跳过多少列
@@ -112,11 +112,11 @@ public class RowsChainRelativeModel implements Serializable {
 		this.relativeIndexs = relativeIndexs;
 	}
 
-	public int getStartRow() {
+	public Integer getStartRow() {
 		return startRow;
 	}
 
-	public void setStartRow(int startRow) {
+	public void setStartRow(Integer startRow) {
 		this.startRow = startRow;
 	}
 
@@ -152,11 +152,11 @@ public class RowsChainRelativeModel implements Serializable {
 		this.relativeColumns = relativeColumns;
 	}
 
-	public int getEndRow() {
+	public Integer getEndRow() {
 		return endRow;
 	}
 
-	public void setEndRow(int endRow) {
+	public void setEndRow(Integer endRow) {
 		this.endRow = endRow;
 	}
 

@@ -21,26 +21,26 @@ public class ReverseModel implements Serializable {
 	/**
 	 * 开始行
 	 */
-	private int startRow;
+	private Integer startRow;
 
 	/**
 	 * 截止行
 	 */
-	private int endRow;
+	private Integer endRow;
 
-	public int getStartRow() {
+	public Integer getStartRow() {
 		return startRow;
 	}
 
-	public void setStartRow(int startRow) {
+	public void setStartRow(Integer startRow) {
 		this.startRow = startRow;
 	}
 
-	public int getEndRow() {
+	public Integer getEndRow() {
 		return endRow;
 	}
 
-	public void setEndRow(int endRow) {
+	public void setEndRow(Integer endRow) {
 		this.endRow = endRow;
 	}
 

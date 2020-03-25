@@ -31,7 +31,7 @@ public class ColsChainRelativeModel implements Serializable {
 	/**
 	 * 分组长度
 	 */
-	private int groupSize;
+	private int groupSize = 1;
 
 	/**
 	 * 环比值是否将insert为新列
@@ -46,12 +46,12 @@ public class ColsChainRelativeModel implements Serializable {
 	/**
 	 * 从第几列开始
 	 */
-	private int startColumn;
+	private Integer startColumn;
 
 	/**
 	 * 截止列
 	 */
-	private int endColumn;
+	private Integer endColumn;
 
 	/**
 	 * 分组后跳过多少列
@@ -108,11 +108,11 @@ public class ColsChainRelativeModel implements Serializable {
 		this.relativeIndexs = relativeIndexs;
 	}
 
-	public int getStartColumn() {
+	public Integer getStartColumn() {
 		return startColumn;
 	}
 
-	public void setStartColumn(int startColumn) {
+	public void setStartColumn(Integer startColumn) {
 		this.startColumn = startColumn;
 	}
 
@@ -140,11 +140,11 @@ public class ColsChainRelativeModel implements Serializable {
 		this.format = format;
 	}
 
-	public int getEndColumn() {
+	public Integer getEndColumn() {
 		return endColumn;
 	}
 
-	public void setEndColumn(int endColumn) {
+	public void setEndColumn(Integer endColumn) {
 		this.endColumn = endColumn;
 	}
 

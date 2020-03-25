@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
-import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
@@ -38,6 +36,10 @@ import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
+import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
+import org.sagacity.sqltoy.plugins.calculator.ReverseList;
+import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -726,120 +728,6 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 对数据进行汇总合计
-	 * @param summaryModel
-	 * @param labelIndexMap
-	 * @param result
-	 * @return
-	 */
-	private static void groupSummary(SummaryModel summaryModel, HashMap<String, Integer> labelIndexMap, List result) {
-		if (result == null || result.isEmpty())
-			return;
-		List<Integer> sumColList = new ArrayList<Integer>();
-		// 参照列，如按年份进行旋转(columns="1..result.width()-1")
-		String cols = summaryModel.getSummaryCols().replaceAll("result\\.width\\(\\)",
-				Integer.toString(((List) result.get(0)).size()));
-		cols = cols.replaceAll("\\$\\{dataWidth\\}", Integer.toString(((List) result.get(0)).size()));
-		String[] columns = cols.split(",");
-		String column;
-		String endColumnStr;
-		int step;
-		int stepIndex;
-		for (int i = 0; i < columns.length; i++) {
-			column = columns[i].toLowerCase();
-			// like {1..20?2} ?step 用于数据间隔性汇总
-			if (column.indexOf("..") != -1) {
-				step = 1;
-				String[] beginToEnd = column.split("\\.\\.");
-				int begin = 0;
-				int end = 0;
-				if (CommonUtils.isInteger(beginToEnd[0])) {
-					begin = Integer.parseInt(beginToEnd[0]);
-				} else {
-					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
-				}
-				endColumnStr = beginToEnd[1];
-				if (CommonUtils.isInteger(endColumnStr)) {
-					end = Integer.parseInt(endColumnStr);
-				} else {
-					stepIndex = endColumnStr.indexOf("?");
-					if (stepIndex != -1) {
-						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
-						endColumnStr = endColumnStr.substring(0, stepIndex);
-					}
-					end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
-				}
-				for (int j = begin; j <= end; j += step) {
-					if (!sumColList.contains(j)) {
-						sumColList.add(j);
-					}
-				}
-			} else if (CommonUtils.isInteger(column)) {
-				if (!sumColList.contains(Integer.parseInt(column))) {
-					sumColList.add(Integer.parseInt(column));
-				}
-			} else {
-				Integer colIndex;
-				if (labelIndexMap.containsKey(column)) {
-					colIndex = labelIndexMap.get(column);
-				} else {
-					colIndex = (new BigDecimal(ExpressionUtil.calculate(column).toString())).intValue();
-				}
-				if (!sumColList.contains(colIndex)) {
-					sumColList.add(colIndex);
-				}
-			}
-		}
-		Integer[] summaryCols = new Integer[sumColList.size()];
-		sumColList.toArray(summaryCols);
-		boolean hasAverage = false;
-		if (summaryModel.getGlobalAverageTitle() != null || summaryModel.getSumSite().equals("left")
-				|| summaryModel.getSumSite().equals("right")) {
-			hasAverage = true;
-		}
-		Object[][] groupIndexs = null;
-		if (summaryModel.getGroupMeta() != null) {
-			groupIndexs = new Object[summaryModel.getGroupMeta().length][5];
-			GroupMeta groupMeta;
-			// {{汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}}
-			for (int i = 0; i < groupIndexs.length; i++) {
-				Object[] group = new Object[5];
-				groupMeta = summaryModel.getGroupMeta()[i];
-				group[0] = CommonUtils.isInteger(groupMeta.getGroupColumn())
-						? Integer.parseInt(groupMeta.getGroupColumn())
-						: labelIndexMap.get(groupMeta.getGroupColumn().toLowerCase());
-				group[1] = groupMeta.getSumTitle();
-				group[2] = groupMeta.getAverageTitle();
-				group[3] = summaryModel.getSumSite();
-				if (groupMeta.getLabelColumn() != null) {
-					group[4] = CommonUtils.isInteger(groupMeta.getLabelColumn())
-							? Integer.parseInt(groupMeta.getLabelColumn())
-							: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase());
-				}
-				groupIndexs[i] = group;
-			}
-		}
-		int globalLabelIndex = -1;
-		if (summaryModel.getGlobalLabelColumn() != null) {
-			if (CommonUtils.isInteger(summaryModel.getGlobalLabelColumn())) {
-				globalLabelIndex = Integer.parseInt(summaryModel.getGlobalLabelColumn());
-			} else {
-				globalLabelIndex = labelIndexMap.get(summaryModel.getGlobalLabelColumn().toLowerCase());
-			}
-		}
-		// 逆向汇总
-		if (summaryModel.isReverse()) {
-			CollectionUtil.groupReverseSummary(result, groupIndexs, summaryCols, globalLabelIndex,
-					summaryModel.getGlobalSumTitle(), hasAverage, summaryModel.getGlobalAverageTitle(),
-					summaryModel.getRadixSize(), summaryModel.getSumSite());
-		} else {
-			CollectionUtil.groupSummary(result, groupIndexs, summaryCols, globalLabelIndex,
-					summaryModel.getGlobalSumTitle(), hasAverage, summaryModel.getGlobalAverageTitle(),
-					summaryModel.getRadixSize(), summaryModel.getSumSite(), summaryModel.isGlobalReverse());
-		}
-	}
-
-	/**
 	 * @todo 处理ResultSet的单行数据
 	 * @param rs
 	 * @param startColIndex
@@ -1044,16 +932,16 @@ public class ResultUtils {
 					items = unPivotResult((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
-					groupSummary((SummaryModel) processor, labelIndexMap, items);
+					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ColsChainRelativeModel) {
 					// 数据汇总合计
-					colsRelative((ColsChainRelativeModel) processor, labelIndexMap, items);
+					ColsChainRelative.process((ColsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof RowsChainRelativeModel) {
 					// 数据汇总合计
-					rowsRelative((RowsChainRelativeModel) processor, labelIndexMap, items);
+					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ReverseModel) {
 					// 数据汇总合计
-					listReverse((ReverseModel) processor, labelIndexMap, items);
+					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
 				}
 			}
 			dataSetResult.setRows(items);
@@ -1130,37 +1018,5 @@ public class ResultUtils {
 	private static void warnLog(SqlToyConfig sqlToyConfig, int totalCount) {
 		logger.warn("Large Result:totalCount={},sqlId={},sql={}", totalCount, sqlToyConfig.getId(),
 				sqlToyConfig.getSql(null));
-	}
-
-	/**
-	 * @TODO 行与行数据比较
-	 * @param rowsRelativeModel
-	 * @param labelIndexMap
-	 * @param result
-	 */
-	private static void rowsRelative(RowsChainRelativeModel rowsRelativeModel, HashMap<String, Integer> labelIndexMap,
-			List result) {
-
-	}
-
-	/**
-	 * @TODO 列与列数据进行比较
-	 * @param colsRelativeModel
-	 * @param labelIndexMap
-	 * @param result
-	 */
-	private static void colsRelative(ColsChainRelativeModel colsRelativeModel, HashMap<String, Integer> labelIndexMap,
-			List result) {
-
-	}
-
-	/**
-	 * @TODO 集合倒序反转
-	 * @param reverseModel
-	 * @param labelIndexMap
-	 * @param result
-	 */
-	private static void listReverse(ReverseModel reverseModel, HashMap<String, Integer> labelIndexMap, List result) {
-		
 	}
 }
