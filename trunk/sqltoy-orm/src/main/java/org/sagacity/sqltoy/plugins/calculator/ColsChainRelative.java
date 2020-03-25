@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 
 /**
@@ -26,7 +27,11 @@ public class ColsChainRelative {
 		boolean isAppend = relativeModel.isInsert();
 		int skipSize = relativeModel.getSkipSize();
 		int relativeSize = relativeModel.getRelativeIndexs().length;
-		int[] relativeIndexs = relativeModel.getRelativeIndexs();
+		Integer[] relativeIndexs = relativeModel.getRelativeIndexs();
+		if (relativeIndexs == null || relativeIndexs.length == 0) {
+			relativeIndexs = new Integer[] { 0 };
+		}
+		CollectionUtil.sortArray(relativeIndexs, false);
 		double divData;
 		double divedData;
 		int radixSize = relativeModel.getRadixSize();

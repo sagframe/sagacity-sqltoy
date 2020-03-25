@@ -348,10 +348,10 @@ public class NumberUtil {
 	 * @param bigArray
 	 * @return
 	 */
-	public static int getMaxValue(int[] bigArray) {
-		int max = bigArray[0];
+	public static Integer getMaxValue(Integer[] bigArray) {
+		Integer max = bigArray[0];
 		for (int i = 0; i < bigArray.length; i++) {
-			if (max < bigArray[i]) {
+			if (max.compareTo(bigArray[i]) < 0) {
 				max = bigArray[i];
 			}
 		}

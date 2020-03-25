@@ -45,7 +45,7 @@ public class RowsChainRelativeModel implements Serializable {
 	/**
 	 * 分组内的哪几列进行环比
 	 */
-	private int[] relativeIndexs = { 0 };
+	private Integer[] relativeIndexs = { 0 };
 
 	/**
 	 * 从第几列开始
@@ -104,11 +104,11 @@ public class RowsChainRelativeModel implements Serializable {
 		this.insert = insert;
 	}
 
-	public int[] getRelativeIndexs() {
+	public Integer[] getRelativeIndexs() {
 		return relativeIndexs;
 	}
 
-	public void setRelativeIndexs(int[] relativeIndexs) {
+	public void setRelativeIndexs(Integer[] relativeIndexs) {
 		this.relativeIndexs = relativeIndexs;
 	}
 

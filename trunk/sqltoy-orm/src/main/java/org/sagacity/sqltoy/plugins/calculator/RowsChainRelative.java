@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 
 /**
@@ -26,14 +27,15 @@ public class RowsChainRelative {
 			List result) {
 		if (result == null || result.size() < 2)
 			return;
-
+		int dataSize = result.size();
 		// 5,3-2+0+1
 		boolean isAppend = rowsRelative.isInsert();
 		// 实际需要计算的列(如果环比值是插入模式,则需要调整列的对应index)
 		Integer[] realRelativeCols = new Integer[rowsRelative.getRelativeColumns().length];
-		int[] relativeIndexs = rowsRelative.getRelativeIndexs();
+		Integer[] relativeIndexs = rowsRelative.getRelativeIndexs();
+		CollectionUtil.sortArray(relativeIndexs, false);
 		if (relativeIndexs == null || relativeIndexs.length == 0)
-			relativeIndexs = new int[] { 0 };
+			relativeIndexs = new Integer[] { 0 };
 		int max = NumberUtil.getMaxValue(relativeIndexs);
 		int groupSize = rowsRelative.getGroupSize();
 		if (groupSize < 1) {
@@ -72,12 +74,12 @@ public class RowsChainRelative {
 		int index;
 		int colIndex;
 		int start = rowsRelative.getStartRow() == null ? 0 : rowsRelative.getStartRow();
-		int end = rowsRelative.getEndRow() == null ? result.size() - 1 : rowsRelative.getEndRow();
+		int end = rowsRelative.getEndRow() == null ? dataSize - 1 : rowsRelative.getEndRow();
 		if (end < 0) {
-			end = result.size() - 1 + end;
+			end = dataSize - 1 + end;
 		}
-		if (end > result.size() - 1) {
-			end = result.size() - 1;
+		if (end > dataSize - 1) {
+			end = dataSize - 1;
 		}
 		String format = rowsRelative.getFormat();
 		BigDecimal value;
