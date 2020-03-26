@@ -9,6 +9,8 @@ import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 
+import com.alibaba.fastjson.JSON;
+
 /**
  * @project sqltoy-orm
  * @description 对集合数据进行列与列之间的比较(环比计算)
@@ -25,13 +27,19 @@ public class ColsChainRelative {
 		int dataSize = result.size();
 		int dataWidth = ((List) result.get(0)).size();
 		boolean isAppend = relativeModel.isInsert();
-		int skipSize = relativeModel.getSkipSize();
-		int relativeSize = relativeModel.getRelativeIndexs().length;
+		int groupSize = relativeModel.getGroupSize();
+		if (groupSize < 1) {
+			groupSize = 1;
+		}
 		Integer[] relativeIndexs = relativeModel.getRelativeIndexs();
 		if (relativeIndexs == null || relativeIndexs.length == 0) {
-			relativeIndexs = new Integer[] { 0 };
+			relativeIndexs = new Integer[groupSize];
+			for (int i = 0; i < groupSize; i++) {
+				relativeIndexs[i] = i;
+			}
 		}
-		CollectionUtil.sortArray(relativeIndexs, false);
+		CollectionUtil.sortArray(relativeIndexs, true);
+		int relativeSize = relativeIndexs.length;
 		double divData;
 		double divedData;
 		int radixSize = relativeModel.getRadixSize();
@@ -50,18 +58,19 @@ public class ColsChainRelative {
 			end = dataWidth - 1;
 		}
 		BigDecimal value;
-		for (int i = start; i > end; i = i - skipSize) {
+		String defaultValue = relativeModel.getDefaultValue();
+		for (int i = end; i > start; i = i - groupSize) {
 			for (int j = 0; j < dataSize; j++) {
 				rowList = (List) result.get(j);
 				for (int k = 0; k < relativeSize; k++) {
-					divIndex = i - skipSize + relativeIndexs[k] + 1;
-					divedIndex = i - 2 * skipSize + relativeIndexs[k] + 1;
-					if (i - skipSize <= start) {
+					divIndex = i - groupSize + relativeIndexs[k] + 1;
+					divedIndex = i - 2 * groupSize + relativeIndexs[k] + 1;
+					if (i - groupSize <= start) {
 						if (isAppend) {
-							rowList.add(divIndex + 1, 0);
+							rowList.add(divIndex + 1, defaultValue);
 						} else// (11-4+3+1)
 						{
-							rowList.set(divIndex + 1, 0);
+							rowList.set(divIndex + 1, defaultValue);
 						}
 					} else {
 						divData = 0;
@@ -75,10 +84,10 @@ public class ColsChainRelative {
 						if (divedData == 0) {
 							// 插入(8-3+2+2)
 							if (isAppend) {
-								rowList.add(divIndex + 1, (divData == 0) ? 0 : "");
+								rowList.add(divIndex + 1, (divData == 0) ? 0 : defaultValue);
 							} else// (11-4+3+1)
 							{
-								rowList.set(divIndex + 1, (divData == 0) ? 0 : "");
+								rowList.set(divIndex + 1, (divData == 0) ? 0 : defaultValue);
 							}
 						} else {
 							value = new BigDecimal(((divData - ((isIncrement) ? divedData : 0)) * multiply) / divedData)
@@ -93,5 +102,22 @@ public class ColsChainRelative {
 				}
 			}
 		}
+	}
+
+	public static void main(String[] args) {
+		// |------- 1月-------|------- 2月 ------|------ 3月--------|
+		// |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |
+		Object[][] values = { { "香蕉", 10, 2000, 20000, 12, 2400, 27000, 13, 2300, 27000 },
+				{ "苹果", 12, 2000, 24000, 11, 1900, 26000, 13, 2000, 25000 } };
+		List result = CollectionUtil.arrayToDeepList(values);
+		ColsChainRelativeModel colsRelative = new ColsChainRelativeModel();
+		colsRelative.setGroupSize(3);
+		colsRelative.setReduceOne(false);
+		colsRelative.setRelativeIndexs(new Integer[] { 1, 2 });
+		colsRelative.setFormat("#.00%");
+		colsRelative.setStartColumn(1);
+		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		ColsChainRelative.process(colsRelative, labelIndexMap, result);
+		System.out.println(JSON.toJSONString(result));
 	}
 }

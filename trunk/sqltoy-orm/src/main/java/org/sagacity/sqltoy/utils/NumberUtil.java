@@ -62,10 +62,9 @@ public class NumberUtil {
 	/**
 	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
 	 * @param target
-	 * @param pattern
-	 *            :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
-	 *            '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
-	 *            整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
+	 * @param pattern :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
+	 *                '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
+	 *                整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
@@ -145,8 +144,7 @@ public class NumberUtil {
 
 	/**
 	 * @todo 转换百分数
-	 * @param percent
-	 *            :example: 90% return 0.9
+	 * @param percent :example: 90% return 0.9
 	 * @return
 	 */
 	public static Float parsePercent(String percent) {
@@ -207,8 +205,7 @@ public class NumberUtil {
 	/**
 	 * @todo 将大写中文金额字符串转换成数字(最大支持到千万亿)
 	 * @param capitalMoney
-	 * @param firstSign
-	 *            ($或￥￡等符号)
+	 * @param firstSign    ($或￥￡等符号)
 	 * @return
 	 */
 	public static BigDecimal capitalMoneyToNum(String capitalMoney) {
@@ -341,21 +338,6 @@ public class NumberUtil {
 			}
 		}
 		return min;
-	}
-
-	/**
-	 * @todo 求数组中数据的最大值
-	 * @param bigArray
-	 * @return
-	 */
-	public static Integer getMaxValue(Integer[] bigArray) {
-		Integer max = bigArray[0];
-		for (int i = 0; i < bigArray.length; i++) {
-			if (max.compareTo(bigArray[i]) < 0) {
-				max = bigArray[i];
-			}
-		}
-		return max;
 	}
 
 	/**
@@ -541,10 +523,8 @@ public class NumberUtil {
 
 	/**
 	 * @todo 产生随机数数组
-	 * @param maxValue
-	 *            随机数的最大值
-	 * @param size
-	 *            随机数的个数
+	 * @param maxValue 随机数的最大值
+	 * @param size     随机数的个数
 	 * @return
 	 */
 	public static Object[] randomArray(int maxValue, int size) {

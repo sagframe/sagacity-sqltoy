@@ -41,7 +41,7 @@ public class ColsChainRelativeModel implements Serializable {
 	/**
 	 * 分组内的哪几列进行环比
 	 */
-	private Integer[] relativeIndexs = { 0 };
+	private Integer[] relativeIndexs;
 
 	/**
 	 * 从第几列开始
@@ -62,6 +62,11 @@ public class ColsChainRelativeModel implements Serializable {
 	 * 保留多少小数位
 	 */
 	private int radixSize = 3;
+	
+	/**
+	 * 默认值
+	 */
+	private String defaultValue;
 
 	/**
 	 * 环比显示格式(#.00%,#.00‰)
@@ -146,6 +151,14 @@ public class ColsChainRelativeModel implements Serializable {
 
 	public void setEndColumn(Integer endColumn) {
 		this.endColumn = endColumn;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 
 }

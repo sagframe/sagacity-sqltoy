@@ -45,7 +45,7 @@ public class RowsChainRelativeModel implements Serializable {
 	/**
 	 * 分组内的哪几列进行环比
 	 */
-	private Integer[] relativeIndexs = { 0 };
+	private Integer[] relativeIndexs;
 
 	/**
 	 * 从第几列开始
@@ -58,14 +58,19 @@ public class RowsChainRelativeModel implements Serializable {
 	private Integer endRow;
 
 	/**
-	 * 分组后跳过多少列
+	 * 是否逆序
 	 */
-	private int skipSize = 0;
+	private boolean reverse = true;
 
 	/**
 	 * 保留多少小数位
 	 */
 	private int radixSize = 3;
+
+	/**
+	 * 默认值
+	 */
+	private String defaultValue;
 
 	/**
 	 * 环比显示格式(#.00%,#.00‰)
@@ -120,12 +125,12 @@ public class RowsChainRelativeModel implements Serializable {
 		this.startRow = startRow;
 	}
 
-	public int getSkipSize() {
-		return skipSize;
+	public boolean isReverse() {
+		return reverse;
 	}
 
-	public void setSkipSize(int skipSize) {
-		this.skipSize = skipSize;
+	public void setReverse(boolean reverse) {
+		this.reverse = reverse;
 	}
 
 	public int getRadixSize() {
@@ -158,6 +163,14 @@ public class RowsChainRelativeModel implements Serializable {
 
 	public void setEndRow(Integer endRow) {
 		this.endRow = endRow;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 
 }

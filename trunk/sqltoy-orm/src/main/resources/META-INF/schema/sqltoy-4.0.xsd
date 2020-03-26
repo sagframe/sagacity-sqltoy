@@ -138,6 +138,8 @@
 				<xsd:complexType>
 					<xsd:attribute name="reduce-one" type="xsd:boolean"
 						default="false" />
+					<xsd:attribute name="reverse" type="xsd:boolean"
+						default="true" />
 					<xsd:attribute name="multiply" default="1">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:integer">
@@ -163,12 +165,19 @@
 							<xsd:documentation><![CDATA[针对哪几列进行比较计算]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="radix-size" type="xsd:integer">
+					<xsd:attribute name="radix-size" type="xsd:integer"
+						default="3">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
 					<xsd:attribute name="group-size" type="xsd:integer" />
+					<xsd:attribute name="defaultValue" type="xsd:string"
+						default="false">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="relative-indexs"
 						type="xsd:string">
 						<xsd:annotation>
@@ -204,6 +213,12 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
+					<xsd:attribute name="defaultValue" type="xsd:string"
+						default="false">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="group-size" type="xsd:integer"
 						use="required">
 						<xsd:annotation>
@@ -228,12 +243,8 @@
 							<xsd:documentation><![CDATA[截止列,负数表示倒数第几列,如-1表示倒数第二列]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="skip-size" type="xsd:integer">
-						<xsd:annotation>
-							<xsd:documentation><![CDATA[每组数据之间的非比较列数量]]></xsd:documentation>
-						</xsd:annotation>
-					</xsd:attribute>
-					<xsd:attribute name="radix-size" type="xsd:integer">
+					<xsd:attribute name="radix-size" type="xsd:integer"
+						default="3">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
