@@ -30,6 +30,16 @@ public class CheckerConfigModel implements Serializable {
 	private String sql;
 
 	/**
+	 * 针对哪个缓存进行更新
+	 */
+	private String cache;
+
+	/**
+	 * 更新方式
+	 */
+	private String updateMode;
+
+	/**
 	 * 数据源
 	 */
 	private String dataSource;
@@ -220,6 +230,22 @@ public class CheckerConfigModel implements Serializable {
 
 	public void setProperties(String[] properties) {
 		this.properties = properties;
+	}
+
+	public String getCache() {
+		return cache;
+	}
+
+	public void setCache(String cache) {
+		this.cache = cache;
+	}
+
+	public String getUpdateMode() {
+		return updateMode;
+	}
+
+	public void setUpdateMode(String updateMode) {
+		this.updateMode = updateMode;
 	}
 
 }
