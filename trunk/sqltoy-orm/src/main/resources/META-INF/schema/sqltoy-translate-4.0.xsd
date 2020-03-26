@@ -41,7 +41,18 @@
 			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:attributeGroup>
-
+	<xsd:attributeGroup name="sqlToyTranslateUpdater">
+		<xsd:attribute name="cache" type="xsd:string" />
+		<xsd:attribute name="updateMode">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="clear" />
+					<xsd:enumeration value="increment" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="check-frequency" type="xsd:string" />
+	</xsd:attributeGroup>
 	<!-- root -->
 	<xsd:element name="sagacity">
 		<xsd:complexType>
@@ -94,28 +105,32 @@
 						</xsd:choice>
 						<xsd:attribute name="disk-store-path"
 							default="./translateCaches" />
-						<xsd:attribute name="default-keep-alive" type="xsd:integer" default="3600">
+						<xsd:attribute name="default-keep-alive"
+							type="xsd:integer" default="3600">
 							<xsd:annotation>
 								<xsd:documentation>
 								<![CDATA[unit is second]]>
 								</xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
-						<xsd:attribute name="default-heap" type="xsd:integer" default="10000">
+						<xsd:attribute name="default-heap"
+							type="xsd:integer" default="10000">
 							<xsd:annotation>
 								<xsd:documentation>
 								<![CDATA[unit is EntryUnit.ENTRIES]]>
 								</xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
-						<xsd:attribute name="default-off-heap" type="xsd:integer" default="0">
+						<xsd:attribute name="default-off-heap"
+							type="xsd:integer" default="0">
 							<xsd:annotation>
 								<xsd:documentation>
 								<![CDATA[unit is MemoryUnit.MB]]>
 								</xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
-						<xsd:attribute name="default-disk-size" type="xsd:integer" default="0">
+						<xsd:attribute name="default-disk-size"
+							type="xsd:integer" default="0">
 							<xsd:annotation>
 								<xsd:documentation>
 								<![CDATA[unit is MemoryUnit.MB]]>
@@ -145,8 +160,8 @@
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
 									<xsd:attribute name="sql" type="xsd:string" />
-									<xsd:attribute name="check-frequency"
-										type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
 									<xsd:attribute name="datasource"
 										type="xsd:string" />
 								</xsd:complexType>
@@ -158,8 +173,8 @@
 										use="required" />
 									<xsd:attribute name="method" type="xsd:string"
 										use="required" />
-									<xsd:attribute name="check-frequency"
-										type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="rest-checker" minOccurs="0"
@@ -167,8 +182,8 @@
 								<xsd:complexType mixed="true">
 									<xsd:attribute name="url" type="xsd:string"
 										use="required" />
-									<xsd:attribute name="check-frequency"
-										type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
 								</xsd:complexType>
