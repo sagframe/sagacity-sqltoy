@@ -46,6 +46,8 @@ public class RowsChainRelative {
 			end = dataSize - 1;
 		}
 		int groupSize = 1;
+		//通过分组列来提取分组对比的数据长度(如不同品类不同月份的对比,品类数量即为groupSize)
+		//如单品类则groupSize为1
 		if (StringUtil.isNotBlank(rowsRelative.getGroupColumn())) {
 			int groupColIndex;
 			if (NumberUtil.isInteger(rowsRelative.getGroupColumn())) {
@@ -103,18 +105,15 @@ public class RowsChainRelative {
 		int radixSize = rowsRelative.getRadixSize();
 		boolean isIncrement = rowsRelative.isReduceOne();
 		double multiply = rowsRelative.getMultiply();
-
 		// 由下往上排序(第一组数据无需计算)
 		int index;
 		int colIndex;
-
 		String format = rowsRelative.getFormat();
 		BigDecimal value;
 		int divIndex;
 		int divedIndex;
 		List divRowList;
 		List divedRowList;
-
 		// 逆序(从下到上)
 		if (rowsRelative.isReverse()) {
 			for (int i = end - groupSize; i > start; i = i - groupSize) {
