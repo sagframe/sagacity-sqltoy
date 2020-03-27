@@ -35,9 +35,14 @@ public class CheckerConfigModel implements Serializable {
 	private String cache;
 
 	/**
-	 * 更新方式
+	 * 是否存在缓存内部分类
 	 */
-	private String updateMode;
+	private boolean hasInsideGroup;
+
+	/**
+	 * 增量更新
+	 */
+	private boolean increment = false;
 
 	/**
 	 * 数据源
@@ -240,12 +245,20 @@ public class CheckerConfigModel implements Serializable {
 		this.cache = cache;
 	}
 
-	public String getUpdateMode() {
-		return updateMode;
+	public boolean isIncrement() {
+		return increment;
 	}
 
-	public void setUpdateMode(String updateMode) {
-		this.updateMode = updateMode;
+	public void setIncrement(boolean increment) {
+		this.increment = increment;
+	}
+
+	public boolean isHasInsideGroup() {
+		return hasInsideGroup;
+	}
+
+	public void setHasInsideGroup(boolean hasInsideGroup) {
+		this.hasInsideGroup = hasInsideGroup;
 	}
 
 }

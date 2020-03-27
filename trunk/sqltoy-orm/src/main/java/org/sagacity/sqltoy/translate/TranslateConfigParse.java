@@ -41,6 +41,8 @@ public class TranslateConfigParse {
 	private final static String TRANSLATE_SUFFIX = "-translate";
 	private final static String CHECKER_SUFFIX = "-checker";
 	private final static String[] TRANSLATE_TYPES = new String[] { "sql", "service", "rest", "local" };
+	private final static String[] TRANSLATE_CHECKER_TYPES = new String[] { "sql-increment", "sql", "service-increment",
+			"service", "rest", "rest-increment" };
 
 	/**
 	 * @todo 解析translate配置文件
@@ -133,15 +135,29 @@ public class TranslateConfigParse {
 						defaultConfig.setDeviationSeconds(0 - Math.abs(defaultConfig.getDeviationSeconds()));
 					}
 				}
-				for (String translateType : TRANSLATE_TYPES) {
-					elts = node.getElementsByTagName(translateType.concat(CHECKER_SUFFIX));
+				String nodeType;
+				for (String translateType : TRANSLATE_CHECKER_TYPES) {
+					nodeType = translateType.concat(CHECKER_SUFFIX);
+					elts = node.getElementsByTagName(nodeType);
 					if (elts.getLength() > 0) {
 						for (int i = 0; i < elts.getLength(); i++) {
 							elt = (Element) elts.item(i);
 							CheckerConfigModel checherConfigModel = new CheckerConfigModel();
 							XMLUtil.setAttributes(elt, checherConfigModel);
-							checherConfigModel.setType(translateType);
-							if (translateType.equals("sql")) {
+							// 数据交互类型
+							checherConfigModel.setType(translateType.replace("-increment", ""));
+							// 增量方式更新
+							if (translateType.endsWith("-increment")) {
+								checherConfigModel.setIncrement(true);
+								// 增量方式必须要指定缓存名称
+								if (StringUtil.isBlank(checherConfigModel.getCache())) {
+									logger.error("translate update checker:{}  must config with cache=\"xxx\"!",
+											nodeType);
+									throw new IllegalArgumentException(nodeType + " must config with cache=\"xxx\"");
+								}
+							}
+							// sql模式
+							if (checherConfigModel.getType().equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
 									sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + (i + 1);
 									sqlNode = elt.getElementsByTagName("sql");
@@ -166,9 +182,7 @@ public class TranslateConfigParse {
 							// frequency的格式 frequency="0..12?15,12..18:30?10,18:30..24?60"
 							if (StringUtil.isNotBlank(frequency)) {
 								// 统一格式,去除全角字符,去除空白
-								frequency = frequency.replaceAll("\\；", ",").replaceAll("\\;", ",")
-										.replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\。", ".")
-										.replaceAll("\\，", ",").trim();
+								frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
 								// 0~24点 统一的检测频率
 								// 可以是单个频率值,表示0到24小时采用统一的频率
 								if (CommonUtils.isInteger(frequency)) {

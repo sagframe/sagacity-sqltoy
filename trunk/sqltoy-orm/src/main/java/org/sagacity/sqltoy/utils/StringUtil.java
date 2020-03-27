@@ -787,4 +787,17 @@ public class StringUtil {
 		return beforeStr.concat(replaceBody).concat(endStr);
 	}
 
+	/**
+	 * @TODO 替换部分全角字符为半角
+	 * @param SBCStr
+	 * @return
+	 */
+	public static String toDBC(String SBCStr) {
+		if (isBlank(SBCStr))
+			return SBCStr;
+		// 常用符号进行全角转半角
+		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
+				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
+				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+	}
 }

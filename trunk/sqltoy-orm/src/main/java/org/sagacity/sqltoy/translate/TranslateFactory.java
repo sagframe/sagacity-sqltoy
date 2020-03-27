@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -65,7 +66,12 @@ public class TranslateFactory {
 			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
-		return wrapCheckResult(result, config);
+		// 清空模式
+		if (!config.isIncrement()) {
+			return wrapClearCheckResult(result, config);
+		}
+		// 增量更新模式
+		return wrapIncrementCheckResult(result, config);
 	}
 
 	/**
@@ -146,16 +152,24 @@ public class TranslateFactory {
 	 * @param config
 	 * @return
 	 */
-	private static List<CacheCheckResult> wrapCheckResult(List result, CheckerConfigModel config) {
+	private static List<CacheCheckResult> wrapClearCheckResult(List result, CheckerConfigModel config) {
 		if (result == null || result.isEmpty())
 			return null;
 		if (result.get(0) instanceof CacheCheckResult)
 			return result;
-		List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
+		List<Object[]> cacheSet = null;
 		if (result.get(0) instanceof Object[]) {
+			cacheSet = result;
+		} else if (result.get(0) instanceof List) {
+			cacheSet = CollectionUtil.innerListToArray(result);
+		} else if (config.getProperties() != null && config.getProperties().length > 0) {
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
+		}
+		if (cacheSet != null) {
+			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
 			Object[] row;
-			for (int i = 0; i < result.size(); i++) {
-				row = (Object[]) result.get(i);
+			for (int i = 0; i < cacheSet.size(); i++) {
+				row = (Object[]) cacheSet.get(i);
 				CacheCheckResult item = new CacheCheckResult();
 				item.setCacheName((String) row[0]);
 				if (row.length > 1) {
@@ -164,27 +178,47 @@ public class TranslateFactory {
 				checkResult.add(item);
 			}
 			return checkResult;
-		} else if (result.get(0) instanceof List) {
-			List row;
-			for (int i = 0; i < result.size(); i++) {
-				row = (List) result.get(i);
-				CacheCheckResult item = new CacheCheckResult();
-				item.setCacheName((String) row.get(0));
-				if (row.size() > 1) {
-					item.setCacheType((String) row.get(1));
-				}
-				checkResult.add(item);
-			}
-			return checkResult;
+		}
+		return null;
+	}
+
+	/**
+	 * @todo 包装检测结果为统一的对象集合
+	 * @param result
+	 * @param config
+	 * @return
+	 */
+	private static List<CacheCheckResult> wrapIncrementCheckResult(List result, CheckerConfigModel config) {
+		if (result == null || result.isEmpty())
+			return null;
+		if (result.get(0) instanceof CacheCheckResult)
+			return result;
+		List<Object[]> cacheSet = null;
+		if (result.get(0) instanceof List) {
+			cacheSet = CollectionUtil.innerListToArray(result);
+		} else if (result.get(0) instanceof Object[]) {
+			cacheSet = result;
 		} else if (config.getProperties() != null && config.getProperties().length > 0) {
-			// 反射对象属性
-			List<Object[]> tmp = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
-			boolean hasType = (config.getProperties().length > 1) ? true : false;
-			for (Object[] row : tmp) {
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
+		}
+		if (cacheSet != null) {
+			String cacheName = config.getCache();
+			boolean hasInsideGroup = config.isHasInsideGroup();
+			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
+			Object[] row;
+			for (int i = 0; i < cacheSet.size(); i++) {
+				row = (Object[]) cacheSet.get(i);
 				CacheCheckResult item = new CacheCheckResult();
-				item.setCacheName((String) row[0]);
-				if (hasType) {
-					item.setCacheType((String) row[1]);
+				item.setCacheName(cacheName);
+				// 缓存内部存在分组(参考数据字典表中的字典分类)
+				if (hasInsideGroup) {
+					item.setCacheType((String) row[0]);
+					Object[] cacheValue = new Object[row.length - 1];
+					// 跳过第一列缓存类别
+					System.arraycopy(row, 1, cacheValue, 0, row.length - 1);
+					item.setItem(cacheValue);
+				} else {
+					item.setItem(row);
 				}
 				checkResult.add(item);
 			}

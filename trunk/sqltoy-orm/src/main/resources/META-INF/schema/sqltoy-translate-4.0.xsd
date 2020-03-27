@@ -42,14 +42,15 @@
 		</xsd:attribute>
 	</xsd:attributeGroup>
 	<xsd:attributeGroup name="sqlToyTranslateUpdater">
-		<xsd:attribute name="cache" type="xsd:string" />
-		<xsd:attribute name="updateMode">
-			<xsd:simpleType>
-				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="clear" />
-					<xsd:enumeration value="increment" />
-				</xsd:restriction>
-			</xsd:simpleType>
+		<xsd:attribute name="cache" type="xsd:string"
+			use="required" />
+		<xsd:attribute name="has-inside-group"
+			type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation>
+				<![CDATA[缓存内部是否存在分组,比如数据字典缓存中有字典分类]]>
+				</xsd:documentation>
+			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="check-frequency" type="xsd:string" />
 	</xsd:attributeGroup>
@@ -160,8 +161,8 @@
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
 									<xsd:attribute name="sql" type="xsd:string" />
-									<xsd:attributeGroup
-										ref="sqlToyTranslateUpdater" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
 									<xsd:attribute name="datasource"
 										type="xsd:string" />
 								</xsd:complexType>
@@ -173,12 +174,47 @@
 										use="required" />
 									<xsd:attribute name="method" type="xsd:string"
 										use="required" />
-									<xsd:attributeGroup
-										ref="sqlToyTranslateUpdater" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="rest-checker" minOccurs="0"
 								maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="url" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="check-frequency"
+										type="xsd:string" />
+									<xsd:attribute name="username" type="xsd:string" />
+									<xsd:attribute name="password" type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="sql-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:sequence>
+										<xsd:element name="sql" type="xsd:string" />
+									</xsd:sequence>
+									<xsd:attribute name="sql" type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
+									<xsd:attribute name="datasource"
+										type="xsd:string" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="service-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
+								<xsd:complexType mixed="true">
+									<xsd:attribute name="service" type="xsd:string"
+										use="required" />
+									<xsd:attribute name="method" type="xsd:string"
+										use="required" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateUpdater" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="rest-increment-checker"
+								minOccurs="0" maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
 									<xsd:attribute name="url" type="xsd:string"
 										use="required" />

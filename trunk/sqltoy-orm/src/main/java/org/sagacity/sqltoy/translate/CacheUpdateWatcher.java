@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.translate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -165,7 +166,10 @@ public class CacheUpdateWatcher extends Thread {
 	private void doCheck(SqlToyContext sqlToyContext, CheckerConfigModel checkerConfig, Long lastCheckTime) {
 		List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
 				DateUtil.getTimestamp(lastCheckTime));
-		if (results != null) {
+		if (results == null || results.isEmpty())
+			return;
+		// 非增量更新检测(发生变更即清空缓存)
+		if (!checkerConfig.isIncrement()) {
 			try {
 				for (CacheCheckResult result : results) {
 					logger.debug("检测到缓存:{} 类别:{} 发生更新!", result.getCacheName(), result.getCacheType());
@@ -174,6 +178,32 @@ public class CacheUpdateWatcher extends Thread {
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("缓存变更检测检测到更新后,清除缓存发生异常:{}", e.getMessage());
+			}
+		} // 增量直接更新缓存
+		else {
+			String cacheName = checkerConfig.getCache();
+			try {
+				logger.debug("检测到缓存:{} 发生{}条记录更新!", cacheName, results.size());
+				// 内部不存在分组的缓存
+				if (!checkerConfig.isHasInsideGroup()) {
+					HashMap<String, Object[]> cacheData = translateCacheManager.getCache(cacheName, null);
+					for (CacheCheckResult result : results) {
+						if (result.getItem()[0] != null) {
+							cacheData.put(result.getItem()[0].toString(), result.getItem());
+						}
+					}
+				} // 内部存在分组的缓存(如数据字典)
+				else {
+					for (CacheCheckResult result : results) {
+						if (result.getItem()[0] != null) {
+							translateCacheManager.getCache(cacheName, result.getCacheType())
+									.put(result.getItem()[0].toString(), result.getItem());
+						}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
 			}
 		}
 	}

@@ -29,6 +29,11 @@ public class CacheCheckResult implements Serializable {
 	private String cacheType;
 
 	/**
+	 * 缓存内容
+	 */
+	private Object[] item;
+
+	/**
 	 * @return the cacheName
 	 */
 	public String getCacheName() {
@@ -36,8 +41,7 @@ public class CacheCheckResult implements Serializable {
 	}
 
 	/**
-	 * @param cacheName
-	 *            the cacheName to set
+	 * @param cacheName the cacheName to set
 	 */
 	public void setCacheName(String cacheName) {
 		this.cacheName = cacheName;
@@ -51,11 +55,18 @@ public class CacheCheckResult implements Serializable {
 	}
 
 	/**
-	 * @param cacheType
-	 *            the cacheType to set
+	 * @param cacheType the cacheType to set
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+	}
+
+	public Object[] getItem() {
+		return item;
+	}
+
+	public void setItem(Object[] item) {
+		this.item = item;
 	}
 
 }
