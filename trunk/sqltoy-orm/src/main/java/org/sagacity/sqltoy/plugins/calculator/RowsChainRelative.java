@@ -56,13 +56,15 @@ public class RowsChainRelative {
 			} else {
 				groupColIndex = labelIndexMap.get(rowsRelative.getGroupColumn().toLowerCase());
 			}
-			HashSet map = new HashSet();
-			List rowData;
-			for (int i = start; i < end; i++) {
-				rowData = (List) result.get(i);
-				map.add(rowData.get(groupColIndex));
+			if (groupColIndex > 0 && groupColIndex < ((List) result.get(0)).size()) {
+				HashSet map = new HashSet();
+				List rowData;
+				for (int i = start; i < end; i++) {
+					rowData = (List) result.get(i);
+					map.add(rowData.get(groupColIndex));
+				}
+				groupSize = map.size();
 			}
-			groupSize = map.size();
 		}
 		Integer[] relativeIndexs = rowsRelative.getRelativeIndexs();
 		if (relativeIndexs == null || relativeIndexs.length == 0) {
