@@ -3,11 +3,14 @@ package org.sagacity.sqltoy.plugins.calculator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 import com.alibaba.fastjson.JSON;
 
@@ -37,10 +40,29 @@ public class RowsChainRelative {
 		boolean isAppend = rowsRelative.isInsert();
 		// 实际需要计算的列(如果环比值是插入模式,则需要调整列的对应index)
 		Integer[] realRelativeCols = new Integer[rowsRelative.getRelativeColumns().length];
-
-		int groupSize = rowsRelative.getGroupSize();
-		if (groupSize < 1) {
-			groupSize = 1;
+		int start = rowsRelative.getStartRow() == null ? 0 : rowsRelative.getStartRow();
+		int end = rowsRelative.getEndRow() == null ? dataSize - 1 : rowsRelative.getEndRow();
+		if (end < 0) {
+			end = dataSize - 1 + end;
+		}
+		if (end > dataSize - 1) {
+			end = dataSize - 1;
+		}
+		int groupSize = 1;
+		if (StringUtil.isNotBlank(rowsRelative.getGroupColumn())) {
+			int groupColIndex;
+			if (NumberUtil.isInteger(rowsRelative.getGroupColumn())) {
+				groupColIndex = Integer.parseInt(rowsRelative.getGroupColumn());
+			} else {
+				groupColIndex = labelIndexMap.get(rowsRelative.getGroupColumn().toLowerCase());
+			}
+			HashSet map = new HashSet();
+			List rowData;
+			for (int i = start; i < end; i++) {
+				rowData = (List) result.get(i);
+				map.add(rowData.get(groupColIndex));
+			}
+			groupSize = map.size();
 		}
 		Integer[] relativeIndexs = rowsRelative.getRelativeIndexs();
 		if (relativeIndexs == null || relativeIndexs.length == 0) {
@@ -86,14 +108,7 @@ public class RowsChainRelative {
 		// 由下往上排序(第一组数据无需计算)
 		int index;
 		int colIndex;
-		int start = rowsRelative.getStartRow() == null ? 0 : rowsRelative.getStartRow();
-		int end = rowsRelative.getEndRow() == null ? dataSize - 1 : rowsRelative.getEndRow();
-		if (end < 0) {
-			end = dataSize - 1 + end;
-		}
-		if (end > dataSize - 1) {
-			end = dataSize - 1;
-		}
+
 		String format = rowsRelative.getFormat();
 		BigDecimal value;
 		int divIndex;
@@ -180,7 +195,7 @@ public class RowsChainRelative {
 				{ "3月", "香蕉", 1600 }, { "3月", "苹果", 1700 } };
 		List result = CollectionUtil.arrayToDeepList(values);
 		RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
-		rowsRelative.setGroupSize(2);
+		rowsRelative.setGroupColumn("1");
 		rowsRelative.setReduceOne(false);
 		rowsRelative.setRelativeColumns(new String[] { "2" });
 		rowsRelative.setFormat("#.00%");

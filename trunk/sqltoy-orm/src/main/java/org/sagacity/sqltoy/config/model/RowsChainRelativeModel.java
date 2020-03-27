@@ -30,7 +30,7 @@ public class RowsChainRelativeModel implements Serializable {
 	/**
 	 * 分组长度
 	 */
-	private int groupSize = 1;
+	private String groupColumn;
 
 	/**
 	 * 环比值是否将insert为新列
@@ -93,12 +93,12 @@ public class RowsChainRelativeModel implements Serializable {
 		this.multiply = multiply;
 	}
 
-	public int getGroupSize() {
-		return groupSize;
+	public String getGroupColumn() {
+		return groupColumn;
 	}
 
-	public void setGroupSize(int groupSize) {
-		this.groupSize = groupSize;
+	public void setGroupColumn(String groupColumn) {
+		this.groupColumn = groupColumn;
 	}
 
 	public boolean isInsert() {

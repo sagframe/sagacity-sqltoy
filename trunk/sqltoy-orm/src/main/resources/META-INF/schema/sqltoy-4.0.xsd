@@ -171,7 +171,7 @@
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="group-size" type="xsd:integer" />
+					<xsd:attribute name="group-column" type="xsd:string" use="required"/>
 					<xsd:attribute name="defaultValue" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
