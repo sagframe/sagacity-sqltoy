@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.plugins;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
@@ -21,7 +22,8 @@ import com.alibaba.fastjson.JSON;
  */
 public class ChainRelativeTest {
 
-	public static void testColsChainRelative() {
+	@Test
+	public void testColsChainRelative() {
 		// |------- 1月-------|------- 2月 ------|------ 3月--------|
 		// |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |
 		Object[][] values = { { "香蕉", 10, 2000, 20000, 12, 2400, 27000, 13, 2300, 27000 },
@@ -38,7 +40,8 @@ public class ChainRelativeTest {
 		System.out.println(JSON.toJSONString(result));
 	}
 
-	public static void testRowsChainRelative() {
+	@Test
+	public void testRowsChainRelative() {
 		// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
 		// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 		// | 5月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
@@ -54,18 +57,12 @@ public class ChainRelativeTest {
 		rowsRelative.setReduceOne(false);
 		rowsRelative.setRelativeColumns(new String[] { "2" });
 		rowsRelative.setFormat("#.00%");
-		rowsRelative.setReverse(false);
+		rowsRelative.setReverse(true);
 		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 		RowsChainRelative.process(rowsRelative, labelIndexMap, result);
-		System.out.println(JSON.toJSONString(result));
-	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		testColsChainRelative();
-		testRowsChainRelative();
+		for (int i = 0; i < result.size(); i++) {
+			System.out.println(JSON.toJSONString(result.get(i)));
+		}
 	}
 
 }
