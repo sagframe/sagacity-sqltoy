@@ -157,7 +157,7 @@
 		]]>
 		</value>
 	</eql>
-	
+
 	<eql id="es_find_company_page_count"
 		fields="company_id,company_name,company_type" mode="sql">
 		<value>
@@ -193,7 +193,7 @@
 	</eql>
 	<sql id="clickhouse_trade_info">
 		<filters>
-			<to-date params="beginDate,endDate" format="yyyy-MM-dd"/>
+			<to-date params="beginDate,endDate" format="yyyy-MM-dd" />
 		</filters>
 		<value>
 			<![CDATA[
@@ -202,5 +202,34 @@
 				#[and t.ORDER_DATE BETWEEN :beginDate and :endDate]
 			]]>
 		</value>
+	</sql>
+
+	<!-- 列与列高级环比演示 -->
+	<sql id="cols_relative_case">
+		<value>
+			<![CDATA[
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				from sqltoy_fruit_order t
+				order by t.fruit_name ,t.order_month
+			]]>
+		</value>
+		<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
+		<pivot start-column="sale_count" end-column="total_amt"
+			group-columns="fruit_name" category-columns="order_month" />
+		<!-- 列与列之间进行环比计算 -->
+		<cols-chain-relative group-size="3"
+			relative-indexs="1,2" start-column="1" format="#.00%" />
+	</sql>
+	<!-- 行与行高级环比演示 -->
+	<sql id="rows_relative_case">
+		<value>
+			<![CDATA[
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				from sqltoy_fruit_order t
+				order by t.order_month desc,t.fruit_name
+			]]>
+		</value>
+		<!-- group-size是 -->
+		<rows-chain-relative group-column="fruit_name" relative-columns="sale_count,total_amt"/>
 	</sql>
 </sqltoy>

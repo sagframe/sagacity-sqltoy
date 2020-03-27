@@ -225,16 +225,38 @@ public class QueryCaseTest {
 
 	/**
 	 * 查询随机记录 randomSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
+	 * 
+	 * @throws InterruptedException
 	 */
 	@Test
-	public void findByRandom() {
-		// 授权的机构
-		String[] authedOrgans = { "100004", "100007" };
-		double randomSize = 20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search",
-				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
-				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, randomSize);
-		for (DeviceOrderInfoVO vo : result)
-			System.err.println(JSON.toJSONString(vo));
+	public void findByRandom() throws InterruptedException {
+		while (true) {
+			// 授权的机构
+			String[] authedOrgans = { "100004", "100007" };
+			double randomSize = 20;
+			List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search",
+					new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
+					new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, randomSize);
+			for (DeviceOrderInfoVO vo : result) {
+				// System.err.println(JSON.toJSONString(vo));
+			}
+			Thread.sleep(100000);
+		}
+	}
+
+	@Test
+	public void testColsRelativeCalculate() throws InterruptedException {
+		List result = (List) sqlToyLazyDao.findBySql("cols_relative_case", null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
+	
+	@Test
+	public void testRowsRelativeCalculate() throws InterruptedException {
+		List result = (List) sqlToyLazyDao.findBySql("rows_relative_case", null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
 	}
 }

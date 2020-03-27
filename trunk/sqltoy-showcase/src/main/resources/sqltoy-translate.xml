@@ -50,9 +50,7 @@
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
 		<!-- 基于sql的缓存更新检测 -->
-		<sql-checker
-			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
-			datasource="dataSource">
+		<sql-checker check-frequency="5000" datasource="dataSource">
 			<sql><![CDATA[
 			--#not_debug#--
 			-- 机构缓存更新检测
@@ -64,14 +62,19 @@
 			select distinct 'staffIdName' cacheName,null cache_type
 			from SQLTOY_STAFF_INFO t1
 			where t1.UPDATE_TIME >=:lastUpdateTime
-			-- 数据字典key和name缓存检测
-			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
-			from SQLTOY_DICT_DETAIL t2
-			where t2.UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
 		</sql-checker>
-
+		<!-- 增量更新检测,直接将查询结果更新当前缓存,
+		     has-inside-group="true" 查询结果第一列必须是缓存分类 -->
+		<sql-increment-checker cache="dictKeyName"
+			check-frequency="2" has-inside-group="true">
+			<sql><![CDATA[
+				select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
+				from SQLTOY_DICT_DETAIL t
+		        where t.UPDATE_TIME>=:lastUpdateTime
+		        order by t.SHOW_INDEX
+			]]></sql>
+		</sql-increment-checker>
 		<!-- 缓存更新检测返回的数据格式List<{cacheName,cacheType}> cacheType 只在类似数据字典表需要体现具体哪个字典分类，其他缓存为null即可 -->
 		<!-- 基于service 形式的缓存更新检测 -->
 		<!-- <service-checker service="cacheChangeCheckService" method="getChangeCache" 
