@@ -77,6 +77,7 @@ public class TranslateConfigParse {
 				String sql;
 				String sqlId;
 				boolean isShowSql;
+				int index = 1;
 				for (String translateType : TRANSLATE_TYPES) {
 					elts = node.getElementsByTagName(translateType.concat(TRANSLATE_SUFFIX));
 					if (elts.getLength() > 0) {
@@ -98,7 +99,7 @@ public class TranslateConfigParse {
 									} else {
 										sql = StringUtil.trim(elt.getTextContent());
 									}
-									sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + (i + 1);
+									sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + index;
 									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
@@ -107,6 +108,7 @@ public class TranslateConfigParse {
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									translateCacheModel.setSql(sqlId);
+									index++;
 								}
 							}
 							// local 缓存 默认缓存不失效
@@ -136,6 +138,7 @@ public class TranslateConfigParse {
 					}
 				}
 				String nodeType;
+				index = 1;
 				for (String translateType : TRANSLATE_CHECKER_TYPES) {
 					nodeType = translateType.concat(CHECKER_SUFFIX);
 					elts = node.getElementsByTagName(nodeType);
@@ -159,7 +162,7 @@ public class TranslateConfigParse {
 							// sql模式
 							if (checherConfigModel.getType().equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
-									sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + (i + 1);
+									sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + index;
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
 										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
@@ -174,6 +177,7 @@ public class TranslateConfigParse {
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									checherConfigModel.setSql(sqlId);
+									index++;
 								}
 							}
 							// 剔除tab\回车等特殊字符
