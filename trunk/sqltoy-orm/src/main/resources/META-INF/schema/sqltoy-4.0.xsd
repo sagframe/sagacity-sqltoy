@@ -171,7 +171,12 @@
 							<xsd:documentation><![CDATA[保留小数位,默认保留3位]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="group-column" type="xsd:string" use="required"/>
+					<xsd:attribute name="group-column" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[可以写列的名称或数字索引,如单一类型比较没有对应group-column则可以写-1]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="defaultValue" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
