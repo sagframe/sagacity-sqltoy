@@ -184,9 +184,13 @@ public class CacheUpdateWatcher extends Thread {
 			String cacheName = checkerConfig.getCache();
 			try {
 				logger.debug("检测到缓存:{} 发生{}条记录更新!", cacheName, results.size());
+				HashMap<String, Object[]> cacheData;
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
-					HashMap<String, Object[]> cacheData = translateCacheManager.getCache(cacheName, null);
+					cacheData = translateCacheManager.getCache(cacheName, null);
+					// 缓存为null,等待首次调用进行加载
+					if (cacheData == null)
+						return;
 					for (CacheCheckResult result : results) {
 						if (result.getItem()[0] != null) {
 							cacheData.put(result.getItem()[0].toString(), result.getItem());
@@ -196,8 +200,10 @@ public class CacheUpdateWatcher extends Thread {
 				else {
 					for (CacheCheckResult result : results) {
 						if (result.getItem()[0] != null) {
-							translateCacheManager.getCache(cacheName, result.getCacheType())
-									.put(result.getItem()[0].toString(), result.getItem());
+							cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+							if (cacheData != null) {
+								cacheData.put(result.getItem()[0].toString(), result.getItem());
+							}
 						}
 					}
 				}
