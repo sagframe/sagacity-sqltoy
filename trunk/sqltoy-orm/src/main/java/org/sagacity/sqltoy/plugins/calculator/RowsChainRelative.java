@@ -53,10 +53,10 @@ public class RowsChainRelative {
 			} else {
 				groupColIndex = labelIndexMap.get(rowsRelative.getGroupColumn().toLowerCase());
 			}
-			if (groupColIndex > 0 && groupColIndex < ((List) result.get(0)).size()) {
+			if (groupColIndex >= 0 && groupColIndex < ((List) result.get(0)).size()) {
 				HashSet map = new HashSet();
 				List rowData;
-				for (int i = start; i < end; i++) {
+				for (int i = start; i <= end; i++) {
 					rowData = (List) result.get(i);
 					map.add(rowData.get(groupColIndex));
 				}
