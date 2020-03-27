@@ -50,7 +50,7 @@ public class ChainRelativeTest {
 				{ "3月", "香蕉", 1600 }, { "3月", "苹果", 1700 } };
 		List result = CollectionUtil.arrayToDeepList(values);
 		RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
-		rowsRelative.setGroupSize(2);
+		rowsRelative.setGroupColumn("1");
 		rowsRelative.setReduceOne(false);
 		rowsRelative.setRelativeColumns(new String[] { "2" });
 		rowsRelative.setFormat("#.00%");

@@ -5,14 +5,11 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
-
-import com.alibaba.fastjson.JSON;
 
 /**
  * @project sqltoy-orm
@@ -182,28 +179,5 @@ public class RowsChainRelative {
 				}
 			}
 		}
-
-	}
-
-	public static void main(String[] args) {
-		// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
-		// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
-		// | 5月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
-		// | 4月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |0
-		// | 4月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |1
-		// | 3月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
-		// | 3月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
-		Object[][] values = { { "5月", "香蕉", 2000 }, { "5月", "苹果", 1900 }, { "4月", "香蕉", 1800 }, { "4月", "苹果", 1800 },
-				{ "3月", "香蕉", 1600 }, { "3月", "苹果", 1700 } };
-		List result = CollectionUtil.arrayToDeepList(values);
-		RowsChainRelativeModel rowsRelative = new RowsChainRelativeModel();
-		rowsRelative.setGroupColumn("1");
-		rowsRelative.setReduceOne(false);
-		rowsRelative.setRelativeColumns(new String[] { "2" });
-		rowsRelative.setFormat("#.00%");
-		rowsRelative.setReverse(false);
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
-		RowsChainRelative.process(rowsRelative, labelIndexMap, result);
-		System.out.println(JSON.toJSONString(result));
 	}
 }

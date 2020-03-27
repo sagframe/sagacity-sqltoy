@@ -9,8 +9,6 @@ import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 
-import com.alibaba.fastjson.JSON;
-
 /**
  * @project sqltoy-orm
  * @description 对集合数据进行列与列之间的比较(环比计算)
@@ -102,22 +100,5 @@ public class ColsChainRelative {
 				}
 			}
 		}
-	}
-
-	public static void main(String[] args) {
-		// |------- 1月-------|------- 2月 ------|------ 3月--------|
-		// |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |
-		Object[][] values = { { "香蕉", 10, 2000, 20000, 12, 2400, 27000, 13, 2300, 27000 },
-				{ "苹果", 12, 2000, 24000, 11, 1900, 26000, 13, 2000, 25000 } };
-		List result = CollectionUtil.arrayToDeepList(values);
-		ColsChainRelativeModel colsRelative = new ColsChainRelativeModel();
-		colsRelative.setGroupSize(3);
-		colsRelative.setReduceOne(false);
-		colsRelative.setRelativeIndexs(new Integer[] { 1, 2 });
-		colsRelative.setFormat("#.00%");
-		colsRelative.setStartColumn(1);
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
-		ColsChainRelative.process(colsRelative, labelIndexMap, result);
-		System.out.println(JSON.toJSONString(result));
 	}
 }
