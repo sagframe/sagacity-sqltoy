@@ -172,8 +172,7 @@
 						</xsd:annotation>
 					</xsd:attribute>
 					<xsd:attribute name="group-size" type="xsd:integer" />
-					<xsd:attribute name="defaultValue" type="xsd:string"
-						default="false">
+					<xsd:attribute name="defaultValue" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
 						</xsd:annotation>
@@ -213,8 +212,7 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="defaultValue" type="xsd:string"
-						default="false">
+					<xsd:attribute name="defaultValue" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[第一组数据没有对比数据的环比默认值]]></xsd:documentation>
 						</xsd:annotation>
