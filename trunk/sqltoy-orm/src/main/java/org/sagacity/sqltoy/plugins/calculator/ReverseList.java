@@ -19,7 +19,7 @@ public class ReverseList {
 	 * @param result
 	 */
 	public static void process(ReverseModel reverseModel, HashMap<String, Integer> labelIndexMap, List result) {
-		if(result==null||result.size()<2)
+		if (result == null || result.size() < 2)
 			return;
 		int dataSize = result.size();
 		int start = reverseModel.getStartRow() == null ? 0 : reverseModel.getStartRow();
@@ -40,23 +40,4 @@ public class ReverseList {
 			result.set(end - i, row);
 		}
 	}
-
-//	public static void main(String[] args) {
-//		List result = new ArrayList();
-//		for (int i = 1; i < 10; i++) {
-//			result.add(i);
-//		}
-//		int start = 7;
-//		int end = 2;
-//		int loopCnt = (end - start) / 2;
-//		Object row;
-//		for (int i = 0; i < loopCnt; i++) {
-//			row = result.get(start + i);
-//			result.set(start + i, result.get(end - i));
-//			result.set(end - i, row);
-//		}
-//		for (int i = 0; i < result.size(); i++) {
-//			System.err.println(result.get(i));
-//		}
-//	}
 }

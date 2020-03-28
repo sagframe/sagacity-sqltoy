@@ -497,20 +497,6 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 列转行
-	 * @param unpivotModel
-	 * @param resultModel
-	 * @param labelIndexMap
-	 * @param result
-	 * @return
-	 * @throws Exception
-	 */
-//	private static List unPivotResult(UnpivotModel unpivotModel, DataSetResult resultModel,
-//			HashMap<String, Integer> labelIndexMap, List result) {
-//		
-//	}
-
-	/**
 	 * @todo 将label别名换成对应的列编号(select name,sex from xxxTable，name别名对应的列则为0)
 	 * @param columnLabels
 	 * @param labelIndexMap
