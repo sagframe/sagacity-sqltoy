@@ -31,13 +31,13 @@ public class UnpivotList {
 		String[] indexColValues = new String[cols];
 		String[] colsAndIndexValue = null;
 		String[] newColsLabels = unpivotModel.getNewColumnsLabels();
-		//设置默认新列的标题
+		// 设置默认新列的标题
 		if (newColsLabels == null || newColsLabels.length == 0) {
 			newColsLabels = new String[] { "indexName", "indexValue" };
 		}
 		String colIndex;
 		for (int i = 0; i < cols; i++) {
-			colsAndIndexValue = unpivotModel.getColumnsToRows()[i].split("\\:");
+			colsAndIndexValue = unpivotModel.getColumnsToRows()[i].replaceFirst("\\：", ":").split("\\:");
 			colIndex = colsAndIndexValue[0].toLowerCase().trim();
 			if (NumberUtil.isInteger(colIndex)) {
 				unpivotCols[i] = Integer.parseInt(colIndex);

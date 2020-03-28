@@ -264,7 +264,8 @@ public class XMLUtil {
 						className = argType.getTypeName();
 						className = className.substring(className.lastIndexOf(".") + 1);
 						if (argType.isArray()) {
-							String[] args = values[i].split(",");
+							//替换全角为半角
+							String[] args = values[i].replaceAll("\\，", ",").split("\\,");
 							className = className.substring(0, className.indexOf("["));
 							if (className.equals("int")) {
 								int[] arrayData = new int[args.length];
