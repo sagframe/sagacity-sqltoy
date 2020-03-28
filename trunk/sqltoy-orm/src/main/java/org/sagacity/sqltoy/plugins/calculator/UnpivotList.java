@@ -30,11 +30,7 @@ public class UnpivotList {
 		Integer[] sortUnpivotCols = new Integer[cols];
 		String[] indexColValues = new String[cols];
 		String[] colsAndIndexValue = null;
-		String[] newColsLabels = unpivotModel.getNewColumnsLabels();
-		// 设置默认新列的标题
-		if (newColsLabels == null || newColsLabels.length == 0) {
-			newColsLabels = new String[] { "indexName", "indexValue" };
-		}
+
 		String colIndex;
 		for (int i = 0; i < cols; i++) {
 			colsAndIndexValue = unpivotModel.getColumnsToRows()[i].replaceFirst("\\：", ":").split("\\:");
@@ -65,7 +61,7 @@ public class UnpivotList {
 		for (int i = 0; i < size; i++) {
 			List row = (List) ((ArrayList) result.get(i / cols)).clone();
 			// 标题列
-			row.add(addIndex, newColsLabels[i % cols]);
+			row.add(addIndex, indexColValues[i % cols]);
 			row.add(addIndex + 1, row.get(unpivotCols[i % cols] + 1));
 			// 从最大列进行删除被旋转的列
 			for (int j = 0; j < cols; j++) {
@@ -85,6 +81,11 @@ public class UnpivotList {
 		}
 
 		// 变成行的列标题是否作为一列
+		String[] newColsLabels = unpivotModel.getNewColumnsLabels();
+		// 设置默认新列的标题
+		if (newColsLabels == null || newColsLabels.length == 0) {
+			newColsLabels = new String[] { "indexName", "indexValue" };
+		}
 		labelList.add(addIndex, newColsLabels[0]);
 		labelTypeList.add(addIndex, "string");
 		labelList.add(addIndex + 1, newColsLabels[1]);
