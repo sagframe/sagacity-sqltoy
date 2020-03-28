@@ -99,7 +99,7 @@ public class TranslateConfigParse {
 									} else {
 										sql = StringUtil.trim(elt.getTextContent());
 									}
-									sqlId = "SQLTOY_TRANSLATE_Cache_ID_00" + index;
+									sqlId = "sqltoy_translate_cache_00" + index;
 									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
 											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
@@ -162,7 +162,8 @@ public class TranslateConfigParse {
 							// sql模式
 							if (checherConfigModel.getType().equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
-									sqlId = "SQLTOY_TRANSLATE_Check_ID_00" + index;
+									sqlId = (checherConfigModel.isIncrement() ? "sqltoy_translate_increment_check_00"
+											: "sqltoy_translate_check_00") + index;
 									sqlNode = elt.getElementsByTagName("sql");
 									if (sqlNode.getLength() > 0) {
 										sql = StringUtil.trim(sqlNode.item(0).getTextContent());
