@@ -51,7 +51,7 @@
 	<cache-update-checkers>
 		<!-- 增量更新，检测到变化直接更新缓存 -->
 		<sql-increment-checker cache="staffIdName"
-			check-frequency="15" datasource="dataSource">
+			check-frequency="30" datasource="dataSource">
 			<sql><![CDATA[
 			select STAFF_ID,STAFF_NAME,STATUS
 			from SQLTOY_STAFF_INFO
@@ -61,7 +61,7 @@
 
 		<!-- 增量更新检测,直接将查询结果更新当前缓存, has-inside-group="true" 查询结果第一列必须是缓存分类 -->
 		<sql-increment-checker cache="dictKeyName"
-			check-frequency="10" has-inside-group="true">
+			check-frequency="15" has-inside-group="true">
 			<sql><![CDATA[
 				select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
 				from SQLTOY_DICT_DETAIL t
@@ -71,7 +71,7 @@
 		
 		<!-- 基于sql的缓存更新检测 -->
 		<sql-increment-checker cache="organIdName"
-			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
+			check-frequency="60"
 			datasource="dataSource">
 			<sql><![CDATA[
 			select ORGAN_ID,ORGAN_NAME 
