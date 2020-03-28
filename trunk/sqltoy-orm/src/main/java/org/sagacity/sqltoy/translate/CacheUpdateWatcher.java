@@ -192,6 +192,7 @@ public class CacheUpdateWatcher extends Thread {
 					if (cacheData == null)
 						return;
 					for (CacheCheckResult result : results) {
+						// key不能为null
 						if (result.getItem()[0] != null) {
 							cacheData.put(result.getItem()[0].toString(), result.getItem());
 						}

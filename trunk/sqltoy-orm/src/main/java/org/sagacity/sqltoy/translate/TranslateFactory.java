@@ -66,12 +66,13 @@ public class TranslateFactory {
 			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
-		// 清空模式
-		if (!config.isIncrement()) {
-			return wrapClearCheckResult(result, config);
-		}
+
 		// 增量更新模式
-		return wrapIncrementCheckResult(result, config);
+		if (config.isIncrement()) {
+			return wrapIncrementCheckResult(result, config);
+		}
+		// 清空模式
+		return wrapClearCheckResult(result, config);
 	}
 
 	/**
