@@ -48,17 +48,16 @@
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
 		<!-- 基于sql的缓存更新检测 -->
-		<sql-checker
+		<sql-increment-checker cache="organIdName"
 			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
 			datasource="dataSource">
 			<sql><![CDATA[
-			--#not_debug#--
-			-- 机构缓存更新检测
-			select distinct 'organIdName' cacheName,null cache_type
-			from SQLTOY_ORGAN_INFO t
-			where t.UPDATE_TIME >=:lastUpdateTime
+			select ORGAN_ID,ORGAN_NAME 
+			from SQLTOY_ORGAN_INFO
+			where UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
-		</sql-checker>
+		</sql-increment-checker>
+		
 		<!-- 增量更新，检测到变化直接更新缓存 -->
 		<sql-increment-checker cache="staffIdName" check-frequency="15" datasource="dataSource">
 			<sql><![CDATA[
