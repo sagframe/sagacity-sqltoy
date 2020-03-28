@@ -40,6 +40,7 @@ import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
+import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -504,103 +505,10 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List unPivotResult(UnpivotModel unpivotModel, DataSetResult resultModel,
-			HashMap<String, Integer> labelIndexMap, List result) {
-		if (result == null || result.isEmpty()) {
-			return result;
-		}
-		int cols = unpivotModel.getColumns().length;
-		List newResult = new ArrayList();
-		Integer[] unpivotCols = new Integer[cols];
-		Integer[] sortUnpivotCols = new Integer[cols];
-		for (int i = 0; i < cols; i++) {
-			unpivotCols[i] = labelIndexMap.get(unpivotModel.getColumns()[i]);
-			sortUnpivotCols[i] = unpivotCols[i];
-		}
-		boolean hasLabelsColumn = (unpivotModel.getLabelsColumn() == null) ? false : true;
-
-		// 判断select 中是否已经预留了旋转列label和value对应的字段，如果有则update相关列的数据
-		// 如:select bizDate,'' as unpivot_label,null as
-		// unpivot_value,unpivot_col1,unpivot_col2
-		// 结果:bizDate unpivot_label unpivot_value
-		// ==== 2015-12-1--- 个人 -------1000
-		// ==== 2015-12-1--- 企业 -------4000
-		int labelColIndex = -1;
-		int valueColIndex = -1;
-		if (labelIndexMap.get(unpivotModel.getLabelsColumn().toLowerCase()) != null) {
-			labelColIndex = labelIndexMap.get(unpivotModel.getLabelsColumn().toLowerCase()).intValue();
-		}
-
-		if (labelIndexMap.get(unpivotModel.getAsColumn().toLowerCase()) != null) {
-			valueColIndex = labelIndexMap.get(unpivotModel.getAsColumn().toLowerCase()).intValue();
-		}
-
-		// 排序,从大到小排
-		CollectionUtil.sortArray(sortUnpivotCols, true);
-		// 插在最开始被旋转的列位置前
-		int addIndex = sortUnpivotCols[sortUnpivotCols.length - 1].intValue();
-		if (addIndex < 0) {
-			addIndex = 0;
-		}
-		// 将多列转成行，记录数量是列的倍数
-		int size = result.size() * cols;
-		int removeAdd = 0;
-		for (int i = 0; i < size; i++) {
-			removeAdd = 0;
-			List row = (List) ((ArrayList) result.get(i / cols)).clone();
-			// 标题列
-			if (hasLabelsColumn) {
-				if (labelColIndex != -1) {
-					row.set(labelColIndex, unpivotModel.getColsAlias()[i % cols]);
-				} else {
-					row.add(addIndex, unpivotModel.getColsAlias()[i % cols]);
-					removeAdd = 1;
-				}
-			}
-			if (valueColIndex != -1) {
-				row.set(valueColIndex, row.get(unpivotCols[i % cols]));
-			} else {
-				row.add(addIndex + removeAdd, row.get(unpivotCols[i % cols] + removeAdd));
-				removeAdd = removeAdd + 1;
-			}
-			// 从最大列进行删除被旋转的列
-			for (int j = 0; j < cols; j++) {
-				row.remove(sortUnpivotCols[j].intValue() + removeAdd);
-			}
-			newResult.add(row);
-		}
-
-		// 标题的名称
-		String[] labelNames = resultModel.getLabelNames();
-		String[] labelTypes = resultModel.getLabelTypes();
-		List<String> labelList = new ArrayList<String>();
-		List<String> labelTypeList = new ArrayList<String>();
-		for (int i = 0; i < labelNames.length; i++) {
-			labelList.add(labelNames[i]);
-			labelTypeList.add(labelTypes[i]);
-		}
-		if (removeAdd > 0) {
-			// 变成行的列标题是否作为一列
-			if (hasLabelsColumn) {
-				labelList.add(addIndex, unpivotModel.getLabelsColumn());
-				labelTypeList.add(addIndex, "string");
-			}
-			labelList.add(addIndex + removeAdd - 1, unpivotModel.getAsColumn());
-			labelTypeList.add(addIndex + removeAdd - 1, "object");
-		}
-		// 移除转变成行的列
-		for (int j = 0; j < cols; j++) {
-			labelList.remove(sortUnpivotCols[j].intValue() + removeAdd);
-			labelTypeList.remove(sortUnpivotCols[j].intValue() + removeAdd);
-		}
-		String[] newLabelNames = new String[labelList.size()];
-		String[] newLabelTypes = new String[labelList.size()];
-		labelList.toArray(newLabelNames);
-		labelTypeList.toArray(newLabelTypes);
-		resultModel.setLabelNames(newLabelNames);
-		resultModel.setLabelTypes(newLabelTypes);
-		return newResult;
-	}
+//	private static List unPivotResult(UnpivotModel unpivotModel, DataSetResult resultModel,
+//			HashMap<String, Integer> labelIndexMap, List result) {
+//		
+//	}
 
 	/**
 	 * @todo 将label别名换成对应的列编号(select name,sex from xxxTable，name别名对应的列则为0)
@@ -929,7 +837,7 @@ public class ResultUtils {
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet, debug);
 				} else if (processor instanceof UnpivotModel) {
-					items = unPivotResult((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
+					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);

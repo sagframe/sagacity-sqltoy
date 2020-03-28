@@ -1061,31 +1061,10 @@ public class SqlXMLConfigParse {
 					resultProcessor.add(pivotModel);
 				} // 列转行
 				else if (eltName.equals("unpivot")) {
-					if (elt.hasAttribute("columns") && elt.hasAttribute("values-as-column")) {
-						UnpivotModel unpivotModel = new UnpivotModel();
-						String[] columns = elt.getAttribute("columns").split("\\,");
-						String[] realCols = new String[columns.length];
-						String[] colsAlias = new String[columns.length];
-						int index = 0;
-						String[] temp;
-						for (String column : columns) {
-							temp = column.split(":");
-							realCols[index] = temp[0].trim().toLowerCase();
-							colsAlias[index] = temp[temp.length - 1];
-							index++;
-						}
-						unpivotModel.setColumns(realCols);
-						unpivotModel.setColsAlias(colsAlias);
-						// 多列变成行时转成的列名称
-						unpivotModel.setAsColumn(elt.getAttribute("values-as-column"));
-						// 变成行的列标题作为的新列名称
-						if (elt.hasAttribute("labels-as-column")) {
-							unpivotModel.setLabelsColumn(elt.getAttribute("labels-as-column"));
-						}
-						// 必须要有2个或以上列
-						if (index > 1) {
-							resultProcessor.add(unpivotModel);
-						}
+					UnpivotModel unpivotModel = new UnpivotModel();
+					XMLUtil.setAttributes(elt, unpivotModel);
+					if (unpivotModel.getColumnsToRows().length > 1) {
+						resultProcessor.add(unpivotModel);
 					}
 				}
 				// 汇总合计

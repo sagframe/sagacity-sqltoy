@@ -770,13 +770,20 @@
 
 	<xsd:complexType name="sqltoyUnpivotType">
 		<xsd:annotation>
-			<xsd:documentation><![CDATA[列转行]]></xsd:documentation>
+			<xsd:documentation><![CDATA[将几个固定列指标转为多行来显示]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:attribute name="columns" type="xsd:string"
-			use="required" />
-		<xsd:attribute name="values-as-column" type="xsd:string"
-			use="required" />
-		<xsd:attribute name="labels-as-column" type="xsd:string" />
+		<xsd:attribute name="columns-to-rows" type="xsd:string"
+			use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[格式如下"col1:指标名称1,col2:指标名称2"]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="new-columns-labels"
+			type="xsd:string" use="required">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[为新产生的2个列设定标题便于映射到VO对象属性,如:"indexName,indexValue"]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoySummaryType">
