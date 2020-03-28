@@ -472,7 +472,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
-			List pivotCategorySet, boolean debug) {
+			List pivotCategorySet) {
 		if (result == null || result.isEmpty())
 			return result;
 		// 行列转换
@@ -488,10 +488,6 @@ public class ResultUtils {
 		Integer[] groupCols = mappingLabelIndex(pivotModel.getGroupCols(), labelIndexMap);
 		// update 2016-12-13 提取category后进行了排序
 		List categoryList = (pivotCategorySet == null) ? extractCategory(result, categoryCols) : pivotCategorySet;
-		if (debug) {
-			logger.info("---------pivot category info--------------------");
-			DebugUtil.printAry(categoryList, " , ", true);
-		}
 		return CollectionUtil.pivotList(result, categoryList, null, groupCols, categoryCols, pivotCols[0],
 				pivotCols[pivotCols.length - 1], pivotModel.getDefaultValue());
 	}
@@ -821,7 +817,7 @@ public class ResultUtils {
 				processor = resultProcessors.get(i);
 				// 数据旋转
 				if (processor instanceof PivotModel) {
-					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet, debug);
+					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
 				} else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
 				} else if (processor instanceof SummaryModel) {
