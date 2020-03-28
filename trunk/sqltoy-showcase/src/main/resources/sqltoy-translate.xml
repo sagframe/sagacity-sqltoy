@@ -53,6 +53,7 @@
 		<sql-increment-checker cache="staffIdName"
 			check-frequency="30" datasource="dataSource">
 			<sql><![CDATA[
+			--#not_debug#--
 			select STAFF_ID,STAFF_NAME,STATUS
 			from SQLTOY_STAFF_INFO
 	        where UPDATE_TIME >=:lastUpdateTime
@@ -63,9 +64,10 @@
 		<sql-increment-checker cache="dictKeyName"
 			check-frequency="15" has-inside-group="true">
 			<sql><![CDATA[
-				select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
-		        where t.UPDATE_TIME>=:lastUpdateTime
+			--#not_debug#--
+			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
+			from SQLTOY_DICT_DETAIL t
+	        where t.UPDATE_TIME>=:lastUpdateTime
 			]]></sql>
 		</sql-increment-checker>
 		
@@ -74,6 +76,7 @@
 			check-frequency="60"
 			datasource="dataSource">
 			<sql><![CDATA[
+			--#not_debug#--
 			select ORGAN_ID,ORGAN_NAME 
 			from SQLTOY_ORGAN_INFO
 			where UPDATE_TIME >=:lastUpdateTime
