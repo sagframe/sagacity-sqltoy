@@ -19,7 +19,7 @@ import org.sagacity.sqltoy.utils.ExpressionUtil;
  */
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, HashMap<String, Integer> labelIndexMap, List result) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.size() < 2)
 			return;
 		List<Integer> sumColList = new ArrayList<Integer>();
 		// 参照列，如按年份进行旋转(columns="1..result.width()-1")
