@@ -232,4 +232,16 @@
 		<!-- group-size是 -->
 		<rows-chain-relative group-column="fruit_name" relative-columns="sale_count,total_amt"/>
 	</sql>
+	
+	<!-- 列转行 -->
+	<sql id="unpivot_case">
+		<value>
+			<![CDATA[
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				from sqltoy_fruit_order t
+				order by t.order_month desc,t.fruit_name
+			]]>
+		</value>
+		<unpivot columns-to-rows="sale_count:销售量,sale_amt:销售金额,total_amt:总销售额" new-columns-labels="indexName,indexValue" />
+	</sql>
 </sqltoy>

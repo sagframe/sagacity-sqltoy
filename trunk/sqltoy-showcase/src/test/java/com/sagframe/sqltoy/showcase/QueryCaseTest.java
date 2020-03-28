@@ -259,4 +259,12 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
 	}
+	
+	@Test
+	public void testUnpivotList() throws InterruptedException {
+		List result = (List) sqlToyLazyDao.findBySql("unpivot_case", null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
 }
