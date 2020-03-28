@@ -10,6 +10,7 @@ import java.util.List;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 
 /**
  * @project sqltoy-orm
@@ -30,9 +31,19 @@ public class UnpivotList {
 		String[] indexColValues = new String[cols];
 		String[] colsAndIndexValue = null;
 		String[] newColsLabels = unpivotModel.getNewColumnsLabels();
+		//设置默认新列的标题
+		if (newColsLabels == null || newColsLabels.length == 0) {
+			newColsLabels = new String[] { "indexName", "indexValue" };
+		}
+		String colIndex;
 		for (int i = 0; i < cols; i++) {
 			colsAndIndexValue = unpivotModel.getColumnsToRows()[i].split("\\:");
-			unpivotCols[i] = labelIndexMap.get(colsAndIndexValue[0].toLowerCase().trim());
+			colIndex = colsAndIndexValue[0].toLowerCase().trim();
+			if (NumberUtil.isInteger(colIndex)) {
+				unpivotCols[i] = Integer.parseInt(colIndex);
+			} else {
+				unpivotCols[i] = labelIndexMap.get(colIndex);
+			}
 			indexColValues[i] = colsAndIndexValue[1].trim();
 			sortUnpivotCols[i] = unpivotCols[i];
 		}
