@@ -16,14 +16,23 @@ public class ElasticConfig implements Serializable {
 	 */
 	private static final long serialVersionUID = -5753295867761297803L;
 
+	/**
+	 * 连接赋予的id
+	 */
 	private String id;
 
+	/**
+	 * 连接url地址
+	 */
 	private String url;
 
 	private String username;
 
 	private String password;
 
+	/**
+	 * es版本
+	 */
 	private String version;
 
 	private String path;
@@ -36,6 +45,9 @@ public class ElasticConfig implements Serializable {
 
 	private Integer socketTimeout;
 
+	/**
+	 * 字符集,默认UTF-8
+	 */
 	private String charset;
 
 	public String getUrl() {

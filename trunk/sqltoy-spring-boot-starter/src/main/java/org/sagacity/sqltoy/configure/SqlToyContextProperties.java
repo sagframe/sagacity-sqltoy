@@ -38,7 +38,7 @@ public class SqlToyContextProperties implements Serializable {
 	private String dialect;
 
 	/**
-	 * SqltoyEntity包路径,非必须属性
+	 * Sqltoy实体Entity包路径,非必须属性
 	 */
 	private String[] packagesToScan;
 
@@ -57,6 +57,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Elastic elastic;
 
+	/**
+	 * 是否开启debug模式(默认为false)
+	 */
 	private Boolean debug;
 
 	/**
@@ -64,6 +67,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer batchSize;
 
+	/**
+	 * 分页最大单页数据量(默认是5万)
+	 */
 	private Integer pageFetchSizeLimit;
 
 	/**
@@ -72,7 +78,7 @@ public class SqlToyContextProperties implements Serializable {
 	private Integer printSqlTimeoutMillis;
 
 	/**
-	 * debug\error
+	 * sql打印策略,分debug\error两种模式,默认error时打印
 	 */
 	private String printSqlStrategy = "error";
 

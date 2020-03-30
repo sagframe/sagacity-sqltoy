@@ -17,8 +17,14 @@ public class Elastic implements Serializable {
 	 */
 	private static final long serialVersionUID = -7130685535362259100L;
 
+	/**
+	 * 使用时默认使用的es集群点
+	 */
 	private String defaultId;
 
+	/**
+	 * 多个es集群配置
+	 */
 	private List<ElasticConfig> endpoints;
 
 	public String getDefaultId() {
@@ -36,7 +42,5 @@ public class Elastic implements Serializable {
 	public void setEndpoints(List<ElasticConfig> endpoints) {
 		this.endpoints = endpoints;
 	}
-	
-	
 
 }
