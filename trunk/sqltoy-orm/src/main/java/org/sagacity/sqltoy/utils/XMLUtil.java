@@ -186,8 +186,9 @@ public class XMLUtil {
 			logger.error("解析文件:{}错误:{}!", xmlFile, e.getMessage());
 			throw e;
 		} finally {
-			if (fileIS != null)
+			if (fileIS != null) {
 				fileIS.close();
+			}
 		}
 		return null;
 	}
