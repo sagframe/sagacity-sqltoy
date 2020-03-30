@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.ExpressionUtil;
  * @project sqltoy-orm
  * @description 对集合进行分组汇总计算
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ColsChainRelative.java,Revision:v1.0,Date:2020-3-25 上午10:08:15
+ * @version id:GroupSummary.java,Revision:v1.0,Date:2020-3-25 上午10:08:15
  */
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, HashMap<String, Integer> labelIndexMap, List result) {

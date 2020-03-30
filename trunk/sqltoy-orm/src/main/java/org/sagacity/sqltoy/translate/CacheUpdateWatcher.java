@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.2
  * @description 定时检测缓存是否更新程序
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:CacheCheckTimer.java,Revision:v1.0,Date:2018年3月11日
+ * @version id:CacheUpdateWatcher.java,Revision:v1.0,Date:2018年3月11日
  * @modify {Date:2019-1-22,修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异}
  * @modify {Date:2019-10-14,增加集群节点的时间差异参数,便于包容性检测缓存更新}
  * @modify {Date:2020-3-26,增加缓存增量更新机制,而不是清除缓存，然后重新全量获取更新}
