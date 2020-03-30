@@ -11,8 +11,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.2.5.RELEASE</spring-framework.version>
-		<spring-data-redis.version>2.2.5.RELEASE</spring-data-redis.version>
-		<spring-data-mongo.version>2.2.5.RELEASE</spring-data-mongo.version>
+		<spring-data-redis.version>2.2.6.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>2.2.6.RELEASE</spring-data-mongo.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.12</httpclient.version>
