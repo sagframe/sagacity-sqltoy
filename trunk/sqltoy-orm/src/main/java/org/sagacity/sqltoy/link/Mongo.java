@@ -141,10 +141,9 @@ public class Mongo extends BaseLink {
 			if (noSqlModel.isHasAggs()) {
 				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
 						realMql, (Class) queryExecutor.getResultType());
-			} else {
-				return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-						realMql, (Class) queryExecutor.getResultType());
 			}
+			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
+					realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);

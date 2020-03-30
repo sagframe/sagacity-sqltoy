@@ -119,9 +119,11 @@ public class Save extends BaseLink {
 			throw new IllegalArgumentException("save entity is null!");
 		if (saveMode == SaveMode.APPEND) {
 			return dialectFactory.save(sqlToyContext, entity, dataSource);
-		} else if (saveMode == SaveMode.UPDATE) {
+		}
+		if (saveMode == SaveMode.UPDATE) {
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, dataSource);
-		} else if (saveMode == SaveMode.IGNORE) {
+		}
+		if (saveMode == SaveMode.IGNORE) {
 			throw new IllegalArgumentException("单条对象记录保存不支持IGNORE 模式,请通过自身逻辑判断SaveMode是append(insert) 还是 update!");
 		}
 		return null;
@@ -138,12 +140,12 @@ public class Save extends BaseLink {
 		if (saveMode == SaveMode.IGNORE) {
 			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
 					dataSource, autoCommit);
-		} else if (saveMode == SaveMode.UPDATE) {
+		}
+		if (saveMode == SaveMode.UPDATE) {
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
 					reflectPropertyHandler, dataSource, autoCommit);
-		} else {
-			return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler, dataSource,
-					autoCommit);
 		}
+		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler, dataSource,
+				autoCommit);
 	}
 }
