@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.HashMap;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -25,6 +24,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -192,8 +192,8 @@ public class XMLUtil {
 		return null;
 	}
 
-	private static HashMap<String, String> asMap(String... keyValues) {
-		HashMap<String, String> result = new HashMap<String, String>();
+	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
+		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
 		if (keyValues == null)
 			return result;
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {
@@ -206,12 +206,12 @@ public class XMLUtil {
 	 * @todo 解析xml元素的属性映射到java对象属性
 	 * @param elt
 	 * @param entity
-	 * @param mapped
+	 * @param aliasProps 属性映射,长度必须是偶数,如:a对应到a1,{a,a1,b,b1}
 	 */
-	public static void setAttributes(Element elt, Serializable entity, String... keyValues) throws Exception {
+	public static void setAttributes(Element elt, Serializable entity, String... aliasProps) throws Exception {
 		if (elt == null)
 			return;
-		HashMap<String, String> realMap = asMap(keyValues);
+		IgnoreKeyCaseMap<String, String> realMap = asMap(aliasProps);
 		NamedNodeMap attrs = elt.getAttributes();
 		String name;
 		String value;
@@ -226,10 +226,6 @@ public class XMLUtil {
 			// 对照属性
 			if (realMap.containsKey(name)) {
 				properties[index] = realMap.get(name);
-			} else if (realMap.containsKey(name.toLowerCase())) {
-				properties[index] = realMap.get(name.toLowerCase());
-			} else if (realMap.containsKey(name.toUpperCase())) {
-				properties[index] = realMap.get(name.toUpperCase());
 			} else {
 				properties[index] = StringUtil.toHumpStr(name, false);
 			}
@@ -240,10 +236,6 @@ public class XMLUtil {
 		name = elt.getNodeName();
 		if (realMap.containsKey(name)) {
 			properties[index] = realMap.get(name);
-		} else if (realMap.containsKey(name.toLowerCase())) {
-			properties[index] = realMap.get(name.toLowerCase());
-		} else if (realMap.containsKey(name.toUpperCase())) {
-			properties[index] = realMap.get(name.toUpperCase());
 		} else {
 			properties[index] = StringUtil.toHumpStr(name, false);
 		}
@@ -264,7 +256,7 @@ public class XMLUtil {
 						className = argType.getTypeName();
 						className = className.substring(className.lastIndexOf(".") + 1);
 						if (argType.isArray()) {
-							//替换全角为半角
+							// 替换全角为半角
 							String[] args = values[i].replaceAll("\\，", ",").split("\\,");
 							className = className.substring(0, className.indexOf("["));
 							if (className.equals("int")) {
