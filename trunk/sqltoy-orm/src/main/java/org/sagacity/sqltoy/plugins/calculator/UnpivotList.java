@@ -33,6 +33,8 @@ public class UnpivotList {
 
 		String colIndex;
 		for (int i = 0; i < cols; i++) {
+			// columnsToRows配置时格式为:colName1:rowValue1,colName2:rowValue2格式,经过解析每个里面是colName:rowValue
+			// 格式
 			colsAndIndexValue = unpivotModel.getColumnsToRows()[i].replaceFirst("\\：", ":").split("\\:");
 			colIndex = colsAndIndexValue[0].toLowerCase().trim();
 			if (NumberUtil.isInteger(colIndex)) {
