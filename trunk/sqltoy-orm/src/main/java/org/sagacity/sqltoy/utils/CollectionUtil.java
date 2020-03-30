@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @description 数组集合的公用方法
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:CollectionUtil.java,Revision:v1.0,Date:2008-10-22 上午10:57:00
- * @Modification Date:2011-8-11 {修复了pivotList设置旋转数据的初始值错误}
+ * @modify Date:2011-8-11 {修复了pivotList设置旋转数据的初始值错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CollectionUtil {
