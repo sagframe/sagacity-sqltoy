@@ -162,9 +162,8 @@ public class Elastic extends BaseLink {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
 				if (esConfig.isNativeSql()) {
 					throw new UnsupportedOperationException("elastic native sql pagination is not support!");
-				} else {
-					return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 				}
+				return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			}
 			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 		} catch (Exception e) {

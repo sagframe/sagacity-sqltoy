@@ -174,8 +174,9 @@ public class SqlXMLConfigParse {
 					xmlFile, e);
 			throw e;
 		} finally {
-			if (fileIS != null)
+			if (fileIS != null) {
 				fileIS.close();
+			}
 		}
 	}
 

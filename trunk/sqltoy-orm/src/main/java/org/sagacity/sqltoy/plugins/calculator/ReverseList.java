@@ -22,10 +22,11 @@ public class ReverseList {
 		if (result == null || result.size() < 2)
 			return;
 		int dataSize = result.size();
-		int start = reverseModel.getStartRow() == null ? 0 : reverseModel.getStartRow();
+		int start = (reverseModel.getStartRow() == null) ? 0 : reverseModel.getStartRow();
+		// 不合法反转
 		if (start > dataSize - 1)
 			return;
-		int end = reverseModel.getEndRow() == null ? dataSize - 1 : reverseModel.getEndRow();
+		int end = (reverseModel.getEndRow() == null) ? dataSize - 1 : reverseModel.getEndRow();
 		if (end < 0) {
 			end = dataSize - 1 + end;
 		}

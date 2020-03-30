@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 用于检测sql文件内容发生变化,如果发生变化则重新加载文件
  * @author zhongxuchen
- * @version v1.0, Date:2019年8月26日
- * @modify 2019年8月26日,初始创建
+ * @version v1.0, Date:2012年8月26日
+ * @modify 2019年8月26日,将原本调用sql时检测sql文件更新改为一个独立的后台线程
  */
 public class SqlFileModifyWatcher extends Thread {
 	/**
@@ -21,7 +21,9 @@ public class SqlFileModifyWatcher extends Thread {
 	private final static Logger logger = LoggerFactory.getLogger(SqlFileModifyWatcher.class);
 
 	private ConcurrentHashMap<String, SqlToyConfig> sqlCache;
+	// 存放文件最后修改时间,用于比较是否发生变更
 	private ConcurrentHashMap<String, Long> filesLastModifyMap;
+	// 存放sql文件
 	private List realSqlList;
 
 	/**
@@ -74,7 +76,7 @@ public class SqlFileModifyWatcher extends Thread {
 				logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
 			}
 			try {
-				// 一秒钟监测一次
+				// 隔几秒进行一次检测,默认开发模式为1秒钟
 				Thread.sleep(1000 * sleepSeconds);
 			} catch (InterruptedException e) {
 				logger.warn("sql文件变更监测程序进程异常,监测将终止!{}", e.getMessage(), e);
