@@ -62,7 +62,7 @@
 
 		<!-- 增量更新检测,直接将查询结果更新当前缓存, has-inside-group="true" 查询结果第一列必须是缓存分类 -->
 		<sql-increment-checker cache="dictKeyName"
-			check-frequency="15" has-inside-group="true">
+			check-frequency="15" has-inside-group="true" datasource="dataSource">
 			<sql><![CDATA[
 			--#not_debug#--
 			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
@@ -70,11 +70,10 @@
 	        where t.UPDATE_TIME>=:lastUpdateTime
 			]]></sql>
 		</sql-increment-checker>
-		
+
 		<!-- 基于sql的缓存更新检测 -->
 		<sql-increment-checker cache="organIdName"
-			check-frequency="60"
-			datasource="dataSource">
+			check-frequency="60" datasource="dataSource">
 			<sql><![CDATA[
 			--#not_debug#--
 			select ORGAN_ID,ORGAN_NAME 
