@@ -157,7 +157,7 @@ public class SqlXMLConfigParse {
 						sqlToyConfig = parseSingleSql(sqlElt, dialect);
 						if (sqlToyConfig != null) {
 							// 去除sql中的注释语句并放入缓存
-							if (cache.get(sqlToyConfig.getId()) != null && !isReload) {
+							if (cache.containsKey(sqlToyConfig.getId()) && !isReload) {
 								logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
 								// 移除分页优化缓存
 								PageOptimizeUtils.remove(sqlToyConfig.getId());

@@ -196,7 +196,7 @@ public class SqlScriptLoader {
 	 */
 	public void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
-			if (sqlCache.get(sqlToyConfig.getId()) != null) {
+			if (sqlCache.containsKey(sqlToyConfig.getId())) {
 				logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
 				// 移除分页优化缓存
 				PageOptimizeUtils.remove(sqlToyConfig.getId());
