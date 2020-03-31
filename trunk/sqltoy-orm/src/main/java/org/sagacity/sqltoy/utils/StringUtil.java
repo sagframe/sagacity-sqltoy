@@ -71,9 +71,11 @@ public class StringUtil {
 			return true;
 		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
 			return true;
-		} else if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
+		}
+		if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
 			return true;
-		} else if ((str instanceof Map) && ((Map) str).isEmpty()) {
+		}
+		if ((str instanceof Map) && ((Map) str).isEmpty()) {
 			return true;
 		}
 		return false;
