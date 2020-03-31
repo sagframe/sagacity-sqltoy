@@ -84,8 +84,8 @@
 		<translate cache="dictKeyName"
 			cache-type="PURCHASE_SALE_TYPE" columns="psTypeName" />
 		<!-- 缓存翻译订单状态 -->
-		<translate cache="dictKeyName"
-			cache-type="ORDER_STATUS" columns="statusName" />
+		<translate cache="dictKeyName" cache-type="ORDER_STATUS"
+			columns="statusName" />
 		<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
 		<translate cache="staffIdName"
 			columns="staffName,createName" />
@@ -172,7 +172,6 @@
 		<!-- 如果需要依然可以使用translate 缓存翻译,column 对应_source 中定义的字段 -->
 		<!-- <translate cache="" columns=""/> -->
 		<value>
-		
 	<![CDATA[
 		{
 			    "_source": [
@@ -204,6 +203,24 @@
 		</value>
 	</sql>
 
+	<!-- 演示分组汇总 -->
+	<sql id="group_summary_case">
+		<value>
+			<![CDATA[
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				from sqltoy_fruit_order t
+				order by t.fruit_name ,t.order_month
+			]]>
+		</value>
+		<summary columns="sale_count,sale_amt,total_amt"
+			reverse="true">
+			<!-- 层级顺序保持从高到低 -->
+			<global sum-label="总计" label-column="fruit_name" />
+			<group group-column="fruit_name" sum-label="小计"
+				label-column="fruit_name" />
+		</summary>
+	</sql>
+
 	<!-- 列与列高级环比演示 -->
 	<sql id="cols_relative_case">
 		<value>
@@ -230,9 +247,22 @@
 			]]>
 		</value>
 		<!-- group-size是 -->
-		<rows-chain-relative group-column="fruit_name" relative-columns="sale_count,total_amt"/>
+		<rows-chain-relative group-column="fruit_name"
+			relative-columns="sale_count,total_amt" />
 	</sql>
-	
+	<!-- 列转行 -->
+	<sql id="pivot_case">
+		<value>
+			<![CDATA[
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				from sqltoy_fruit_order t
+				order by t.fruit_name ,t.order_month
+			]]>
+		</value>
+		<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
+		<pivot start-column="sale_count" end-column="total_amt" 
+			group-columns="fruit_name" category-columns="order_month" />
+	</sql>
 	<!-- 列转行 -->
 	<sql id="unpivot_case">
 		<value>
@@ -242,6 +272,8 @@
 				order by t.order_month desc,t.fruit_name
 			]]>
 		</value>
-		<unpivot columns-to-rows="sale_count:销售量,sale_amt:销售金额,total_amt:总销售额" new-columns-labels="indexName,indexValue" />
+		<unpivot
+			columns-to-rows="sale_count:销售量,sale_amt:销售金额,total_amt:总销售额"
+			new-columns-labels="indexName,indexValue" />
 	</sql>
 </sqltoy>

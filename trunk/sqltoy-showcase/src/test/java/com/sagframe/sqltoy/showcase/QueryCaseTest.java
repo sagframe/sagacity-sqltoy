@@ -251,7 +251,7 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
 	}
-	
+
 	@Test
 	public void testRowsRelativeCalculate() throws InterruptedException {
 		List result = (List) sqlToyLazyDao.findBySql("rows_relative_case", null);
@@ -259,10 +259,26 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
 	}
-	
+
+	@Test
+	public void testPivotList() throws InterruptedException {
+		List result = (List) sqlToyLazyDao.findBySql("pivot_case", null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
+
 	@Test
 	public void testUnpivotList() throws InterruptedException {
 		List result = (List) sqlToyLazyDao.findBySql("unpivot_case", null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
+
+	@Test
+	public void testGroupSummary() throws InterruptedException {
+		List result = (List) sqlToyLazyDao.findBySql("group_summary_case", null);
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
