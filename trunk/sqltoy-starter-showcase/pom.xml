@@ -12,8 +12,7 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sqltoy.version>4.10.4</sqltoy.version>
-		<sqltoy-starter.version>4.10.4</sqltoy-starter.version>
+		<sqltoy-starter.version>4.10.5</sqltoy-starter.version>
 		<fastjson.version>1.2.68</fastjson.version>
 		<druid.version>1.1.21</druid.version>
 		<junit-jupiter.version>5.6.1</junit-jupiter.version>
@@ -53,11 +52,6 @@
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy-starter</artifactId>
 			<version>${sqltoy-starter.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sagframe</groupId>
-			<artifactId>sagacity-sqltoy</artifactId>
-			<version>${sqltoy.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -121,12 +115,6 @@
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.springframework/spring-tx -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-tx</artifactId>
-			<version>${spring.version}</version>
 		</dependency>
 	</dependencies>
 	<build>
