@@ -235,9 +235,9 @@ public void findPageByParams() {
 	cache-indexs:缓存数据名称对应的列,不填则默认为第二列(从0开始,1则表示第二列)，
 	      例如缓存的数据结构是:key、name、fullName,则第三列表示全称
 	-->
-	<translate cache="dictKeyNameCache" cache-type="DEVICE_TYPE" columns="deviceTypeName" cache-indexs="1"/>
+	<translate cache="dictKeyName" cache-type="DEVICE_TYPE" columns="deviceTypeName" cache-indexs="1"/>
 	<!-- 员工名称翻译,如果同一个缓存则可以同时对几个字段进行翻译 -->
-	<translate cache="staffIdNameCache" columns="staffName,createName" />
+	<translate cache="staffIdName" columns="staffName,createName" />
 	<filters>
 		<!-- 反向利用缓存通过名称匹配出id用于精确查询 -->
 		<cache-arg cache-name="staffIdNameCache" param="staffName" alias-name="staffIds"/>
@@ -494,7 +494,7 @@ spring.sqltoy.printSqlTimeoutMillis=30000
 	<cache-translates
 		disk-store-path="./sqltoy-showcase/translateCaches">
 		<!-- 基于sql直接查询的方式获取缓存 -->
-		<sql-translate cache="dictKeyNameCache"
+		<sql-translate cache="dictKeyName"
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
@@ -507,7 +507,7 @@ spring.sqltoy.printSqlTimeoutMillis=30000
 		</sql-translate>
 
 		<!-- 员工ID和姓名的缓存 -->
-		<sql-translate cache="staffIdNameCache"
+		<sql-translate cache="staffIdName"
 			datasource="dataSource">
 			<sql>
 			<![CDATA[
@@ -522,7 +522,7 @@ spring.sqltoy.printSqlTimeoutMillis=30000
 	<cache-update-checkers>
 		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
 		<sql-checker
-			check-frequency="0..8:30?600,8:30..20?15,20..24?600"
+			check-frequency="30"
 			datasource="dataSource">
 			<sql><![CDATA[
 			--#not_debug#--
@@ -617,7 +617,7 @@ public class CrudCaseServiceTest {
 	</filters>
 		
 	<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
-	<translate cache="dictCache" cache-type="POST_TYPE" columns="POST_TYPE"
+	<translate cache="dictKeyName" cache-type="POST_TYPE" columns="POST_TYPE"
 		cache-indexs="1" uncached-template=""/>
 
 	<!-- 安全掩码:tel\姓名\地址\卡号 -->
