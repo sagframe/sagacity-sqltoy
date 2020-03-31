@@ -349,12 +349,15 @@ public class DateUtil {
 		if (fmt.equalsIgnoreCase("YY")) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
-		} else if (fmt.equalsIgnoreCase("YYYY")) {
+		}
+		if (fmt.equalsIgnoreCase("YYYY")) {
 			return Integer.toString(getYear(dt));
-		} else if (fmt.equalsIgnoreCase("MM")) {
+		}
+		if (fmt.equalsIgnoreCase("MM")) {
 			int month = getMonth(dt);
 			return (month < 10 ? "0" : "").concat(Integer.toString(month));
-		} else if (fmt.equalsIgnoreCase("dd")) {
+		}
+		if (fmt.equalsIgnoreCase("dd")) {
 			int day = getDay(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}
