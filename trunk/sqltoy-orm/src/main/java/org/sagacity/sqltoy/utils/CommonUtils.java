@@ -253,8 +253,9 @@ public class CommonUtils {
 		String logicStr = "&&";
 		String[] expressions;
 		try {
-			if (sql.indexOf("||") != -1)
+			if (sql.indexOf("||") != -1) {
 				logicStr = "||";
+			}
 			expressions = sql.split(logicStr);
 			// 超过2个运算,交freemarker
 			if (expressions.length > 2)
