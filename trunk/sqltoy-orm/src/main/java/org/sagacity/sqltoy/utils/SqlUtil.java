@@ -246,20 +246,20 @@ public class SqlUtil {
 				}
 			} else if (paramValue instanceof java.lang.Integer) {
 				pst.setInt(paramIndex, ((Integer) paramValue));
-			} else if (paramValue instanceof java.sql.Timestamp) {
-				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
-			} else if (paramValue instanceof java.time.LocalDate) {
-				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 			} else if (paramValue instanceof java.time.LocalDateTime) {
 				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
 			} else if (paramValue instanceof BigDecimal) {
 				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+			} else if (paramValue instanceof java.time.LocalDate) {
+				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 			} else if (paramValue instanceof java.util.Date) {
 				if (dbType == DBType.CLICKHOUSE) {
 					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
 				} else {
 					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 				}
+			} else if (paramValue instanceof java.sql.Timestamp) {
+				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			} else if (paramValue instanceof java.lang.Double) {
 				pst.setDouble(paramIndex, ((Double) paramValue));
 			} else if (paramValue instanceof java.lang.Long) {
