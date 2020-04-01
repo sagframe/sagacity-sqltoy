@@ -201,42 +201,42 @@ public class DataSourceUtils {
 				return Dialect.ORACLE;
 			}
 			// mysql以及mysql的分支数据库
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MYSQL) != -1
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MYSQL) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				return Dialect.MYSQL;
 			}
 			// postgresql
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
 			}
 			// sqlserver,只支持2008或以上版本
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "mssql") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "microsoftsqlserver") != -1) {
 				return Dialect.SQLSERVER;
 			}
 			// db2
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DB2) != -1) {
 				return Dialect.DB2;
 			}
 			// clickhouse
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
 				return Dialect.CLICKHOUSE;
 			}
 			// GAUSSDB
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
 				return Dialect.GAUSSDB;
 			}
 			// hana
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
 				return Dialect.SAP_HANA;
 			} // sqlite
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				return Dialect.SQLITE;
 			}
 			// sybase iq
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
 					|| (StringUtil.indexOfIgnoreCase(dbDialect, "sap") != -1
 							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1)) {

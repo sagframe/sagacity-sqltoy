@@ -90,8 +90,9 @@ public class IdUtil {
 				while (netCards.hasMoreElements()) {
 					ip = (InetAddress) netCards.nextElement();
 					if (!ip.isLoopbackAddress() && (hasIPV6 ? true : ip.getHostAddress().indexOf(":") == -1)) {
-						if (hasHostName && !result.contains(ip.getHostName()))
+						if (hasHostName && !result.contains(ip.getHostName())) {
 							result.add(ip.getHostName());
+						}
 						result.add(ip.getHostAddress());
 					}
 				}

@@ -50,43 +50,50 @@ public class CollectionUtil {
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof short[]) {
+		}
+		if (obj instanceof short[]) {
 			short[] tmp = (short[]) obj;
 			Short[] result = new Short[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof long[]) {
+		}
+		if (obj instanceof long[]) {
 			long[] tmp = (long[]) obj;
 			Long[] result = new Long[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof float[]) {
+		}
+		if (obj instanceof float[]) {
 			float[] tmp = (float[]) obj;
 			Float[] result = new Float[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof double[]) {
+		}
+		if (obj instanceof double[]) {
 			double[] tmp = (double[]) obj;
 			Double[] result = new Double[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof boolean[]) {
+		}
+		if (obj instanceof boolean[]) {
 			boolean[] tmp = (boolean[]) obj;
 			Boolean[] result = new Boolean[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = tmp[i];
 			return result;
-		} else if (obj instanceof char[]) {
+		}
+		if (obj instanceof char[]) {
 			char[] tmp = (char[]) obj;
 			String[] result = new String[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
 				result[i] = String.valueOf(tmp[i]);
 			return result;
-		} else if (obj instanceof byte[]) {
+		}
+		if (obj instanceof byte[]) {
 			byte[] tmp = (byte[]) obj;
 			Byte[] result = new Byte[tmp.length];
 			for (int i = 0; i < tmp.length; i++)
@@ -98,8 +105,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 数组转换为List集合,此转换只适用于一维和二维数组
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToDeepList(Object arySource) {
@@ -138,8 +144,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 此转换只适用于一维数组(建议使用Arrays.asList())
-	 * @param arySource
-	 *            Object
+	 * @param arySource Object
 	 * @return List
 	 */
 	public static List arrayToList(Object arySource) {
@@ -268,21 +273,24 @@ public class CollectionUtil {
 				Collection tmp = (Collection) obj;
 				if (tmp.isEmpty())
 					return result;
-				if (((List) obj).get(0) != null && ((List) obj).get(0) instanceof List)
+				if (((List) obj).get(0) != null && ((List) obj).get(0) instanceof List) {
 					result = 2;
+				}
 			} else if (obj.getClass().isArray()) {
 				Object[] tmp = convertArray(obj);
 				if (tmp.length == 0)
 					return result;
-				if (tmp[0] != null && tmp[0].getClass().isArray())
+				if (tmp[0] != null && tmp[0].getClass().isArray()) {
 					result = 2;
+				}
 			} else if (obj instanceof Map) {
 				Map tmp = (Map) obj;
 				if (tmp.isEmpty())
 					return result;
 				Object setItem = tmp.values().iterator().next();
-				if (setItem.getClass().isArray() || setItem instanceof Collection || setItem instanceof Map)
+				if (setItem.getClass().isArray() || setItem instanceof Collection || setItem instanceof Map) {
 					result = 2;
+				}
 			}
 		}
 		return result;
@@ -369,11 +377,13 @@ public class CollectionUtil {
 			} else {
 				for (int k = 0; k < indexLength; k++) {
 					pkColValue = rowList.get(pkColumns[k]);
-					if (pkColValue == null)
+					if (pkColValue == null) {
 						pkColValue = "null";
+					}
 					compareValue = compareRow.get(pkColumns[k]);
-					if (compareValue == null)
+					if (compareValue == null) {
 						compareValue = "null";
+					}
 					pkColumnsEqual = pkColumnsEqual && BeanUtil.equalsIgnoreType(pkColValue, compareValue, false);
 					if (!pkColumnsEqual)
 						break;
@@ -402,8 +412,9 @@ public class CollectionUtil {
 							break;
 						}
 					}
-					if (k >= startCol && k <= endCol)
+					if (k >= startCol && k <= endCol) {
 						isRotaCol = true;
+					}
 					if (!isRotaCol) {
 						rowData[count] = rowList.get(k);
 						count++;
@@ -414,12 +425,14 @@ public class CollectionUtil {
 				// 单个数据
 				if (categColSize == 1) {
 					pkColValue = rowList.get(categCompareCol[0]);
-					if (pkColValue == null)
+					if (pkColValue == null) {
 						pkColValue = "null";
+					}
 					compareValue = isTwoDimensionCategory ? ((List) categorys.get(categCol[0])).get(j)
 							: categorys.get(j);
-					if (compareValue == null)
+					if (compareValue == null) {
 						compareValue = "null";
+					}
 					if (BeanUtil.equalsIgnoreType(pkColValue, compareValue, false)) {
 						for (int t = 0; t < rotateWith; t++) {
 							rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
@@ -429,12 +442,14 @@ public class CollectionUtil {
 					categoryColEqual = true;
 					for (int k = 0; k < categColSize; k++) {
 						pkColValue = rowList.get(categCompareCol[k]);
-						if (pkColValue == null)
+						if (pkColValue == null) {
 							pkColValue = "null";
+						}
 						compareValue = isTwoDimensionCategory ? ((List) categorys.get(categCol[k])).get(j)
 								: categorys.get(j);
-						if (compareValue == null)
+						if (compareValue == null) {
 							compareValue = "null";
+						}
 						categoryColEqual = categoryColEqual
 								&& BeanUtil.equalsIgnoreType(pkColValue, compareValue, false);
 					}
@@ -459,8 +474,7 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
+	 * @param keyToStr  将key统一转成字符串
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr) {
@@ -472,10 +486,8 @@ public class CollectionUtil {
 	 * @param data
 	 * @param keyProp
 	 * @param valueProp
-	 * @param keyToStr
-	 *            将key统一转成字符串
-	 * @param isLinkedHash
-	 *            返回的是否为LinkedHashMap
+	 * @param keyToStr     将key统一转成字符串
+	 * @param isLinkedHash 返回的是否为LinkedHashMap
 	 * @return
 	 */
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
@@ -526,8 +538,9 @@ public class CollectionUtil {
 				} else if (data instanceof List) {
 					List hashObj = (List) data;
 					Object[] rowData;
-					if (isBean)
+					if (isBean) {
 						hashValues = BeanUtil.reflectBeansToList(hashObj, hashProperties);
+					}
 					for (int i = 0, n = hashObj.size(); i < n; i++) {
 						if (isBean) {
 							result.put(keyToStr ? hashValues.get(i).get(0).toString() : hashValues.get(i).get(0),
@@ -637,11 +650,9 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs
-	 *            {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite
-	 *            存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -772,20 +783,21 @@ public class CollectionUtil {
 	 * @param totalTitle
 	 * @param hasAverage
 	 * @param averageTitle
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize        小数位长度
 	 * @param firstSummary
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
 			int globalSumSite, String totalLabel, boolean hasAverage, String averageLabel, int radixSize,
 			String sumRecordSite) {
 		boolean hasTotalSum = false;
-		if (globalSumSite >= 0 || hasAverage)
+		if (globalSumSite >= 0 || hasAverage) {
 			hasTotalSum = true;
+		}
 		int groupTotal = (groupIndexs == null) ? 0 : groupIndexs.length;
 		int columns = ((List) sumData.get(0)).size();
-		if (sumRecordSite == null)
+		if (sumRecordSite == null) {
 			sumRecordSite = "bottom";
+		}
 		// 总数
 		Object[] totalSum = new Object[columns];
 		int dataSize = sumData.size();
@@ -870,8 +882,7 @@ public class CollectionUtil {
 	 * @param groupIndex
 	 * @param title
 	 * @param rowCount
-	 * @param radixSize
-	 *            小数位长度
+	 * @param radixSize      小数位长度
 	 * @return
 	 */
 	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
@@ -1010,8 +1021,7 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex
-	 *            保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {
@@ -1090,24 +1100,25 @@ public class CollectionUtil {
 			return null;
 		String type = argType.toLowerCase();
 		Object[] result = null;
-		if (type.equals("string"))
+		if (type.equals("string")) {
 			result = new String[values.length];
-		else if (type.equals("int") || type.equals("integer"))
+		} else if (type.equals("int") || type.equals("integer")) {
 			result = new Integer[values.length];
-		else if (type.equals("long"))
+		} else if (type.equals("long")) {
 			result = new Long[values.length];
-		else if (type.equals("date"))
+		} else if (type.equals("date")) {
 			result = new Date[values.length];
-		else if (type.equals("boolean"))
+		} else if (type.equals("boolean")) {
 			result = new Boolean[values.length];
-		else if (type.equals("double"))
+		} else if (type.equals("double")) {
 			result = new Double[values.length];
-		else if (type.equals("float"))
+		} else if (type.equals("float")) {
 			result = new Float[values.length];
-		else if (type.equals("short"))
+		} else if (type.equals("short")) {
 			result = new Short[values.length];
-		else if (type.equals("java.lang.class") || type.equals("class"))
+		} else if (type.equals("java.lang.class") || type.equals("class")) {
 			result = new Class[values.length];
+		}
 		for (int i = 0; i < result.length; i++) {
 			if (values[i] != null) {
 				if (type.equals("string")) {
