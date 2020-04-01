@@ -102,14 +102,10 @@ public class SqlUtil {
 
 	/**
 	 * @todo 合成数据库in 查询的条件(不建议使用)
-	 * @param conditions
-	 *            :数据库in条件的数据集合，可以是POJO List或Object[]
-	 * @param colIndex
-	 *            :二维数组对应列编号
-	 * @param property
-	 *            :POJO property
-	 * @param isChar
-	 *            :in 是否要加单引号
+	 * @param conditions :数据库in条件的数据集合，可以是POJO List或Object[]
+	 * @param colIndex   :二维数组对应列编号
+	 * @param property   :POJO property
+	 * @param isChar     :in 是否要加单引号
 	 * @return:example:1,2,3或'1','2','3'
 	 * @throws Exception
 	 */
@@ -250,43 +246,27 @@ public class SqlUtil {
 				}
 			} else if (paramValue instanceof java.lang.Integer) {
 				pst.setInt(paramIndex, ((Integer) paramValue));
-			} else if (paramValue instanceof java.lang.Double) {
-				pst.setDouble(paramIndex, ((Double) paramValue));
 			} else if (paramValue instanceof java.sql.Timestamp) {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			} else if (paramValue instanceof java.time.LocalDate) {
 				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
 			} else if (paramValue instanceof java.time.LocalDateTime) {
 				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
-			} else if (paramValue instanceof java.time.LocalTime) {
-				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
-			} else if (paramValue instanceof java.sql.Time) {
-				pst.setTime(paramIndex, (java.sql.Time) paramValue);
+			} else if (paramValue instanceof BigDecimal) {
+				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 			} else if (paramValue instanceof java.util.Date) {
 				if (dbType == DBType.CLICKHOUSE) {
 					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
 				} else {
 					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 				}
+			} else if (paramValue instanceof java.lang.Double) {
+				pst.setDouble(paramIndex, ((Double) paramValue));
 			} else if (paramValue instanceof java.lang.Long) {
 				pst.setLong(paramIndex, ((Long) paramValue));
-			} else if (paramValue instanceof java.lang.Boolean) {
-				pst.setBoolean(paramIndex, (Boolean) paramValue);
-			} else if (paramValue instanceof BigDecimal) {
-				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
 			} else if (paramValue instanceof java.sql.Clob) {
 				tmpStr = clobToString((java.sql.Clob) paramValue);
 				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof java.sql.Blob) {
-				Blob tmp = (java.sql.Blob) paramValue;
-				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
-			} else if (paramValue instanceof java.sql.Date) {
-				pst.setDate(paramIndex, (java.sql.Date) paramValue);
-			} else if (paramValue instanceof java.lang.Character) {
-				tmpStr = ((Character) paramValue).toString();
-				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof java.lang.Byte) {
-				pst.setByte(paramIndex, (Byte) paramValue);
 			} else if (paramValue instanceof byte[]) {
 				if (jdbcType == java.sql.Types.BLOB) {
 					Blob blob = null;
@@ -303,10 +283,26 @@ public class SqlUtil {
 				} else {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
 				}
-			} else if (paramValue instanceof java.lang.Short) {
-				pst.setShort(paramIndex, (java.lang.Short) paramValue);
 			} else if (paramValue instanceof java.lang.Float) {
 				pst.setFloat(paramIndex, ((Float) paramValue));
+			} else if (paramValue instanceof java.sql.Blob) {
+				Blob tmp = (java.sql.Blob) paramValue;
+				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+			} else if (paramValue instanceof java.sql.Date) {
+				pst.setDate(paramIndex, (java.sql.Date) paramValue);
+			} else if (paramValue instanceof java.lang.Boolean) {
+				pst.setBoolean(paramIndex, (Boolean) paramValue);
+			} else if (paramValue instanceof java.time.LocalTime) {
+				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
+			} else if (paramValue instanceof java.sql.Time) {
+				pst.setTime(paramIndex, (java.sql.Time) paramValue);
+			} else if (paramValue instanceof java.lang.Character) {
+				tmpStr = ((Character) paramValue).toString();
+				pst.setString(paramIndex, tmpStr);
+			} else if (paramValue instanceof java.lang.Short) {
+				pst.setShort(paramIndex, (java.lang.Short) paramValue);
+			} else if (paramValue instanceof java.lang.Byte) {
+				pst.setByte(paramIndex, (Byte) paramValue);
 			} else {
 				if (jdbcType != -1) {
 					pst.setObject(paramIndex, paramValue, jdbcType);
@@ -1232,8 +1228,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -1248,8 +1243,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
