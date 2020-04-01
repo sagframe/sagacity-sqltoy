@@ -50,16 +50,16 @@ import org.slf4j.LoggerFactory;
  * @description 数据库sql相关的处理工具
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlUtil.java,Revision:v1.3,Date:Apr 14, 2009 11:52:31 PM
- * @Modification Date:2011-8-18
+ * @modify Date:2011-8-18
  *               {移植BaseDaoSupport中分页移植到SqlUtil中，将数据库表、外键、主键等库和表信息移植到DBUtil中 }
- * @Modification Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select
+ * @modify Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select
  *               name,count(*) from table group by name}
- * @Modification Date:2012-11-21
+ * @modify Date:2012-11-21
  *               {完善分页查询语句中存在union的处理机制,框架自动判断是否存在union,有union则自动实现外层包裹}
- * @Modification Date:2017-6-5 {剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select
+ * @modify Date:2017-6-5 {剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select
  *               xxxfrom }
- * @Modification $Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
- * @Modification $Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
+ * @modify $Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
+ * @modify $Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlUtil {
@@ -210,6 +210,7 @@ public class SqlUtil {
 	/**
 	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
 	 * clob bug的支持(druid 1.1.10 已经修复)
+	 * update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
 	 * 
 	 * @todo 设置sql中的参数条件的值
 	 * @param conn
