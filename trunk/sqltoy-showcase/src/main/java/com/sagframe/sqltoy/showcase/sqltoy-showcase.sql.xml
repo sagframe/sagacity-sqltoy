@@ -234,7 +234,7 @@
 		<pivot start-column="sale_count" end-column="total_amt"
 			group-columns="fruit_name" category-columns="order_month" />
 		<!-- 列与列之间进行环比计算 -->
-		<cols-chain-relative group-size="3"
+		<cols-chain-relative group-size="3" reduce-one="true"
 			relative-indexs="1,2" start-column="1" format="#.00%" />
 	</sql>
 	<!-- 行与行高级环比演示 -->
@@ -260,7 +260,7 @@
 			]]>
 		</value>
 		<!-- 数据旋转,行转列,将order_month 按列显示，每个月份下面有三个指标 -->
-		<pivot start-column="sale_count" end-column="total_amt" 
+		<pivot start-column="sale_count" end-column="total_amt"
 			group-columns="fruit_name" category-columns="order_month" />
 	</sql>
 	<!-- 列转行 -->
@@ -275,5 +275,44 @@
 		<unpivot
 			columns-to-rows="sale_count:销售量,sale_amt:销售金额,total_amt:总销售额"
 			new-columns-labels="indexName,indexValue" />
+	</sql>
+
+	<sql id="order_showcase">
+		<!-- 通过缓存对最终结果代码进行翻译，显示名称 -->
+		<translate cache="organIdName" columns="ORGAN_NAME" />
+		<translate cache="staffIdName" columns="STAFF_NAME" />
+		<translate cache="goodsIdName" columns="GOODS_NAME" />
+		<translate cache="customIdName" columns="CUSTOM_NAME" />
+		<translate cache="dictKeyName" cache-type="ORDER_STATUS"
+			columns="STATUS_NAME" />
+		<filters>
+			<!-- 将查询参数customName通过缓存进行类似like检索获取匹配的customId数组作为查询条件 -->
+			<cache-arg cache-name="customIdName" param="customName"
+				alias-name="customIds" />
+		</filters>
+		<value>
+		<![CDATA[
+		select
+			ORDER_ID ,
+			TOTAL_QUANTITY,
+			TOTAL_AMT,
+			ORGAN_ID ,
+			ORGAN_ID ORGAN_NAME,-- 缓存翻译
+			STAFF_ID ,
+			STAFF_ID STAFF_NAME,
+			SIGN_TIME,
+			CUSTOM_ID,
+			CUSTOM_ID CUSTOM_NAME,
+			GOODS_ID ,
+			GOODS_ID GOODS_NAME,
+			STATUS,
+			STATUS STATUS_NAME
+		from od_order_info t1
+		where #[SIGN_TIME>=:beginTime]
+		      #[and SIGN_TIME <=:endTime]
+		      -- 这里就是缓存条件检索
+		      #[and CUSTOM_ID in (:customIds)]
+		]]>
+		</value>
 	</sql>
 </sqltoy>
