@@ -1,4 +1,4 @@
-# 使用文档(建设中)
+# 使用文档(完善进度70%,可以预览)
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 #  QQ交流群:531812227 
