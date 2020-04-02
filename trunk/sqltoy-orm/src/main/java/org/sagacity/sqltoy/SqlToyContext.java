@@ -281,9 +281,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		try {
 			if (beanName instanceof String) {
 				return applicationContext.getBean(beanName.toString());
-			} else {
-				return applicationContext.getBean((Class) beanName);
 			}
+			return applicationContext.getBean((Class) beanName);
 		} catch (BeansException e) {
 			e.printStackTrace();
 			logger.error("从springContext中获取Bean:{} 错误!{}", e.getMessage());

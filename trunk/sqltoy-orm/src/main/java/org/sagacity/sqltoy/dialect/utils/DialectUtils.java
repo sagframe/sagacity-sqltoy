@@ -1845,14 +1845,16 @@ public class DialectUtils {
 			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn, dbType);
 			if (recordCnt == 0) {
 				return true;
-			} else if (recordCnt > 1) {
+			}
+			if (recordCnt > 1) {
 				return false;
 			}
 			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
 				return true;
-			} else if (result.size() > 1) {
+			}
+			if (result.size() > 1) {
 				return false;
 			}
 			// 表没有主键,单条记录算重复
