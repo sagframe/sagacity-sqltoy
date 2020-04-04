@@ -476,6 +476,64 @@ public class DialectFactory {
 	}
 
 	/**
+	 * @TODO 跳过查询总记录的分页查询,提供给特殊的场景，尤其是移动端滚屏模式
+	 * @param sqlToyContext
+	 * @param queryExecutor
+	 * @param sqlToyConfig
+	 * @param pageNo
+	 * @param pageSize
+	 * @param dataSource
+	 * @return
+	 */
+	public QueryResult findSkipTotalCountPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
+			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
+		if (queryExecutor.getSql() == null) {
+			throw new IllegalArgumentException("findSkipTotalCountPage operate sql is null!");
+		}
+		int limitSize = sqlToyContext.getPageFetchSizeLimit();
+		// 分页查询不允许单页数据超过上限，避免大规模数据提取
+		if (pageSize >= limitSize) {
+			throw new IllegalArgumentException("findSkipTotalCountPage operate args is Illegal,pageSize={" + pageSize
+					+ "}>= limit:{" + limitSize + "}!");
+		}
+		try {
+			queryExecutor.optimizeArgs(sqlToyConfig);
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
+			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
+					new DataSourceCallbackHandler() {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							// 处理sql中的?为统一的:named形式
+							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+									sqlToyConfig, queryExecutor, dialect, true);
+							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
+									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+							queryResult.setPageNo(pageNo);
+							queryResult.setPageSize(pageSize);
+							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
+							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
+									queryExecutor, conn, dbType, dialect);
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									sqlToyContext.isDebug());
+							// 结果映射成对象
+							if (queryExecutor.getResultType() != null) {
+								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+										(Class) queryExecutor.getResultType()));
+							}
+							queryResult.setSkipQueryCount(true);
+							this.setResult(queryResult);
+						}
+					});
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
+	}
+
+	/**
 	 * @todo 分页查询, pageNo为负一表示取全部记录
 	 * @param sqlToyContext
 	 * @param queryExecutor
