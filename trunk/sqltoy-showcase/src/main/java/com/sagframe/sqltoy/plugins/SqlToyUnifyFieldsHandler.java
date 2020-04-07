@@ -24,7 +24,7 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see com.sagframe.sqltoy.plugin.IUnifyFieldsHandler#createUnifyFields()
+	 * @see com.sagframe.sqltoy.plugins.IUnifyFieldsHandler#createUnifyFields()
 	 */
 	@Override
 	public Map<String, Object> createUnifyFields() {
@@ -49,7 +49,7 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see com.sagframe.sqltoy.plugin.IUnifyFieldsHandler#updateUnifyFields()
+	 * @see com.sagframe.sqltoy.plugins.IUnifyFieldsHandler#updateUnifyFields()
 	 */
 	@Override
 	public Map<String, Object> updateUnifyFields() {

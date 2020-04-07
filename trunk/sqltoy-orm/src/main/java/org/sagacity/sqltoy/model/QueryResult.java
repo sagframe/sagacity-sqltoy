@@ -32,7 +32,12 @@ public class QueryResult extends DataSetResult implements Serializable {
 	 * 每页记录数
 	 */
 	private Integer pageSize;
-	
+
+	/**
+	 * 是否跳过查询总记录数
+	 */
+	private Boolean skipQueryCount = false;
+
 	/**
 	 * @return the recordCount
 	 */
@@ -41,8 +46,7 @@ public class QueryResult extends DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param recordCount
-	 *            the recordCount to set
+	 * @param recordCount the recordCount to set
 	 */
 	public void setRecordCount(Long recordCount) {
 		this.recordCount = recordCount;
@@ -56,8 +60,7 @@ public class QueryResult extends DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param pageNo
-	 *            the pageNo to set
+	 * @param pageNo the pageNo to set
 	 */
 	public void setPageNo(Long pageNo) {
 		this.pageNo = pageNo;
@@ -71,11 +74,18 @@ public class QueryResult extends DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param pageSize
-	 *            the pageSize to set
+	 * @param pageSize the pageSize to set
 	 */
 	public void setPageSize(Integer pageSize) {
 		this.pageSize = pageSize;
+	}
+
+	public Boolean getSkipQueryCount() {
+		return skipQueryCount;
+	}
+
+	public void setSkipQueryCount(Boolean skipQueryCount) {
+		this.skipQueryCount = skipQueryCount;
 	}
 
 	/**
@@ -88,6 +98,9 @@ public class QueryResult extends DataSetResult implements Serializable {
 		result.setPageSize(this.getPageSize());
 		result.setRecordCount(this.getRecordCount());
 		result.setRows(this.getRows());
+		if (skipQueryCount != null) {
+			result.setSkipQueryCount(skipQueryCount);
+		}
 		return result;
 	}
 

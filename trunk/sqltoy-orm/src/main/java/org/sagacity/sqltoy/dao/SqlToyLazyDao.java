@@ -332,17 +332,33 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed
 	 * @param paramValues
 	 * @param voClass
-	 * @param topSize
+	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
 	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
 			final Class<T> voClass, final double topSize);
 
+	/**
+	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值)
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @return
+	 */
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
 			final double topSize);
 
 	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
 
+	/**
+	 * @TODO 通过对象传参模式取随机记录
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @param randomCount
+	 * @return
+	 */
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
 			final double randomCount);
 

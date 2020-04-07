@@ -114,7 +114,7 @@ public class TranslateManager {
 					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!");
 				}
 			} else {
-				logger.warn("translateConfig={} 中未定义缓存,请正确定义!", translateConfig);
+				logger.warn("translateConfig={} 中未定义缓存,请正确定义,如不使用缓存翻译可忽视此提示!", translateConfig);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

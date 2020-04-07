@@ -29,6 +29,11 @@ public class PaginationModel implements Serializable {
 	private List rows;
 
 	/**
+	 * 是否跳过查询总记录数
+	 */
+	private Boolean skipQueryCount = false;
+
+	/**
 	 * 总记录数
 	 */
 	private long recordCount;
@@ -97,7 +102,7 @@ public class PaginationModel implements Serializable {
 	 * @return the current value of the pageNo property
 	 */
 	public long getPageNo() {
-		if (this.pageNo == 0)
+		if (this.pageNo <= 0)
 			return 1;
 		return this.pageNo;
 	}
@@ -105,9 +110,8 @@ public class PaginationModel implements Serializable {
 	/**
 	 * Sets the value of the pageNo property.
 	 * 
-	 * @param aPageNo
-	 *            the new value of the pageNo property where pageNo==-1 then show
-	 *            all page
+	 * @param aPageNo the new value of the pageNo property where pageNo==-1 then
+	 *                show all page
 	 */
 	public void setPageNo(long pageNo) {
 		this.pageNo = pageNo;
@@ -185,6 +189,14 @@ public class PaginationModel implements Serializable {
 			return 0;
 		}
 		return (this.recordCount + this.pageSize - 1) / this.pageSize;
+	}
+
+	public Boolean getSkipQueryCount() {
+		return skipQueryCount;
+	}
+
+	public void setSkipQueryCount(Boolean skipQueryCount) {
+		this.skipQueryCount = skipQueryCount;
 	}
 
 }
