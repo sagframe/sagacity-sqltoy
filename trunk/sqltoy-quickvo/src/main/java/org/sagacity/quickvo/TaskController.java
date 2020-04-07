@@ -426,6 +426,12 @@ public class TaskController {
 			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
+			/**
+			 * 修复unsigned无符号数值的类型, 如bigint(20) unsigned
+			 * updated at 20200407 by songxiangfeng
+			 */
+			jdbcType = jdbcType.trim().split(" ")[0];
+
 			// 提取原始类型
 			sqlType = jdbcType.toLowerCase();
 			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);
