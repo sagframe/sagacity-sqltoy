@@ -198,7 +198,7 @@ public class TaskController {
 				quickVO.setVoName(StringUtil
 						.firstToUpperCase(StringUtil.replaceStr(quickModel.getVoName(), "#{subName}", entityName)));
 			}
-			
+
 			isTable = true;
 			// 判断是"表还是视图"
 			if (StringUtil.indexOfIgnoreCase(tableMeta.getTableType(), "TABLE") == -1) {
@@ -420,7 +420,8 @@ public class TaskController {
 			colMeta = (TableColumnMeta) cols.get(i);
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
-			String jdbcType = colMeta.getTypeName();
+			//update 2020-4-8 剔除掉UNSIGNED对类型的干扰
+			String jdbcType = colMeta.getTypeName().replace(" UNSIGNED", "");
 			if (colMeta.getTypeName().indexOf(".") != -1) {
 				jdbcType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);
 			}
