@@ -49,7 +49,7 @@
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.10.0</version>	
+	<version>4.10.1</version>	
 </dependency>
 ```
 # 1. 前言
