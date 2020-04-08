@@ -159,8 +159,8 @@ public class QuickVOConstants implements Serializable {
 			{ "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "LONGBLOB", "BLOB" }, { "MEDIUMBLOB", "BLOB" },
 			{ "LONGTEXT", "VARCHAR" }, { "MEDIUMTEXT", "VARCHAR" }, { "TEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" },
 			{ "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" }, { "TINYINT UNSIGNED", "TINYINT" },
-			{ "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "INTEGER UNSIGNED", "INTEGER" }, { "BIGINT", "INTEGER" },
-			{ "BIGINT UNSIGNED", "INTEGER" }, { "BIT", "BIT" }, { "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" },
+			{ "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "INTEGER UNSIGNED", "INTEGER" }, { "BIGINT", "BIGINT" },
+			{ "BIGINT UNSIGNED", "BIGINT" }, { "BIT", "BIT" }, { "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" },
 			{ "NUMERIC", "DECIMAL" }, { "IMAGE", "LONGVARBINARY" } };
 
 	/**
