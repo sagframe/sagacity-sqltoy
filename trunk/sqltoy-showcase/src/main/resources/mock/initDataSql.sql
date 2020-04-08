@@ -200,3 +200,22 @@ VALUES('S0010', 'S0010', '汪涛', '100011', 'M', NULL, '2019-08-01', NULL, NULL
 INSERT INTO sqltoy.sqltoy_staff_info
 (`STAFF_ID`, `STAFF_CODE`, `STAFF_NAME`, `ORGAN_ID`, `SEX_TYPE`, `BIRTHDAY`, `ENTRY_DATE`, `TERM_DATE`, `PHOTO`, `COUNTRY`, `CENSUS_REGISTER`, `ADDRESS`, `EMAIL`, `TEL_NO`, `POST`, `POST_GRADE`, `CREATE_BY`, `CREATE_TIME`, `UPDATE_BY`, `UPDATE_TIME`, `STATUS`)
 VALUES('S0012', 'S0012', '陈大鹏', '100007', 'M', NULL, '2019-08-01', NULL, NULL, '86', NULL, '上海市黄浦区三大路254号402室', NULL, '13987488762', 'M', 'L5', 'S0001', '2019-07-31 11:19:31.000', 'S0001', '2019-07-31 11:19:31.000', 0);
+
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('香蕉', 202005, 10, 2000, 2000);
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('香蕉', 202004, 12, 2400, 2700);
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('香蕉', 202003, 13, 2300, 2700);
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('苹果', 202005, 12, 2000, 2400);
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('苹果', 202004, 11, 1900, 2600);
+INSERT INTO sqltoy.sqltoy_fruit_order
+(fruit_name, order_month, sale_count, sale_amt, total_amt)
+VALUES('苹果', 202003, 13, 2000, 2500);

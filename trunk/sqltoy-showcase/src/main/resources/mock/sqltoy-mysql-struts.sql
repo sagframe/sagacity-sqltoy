@@ -1,4 +1,4 @@
-alter table SQLTOY_COMPLEXPK_ITEM 
+ï»¿alter table SQLTOY_COMPLEXPK_ITEM 
    drop foreign key FK_COMPLEXH_REF_ITEM;
 
 alter table SQLTOY_DICT_DETAIL 
@@ -41,47 +41,47 @@ drop table if exists SQLTOY_USER_LOG;
 /*==============================================================*/
 create table SQLTOY_AREA_INFO
 (
-   AREA_CODE            varchar(10) not null  comment 'µØÇø´úÂë',
-   AREA_NAME            varchar(30) not null  comment 'µØÇøÃû³Æ',
-   AREA_TEL             varchar(10)  comment 'ÇøºÅ',
-   AREA_PID             varchar(10) not null  comment '¸¸µØÇø´úÂë',
-   ENGLISH_NAME         varchar(100)  comment 'Ó¢ÎÄ¼ò³Æ',
-   INITIAL              char(1)  comment 'Ê××ÖÄ¸',
-   COUNTRY_CODE         varchar(10)  comment '¹ú¼Ò´úÂë',
-   CITY_CODE            varchar(10)  comment 'ËùÔÚ³ÇÊĞ',
-   CITY_NAME            varchar(30)  comment '³ÇÊĞÃû³Æ',
-   PROVINCE_CODE        varchar(10)  comment 'ËùÔÚÊ¡·İ',
-   PROVINCE_NAME        varchar(30)  comment 'Ê¡·İÃû³Æ',
-   FULL_NAME            varchar(100)  comment 'ÍêÕûÃû³Æ',
-   LONGITUDE            decimal(10,5)  comment '¾­¶È',
-   LATITUDE             decimal(10,5)  comment 'Î¬¶È',
-   NODE_ROUTE           varchar(200) not null  comment '½ÚµãÂ·¾¶',
-   NODE_LEVEL           numeric(1) not null  comment '½ÚµãµÈ¼¶',
-   IS_LEAF              numeric(1) not null  comment 'ÊÇ·ñÒ¶×Ó½Úµã',
-   SHOW_INDEX           numeric(8) not null default 1  comment 'ÏÔÊ¾Ë³Ğò',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   AREA_CODE            varchar(10) not null  comment 'åœ°åŒºä»£ç ',
+   AREA_NAME            varchar(30) not null  comment 'åœ°åŒºåç§°',
+   AREA_TEL             varchar(10)  comment 'åŒºå·',
+   AREA_PID             varchar(10) not null  comment 'çˆ¶åœ°åŒºä»£ç ',
+   ENGLISH_NAME         varchar(100)  comment 'è‹±æ–‡ç®€ç§°',
+   INITIAL              char(1)  comment 'é¦–å­—æ¯',
+   COUNTRY_CODE         varchar(10)  comment 'å›½å®¶ä»£ç ',
+   CITY_CODE            varchar(10)  comment 'æ‰€åœ¨åŸå¸‚',
+   CITY_NAME            varchar(30)  comment 'åŸå¸‚åç§°',
+   PROVINCE_CODE        varchar(10)  comment 'æ‰€åœ¨çœä»½',
+   PROVINCE_NAME        varchar(30)  comment 'çœä»½åç§°',
+   FULL_NAME            varchar(100)  comment 'å®Œæ•´åç§°',
+   LONGITUDE            decimal(10,5)  comment 'ç»åº¦',
+   LATITUDE             decimal(10,5)  comment 'ç»´åº¦',
+   NODE_ROUTE           varchar(200) not null  comment 'èŠ‚ç‚¹è·¯å¾„',
+   NODE_LEVEL           numeric(1) not null  comment 'èŠ‚ç‚¹ç­‰çº§',
+   IS_LEAF              numeric(1) not null  comment 'æ˜¯å¦å¶å­èŠ‚ç‚¹',
+   SHOW_INDEX           numeric(8) not null default 1  comment 'æ˜¾ç¤ºé¡ºåº',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (AREA_CODE)
 );
 
-alter table SQLTOY_AREA_INFO comment 'µØÇø´úÂë±í';
+alter table SQLTOY_AREA_INFO comment 'åœ°åŒºä»£ç è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_COMPLEXPK_HEAD                                 */
 /*==============================================================*/
 create table SQLTOY_COMPLEXPK_HEAD
 (
-   TRANS_DATE           date not null  comment '½»Ò×ÈÕÆÚ',
-   TRANS_CODE           varchar(30) not null  comment 'ÒµÎñ´úÂë',
-   TOTAL_CNT            decimal(12,3) not null  comment '×ÜÊıÁ¿',
-   TOTAL_AMT            decimal(12,3) not null  comment '×Ü½ğ¶î',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
+   TRANS_DATE           date not null  comment 'äº¤æ˜“æ—¥æœŸ',
+   TRANS_CODE           varchar(30) not null  comment 'ä¸šåŠ¡ä»£ç ',
+   TOTAL_CNT            decimal(12,3) not null  comment 'æ€»æ•°é‡',
+   TOTAL_AMT            decimal(12,3) not null  comment 'æ€»é‡‘é¢',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
    primary key (TRANS_DATE, TRANS_CODE)
 );
 
-alter table SQLTOY_COMPLEXPK_HEAD comment '¸´ºÏÖ÷¼ü¼¶Áª²Ù×÷Ö÷±í';
+alter table SQLTOY_COMPLEXPK_HEAD comment 'å¤åˆä¸»é”®çº§è”æ“ä½œä¸»è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_COMPLEXPK_ITEM                                 */
@@ -89,215 +89,223 @@ alter table SQLTOY_COMPLEXPK_HEAD comment '¸´ºÏÖ÷¼ü¼¶Áª²Ù×÷Ö÷±í';
 create table SQLTOY_COMPLEXPK_ITEM
 (
    ID                   varchar(32) not null  comment 'ID',
-   TRANS_DATE           date  comment '½»Ò×ÈÕÆÚ',
-   TRANS_CODE           varchar(30)  comment 'ÒµÎñ´úÂë',
-   PRODUCT_ID           varchar(32) not null  comment 'ÉÌÆ·±àÂë',
-   QUANTITY             decimal(8,3) not null  comment 'ÊıÁ¿',
-   PRICE                decimal(8,3) not null  comment '¼Û¸ñ',
-   AMT                  decimal(10,3) not null  comment '×Ü½ğ¶î',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
+   TRANS_DATE           date  comment 'äº¤æ˜“æ—¥æœŸ',
+   TRANS_CODE           varchar(30)  comment 'ä¸šåŠ¡ä»£ç ',
+   PRODUCT_ID           varchar(32) not null  comment 'å•†å“ç¼–ç ',
+   QUANTITY             decimal(8,3) not null  comment 'æ•°é‡',
+   PRICE                decimal(8,3) not null  comment 'ä»·æ ¼',
+   AMT                  decimal(10,3) not null  comment 'æ€»é‡‘é¢',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
    primary key (ID)
 );
 
-alter table SQLTOY_COMPLEXPK_ITEM comment '¸´ºÏÖ÷¼ü¼¶Áª²Ù×÷×Ó±í';
+alter table SQLTOY_COMPLEXPK_ITEM comment 'å¤åˆä¸»é”®çº§è”æ“ä½œå­è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_DEVICE_ORDER_INFO                              */
 /*==============================================================*/
 create table SQLTOY_DEVICE_ORDER_INFO
 (
-   ORDER_ID             varchar(22) not null  comment '¶©µ¥ID',
-   DEVICE_TYPE          varchar(10) not null  comment 'Éè±¸ÀàĞÍ',
-   PS_TYPE              varchar(10) not null  comment '¹ºÏú±êÖ¾',
-   TOTAL_CNT            decimal(12,3)  comment 'ÉÌÆ·×ÜÁ¿',
-   TOTAL_AMT            decimal(12,2)  comment '×Ü½ğ¶î',
-   BUYER                varchar(22)  comment '¹ºÂò·½',
-   SALER                varchar(22)  comment 'ÏúÊÛ·½',
-   TRANS_DATE           date not null  comment '³É½»ÈÕÆÚ',
-   DELIVERY_TERM        date  comment '½»»õÆÚÏŞ',
-   STAFF_ID             varchar(22)  comment 'ÒµÎñÔ±',
-   ORGAN_ID             varchar(22)  comment 'ÒµÎñ»ú¹¹',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               int(1) not null  comment '×´Ì¬',
+   ORDER_ID             varchar(22) not null  comment 'è®¢å•ID',
+   DEVICE_TYPE          varchar(10) not null  comment 'è®¾å¤‡ç±»å‹',
+   PS_TYPE              varchar(10) not null  comment 'è´­é”€æ ‡å¿—',
+   TOTAL_CNT            decimal(12,3)  comment 'å•†å“æ€»é‡',
+   TOTAL_AMT            decimal(12,2)  comment 'æ€»é‡‘é¢',
+   BUYER                varchar(22)  comment 'è´­ä¹°æ–¹',
+   SALER                varchar(22)  comment 'é”€å”®æ–¹',
+   TRANS_DATE           date not null  comment 'æˆäº¤æ—¥æœŸ',
+   DELIVERY_TERM        date  comment 'äº¤è´§æœŸé™',
+   STAFF_ID             varchar(22)  comment 'ä¸šåŠ¡å‘˜',
+   ORGAN_ID             varchar(22)  comment 'ä¸šåŠ¡æœºæ„',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               int(1) not null  comment 'çŠ¶æ€',
    primary key (ORDER_ID)
 );
 
-alter table SQLTOY_DEVICE_ORDER_INFO comment 'Ó²¼ş¹ºÏú¶¨µ¥±í(ÑİÊ¾ÓĞ¹æÔòµ¥ºÅ)';
+alter table SQLTOY_DEVICE_ORDER_INFO comment 'ç¡¬ä»¶è´­é”€å®šå•è¡¨(æ¼”ç¤ºæœ‰è§„åˆ™å•å·)';
 
 /*==============================================================*/
 /* Table: SQLTOY_DICT_DETAIL                                    */
 /*==============================================================*/
 create table SQLTOY_DICT_DETAIL
 (
-   DICT_KEY             varchar(50) not null  comment '×ÖµäKEY',
-   DICT_TYPE            varchar(50) not null  comment '×ÖµäÀàĞÍ´úÂë',
-   DICT_NAME            varchar(200) not null  comment '×ÖµäÖµ',
-   SHOW_INDEX           numeric(8) not null default 1  comment 'ÏÔÊ¾Ë³Ğò',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   DICT_KEY             varchar(50) not null  comment 'å­—å…¸KEY',
+   DICT_TYPE            varchar(50) not null  comment 'å­—å…¸ç±»å‹ä»£ç ',
+   DICT_NAME            varchar(200) not null  comment 'å­—å…¸å€¼',
+   SHOW_INDEX           numeric(8) not null default 1  comment 'æ˜¾ç¤ºé¡ºåº',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (DICT_KEY, DICT_TYPE)
 );
 
-alter table SQLTOY_DICT_DETAIL comment '×ÖµäÃ÷Ï¸±í';
+alter table SQLTOY_DICT_DETAIL comment 'å­—å…¸æ˜ç»†è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_DICT_TYPE                                      */
 /*==============================================================*/
 create table SQLTOY_DICT_TYPE
 (
-   DICT_TYPE            varchar(50) not null  comment '×ÖµäÀàĞÍ´úÂë',
-   DICT_TYPE_NAME       varchar(100) not null  comment '×ÖµäÀàĞÍÃû³Æ',
-   COMMENTS             varchar(500)  comment 'ËµÃ÷',
-   SHOW_INDEX           numeric(8) not null default 1  comment 'ÏÔÊ¾Ë³Ğò',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   DICT_TYPE            varchar(50) not null  comment 'å­—å…¸ç±»å‹ä»£ç ',
+   DICT_TYPE_NAME       varchar(100) not null  comment 'å­—å…¸ç±»å‹åç§°',
+   COMMENTS             varchar(500)  comment 'è¯´æ˜',
+   SHOW_INDEX           numeric(8) not null default 1  comment 'æ˜¾ç¤ºé¡ºåº',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (DICT_TYPE)
 );
 
-alter table SQLTOY_DICT_TYPE comment '×Öµä·ÖÀà±í';
+alter table SQLTOY_DICT_TYPE comment 'å­—å…¸åˆ†ç±»è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_ORGAN_INFO                                     */
 /*==============================================================*/
 create table SQLTOY_ORGAN_INFO
 (
-   ORGAN_ID             varchar(22) not null  comment '»ú¹¹ID',
-   ORGAN_NAME           varchar(100) not null  comment '»ú¹¹Ãû³Æ',
-   ORGAN_CODE           varchar(20) not null  comment '»ú¹¹´úÂë',
-   COST_NO              varchar(20)  comment '³É±¾ÖĞĞÄ´úÂë',
-   ORGAN_PID            varchar(22) not null  comment '¸¸»ú¹¹ID',
-   NODE_ROUTE           varchar(200)  comment '½ÚµãÂ·¾¶',
-   NODE_LEVEL           numeric(1)  comment '½ÚµãµÈ¼¶',
-   IS_LEAF              numeric(1)  comment 'ÊÇ·ñÒ¶×Ó½Úµã',
-   SHOW_INDEX           numeric(8) not null default 1  comment 'ÏÔÊ¾Ë³Ğò',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   ORGAN_ID             varchar(22) not null  comment 'æœºæ„ID',
+   ORGAN_NAME           varchar(100) not null  comment 'æœºæ„åç§°',
+   ORGAN_CODE           varchar(20) not null  comment 'æœºæ„ä»£ç ',
+   COST_NO              varchar(20)  comment 'æˆæœ¬ä¸­å¿ƒä»£ç ',
+   ORGAN_PID            varchar(22) not null  comment 'çˆ¶æœºæ„ID',
+   NODE_ROUTE           varchar(200)  comment 'èŠ‚ç‚¹è·¯å¾„',
+   NODE_LEVEL           numeric(1)  comment 'èŠ‚ç‚¹ç­‰çº§',
+   IS_LEAF              numeric(1)  comment 'æ˜¯å¦å¶å­èŠ‚ç‚¹',
+   SHOW_INDEX           numeric(8) not null default 1  comment 'æ˜¾ç¤ºé¡ºåº',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (ORGAN_ID)
 );
 
-alter table SQLTOY_ORGAN_INFO comment '»ú¹¹ĞÅÏ¢±í';
+alter table SQLTOY_ORGAN_INFO comment 'æœºæ„ä¿¡æ¯è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_STAFF_AUTH_ORGS                                */
 /*==============================================================*/
 create table SQLTOY_STAFF_AUTH_ORGS
 (
-   AUTH_ID              varchar(22) not null  comment 'ÊÚÈ¨ID',
-   STAFF_ID             varchar(22) not null  comment 'Ô±¹¤ID',
-   ORGAN_ID             varchar(22) not null  comment '»ú¹¹ID',
-   SHOW_INDEX           numeric(8) not null default 1  comment 'ÏÔÊ¾Ë³Ğò',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   AUTH_ID              varchar(22) not null  comment 'æˆæƒID',
+   STAFF_ID             varchar(22) not null  comment 'å‘˜å·¥ID',
+   ORGAN_ID             varchar(22) not null  comment 'æœºæ„ID',
+   SHOW_INDEX           numeric(8) not null default 1  comment 'æ˜¾ç¤ºé¡ºåº',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (AUTH_ID)
 );
 
-alter table SQLTOY_STAFF_AUTH_ORGS comment 'Ô±¹¤»ú¹¹ÊÚÈ¨±í';
+alter table SQLTOY_STAFF_AUTH_ORGS comment 'å‘˜å·¥æœºæ„æˆæƒè¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_STAFF_INFO                                     */
 /*==============================================================*/
 create table SQLTOY_STAFF_INFO
 (
-   STAFF_ID             varchar(22) not null  comment 'Ô±¹¤ID',
-   STAFF_CODE           varchar(22) not null  comment '¹¤ºÅ',
-   STAFF_NAME           varchar(30) not null  comment 'ĞÕÃû',
-   ORGAN_ID             varchar(22) not null  comment '²¿ÃÅ',
-   SEX_TYPE             char(1) not null  comment 'ĞÔ±ğ',
-   BIRTHDAY             date  comment '³öÉúÈÕÆÚ',
-   ENTRY_DATE           date not null  comment 'ÈëÖ°ÈÕÆÚ',
-   TERM_DATE            date  comment 'ÀëÖ°ÈÕÆÚ',
-   PHOTO                longblob  comment 'ÕÕÆ¬',
-   COUNTRY              varchar(10)  comment '¹ú¼Ò',
-   CENSUS_REGISTER      varchar(150)  comment '¼®¹á',
-   ADDRESS              varchar(250)  comment '¼ÒÍ¥µØÖ·',
-   EMAIL                varchar(100)  comment 'ÓÊÏä',
-   TEL_NO               varchar(20)  comment 'ÒÆ¶¯µç»°',
-   POST                 varchar(20)  comment '¸ÚÎ»',
-   POST_GRADE           varchar(20)  comment 'Ö°Î»¼¶±ğ',
-   CREATE_BY            varchar(22) not null  comment '´´½¨ÈË',
-   CREATE_TIME          datetime not null  comment '´´½¨Ê±¼ä',
-   UPDATE_BY            varchar(22) not null  comment '×îºóĞŞ¸ÄÈË',
-   UPDATE_TIME          datetime not null  comment '×îºóĞŞ¸ÄÊ±¼ä',
-   STATUS               decimal(1) not null default 1  comment '×´Ì¬',
+   STAFF_ID             varchar(22) not null  comment 'å‘˜å·¥ID',
+   STAFF_CODE           varchar(22) not null  comment 'å·¥å·',
+   STAFF_NAME           varchar(30) not null  comment 'å§“å',
+   ORGAN_ID             varchar(22) not null  comment 'éƒ¨é—¨',
+   SEX_TYPE             char(1) not null  comment 'æ€§åˆ«',
+   BIRTHDAY             date  comment 'å‡ºç”Ÿæ—¥æœŸ',
+   ENTRY_DATE           date not null  comment 'å…¥èŒæ—¥æœŸ',
+   TERM_DATE            date  comment 'ç¦»èŒæ—¥æœŸ',
+   PHOTO                longblob  comment 'ç…§ç‰‡',
+   COUNTRY              varchar(10)  comment 'å›½å®¶',
+   CENSUS_REGISTER      varchar(150)  comment 'ç±è´¯',
+   ADDRESS              varchar(250)  comment 'å®¶åº­åœ°å€',
+   EMAIL                varchar(100)  comment 'é‚®ç®±',
+   TEL_NO               varchar(20)  comment 'ç§»åŠ¨ç”µè¯',
+   POST                 varchar(20)  comment 'å²—ä½',
+   POST_GRADE           varchar(20)  comment 'èŒä½çº§åˆ«',
+   CREATE_BY            varchar(22) not null  comment 'åˆ›å»ºäºº',
+   CREATE_TIME          datetime not null  comment 'åˆ›å»ºæ—¶é—´',
+   UPDATE_BY            varchar(22) not null  comment 'æœ€åä¿®æ”¹äºº',
+   UPDATE_TIME          datetime not null  comment 'æœ€åä¿®æ”¹æ—¶é—´',
+   STATUS               decimal(1) not null default 1  comment 'çŠ¶æ€',
    primary key (STAFF_ID)
 );
 
-alter table SQLTOY_STAFF_INFO comment 'Ô±¹¤ĞÅÏ¢±í';
+alter table SQLTOY_STAFF_INFO comment 'å‘˜å·¥ä¿¡æ¯è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_TRANS_INFO_15D                                 */
 /*==============================================================*/
 create table SQLTOY_TRANS_INFO_15D
 (
-   TRANS_ID             varchar(32) not null  comment '½»Ò×ID',
-   TRANS_CODE           varchar(20) not null  comment '½»Ò×´úÂë',
-   TRANS_CHANNEL        varchar(20) not null  comment '½»Ò×ÇşµÀ',
-   TRANS_AMT            decimal(14,2) not null  comment '½»Ò×½ğ¶î',
-   STATUS               decimal(1) not null  comment '½»Ò××´Ì¬',
-   RESULT_CODE          varchar(20) not null  comment '½»Ò×·µ»ØÂë',
-   TRANS_TIME           datetime not null  comment '½»Ò×Ê±¼ä',
-   TRANS_DATE           date not null  comment '½»Ò×ÈÕÆÚ',
-   USER_ID              varchar(32) not null  comment 'ÓÃ»§ID',
-   CARD_NO              varchar(32)  comment '½»Ò×¿¨ºÅ',
+   TRANS_ID             varchar(32) not null  comment 'äº¤æ˜“ID',
+   TRANS_CODE           varchar(20) not null  comment 'äº¤æ˜“ä»£ç ',
+   TRANS_CHANNEL        varchar(20) not null  comment 'äº¤æ˜“æ¸ é“',
+   TRANS_AMT            decimal(14,2) not null  comment 'äº¤æ˜“é‡‘é¢',
+   STATUS               decimal(1) not null  comment 'äº¤æ˜“çŠ¶æ€',
+   RESULT_CODE          varchar(20) not null  comment 'äº¤æ˜“è¿”å›ç ',
+   TRANS_TIME           datetime not null  comment 'äº¤æ˜“æ—¶é—´',
+   TRANS_DATE           date not null  comment 'äº¤æ˜“æ—¥æœŸ',
+   USER_ID              varchar(32) not null  comment 'ç”¨æˆ·ID',
+   CARD_NO              varchar(32)  comment 'äº¤æ˜“å¡å·',
    primary key (TRANS_ID)
 );
 
-alter table SQLTOY_TRANS_INFO_15D comment 'Ö§¸¶½»Ò×Á÷Ë®±í(15Ìì±í)';
+alter table SQLTOY_TRANS_INFO_15D comment 'æ”¯ä»˜äº¤æ˜“æµæ°´è¡¨(15å¤©è¡¨)';
 
 /*==============================================================*/
 /* Table: SQLTOY_TRANS_INFO_HIS                                 */
 /*==============================================================*/
 create table SQLTOY_TRANS_INFO_HIS
 (
-   TRANS_ID             varchar(32) not null  comment '½»Ò×ID',
-   TRANS_CODE           varchar(20) not null  comment '½»Ò×´úÂë',
-   TRANS_CHANNEL        varchar(20) not null  comment '½»Ò×ÇşµÀ',
-   AMT                  decimal(14,2) not null  comment '½»Ò×½ğ¶î',
-   STATUS               decimal(1) not null  comment '½»Ò××´Ì¬',
-   RESULT_CODE          varchar(20) not null  comment '½»Ò×·µ»ØÂë',
-   TRANS_TIME           datetime not null  comment '½»Ò×Ê±¼ä',
-   TRANS_DATE           date not null  comment '½»Ò×ÈÕÆÚ',
-   USER_ID              varchar(32) not null  comment 'ÓÃ»§ID',
-   CARD_NO              varchar(32)  comment '½»Ò×¿¨ºÅ',
+   TRANS_ID             varchar(32) not null  comment 'äº¤æ˜“ID',
+   TRANS_CODE           varchar(20) not null  comment 'äº¤æ˜“ä»£ç ',
+   TRANS_CHANNEL        varchar(20) not null  comment 'äº¤æ˜“æ¸ é“',
+   AMT                  decimal(14,2) not null  comment 'äº¤æ˜“é‡‘é¢',
+   STATUS               decimal(1) not null  comment 'äº¤æ˜“çŠ¶æ€',
+   RESULT_CODE          varchar(20) not null  comment 'äº¤æ˜“è¿”å›ç ',
+   TRANS_TIME           datetime not null  comment 'äº¤æ˜“æ—¶é—´',
+   TRANS_DATE           date not null  comment 'äº¤æ˜“æ—¥æœŸ',
+   USER_ID              varchar(32) not null  comment 'ç”¨æˆ·ID',
+   CARD_NO              varchar(32)  comment 'äº¤æ˜“å¡å·',
    primary key (TRANS_ID)
 );
 
-alter table SQLTOY_TRANS_INFO_HIS comment 'Ö§¸¶½»Ò×Á÷Ë®±í';
+alter table SQLTOY_TRANS_INFO_HIS comment 'æ”¯ä»˜äº¤æ˜“æµæ°´è¡¨';
 
 /*==============================================================*/
 /* Table: SQLTOY_USER_LOG                                       */
 /*==============================================================*/
 create table SQLTOY_USER_LOG
 (
-   LOG_ID               varchar(32) not null  comment 'ÈÕÖ¾ID',
-   USER_ID              varchar(32) not null  comment 'ÓÃ»§ID',
-   TERMINAL_IP          varchar(32)  comment 'ÇëÇóIP',
-   DEVICE_CODE          varchar(32)  comment 'Éè±¸ºÅ',
-   LOG_TIME             datetime not null  comment 'ÈÕÖ¾Ê±¼ä',
-   LOG_DATE             date not null  comment 'ÈÕÆÚÈÕÆÚ',
-   LOG_TYPE             varchar(32) not null  comment 'ÈÕÖ¾ÀàĞÍ',
-   CHANNEL              varchar(32) not null  comment 'Ó¦ÓÃÇşµÀ',
-   CONTENTS             text not null  comment 'ÈÕÖ¾ÄÚÈİ',
+   LOG_ID               varchar(32) not null  comment 'æ—¥å¿—ID',
+   USER_ID              varchar(32) not null  comment 'ç”¨æˆ·ID',
+   TERMINAL_IP          varchar(32)  comment 'è¯·æ±‚IP',
+   DEVICE_CODE          varchar(32)  comment 'è®¾å¤‡å·',
+   LOG_TIME             datetime not null  comment 'æ—¥å¿—æ—¶é—´',
+   LOG_DATE             date not null  comment 'æ—¥æœŸæ—¥æœŸ',
+   LOG_TYPE             varchar(32) not null  comment 'æ—¥å¿—ç±»å‹',
+   CHANNEL              varchar(32) not null  comment 'åº”ç”¨æ¸ é“',
+   CONTENTS             text not null  comment 'æ—¥å¿—å†…å®¹',
    primary key (LOG_ID)
 );
 
-alter table SQLTOY_USER_LOG comment 'ÓÃ»§ÈÕÖ¾±í';
+alter table SQLTOY_USER_LOG comment 'ç”¨æˆ·æ—¥å¿—è¡¨';
 
 alter table SQLTOY_COMPLEXPK_ITEM add constraint FK_COMPLEXH_REF_ITEM foreign key (TRANS_DATE, TRANS_CODE)
       references SQLTOY_COMPLEXPK_HEAD (TRANS_DATE, TRANS_CODE) on delete restrict on update restrict;
 
 alter table SQLTOY_DICT_DETAIL add constraint FK_DICT_TYPE_REF_ITEM foreign key (DICT_TYPE)
       references SQLTOY_DICT_TYPE (DICT_TYPE) on delete restrict on update restrict;
+
+CREATE TABLE SQLTOY_FRUIT_ORDER (
+  FRUIT_NAME varchar(100) NOT NULL comment 'æ°´æœåç§°',
+  ORDER_MONTH int NOT NULL comment 'è®¢å•æœˆä»½',
+  SALE_COUNT decimal(10,0) NOT NULL comment 'é”€å”®æ•°é‡',
+  SALE_AMT decimal(10,0) NOT NULL comment 'é”€å”®é‡‘é¢',
+  TOTAL_AMT decimal(10,0) NOT NULL comment 'æ€»é‡‘é¢'
+) 
