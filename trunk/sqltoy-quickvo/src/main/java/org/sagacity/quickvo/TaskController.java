@@ -421,7 +421,7 @@ public class TaskController {
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
 			//update 2020-4-8 剔除掉UNSIGNED对类型的干扰
-			String jdbcType = colMeta.getTypeName().replace(" UNSIGNED", "");
+			String jdbcType = colMeta.getTypeName().replaceFirst("(?i)\\sUNSIGNED", "");
 			if (colMeta.getTypeName().indexOf(".") != -1) {
 				jdbcType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);
 			}
