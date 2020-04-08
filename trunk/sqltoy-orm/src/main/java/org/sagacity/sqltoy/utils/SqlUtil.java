@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -257,6 +258,8 @@ public class SqlUtil {
 				} else {
 					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
 				}
+			} else if (paramValue instanceof java.math.BigInteger) {
+				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
 			} else if (paramValue instanceof java.sql.Timestamp) {
 				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
 			} else if (paramValue instanceof java.lang.Double) {

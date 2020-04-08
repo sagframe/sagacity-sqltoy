@@ -203,6 +203,8 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.DOUBLE;
 					} else if (typeName.equals("clob")) {
 						fieldsType[i] = java.sql.Types.CLOB;
+					} else if (typeName.equals("biginteger")) {
+						fieldsType[i] = java.sql.Types.BIGINT;
 					} else if (typeName.equals("blob")) {
 						fieldsType[i] = java.sql.Types.BLOB;
 					} else if (typeName.equals("[b")) {
