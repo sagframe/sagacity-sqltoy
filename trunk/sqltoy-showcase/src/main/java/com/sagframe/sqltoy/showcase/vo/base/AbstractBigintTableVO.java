@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 
 
+
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
@@ -35,13 +36,13 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	 * 主键
 	 */
 	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.SnowflakeIdGenerator")
-	@Column(name="id",length=20L,type=java.sql.Types.BIGINT,nullable=false)
+	@Column(name="ID",length=20L,type=java.sql.Types.BIGINT,nullable=false)
 	protected BigInteger id;
 	
 	/**
 	 * 名称
 	 */
-	@Column(name="name",length=100L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name="NAME",length=100L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String name;
 	
 
