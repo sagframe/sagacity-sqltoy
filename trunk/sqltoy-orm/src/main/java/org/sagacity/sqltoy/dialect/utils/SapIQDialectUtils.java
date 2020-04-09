@@ -84,7 +84,7 @@ public class SapIQDialectUtils {
 			int idLength = entityMeta.getIdLength();
 			int bizIdLength = entityMeta.getBizIdLength();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumn.length];
 				for (int meter = 0; meter < relatedColumn.length; meter++) {
@@ -247,9 +247,9 @@ public class SapIQDialectUtils {
 			Object[] rowData;
 			boolean isAssigned = true;
 			List<Object[]> idSet = new ArrayList<Object[]>();
-			int idJdbcType = entityMeta.getIdType();
+			String idJdbcType = entityMeta.getIdType();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
 				if (relatedColumn != null) {

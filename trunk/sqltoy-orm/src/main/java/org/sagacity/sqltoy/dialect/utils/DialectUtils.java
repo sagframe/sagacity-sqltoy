@@ -514,8 +514,8 @@ public class DialectUtils {
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
 			Object[] relatedColValue = null;
-			int idJdbcType = entityMeta.getIdType();
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String idJdbcType = entityMeta.getIdType();
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			for (int i = 0; i < paramValues.size(); i++) {
 				rowData = (Object[]) paramValues.get(i);
 				// 获取主键策略关联字段的值
@@ -586,8 +586,8 @@ public class DialectUtils {
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
 			Object[] relatedColValue = null;
-			int idJdbcType = entityMeta.getIdType();
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String idJdbcType = entityMeta.getIdType();
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			for (int i = 0; i < paramValues.size(); i++) {
 				rowData = (Object[]) paramValues.get(i);
 				// 关联字段赋值
@@ -1275,7 +1275,7 @@ public class DialectUtils {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
@@ -1433,9 +1433,9 @@ public class DialectUtils {
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
 			boolean isAssigned = true;
-			int idJdbcType = entityMeta.getIdType();
+			String idJdbcType = entityMeta.getIdType();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			List<Object[]> idSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
@@ -1690,7 +1690,7 @@ public class DialectUtils {
 		boolean validator = true;
 		// 判断主键值是否为空
 		for (int i = 0, n = idValues.length; i < n; i++) {
-			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 			if (StringUtil.isBlank(idValues[i])) {
 				validator = false;
 				break;
@@ -1755,8 +1755,9 @@ public class DialectUtils {
 		}
 		int idsLength = entityMeta.getIdArray().length;
 		Integer[] parameterTypes = new Integer[idsLength];
-		for (int i = 0, n = idsLength; i < n; i++)
-			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+		for (int i = 0, n = idsLength; i < n; i++) {
+			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
+		}
 		// 级联批量删除子表数据
 		if (!entityMeta.getOneToManys().isEmpty()) {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {

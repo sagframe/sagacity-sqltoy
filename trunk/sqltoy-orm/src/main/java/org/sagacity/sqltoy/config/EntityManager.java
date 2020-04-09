@@ -453,6 +453,8 @@ public class EntityManager {
 		allFieldAry.add(column.name());
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
+		// 设置type类型，并转小写便于后续对比的统一
+		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
@@ -692,8 +694,7 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param packagesToScan
-	 *            the packagesToScan to set
+	 * @param packagesToScan the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
 		this.packagesToScan = packagesToScan;
@@ -707,16 +708,14 @@ public class EntityManager {
 	}
 
 	/**
-	 * @param annotatedClasses
-	 *            the annotatedClasses to set
+	 * @param annotatedClasses the annotatedClasses to set
 	 */
 	public void setAnnotatedClasses(String[] annotatedClasses) {
 		this.annotatedClasses = annotatedClasses;
 	}
 
 	/**
-	 * @param recursive
-	 *            the recursive to set
+	 * @param recursive the recursive to set
 	 */
 	public void setRecursive(boolean recursive) {
 		this.recursive = recursive;

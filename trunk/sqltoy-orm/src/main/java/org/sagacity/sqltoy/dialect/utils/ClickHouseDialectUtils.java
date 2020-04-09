@@ -102,7 +102,7 @@ public class ClickHouseDialectUtils {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			if (relatedColumn != null) {
 				relatedColValue = new Object[relatedColumnSize];
 				for (int meter = 0; meter < relatedColumnSize; meter++) {
@@ -194,9 +194,9 @@ public class ClickHouseDialectUtils {
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
 			boolean isAssigned = true;
-			int idJdbcType = entityMeta.getIdType();
+			String idJdbcType = entityMeta.getIdType();
 			Object[] relatedColValue = null;
-			int businessIdType = hasBizId ? entityMeta.getColumnType(entityMeta.getBusinessIdField()) : 0;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
 			List<Object[]> idSet = new ArrayList<Object[]>();
 			for (int i = 0, s = paramValues.size(); i < s; i++) {
 				rowData = (Object[]) paramValues.get(i);
@@ -263,7 +263,7 @@ public class ClickHouseDialectUtils {
 		boolean validator = true;
 		// 判断主键值是否为空
 		for (int i = 0, n = idValues.length; i < n; i++) {
-			parameterTypes[i] = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 			if (StringUtil.isBlank(idValues[i])) {
 				validator = false;
 				break;
@@ -334,7 +334,7 @@ public class ClickHouseDialectUtils {
 		Integer[] paramTypes = new Integer[idSize * loopSize];
 		Integer idType;
 		for (int i = 0; i < idSize; i++) {
-			idType = entityMeta.getColumnType(entityMeta.getIdArray()[i]);
+			idType = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 			for (int j = 0; j < loopSize; j++) {
 				paramTypes[loopSize * i + j] = idType;
 			}

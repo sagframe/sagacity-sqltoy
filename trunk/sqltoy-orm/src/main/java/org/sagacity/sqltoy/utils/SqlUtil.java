@@ -1200,32 +1200,37 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 转换主键数据类型
+	 * @todo 转换主键数据类型(主键生成只支持数字和字符串类型)
 	 * @param idValue
 	 * @param jdbcType
 	 * @return
 	 */
-	public static Object convertIdValueType(Object idValue, int jdbcType) {
+	public static Object convertIdValueType(Object idValue, String idType) {
 		if (idValue == null)
 			return null;
-		switch (jdbcType) {
-		case java.sql.Types.VARCHAR:
-		case java.sql.Types.NCHAR:
-		case java.sql.Types.NVARCHAR:
-		case java.sql.Types.CHAR:
-			return idValue.toString();
-		case java.sql.Types.BIGINT:
-			return new BigInteger(idValue.toString());
-		case java.sql.Types.DECIMAL:
-		case java.sql.Types.NUMERIC:
-			return new BigDecimal(idValue.toString());
-		case java.sql.Types.TINYINT:
-		case java.sql.Types.INTEGER:
-		case java.sql.Types.SMALLINT:
-			return Integer.valueOf(idValue.toString());
-		default:
+		if (StringUtil.isBlank(idType))
 			return idValue;
-		}
+		// 按照优先顺序对比
+		// String idType = javaType.toLowerCase();
+		if (idType.equals("java.lang.string"))
+			return idValue.toString();
+		if (idType.equals("java.lang.integer"))
+			return Integer.valueOf(idValue.toString());
+		if (idType.equals("java.lang.long"))
+			return Long.valueOf(idValue.toString());
+		if (idType.equals("java.math.biginteger"))
+			return new BigInteger(idValue.toString());
+		if (idType.equals("java.math.bigdecimal"))
+			return new BigDecimal(idValue.toString());
+		if (idType.equals("long"))
+			return Long.valueOf(idValue.toString()).longValue();
+		if (idType.equals("int"))
+			return Integer.valueOf(idValue.toString()).intValue();
+		if (idType.equals("java.lang.short"))
+			return Short.valueOf(idValue.toString());
+		if (idType.equals("short"))
+			return Short.valueOf(idValue.toString()).shortValue();
+		return idValue;
 	}
 
 	/**

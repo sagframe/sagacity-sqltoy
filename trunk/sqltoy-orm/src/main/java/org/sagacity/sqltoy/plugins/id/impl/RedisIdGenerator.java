@@ -62,8 +62,7 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @param redisTemplate
-	 *            the redisTemplate to set
+	 * @param redisTemplate the redisTemplate to set
 	 */
 	// 目前AutoWired 不起作用(没有用spring来托管),因此在getInstance时进行自动获取
 	@Autowired(required = false)
@@ -87,7 +86,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, int jdbcType, int length, int sequencSize) {
+			Date bizDate, String jdbcType, int length, int sequencSize) {
 		String key = (signature == null ? "" : signature);
 		// 主键生成依赖业务的相关字段值
 		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
@@ -165,8 +164,7 @@ public class RedisIdGenerator implements IdGenerator {
 	}
 
 	/**
-	 * @param dateFormat
-	 *            the dateFormat to set
+	 * @param dateFormat the dateFormat to set
 	 */
 	public void setDateFormat(String dateFormat) {
 		this.dateFormat = dateFormat;

@@ -186,7 +186,7 @@ public class EntityMeta implements Serializable {
 	 */
 	private Class[] cascadeTypes;
 
-	private int idJdbcType = -1;
+	private String idJavaType;
 
 	/**
 	 * 是否存在业务id配置策略
@@ -211,8 +211,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param loadAllSql
-	 *            the loadAllSql to set
+	 * @param loadAllSql the loadAllSql to set
 	 */
 	public void setLoadAllSql(String loadAllSql) {
 		this.loadAllSql = loadAllSql;
@@ -226,8 +225,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param tableName
-	 *            the tableName to set
+	 * @param tableName the tableName to set
 	 */
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
@@ -240,12 +238,13 @@ public class EntityMeta implements Serializable {
 		return fieldsMeta;
 	}
 
-	public int getIdType() {
+	public String getIdType() {
 		if (idArray == null)
-			return -1;
-		if (idJdbcType == -1)
-			idJdbcType = getColumnType(idArray[0]);
-		return idJdbcType;
+			return "";
+		if (idJavaType == null) {
+			idJavaType = getColumnJavaType(idArray[0]);
+		}
+		return idJavaType;
 	}
 
 	public int getIdLength() {
@@ -262,8 +261,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param idStrategy
-	 *            the idStrategy to set
+	 * @param idStrategy the idStrategy to set
 	 */
 	public void setIdStrategy(PKStrategy idStrategy) {
 		this.idStrategy = idStrategy;
@@ -277,8 +275,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param idGenerator
-	 *            the idGenerator to set
+	 * @param idGenerator the idGenerator to set
 	 */
 	public void setIdGenerator(IdGenerator idGenerator) {
 		this.idGenerator = idGenerator;
@@ -296,8 +293,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param idArray
-	 *            the idArray to set
+	 * @param idArray the idArray to set
 	 */
 	public void setIdArray(String[] idArray) {
 		this.idArray = idArray;
@@ -311,8 +307,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldArray
-	 *            the fieldArray to set
+	 * @param fieldArray the fieldArray to set
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
@@ -329,8 +324,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdRelatedColumns
-	 *            the bizIdRelatedColumns to set
+	 * @param bizIdRelatedColumns the bizIdRelatedColumns to set
 	 */
 	public void setBizIdRelatedColumns(String[] bizIdRelatedColumns) {
 		this.bizIdRelatedColumns = bizIdRelatedColumns;
@@ -373,8 +367,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param rejectIdFieldArray
-	 *            the rejectIdFieldArray to set
+	 * @param rejectIdFieldArray the rejectIdFieldArray to set
 	 */
 	public void setRejectIdFieldArray(String[] rejectIdFieldArray) {
 		this.rejectIdFieldArray = rejectIdFieldArray;
@@ -398,8 +391,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param deleteByIdsSql
-	 *            the deleteByIdsSql to set
+	 * @param deleteByIdsSql the deleteByIdsSql to set
 	 */
 	public void setDeleteByIdsSql(String deleteByIdsSql) {
 		this.deleteByIdsSql = deleteByIdsSql;
@@ -424,11 +416,18 @@ public class EntityMeta implements Serializable {
 		return fieldMeta.getColumnOptName();
 	}
 
-	public int getColumnType(String fieldName) {
+	public int getColumnJdbcType(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
 		if (fieldMeta == null)
 			return -1;
 		return fieldMeta.getType();
+	}
+
+	public String getColumnJavaType(String fieldName) {
+		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
+		if (fieldMeta == null)
+			return null;
+		return fieldMeta.getFieldType();
 	}
 
 	/**
@@ -445,8 +444,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param schemaTable
-	 *            the schemaTable to set
+	 * @param schemaTable the schemaTable to set
 	 */
 	public void setSchemaTable(String schemaTable) {
 		this.schemaTable = schemaTable;
@@ -473,8 +471,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param pageSql
-	 *            the pageSql to set
+	 * @param pageSql the pageSql to set
 	 */
 	public void setPageSql(String pageSql) {
 		this.pageSql = pageSql;
@@ -488,8 +485,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param listSql
-	 *            the listSql to set
+	 * @param listSql the listSql to set
 	 */
 	public void setListSql(String listSql) {
 		this.listSql = listSql;
@@ -504,8 +500,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param loadSql
-	 *            the loadSql to set
+	 * @param loadSql the loadSql to set
 	 */
 	public void setLoadSql(String loadSql) {
 		this.loadSql = loadSql;
@@ -523,8 +518,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldsTypeArray
-	 *            the fieldsTypeArray to set
+	 * @param fieldsTypeArray the fieldsTypeArray to set
 	 */
 	public void setFieldsTypeArray(Integer[] fieldsTypeArray) {
 		this.fieldsTypeArray = fieldsTypeArray;
@@ -538,16 +532,14 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldsDefaultValue
-	 *            the fieldsDefaultValue to set
+	 * @param fieldsDefaultValue the fieldsDefaultValue to set
 	 */
 	public void setFieldsDefaultValue(String[] fieldsDefaultValue) {
 		this.fieldsDefaultValue = fieldsDefaultValue;
 	}
 
 	/**
-	 * @param fieldsMeta
-	 *            the fieldsMeta to set
+	 * @param fieldsMeta the fieldsMeta to set
 	 */
 	public void setFieldsMeta(HashMap<String, FieldMeta> fieldsMeta) {
 		this.fieldsMeta = fieldsMeta;
@@ -561,8 +553,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param cascadeTypes
-	 *            the cascadeTypes to set
+	 * @param cascadeTypes the cascadeTypes to set
 	 */
 	public void setCascadeTypes(Class[] cascadeTypes) {
 		this.cascadeTypes = cascadeTypes;
@@ -576,8 +567,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldsNullable
-	 *            the fieldsNullable to set
+	 * @param fieldsNullable the fieldsNullable to set
 	 */
 	public void setFieldsNullable(Boolean[] fieldsNullable) {
 		this.fieldsNullable = fieldsNullable;
@@ -591,8 +581,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param hasDefaultValue
-	 *            the hasDefaultValue to set
+	 * @param hasDefaultValue the hasDefaultValue to set
 	 */
 	public void setHasDefaultValue(boolean hasDefaultValue) {
 		this.hasDefaultValue = hasDefaultValue;
@@ -606,8 +595,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param pkConstraint
-	 *            the pkConstraint to set
+	 * @param pkConstraint the pkConstraint to set
 	 */
 	public void setPkConstraint(String pkConstraint) {
 		this.pkConstraint = pkConstraint;
@@ -621,8 +609,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param shardingModel
-	 *            the shardingModel to set
+	 * @param shardingModel the shardingModel to set
 	 */
 	public void setShardingConfig(ShardingConfig shardingConfig) {
 		this.shardingConfig = shardingConfig;
@@ -636,8 +623,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param idNameWhereSql
-	 *            the idNameWhereSql to set
+	 * @param idNameWhereSql the idNameWhereSql to set
 	 */
 	public void setIdNameWhereSql(String idNameWhereSql) {
 		this.idNameWhereSql = idNameWhereSql;
@@ -651,8 +637,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param idArgWhereSql
-	 *            the idArgWhereSql to set
+	 * @param idArgWhereSql the idArgWhereSql to set
 	 */
 	public void setIdArgWhereSql(String idArgWhereSql) {
 		this.idArgWhereSql = idArgWhereSql;
@@ -666,8 +651,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param businessIdGenerator
-	 *            the businessIdGenerator to set
+	 * @param businessIdGenerator the businessIdGenerator to set
 	 */
 	public void setBusinessIdGenerator(IdGenerator businessIdGenerator) {
 		this.businessIdGenerator = businessIdGenerator;
@@ -681,8 +665,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param businessIdField
-	 *            the businessIdField to set
+	 * @param businessIdField the businessIdField to set
 	 */
 	public void setBusinessIdField(String businessIdField) {
 		this.businessIdField = businessIdField;
@@ -699,8 +682,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdLength
-	 *            the bizIdLength to set
+	 * @param bizIdLength the bizIdLength to set
 	 */
 	public void setBizIdLength(Integer bizIdLength) {
 		this.bizIdLength = bizIdLength;
@@ -714,16 +696,14 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdSequenceSize
-	 *            the bizIdSequenceSize to set
+	 * @param bizIdSequenceSize the bizIdSequenceSize to set
 	 */
 	public void setBizIdSequenceSize(Integer bizIdSequenceSize) {
 		this.bizIdSequenceSize = bizIdSequenceSize;
 	}
 
 	/**
-	 * @param bizIdSignature
-	 *            the bizIdSignature to set
+	 * @param bizIdSignature the bizIdSignature to set
 	 */
 	public void setBizIdSignature(String bizIdSignature) {
 		this.bizIdSignature = bizIdSignature;
@@ -737,8 +717,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param entityClass
-	 *            the entityClass to set
+	 * @param entityClass the entityClass to set
 	 */
 	public void setEntityClass(Class entityClass) {
 		this.entityClass = entityClass;
@@ -752,8 +731,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param hasBizIdConfig
-	 *            the hasBizIdConfig to set
+	 * @param hasBizIdConfig the hasBizIdConfig to set
 	 */
 	public void setHasBizIdConfig(boolean hasBizIdConfig) {
 		this.hasBizIdConfig = hasBizIdConfig;
@@ -767,8 +745,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param bizIdEqPK
-	 *            the bizIdEqPK to set
+	 * @param bizIdEqPK the bizIdEqPK to set
 	 */
 	public void setBizIdEqPK(boolean bizIdEqPK) {
 		this.bizIdEqPK = bizIdEqPK;
@@ -782,8 +759,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	/**
-	 * @param allColumnNames
-	 *            the allColumnNames to set
+	 * @param allColumnNames the allColumnNames to set
 	 */
 	public void setAllColumnNames(String allColumnNames) {
 		this.allColumnNames = allColumnNames;

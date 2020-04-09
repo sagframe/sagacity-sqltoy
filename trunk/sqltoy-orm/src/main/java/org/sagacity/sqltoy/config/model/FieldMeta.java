@@ -54,8 +54,13 @@ public class FieldMeta implements Serializable {
 	// 数据库表字段名称
 	private String columnName;
 
-	// 数据类型
+	// 对应数据库中的类型:java.sql.Types.xxx
 	private int type;
+
+	/**
+	 * 字段java类型
+	 */
+	private String fieldType;
 
 	// 是否为空
 	private boolean nullable;
@@ -92,8 +97,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param autoIncrement
-	 *            the autoIncrement to set
+	 * @param autoIncrement the autoIncrement to set
 	 */
 	public void setAutoIncrement(boolean autoIncrement) {
 		this.autoIncrement = autoIncrement;
@@ -112,8 +116,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(int type) {
 		this.type = type;
@@ -127,8 +130,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param fieldName
-	 *            the fieldName to set
+	 * @param fieldName the fieldName to set
 	 */
 	public void setFieldName(String fieldName) {
 		this.fieldName = fieldName;
@@ -142,8 +144,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param columnName
-	 *            the columnName to set
+	 * @param columnName the columnName to set
 	 */
 	public void setColumnName(String columnName) {
 		this.columnName = columnName;
@@ -169,8 +170,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param nullable
-	 *            the nullable to set
+	 * @param nullable the nullable to set
 	 */
 	public void setNullable(boolean nullable) {
 		this.nullable = nullable;
@@ -184,8 +184,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param length
-	 *            the length to set
+	 * @param length the length to set
 	 */
 	public void setLength(int length) {
 		this.length = length;
@@ -199,8 +198,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param precision
-	 *            the precision to set
+	 * @param precision the precision to set
 	 */
 	public void setPrecision(int precision) {
 		this.precision = precision;
@@ -214,8 +212,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param scale
-	 *            the scale to set
+	 * @param scale the scale to set
 	 */
 	public void setScale(int scale) {
 		this.scale = scale;
@@ -237,8 +234,7 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param defaultValue
-	 *            the defaultValue to set
+	 * @param defaultValue the defaultValue to set
 	 */
 	public void setDefaultValue(String defaultValue) {
 		this.defaultValue = defaultValue;
@@ -252,11 +248,18 @@ public class FieldMeta implements Serializable {
 	}
 
 	/**
-	 * @param keyword
-	 *            the keyword to set
+	 * @param keyword the keyword to set
 	 */
 	public void setKeyword(boolean keyword) {
 		this.keyword = keyword;
+	}
+
+	public String getFieldType() {
+		return fieldType;
+	}
+
+	public void setFieldType(String fieldType) {
+		this.fieldType = fieldType;
 	}
 
 }

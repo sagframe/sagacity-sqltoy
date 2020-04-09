@@ -490,7 +490,7 @@ public class ShardingUtils {
 			return;
 		if (idGenerator != null) {
 			String table = entityMeta.getSchemaTable();
-			int idType = entityMeta.getIdType();
+			String idType = entityMeta.getIdType();
 			// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
 			int idLength = entityMeta.getIdLength();
 			int sequenceSize = entityMeta.getBizIdSequenceSize();

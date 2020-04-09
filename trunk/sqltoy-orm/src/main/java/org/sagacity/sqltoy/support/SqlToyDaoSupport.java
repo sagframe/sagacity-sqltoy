@@ -1046,7 +1046,7 @@ public class SqlToyDaoSupport {
 			throw new IllegalArgumentException(
 					StringUtil.fillArgs("对象:{},没有配置业务主键生成策略,请检查POJO 的业务主键配置!", entity.getClass().getName()));
 		}
-		int businessIdType = entityMeta.getColumnType(entityMeta.getBusinessIdField());
+		String businessIdType = entityMeta.getColumnJavaType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
 		// 提取关联属性的值
