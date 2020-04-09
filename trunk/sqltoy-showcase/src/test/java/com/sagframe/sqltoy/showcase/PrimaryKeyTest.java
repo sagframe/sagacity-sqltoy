@@ -4,6 +4,7 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,5 +107,11 @@ public class PrimaryKeyTest {
 		BigintTableVO vo = new BigintTableVO();
 		vo.setName("测试");
 		sqlToyCRUDService.save(vo);
+	}
+
+	@Test
+	public void testBigIntSnowflake1() {
+		BigintTableVO vo = sqlToyCRUDService.load(new BigintTableVO(new BigInteger("697757119726620672")));
+		System.err.println(JSON.toJSONString(vo));
 	}
 }
