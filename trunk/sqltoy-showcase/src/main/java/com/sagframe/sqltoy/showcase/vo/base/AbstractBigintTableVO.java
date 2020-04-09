@@ -7,6 +7,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.Column;
+import java.math.BigInteger;
 
 
 /**
@@ -33,13 +34,13 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	 * 主键
 	 */
 	@Id(strategy="generator",generator="org.sagacity.sqltoy.plugins.id.SnowflakeIdGenerator")
-	@Column(name="id",length=20L,type=java.sql.Types.BIGINT,nullable=false)
-	protected Long id;
+	@Column(name="ID",length=20L,type=java.sql.Types.BIGINT,nullable=false)
+	protected BigInteger id;
 	
 	/**
 	 * 名称
 	 */
-	@Column(name="name",length=100L,type=java.sql.Types.VARCHAR,nullable=false)
+	@Column(name="NAME",length=100L,type=java.sql.Types.VARCHAR,nullable=false)
 	protected String name;
 	
 
@@ -49,14 +50,14 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	}
 	
 	/** pk constructor */
-	public AbstractBigintTableVO(Long id)
+	public AbstractBigintTableVO(BigInteger id)
 	{
 		this.id=id;
 	}
 
 
 	/** full constructor */
-	public AbstractBigintTableVO(Long id,String name)
+	public AbstractBigintTableVO(BigInteger id,String name)
 	{
 		this.id=id;
 		this.name=name;
@@ -65,14 +66,14 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	/**
 	 *@param id the id to set
 	 */
-	public void setId(Long id) {
+	public void setId(BigInteger id) {
 		this.id=id;
 	}
 		
 	/**
 	 *@return the Id
 	 */
-	public Long getId() {
+	public BigInteger getId() {
 	    return this.id;
 	}
 	
