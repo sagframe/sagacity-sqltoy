@@ -4,6 +4,7 @@
 package com.sagframe.sqltoy.showcase.vo;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import java.math.BigInteger;
 import com.sagframe.sqltoy.showcase.vo.base.AbstractBigintTableVO;
 
 /**
@@ -26,14 +27,14 @@ public class BigintTableVO extends AbstractBigintTableVO {
 	
 	/*---begin-constructor-area---don't-update-this-area--*/
 	/** pk constructor */
-	public BigintTableVO(Long id)
+	public BigintTableVO(BigInteger id)
 	{
 		this.id=id;
 	}
 
 
 	/** full constructor */
-	public BigintTableVO(Long id,String name)
+	public BigintTableVO(BigInteger id,String name)
 	{
 		this.id=id;
 		this.name=name;
