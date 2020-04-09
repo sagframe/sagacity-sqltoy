@@ -38,10 +38,10 @@ public class SnowflakeIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String jdbcType, int length, int sequencSize) {
+			Date bizDate, String idJavaType, int length, int sequencSize) {
 		if (idWorker == null) {
 			idWorker = new SnowflakeIdWorker(SqlToyConstants.WORKER_ID, SqlToyConstants.DATA_CENTER_ID);
 		}
-		return SqlUtil.convertIdValueType(idWorker.nextId(), jdbcType);
+		return SqlUtil.convertIdValueType(idWorker.nextId(), idJavaType);
 	}
 }
