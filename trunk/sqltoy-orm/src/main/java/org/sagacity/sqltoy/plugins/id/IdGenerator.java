@@ -18,11 +18,11 @@ public interface IdGenerator {
 	 * @param signature       识别符号
 	 * @param relatedColValue 关联字段的值
 	 * @param bizDate
-	 * @param jdbcType
+	 * @param idJavaType
 	 * @param length
 	 * @param sequencSize
 	 * @return
 	 */
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String javaType, int length, int sequencSize);
+			Date bizDate, String idJavaType, int length, int sequencSize);
 }

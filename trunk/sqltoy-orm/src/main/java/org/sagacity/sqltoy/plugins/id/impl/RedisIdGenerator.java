@@ -86,7 +86,7 @@ public class RedisIdGenerator implements IdGenerator {
 	 */
 	@Override
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
-			Date bizDate, String jdbcType, int length, int sequencSize) {
+			Date bizDate, String idJavaType, int length, int sequencSize) {
 		String key = (signature == null ? "" : signature);
 		// 主键生成依赖业务的相关字段值
 		IgnoreKeyCaseMap<String, Object> keyValueMap = new IgnoreKeyCaseMap<String, Object>();
