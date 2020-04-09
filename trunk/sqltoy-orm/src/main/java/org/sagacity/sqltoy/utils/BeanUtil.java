@@ -39,7 +39,10 @@ public class BeanUtil {
 	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
 
 	/**
+	 * <p>
 	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误
+	 * update 2020-4-9 setMethod 可以返回对象本身
+	 * </p>
 	 * 
 	 * @todo 获取指定名称的方法集
 	 * @param voClass
@@ -53,7 +56,9 @@ public class BeanUtil {
 		// 先过滤出全是set且只有一个参数的方法
 		List<Method> realMeth = new ArrayList<Method>();
 		for (Method mt : methods) {
-			if (mt.getParameterTypes().length == 1 && void.class.equals(mt.getReturnType())) {
+			// if (mt.getParameterTypes().length == 1 &&
+			// void.class.equals(mt.getReturnType())) {
+			if (mt.getParameterTypes().length == 1) {
 				if (mt.getName().startsWith("set")) {
 					realMeth.add(mt);
 				}
@@ -390,8 +395,8 @@ public class BeanUtil {
 				return (LocalTime) paramValue;
 			return DateUtil.asLocalTime(DateUtil.parseString(valueStr));
 		}
-		//add 2020-4-9
-		if (typeName.equals("java.math.biginteger")||typeName.equals("biginteger")) {
+		// add 2020-4-9
+		if (typeName.equals("java.math.biginteger") || typeName.equals("biginteger")) {
 			return new BigInteger(convertBoolean(valueStr));
 		}
 		if (typeName.equals("long")) {
