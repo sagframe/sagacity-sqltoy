@@ -390,6 +390,9 @@ public class BeanUtil {
 				return (LocalTime) paramValue;
 			return DateUtil.asLocalTime(DateUtil.parseString(valueStr));
 		}
+		if (typeName.equals("java.math.biginteger")) {
+			return new BigInteger(convertBoolean(valueStr));
+		}
 		if (typeName.equals("long")) {
 			return Long.valueOf(convertBoolean(valueStr)).longValue();
 		}

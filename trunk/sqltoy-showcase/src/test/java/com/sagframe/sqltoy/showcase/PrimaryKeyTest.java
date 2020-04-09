@@ -20,6 +20,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.alibaba.fastjson.JSON;
 import com.sagframe.sqltoy.SqlToyApplication;
+import com.sagframe.sqltoy.showcase.vo.BigintTableVO;
 import com.sagframe.sqltoy.showcase.vo.IdentityTableVO;
 import com.sagframe.sqltoy.showcase.vo.SequenceTableVO;
 
@@ -98,5 +99,12 @@ public class PrimaryKeyTest {
 		entities.add(vo1);
 
 		System.err.println(sqlToyCRUDService.saveAllIgnoreExist(entities));
+	}
+
+	@Test
+	public void testBigIntSnowflake() {
+		BigintTableVO vo = new BigintTableVO();
+		vo.setName("测试");
+		sqlToyCRUDService.save(vo);
 	}
 }
