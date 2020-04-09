@@ -103,8 +103,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictKey the dictKey to set
 	 */
-	public void setDictKey(String dictKey) {
+	public AbstractDictDetailVO setDictKey(String dictKey) {
 		this.dictKey=dictKey;
+		return this;
 	}
 		
 	/**
@@ -117,8 +118,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictType the dictType to set
 	 */
-	public void setDictType(String dictType) {
+	public AbstractDictDetailVO setDictType(String dictType) {
 		this.dictType=dictType;
+		return this;
 	}
 		
 	/**
@@ -131,8 +133,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictName the dictName to set
 	 */
-	public void setDictName(String dictName) {
+	public AbstractDictDetailVO setDictName(String dictName) {
 		this.dictName=dictName;
+		return this;
 	}
 		
 	/**
@@ -145,8 +148,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public void setShowIndex(Integer showIndex) {
+	public AbstractDictDetailVO setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
+		return this;
 	}
 		
 	/**
@@ -159,8 +163,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public void setUpdateBy(String updateBy) {
+	public AbstractDictDetailVO setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
+		return this;
 	}
 		
 	/**
@@ -173,8 +178,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(LocalDateTime updateTime) {
+	public AbstractDictDetailVO setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
+		return this;
 	}
 		
 	/**
@@ -187,8 +193,9 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractDictDetailVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**

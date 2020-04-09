@@ -107,6 +107,11 @@ public class TaskController {
 		}
 		// 循环执行任务
 		QuickModel quickModel;
+		String supportLinkedSet = QuickVOConstants.getKeyValue("field.support.linked.set");
+		boolean isSupport = true;
+		if (StringUtil.isNotBlank(supportLinkedSet)) {
+			isSupport = Boolean.parseBoolean(supportLinkedSet);
+		}
 		int i = 0;
 		for (Iterator iter = configModel.getTasks().iterator(); iter.hasNext();) {
 			i++;
@@ -116,7 +121,7 @@ public class TaskController {
 				logger.error("数据库:{}连接异常,请确认你的数据库配置信息或者数据库环境!", quickModel.getDataSource());
 			} else {
 				logger.info("开始执行第:{} 个任务,includes=:{}", i, quickModel.getIncludeTables());
-				createTask(quickModel);
+				createTask(quickModel, isSupport);
 				// 销毁数据库连接
 				DBHelper.close();
 			}
@@ -126,9 +131,10 @@ public class TaskController {
 	/**
 	 * @todo 执行单个任务生成vo
 	 * @param quickModel
+	 * @param supportLinkSet
 	 * @throws Exception
 	 */
-	public static void createTask(QuickModel quickModel) throws Exception {
+	public static void createTask(QuickModel quickModel, boolean supportLinkSet) throws Exception {
 		String[] includes = null;
 		if (quickModel.getIncludeTables() != null) {
 			includes = new String[] { "(?i)".concat(quickModel.getIncludeTables()) };
@@ -170,6 +176,7 @@ public class TaskController {
 			entityName = StringUtil.toHumpStr(tableName, true);
 			quickVO = new QuickVO();
 			quickVO.setSwaggerModel(quickModel.isSwaggerApi());
+			quickVO.setReturnSelf(supportLinkSet);
 			quickVO.setAbstractPath(configModel.getAbstractPath());
 			quickVO.setVersion(QuickVOConstants.getPropertyValue("project.version"));
 			quickVO.setProjectName(QuickVOConstants.getPropertyValue("project.name"));
@@ -420,7 +427,7 @@ public class TaskController {
 			colMeta = (TableColumnMeta) cols.get(i);
 			QuickColMeta quickColMeta = new QuickColMeta();
 			quickColMeta.setColRemark(colMeta.getColRemark());
-			//update 2020-4-8 剔除掉UNSIGNED对类型的干扰
+			// update 2020-4-8 剔除掉UNSIGNED对类型的干扰
 			String jdbcType = colMeta.getTypeName().replaceFirst("(?i)\\sUNSIGNED", "");
 			if (colMeta.getTypeName().indexOf(".") != -1) {
 				jdbcType = colMeta.getTypeName().substring(colMeta.getTypeName().lastIndexOf(".") + 1);

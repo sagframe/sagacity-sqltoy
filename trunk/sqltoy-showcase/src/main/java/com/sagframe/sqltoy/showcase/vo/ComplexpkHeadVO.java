@@ -74,22 +74,6 @@ public class ComplexpkHeadVO extends AbstractComplexpkHeadVO {
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
-	private String transCode;
-
-	/**
-	 * @return the transCode
-	 */
-	public String getTransCode() {
-		return transCode;
-	}
-
-	/**
-	 * @param transCode
-	 *            the transCode to set
-	 */
-	public void setTransCode(String transCode) {
-		this.transCode = transCode;
-	}
 
 	/**
 	 * @todo vo columns to String

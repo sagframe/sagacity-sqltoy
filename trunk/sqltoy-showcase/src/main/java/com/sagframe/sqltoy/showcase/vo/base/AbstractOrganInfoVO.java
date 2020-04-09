@@ -164,8 +164,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organId the organId to set
 	 */
-	public void setOrganId(String organId) {
+	public AbstractOrganInfoVO setOrganId(String organId) {
 		this.organId=organId;
+		return this;
 	}
 		
 	/**
@@ -178,8 +179,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organName the organName to set
 	 */
-	public void setOrganName(String organName) {
+	public AbstractOrganInfoVO setOrganName(String organName) {
 		this.organName=organName;
+		return this;
 	}
 		
 	/**
@@ -192,8 +194,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organCode the organCode to set
 	 */
-	public void setOrganCode(String organCode) {
+	public AbstractOrganInfoVO setOrganCode(String organCode) {
 		this.organCode=organCode;
+		return this;
 	}
 		
 	/**
@@ -206,8 +209,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param costNo the costNo to set
 	 */
-	public void setCostNo(String costNo) {
+	public AbstractOrganInfoVO setCostNo(String costNo) {
 		this.costNo=costNo;
+		return this;
 	}
 		
 	/**
@@ -220,8 +224,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organPid the organPid to set
 	 */
-	public void setOrganPid(String organPid) {
+	public AbstractOrganInfoVO setOrganPid(String organPid) {
 		this.organPid=organPid;
+		return this;
 	}
 		
 	/**
@@ -234,8 +239,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param nodeRoute the nodeRoute to set
 	 */
-	public void setNodeRoute(String nodeRoute) {
+	public AbstractOrganInfoVO setNodeRoute(String nodeRoute) {
 		this.nodeRoute=nodeRoute;
+		return this;
 	}
 		
 	/**
@@ -248,8 +254,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param nodeLevel the nodeLevel to set
 	 */
-	public void setNodeLevel(Integer nodeLevel) {
+	public AbstractOrganInfoVO setNodeLevel(Integer nodeLevel) {
 		this.nodeLevel=nodeLevel;
+		return this;
 	}
 		
 	/**
@@ -262,8 +269,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param isLeaf the isLeaf to set
 	 */
-	public void setIsLeaf(Integer isLeaf) {
+	public AbstractOrganInfoVO setIsLeaf(Integer isLeaf) {
 		this.isLeaf=isLeaf;
+		return this;
 	}
 		
 	/**
@@ -276,8 +284,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public void setShowIndex(Integer showIndex) {
+	public AbstractOrganInfoVO setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
+		return this;
 	}
 		
 	/**
@@ -290,8 +299,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public void setCreateBy(String createBy) {
+	public AbstractOrganInfoVO setCreateBy(String createBy) {
 		this.createBy=createBy;
+		return this;
 	}
 		
 	/**
@@ -304,8 +314,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(LocalDateTime createTime) {
+	public AbstractOrganInfoVO setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
+		return this;
 	}
 		
 	/**
@@ -318,8 +329,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public void setUpdateBy(String updateBy) {
+	public AbstractOrganInfoVO setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
+		return this;
 	}
 		
 	/**
@@ -332,8 +344,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(LocalDateTime updateTime) {
+	public AbstractOrganInfoVO setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
+		return this;
 	}
 		
 	/**
@@ -346,8 +359,9 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractOrganInfoVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**

@@ -66,8 +66,9 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	/**
 	 *@param id the id to set
 	 */
-	public void setId(BigInteger id) {
+	public AbstractBigintTableVO setId(BigInteger id) {
 		this.id=id;
+		return this;
 	}
 		
 	/**
@@ -80,8 +81,9 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	/**
 	 *@param name the name to set
 	 */
-	public void setName(String name) {
+	public AbstractBigintTableVO setName(String name) {
 		this.name=name;
+		return this;
 	}
 		
 	/**

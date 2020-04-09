@@ -137,8 +137,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transId the transId to set
 	 */
-	public void setTransId(String transId) {
+	public AbstractTransInfo15dVO setTransId(String transId) {
 		this.transId=transId;
+		return this;
 	}
 		
 	/**
@@ -151,8 +152,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transCode the transCode to set
 	 */
-	public void setTransCode(String transCode) {
+	public AbstractTransInfo15dVO setTransCode(String transCode) {
 		this.transCode=transCode;
+		return this;
 	}
 		
 	/**
@@ -165,8 +167,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transChannel the transChannel to set
 	 */
-	public void setTransChannel(String transChannel) {
+	public AbstractTransInfo15dVO setTransChannel(String transChannel) {
 		this.transChannel=transChannel;
+		return this;
 	}
 		
 	/**
@@ -179,8 +182,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transAmt the transAmt to set
 	 */
-	public void setTransAmt(BigDecimal transAmt) {
+	public AbstractTransInfo15dVO setTransAmt(BigDecimal transAmt) {
 		this.transAmt=transAmt;
+		return this;
 	}
 		
 	/**
@@ -193,8 +197,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractTransInfo15dVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**
@@ -207,8 +212,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param resultCode the resultCode to set
 	 */
-	public void setResultCode(String resultCode) {
+	public AbstractTransInfo15dVO setResultCode(String resultCode) {
 		this.resultCode=resultCode;
+		return this;
 	}
 		
 	/**
@@ -221,8 +227,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transTime the transTime to set
 	 */
-	public void setTransTime(LocalDateTime transTime) {
+	public AbstractTransInfo15dVO setTransTime(LocalDateTime transTime) {
 		this.transTime=transTime;
+		return this;
 	}
 		
 	/**
@@ -235,8 +242,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(LocalDate transDate) {
+	public AbstractTransInfo15dVO setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
+		return this;
 	}
 		
 	/**
@@ -249,8 +257,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param userId the userId to set
 	 */
-	public void setUserId(String userId) {
+	public AbstractTransInfo15dVO setUserId(String userId) {
 		this.userId=userId;
+		return this;
 	}
 		
 	/**
@@ -263,8 +272,9 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param cardNo the cardNo to set
 	 */
-	public void setCardNo(String cardNo) {
+	public AbstractTransInfo15dVO setCardNo(String cardNo) {
 		this.cardNo=cardNo;
+		return this;
 	}
 		
 	/**

@@ -127,8 +127,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param logId the logId to set
 	 */
-	public void setLogId(String logId) {
+	public AbstractUserLogVO setLogId(String logId) {
 		this.logId=logId;
+		return this;
 	}
 		
 	/**
@@ -141,8 +142,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param userId the userId to set
 	 */
-	public void setUserId(String userId) {
+	public AbstractUserLogVO setUserId(String userId) {
 		this.userId=userId;
+		return this;
 	}
 		
 	/**
@@ -155,8 +157,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param terminalIp the terminalIp to set
 	 */
-	public void setTerminalIp(String terminalIp) {
+	public AbstractUserLogVO setTerminalIp(String terminalIp) {
 		this.terminalIp=terminalIp;
+		return this;
 	}
 		
 	/**
@@ -169,8 +172,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param deviceCode the deviceCode to set
 	 */
-	public void setDeviceCode(String deviceCode) {
+	public AbstractUserLogVO setDeviceCode(String deviceCode) {
 		this.deviceCode=deviceCode;
+		return this;
 	}
 		
 	/**
@@ -183,8 +187,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param logTime the logTime to set
 	 */
-	public void setLogTime(LocalDateTime logTime) {
+	public AbstractUserLogVO setLogTime(LocalDateTime logTime) {
 		this.logTime=logTime;
+		return this;
 	}
 		
 	/**
@@ -197,8 +202,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param logDate the logDate to set
 	 */
-	public void setLogDate(LocalDate logDate) {
+	public AbstractUserLogVO setLogDate(LocalDate logDate) {
 		this.logDate=logDate;
+		return this;
 	}
 		
 	/**
@@ -211,8 +217,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param logType the logType to set
 	 */
-	public void setLogType(String logType) {
+	public AbstractUserLogVO setLogType(String logType) {
 		this.logType=logType;
+		return this;
 	}
 		
 	/**
@@ -225,8 +232,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param channel the channel to set
 	 */
-	public void setChannel(String channel) {
+	public AbstractUserLogVO setChannel(String channel) {
 		this.channel=channel;
+		return this;
 	}
 		
 	/**
@@ -239,8 +247,9 @@ public abstract class AbstractUserLogVO implements Serializable,
 	/**
 	 *@param contents the contents to set
 	 */
-	public void setContents(String contents) {
+	public AbstractUserLogVO setContents(String contents) {
 		this.contents=contents;
+		return this;
 	}
 		
 	/**

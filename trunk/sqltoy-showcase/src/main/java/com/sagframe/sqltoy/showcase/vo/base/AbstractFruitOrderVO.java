@@ -65,8 +65,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param fruitName the fruitName to set
 	 */
-	public void setFruitName(String fruitName) {
+	public AbstractFruitOrderVO setFruitName(String fruitName) {
 		this.fruitName=fruitName;
+		return this;
 	}
 		
 	/**
@@ -79,8 +80,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param orderMonth the orderMonth to set
 	 */
-	public void setOrderMonth(Integer orderMonth) {
+	public AbstractFruitOrderVO setOrderMonth(Integer orderMonth) {
 		this.orderMonth=orderMonth;
+		return this;
 	}
 		
 	/**
@@ -93,8 +95,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleCount the saleCount to set
 	 */
-	public void setSaleCount(Long saleCount) {
+	public AbstractFruitOrderVO setSaleCount(Long saleCount) {
 		this.saleCount=saleCount;
+		return this;
 	}
 		
 	/**
@@ -107,8 +110,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleAmt the saleAmt to set
 	 */
-	public void setSaleAmt(Long saleAmt) {
+	public AbstractFruitOrderVO setSaleAmt(Long saleAmt) {
 		this.saleAmt=saleAmt;
+		return this;
 	}
 		
 	/**
@@ -121,8 +125,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param totalAmt the totalAmt to set
 	 */
-	public void setTotalAmt(Long totalAmt) {
+	public AbstractFruitOrderVO setTotalAmt(Long totalAmt) {
 		this.totalAmt=totalAmt;
+		return this;
 	}
 		
 	/**
