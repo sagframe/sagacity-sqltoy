@@ -40,8 +40,8 @@ public class BeanUtil {
 
 	/**
 	 * <p>
-	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误
-	 * update 2020-4-9 setMethod 可以返回对象本身
+	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误 update 2020-04-09 支持setXXX()
+	 * 并返回对象本身,适配链式操作
 	 * </p>
 	 * 
 	 * @todo 获取指定名称的方法集
@@ -56,6 +56,7 @@ public class BeanUtil {
 		// 先过滤出全是set且只有一个参数的方法
 		List<Method> realMeth = new ArrayList<Method>();
 		for (Method mt : methods) {
+			// 剔除void 判断条件
 			// if (mt.getParameterTypes().length == 1 &&
 			// void.class.equals(mt.getReturnType())) {
 			if (mt.getParameterTypes().length == 1) {

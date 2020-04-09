@@ -40,9 +40,7 @@ public class CrudCaseServiceTest {
 	@Test
 	public void saveStaffInfo() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
-		staffInfo.setStaffId("S190715003");
-		staffInfo.setStaffCode("S190715003");
-		staffInfo.setStaffName("测试员工3");
+		staffInfo.setStaffId("S190715009").setStaffCode("S190715009").setStaffName("测试员工9");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test3@aliyun.com");
 		staffInfo.setEntryDate(LocalDate.now());
@@ -112,7 +110,7 @@ public class CrudCaseServiceTest {
 
 	@Test
 	public void load() {
-		StaffInfoVO staff = sqlToyCRUDService.load(new StaffInfoVO("S190715003"));
+		StaffInfoVO staff = sqlToyCRUDService.load(new StaffInfoVO("S190715009"));
 		System.err.println(JSON.toJSONString(staff));
 	}
 
@@ -173,14 +171,14 @@ public class CrudCaseServiceTest {
 
 		sqlToyCRUDService.save(head);
 	}
-	
+
 	/**
 	 * 演示级联加载
 	 */
 	@Test
 	public void cascadeLoad() {
 		ComplexpkHeadVO head = sqlToyCRUDService.loadCascade(new ComplexpkHeadVO(LocalDate.now(), "S0001"));
-		//打印级联加载的字表数据
+		// 打印级联加载的字表数据
 		System.err.println(JSON.toJSONString(head.getComplexpkItemVOs()));
 	}
 }

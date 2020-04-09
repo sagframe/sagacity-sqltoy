@@ -137,8 +137,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param dictType the dictType to set
 	 */
-	public void setDictType(String dictType) {
+	public AbstractDictTypeVO setDictType(String dictType) {
 		this.dictType=dictType;
+		return this;
 	}
 		
 	/**
@@ -151,8 +152,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param dictTypeName the dictTypeName to set
 	 */
-	public void setDictTypeName(String dictTypeName) {
+	public AbstractDictTypeVO setDictTypeName(String dictTypeName) {
 		this.dictTypeName=dictTypeName;
+		return this;
 	}
 		
 	/**
@@ -165,8 +167,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param comments the comments to set
 	 */
-	public void setComments(String comments) {
+	public AbstractDictTypeVO setComments(String comments) {
 		this.comments=comments;
+		return this;
 	}
 		
 	/**
@@ -179,8 +182,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public void setShowIndex(Integer showIndex) {
+	public AbstractDictTypeVO setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
+		return this;
 	}
 		
 	/**
@@ -193,8 +197,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public void setCreateBy(String createBy) {
+	public AbstractDictTypeVO setCreateBy(String createBy) {
 		this.createBy=createBy;
+		return this;
 	}
 		
 	/**
@@ -207,8 +212,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(LocalDateTime createTime) {
+	public AbstractDictTypeVO setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
+		return this;
 	}
 		
 	/**
@@ -221,8 +227,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public void setUpdateBy(String updateBy) {
+	public AbstractDictTypeVO setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
+		return this;
 	}
 		
 	/**
@@ -235,8 +242,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(LocalDateTime updateTime) {
+	public AbstractDictTypeVO setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
+		return this;
 	}
 		
 	/**
@@ -249,8 +257,9 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractDictTypeVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**

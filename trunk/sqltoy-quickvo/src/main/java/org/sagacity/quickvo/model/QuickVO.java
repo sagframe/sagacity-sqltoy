@@ -104,6 +104,11 @@ public class QuickVO implements Serializable {
 	private boolean hasBusinessId;
 
 	/**
+	 * set方法返回对象自身
+	 */
+	private boolean returnSelf = false;
+
+	/**
 	 * @return the singlePk
 	 */
 	public String getSinglePk() {
@@ -111,8 +116,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param singlePk
-	 *            the singlePk to set
+	 * @param singlePk the singlePk to set
 	 */
 	public void setSinglePk(String singlePk) {
 		this.singlePk = singlePk;
@@ -141,11 +145,11 @@ public class QuickVO implements Serializable {
 	 * 需要导入的类
 	 */
 	private List imports;
-	
+
 	/**
 	 * 支持swaggerApi
 	 */
-	private boolean swaggerModel=false;
+	private boolean swaggerModel = false;
 
 	/**
 	 * @return the tableRemark
@@ -155,8 +159,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param tableRemark
-	 *            the tableRemark to set
+	 * @param tableRemark the tableRemark to set
 	 */
 	public void setTableRemark(String tableRemark) {
 		this.tableRemark = tableRemark;
@@ -178,8 +181,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param imports
-	 *            the imports to set
+	 * @param imports the imports to set
 	 */
 	public void setImports(List imports) {
 		this.imports = imports;
@@ -193,8 +195,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param dateTime
-	 *            the dateTime to set
+	 * @param dateTime the dateTime to set
 	 */
 	public void setDateTime(String dateTime) {
 		this.dateTime = dateTime;
@@ -208,8 +209,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param tableName
-	 *            the tableName to set
+	 * @param tableName the tableName to set
 	 */
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
@@ -223,8 +223,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param exportTables
-	 *            the exportTables to set
+	 * @param exportTables the exportTables to set
 	 */
 	public void setExportTables(List exportTables) {
 		this.exportTables = exportTables;
@@ -238,8 +237,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param columns
-	 *            the columns to set
+	 * @param columns the columns to set
 	 */
 	public void setColumns(List columns) {
 		this.columns = columns;
@@ -253,8 +251,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param voPackage
-	 *            the voPackage to set
+	 * @param voPackage the voPackage to set
 	 */
 	public void setVoPackage(String voPackage) {
 		this.voPackage = voPackage;
@@ -268,8 +265,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param daoPackage
-	 *            the daoPackage to set
+	 * @param daoPackage the daoPackage to set
 	 */
 	public void setDaoPackage(String daoPackage) {
 		this.daoPackage = daoPackage;
@@ -283,8 +279,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param daoName
-	 *            the daoName to set
+	 * @param daoName the daoName to set
 	 */
 	public void setDaoName(String daoName) {
 		this.daoName = daoName;
@@ -298,8 +293,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param voSubstr
-	 *            the voSubstr to set
+	 * @param voSubstr the voSubstr to set
 	 */
 	public void setVoSubstr(String voSubstr) {
 		this.voSubstr = voSubstr;
@@ -313,8 +307,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param voName
-	 *            the voName to set
+	 * @param voName the voName to set
 	 */
 	public void setVoName(String voName) {
 		this.voName = voName;
@@ -328,8 +321,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param entityName
-	 *            the entityName to set
+	 * @param entityName the entityName to set
 	 */
 	public void setEntityName(String entityName) {
 		this.entityName = entityName;
@@ -343,8 +335,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param entityPackage
-	 *            the entityPackage to set
+	 * @param entityPackage the entityPackage to set
 	 */
 	public void setEntityPackage(String entityPackage) {
 		this.entityPackage = entityPackage;
@@ -358,8 +349,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param fullNotNull
-	 *            the fullNotNull to set
+	 * @param fullNotNull the fullNotNull to set
 	 */
 	public void setFullNotNull(String fullNotNull) {
 		this.fullNotNull = fullNotNull;
@@ -373,8 +363,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param schema
-	 *            the schema to set
+	 * @param schema the schema to set
 	 */
 	public void setSchema(String schema) {
 		this.schema = schema;
@@ -388,8 +377,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param pkSizeEqualNotNullSize
-	 *            the pkSizeEqualNotNullSize to set
+	 * @param pkSizeEqualNotNullSize the pkSizeEqualNotNullSize to set
 	 */
 	public void setPkSizeEqualNotNullSize(String pkSizeEqualNotNullSize) {
 		this.pkSizeEqualNotNullSize = pkSizeEqualNotNullSize;
@@ -403,8 +391,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param pkIsAllColumn
-	 *            the pkIsAllColumn to set
+	 * @param pkIsAllColumn the pkIsAllColumn to set
 	 */
 	public void setPkIsAllColumn(String pkIsAllColumn) {
 		this.pkIsAllColumn = pkIsAllColumn;
@@ -418,8 +405,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param version
-	 *            the version to set
+	 * @param version the version to set
 	 */
 	public void setVersion(String version) {
 		this.version = version;
@@ -433,8 +419,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param projectName
-	 *            the projectName to set
+	 * @param projectName the projectName to set
 	 */
 	public void setProjectName(String projectName) {
 		this.projectName = projectName;
@@ -448,8 +433,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param author
-	 *            the author to set
+	 * @param author the author to set
 	 */
 	public void setAuthor(String author) {
 		this.author = author;
@@ -463,8 +447,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -478,8 +461,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param abstractPath
-	 *            the abstractPath to set
+	 * @param abstractPath the abstractPath to set
 	 */
 	public void setAbstractPath(String abstractPath) {
 		this.abstractPath = abstractPath;
@@ -493,8 +475,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param pkConstraint
-	 *            the pkConstraint to set
+	 * @param pkConstraint the pkConstraint to set
 	 */
 	public void setPkConstraint(String pkConstraint) {
 		this.pkConstraint = pkConstraint;
@@ -508,8 +489,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param voSerialUID
-	 *            the voSerialUID to set
+	 * @param voSerialUID the voSerialUID to set
 	 */
 	public void setVoSerialUID(String voSerialUID) {
 		this.voSerialUID = voSerialUID;
@@ -523,8 +503,7 @@ public class QuickVO implements Serializable {
 	}
 
 	/**
-	 * @param abstractVOSerialUID
-	 *            the abstractVOSerialUID to set
+	 * @param abstractVOSerialUID the abstractVOSerialUID to set
 	 */
 	public void setAbstractVOSerialUID(String abstractVOSerialUID) {
 		this.abstractVOSerialUID = abstractVOSerialUID;
@@ -558,5 +537,12 @@ public class QuickVO implements Serializable {
 		this.swaggerModel = swaggerModel;
 	}
 
-	
+	public boolean isReturnSelf() {
+		return returnSelf;
+	}
+
+	public void setReturnSelf(boolean returnSelf) {
+		this.returnSelf = returnSelf;
+	}
+
 }
