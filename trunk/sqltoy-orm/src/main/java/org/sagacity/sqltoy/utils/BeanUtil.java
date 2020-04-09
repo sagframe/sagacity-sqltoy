@@ -390,7 +390,8 @@ public class BeanUtil {
 				return (LocalTime) paramValue;
 			return DateUtil.asLocalTime(DateUtil.parseString(valueStr));
 		}
-		if (typeName.equals("java.math.biginteger")) {
+		//add 2020-4-9
+		if (typeName.equals("java.math.biginteger")||typeName.equals("biginteger")) {
 			return new BigInteger(convertBoolean(valueStr));
 		}
 		if (typeName.equals("long")) {
