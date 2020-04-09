@@ -1215,7 +1215,7 @@ public class SqlUtil {
 		case java.sql.Types.CHAR:
 			return idValue.toString();
 		case java.sql.Types.BIGINT:
-			return Long.valueOf(idValue.toString());
+			return new BigInteger(idValue.toString());
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
 			return new BigDecimal(idValue.toString());
