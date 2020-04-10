@@ -135,15 +135,15 @@ public class QuickVOConstants implements Serializable {
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
 			{ "YEAR", "LocalDate", "java.time.LocalDate" }, { "VARCHAR", "String", "" }, { "MEDIUMTEXT", "String", "" },
 			{ "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" }, { "LONGVARCHAR", "String", "" },
-			{ "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" }, { "STRING", "String", "" },
-			{ "FixedSTRING", "String", "" }, { "CHAR", "String", "" }, { "CHARACTER", "String", "" },
-			{ "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" }, { "Clob", "String", "java.sql.Clob" },
-			{ "NCLOB", "String", "java.sql.Clob" }, { "CLOB", "String", "oracle.sql.CLOB", "oracle" },
-			{ "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" }, { "Blob", "byte[]", "java.sql.Blob" },
-			{ "LONGBLOB", "byte[]", "java.sql.Blob" }, { "MEDIUMBLOB", "byte[]", "java.sql.Blob" },
-			{ "TEXT", "String", "" }, { "LONGTEXT", "String", "" }, { "TINYTEXT", "String" },
-			{ "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
-			{ "VARBINARY", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
+			{ "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" }, { "JSON", "String", "" },
+			{ "STRING", "String", "" }, { "FixedSTRING", "String", "" }, { "CHAR", "String", "" },
+			{ "CHARACTER", "String", "" }, { "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" },
+			{ "Clob", "String", "java.sql.Clob" }, { "NCLOB", "String", "java.sql.Clob" },
+			{ "CLOB", "String", "oracle.sql.CLOB", "oracle" }, { "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" },
+			{ "Blob", "byte[]", "java.sql.Blob" }, { "LONGBLOB", "byte[]", "java.sql.Blob" },
+			{ "MEDIUMBLOB", "byte[]", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
+			{ "TINYTEXT", "String" }, { "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" },
+			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
 
 	/**
 	 * 原始类型
@@ -160,9 +160,10 @@ public class QuickVOConstants implements Serializable {
 			{ "DATE", "DATE" }, { "DATETIME", "DATE" }, { "TIMESTAMP", "TIMESTAMP" }, { "TIMESTAMP(6)", "TIMESTAMP" },
 			{ "TIME", "TIME" }, { "CHAR", "CHAR" }, { "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "LONGBLOB", "BLOB" },
 			{ "MEDIUMBLOB", "BLOB" }, { "LONGTEXT", "VARCHAR" }, { "MEDIUMTEXT", "VARCHAR" }, { "TEXT", "VARCHAR" },
-			{ "TINYTEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" },
-			{ "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "BIGINT", "BIGINT" }, { "BIT", "BIT" },
-			{ "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" }, { "NUMERIC", "DECIMAL" }, { "IMAGE", "LONGVARBINARY" } };
+			{ "JSON", "VARCHAR" }, { "TINYTEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" },
+			{ "TINYINT", "TINYINT" }, { "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "BIGINT", "BIGINT" },
+			{ "BIT", "BIT" }, { "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" }, { "NUMERIC", "DECIMAL" },
+			{ "IMAGE", "LONGVARBINARY" } };
 
 	/**
 	 * 全局常量map
