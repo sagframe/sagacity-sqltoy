@@ -288,6 +288,13 @@ public interface SqlToyLazyDao {
 	 */
 	public QueryResult findByQuery(final QueryExecutor query);
 
+	/**
+	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参 
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @return
+	 */
 	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
 
 	/**
