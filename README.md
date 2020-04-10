@@ -32,6 +32,7 @@
 * sqltoy会不维护吗? 不要担心sqltoy其实发展至今已经10年多了,因为经历了2018~2019年大规模复杂场景应用非成熟了才开始推广,目前公司全部系统都基于此,sqltoy不但要维护更加要深入发展,变得更强更可靠。
 * sqltoy难道就是写sql?不是这样的，sqltoy其实是hibernate+mybatis的合计，还包括一个quickvo帮助从数据库生成pojo，是一个完整的体系。
 * sqltoy学习困难吗? 其实sqltoy学习是极其简单的,参考范例一个晚上绝对可以学会,规则极其统一简单。用学习mybatis五分之一的精力就足够。
+* sqltoy的sql对应xml文件难写吗?xml里面有schema,所有配置方式在eclipse或idea中都是可以自动提示,不需要死记硬背。
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
