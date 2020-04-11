@@ -283,4 +283,15 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
 	}
+
+	@Test
+	public void testNamedParam() throws InterruptedException {
+		String sql = "select t.DICT_KEY ,t.DICT_NAME ,t.DICT_TYPE ,date_format(t.UPDATE_TIME ,'%Y-%m-%d %H:%i:%s') UPDATE_TIME \r\n"
+				+ "from sqltoy_dict_detail t\r\n" + "where #[t.DICT_TYPE = :dictType]";
+		List result = (List) sqlToyLazyDao.findBySql(sql, new String[] { "dictType" }, new Object[] { "TRANS_CODE" },
+				null);
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
 }
