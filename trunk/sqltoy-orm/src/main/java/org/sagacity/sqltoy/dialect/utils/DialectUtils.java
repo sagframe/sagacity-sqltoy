@@ -112,9 +112,9 @@ public class DialectUtils {
 	/**
 	 * 查询from 匹配
 	 */
-	private static final String FROM_REGEX = "\\s+from[\\(|\\s+]";
+	private static final String FROM_REGEX = "\\s+from[\\(\\s+]";
 
-	private static final String WHERE_REGEX = "\\s+where[\\(|\\s+]";
+	private static final String WHERE_REGEX = "\\s+where[\\(\\s+]";
 
 	/**
 	 * @todo 处理分页sql的参数

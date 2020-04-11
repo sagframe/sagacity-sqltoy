@@ -335,14 +335,12 @@ public class SqlToyConstants {
 				return "CURRENT_TIMESTAMP";
 			}
 			return defaultValue;
-		} else {
-			return realDefault;
 		}
+		return realDefault;
 	}
 
 	/**
-	 * @param uncachedKeyResult
-	 *            the uncachedKeyResult to set
+	 * @param uncachedKeyResult the uncachedKeyResult to set
 	 */
 	public static void setUncachedKeyResult(String uncachedKeyResult) {
 		UNCACHED_KEY_RESULT = uncachedKeyResult;

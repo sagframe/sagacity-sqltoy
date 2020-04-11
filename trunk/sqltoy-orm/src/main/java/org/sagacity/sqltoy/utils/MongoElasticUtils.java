@@ -51,10 +51,13 @@ public class MongoElasticUtils {
 	private final static String BLANK = " ";
 
 	// nosql数据库的参数名称匹配
+//	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
+//			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\w+(\\.\\w+)*\\s*\\)");
 	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\w+(\\.\\w+)*\\s*\\)");
-
-	private static final Pattern SQL_NAMED_PATTERN = Pattern.compile("\\W\\:\\s*\\w+(\\.\\w+)*\\s*");
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
+	// private static final Pattern SQL_NAMED_PATTERN =
+	// Pattern.compile("\\W\\:\\s*\\w+(\\.\\w+)*\\s*");
+	private static final Pattern SQL_NAMED_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
 
 	private static SqlToyResult wrapNoSql(SqlToyConfig sqlToyConfig, String[] paramNames, Object[] paramValues) {
 		String mql = sqlToyConfig.getSql(null);

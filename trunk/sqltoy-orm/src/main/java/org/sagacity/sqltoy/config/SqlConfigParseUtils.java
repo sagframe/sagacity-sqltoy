@@ -77,19 +77,19 @@ public class SqlConfigParseUtils {
 	/**
 	 * 先通过分页最小化符合条件的数据集,然后再关联查询,建议@fast(xx)模式,@fastPage(xx) 为兼容旧版
 	 */
-	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w|\\W]+\\)");
+	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
 	/**
 	 * CTE 即 with as 用法
 	 */
 	public final static Pattern CTE_PATTERN = Pattern.compile(
-			"(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
+			"(?i)\\s*with\\s+[a-z0-9\\_]+\\s*(\\([a-z0-9\\_\\s\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 	/**
 	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
 	 */
 	// 提取Named条件参数,like =:paramName
 	// 排除日期函数中存在的named模式，如:to_char(date,'yyyy-MM-dd HH:mm:ss')
-	public final static Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-z|A-Z]+\\w*(\\.\\w+)*\\s*");
+	public final static Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
 	// sql中 in (?)条件
 	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
@@ -126,7 +126,7 @@ public class SqlConfigParseUtils {
 
 	// nosql数据库的参数名称匹配(参数必须要有字母)
 	public static final Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-z|A-Z]+\\w*(\\.\\w+)*\\s*\\)");
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
 
 	/**
 	 * @todo 判断sql语句中是否存在:named 方式的参数
