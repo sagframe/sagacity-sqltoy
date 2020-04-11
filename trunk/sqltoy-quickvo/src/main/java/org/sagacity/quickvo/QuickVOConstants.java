@@ -216,7 +216,7 @@ public class QuickVOConstants implements Serializable {
 		if (constantMap == null || constantMap.size() < 1 || target == null)
 			return target;
 		String result = target;
-		if (StringUtil.matches(result, "\\$\\{[\\w|\\.]+\\}")) {
+		if (StringUtil.matches(result, "\\$\\{[\\w\\.]+\\}")) {
 			Iterator iter = constantMap.entrySet().iterator();
 			Map.Entry entry;
 			while (iter.hasNext()) {
@@ -263,7 +263,7 @@ public class QuickVOConstants implements Serializable {
 	public static String getPropertyValue(String key) {
 		if (StringUtil.isBlank(key))
 			return key;
-		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w|\\.]+\\}$"))
+		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.]+\\}$"))
 			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
 		if (getKeyValue(key) != null)
 			return getKeyValue(key);

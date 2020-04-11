@@ -63,7 +63,7 @@ public class QuickVOStart {
 				// 加载位于driver目录下的jdbc驱动程序类库
 				logger.info("Begin load jdbc driver jar path from ./drivers!");
 				List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
-						new String[] { "[\\w|\\-|\\.]+\\.jar$" });
+						new String[] { "[\\w\\-\\.]+\\.jar$" });
 				ClassLoaderUtil.loadJarFiles(jars);
 			}
 			TaskController.setConfigModel(configModel);
