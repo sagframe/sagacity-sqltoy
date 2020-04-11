@@ -71,7 +71,7 @@ public class SqlUtil {
 	/**
 	 * sql中的单行注释
 	 */
-	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^(+|!)]");
+	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^+!]");
 
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
@@ -85,7 +85,7 @@ public class SqlUtil {
 	/**
 	 * 查询from 匹配
 	 */
-	public static final String FROM_REGEX = "\\s+from[\\(|\\s+]";
+	public static final String FROM_REGEX = "\\s+from[\\(\\s+]";
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
