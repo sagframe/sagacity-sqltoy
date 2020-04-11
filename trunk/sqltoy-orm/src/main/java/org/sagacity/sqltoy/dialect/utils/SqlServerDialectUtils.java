@@ -912,7 +912,8 @@ public class SqlServerDialectUtils {
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		if (lockMode != null) {
-			int fromIndex = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", loadSql, 0);
+			//int fromIndex = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", loadSql, 0);
+			int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
 			String selectPart = loadSql.substring(0, fromIndex);
 			String fromPart = loadSql.substring(fromIndex);
 			String[] sqlChips = fromPart.trim().split("\\s+");
