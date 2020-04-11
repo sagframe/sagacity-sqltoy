@@ -53,7 +53,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	private static final Pattern FROM = Pattern.compile("(?i)\\Wfrom\\\\W");
+	private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
 
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 

@@ -184,7 +184,7 @@ public class FileUtil {
 				return true;
 			}
 		} else {
-			if (StringUtil.matches(path, "^[a-z|A-Z]+:\\w*")) {
+			if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
 				return true;
 			}
 		}

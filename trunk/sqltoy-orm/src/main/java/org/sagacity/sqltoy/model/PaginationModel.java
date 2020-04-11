@@ -79,7 +79,7 @@ public class PaginationModel implements Serializable {
 	}
 
 	public Integer getPageSize() {
-		if (pageSize == null || pageSize <= 0)
+		if (pageSize == null || pageSize < 1)
 			return 10;
 		return pageSize;
 	}
@@ -102,7 +102,7 @@ public class PaginationModel implements Serializable {
 	 * @return the current value of the pageNo property
 	 */
 	public long getPageNo() {
-		if (this.pageNo <= 0)
+		if (this.pageNo < 1)
 			return 1;
 		return this.pageNo;
 	}
@@ -185,7 +185,7 @@ public class PaginationModel implements Serializable {
 	 * @return totalPage
 	 */
 	public long getTotalPage() {
-		if (this.pageSize <= 0) {
+		if (this.pageSize < 1) {
 			return 0;
 		}
 		return (this.recordCount + this.pageSize - 1) / this.pageSize;

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -567,6 +568,8 @@ public class ParamFilterUtils {
 					result[i] = new BigDecimal(value);
 				} else if (dataType.equals("date")) {
 					result[i] = DateUtil.parseString(value);
+				} else if (dataType.equals("biginteger")) {
+					result[i] = new BigInteger(value);
 				}
 			}
 		}
@@ -601,6 +604,8 @@ public class ParamFilterUtils {
 					result[i] = new BigDecimal(value);
 				} else if (dataType.equals("string")) {
 					result[i] = value;
+				} else if (dataType.equals("biginteger")) {
+					result[i] = new BigInteger(value);
 				}
 			}
 		}
@@ -627,6 +632,8 @@ public class ParamFilterUtils {
 				result = Float.valueOf(value.floatValue());
 			} else if (dataType.equals("double")) {
 				result = Double.valueOf(value.doubleValue());
+			} else if (dataType.equals("biginteger")) {
+				result = value.toBigInteger();
 			} else {
 				result = value;
 			}
@@ -743,7 +750,7 @@ public class ParamFilterUtils {
 				}
 			} else if (type == 2) {
 				if (NumberUtil.isNumber(contrast)
-						&& Double.parseDouble(param.toString()) == Double.parseDouble(contrast)) {
+						&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
 					return null;
 				}
 			} else if (param.toString().compareTo(contrast) == 0) {
@@ -790,7 +797,7 @@ public class ParamFilterUtils {
 			} else if (type == 2) {
 				// 非数字或相等
 				if (!NumberUtil.isNumber(contrast)
-						|| Double.parseDouble(param.toString()) == Double.parseDouble(contrast)) {
+						|| (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) == 0)) {
 					return param;
 				}
 			} else if (param.toString().compareTo(contrast) == 0) {
@@ -823,7 +830,7 @@ public class ParamFilterUtils {
 			if (((LocalTime) param).isBefore(LocalTime.parse(contrast)))
 				return null;
 		} else if (param instanceof Number) {
-			if (Double.parseDouble(param.toString()) < Double.parseDouble(contrast))
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) < 0)
 				return null;
 		} else if (param.toString().compareTo(contrast) < 0) {
 			return null;
@@ -853,7 +860,7 @@ public class ParamFilterUtils {
 			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) <= 0)
 				return null;
 		} else if (param instanceof Number) {
-			if (Double.parseDouble(param.toString()) <= Double.parseDouble(contrast))
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) <= 0)
 				return null;
 		} else if (param.toString().compareTo(contrast) <= 0) {
 			return null;
@@ -883,7 +890,7 @@ public class ParamFilterUtils {
 			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) > 0)
 				return null;
 		} else if (param instanceof Number) {
-			if (Double.parseDouble(param.toString()) > Double.parseDouble(contrast))
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) > 0)
 				return null;
 		} else if (param.toString().compareTo(contrast) > 0) {
 			return null;
@@ -913,7 +920,7 @@ public class ParamFilterUtils {
 			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) >= 0)
 				return null;
 		} else if (param instanceof Number) {
-			if (Double.parseDouble(param.toString()) >= Double.parseDouble(contrast))
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) >= 0)
 				return null;
 		} else if (param.toString().compareTo(contrast) >= 0) {
 			return null;
@@ -941,8 +948,8 @@ public class ParamFilterUtils {
 					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0)
 				return null;
 		} else if (param instanceof Number) {
-			if (Double.parseDouble(param.toString()) >= Double.parseDouble(beginContrast)
-					&& Double.parseDouble(param.toString()) <= Double.parseDouble(endContrast))
+			if ((new BigDecimal(param.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
+					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0))
 				return null;
 		} else if (param.toString().compareTo(beginContrast) >= 0 && param.toString().compareTo(endContrast) <= 0) {
 			return null;
