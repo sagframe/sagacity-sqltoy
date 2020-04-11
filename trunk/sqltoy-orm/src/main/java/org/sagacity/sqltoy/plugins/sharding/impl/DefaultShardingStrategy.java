@@ -136,8 +136,8 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			return null;
 		if (index > shardingTable.length - 1) {
 			return shardingTable[shardingTable.length - 1].trim();
-		} else
-			return shardingTable[index].trim();
+		}
+		return shardingTable[index].trim();
 	}
 
 	/*
@@ -177,24 +177,21 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @param dataSourceWeight
-	 *            the dataSourceWeight to set
+	 * @param dataSourceWeight the dataSourceWeight to set
 	 */
 	public void setDataSourceWeight(HashMap<String, Integer> dataSourceWeight) {
 		this.dataSourceWeight = dataSourceWeight;
 	}
 
 	/**
-	 * @param checkSeconds
-	 *            the checkSeconds to set
+	 * @param checkSeconds the checkSeconds to set
 	 */
 	public void setCheckSeconds(int checkSeconds) {
 		this.checkSeconds = checkSeconds;
 	}
 
 	/**
-	 * @param tableNamesMap
-	 *            the tableNamesMap to set
+	 * @param tableNamesMap the tableNamesMap to set
 	 */
 	public void setTableNamesMap(HashMap<String, String> tableMap) {
 		Iterator<Map.Entry<String, String>> iter = tableMap.entrySet().iterator();
@@ -207,8 +204,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @param days
-	 *            the days to set
+	 * @param days the days to set
 	 */
 	public void setDays(String days) {
 		String[] daysAry = days.split(",");
@@ -219,8 +215,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	}
 
 	/**
-	 * @param dateParams
-	 *            the dateParams to set
+	 * @param dateParams the dateParams to set
 	 */
 	public void setDateParams(String dateParams) {
 		this.dateParams = dateParams.toLowerCase().split(",");

@@ -11,7 +11,6 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *              例如 @substr(${colName},0,2) 从第0位开始切去2位字符,startIndex<0
  *              时，表示从尾部截取指定长度字符
  * @author zhongxuchen
- * 
  */
 public class SubString extends AbstractMacro {
 
@@ -28,7 +27,7 @@ public class SubString extends AbstractMacro {
 			if (keyValues != null && keyValues.containsKey(baseParam)) {
 				paramValue = keyValues.get(baseParam).toString();
 			} else {
-				paramValue=baseParam;
+				paramValue = baseParam;
 			}
 		}
 		if (StringUtil.isBlank(paramValue))
@@ -51,31 +50,4 @@ public class SubString extends AbstractMacro {
 		// 长度小于切割长度
 		return paramValue.substring(start);
 	}
-
-	// public static void main(String[] args) {
-	// String[] params = { "chen", "3", "2" };
-	// String paramValue = params[0].toString();
-	//
-	// int strLength = paramValue.length();
-	// int start = Integer.parseInt(params[1]);
-	// int length = Integer.parseInt(params[2]);
-	// String result = "";
-	// // 开始位置大于整体长度
-	// if (start >= strLength) {
-	// result = "";
-	// } else {
-	// // start 为负数,表示截取尾部长度
-	// if (start < 0) {
-	// start = strLength - length;
-	// }
-	// // 长度符合切割标准
-	// if ((strLength - start) > length) {
-	// result = paramValue.substring(start, start + length);
-	// } else {
-	// // 长度小于切割长度
-	// result = paramValue.substring(start);
-	// }
-	// }
-	// System.err.println(result);
-	// }
 }

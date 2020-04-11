@@ -21,7 +21,7 @@ public class ColsChainRelative {
 		if (result == null || result.isEmpty())
 			return;
 		// |------- 1月-------|------- 2月 ------|------ 3月--------|
-		// |交易笔数  | 金额 | 收入    |交易笔数 | 金额 | 收入   |交易笔数 | 金额 | 收入 |
+		// |交易笔数 | 金额 | 收入 |交易笔数 | 金额 | 收入 |交易笔数 | 金额 | 收入 |
 		int dataSize = result.size();
 		int dataWidth = ((List) result.get(0)).size();
 		boolean isAppend = relativeModel.isInsert();
@@ -36,9 +36,9 @@ public class ColsChainRelative {
 				relativeIndexs[i] = i;
 			}
 		}
-		//从大到小排序
+		// 从大到小排序
 		CollectionUtil.sortArray(relativeIndexs, true);
-		
+
 		int relativeSize = relativeIndexs.length;
 		double divData;
 		double divedData;
@@ -47,7 +47,7 @@ public class ColsChainRelative {
 		int divIndex;
 		int divedIndex;
 		double multiply = relativeModel.getMultiply();
-		//输出格式
+		// 输出格式
 		String format = relativeModel.getFormat();
 		List rowList;
 		// 开始列

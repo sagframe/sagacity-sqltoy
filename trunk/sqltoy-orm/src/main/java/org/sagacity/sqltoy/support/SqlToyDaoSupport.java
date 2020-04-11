@@ -64,7 +64,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modified Date:2017-11-1 {增加对象操作分库分表功能实现,精简和优化代码}
  * @modified Date:2019-3-1 {增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索}
  * @modified Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
- * @modified Date:2020-4-5 {提供分页查询可以设置跳过查总记录数的机制,PaginationModel中设置skipQueryCount=true,默认为false}
+ * @modified Date:2020-4-5
+ *           {提供分页查询可以设置跳过查总记录数的机制,PaginationModel中设置skipQueryCount=true,默认为false}
  */
 @SuppressWarnings("rawtypes")
 public class SqlToyDaoSupport {
@@ -518,8 +519,9 @@ public class SqlToyDaoSupport {
 	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
-		if (voClass != null)
+		if (voClass != null) {
 			query.resultType(voClass);
+		}
 		return (List<T>) findByQuery(query).getRows();
 	}
 
@@ -537,9 +539,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
-		
+
 		// 跳过查询总记录数量
-		if (paginationModel.getSkipQueryCount()!=null && paginationModel.getSkipQueryCount()) {
+		if (paginationModel.getSkipQueryCount() != null && paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
 					paginationModel.getPageNo(), paginationModel.getPageSize(),
 					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
@@ -561,8 +563,9 @@ public class SqlToyDaoSupport {
 	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
 			final String[] paramsNamed, final Object[] paramsValue, Class voClass) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
-		if (voClass != null)
+		if (voClass != null) {
 			query.resultType(voClass);
+		}
 		return findPageByQuery(paginationModel, query).getPageResult();
 	}
 
@@ -583,8 +586,9 @@ public class SqlToyDaoSupport {
 	protected <T> List<T> findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass, final double topSize) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
-		if (voClass != null)
+		if (voClass != null) {
 			query.resultType(voClass);
+		}
 		return (List<T>) findTopByQuery(query, topSize).getRows();
 	}
 
@@ -615,8 +619,9 @@ public class SqlToyDaoSupport {
 	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, Class<T> voClass, final double randomCount) {
 		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramsNamed, paramsValue);
-		if (voClass != null)
+		if (voClass != null) {
 			query.resultType(voClass);
+		}
 		return (List<T>) getRandomResult(query, randomCount).getRows();
 	}
 
