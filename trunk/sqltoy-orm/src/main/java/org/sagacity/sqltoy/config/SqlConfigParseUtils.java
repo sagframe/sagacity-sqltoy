@@ -37,19 +37,18 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2011-6-4, 修改了因sql中存在":"符号导致的错误}
  * @modify {Date:2011-12-11, 优化了StringMatch方式，将Pattern放在外面定义，避免每次重复定义消耗性能}
  * @modify {Date:2012-7-10, 完善了in ()条件查询，提供了数组扩充参数和字符串替换成 in (value)两种模式
- *               解决了可能通过in()模式的sql注入 }
+ *         解决了可能通过in()模式的sql注入 }
  * @modify {Date:2012-8-3,
- *               修改了:named匹配正则表达式以及匹配处理，排除to_char(date,'HH:mm:ss')形式出现的错误}
+ *         修改了:named匹配正则表达式以及匹配处理，排除to_char(date,'HH:mm:ss')形式出现的错误}
  * @modify {Date:2012-8-23, 修复了直接用?替代变量名称导致=符合丢失错误}
  * @modify {Date:2012-9-11, 对于xml中配置的sql文件已经通过sql加载时完成了参数名称的替换,避免每次执行时的替换}
  * @modify {Date:2012-11-15,将in (:named)
- *               named对应的值因使用combineInStr数组长度为1自动添加了'value', 单引号而导致查询错误问题}
+ *         named对应的值因使用combineInStr数组长度为1自动添加了'value', 单引号而导致查询错误问题}
  * @modify {Date:2015-12-09,修改#[sql],sql中如果没有参数剔除#[sql]}
- * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及
- *               #[@value(:named) sql] 形式,使得增强sql组织拼装能力}
+ * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及 #[@value(:named)
+ *         sql] 形式,使得增强sql组织拼装能力}
  * @modify {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
- * @modify {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if()
- *               基于freemarker的复杂逻辑判断代码}
+ * @modify {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if() 基于freemarker的复杂逻辑判断代码}
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
@@ -79,17 +78,12 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
-	/**
-	 * CTE 即 with as 用法
-	 */
-	public final static Pattern CTE_PATTERN = Pattern.compile(
-			"(?i)\\s*with\\s+[a-z0-9\\_]+\\s*(\\([a-z0-9\\_\\s\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
-	/**
-	 * 定义sql语句中条件参数命名模式的匹配表达式(必须要有字母)
-	 */
-	// 提取Named条件参数,like =:paramName
-	// 排除日期函数中存在的named模式，如:to_char(date,'yyyy-MM-dd HH:mm:ss')
-	public final static Pattern PARAM_NAME_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
+//	/**
+//	 * CTE 即 with as 用法
+//	 */
+//	public final static Pattern CTE_PATTERN = Pattern
+//			.compile("(?i)\\s*with\\s+[a-z0-9\\_]+\\s*(\\([a-z0-9\\_\\s\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
+
 	// sql中 in (?)条件
 	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
@@ -124,17 +118,13 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
 
-	// nosql数据库的参数名称匹配(参数必须要有字母)
-	public static final Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
-
 	/**
 	 * @todo 判断sql语句中是否存在:named 方式的参数
 	 * @param sql
 	 * @return
 	 */
 	public static boolean hasNamedParam(String sql) {
-		return StringUtil.matches(sql, PARAM_NAME_PATTERN);
+		return StringUtil.matches(sql, SqlToyConstants.SQL_NAMED_PATTERN);
 	}
 
 	/**
@@ -152,7 +142,7 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean hasWith(String sql) {
-		return StringUtil.matches(sql, CTE_PATTERN);
+		return StringUtil.matches(sql, SqlToyConstants.withPattern);
 	}
 
 	/**
@@ -183,7 +173,7 @@ public class SqlConfigParseUtils {
 			return new SqlToyResult(queryStr, paramsValue);
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		// 是否:paramName 形式的参数模式
-		boolean isNamedArgs = StringUtil.matches(queryStr, PARAM_NAME_PATTERN);
+		boolean isNamedArgs = StringUtil.matches(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
@@ -261,7 +251,7 @@ public class SqlConfigParseUtils {
 		// 提取sql语句中的命名参数
 		SqlParamsModel sqlParam = new SqlParamsModel();
 		sqlParam.setSql(queryStr);
-		Matcher m = PARAM_NAME_PATTERN.matcher(queryStr);
+		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsName = new ArrayList<String>();
 		StringBuilder lastSql = new StringBuilder();
@@ -293,7 +283,7 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static String[] getSqlParamsName(String queryStr, boolean distinct) {
-		Matcher m = PARAM_NAME_PATTERN.matcher(queryStr);
+		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
 		String paramName;
@@ -322,7 +312,7 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static String[] getNoSqlParamsName(String queryStr, boolean distinct) {
-		Matcher m = NOSQL_NAMED_PATTERN.matcher(queryStr);
+		Matcher m = SqlToyConstants.NOSQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
 		String paramName;

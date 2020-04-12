@@ -124,8 +124,23 @@ public class SqlToyConstants {
 	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
-	private final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*\\_?[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	public final static Pattern paramPattern = Pattern
+			.compile("\\$\\{\\s*[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+
+	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("\\W\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
+	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
+	
+	// mysql8 支持 with recursive cte as
+	// postgresql12 支持materialized 物化
+	// with aliasTable as materialized ()
+	// with aliasTable as not materialized ()
+	public final static Pattern withPattern = Pattern.compile(
+			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
+
+	// with 下面多个as
+	public final static Pattern otherWithPattern = Pattern.compile(
+			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	/**
 	 * 不输出sql的表达式

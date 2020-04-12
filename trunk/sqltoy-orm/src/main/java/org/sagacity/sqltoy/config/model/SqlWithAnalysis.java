@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -27,20 +28,14 @@ public class SqlWithAnalysis implements Serializable {
 	private static final long serialVersionUID = -5841684922722930298L;
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
-	// with aliasTable as materialized () 
+	// with aliasTable as materialized ()
 	// with aliasTable as not materialized ()
-	private final Pattern withPattern = Pattern.compile(
-			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
-
-	// private final Pattern withPattern = Pattern.compile(
-	// "(?i)\\s*with\\s+[a-z|0-9|\\_]+\\s+as\\s*\\(");
-
-	// with 下面多个as
-	private final Pattern otherWithPattern = Pattern.compile(
-			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
-
-	// private final Pattern otherWithPattern = Pattern.compile(
-	// "(?i)\\s*\\,\\s*[a-z|0-9|\\_]+as\\s*\\(");
+//	private final Pattern withPattern = Pattern.compile(
+//			"(?i)\\s*with\\s+([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
+//
+//	// with 下面多个as
+//	private final Pattern otherWithPattern = Pattern.compile(
+//			"(?i)\\s*\\,\\s*([a-z]+\\s+)?[a-z|0-9|\\_]+\\s*(\\([a-z|0-9|\\_|\\s|\\,]+\\))?\\s+as\\s*(\\s+[a-z|\\_]+){0,2}\\s*\\(");
 
 	private final Pattern asPattern = Pattern.compile("\\Was");
 
@@ -109,7 +104,7 @@ public class SqlWithAnalysis implements Serializable {
 		String ext;
 		StringBuilder withSqlBuffer = null;
 		// 单个with
-		Matcher withAsMatcher = withPattern.matcher(tailSql);
+		Matcher withAsMatcher = SqlToyConstants.withPattern.matcher(tailSql);
 		String groupStr;
 		String groupLow;
 		String withAfter;
@@ -138,7 +133,7 @@ public class SqlWithAnalysis implements Serializable {
 		} else
 			return;
 		// with 中包含多个 as
-		Matcher otherMatcher = otherWithPattern.matcher(tailSql);
+		Matcher otherMatcher = SqlToyConstants.otherWithPattern.matcher(tailSql);
 		while (otherMatcher.find()) {
 			if (otherMatcher.start() != 0)
 				break;
@@ -170,8 +165,7 @@ public class SqlWithAnalysis implements Serializable {
 	}
 
 	/**
-	 * @param hasWith
-	 *            the hasWith to set
+	 * @param hasWith the hasWith to set
 	 */
 	public void setHasWith(boolean hasWith) {
 		this.hasWith = hasWith;
