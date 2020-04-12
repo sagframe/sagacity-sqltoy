@@ -286,12 +286,18 @@ public class QueryCaseTest {
 
 	@Test
 	public void testNamedParam() throws InterruptedException {
-		String sql = "select t.DICT_KEY ,t.DICT_NAME ,t.DICT_TYPE ,date_format(t.UPDATE_TIME ,'%Y-%m-%d %H:%i:%s') UPDATE_TIME \r\n"
-				+ "from sqltoy_dict_detail t\r\n" + "where #[t.DICT_TYPE = :dictType]";
-		List result = (List) sqlToyLazyDao.findBySql(sql, new String[] { "dictType" }, new Object[] { "TRANS_CODE" },
-				null);
-		for (int i = 0; i < result.size(); i++) {
-			System.err.println(JSON.toJSONString(result.get(i)));
+		String sql = "with d as (\r\n" + "                      select\r\n"
+				+ "                          DATE_FORMAT(d.UPDATE_TIME,'%Y-%m-%d %H:%i:%s') CREATE_TIME,\r\n"
+				+ "                          d.DICT_TYPE,\r\n" + "                          d.DICT_KEY,\r\n"
+				+ "                          d.DICT_NAME,\r\n" + "                          d.SHOW_INDEX\r\n"
+				+ "                      from sqltoy_dict_detail d\r\n"
+				+ "                      where d.`STATUS`=1 \r\n" + "                    )\r\n"
+				+ "                    select *\r\n" + "                    from d\r\n"
+				+ "                    where 1=1 \r\n" + "                        #[and d.DICT_TYPE=:dictType]";
+		PaginationModel result = (PaginationModel) sqlToyLazyDao.findPageBySql(new PaginationModel(), sql,
+				new String[] { "dictType" }, new Object[] { "TRANS_CODE" }, null);
+		for (int i = 0; i < result.getRows().size(); i++) {
+			System.err.println(JSON.toJSONString(result.getRows().get(i)));
 		}
 	}
 }
