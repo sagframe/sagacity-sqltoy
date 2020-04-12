@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -49,15 +50,6 @@ public class MongoElasticUtils {
 	private final static String SQL_PSEUDO_END_MARK = "]";
 	private final static String MQL_PSEUDO_END_MARK = "</#>";
 	private final static String BLANK = " ";
-
-	// nosql数据库的参数名称匹配
-//	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
-//			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\w+(\\.\\w+)*\\s*\\)");
-	private static final Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
-	// private static final Pattern SQL_NAMED_PATTERN =
-	// Pattern.compile("\\W\\:\\s*\\w+(\\.\\w+)*\\s*");
-	private static final Pattern SQL_NAMED_PATTERN = Pattern.compile("\\W\\:\\s*\\d*\\_?[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
 
 	private static SqlToyResult wrapNoSql(SqlToyConfig sqlToyConfig, String[] paramNames, Object[] paramValues) {
 		String mql = sqlToyConfig.getSql(null);
@@ -145,7 +137,7 @@ public class MongoElasticUtils {
 		// 兼容#[] 和<#></#> 两种模式配置
 		String startMark = isMqlMark ? MQL_PSEUDO_START_MARK : SQL_PSEUDO_START_MARK;
 		String endMark = isMqlMark ? MQL_PSEUDO_END_MARK : SQL_PSEUDO_END_MARK;
-		Pattern namedPattern = sqlMode ? SQL_NAMED_PATTERN : NOSQL_NAMED_PATTERN;
+		Pattern namedPattern = sqlMode ? SqlToyConstants.SQL_NAMED_PATTERN : SqlToyConstants.NOSQL_NAMED_PATTERN;
 		int startMarkLength = startMark.length();
 		int endMarkLength = endMark.length();
 		int pseudoMarkStart = queryStr.indexOf(startMark);
@@ -281,7 +273,7 @@ public class MongoElasticUtils {
 	public static String replaceNoSqlParams(String sql, Object[] paramValues, String charSign) {
 		if (paramValues == null || paramValues.length == 0)
 			return sql;
-		Matcher m = NOSQL_NAMED_PATTERN.matcher(sql);
+		Matcher m = SqlToyConstants.NOSQL_NAMED_PATTERN.matcher(sql);
 		StringBuilder realMql = new StringBuilder();
 		String method;
 		String groupStr;
@@ -349,7 +341,7 @@ public class MongoElasticUtils {
 	public static String replaceSqlParams(String sql, Object[] paramValues, String charSign) {
 		if (paramValues == null || paramValues.length == 0)
 			return sql;
-		Matcher m = SQL_NAMED_PATTERN.matcher(sql);
+		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(sql);
 		StringBuilder realMql = new StringBuilder();
 		int start = 0;
 		int index = 0;
