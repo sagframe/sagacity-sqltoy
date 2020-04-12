@@ -25,7 +25,7 @@ spring:
          removeAbandoned: true
          removeAbandonedTimeout: 300
     sqltoy:
-        sqlResourcesDir: classpath:/com/sagframe/sqltoy/showcase
+        sqlResourcesDir: classpath:com/sagframe/sqltoy/showcase
         translateConfig: classpath:sqltoy-translate.xml
         debug: true
         # 设置默认使用的datasource(可选配置)
