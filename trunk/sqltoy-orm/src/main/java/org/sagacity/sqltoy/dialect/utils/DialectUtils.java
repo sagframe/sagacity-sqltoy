@@ -2199,18 +2199,12 @@ public class DialectUtils {
 	 * @return
 	 */
 	private static int getParamsCount(String queryStr) {
-		int paramCnt = 0;
 		if (StringUtil.isBlank(queryStr))
-			return paramCnt;
+			return 0;
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
-		String sign = "?";
 		if (queryStr.indexOf("?") == -1) {
-			sign = ":";
+			return StringUtil.matchCnt(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
 		}
-		int index = 0;
-		while ((index = queryStr.indexOf(sign, index + 1)) != -1) {
-			paramCnt++;
-		}
-		return paramCnt;
+		return StringUtil.matchCnt(queryStr, "\\?");
 	}
 }
