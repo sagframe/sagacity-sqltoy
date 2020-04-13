@@ -407,8 +407,11 @@ public class BeanUtil {
 			return Double.valueOf(valueStr).doubleValue();
 		}
 		// update by 2020-4-13增加Byte类型的处理
-		if (typeName.equals("java.lang.byte") || typeName.equals("byte")) {
+		if (typeName.equals("java.lang.byte")) {
 			return Byte.valueOf(valueStr);
+		}
+		if (typeName.equals("byte")) {
+			return Byte.valueOf(valueStr).byteValue();
 		}
 		// byte数组
 		if (typeName.equals("[b")) {
