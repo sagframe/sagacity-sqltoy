@@ -259,12 +259,25 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<excludes>
-					<exclude>**/*.java</exclude>
 					<exclude>**/*.xml</exclude>
 					<exclude>**/*.properties</exclude>
 				</excludes>
 			</resource>
 		</resources>
+		<testResources>
+			<testResource>
+				<directory>src/test/java</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+		</testResources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
