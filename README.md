@@ -78,7 +78,7 @@ where #[t.ORDER_ID=:orderId]
       #[and t.TRANS_DATE<:endDate]  
 ```
 
-* mybatis的写法(一板一眼很工程化)
+* mybatis的写法(一板一眼很工程化),sqltoy比这个香多少倍?其实根本就无法比,因为mybatis这种写法就是一个负数!
 
 ```
  select *
