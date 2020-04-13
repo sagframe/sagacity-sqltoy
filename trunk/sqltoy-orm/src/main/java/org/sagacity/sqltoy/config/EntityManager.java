@@ -201,7 +201,7 @@ public class EntityManager {
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 
-				// 主键约束
+				// 主键约束(for postgresql)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
