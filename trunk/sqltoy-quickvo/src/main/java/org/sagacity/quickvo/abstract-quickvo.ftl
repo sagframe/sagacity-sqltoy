@@ -32,7 +32,8 @@ import ${quickVO.voPackage}.${exportTable.pkRefTableJavaName?cap_first};
 /**
  * @project <#if (quickVO.projectName?exists)>${quickVO.projectName}</#if>
  * @version <#if (quickVO.version?exists)>${quickVO.version}</#if>
- * Table: ${quickVO.tableName}<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,Remark:${quickVO.tableRemark}</#if>   
+ * Table: ${quickVO.tableName}<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,Remark:${quickVO.tableRemark}</#if> 
+ * pk_constraint only for postgresql  
  */
 <#if (quickVO.swaggerModel)>
 @ApiModel(value="${quickVO.voName}"<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,description="${quickVO.tableRemark}"</#if>)
