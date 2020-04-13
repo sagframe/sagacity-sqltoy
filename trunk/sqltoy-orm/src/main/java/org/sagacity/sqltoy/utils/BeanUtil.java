@@ -229,6 +229,8 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.DATE;
 					} else if (typeName.equals("time")) {
 						fieldsType[i] = java.sql.Types.TIME;
+					} else if (typeName.equals("byte")) {
+						fieldsType[i] = java.sql.Types.TINYINT;
 					} else {
 						fieldsType[i] = java.sql.Types.NULL;
 					}
