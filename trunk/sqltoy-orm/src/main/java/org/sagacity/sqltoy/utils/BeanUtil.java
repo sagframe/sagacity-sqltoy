@@ -40,8 +40,8 @@ public class BeanUtil {
 
 	/**
 	 * <p>
-	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误 
-	   update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作
+	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误 update 2020-04-09
+	 * 支持setXXX()并返回对象本身,适配链式操作
 	 * </p>
 	 * 
 	 * @todo 获取指定名称的方法集
@@ -405,6 +405,10 @@ public class BeanUtil {
 		}
 		if (typeName.equals("double")) {
 			return Double.valueOf(valueStr).doubleValue();
+		}
+		// update by 2020-4-13增加Byte类型的处理
+		if (typeName.equals("java.lang.byte")) {
+			return Byte.valueOf(valueStr);
 		}
 		// byte数组
 		if (typeName.equals("[b")) {
