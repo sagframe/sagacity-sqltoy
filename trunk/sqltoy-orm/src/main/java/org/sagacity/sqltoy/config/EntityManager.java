@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.config.annotation.LoadSql;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.PaginationSql;
 import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.annotation.Strategy;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -288,7 +289,7 @@ public class EntityManager {
 		if (entityMeta != null) {
 			entitysMetaMap.put(entityClass, entityMeta);
 		} else {
-			logger.error("类型检查错误[SqlToy EntityCLass:{}] 注解配置非法,请检查!", entityClass.getName());
+			logger.error("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", entityClass.getName());
 		}
 		return entityMeta;
 	}
