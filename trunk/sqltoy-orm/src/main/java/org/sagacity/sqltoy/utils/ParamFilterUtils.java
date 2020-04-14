@@ -66,8 +66,9 @@ public class ParamFilterUtils {
 		for (ParamFilterModel paramFilterModel : filters) {
 			filterParams = paramFilterModel.getParams();
 			// 通配符表示针对所有参数
-			if (filterParams.length == 1 && filterParams[0].equals("*"))
+			if (filterParams.length == 1 && filterParams[0].equals("*")) {
 				filterParams = paramsName;
+			}
 			// 排他性参数(当某些参数值都不为null,则设置其他参数值为null)
 			if (paramFilterModel.getFilterType().equals("exclusive") && paramFilterModel.getUpdateParams() != null) {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
