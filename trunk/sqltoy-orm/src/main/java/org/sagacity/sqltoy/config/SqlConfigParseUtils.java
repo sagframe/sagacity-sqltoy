@@ -547,18 +547,18 @@ public class SqlConfigParseUtils {
 		int parameterMarkCnt = 0;
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
-		boolean hasIn = false;
+		// boolean hasIn = false;
 		String partSql = null;
 		Object[] inParamArray;
 		String argValue;
 		Collection inParamList;
 		while (matched) {
-			hasIn = false;
+			// hasIn = false;
 			end = m.end();
+			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
 			if (null != paramsValue[parameterMarkCnt - 1]) {
-				hasIn = true;
-				partSql = ARG_NAME;
+				// hasIn = true;
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
 						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
@@ -591,10 +591,10 @@ public class SqlConfigParseUtils {
 				}
 			}
 			// 存在in(?)
-			if (hasIn) {
-				lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
-				start = end;
-			}
+			// if (hasIn) {
+			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
+			start = end;
+			// }
 			matched = m.find(end);
 		}
 		// 添加尾部sql
