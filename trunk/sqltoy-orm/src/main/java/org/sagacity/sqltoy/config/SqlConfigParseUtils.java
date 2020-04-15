@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
+ * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -77,12 +78,6 @@ public class SqlConfigParseUtils {
 	 * 先通过分页最小化符合条件的数据集,然后再关联查询,建议@fast(xx)模式,@fastPage(xx) 为兼容旧版
 	 */
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
-
-//	/**
-//	 * CTE 即 with as 用法
-//	 */
-//	public final static Pattern CTE_PATTERN = Pattern
-//			.compile("(?i)\\s*with\\s+[a-z0-9\\_]+\\s*(\\([a-z0-9\\_\\s\\,]+\\))?\\s+as\\s*(\\s+materialized)?\\s*\\(");
 
 	// sql中 in (?)条件
 	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
@@ -527,7 +522,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2020-4-15 修复参数为null时,忽视了匹配的in(?)
+	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
 	 * @todo 处理sql 语句中的in 条件，功能有2类： 1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
 	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
 	 * @param sqlToyResult
