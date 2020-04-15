@@ -4,6 +4,7 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
 import com.sagframe.sqltoy.showcase.vo.DictDetailVO;
 import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
+import com.sagframe.sqltoy.showcase.vo.TestVO;
 import com.sagframe.sqltoy.utils.ShowCaseUtils;
 
 /**
@@ -51,7 +53,6 @@ public class QueryCaseTest {
 	/**
 	 * 初次先执行此方法, 加载数据字典、订单等模拟数据sql文件
 	 */
-	// @Before
 	@Test
 	public void initData() {
 		// 加载初始化数据脚本(最好手工执行数据初始化,便于演示缓存翻译功能)
@@ -299,5 +300,24 @@ public class QueryCaseTest {
 		for (int i = 0; i < result.getRows().size(); i++) {
 			System.err.println(JSON.toJSONString(result.getRows().get(i)));
 		}
+	}
+
+	@Test
+	public void testSearchBitType() throws InterruptedException {
+		String sql = "select * from sqltoy_test";
+		List<TestVO> result = sqlToyLazyDao.findBySql(sql, new TestVO());
+		for (int i = 0; i < result.size(); i++) {
+			System.err.println(JSON.toJSONString(result.get(i)));
+		}
+	}
+	
+	@Test
+	public void testSaveBitType() throws InterruptedException {
+		TestVO testVO=new TestVO();
+		testVO.setId(true);
+		testVO.setName("hello");
+		testVO.setSallary(new BigInteger("2000"));
+		sqlToyCRUDService.save(testVO);
+		
 	}
 }

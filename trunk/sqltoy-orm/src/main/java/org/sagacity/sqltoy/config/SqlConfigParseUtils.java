@@ -527,6 +527,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * update 2020-4-15 修复参数为null时,忽视了匹配的in(?)
 	 * @todo 处理sql 语句中的in 条件，功能有2类： 1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
 	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
 	 * @param sqlToyResult
@@ -545,20 +546,19 @@ public class SqlConfigParseUtils {
 		List paramValueList = CollectionUtil.arrayToList(paramsValue);
 		// ?符合出现的次数累计
 		int parameterMarkCnt = 0;
+		//通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
-		// boolean hasIn = false;
+
 		String partSql = null;
 		Object[] inParamArray;
 		String argValue;
 		Collection inParamList;
 		while (matched) {
-			// hasIn = false;
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
 			if (null != paramsValue[parameterMarkCnt - 1]) {
-				// hasIn = true;
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
 						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
@@ -590,11 +590,10 @@ public class SqlConfigParseUtils {
 					}
 				}
 			}
-			// 存在in(?)
-			// if (hasIn) {
+
+			//用新的?,?,,, 代替原本单? 号
 			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
 			start = end;
-			// }
 			matched = m.find(end);
 		}
 		// 添加尾部sql
