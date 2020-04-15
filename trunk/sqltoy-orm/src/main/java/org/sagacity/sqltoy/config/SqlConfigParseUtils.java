@@ -546,20 +546,19 @@ public class SqlConfigParseUtils {
 		List paramValueList = CollectionUtil.arrayToList(paramsValue);
 		// ?符合出现的次数累计
 		int parameterMarkCnt = 0;
+		//通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
-		// boolean hasIn = false;
 		String partSql = null;
 		Object[] inParamArray;
 		String argValue;
 		Collection inParamList;
 		while (matched) {
-			// hasIn = false;
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
+	
 			if (null != paramsValue[parameterMarkCnt - 1]) {
-				// hasIn = true;
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
 						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
@@ -591,11 +590,9 @@ public class SqlConfigParseUtils {
 					}
 				}
 			}
-			// 存在in(?)
-			// if (hasIn) {
+			//用新的?,?,,, 代替原本单? 号
 			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
 			start = end;
-			// }
 			matched = m.find(end);
 		}
 		// 添加尾部sql
