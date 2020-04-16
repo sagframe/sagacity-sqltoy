@@ -522,10 +522,6 @@ public class ShardingUtils {
 					BeanUtil.setProperty(entities.get(i), pks[0],
 							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
 									null, idType, idLength, sequenceSize));
-
-//					PropertyUtils.setProperty(entities.get(i), pks[0],
-//							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
-//									null, idType, idLength, sequenceSize));
 				}
 			}
 		}
