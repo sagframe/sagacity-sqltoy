@@ -108,7 +108,7 @@ public class TaskController {
 		// 循环执行任务
 		QuickModel quickModel;
 		String supportLinkedSet = QuickVOConstants.getKeyValue("field.support.linked.set");
-		boolean isSupport = true;
+		boolean isSupport = false;
 		if (StringUtil.isNotBlank(supportLinkedSet)) {
 			isSupport = Boolean.parseBoolean(supportLinkedSet);
 		}
