@@ -1101,7 +1101,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 代替PropertyUtil 和BeanUtils的方法
+	 * @TODO 代替PropertyUtil 和BeanUtils的setProperty方法
 	 * @param bean
 	 * @param property
 	 * @param value
