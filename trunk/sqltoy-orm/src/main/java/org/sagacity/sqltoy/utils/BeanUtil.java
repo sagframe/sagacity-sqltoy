@@ -39,7 +39,15 @@ public class BeanUtil {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
 
-	private static ConcurrentHashMap<String, Method> methods = new ConcurrentHashMap<String, Method>();
+	/**
+	 * 保存set方法
+	 */
+	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<String, Method>();
+	
+	/**
+	 * 保存get方法
+	 */
+	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
 
 	/**
 	 * <p>
@@ -1101,10 +1109,10 @@ public class BeanUtil {
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
-		Method method = methods.get(key);
+		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
-			methods.put(key, method);
+			setMethods.put(key, method);
 		}
 		method.invoke(bean, value);
 	}
@@ -1118,10 +1126,10 @@ public class BeanUtil {
 	 */
 	public static Object getProperty(Object bean, String property) throws Exception {
 		String key = bean.getClass().getName().concat(":get").concat(property);
-		Method method = methods.get(key);
+		Method method = getMethods.get(key);
 		if (method == null) {
 			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
-			methods.put(key, method);
+			getMethods.put(key, method);
 		}
 		return method.invoke(bean);
 	}
