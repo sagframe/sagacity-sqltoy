@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -564,7 +562,7 @@ public class SqlServerDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -617,7 +615,7 @@ public class SqlServerDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 是否有子表进行级联保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -625,7 +623,7 @@ public class SqlServerDialectUtils {
 			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				final String[] mappedFields = oneToMany.getMappedFields();
-				subTableData = (List) PropertyUtils.getProperty(entity, oneToMany.getProperty());
+				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
 				if (subTableData != null && !subTableData.isEmpty()) {
 					saveAll(sqlToyContext, subTableData, new ReflectPropertyHandler() {
 						public void process() {
@@ -737,7 +735,7 @@ public class SqlServerDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
@@ -912,7 +910,8 @@ public class SqlServerDialectUtils {
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		if (lockMode != null) {
-			//int fromIndex = StringUtil.getSymMarkIndexIgnoreCase("select ", " from", loadSql, 0);
+			// int fromIndex = StringUtil.getSymMarkIndexIgnoreCase("select ", " from",
+			// loadSql, 0);
 			int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
 			String selectPart = loadSql.substring(0, fromIndex);
 			String fromPart = loadSql.substring(fromIndex);

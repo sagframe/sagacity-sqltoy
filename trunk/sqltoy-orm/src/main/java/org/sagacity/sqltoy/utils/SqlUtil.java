@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -143,7 +142,7 @@ public class SqlUtil {
 				if (null == property) {
 					conditons.append(array[i]);
 				} else {
-					conditons.append(BeanUtils.getProperty(array[i], property));
+					conditons.append(BeanUtil.getProperty(array[i], property));
 				}
 				conditons.append(flag);
 			}
@@ -167,7 +166,7 @@ public class SqlUtil {
 				if (null == property) {
 					conditons.append(array[i][colIndex.intValue()]);
 				} else {
-					conditons.append(BeanUtils.getProperty(array[i][colIndex.intValue()], property));
+					conditons.append(BeanUtil.getProperty(array[i][colIndex.intValue()], property));
 				}
 				conditons.append(flag);
 			}

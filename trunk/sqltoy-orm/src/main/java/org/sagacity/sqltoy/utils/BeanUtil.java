@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.slf4j.Logger;
@@ -37,6 +38,16 @@ public class BeanUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(BeanUtil.class);
+
+	/**
+	 * 保存set方法
+	 */
+	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<String, Method>();
+	
+	/**
+	 * 保存get方法
+	 */
+	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
 
 	/**
 	 * <p>
@@ -1065,10 +1076,12 @@ public class BeanUtil {
 		int methodArgsLength;
 		for (Method method : methods) {
 			methodArgsLength = 0;
-			if (method.getParameterTypes() != null)
+			if (method.getParameterTypes() != null) {
 				methodArgsLength = method.getParameterTypes().length;
-			if (method.getName().equalsIgnoreCase(methodName) && methodArgsLength == argLength)
+			}
+			if (method.getName().equalsIgnoreCase(methodName) && methodArgsLength == argLength) {
 				return method;
+			}
 		}
 		return null;
 	}
@@ -1085,6 +1098,42 @@ public class BeanUtil {
 				|| clazz.equals(Character.class) || clazz.equals(Short.class) || clazz.equals(BigDecimal.class)
 				|| clazz.equals(BigInteger.class) || clazz.equals(Boolean.class) || clazz.equals(Date.class)
 				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
+	}
+
+	/**
+	 * @TODO 代替PropertyUtil 和BeanUtils的方法
+	 * @param bean
+	 * @param property
+	 * @param value
+	 * @throws Exception
+	 */
+	public static void setProperty(Object bean, String property, Object value) throws Exception {
+		String key = bean.getClass().getName().concat(":set").concat(property);
+		//利用缓存提升方法匹配效率
+		Method method = setMethods.get(key);
+		if (method == null) {
+			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
+			setMethods.put(key, method);
+		}
+		method.invoke(bean, value);
+	}
+
+	/**
+	 * @TODO 代替BeanUtils.getProperty 方法
+	 * @param bean
+	 * @param property
+	 * @return
+	 * @throws Exception
+	 */
+	public static Object getProperty(Object bean, String property) throws Exception {
+		String key = bean.getClass().getName().concat(":get").concat(property);
+		//利用缓存提升方法匹配效率
+		Method method = getMethods.get(key);
+		if (method == null) {
+			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
+			getMethods.put(key, method);
+		}
+		return method.invoke(bean);
 	}
 
 }
