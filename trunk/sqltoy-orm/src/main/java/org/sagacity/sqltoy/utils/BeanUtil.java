@@ -1109,6 +1109,7 @@ public class BeanUtil {
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
+		//利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
@@ -1126,6 +1127,7 @@ public class BeanUtil {
 	 */
 	public static Object getProperty(Object bean, String property) throws Exception {
 		String key = bean.getClass().getName().concat(":get").concat(property);
+		//利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
 			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
