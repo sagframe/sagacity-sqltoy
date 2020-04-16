@@ -8,7 +8,7 @@
 	<property name="project.package" value="com.sagframe.sqltoy" />
 	<property name="include.schema" value="false" />
 	<!-- set method 是否支持返回对象自身(默认是true),即：public VO  setName(String name){this.name=name;return this;} -->
-	<property name="field.support.linked.set" value="true" />
+	<property name="field.support.linked.set" value="false" />
 	<!-- oracle支持schema,mysql\DB2:catalog -->
 	<datasource name="sqltoy" url="${jdbc.connection.url}"
 		driver="${jdbc.connection.driver_class}" catalog="${jdbc.connection.catalog}"

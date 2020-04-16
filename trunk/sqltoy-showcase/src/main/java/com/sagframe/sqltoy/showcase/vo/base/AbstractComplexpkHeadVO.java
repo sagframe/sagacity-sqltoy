@@ -19,7 +19,8 @@ import com.sagframe.sqltoy.showcase.vo.ComplexpkItemVO;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_complexpk_head,Remark:复合主键级联操作主表   
+ * Table: sqltoy_complexpk_head,Remark:复合主键级联操作主表 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_complexpk_head",pk_constraint="PRIMARY")
 public abstract class AbstractComplexpkHeadVO implements Serializable,
@@ -122,9 +123,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public AbstractComplexpkHeadVO setTransDate(LocalDate transDate) {
+	public void setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
-		return this;
 	}
 		
 	/**
@@ -137,9 +137,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param transCode the transCode to set
 	 */
-	public AbstractComplexpkHeadVO setTransCode(String transCode) {
+	public void setTransCode(String transCode) {
 		this.transCode=transCode;
-		return this;
 	}
 		
 	/**
@@ -152,9 +151,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param totalCnt the totalCnt to set
 	 */
-	public AbstractComplexpkHeadVO setTotalCnt(BigDecimal totalCnt) {
+	public void setTotalCnt(BigDecimal totalCnt) {
 		this.totalCnt=totalCnt;
-		return this;
 	}
 		
 	/**
@@ -167,9 +165,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param totalAmt the totalAmt to set
 	 */
-	public AbstractComplexpkHeadVO setTotalAmt(BigDecimal totalAmt) {
+	public void setTotalAmt(BigDecimal totalAmt) {
 		this.totalAmt=totalAmt;
-		return this;
 	}
 		
 	/**
@@ -182,9 +179,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public AbstractComplexpkHeadVO setCreateBy(String createBy) {
+	public void setCreateBy(String createBy) {
 		this.createBy=createBy;
-		return this;
 	}
 		
 	/**
@@ -197,9 +193,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public AbstractComplexpkHeadVO setCreateTime(LocalDateTime createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
-		return this;
 	}
 		
 	/**
@@ -212,9 +207,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public AbstractComplexpkHeadVO setUpdateBy(String updateBy) {
+	public void setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
-		return this;
 	}
 		
 	/**
@@ -227,9 +221,8 @@ public abstract class AbstractComplexpkHeadVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public AbstractComplexpkHeadVO setUpdateTime(LocalDateTime updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
-		return this;
 	}
 		
 	/**
