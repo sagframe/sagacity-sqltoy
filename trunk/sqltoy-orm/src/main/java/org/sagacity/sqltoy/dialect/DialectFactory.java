@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -443,8 +442,8 @@ public class DialectFactory {
 				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
 				if (!(treeModel.getEntity() instanceof Type)) {
-					Object rootValue = PropertyUtils.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
-					Object pidValue = PropertyUtils.getProperty(treeModel.getEntity(),
+					Object rootValue = BeanUtil.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
+					Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 							StringUtil.toHumpStr(treeModel.getPidField(), false));
 					if (null == treeModel.getRootId())
 						treeModel.rootId(pidValue);

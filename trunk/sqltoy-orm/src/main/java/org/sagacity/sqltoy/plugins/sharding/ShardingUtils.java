@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.plugins.sharding;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,7 +16,6 @@ import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
@@ -519,9 +519,14 @@ public class ShardingUtils {
 							}
 						}
 					}
-					PropertyUtils.setProperty(entities.get(i), pks[0],
+
+					BeanUtil.setProperty(entities.get(i), pks[0],
 							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
 									null, idType, idLength, sequenceSize));
+
+//					PropertyUtils.setProperty(entities.get(i), pks[0],
+//							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
+//									null, idType, idLength, sequenceSize));
 				}
 			}
 		}

@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -530,14 +528,14 @@ public class DialectUtils {
 							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
 							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 			}
 		}
@@ -606,14 +604,14 @@ public class DialectUtils {
 							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
 							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 			}
 		}
@@ -1130,7 +1128,7 @@ public class DialectUtils {
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, dbType, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
-						BeanUtils.setProperty(result, oneToMany.getProperty(), pkRefDetails);
+						BeanUtil.setProperty(result, oneToMany.getProperty(), pkRefDetails);
 					}
 				}
 			}
@@ -1298,7 +1296,7 @@ public class DialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -1357,7 +1355,7 @@ public class DialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判定是否有级联子表数据保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -1370,7 +1368,7 @@ public class DialectUtils {
 				final String[] mappedFields = oneToMany.getMappedFields();
 				subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 				logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
-				subTableData = (List) PropertyUtils.getProperty(entity, oneToMany.getProperty());
+				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
 				if (subTableData != null && !subTableData.isEmpty()) {
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
 					savePkStrategy = generateSavePKStrategy.generate(subTableEntityMeta);
@@ -1462,7 +1460,7 @@ public class DialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}

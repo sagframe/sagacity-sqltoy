@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -125,7 +124,7 @@ public class ClickHouseDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtils.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -152,7 +151,7 @@ public class ClickHouseDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk) {
-			BeanUtils.setProperty(entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 
 		return result;
@@ -223,7 +222,7 @@ public class ClickHouseDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtils.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}

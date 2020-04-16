@@ -8,9 +8,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy4.0
