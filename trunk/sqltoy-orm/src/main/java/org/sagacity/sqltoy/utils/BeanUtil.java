@@ -43,7 +43,7 @@ public class BeanUtil {
 	 * 保存set方法
 	 */
 	private static ConcurrentHashMap<String, Method> setMethods = new ConcurrentHashMap<String, Method>();
-	
+
 	/**
 	 * 保存get方法
 	 */
@@ -1109,13 +1109,15 @@ public class BeanUtil {
 	 */
 	public static void setProperty(Object bean, String property, Object value) throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
-		//利用缓存提升方法匹配效率
+		// 利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
 			setMethods.put(key, method);
 		}
-		method.invoke(bean, value);
+		// 将数据类型进行转换再赋值
+		String type = method.getParameterTypes()[0].getTypeName();
+		method.invoke(bean, convertType(value, type));
 	}
 
 	/**
@@ -1127,7 +1129,7 @@ public class BeanUtil {
 	 */
 	public static Object getProperty(Object bean, String property) throws Exception {
 		String key = bean.getClass().getName().concat(":get").concat(property);
-		//利用缓存提升方法匹配效率
+		// 利用缓存提升方法匹配效率
 		Method method = getMethods.get(key);
 		if (method == null) {
 			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
