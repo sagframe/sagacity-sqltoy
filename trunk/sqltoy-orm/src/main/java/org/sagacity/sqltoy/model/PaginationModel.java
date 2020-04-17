@@ -102,6 +102,10 @@ public class PaginationModel implements Serializable {
 	 * @return the current value of the pageNo property
 	 */
 	public long getPageNo() {
+		// -1 有特殊用途，表示查询所有记录,用于页面下载场景(实际查询时会控制下载是否超范围)
+		if (this.pageNo == -1) {
+			return this.pageNo;
+		}
 		if (this.pageNo < 1)
 			return 1;
 		return this.pageNo;

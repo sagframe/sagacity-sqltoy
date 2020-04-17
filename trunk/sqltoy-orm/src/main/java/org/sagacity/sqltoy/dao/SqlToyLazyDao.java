@@ -292,7 +292,7 @@ public interface SqlToyLazyDao {
 	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参 
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity
+	 * @param entity 通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
@@ -302,7 +302,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue   对应Named参数的值
-	 * @param voClass       返回结果List中的对象类型
+	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,

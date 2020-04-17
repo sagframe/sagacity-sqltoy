@@ -358,8 +358,9 @@ public class SqlToyDaoSupport {
 	protected <T> T loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
 		QueryExecutor query = new QueryExecutor(sql, paramNames, paramValues);
-		if (resultType != null)
+		if (resultType != null) {
 			query.resultType(resultType);
+		}
 		return (T) loadByQuery(query);
 	}
 
@@ -626,8 +627,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected void truncate(final Class entityClass, final Boolean autoCommit) {
-		if (null == entityClass)
+		if (null == entityClass) {
 			throw new IllegalArgumentException("entityClass is null!Please enter the correct!");
+		}
 		truncate(sqlToyContext.getEntityMeta(entityClass).getTableName(), autoCommit, null);
 	}
 

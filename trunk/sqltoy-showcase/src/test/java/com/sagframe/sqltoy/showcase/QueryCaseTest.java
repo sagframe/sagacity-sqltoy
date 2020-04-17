@@ -27,6 +27,7 @@ import com.sagframe.sqltoy.SqlToyApplication;
 import com.sagframe.sqltoy.showcase.service.InitDataService;
 import com.sagframe.sqltoy.showcase.vo.DeviceOrderInfoVO;
 import com.sagframe.sqltoy.showcase.vo.DictDetailVO;
+import com.sagframe.sqltoy.showcase.vo.OrderInfoVO;
 import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
 import com.sagframe.sqltoy.showcase.vo.TestVO;
@@ -224,6 +225,20 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(vo));
 	}
 
+	@Test
+	public void findTopByQuery() {
+		// topSize:
+		// 授权的机构
+		String[] authedOrgans = { "100004", "100007" };
+		//QueryExecuter query = new QueryExecutor();
+		double topSize = 20;
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search",
+				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
+				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, topSize);
+		for (DeviceOrderInfoVO vo : result)
+			System.err.println(JSON.toJSONString(vo));
+	}
+
 	/**
 	 * 查询随机记录 randomSize:如果是大于1的数字,则取其整数部分;如果小于1则表示按比例提取
 	 * 
@@ -271,7 +286,11 @@ public class QueryCaseTest {
 
 	@Test
 	public void testUnpivotList() throws InterruptedException {
-		List result = (List) sqlToyLazyDao.findBySql("unpivot_case", null);
+		//List result = (List) sqlToyLazyDao.findBySql("unpivot_case", new String[] {"id"},new Object[] {"123"},OrderInfoVO.class);
+		String sql="select * from order where user_id=:id";
+		List<OrderInfoVO> result = sqlToyLazyDao.findBySql(sql, new String[] {"id"},new Object[] {"123"},OrderInfoVO.class);
+		
+		
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
@@ -310,14 +329,14 @@ public class QueryCaseTest {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
 	}
-	
+
 	@Test
 	public void testSaveBitType() throws InterruptedException {
-		TestVO testVO=new TestVO();
+		TestVO testVO = new TestVO();
 		testVO.setId(true);
 		testVO.setName("hello");
 		testVO.setSallary(new BigInteger("2000"));
 		sqlToyCRUDService.save(testVO);
-		
+
 	}
 }
