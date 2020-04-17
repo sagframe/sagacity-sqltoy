@@ -14,6 +14,7 @@ import javax.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
+import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -230,13 +231,16 @@ public class QueryCaseTest {
 		// topSize:
 		// 授权的机构
 		String[] authedOrgans = { "100004", "100007" };
-		//QueryExecuter query = new QueryExecutor();
+		String[] paramNames = { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" };
+		Object[] paramValues = { null, authedOrgans, "陈", "2018-09-01", null };
+		// QueryExecuter query = new QueryExecutor();
 		double topSize = 20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search",
-				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
-				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, topSize);
-		for (DeviceOrderInfoVO vo : result)
+		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
+				.names(paramNames).values(paramValues).resultType(DeviceOrderInfoVO.class), topSize).getRows();
+
+		for (DeviceOrderInfoVO vo : result) {
 			System.err.println(JSON.toJSONString(vo));
+		}
 	}
 
 	/**
@@ -286,11 +290,12 @@ public class QueryCaseTest {
 
 	@Test
 	public void testUnpivotList() throws InterruptedException {
-		//List result = (List) sqlToyLazyDao.findBySql("unpivot_case", new String[] {"id"},new Object[] {"123"},OrderInfoVO.class);
-		String sql="select * from order where user_id=:id";
-		List<OrderInfoVO> result = sqlToyLazyDao.findBySql(sql, new String[] {"id"},new Object[] {"123"},OrderInfoVO.class);
-		
-		
+		// List result = (List) sqlToyLazyDao.findBySql("unpivot_case", new String[]
+		// {"id"},new Object[] {"123"},OrderInfoVO.class);
+		String sql = "select * from order where user_id=:id";
+		List<OrderInfoVO> result = sqlToyLazyDao.findBySql(sql, new String[] { "id" }, new Object[] { "123" },
+				OrderInfoVO.class);
+
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
