@@ -1,24 +1,12 @@
-﻿alter table SQLTOY_COMPLEXPK_ITEM 
-   drop foreign key FK_COMPLEXH_REF_ITEM;
-
-alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_DICT_TYPE_REF_ITEM;
+﻿SET FOREIGN_KEY_CHECKS=0;
 
 drop table if exists SQLTOY_AREA_INFO;
 
 drop table if exists SQLTOY_COMPLEXPK_HEAD;
 
-
-alter table SQLTOY_COMPLEXPK_ITEM 
-   drop foreign key FK_COMPLEXH_REF_ITEM;
-
 drop table if exists SQLTOY_COMPLEXPK_ITEM;
 
 drop table if exists SQLTOY_DEVICE_ORDER_INFO;
-
-
-alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_DICT_TYPE_REF_ITEM;
 
 drop table if exists SQLTOY_DICT_DETAIL;
 
@@ -35,6 +23,12 @@ drop table if exists SQLTOY_TRANS_INFO_15D;
 drop table if exists SQLTOY_TRANS_INFO_HIS;
 
 drop table if exists SQLTOY_USER_LOG;
+
+drop table if exists SQLTOY_FRUIT_ORDER;
+
+drop table if exists SQLTOY_BIGINT_TABLE;
+
+SET FOREIGN_KEY_CHECKS=1;
 
 /*==============================================================*/
 /* Table: SQLTOY_AREA_INFO                                      */
@@ -308,10 +302,10 @@ CREATE TABLE SQLTOY_FRUIT_ORDER (
   SALE_COUNT decimal(10,0) NOT NULL comment '销售数量',
   SALE_AMT decimal(10,0) NOT NULL comment '销售金额',
   TOTAL_AMT decimal(10,0) NOT NULL comment '总金额'
-) 
+);
 
 CREATE TABLE SQLTOY_BIGINT_TABLE (
   ID bigint unsigned NOT NULL COMMENT '主键',
   NAME varchar(100) NOT NULL COMMENT '名称',
   PRIMARY KEY (ID)
-)
+);
