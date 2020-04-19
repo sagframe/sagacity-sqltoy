@@ -308,7 +308,7 @@ CREATE TABLE SQLTOY_FRUIT_ORDER (
   SALE_COUNT decimal(10,0) NOT NULL comment '销售数量',
   SALE_AMT decimal(10,0) NOT NULL comment '销售金额',
   TOTAL_AMT decimal(10,0) NOT NULL comment '总金额'
-) 
+);
 
 CREATE TABLE SQLTOY_BIGINT_TABLE (
   ID bigint unsigned NOT NULL COMMENT '主键',
