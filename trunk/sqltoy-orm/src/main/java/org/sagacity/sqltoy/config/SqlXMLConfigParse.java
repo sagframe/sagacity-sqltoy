@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.config;
 
+import static java.lang.System.out;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,7 +50,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy

@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.config;
 
+import static java.lang.System.out;
+
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +17,6 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy

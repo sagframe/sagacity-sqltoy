@@ -3,13 +3,14 @@
  */
 package org.sagacity.sqltoy;
 
+import static java.lang.System.out;
+
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy4.0
