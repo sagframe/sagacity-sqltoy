@@ -10,7 +10,7 @@ import java.util.List;
  * @author zhongxuchen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:PaginationModel.java,Revision:v1.0,Date:2011-2-25 上午08:48:55 $
  */
-public class PaginationModel implements Serializable {
+public class PaginationModel<T> implements Serializable {
 	private static final long serialVersionUID = -7117473828519846708L;
 
 	/**
@@ -26,7 +26,7 @@ public class PaginationModel implements Serializable {
 	/**
 	 * 分页查询出的数据明细
 	 */
-	private List rows;
+	private List<T> rows;
 
 	/**
 	 * 是否跳过查询总记录数
@@ -47,34 +47,34 @@ public class PaginationModel implements Serializable {
 
 	}
 
-	public PaginationModel(List rows, long recordCount) {
+	public PaginationModel(List<T> rows, long recordCount) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = 0;
 	}
 
-	public PaginationModel(List rows, long recordCount, long startIndex) {
+	public PaginationModel(List<T> rows, long recordCount, long startIndex) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
 
-	public PaginationModel(List rows, long recordCount, Integer pageSize, long startIndex) {
+	public PaginationModel(List<T> rows, long recordCount, Integer pageSize, long startIndex) {
 		setPageSize(pageSize);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
 
-	public List getRows() {
+	public List<T> getRows() {
 		if (this.rows == null)
-			return new ArrayList();
+			return new ArrayList<T>();
 		return this.rows;
 	}
 
-	public void setRows(List rows) {
+	public void setRows(List<T> rows) {
 		this.rows = rows;
 	}
 

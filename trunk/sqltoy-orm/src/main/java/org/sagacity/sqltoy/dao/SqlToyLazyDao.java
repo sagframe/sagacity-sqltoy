@@ -101,7 +101,7 @@ public interface SqlToyLazyDao {
 	public Object save(Serializable serializableVO);
 
 	public <T extends Serializable> Long saveAll(List<T> entities);
-	
+
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
 	/**
@@ -289,10 +289,10 @@ public interface SqlToyLazyDao {
 	public QueryResult findByQuery(final QueryExecutor query);
 
 	/**
-	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参 
+	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity 通过对象传参数,并按对象类型返回结果
+	 * @param entity        通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
@@ -316,8 +316,8 @@ public interface SqlToyLazyDao {
 	 */
 	public QueryResult findPageByQuery(final PaginationModel pageModel, final QueryExecutor queryExecutor);
 
-	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Serializable entity);
+	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+			final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @todo 普通sql分页查询
@@ -328,8 +328,8 @@ public interface SqlToyLazyDao {
 	 * @param voClass
 	 * @return
 	 */
-	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final String[] paramsNamed, final Object[] paramValues, final Class voClass);
+	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
 
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
@@ -339,7 +339,7 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed
 	 * @param paramValues
 	 * @param voClass
-	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
 	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
@@ -350,7 +350,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
