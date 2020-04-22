@@ -46,8 +46,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	protected SqlToyLazyDao sqlToyLazyDao;
 
 	/**
-	 * @param sqlToyLazyDao
-	 *            the sqlToyLazyDao to set
+	 * @param sqlToyLazyDao the sqlToyLazyDao to set
 	 */
 	@Autowired(required = false)
 	@Qualifier(value = "sqlToyLazyDao")
@@ -419,7 +418,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
-	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity) {
+	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getPageSql())) {
 			throw new DataAccessException(
@@ -437,14 +436,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
-	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity,
+	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getPageSql())) {
 			throw new DataAccessException(
 					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
 		}
-		return sqlToyLazyDao.findPageByQuery(paginationModel,
+		return (PaginationModel<T>) sqlToyLazyDao.findPageByQuery(paginationModel,
 				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
 				.getPageResult();
 	}

@@ -561,18 +561,18 @@ public class SqlToyDaoSupport {
 	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 */
-	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
-			final String[] paramsNamed, final Object[] paramsValue, Class voClass) {
+	protected <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sql,
+			final String[] paramsNamed, final Object[] paramsValue, Class<T> voClass) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
 		if (voClass != null) {
 			query.resultType(voClass);
 		}
-		return findPageByQuery(paginationModel, query).getPageResult();
+		return (PaginationModel<T>) findPageByQuery(paginationModel, query).getPageResult();
 	}
 
-	protected PaginationModel findPageBySql(final PaginationModel paginationModel, final String sql,
-			final Serializable entity) {
-		return findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
+	protected <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+			final String sql, final T entity) {
+		return (PaginationModel<T>) findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
 	/**

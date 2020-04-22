@@ -103,7 +103,7 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @todo 修改或保存单条记录
-	 * @param entity 实体对象
+	 * @param entity           实体对象
 	 * @param forceUpdateProps 强制修改的对象属性
 	 */
 	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps);
@@ -119,7 +119,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 批量保存或修改对象
 	 * @param <T>
-	 * @param entities 对象集合
+	 * @param entities         对象集合
 	 * @param forceUpdateProps 需强制修改的属性
 	 * @return
 	 */
@@ -207,6 +207,7 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * 在controller层不允许直接暴露sql,因此sql必须是通过注解在POJO上的
+	 * 
 	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集
 	 * @param entity
 	 * @return
@@ -221,9 +222,9 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @return
 	 */
-	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity);
+	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity);
 
-	public PaginationModel findPageFrom(PaginationModel paginationModel, Serializable entity,
+	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
