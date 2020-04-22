@@ -48,6 +48,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy
@@ -95,6 +96,7 @@ public class SqlXMLConfigParse {
 		File sqlFile;
 		String fileName;
 		Object resource;
+		boolean isDebug = logger.isDebugEnabled();
 		for (int i = 0; i < xmlFiles.size(); i++) {
 			resource = xmlFiles.get(i);
 			if (resource instanceof File) {
@@ -107,7 +109,11 @@ public class SqlXMLConfigParse {
 					// 最后修改时间比上次修改时间大，重新加载sql文件
 					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
 						filesLastModifyMap.put(fileName, lastModified);
-						logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
+						if (isDebug) {
+							logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
+						} else {
+							out.println("sql文件:" + fileName + " 已经被修改,进行重新解析!");
+						}
 						parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true);
 					}
 				}
@@ -130,14 +136,23 @@ public class SqlXMLConfigParse {
 			throws Exception {
 		InputStream fileIS = null;
 		try {
+			boolean isDebug = logger.isDebugEnabled();
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
 				filesLastModifyMap.put(file.getName(), Long.valueOf(file.lastModified()));
 				fileIS = new FileInputStream(file);
-				logger.debug("正在解析sql文件,对应文件={}", file.getName());
+				if (isDebug) {
+					logger.debug("正在解析sql文件,对应文件={}", file.getName());
+				} else {
+					out.println("正在解析sql文件,对应文件=" + file.getName());
+				}
 			} else {
 				fileIS = getResourceAsStream((String) xmlFile);
-				logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
+				if (isDebug) {
+					logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
+				} else {
+					out.println("正在解析sql文件,对应文件=" + (String) xmlFile);
+				}
 			}
 			if (fileIS != null) {
 				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
