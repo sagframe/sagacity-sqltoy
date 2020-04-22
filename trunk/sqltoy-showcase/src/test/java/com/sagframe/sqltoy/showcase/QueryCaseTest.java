@@ -203,8 +203,10 @@ public class QueryCaseTest {
 		staffVO.setStaffName("陈");
 		// 使用了分页优化器
 		// 第一次调用:执行count 和 取记录两次查询
-		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
-		System.err.println(JSON.toJSONString(result));
+		PaginationModel<StaffInfoVO> result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		for (StaffInfoVO staff : result.getRows()) {
+			System.err.println(JSON.toJSONString(staff));
+		}
 		// 第二次调用:条件一致，不执行count查询
 		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
