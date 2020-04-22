@@ -9,6 +9,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -87,6 +88,7 @@ public class SqlExecuteStat {
 	 */
 	private static void printSql(String sql, Object[] paramValues, boolean isErrorOrWarn) {
 		StringBuilder paramStr = new StringBuilder();
+		boolean isDebug = logger.isDebugEnabled();
 		if (paramValues != null) {
 			for (int i = 0; i < paramValues.length; i++) {
 				if (i > 0) {
@@ -103,15 +105,24 @@ public class SqlExecuteStat {
 				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
-				logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
+				if (isDebug) {
+					logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
+				} else {
+					out.println("执行:" + sqlTrace.getType() + " 类型sql,sqlId=" + sqlTrace.getId());
+				}
 			}
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
 			logger.error("执行异常对应的sqlParams:{}", paramStr);
 		} else {
-			logger.debug("sqlScript:{}", sql);
-			logger.debug("sqlParams:{}", paramStr);
+			if (isDebug) {
+				logger.debug("sqlScript:{}", sql);
+				logger.debug("sqlParams:{}", paramStr);
+			} else {
+				out.println("sqlScript:" + sql);
+				out.println("sqlParams:" + paramStr);
+			}
 		}
 	}
 
@@ -153,24 +164,21 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @param printSqlStrategy
-	 *            the printSqlStrategy to set
+	 * @param printSqlStrategy the printSqlStrategy to set
 	 */
 	public static void setPrintSqlStrategy(String printSqlStrategy) {
 		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
-	 * @param debug
-	 *            the debug to set
+	 * @param debug the debug to set
 	 */
 	public static void setDebug(boolean debug) {
 		SqlExecuteStat.debug = debug;
 	}
 
 	/**
-	 * @param printSqlTimeoutMillis
-	 *            the printSqlTimeoutMillis to set
+	 * @param printSqlTimeoutMillis the printSqlTimeoutMillis to set
 	 */
 	public static void setPrintSqlTimeoutMillis(int printSqlTimeoutMillis) {
 		SqlExecuteStat.printSqlTimeoutMillis = printSqlTimeoutMillis;
