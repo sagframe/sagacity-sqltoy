@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.config;
 
+import static java.lang.System.out;
+
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +17,6 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.lang.System.out;
 
 /**
  * @project sagacity-sqltoy
@@ -106,7 +107,7 @@ public class SqlScriptLoader {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				// 此处提供大量提升信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
 				if (enabledDebug) {
 					logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
 					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
@@ -136,8 +137,15 @@ public class SqlScriptLoader {
 							dialect, false);
 				}
 			} else {
-				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
-						sqlResourcesDir);
+				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
+				if (logger.isWarnEnabled()) {
+					logger.warn(
+							"没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
+							sqlResourcesDir);
+				} else {
+					out.println("未检测到以.sql.xml结尾的文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
+							+ "配置是否正确,或文件没有在编译路径下(bin、classes等)!");
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -47,6 +47,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyLazyDao.java,Revision:v1.0,Date:2015年11月27日
  * @Modification Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
+ * @Modification Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface SqlToyLazyDao {
@@ -101,7 +102,7 @@ public interface SqlToyLazyDao {
 	public Object save(Serializable serializableVO);
 
 	public <T extends Serializable> Long saveAll(List<T> entities);
-	
+
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
 	/**
@@ -289,10 +290,10 @@ public interface SqlToyLazyDao {
 	public QueryResult findByQuery(final QueryExecutor query);
 
 	/**
-	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参 
+	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity 通过对象传参数,并按对象类型返回结果
+	 * @param entity        通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
@@ -309,15 +310,21 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass);
 
 	/**
+	 * @TODO 将查询结果直接按二维List返回
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
+	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+
+	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
 	 * @param pageModel
 	 * @param queryExecutor
 	 * @return
 	 */
 	public QueryResult findPageByQuery(final PaginationModel pageModel, final QueryExecutor queryExecutor);
-
-	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Serializable entity);
 
 	/**
 	 * @todo 普通sql分页查询
@@ -328,8 +335,22 @@ public interface SqlToyLazyDao {
 	 * @param voClass
 	 * @return
 	 */
+	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
+
+	/**
+	 * @TODO 将分页结果按二维List返回
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramValues
+	 * @return
+	 */
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final String[] paramsNamed, final Object[] paramValues, final Class voClass);
+			final String[] paramsNamed, final Object[] paramValues);
+
+	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+			final String sqlOrNamedSql, final T entity);
 
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
@@ -338,19 +359,19 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass
-	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param voClass    返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
 	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
 			final Class<T> voClass, final double topSize);
 
 	/**
-	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值)
+	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity
-	 * @param topSize (大于1则取固定数量的记录，小于1，则表示按比例提取)
+	 * @param entity  
+	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
