@@ -107,7 +107,7 @@ public class SqlScriptLoader {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				// 此处提供大量提升信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
 				if (enabledDebug) {
 					logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
 					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
