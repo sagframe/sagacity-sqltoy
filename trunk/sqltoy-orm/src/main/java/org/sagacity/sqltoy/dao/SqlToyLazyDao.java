@@ -308,6 +308,13 @@ public interface SqlToyLazyDao {
 	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
+	/**
+	 * @TODO 将查询结果直接按二维List返回
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
 	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
@@ -330,6 +337,14 @@ public interface SqlToyLazyDao {
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
 
+	/**
+	 * @TODO 将分页结果按二维List返回
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramValues
+	 * @return
+	 */
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
@@ -343,7 +358,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass
+	 * @param voClass    返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -351,10 +366,10 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass, final double topSize);
 
 	/**
-	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值)
+	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity
+	 * @param entity  
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
