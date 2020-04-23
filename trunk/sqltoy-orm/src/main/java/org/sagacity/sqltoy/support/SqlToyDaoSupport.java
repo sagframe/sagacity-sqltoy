@@ -517,6 +517,15 @@ public class SqlToyDaoSupport {
 		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
 	}
 
+	/**
+	 * @TODO 查询集合
+	 * @param <T>
+	 * @param sql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @param voClass 分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @return
+	 */
 	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);

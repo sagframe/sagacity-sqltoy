@@ -129,6 +129,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return (List<T>) super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, voClass);
 	}
 
+	@Override
+	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
+		return super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -164,6 +169,13 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 			String[] paramsNamed, Object[] paramValues, Class<T> voClass) {
 		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
 				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass)).getPageResult();
+	}
+
+	@Override
+	public PaginationModel findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql, String[] paramsNamed,
+			Object[] paramValues) {
+		return super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues))
+				.getPageResult();
 	}
 
 	/*

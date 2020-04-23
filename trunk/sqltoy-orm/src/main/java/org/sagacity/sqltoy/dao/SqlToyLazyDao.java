@@ -308,6 +308,8 @@ public interface SqlToyLazyDao {
 	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
+	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
 	 * @param pageModel
@@ -327,6 +329,9 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
+
+	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final String[] paramsNamed, final Object[] paramValues);
 
 	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
 			final String sqlOrNamedSql, final T entity);
