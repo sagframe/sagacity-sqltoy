@@ -237,7 +237,7 @@ public class QueryCaseTest {
 		Object[] paramValues = { null, authedOrgans, "陈", "2018-09-01", null };
 		// QueryExecuter query = new QueryExecutor();
 		double topSize = 20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
+		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
 				.names(paramNames).values(paramValues).resultType(DeviceOrderInfoVO.class), topSize).getRows();
 		for (DeviceOrderInfoVO vo : result) {
 			System.err.println(JSON.toJSONString(vo));
