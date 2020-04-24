@@ -1096,7 +1096,7 @@ public class DialectUtils {
 		for (int i = 0; i < pkValues.length; i++) {
 			if (StringUtil.isBlank(pkValues[i])) {
 				throw new IllegalArgumentException(entityMeta.getSchemaTable()
-						+ "load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
+						+ " load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
@@ -1503,7 +1503,7 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		for (int i = pkIndex; i < pkIndex + entityMeta.getIdArray().length; i++) {
 			if (StringUtil.isBlank(fieldsValues[i])) {
-				throw new IllegalArgumentException("通过对象对表:" + realTable + "进行update操作,主键字段必须要赋值!");
+				throw new IllegalArgumentException("通过对象对表:" + realTable + " 进行update操作,主键字段必须要赋值!");
 			}
 		}
 		// 构建update语句
@@ -1642,7 +1642,7 @@ public class DialectUtils {
 						break;
 					} else {
 						throw new IllegalArgumentException(
-								"通过对象对表" + realTable + "进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
+								"通过对象对表" + realTable + " 进行updateAll操作,主键字段必须要赋值!第:" + index + " 条记录主键为null!");
 					}
 				}
 			}
@@ -1681,7 +1681,7 @@ public class DialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException("delete 操作,表:" + realTable + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete 操作,表:" + realTable + " 没有主键,请检查表设计!");
 		}
 		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 		Integer[] parameterTypes = new Integer[idValues.length];
@@ -1696,7 +1696,7 @@ public class DialectUtils {
 		}
 		if (!validator) {
 			throw new IllegalArgumentException(realTable
-					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
+					+ " delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -1737,7 +1737,7 @@ public class DialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + "没有主键,请检查表设计!");
+			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
 		}
 		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
 				0);
