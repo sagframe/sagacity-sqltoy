@@ -446,6 +446,8 @@ public class DialectUtils {
 		UnifySqlParams sqlParam = new UnifySqlParams();
 		if (sql == null || sql.trim().equals(""))
 			return sqlParam;
+		// 不以转义符开始的问号
+		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
 		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
 		StringBuilder lastSql = new StringBuilder();
 		String group;
