@@ -202,6 +202,7 @@ public class CacheUpdateWatcher extends Thread {
 					for (CacheCheckResult result : results) {
 						if (result.getItem()[0] != null) {
 							cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
+							//为null则等待首次调用加载
 							if (cacheData != null) {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
 							}
