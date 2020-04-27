@@ -277,12 +277,12 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
-		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields,
+				uniqueFields, conn, dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -293,9 +293,9 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// sybase iq 只支持identity模式
 		boolean isIdentity = (entityMeta.getIdStrategy() != null
@@ -491,7 +491,7 @@ public class SybaseIQDialect implements Dialect {
 										this.setValue(mappedFields[i], IdValues[i]);
 									}
 								}
-							}, forceUpdateProps, conn, dbType, dialect, null, null);
+							}, forceUpdateProps, null, conn, dbType, dialect, null, null);
 				}
 			}
 		}

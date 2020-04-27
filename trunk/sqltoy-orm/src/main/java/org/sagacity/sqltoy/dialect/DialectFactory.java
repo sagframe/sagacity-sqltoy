@@ -882,7 +882,7 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
-									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
+									forceUpdateProps, null, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
 					});
 		} catch (Exception e) {
@@ -923,7 +923,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, reflectPropertyHandler,
-													forceUpdateProps, conn, dbType, dialect,
+													forceUpdateProps, null, conn, dbType, dialect,
 													(autoCommit == null) ? false : autoCommit,
 													shardingModel.getTableName()));
 										}

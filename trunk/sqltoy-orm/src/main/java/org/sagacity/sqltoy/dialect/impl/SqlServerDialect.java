@@ -194,12 +194,12 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
-		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields,
+				uniqueFields, conn, dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -210,9 +210,9 @@ public class SqlServerDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception {
 		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
 				forceUpdateFields, conn, dbType, autoCommit, tableName);
 	}
