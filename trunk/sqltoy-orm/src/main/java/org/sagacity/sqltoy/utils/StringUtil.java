@@ -608,19 +608,20 @@ public class StringUtil {
 				}
 
 			}
-			// 在中间
+			// 分隔符号在""或()中间则当做字符串的一部分
 			if (minBegin < splitIndex && minEndIndex > splitIndex) {
 				skipIndex = minEndIndex + 1;
 				splitIndex = source.indexOf(splitSign, minEndIndex + 1);
 			} else {
 				// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
-				if (minBegin > splitIndex || minBegin == -1) {
+				if (minBegin > splitIndex || minBegin == -1 || minEndIndex < splitIndex) {
 					splitResults.add(
 							source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
 					preSplitIndex = splitIndex;
 					skipIndex = preSplitIndex + 1;
 					splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
-				} // 对称截止符号在分割符前面，向下继续寻找
+				}
+				// 对称截止符号在分割符前面，向下继续寻找
 				else {
 					skipIndex = minEndIndex + 1;
 				}
