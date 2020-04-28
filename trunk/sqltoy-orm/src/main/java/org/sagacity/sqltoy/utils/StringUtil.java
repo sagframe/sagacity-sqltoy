@@ -614,7 +614,7 @@ public class StringUtil {
 				splitIndex = source.indexOf(splitSign, minEndIndex + 1);
 			} else {
 				// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
-				if (minBegin > splitIndex || minBegin == -1) {
+				if (minBegin > splitIndex || minBegin == -1 || minEndIndex < splitIndex) {
 					splitResults.add(
 							source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
 					preSplitIndex = splitIndex;
