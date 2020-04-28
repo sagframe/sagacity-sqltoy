@@ -544,6 +544,7 @@ public class SqlConfigParseUtils {
 		//通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
+
 		String partSql = null;
 		Object[] inParamArray;
 		String argValue;
@@ -552,7 +553,6 @@ public class SqlConfigParseUtils {
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
-	
 			if (null != paramsValue[parameterMarkCnt - 1]) {
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
@@ -585,6 +585,7 @@ public class SqlConfigParseUtils {
 					}
 				}
 			}
+
 			//用新的?,?,,, 代替原本单? 号
 			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
 			start = end;

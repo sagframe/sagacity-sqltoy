@@ -12,7 +12,8 @@ import org.sagacity.sqltoy.config.annotation.Column;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_fruit_order   
+ * Table: sqltoy_fruit_order 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_fruit_order")
 public abstract class AbstractFruitOrderVO implements Serializable,
@@ -65,9 +66,8 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param fruitName the fruitName to set
 	 */
-	public AbstractFruitOrderVO setFruitName(String fruitName) {
+	public void setFruitName(String fruitName) {
 		this.fruitName=fruitName;
-		return this;
 	}
 		
 	/**
@@ -80,9 +80,8 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param orderMonth the orderMonth to set
 	 */
-	public AbstractFruitOrderVO setOrderMonth(Integer orderMonth) {
+	public void setOrderMonth(Integer orderMonth) {
 		this.orderMonth=orderMonth;
-		return this;
 	}
 		
 	/**
@@ -95,9 +94,8 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleCount the saleCount to set
 	 */
-	public AbstractFruitOrderVO setSaleCount(Long saleCount) {
+	public void setSaleCount(Long saleCount) {
 		this.saleCount=saleCount;
-		return this;
 	}
 		
 	/**
@@ -110,9 +108,8 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleAmt the saleAmt to set
 	 */
-	public AbstractFruitOrderVO setSaleAmt(Long saleAmt) {
+	public void setSaleAmt(Long saleAmt) {
 		this.saleAmt=saleAmt;
-		return this;
 	}
 		
 	/**
@@ -125,9 +122,8 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param totalAmt the totalAmt to set
 	 */
-	public AbstractFruitOrderVO setTotalAmt(Long totalAmt) {
+	public void setTotalAmt(Long totalAmt) {
 		this.totalAmt=totalAmt;
-		return this;
 	}
 		
 	/**

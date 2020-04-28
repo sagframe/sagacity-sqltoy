@@ -37,7 +37,7 @@ public class QuickVOStart {
 	 */
 	public void init() {
 		try {
-			out.println("=========  welcome use sagacity-quickvo version:4.11.1  支持jdk8 日期 ==========");
+			out.println("=========  welcome use sagacity-quickvo version:4.11.5  支持jdk8 日期 ==========");
 			out.println("======       请使用java -cp jarPath mainClass args模式启动                          =========");
 			configModel = XMLConfigLoader.parse();
 		} catch (Exception e) {

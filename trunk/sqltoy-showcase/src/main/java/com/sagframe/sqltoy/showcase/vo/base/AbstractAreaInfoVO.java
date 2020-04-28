@@ -13,7 +13,8 @@ import java.math.BigDecimal;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_area_info,Remark:地区代码表   
+ * Table: sqltoy_area_info,Remark:地区代码表 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_area_info",pk_constraint="PRIMARY")
 public abstract class AbstractAreaInfoVO implements Serializable,
@@ -197,9 +198,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param areaCode the areaCode to set
 	 */
-	public AbstractAreaInfoVO setAreaCode(String areaCode) {
+	public void setAreaCode(String areaCode) {
 		this.areaCode=areaCode;
-		return this;
 	}
 		
 	/**
@@ -212,9 +212,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param areaName the areaName to set
 	 */
-	public AbstractAreaInfoVO setAreaName(String areaName) {
+	public void setAreaName(String areaName) {
 		this.areaName=areaName;
-		return this;
 	}
 		
 	/**
@@ -227,9 +226,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param areaTel the areaTel to set
 	 */
-	public AbstractAreaInfoVO setAreaTel(String areaTel) {
+	public void setAreaTel(String areaTel) {
 		this.areaTel=areaTel;
-		return this;
 	}
 		
 	/**
@@ -242,9 +240,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param areaPid the areaPid to set
 	 */
-	public AbstractAreaInfoVO setAreaPid(String areaPid) {
+	public void setAreaPid(String areaPid) {
 		this.areaPid=areaPid;
-		return this;
 	}
 		
 	/**
@@ -257,9 +254,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param englishName the englishName to set
 	 */
-	public AbstractAreaInfoVO setEnglishName(String englishName) {
+	public void setEnglishName(String englishName) {
 		this.englishName=englishName;
-		return this;
 	}
 		
 	/**
@@ -272,9 +268,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param initial the initial to set
 	 */
-	public AbstractAreaInfoVO setInitial(String initial) {
+	public void setInitial(String initial) {
 		this.initial=initial;
-		return this;
 	}
 		
 	/**
@@ -287,9 +282,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param countryCode the countryCode to set
 	 */
-	public AbstractAreaInfoVO setCountryCode(String countryCode) {
+	public void setCountryCode(String countryCode) {
 		this.countryCode=countryCode;
-		return this;
 	}
 		
 	/**
@@ -302,9 +296,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param cityCode the cityCode to set
 	 */
-	public AbstractAreaInfoVO setCityCode(String cityCode) {
+	public void setCityCode(String cityCode) {
 		this.cityCode=cityCode;
-		return this;
 	}
 		
 	/**
@@ -317,9 +310,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param cityName the cityName to set
 	 */
-	public AbstractAreaInfoVO setCityName(String cityName) {
+	public void setCityName(String cityName) {
 		this.cityName=cityName;
-		return this;
 	}
 		
 	/**
@@ -332,9 +324,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param provinceCode the provinceCode to set
 	 */
-	public AbstractAreaInfoVO setProvinceCode(String provinceCode) {
+	public void setProvinceCode(String provinceCode) {
 		this.provinceCode=provinceCode;
-		return this;
 	}
 		
 	/**
@@ -347,9 +338,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param provinceName the provinceName to set
 	 */
-	public AbstractAreaInfoVO setProvinceName(String provinceName) {
+	public void setProvinceName(String provinceName) {
 		this.provinceName=provinceName;
-		return this;
 	}
 		
 	/**
@@ -362,9 +352,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param fullName the fullName to set
 	 */
-	public AbstractAreaInfoVO setFullName(String fullName) {
+	public void setFullName(String fullName) {
 		this.fullName=fullName;
-		return this;
 	}
 		
 	/**
@@ -377,9 +366,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param longitude the longitude to set
 	 */
-	public AbstractAreaInfoVO setLongitude(BigDecimal longitude) {
+	public void setLongitude(BigDecimal longitude) {
 		this.longitude=longitude;
-		return this;
 	}
 		
 	/**
@@ -392,9 +380,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param latitude the latitude to set
 	 */
-	public AbstractAreaInfoVO setLatitude(BigDecimal latitude) {
+	public void setLatitude(BigDecimal latitude) {
 		this.latitude=latitude;
-		return this;
 	}
 		
 	/**
@@ -407,9 +394,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param nodeRoute the nodeRoute to set
 	 */
-	public AbstractAreaInfoVO setNodeRoute(String nodeRoute) {
+	public void setNodeRoute(String nodeRoute) {
 		this.nodeRoute=nodeRoute;
-		return this;
 	}
 		
 	/**
@@ -422,9 +408,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param nodeLevel the nodeLevel to set
 	 */
-	public AbstractAreaInfoVO setNodeLevel(Integer nodeLevel) {
+	public void setNodeLevel(Integer nodeLevel) {
 		this.nodeLevel=nodeLevel;
-		return this;
 	}
 		
 	/**
@@ -437,9 +422,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param isLeaf the isLeaf to set
 	 */
-	public AbstractAreaInfoVO setIsLeaf(Integer isLeaf) {
+	public void setIsLeaf(Integer isLeaf) {
 		this.isLeaf=isLeaf;
-		return this;
 	}
 		
 	/**
@@ -452,9 +436,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public AbstractAreaInfoVO setShowIndex(Integer showIndex) {
+	public void setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
-		return this;
 	}
 		
 	/**
@@ -467,9 +450,8 @@ public abstract class AbstractAreaInfoVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public AbstractAreaInfoVO setStatus(Integer status) {
+	public void setStatus(Integer status) {
 		this.status=status;
-		return this;
 	}
 		
 	/**

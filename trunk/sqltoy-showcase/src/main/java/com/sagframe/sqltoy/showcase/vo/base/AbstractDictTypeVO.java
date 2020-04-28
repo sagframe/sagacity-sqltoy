@@ -17,7 +17,8 @@ import com.sagframe.sqltoy.showcase.vo.DictDetailVO;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_dict_type,Remark:字典分类表   
+ * Table: sqltoy_dict_type,Remark:字典分类表 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_dict_type",pk_constraint="PRIMARY")
 public abstract class AbstractDictTypeVO implements Serializable,
@@ -137,9 +138,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param dictType the dictType to set
 	 */
-	public AbstractDictTypeVO setDictType(String dictType) {
+	public void setDictType(String dictType) {
 		this.dictType=dictType;
-		return this;
 	}
 		
 	/**
@@ -152,9 +152,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param dictTypeName the dictTypeName to set
 	 */
-	public AbstractDictTypeVO setDictTypeName(String dictTypeName) {
+	public void setDictTypeName(String dictTypeName) {
 		this.dictTypeName=dictTypeName;
-		return this;
 	}
 		
 	/**
@@ -167,9 +166,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param comments the comments to set
 	 */
-	public AbstractDictTypeVO setComments(String comments) {
+	public void setComments(String comments) {
 		this.comments=comments;
-		return this;
 	}
 		
 	/**
@@ -182,9 +180,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public AbstractDictTypeVO setShowIndex(Integer showIndex) {
+	public void setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
-		return this;
 	}
 		
 	/**
@@ -197,9 +194,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public AbstractDictTypeVO setCreateBy(String createBy) {
+	public void setCreateBy(String createBy) {
 		this.createBy=createBy;
-		return this;
 	}
 		
 	/**
@@ -212,9 +208,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public AbstractDictTypeVO setCreateTime(LocalDateTime createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
-		return this;
 	}
 		
 	/**
@@ -227,9 +222,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public AbstractDictTypeVO setUpdateBy(String updateBy) {
+	public void setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
-		return this;
 	}
 		
 	/**
@@ -242,9 +236,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public AbstractDictTypeVO setUpdateTime(LocalDateTime updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
-		return this;
 	}
 		
 	/**
@@ -257,9 +250,8 @@ public abstract class AbstractDictTypeVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public AbstractDictTypeVO setStatus(Integer status) {
+	public void setStatus(Integer status) {
 		this.status=status;
-		return this;
 	}
 		
 	/**

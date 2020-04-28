@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_organ_info,Remark:机构信息表   
+ * Table: sqltoy_organ_info,Remark:机构信息表 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_organ_info",pk_constraint="PRIMARY")
 public abstract class AbstractOrganInfoVO implements Serializable,
@@ -164,9 +165,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organId the organId to set
 	 */
-	public AbstractOrganInfoVO setOrganId(String organId) {
+	public void setOrganId(String organId) {
 		this.organId=organId;
-		return this;
 	}
 		
 	/**
@@ -179,9 +179,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organName the organName to set
 	 */
-	public AbstractOrganInfoVO setOrganName(String organName) {
+	public void setOrganName(String organName) {
 		this.organName=organName;
-		return this;
 	}
 		
 	/**
@@ -194,9 +193,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organCode the organCode to set
 	 */
-	public AbstractOrganInfoVO setOrganCode(String organCode) {
+	public void setOrganCode(String organCode) {
 		this.organCode=organCode;
-		return this;
 	}
 		
 	/**
@@ -209,9 +207,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param costNo the costNo to set
 	 */
-	public AbstractOrganInfoVO setCostNo(String costNo) {
+	public void setCostNo(String costNo) {
 		this.costNo=costNo;
-		return this;
 	}
 		
 	/**
@@ -224,9 +221,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param organPid the organPid to set
 	 */
-	public AbstractOrganInfoVO setOrganPid(String organPid) {
+	public void setOrganPid(String organPid) {
 		this.organPid=organPid;
-		return this;
 	}
 		
 	/**
@@ -239,9 +235,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param nodeRoute the nodeRoute to set
 	 */
-	public AbstractOrganInfoVO setNodeRoute(String nodeRoute) {
+	public void setNodeRoute(String nodeRoute) {
 		this.nodeRoute=nodeRoute;
-		return this;
 	}
 		
 	/**
@@ -254,9 +249,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param nodeLevel the nodeLevel to set
 	 */
-	public AbstractOrganInfoVO setNodeLevel(Integer nodeLevel) {
+	public void setNodeLevel(Integer nodeLevel) {
 		this.nodeLevel=nodeLevel;
-		return this;
 	}
 		
 	/**
@@ -269,9 +263,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param isLeaf the isLeaf to set
 	 */
-	public AbstractOrganInfoVO setIsLeaf(Integer isLeaf) {
+	public void setIsLeaf(Integer isLeaf) {
 		this.isLeaf=isLeaf;
-		return this;
 	}
 		
 	/**
@@ -284,9 +277,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public AbstractOrganInfoVO setShowIndex(Integer showIndex) {
+	public void setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
-		return this;
 	}
 		
 	/**
@@ -299,9 +291,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public AbstractOrganInfoVO setCreateBy(String createBy) {
+	public void setCreateBy(String createBy) {
 		this.createBy=createBy;
-		return this;
 	}
 		
 	/**
@@ -314,9 +305,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public AbstractOrganInfoVO setCreateTime(LocalDateTime createTime) {
+	public void setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
-		return this;
 	}
 		
 	/**
@@ -329,9 +319,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public AbstractOrganInfoVO setUpdateBy(String updateBy) {
+	public void setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
-		return this;
 	}
 		
 	/**
@@ -344,9 +333,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public AbstractOrganInfoVO setUpdateTime(LocalDateTime updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
-		return this;
 	}
 		
 	/**
@@ -359,9 +347,8 @@ public abstract class AbstractOrganInfoVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public AbstractOrganInfoVO setStatus(Integer status) {
+	public void setStatus(Integer status) {
 		this.status=status;
-		return this;
 	}
 		
 	/**

@@ -1,4 +1,4 @@
-# 使用文档(完善进度70%,可以预览)
+# 使用文档(完善进度73%,可以预览)
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 #  QQ交流群:531812227 
@@ -28,34 +28,12 @@
 * 中化石化销售
 * 苏州友达光电
 
-# maven集成，sqltoy可以从maven中央仓库获取
-* 普通spring项目集成
-```xml
-<!-- sqltoy -->
-<dependency>
-	<groupId>com.sagframe</groupId>
-	<artifactId>sagacity-sqltoy</artifactId>
-	<version>4.10.5</version>	
-</dependency>
-```
-* 基于spring boot starter模式的集成
-```xml 
-<!-- sqltoy spring boot starter -->
-<dependency>
-	<groupId>com.sagframe</groupId>
-	<artifactId>sagacity-sqltoy-starter</artifactId>
-	<version>4.10.5</version>	
-</dependency>
-```
-* POJO生成工具类
-```xml
-<!-- quickvo 请先下载，然后参照sqltoy-showcase/tools/quickvo 下面的配置使用 -->
-<dependency>
-	<groupId>com.sagframe</groupId>
-	<artifactId>sqltoy-quickvo</artifactId>
-	<version>4.10.1</version>	
-</dependency>
-```
+# 疑问解答
+* sqltoy会不维护吗? 不要担心sqltoy其实发展至今已经10年多了,因为经历了2018~2019年大规模复杂场景应用非常成熟了才开始推广的,目前公司全部系统都基于此,sqltoy不但要维护更加要深入发展,变得更强更可靠。
+* sqltoy难道就是写sql?不是这样的，sqltoy其实是hibernate+mybatis(含plus)的合集，还包括一个quickvo帮助从数据库生成pojo，是一个完整的体系。
+* sqltoy学习困难吗? 其实sqltoy学习是极其简单的,参考范例一个晚上绝对可以学会,规则极其统一简单。用学习mybatis五分之一的精力就足够。
+* sqltoy的sql对应xml文件难写吗?xml里面有schema,所有配置方式在eclipse或idea中都是可以自动提示,不需要死记硬背。
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改和对象加载的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
@@ -100,7 +78,7 @@ where #[t.ORDER_ID=:orderId]
       #[and t.TRANS_DATE<:endDate]  
 ```
 
-* mybatis的写法(一板一眼很工程化)
+* mybatis的写法(一板一眼很工程化),sqltoy比这个香多少倍?其实根本就无法比,因为mybatis这种写法就是一个负数!
 
 ```
  select *

@@ -15,7 +15,8 @@ import java.time.LocalDate;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_trans_info_15d,Remark:支付交易流水表(15天表)   
+ * Table: sqltoy_trans_info_15d,Remark:支付交易流水表(15天表) 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_trans_info_15d",pk_constraint="PRIMARY")
 public abstract class AbstractTransInfo15dVO implements Serializable,
@@ -137,9 +138,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transId the transId to set
 	 */
-	public AbstractTransInfo15dVO setTransId(String transId) {
+	public void setTransId(String transId) {
 		this.transId=transId;
-		return this;
 	}
 		
 	/**
@@ -152,9 +152,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transCode the transCode to set
 	 */
-	public AbstractTransInfo15dVO setTransCode(String transCode) {
+	public void setTransCode(String transCode) {
 		this.transCode=transCode;
-		return this;
 	}
 		
 	/**
@@ -167,9 +166,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transChannel the transChannel to set
 	 */
-	public AbstractTransInfo15dVO setTransChannel(String transChannel) {
+	public void setTransChannel(String transChannel) {
 		this.transChannel=transChannel;
-		return this;
 	}
 		
 	/**
@@ -182,9 +180,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transAmt the transAmt to set
 	 */
-	public AbstractTransInfo15dVO setTransAmt(BigDecimal transAmt) {
+	public void setTransAmt(BigDecimal transAmt) {
 		this.transAmt=transAmt;
-		return this;
 	}
 		
 	/**
@@ -197,9 +194,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public AbstractTransInfo15dVO setStatus(Integer status) {
+	public void setStatus(Integer status) {
 		this.status=status;
-		return this;
 	}
 		
 	/**
@@ -212,9 +208,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param resultCode the resultCode to set
 	 */
-	public AbstractTransInfo15dVO setResultCode(String resultCode) {
+	public void setResultCode(String resultCode) {
 		this.resultCode=resultCode;
-		return this;
 	}
 		
 	/**
@@ -227,9 +222,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transTime the transTime to set
 	 */
-	public AbstractTransInfo15dVO setTransTime(LocalDateTime transTime) {
+	public void setTransTime(LocalDateTime transTime) {
 		this.transTime=transTime;
-		return this;
 	}
 		
 	/**
@@ -242,9 +236,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public AbstractTransInfo15dVO setTransDate(LocalDate transDate) {
+	public void setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
-		return this;
 	}
 		
 	/**
@@ -257,9 +250,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param userId the userId to set
 	 */
-	public AbstractTransInfo15dVO setUserId(String userId) {
+	public void setUserId(String userId) {
 		this.userId=userId;
-		return this;
 	}
 		
 	/**
@@ -272,9 +264,8 @@ public abstract class AbstractTransInfo15dVO implements Serializable,
 	/**
 	 *@param cardNo the cardNo to set
 	 */
-	public AbstractTransInfo15dVO setCardNo(String cardNo) {
+	public void setCardNo(String cardNo) {
 		this.cardNo=cardNo;
-		return this;
 	}
 		
 	/**

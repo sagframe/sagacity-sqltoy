@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_dict_detail,Remark:字典明细表   
+ * Table: sqltoy_dict_detail,Remark:字典明细表 
+ * pk_constraint only for postgresql  
  */
 @Entity(tableName="sqltoy_dict_detail",pk_constraint="PRIMARY")
 public abstract class AbstractDictDetailVO implements Serializable,
@@ -103,9 +104,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictKey the dictKey to set
 	 */
-	public AbstractDictDetailVO setDictKey(String dictKey) {
+	public void setDictKey(String dictKey) {
 		this.dictKey=dictKey;
-		return this;
 	}
 		
 	/**
@@ -118,9 +118,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictType the dictType to set
 	 */
-	public AbstractDictDetailVO setDictType(String dictType) {
+	public void setDictType(String dictType) {
 		this.dictType=dictType;
-		return this;
 	}
 		
 	/**
@@ -133,9 +132,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param dictName the dictName to set
 	 */
-	public AbstractDictDetailVO setDictName(String dictName) {
+	public void setDictName(String dictName) {
 		this.dictName=dictName;
-		return this;
 	}
 		
 	/**
@@ -148,9 +146,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public AbstractDictDetailVO setShowIndex(Integer showIndex) {
+	public void setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
-		return this;
 	}
 		
 	/**
@@ -163,9 +160,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public AbstractDictDetailVO setUpdateBy(String updateBy) {
+	public void setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
-		return this;
 	}
 		
 	/**
@@ -178,9 +174,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public AbstractDictDetailVO setUpdateTime(LocalDateTime updateTime) {
+	public void setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
-		return this;
 	}
 		
 	/**
@@ -193,9 +188,8 @@ public abstract class AbstractDictDetailVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public AbstractDictDetailVO setStatus(Integer status) {
+	public void setStatus(Integer status) {
 		this.status=status;
-		return this;
 	}
 		
 	/**

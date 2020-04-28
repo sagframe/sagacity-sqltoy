@@ -234,8 +234,7 @@ public class QueryCaseTest {
 		// 授权的机构
 		String[] authedOrgans = { "100004", "100007" };
 		String[] paramNames = { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" };
-		Object[] paramValues = new Object[] { null, authedOrgans, "陈", "2018-09-01", null };
-
+		Object[] paramValues = { null, authedOrgans, "陈", "2018-09-01", null };
 		// QueryExecuter query = new QueryExecutor();
 		double topSize = 20;
 		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
