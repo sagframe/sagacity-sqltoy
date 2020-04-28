@@ -64,6 +64,7 @@
 								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
 								<xsd:enumeration value="yyyyMMdd" />
 								<xsd:enumeration value="yyyy-MM" />
+								<xsd:enumeration value="MM-dd" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
