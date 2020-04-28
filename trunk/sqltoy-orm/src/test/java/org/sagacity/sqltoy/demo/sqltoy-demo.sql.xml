@@ -41,6 +41,7 @@
         		where t.DICT_TYPE_CODE=:dictTypeCode
 			]]>
 		</count-sql>
-		<unpivot columns="colName1:总量,colName2:个人" values-as-column="transCount" labels-as-column="bizType"/>
+		<unpivot columns-to-rows="colName1:总量,colName2:个人"
+			new-columns-labels="transCount,bizType" />
 	</sql>
 </sqltoy>
