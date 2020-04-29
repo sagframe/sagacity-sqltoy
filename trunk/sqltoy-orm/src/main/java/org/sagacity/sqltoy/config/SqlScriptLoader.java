@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.config;
 
+import static java.lang.System.out;
+
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +26,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
  * @modify Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
+ * @modify Date:2020-04-22 增加System.out
+ *         对sql文件加载的打印输出,避免有些开发在开发阶段不知道设置日志级别为debug从而看不到输出
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlScriptLoader {
@@ -93,21 +97,39 @@ public class SqlScriptLoader {
 		if (initialized)
 			return;
 		initialized = true;
-		logger.debug("开始加载sql配置文件..........................");
+		boolean enabledDebug = logger.isDebugEnabled();
+		if (enabledDebug) {
+			logger.debug("开始加载sql配置文件..........................");
+		} else {
+			out.println("开始加载sql配置文件..........................");
+		}
 		try {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				// 此处提供大量提升信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
-				logger.debug("总计加载.sql.xml文件数量为:" + realSqlList.size());
-				logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				if (enabledDebug) {
+					logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
+					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+				} else {
+					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
+					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
+				}
 				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
 					sqlFile = realSqlList.get(i);
 					if (sqlFile instanceof File) {
-						logger.debug("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
+						if (enabledDebug) {
+							logger.debug("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
+						} else {
+							out.println("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
+						}
 					} else {
-						logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
+						if (enabledDebug) {
+							logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
+						} else {
+							out.println("第:[" + i + "]个文件:" + sqlFile.toString());
+						}
 					}
 				}
 				for (int i = 0; i < realSqlList.size(); i++) {
@@ -115,8 +137,15 @@ public class SqlScriptLoader {
 							dialect, false);
 				}
 			} else {
-				logger.warn("没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
-						sqlResourcesDir);
+				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
+				if (logger.isWarnEnabled()) {
+					logger.warn(
+							"没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
+							sqlResourcesDir);
+				} else {
+					out.println("未检测到以.sql.xml结尾的文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
+							+ "配置是否正确,或文件没有在编译路径下(bin、classes等)!");
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -137,7 +166,11 @@ public class SqlScriptLoader {
 			}
 			// update 2019-08-25 增加独立的文件变更检测程序用于重新加载sql
 			if (sleepSeconds > 0 && sleepSeconds <= maxWait) {
-				logger.debug("已经开启sql文件变更检测，会自动间隔:{}秒检测一次,发生变更会自动重新载入!", sleepSeconds);
+				if (enabledDebug) {
+					logger.debug("已经开启sql文件变更检测，会自动间隔:{}秒检测一次,发生变更会自动重新载入!", sleepSeconds);
+				} else {
+					out.println("已经开启sql文件变更检测，会自动间隔:" + sleepSeconds + "秒检测一次,发生变更会自动重新载入!");
+				}
 				watcher = new SqlFileModifyWatcher(sqlCache, filesLastModifyMap, realSqlList, dialect, encoding,
 						delayCheckSeconds, sleepSeconds);
 				watcher.start();

@@ -181,7 +181,7 @@ public class QueryCaseTest {
 	public void findBySql() {
 		// 授权的机构
 		String[] authedOrgans = { "100004", "100007" };
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findBySql("sqltoy_order_search",
+		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findBySql("sqltoy_order_search",
 				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 				new Object[] { null, authedOrgans, "陈", LocalDate.parse("2018-09-01"), null }, DeviceOrderInfoVO.class);
 		for (DeviceOrderInfoVO vo : result)
@@ -203,8 +203,10 @@ public class QueryCaseTest {
 		staffVO.setStaffName("陈");
 		// 使用了分页优化器
 		// 第一次调用:执行count 和 取记录两次查询
-		PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
-		System.err.println(JSON.toJSONString(result));
+		PaginationModel<StaffInfoVO> result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		for (StaffInfoVO staff : result.getRows()) {
+			System.err.println(JSON.toJSONString(staff));
+		}
 		// 第二次调用:条件一致，不执行count查询
 		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
@@ -219,7 +221,7 @@ public class QueryCaseTest {
 		// 授权的机构
 		String[] authedOrgans = { "100004", "100007" };
 		double topSize = 20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopBySql("sqltoy_order_search",
+		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findTopBySql("sqltoy_order_search",
 				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, topSize);
 		for (DeviceOrderInfoVO vo : result)
@@ -235,7 +237,7 @@ public class QueryCaseTest {
 		Object[] paramValues = { null, authedOrgans, "陈", "2018-09-01", null };
 		// QueryExecuter query = new QueryExecutor();
 		double topSize = 20;
-		List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
+		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
 				.names(paramNames).values(paramValues).resultType(DeviceOrderInfoVO.class), topSize).getRows();
 		for (DeviceOrderInfoVO vo : result) {
 			System.err.println(JSON.toJSONString(vo));
@@ -253,7 +255,7 @@ public class QueryCaseTest {
 			// 授权的机构
 			String[] authedOrgans = { "100004", "100007" };
 			double randomSize = 20;
-			List<DeviceOrderInfoVO> result = (List) sqlToyLazyDao.getRandomResult("sqltoy_order_search",
+			List<DeviceOrderInfoVO> result = sqlToyLazyDao.getRandomResult("sqltoy_order_search",
 					new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 					new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderInfoVO.class, randomSize);
 			for (DeviceOrderInfoVO vo : result) {
@@ -265,7 +267,7 @@ public class QueryCaseTest {
 
 	@Test
 	public void testColsRelativeCalculate() throws InterruptedException {
-		List result = (List) sqlToyLazyDao.findBySql("cols_relative_case", null);
+		List result = sqlToyLazyDao.findBySql("cols_relative_case", null);
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
@@ -273,7 +275,7 @@ public class QueryCaseTest {
 
 	@Test
 	public void testRowsRelativeCalculate() throws InterruptedException {
-		List result = (List) sqlToyLazyDao.findBySql("rows_relative_case", null);
+		List result = sqlToyLazyDao.findBySql("rows_relative_case", null);
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
@@ -281,7 +283,7 @@ public class QueryCaseTest {
 
 	@Test
 	public void testPivotList() throws InterruptedException {
-		List result = (List) sqlToyLazyDao.findBySql("pivot_case", null);
+		List result = sqlToyLazyDao.findBySql("pivot_case", null);
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
@@ -302,7 +304,7 @@ public class QueryCaseTest {
 
 	@Test
 	public void testGroupSummary() throws InterruptedException {
-		List result = (List) sqlToyLazyDao.findBySql("group_summary_case", null);
+		List result = sqlToyLazyDao.findBySql("group_summary_case", null);
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
@@ -318,8 +320,8 @@ public class QueryCaseTest {
 				+ "                      where d.`STATUS`=1 \r\n" + "                    )\r\n"
 				+ "                    select *\r\n" + "                    from d\r\n"
 				+ "                    where 1=1 \r\n" + "                        #[and d.DICT_TYPE=:dictType]";
-		PaginationModel result = (PaginationModel) sqlToyLazyDao.findPageBySql(new PaginationModel(), sql,
-				new String[] { "dictType" }, new Object[] { "TRANS_CODE" }, null);
+		PaginationModel result = sqlToyLazyDao.findPageBySql(new PaginationModel(), sql, new String[] { "dictType" },
+				new Object[] { "TRANS_CODE" }, null);
 		for (int i = 0; i < result.getRows().size(); i++) {
 			System.err.println(JSON.toJSONString(result.getRows().get(i)));
 		}
