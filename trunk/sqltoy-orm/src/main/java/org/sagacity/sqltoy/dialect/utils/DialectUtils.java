@@ -749,7 +749,7 @@ public class DialectUtils {
 				sql.append(",");
 			}
 			sql.append("? as ");
-			sql.append(columnName);
+			sql.append(keywordProcess(columnName, dbType));
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -829,7 +829,7 @@ public class DialectUtils {
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				sql.append(",");
-				sql.append(columnName);
+				sql.append(keywordProcess(columnName, dbType));
 				sql.append(") values (");
 				sql.append(insertRejIdColValues).append(",");
 				if (isAssignPK && isSupportNUL) {
@@ -843,7 +843,7 @@ public class DialectUtils {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				if (isAssignPK) {
 					sql.append(",");
-					sql.append(columnName);
+					sql.append(keywordProcess(columnName, dbType));
 				}
 				sql.append(") values (");
 				// identity 模式insert无需写插入该字段语句
