@@ -576,12 +576,14 @@ public class StringUtil {
 		int symBeginIndex = 0;
 		int symEndIndex = 0;
 		int skipIndex = 0;
-		int minBegin = -1;
+		//最前对称符号
+		int minBeginIndex = -1;
+		//最后对称截止符号位置
 		int minEndIndex = -1;
 		int meter = 0;
 		while (splitIndex != -1) {
 			// 寻找最前的对称符号
-			minBegin = -1;
+			minBeginIndex = -1;
 			minEndIndex = -1;
 			meter = 0;
 			for (int i = 0; i < count; i++) {
@@ -601,26 +603,29 @@ public class StringUtil {
 					}
 				}
 				symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skipIndex);
-				if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBegin))) {
-					minBegin = symBeginIndex;
+				if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBeginIndex))) {
+					minBeginIndex = symBeginIndex;
 					minEndIndex = symEndIndex;
 					meter++;
 				}
 
 			}
-			// 在中间
-			if (minBegin < splitIndex && minEndIndex > splitIndex) {
+			// 分隔符号在""或()中间则当做字符串的一部分
+			if (minBeginIndex < splitIndex && minEndIndex > splitIndex) {
 				skipIndex = minEndIndex + 1;
 				splitIndex = source.indexOf(splitSign, minEndIndex + 1);
 			} else {
-				// 对称开始符号在分割符号后面或分割符前面没有对称符号或找不到对称符号
-				if (minBegin > splitIndex || minBegin == -1 || minEndIndex < splitIndex) {
+				// 对称开始符号在分割符号后面
+				// 无开始对称符号
+				// 对称截止符号在分割符号前面(2020-4-27 修复)
+				if (minBeginIndex > splitIndex || minBeginIndex == -1 || minEndIndex < splitIndex) {
 					splitResults.add(
 							source.substring(preSplitIndex + (preSplitIndex == 0 ? 0 : splitSignLength), splitIndex));
 					preSplitIndex = splitIndex;
 					skipIndex = preSplitIndex + 1;
 					splitIndex = source.indexOf(splitSign, preSplitIndex + 1);
-				} // 对称截止符号在分割符前面，向下继续寻找
+				}
+				// 对称截止符号在分割符前面，向下继续寻找
 				else {
 					skipIndex = minEndIndex + 1;
 				}

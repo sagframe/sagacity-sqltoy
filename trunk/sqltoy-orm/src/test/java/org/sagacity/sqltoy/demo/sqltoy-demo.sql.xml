@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
 	<!-- 获取数据字典key和名称的对照，用于缓存 -->
 	<sql id="sag_dictKeyNameCache">
 		<value>
@@ -16,9 +16,10 @@
 
 	<sql id="test_page_list">
 		<filters>
-			<primary param="" excludes=""/>
-			<exclusive param="" compare-type="eq" set-params="" compare-values="" set-value=""/>
-			
+			<primary param="" excludes="" />
+			<exclusive param="" compare-type="eq" set-params=""
+				compare-values="" set-value="" />
+
 		</filters>
 		<value>
 		<![CDATA[
