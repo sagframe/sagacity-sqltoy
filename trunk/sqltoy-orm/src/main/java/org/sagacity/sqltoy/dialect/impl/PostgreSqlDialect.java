@@ -278,12 +278,12 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
-		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields,
-				uniqueFields, conn, dbType, dialect, autoCommit, tableName);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -296,9 +296,9 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, final String[] uniqueFields,
-			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		logger.debug("修改记录数为:{}", updateCnt);

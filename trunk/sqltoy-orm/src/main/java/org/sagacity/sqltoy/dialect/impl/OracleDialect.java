@@ -186,12 +186,12 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
-			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();
 		entities.add(entity);
-		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields,
-				uniqueFields, conn, dbType, dialect, autoCommit, tableName);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -202,9 +202,9 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
-			final String[] uniqueFields, Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {

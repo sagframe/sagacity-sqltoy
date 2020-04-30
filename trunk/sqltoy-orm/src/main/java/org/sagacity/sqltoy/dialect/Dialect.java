@@ -235,8 +235,8 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveOrUpdate(final SqlToyContext sqlToyContext, final Serializable entity,
-			final String[] forceUpdateFields, final String[] uniqueFields, final Connection conn, final Integer dbType,
-			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
+			final String[] forceUpdateFields, final Connection conn, final Integer dbType, final String dialect,
+			final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量保存或修改记录
@@ -255,8 +255,8 @@ public interface Dialect {
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
-			final String[] uniqueFields, final Connection conn, final Integer dbType, final String dialect,
-			final Boolean autoCommit, final String tableName) throws Exception;
+			final Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception;
 
 	/**
 	 * @todo 批量保存,主键冲突的则忽视

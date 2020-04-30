@@ -214,16 +214,15 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final String[] uniqueFields, Connection conn, Integer dbType, String dialect, Boolean autoCommit,
-			String tableName) throws Exception {
+			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, final String[] uniqueFields,
-			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
