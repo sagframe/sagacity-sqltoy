@@ -5,7 +5,9 @@ package ${quickVO.voPackage}.${quickVO.abstractPath};
 
 import java.io.Serializable;
 import org.sagacity.sqltoy.config.annotation.Entity;
+<#if (quickVO.type=="TABLE")>
 import org.sagacity.sqltoy.config.annotation.Id;
+</#if>
 import org.sagacity.sqltoy.config.annotation.Column;
 <#if (quickVO.swaggerModel)>
 import io.swagger.annotations.ApiModel;
@@ -83,7 +85,7 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 
 </#list>
 </#if>
-
+<#if (quickVO.type=='TABLE')>
 	/** default constructor */
 	public Abstract${quickVO.voName}() {
 	}
@@ -123,6 +125,7 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 		this.${column.colJavaName?uncap_first}=${column.colJavaName?uncap_first};
 		</#list>
 	}
+</#if>
 </#if>
 <#list quickVO.columns as column>
 	

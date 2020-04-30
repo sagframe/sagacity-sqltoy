@@ -1,3 +1,4 @@
+<#if (quickVO.type=="TABLE")>
 /*---begin-constructor-area---don't-update-this-area--*/
 <#if (quickVO.singlePk=='1'||quickVO.singlePk=='0')>
 <#assign paramCnt="0"/> 
@@ -64,3 +65,4 @@
 </#list>
 </#if>
 	/*---end-constructor-area---don't-update-this-area--*/
+</#if>

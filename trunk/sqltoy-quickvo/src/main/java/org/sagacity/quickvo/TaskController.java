@@ -168,13 +168,19 @@ public class TaskController {
 		for (int i = 0; i < tables.size(); i++) {
 			tableMeta = (TableMeta) tables.get(i);
 			tableName = tableMeta.getTableName();
+			if (tableMeta.getTableType().equals("VIEW")) {
+				logger.info("正在处理视图:" + tableName);
+			} else {
+				logger.info("正在处理表:" + tableName);
+			}
 			businessIdConfig = configModel.getBusinessId(tableName);
+			quickVO = new QuickVO();
 			// 匹配表主键产生策略，主键策略通过配置文件进行附加定义
 			PrimaryKeyStrategy primaryKeyStrategy = getPrimaryKeyStrategy(configModel.getPkGeneratorStrategy(),
 					tableName);
-			logger.info("正在处理表:" + tableName);
+
 			entityName = StringUtil.toHumpStr(tableName, true);
-			quickVO = new QuickVO();
+
 			quickVO.setSwaggerModel(quickModel.isSwaggerApi());
 			quickVO.setReturnSelf(supportLinkSet);
 			quickVO.setAbstractPath(configModel.getAbstractPath());
@@ -183,6 +189,7 @@ public class TaskController {
 			quickVO.setAuthor(quickModel.getAuthor());
 			quickVO.setDateTime(formatDate(getNowTime(), "yyyy-MM-dd HH:mm:ss"));
 			quickVO.setTableName(tableName);
+			quickVO.setType(tableMeta.getTableType());
 			quickVO.setSchema(tableMeta.getSchema());
 			if (QuickVOConstants.getKeyValue("include.schema") == null
 					|| !QuickVOConstants.getKeyValue("include.schema").equalsIgnoreCase("true")) {
@@ -208,9 +215,8 @@ public class TaskController {
 
 			isTable = true;
 			// 判断是"表还是视图"
-			if (StringUtil.indexOfIgnoreCase(tableMeta.getTableType(), "TABLE") == -1) {
+			if (quickVO.getType().equals("VIEW")) {
 				isTable = false;
-				quickVO.setType("view");
 			}
 
 			// vo中需要import的数据类型
@@ -753,6 +759,10 @@ public class TaskController {
 		if (!voFile.exists()) {
 			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate,
 					file);
+			return;
+		}
+		// 如果是视图则直接返回
+		if (quickVO.getType().equals("VIEW")) {
 			return;
 		}
 		String fileStr = FileUtil.readAsString(voFile, charset);

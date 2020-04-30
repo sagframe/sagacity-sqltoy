@@ -131,7 +131,7 @@ public class DBHelper {
 	 */
 	public static List getTableAndView(final String[] includes, final String[] excludes) throws Exception {
 		int dbType = DBUtil.getDbType(conn);
-		String[] types = new String[] { "TABLE" };
+		String[] types = new String[] { "TABLE", "VIEW" };
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 		// 数据库表注释，默认为remarks，不同数据库其名称不一样
@@ -172,6 +172,7 @@ public class DBHelper {
 				String tableName;
 				// 是否包含标识，通过正则表达是判断是否是需要获取的表
 				boolean is_include = false;
+				String type;
 				while (rs.next()) {
 					is_include = false;
 					tableName = rs.getString("TABLE_NAME");
@@ -182,8 +183,9 @@ public class DBHelper {
 								break;
 							}
 						}
-					} else
+					} else {
 						is_include = true;
+					}
 					if (excludes != null && excludes.length > 0) {
 						for (int j = 0; j < excludes.length; j++) {
 							if (StringUtil.matches(tableName, excludes[j])) {
@@ -197,7 +199,12 @@ public class DBHelper {
 						tableMeta.setTableName(tableName);
 						tableMeta.setSchema(dbConfig.getSchema());
 						// tableMeta.setSchema(rs.getString("TABLE_SCHEMA"));
-						tableMeta.setTableType(rs.getString("TABLE_TYPE"));
+						type = rs.getString("TABLE_TYPE").toLowerCase();
+						if (type.contains("view")) {
+							tableMeta.setTableType("VIEW");
+						} else {
+							tableMeta.setTableType("TABLE");
+						}
 						tableMeta.setTableRemark(rs.getString(obj.toString()));
 						tables.add(tableMeta);
 					}
