@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ReservedWords {
 	/**
-	 * 哪些字段名称是保留字
+	 * 在vo类上指定哪些字段名称是保留字
 	 * 
 	 * @return
 	 */

@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.config.annotation.ListSql;
 import org.sagacity.sqltoy.config.annotation.LoadSql;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.PaginationSql;
+import org.sagacity.sqltoy.config.annotation.ReservedWords;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -299,6 +300,15 @@ public class EntityManager {
 	 * @param entityClass
 	 */
 	private void parseAnnotationSql(EntityMeta entityMeta, Class entityClass) {
+		// 保留字
+		if (entityClass.isAnnotationPresent(ReservedWords.class)) {
+			ReservedWords reservedWords = (ReservedWords) entityClass.getAnnotation(ReservedWords.class);
+			String[] fields = reservedWords.fields();
+			for (String field : fields) {
+				entityMeta.getReservedWords().add(StringUtil.toHumpStr(field, false).toLowerCase());
+			}
+		}
+
 		// 单记录查询的自定义语句
 		if (entityClass.isAnnotationPresent(LoadSql.class)) {
 			LoadSql loadSql = (LoadSql) entityClass.getAnnotation(LoadSql.class);

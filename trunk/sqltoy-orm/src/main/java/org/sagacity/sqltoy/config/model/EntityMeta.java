@@ -6,7 +6,9 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -95,6 +97,11 @@ public class EntityMeta implements Serializable {
 	 * 字段对应的顺序
 	 */
 	private HashMap<String, Integer> fieldIndexs = new HashMap<String, Integer>();
+
+	/**
+	 * 表字段中的保留字
+	 */
+	private Set<String> reservedWords = new HashSet<String>();
 
 	/**
 	 * 业务主键生成的标志符号
@@ -765,4 +772,13 @@ public class EntityMeta implements Serializable {
 		this.allColumnNames = allColumnNames;
 	}
 
+	public Set<String> getReservedWords() {
+		return reservedWords;
+	}
+
+	public void setReservedWords(Set<String> reservedWords) {
+		this.reservedWords = reservedWords;
+	}
+
+	
 }
