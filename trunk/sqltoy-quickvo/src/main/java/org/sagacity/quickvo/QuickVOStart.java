@@ -37,7 +37,7 @@ public class QuickVOStart {
 	 */
 	public void init() {
 		try {
-			out.println("=========  welcome use sagacity-quickvo version:4.11.5  支持jdk8 日期 ==========");
+			out.println("=========  welcome use sagacity-quickvo version:4.11.7  支持jdk8 日期 ==========");
 			out.println("======       请使用java -cp jarPath mainClass args模式启动                          =========");
 			configModel = XMLConfigLoader.parse();
 		} catch (Exception e) {
@@ -98,7 +98,7 @@ public class QuickVOStart {
 		QuickVOConstants.BASE_LOCATE = baseDir;
 		// 测试使用(真实场景不起作用)
 		if (args == null || args.length == 0) {
-			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sagacity-sqltoy/trunk/sqltoy-showcase/tools/quickvo";
+			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/github/sagacity-sqltoy/trunk/sqltoy-showcase/tools/quickvo";
 			// QuickVOConstants.BASE_LOCATE =
 			// "D:/workspace/personal/sagacity2.0/sqltoy-orm/tools/quickvo";
 			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
