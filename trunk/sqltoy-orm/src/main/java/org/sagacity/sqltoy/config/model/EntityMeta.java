@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -780,5 +781,22 @@ public class EntityMeta implements Serializable {
 		this.reservedWords = reservedWords;
 	}
 
-	
+	public String convertReseredWord(String column, Integer dbType) {
+		// 非保留字
+		if (!reservedWords.contains(column.toLowerCase()))
+			return column;
+		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
+		if (dbType == null || dbType.intValue() == DBType.SQLSERVER || dbType.intValue() == DBType.SQLITE
+				|| dbType.intValue() == DBType.SQLSERVER2012) {
+			return "[".concat(column).concat("]");
+		}
+		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
+			return "`".concat(column).concat("`");
+		}
+		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
+				|| dbType.intValue() == DBType.ORACLE11) {
+			return "\"".concat(column).concat("\"");
+		}
+		return column;
+	}
 }

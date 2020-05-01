@@ -197,8 +197,8 @@ public class EntityManager {
 				// 表名
 				entityMeta.setTableName(entity.tableName());
 
-				// 解析自定义注解sql
-				parseAnnotationSql(entityMeta, entityClass);
+				// 解析自定义注解
+				parseCustomAnnotation(entityMeta, entityClass);
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 
@@ -239,7 +239,7 @@ public class EntityManager {
 					if (i > 0) {
 						allColNames.append(",");
 					}
-					allColNames.append(allColumnNames.get(i));
+					allColNames.append(entityMeta.convertReseredWord(allColumnNames.get(i), null));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
@@ -295,17 +295,17 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析注解sql语句
+	 * @todo 解析自定义注解
 	 * @param entityMeta
 	 * @param entityClass
 	 */
-	private void parseAnnotationSql(EntityMeta entityMeta, Class entityClass) {
+	private void parseCustomAnnotation(EntityMeta entityMeta, Class entityClass) {
 		// 保留字
 		if (entityClass.isAnnotationPresent(ReservedWords.class)) {
 			ReservedWords reservedWords = (ReservedWords) entityClass.getAnnotation(ReservedWords.class);
 			String[] fields = reservedWords.fields();
 			for (String field : fields) {
-				entityMeta.getReservedWords().add(StringUtil.toHumpStr(field, false).toLowerCase());
+				entityMeta.getReservedWords().add(field.toLowerCase());
 			}
 		}
 
@@ -468,6 +468,7 @@ public class EntityManager {
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
+		String idColName;
 		if (id != null) {
 			fieldMeta.setPK(true);
 			// 主键生成策略
@@ -485,8 +486,9 @@ public class EntityManager {
 				loadNamedWhereSql.append(" where ");
 				loadArgWhereSql.append(" where ");
 			}
-			loadNamedWhereSql.append(column.name()).append("=:").append(field.getName());
-			loadArgWhereSql.append(column.name()).append("=?");
+			idColName = entityMeta.convertReseredWord(column.name(), null);
+			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
+			loadArgWhereSql.append(idColName).append("=?");
 		} else {
 			rejectIdFieldList.add(field.getName());
 		}
@@ -612,7 +614,8 @@ public class EntityManager {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 			}
-			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
+			subWhereSql = subWhereSql.concat(entityMeta.convertReseredWord(mappedColumns[i], null)).concat("=:")
+					.concat(mappedFields[i]);
 		}
 		boolean matchedWhere = false;
 		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
@@ -650,7 +653,7 @@ public class EntityManager {
 			if (i > 0) {
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
+			subDeleteSql = subDeleteSql.concat(entityMeta.convertReseredWord(mappedColumns[i], null)).concat("=?");
 		}
 		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
 
