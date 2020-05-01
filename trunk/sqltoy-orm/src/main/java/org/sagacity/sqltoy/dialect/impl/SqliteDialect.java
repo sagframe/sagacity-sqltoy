@@ -264,7 +264,7 @@ public class SqliteDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
-		String loadSql = sqlToyConfig.getSql(dialect);
+		String loadSql = entityMeta.convertReseredSql(sqlToyConfig.getSql(dialect), dbType);
 		// switch (lockMode) {
 		// case UPGRADE_NOWAIT:
 		// case UPGRADE:
@@ -294,7 +294,7 @@ public class SqliteDialect implements Dialect {
 					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
 		}
 		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(entityMeta.getAllColumnNames());
+		loadSql.append("select ").append(entityMeta.convertReseredSql(entityMeta.getAllColumnNames(), dbType));
 		loadSql.append(" from ");
 		// sharding 分表情况下会传递表名
 		loadSql.append(entityMeta.getSchemaTable(tableName));
@@ -305,7 +305,7 @@ public class SqliteDialect implements Dialect {
 			if (i > 0) {
 				loadSql.append(" and ");
 			}
-			loadSql.append(entityMeta.getColumnName(field));
+			loadSql.append(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		// if (lockMode != null) {

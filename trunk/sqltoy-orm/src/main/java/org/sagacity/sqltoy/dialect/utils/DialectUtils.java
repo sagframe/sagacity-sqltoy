@@ -1829,7 +1829,7 @@ public class DialectUtils {
 			if (null != entityMeta.getIdArray()) {
 				for (String idFieldName : entityMeta.getIdArray()) {
 					queryStr.append(",");
-					queryStr.append(entityMeta.getColumnName(idFieldName));
+					queryStr.append(entityMeta.convertReseredWord(entityMeta.getColumnName(idFieldName), dbType));
 				}
 			}
 			queryStr.append(" from ");
@@ -1839,7 +1839,8 @@ public class DialectUtils {
 				if (i > 0) {
 					queryStr.append(" and ");
 				}
-				queryStr.append(entityMeta.getColumnName(realParamNamed[i])).append("=? ");
+				queryStr.append(entityMeta.convertReseredWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
+						.append("=? ");
 			}
 
 			// 防止数据量过大，先用count方式查询提升效率

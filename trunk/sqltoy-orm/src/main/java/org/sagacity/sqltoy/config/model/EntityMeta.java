@@ -783,7 +783,7 @@ public class EntityMeta implements Serializable {
 
 	public String convertReseredWord(String column, Integer dbType) {
 		// 非保留字
-		if (!reservedWords.contains(column.toLowerCase()))
+		if (reservedWords.isEmpty() || !reservedWords.contains(column.toLowerCase()))
 			return column;
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
 		if (dbType == null || dbType.intValue() == DBType.SQLSERVER || dbType.intValue() == DBType.SQLITE
@@ -798,5 +798,19 @@ public class EntityMeta implements Serializable {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
+	}
+
+	public String convertReseredSql(String sql, Integer dbType) {
+		if (reservedWords.isEmpty())
+			return sql;
+		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
+			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
+		}
+		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
+				|| dbType.intValue() == DBType.DB2 || dbType.intValue() == DBType.ORACLE11) {
+			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
+		}
+		// 剔除保留字符号
+		return sql.replaceAll("\\[", "").replaceAll("\\]", "");
 	}
 }
