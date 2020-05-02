@@ -438,11 +438,13 @@ public class SqlToyDaoSupport {
 	 * @todo 批量执行sql修改或删除操作(返回updateCount)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param reflectPropertyHandler
+	 * @param reflectPropertyHandler 反调函数(一般不需要)
 	 * @param autoCommit
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) {
+		//例如sql 为:merge into table  update set xxx=:param
+		//dataSet可以是VO List,可以根据属性自动映射到:param
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
 				autoCommit, this.getDataSource(null));
 	}
