@@ -710,7 +710,7 @@ public class ResultUtils {
 		// 单值翻译
 		if (translate.getSplitRegex() == null) {
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
-			if (cacheValues == null) {
+			if (cacheValues == null || cacheValues.length == 0) {
 				if (translate.getUncached() != null) {
 					fieldValue = translate.getUncached().replace("${value}", fieldStr);
 				} else {
@@ -733,7 +733,7 @@ public class ResultUtils {
 				result.append(linkSign);
 			}
 			Object[] cacheValues = translateKeyMap.get(key.trim());
-			if (cacheValues == null) {
+			if (cacheValues == null || cacheValues.length == 0) {
 				if (translate.getUncached() != null) {
 					result.append(translate.getUncached().replace("${value}", key));
 				} else {
