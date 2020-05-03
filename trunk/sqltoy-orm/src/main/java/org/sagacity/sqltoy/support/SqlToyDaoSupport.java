@@ -102,10 +102,12 @@ public class SqlToyDaoSupport {
 	 */
 	public DataSource getDataSource(DataSource dataSource) {
 		DataSource result = dataSource;
-		if (null == result)
+		if (null == result) {
 			result = this.dataSource;
-		if (null == result)
+		}
+		if (null == result) {
 			result = sqlToyContext.getDefaultDataSource();
+		}
 		return result;
 	}
 
@@ -119,14 +121,17 @@ public class SqlToyDaoSupport {
 		// 第一、接口调用时直接指定的数据源
 		DataSource result = dataSource;
 		// 第二、sql指定的数据源
-		if (null == result && null != sqltoyConfig.getDataSource())
+		if (null == result && null != sqltoyConfig.getDataSource()) {
 			result = sqlToyContext.getDataSource(sqltoyConfig.getDataSource());
+		}
 		// 第三、自动注入的数据源
-		if (null == result)
+		if (null == result) {
 			result = this.dataSource;
+		}
 		// 第四、sqltoyContext默认的数据源
-		if (null == result)
+		if (null == result) {
 			result = sqlToyContext.getDefaultDataSource();
+		}
 		return result;
 	}
 
