@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -859,9 +860,18 @@ public class ResultUtils {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;
+			boolean isMap = resultType.equals(Map.class);
+			boolean isConMap = resultType.equals(ConcurrentMap.class);
 			for (int i = 0, n = queryResultRows.size(); i < n; i++) {
 				rowList = (List) queryResultRows.get(i);
-				Map rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				Map rowMap;
+				if (isMap) {
+					rowMap = new HashMap();
+				} else if (isConMap) {
+					rowMap = new ConcurrentHashMap();
+				} else {
+					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				}
 				for (int j = 0; j < width; j++) {
 					rowMap.put(labelNames[j], rowList.get(j));
 				}
