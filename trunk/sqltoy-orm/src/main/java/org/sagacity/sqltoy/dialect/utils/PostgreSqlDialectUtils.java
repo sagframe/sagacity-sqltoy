@@ -5,7 +5,7 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -253,6 +253,7 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -260,7 +261,8 @@ public class PostgreSqlDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(entityMeta.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -277,27 +279,30 @@ public class PostgreSqlDialectUtils {
 					if (i > 0) {
 						sql.append(",");
 					}
-					sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+					sql.append(entityMeta.convertReseredWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}
 
 			sql.append(" DO UPDATE SET ");
 			// 需要被强制修改的字段
-			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
+			HashSet<String> fuc = new HashSet<String>();
 			if (forceUpdateFields != null) {
-				for (String forceUpdatefield : forceUpdateFields)
-					forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
+				for (String field : forceUpdateFields) {
+					fuc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
+				}
 			}
-			String columnName;
+
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
 				sql.append(columnName).append("=");
 				// 强制修改
-				if (forceUpdateColumnMap.containsKey(columnName)) {
+				if (fuc.contains(columnName)) {
 					sql.append("excluded.").append(columnName);
 				} else {
 					sql.append("COALESCE(excluded.");
@@ -328,6 +333,7 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -335,7 +341,8 @@ public class PostgreSqlDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(entityMeta.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -352,7 +359,8 @@ public class PostgreSqlDialectUtils {
 					if (i > 0) {
 						sql.append(",");
 					}
-					sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+					sql.append(entityMeta.convertReseredWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}

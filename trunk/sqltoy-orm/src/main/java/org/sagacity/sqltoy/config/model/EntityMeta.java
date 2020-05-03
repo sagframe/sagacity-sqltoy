@@ -783,7 +783,9 @@ public class EntityMeta implements Serializable {
 
 	public String convertReseredWord(String column, Integer dbType) {
 		// 非保留字
-		if (reservedWords.isEmpty() || !reservedWords.contains(column.toLowerCase()))
+		if (reservedWords.isEmpty())
+			return column;
+		if (!reservedWords.contains(column.toLowerCase()))
 			return column;
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
 		if (dbType == null || dbType.intValue() == DBType.SQLSERVER || dbType.intValue() == DBType.SQLITE

@@ -4,7 +4,7 @@
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -101,7 +101,9 @@ public class DB2DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
-			wrapSelectFields(sql, i, fieldMeta.getColumnName(), fieldMeta.getType(), fieldMeta.getLength());
+			// 处理保留字
+			columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
+			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -111,6 +113,8 @@ public class DB2DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			// 处理保留字
+			columnName = entityMeta.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -129,17 +133,19 @@ public class DB2DialectUtils {
 			sql.append(" when matched then update set ");
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
-			HashMap<String, String> fupc = new HashMap<String, String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.put(entityMeta.getColumnName(field), "1");
+					// 增加处理保留字
+					fupc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					sql.append(",");
 					insertRejIdCols.append(",");
@@ -147,7 +153,7 @@ public class DB2DialectUtils {
 				}
 				sql.append(" ta.").append(columnName).append("=");
 				// 强制修改
-				if (fupc.containsKey(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("tv.").append(columnName);
 				} else {
 					sql.append(isNullFunction);
@@ -181,6 +187,8 @@ public class DB2DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -194,6 +202,8 @@ public class DB2DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -246,7 +256,9 @@ public class DB2DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
-			wrapSelectFields(sql, i, fieldMeta.getColumnName(), fieldMeta.getType(), fieldMeta.getLength());
+			// 增加处理保留字
+			columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
+			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
 			sql.append(" from ").append(fromTable);
@@ -256,6 +268,8 @@ public class DB2DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			// 增加处理保留字
+			columnName = entityMeta.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -275,6 +289,8 @@ public class DB2DialectUtils {
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = fieldMeta.getColumnName();
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
@@ -305,6 +321,8 @@ public class DB2DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -318,6 +336,8 @@ public class DB2DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				// 增加处理保留字
+				columnName = entityMeta.convertReseredWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
