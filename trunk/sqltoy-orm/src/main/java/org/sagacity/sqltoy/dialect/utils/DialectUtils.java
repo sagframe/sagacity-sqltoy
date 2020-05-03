@@ -650,9 +650,11 @@ public class DialectUtils {
 		String field;
 		boolean isStart = true;
 		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
+		String columnName;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -662,7 +664,7 @@ public class DialectUtils {
 							sql.append(",");
 							values.append(",");
 						}
-						sql.append(fieldMeta.getColumnName());
+						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
@@ -672,7 +674,7 @@ public class DialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					if (isAssignPK && isSupportNULL) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
@@ -685,7 +687,7 @@ public class DialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
@@ -694,7 +696,7 @@ public class DialectUtils {
 					sql.append(",");
 					values.append(",");
 				}
-				sql.append(fieldMeta.getColumnName());
+				sql.append(columnName);
 				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
 					values.append("(?,");
