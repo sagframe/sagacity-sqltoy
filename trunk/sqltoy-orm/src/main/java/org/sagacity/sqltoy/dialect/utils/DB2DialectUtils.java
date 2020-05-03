@@ -288,9 +288,8 @@ public class DB2DialectUtils {
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
 				// 增加处理保留字
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
