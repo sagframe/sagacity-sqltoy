@@ -716,7 +716,7 @@ public class ResultUtils {
 				} else {
 					fieldValue = fieldValue.toString();
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), fieldValue);
 			} else {
 				fieldValue = cacheValues[translate.getIndex()];
@@ -739,7 +739,7 @@ public class ResultUtils {
 				} else {
 					result.append(key);
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), key);
 			} else {
 				result.append(cacheValues[translate.getIndex()]);
