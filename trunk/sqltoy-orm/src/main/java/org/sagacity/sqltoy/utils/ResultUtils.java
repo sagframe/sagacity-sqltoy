@@ -758,6 +758,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param conn
+	 * @param dbType
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -903,6 +904,12 @@ public class ResultUtils {
 		return result;
 	}
 
+	/**
+	 * @TODO 将字段名称变成驼峰模式
+	 * @param queryExecutor
+	 * @param labelNames
+	 * @return
+	 */
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getResultType();
 		boolean hump = true;
