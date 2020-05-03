@@ -349,15 +349,15 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
-	 * @param sql
+	 * @param sqlOrNamedSql
 	 * @param paramNames
 	 * @param paramValues
 	 * @param resultType
 	 * @return
 	 */
-	protected <T> T loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
+	protected <T> T loadBySql(final String sqlOrNamedSql, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
-		QueryExecutor query = new QueryExecutor(sql, paramNames, paramValues);
+		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramNames, paramValues);
 		if (resultType != null) {
 			query.resultType(resultType);
 		}
@@ -374,6 +374,11 @@ public class SqlToyDaoSupport {
 		return (T) loadByQuery(new QueryExecutor(sql, entity));
 	}
 
+	/**
+	 * @TODO 通过构造QueryExecutor进行单记录查询
+	 * @param queryExecutor
+	 * @return
+	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
@@ -443,8 +448,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) {
-		//例如sql 为:merge into table  update set xxx=:param
-		//dataSet可以是VO List,可以根据属性自动映射到:param
+		// 例如sql 为:merge into table update set xxx=:param
+		// dataSet可以是VO List,可以根据属性自动映射到:param
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
 				autoCommit, this.getDataSource(null));
 	}
@@ -525,7 +530,7 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass 分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @param voClass     分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
 	 * @return
 	 */
 	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
