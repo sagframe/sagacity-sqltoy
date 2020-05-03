@@ -45,6 +45,8 @@ import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+
 /**
  * @project sagacity-sqltoy
  * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
@@ -851,6 +853,10 @@ public class ResultUtils {
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
+		// 返回数组类型
+		if (Array.class.equals(resultType)) {
+			return CollectionUtil.innerListToArray(queryResultRows);
+		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
