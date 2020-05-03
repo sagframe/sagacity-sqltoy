@@ -269,11 +269,13 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T load(final T entity) {
-		if (entity == null)
+		if (entity == null) {
 			return null;
+		}
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
-		if (SqlConfigParseUtils.isNamedQuery(entityMeta.getLoadSql(null)))
+		if (SqlConfigParseUtils.isNamedQuery(entityMeta.getLoadSql(null))) {
 			return (T) this.loadBySql(entityMeta.getLoadSql(null), entity);
+		}
 		return load(entity, null, null);
 	}
 
@@ -305,8 +307,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
-		if (entity == null)
+		if (entity == null) {
 			return null;
+		}
 		return dialectFactory.load(sqlToyContext, entity,
 				sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes(), lockMode, this.getDataSource(null));
 	}
@@ -333,8 +336,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			return entities;
+		}
 		return dialectFactory.loadAll(sqlToyContext, entities,
 				sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes(), lockMode,
 				this.getDataSource(null));
@@ -389,8 +393,9 @@ public class SqlToyDaoSupport {
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0)
+		if (rows != null && rows.size() > 0) {
 			return rows.get(0);
+		}
 		return null;
 	}
 
@@ -1134,8 +1139,9 @@ public class SqlToyDaoSupport {
 	protected void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) {
 		// 数据以及合法性校验
-		if (dataSet == null || dataSet.isEmpty())
+		if (dataSet == null || dataSet.isEmpty()) {
 			return;
+		}
 		if (cacheName == null) {
 			throw new IllegalArgumentException("缓存名称不能为空!");
 		}
