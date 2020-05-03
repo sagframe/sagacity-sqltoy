@@ -252,9 +252,9 @@ public class TranslateFactory {
 					e.getMessage());
 		}
 		HashMap<String, Object[]> cacheData = wrapCacheResult(result, cacheModel);
-		//增加错误日志提醒
+		// 增加错误日志提醒
 		if (cacheData == null || cacheData.isEmpty()) {
-			logger.error("请检查缓存翻译cacheName={} 对应的配置是否正确,未能查询出数据将导致正常的查询无法翻译!", cacheModel.getCache());
+			logger.error("缓存cacheName={} 数据集为空,请检查对应的配置和查询逻辑是否正确!", cacheModel.getCache());
 		}
 		return cacheData;
 	}
