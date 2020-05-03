@@ -251,7 +251,12 @@ public class TranslateFactory {
 			logger.error("获取缓存数据失败,返回结果应该是List<List> 或List<Object[]> 或 Map<String,Object[]> 类型,错误信息:{}",
 					e.getMessage());
 		}
-		return wrapCacheResult(result, cacheModel);
+		HashMap<String, Object[]> cacheData = wrapCacheResult(result, cacheModel);
+		//增加错误日志提醒
+		if (cacheData == null || cacheData.isEmpty()) {
+			logger.error("请检查缓存翻译cacheName={} 对应的配置是否正确,未能查询出数据将导致正常的查询无法翻译!", cacheModel.getCache());
+		}
+		return cacheData;
 	}
 
 	/**
