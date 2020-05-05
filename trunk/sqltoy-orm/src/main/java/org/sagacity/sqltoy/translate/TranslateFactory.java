@@ -87,8 +87,9 @@ public class TranslateFactory {
 			Timestamp preCheckTime) throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(config.getSql(), SqlType.search);
 		String dataSourceName = config.getDataSource();
-		if (dataSourceName == null)
+		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
+		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(config.getSql(), sqlToyConfig.getParamsName(),
