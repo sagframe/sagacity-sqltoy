@@ -5,7 +5,7 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -284,10 +284,11 @@ public class PostgreSqlDialectUtils {
 
 			sql.append(" DO UPDATE SET ");
 			// 需要被强制修改的字段
-			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
-				for (String forceUpdatefield : forceUpdateFields)
-					forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
+				for (String field : forceUpdateFields) {
+					fupc.add(entityMeta.getColumnName(field));
+				}
 			}
 			String columnName;
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -297,7 +298,7 @@ public class PostgreSqlDialectUtils {
 				}
 				sql.append(columnName).append("=");
 				// 强制修改
-				if (forceUpdateColumnMap.containsKey(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("excluded.").append(columnName);
 				} else {
 					sql.append("COALESCE(excluded.");

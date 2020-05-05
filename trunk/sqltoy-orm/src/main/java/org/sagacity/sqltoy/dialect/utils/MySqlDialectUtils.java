@@ -3,7 +3,7 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 
@@ -58,10 +58,10 @@ public class MySqlDialectUtils {
 			// 当主键存在则进行修改操作
 			sql.append(" ON DUPLICATE KEY UPDATE ");
 			// 需要被强制修改的字段
-			HashMap<String, String> forceUpdateColumnMap = new HashMap<String, String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
-				for (String forceUpdatefield : forceUpdateFields) {
-					forceUpdateColumnMap.put(entityMeta.getColumnName(forceUpdatefield), "1");
+				for (String field : forceUpdateFields) {
+					fupc.add(entityMeta.getColumnName(field));
 				}
 			}
 			String columnName;
@@ -72,7 +72,7 @@ public class MySqlDialectUtils {
 				}
 				sql.append(columnName).append("=");
 				// 强制修改
-				if (forceUpdateColumnMap.containsKey(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("values(").append(columnName).append(")");
 				} else {
 					sql.append("ifnull(values(");

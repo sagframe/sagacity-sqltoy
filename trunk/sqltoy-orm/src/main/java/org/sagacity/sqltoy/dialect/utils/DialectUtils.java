@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -775,10 +776,10 @@ public class DialectUtils {
 			sql.append(" when matched then update set ");
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
-			HashMap<String, String> fupc = new HashMap<String, String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.put(entityMeta.getColumnName(field), "1");
+					fupc.add(entityMeta.getColumnName(field));
 				}
 			}
 			FieldMeta fieldMeta;
@@ -793,7 +794,7 @@ public class DialectUtils {
 				}
 				sql.append(" ta.").append(columnName).append("=");
 				// 强制修改
-				if (fupc.containsKey(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("tv.").append(columnName);
 				} else {
 					sql.append(isNullFunction);
@@ -1045,10 +1046,10 @@ public class DialectUtils {
 		sql.append(" set ");
 		String columnName;
 		// 需要被强制修改的字段
-		HashMap<String, String> fupc = new HashMap<String, String>();
+		HashSet<String> fupc = new HashSet<String>();
 		if (forceUpdateFields != null) {
 			for (String field : forceUpdateFields) {
-				fupc.put(entityMeta.getColumnName(field), "1");
+				fupc.add(entityMeta.getColumnName(field));
 			}
 		}
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -1058,7 +1059,7 @@ public class DialectUtils {
 			}
 			sql.append(columnName);
 			sql.append("=");
-			if (fupc.containsKey(columnName)) {
+			if (fupc.contains(columnName)) {
 				sql.append("?");
 			} else {
 				sql.append(nullFunction);

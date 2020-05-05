@@ -4,7 +4,7 @@
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -129,10 +129,10 @@ public class DB2DialectUtils {
 			sql.append(" when matched then update set ");
 			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
 			// 需要被强制修改的字段
-			HashMap<String, String> fupc = new HashMap<String, String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.put(entityMeta.getColumnName(field), "1");
+					fupc.add(entityMeta.getColumnName(field));
 				}
 			}
 
@@ -147,7 +147,7 @@ public class DB2DialectUtils {
 				}
 				sql.append(" ta.").append(columnName).append("=");
 				// 强制修改
-				if (fupc.containsKey(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("tv.").append(columnName);
 				} else {
 					sql.append(isNullFunction);
