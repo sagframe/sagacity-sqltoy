@@ -374,13 +374,23 @@ public class SqlToyDaoSupport {
 		return (T) loadByQuery(new QueryExecutor(sql, entity));
 	}
 
+	/**
+	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如: 
+	 * <p>
+	 * 1、new QueryExecutor(sql,entity).dataSource(dataSource) 
+	 * 2、new QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
+	 * </p>
+	 * @param queryExecutor
+	 * @return
+	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0)
+		if (rows != null && rows.size() > 0) {
 			return rows.get(0);
+		}
 		return null;
 	}
 
@@ -523,7 +533,7 @@ public class SqlToyDaoSupport {
 	 * @param sql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass 分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
+	 * @param voClass     分null(返回二维List)、voClass、HashMap.class、LinkedHashMap.class等
 	 * @return
 	 */
 	protected <T> List<T> findBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
@@ -549,7 +559,6 @@ public class SqlToyDaoSupport {
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
-
 		// 跳过查询总记录数量
 		if (paginationModel.getSkipQueryCount() != null && paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
