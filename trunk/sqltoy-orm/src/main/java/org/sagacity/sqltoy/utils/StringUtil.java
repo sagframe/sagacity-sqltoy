@@ -578,13 +578,13 @@ public class StringUtil {
 		}
 		if (pattern == null) {
 			result[0] = source.indexOf(filter[0], skipIndex);
-			if (result[0] > 0) {
+			if (result[0] >= 0) {
 				result[1] = source.indexOf(filter[1], result[0] + 1);
 			}
 		} else {
 			result[0] = StringUtil.matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
-			if (result[0] > 0) {
+			if (result[0] >= 0) {
 				result[0] = result[0] + 1;
 				result[1] = StringUtil.matchIndex(source, pattern, result[0] + 1)[0];
 			}
@@ -636,19 +636,17 @@ public class StringUtil {
 			endSignIndex = -1;
 			if (pattern == null) {
 				beginSignIndex = source.indexOf(beginSign);
-				if (beginSignIndex != -1) {
+				if (beginSignIndex > -1) {
 					endSignIndex = source.indexOf(endSign, beginSignIndex + 1);
 				}
 			} else {
 				beginSignIndex = StringUtil.matchIndex(source, pattern);
 				// 转义符号占一位,开始位后移一位
-				if (beginSignIndex > 0) {
+				if (beginSignIndex > -1) {
 					beginSignIndex = beginSignIndex + 1;
-				}
-				if (beginSignIndex >= 0) {
 					endSignIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 					// 转义符号占一位,开始位后移一位
-					if (endSignIndex > beginSignIndex + 1) {
+					if (endSignIndex >= beginSignIndex + 1) {
 						endSignIndex = endSignIndex + 1;
 					}
 				}
