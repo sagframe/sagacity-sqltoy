@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
@@ -576,9 +578,9 @@ public class StringUtil {
 		int symBeginIndex = 0;
 		int symEndIndex = 0;
 		int skipIndex = 0;
-		//最前对称符号
+		// 最前对称符号
 		int minBeginIndex = -1;
-		//最后对称截止符号位置
+		// 最后对称截止符号位置
 		int minEndIndex = -1;
 		int meter = 0;
 		while (splitIndex != -1) {
@@ -602,7 +604,33 @@ public class StringUtil {
 						symBeginIndex = symBeginIndex + 1;
 					}
 				}
-				symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skipIndex);
+				// symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source,
+				// skipIndex);
+
+				int skip = skipIndex;
+				while (symBeginIndex > 0 && symBeginIndex < splitIndex) {
+					symEndIndex = getSymMarkIndex(filters[i][0], filters[i][1], source, skip);
+					int start;
+					if (symEndIndex > 0) {
+						skip = symEndIndex;
+						if (pattern == null) {
+							start = source.indexOf(filters[i][0], skip);
+						} else {
+							start = StringUtil.matchIndex(source, pattern, skip)[0];
+							// 正则表达式有一个转义符号占一位
+							if (start > 0) {
+								start = start + 1;
+							}
+						}
+						if (start < splitIndex) {
+							symBeginIndex = start;
+						} else {
+							break;
+						}
+					} else {
+						break;
+					}
+				}
 				if (symBeginIndex != -1 && symEndIndex != -1 && (meter == 0 || (symBeginIndex < minBeginIndex))) {
 					minBeginIndex = symBeginIndex;
 					minEndIndex = symEndIndex;
@@ -806,5 +834,14 @@ public class StringUtil {
 		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+	}
+
+	public static void main(String[] args) {
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo').size()]\">@dict(EC_PAY_TYPE,#[payType])</td>";
+		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
+		for (String s : strs) {
+			System.err.println("[" + s.trim() + "]");
+		}
+
 	}
 }
