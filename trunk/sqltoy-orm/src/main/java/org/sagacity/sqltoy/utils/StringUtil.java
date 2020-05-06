@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
@@ -513,17 +515,21 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filterMap) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		int splitIndex = source.indexOf(splitSign);
-		if (splitIndex == -1)
+		if (splitIndex == -1) {
 			return new String[] { source };
-		if (filterMap == null || filterMap.isEmpty())
+		}
+		if (filterMap == null || filterMap.isEmpty()) {
 			return source.split(splitSign);
+		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		int count = filters.size();
-		if (count == 0)
+		if (count == 0) {
 			return source.split(splitSign);
+		}
 		int start = 0;
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
@@ -581,8 +587,8 @@ public class StringUtil {
 			}
 		} else {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
+			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
-				// 正则表达式有一个转义符号占一位
 				result[0] = result[0] + 1;
 				result[1] = matchIndex(source, pattern, result[0] + 1)[0];
 			}
@@ -595,8 +601,8 @@ public class StringUtil {
 				}
 			} else {
 				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
+				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
-					// 正则表达式有一个转义符号占一位
 					result[0] = result[0] + 1;
 					result[1] = matchIndex(source, pattern, result[0] + 1)[0];
 				}
@@ -819,5 +825,14 @@ public class StringUtil {
 		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+	}
+
+	public static void main(String[] args) {
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
+		for (String s : strs) {
+			System.err.println("[" + s.trim() + "]");
+		}
+
 	}
 }
