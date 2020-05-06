@@ -515,17 +515,21 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filterMap) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		int splitIndex = source.indexOf(splitSign);
-		if (splitIndex == -1)
+		if (splitIndex == -1) {
 			return new String[] { source };
-		if (filterMap == null || filterMap.isEmpty())
+		}
+		if (filterMap == null || filterMap.isEmpty()) {
 			return source.split(splitSign);
+		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		int count = filters.size();
-		if (count == 0)
+		if (count == 0) {
 			return source.split(splitSign);
+		}
 		int start = 0;
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
