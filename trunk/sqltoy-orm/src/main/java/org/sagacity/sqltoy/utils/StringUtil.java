@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
@@ -513,17 +515,21 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String[] splitExcludeSymMark(String source, String splitSign, HashMap filterMap) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		int splitIndex = source.indexOf(splitSign);
-		if (splitIndex == -1)
+		if (splitIndex == -1) {
 			return new String[] { source };
-		if (filterMap == null || filterMap.isEmpty())
+		}
+		if (filterMap == null || filterMap.isEmpty()) {
 			return source.split(splitSign);
+		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		int count = filters.size();
-		if (count == 0)
+		if (count == 0) {
 			return source.split(splitSign);
+		}
 		int start = 0;
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
@@ -576,15 +582,15 @@ public class StringUtil {
 		}
 		if (pattern == null) {
 			result[0] = source.indexOf(filter[0], skipIndex);
-			if (result[0] > 0) {
+			if (result[0] >= 0) {
 				result[1] = source.indexOf(filter[1], result[0] + 1);
 			}
 		} else {
-			result[0] = StringUtil.matchIndex(source, pattern, skipIndex)[0];
+			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
-			if (result[0] > 0) {
+			if (result[0] >= 0) {
 				result[0] = result[0] + 1;
-				result[1] = StringUtil.matchIndex(source, pattern, result[0] + 1)[0];
+				result[1] = matchIndex(source, pattern, result[0] + 1)[0];
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
@@ -594,11 +600,11 @@ public class StringUtil {
 					result[1] = source.indexOf(filter[1], result[0] + 1);
 				}
 			} else {
-				result[0] = StringUtil.matchIndex(source, pattern, result[1] + 1)[0];
+				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
-					result[1] = StringUtil.matchIndex(source, pattern, result[0] + 1)[0];
+					result[1] = matchIndex(source, pattern, result[0] + 1)[0];
 				}
 			}
 		}
@@ -634,19 +640,17 @@ public class StringUtil {
 			endSignIndex = -1;
 			if (pattern == null) {
 				beginSignIndex = source.indexOf(beginSign);
-				if (beginSignIndex != -1) {
+				if (beginSignIndex > -1) {
 					endSignIndex = source.indexOf(endSign, beginSignIndex + 1);
 				}
 			} else {
-				beginSignIndex = StringUtil.matchIndex(source, pattern);
+				beginSignIndex = matchIndex(source, pattern);
 				// 转义符号占一位,开始位后移一位
-				if (beginSignIndex > 0) {
+				if (beginSignIndex > -1) {
 					beginSignIndex = beginSignIndex + 1;
-				}
-				if (beginSignIndex >= 0) {
-					endSignIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+					endSignIndex = matchIndex(source, pattern, beginSignIndex + 1)[0];
 					// 转义符号占一位,开始位后移一位
-					if (endSignIndex > beginSignIndex + 1) {
+					if (endSignIndex >= beginSignIndex + 1) {
 						endSignIndex = endSignIndex + 1;
 					}
 				}
@@ -821,5 +825,14 @@ public class StringUtil {
 		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+	}
+
+	public static void main(String[] args) {
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
+		for (String s : strs) {
+			System.err.println("[" + s.trim() + "]");
+		}
+
 	}
 }
