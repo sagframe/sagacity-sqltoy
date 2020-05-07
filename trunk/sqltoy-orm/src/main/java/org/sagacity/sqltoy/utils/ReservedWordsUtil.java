@@ -82,7 +82,6 @@ public class ReservedWordsUtil {
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
-
 		StringBuilder sqlBuff = new StringBuilder();
 		Matcher matcher;
 		int start = 0;
