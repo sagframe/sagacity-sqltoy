@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DebugUtil;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -654,7 +655,7 @@ public class DialectUtils {
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
-			columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -746,7 +747,7 @@ public class DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -761,7 +762,7 @@ public class DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -783,14 +784,14 @@ public class DialectUtils {
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
+					fupc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					sql.append(",");
 					insertRejIdCols.append(",");
@@ -831,7 +832,7 @@ public class DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -845,7 +846,7 @@ public class DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -897,7 +898,7 @@ public class DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -912,7 +913,7 @@ public class DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -932,7 +933,7 @@ public class DialectUtils {
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = entityMeta.convertReseredWord(fieldMeta.getColumnName(), dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
@@ -962,7 +963,7 @@ public class DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -976,7 +977,7 @@ public class DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -1060,12 +1061,12 @@ public class DialectUtils {
 		HashSet<String> fupc = new HashSet<String>();
 		if (forceUpdateFields != null) {
 			for (String field : forceUpdateFields) {
-				fupc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
+				fupc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
 			}
 		}
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -1081,7 +1082,7 @@ public class DialectUtils {
 		sql.append(" where ");
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-			columnName = entityMeta.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 			}
@@ -1843,7 +1844,7 @@ public class DialectUtils {
 			if (null != entityMeta.getIdArray()) {
 				for (String idFieldName : entityMeta.getIdArray()) {
 					queryStr.append(",");
-					queryStr.append(entityMeta.convertReseredWord(entityMeta.getColumnName(idFieldName), dbType));
+					queryStr.append(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(idFieldName), dbType));
 				}
 			}
 			queryStr.append(" from ");
@@ -1853,7 +1854,7 @@ public class DialectUtils {
 				if (i > 0) {
 					queryStr.append(" and ");
 				}
-				queryStr.append(entityMeta.convertReseredWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
+				queryStr.append(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
 						.append("=? ");
 			}
 

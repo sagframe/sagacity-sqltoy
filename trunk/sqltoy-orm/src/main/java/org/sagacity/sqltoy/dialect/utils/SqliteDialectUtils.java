@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -49,7 +50,7 @@ public class SqliteDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(entityMeta.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");
@@ -61,19 +62,19 @@ public class SqliteDialectUtils {
 					sql.append(",");
 				}
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-				sql.append(entityMeta.convertReseredWord(columnName, dbType));
+				sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 			}
 			sql.append(" ) DO UPDATE SET ");
 			// 需要被强制修改的字段
 			HashSet<String> fuc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fuc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
+					fuc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
@@ -116,7 +117,7 @@ public class SqliteDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(entityMeta.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");

@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -262,7 +263,7 @@ public class PostgreSqlDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(entityMeta.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -280,7 +281,7 @@ public class PostgreSqlDialectUtils {
 						sql.append(",");
 					}
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-					sql.append(entityMeta.convertReseredWord(columnName, dbType));
+					sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}
@@ -290,13 +291,13 @@ public class PostgreSqlDialectUtils {
 			HashSet<String> fuc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fuc.add(entityMeta.convertReseredWord(entityMeta.getColumnName(field), dbType));
+					fuc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = entityMeta.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
@@ -342,7 +343,7 @@ public class PostgreSqlDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(entityMeta.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -360,7 +361,7 @@ public class PostgreSqlDialectUtils {
 						sql.append(",");
 					}
 					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-					sql.append(entityMeta.convertReseredWord(columnName, dbType));
+					sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}

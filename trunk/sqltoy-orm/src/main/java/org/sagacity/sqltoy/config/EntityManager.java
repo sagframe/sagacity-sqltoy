@@ -32,6 +32,7 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,7 +240,7 @@ public class EntityManager {
 					if (i > 0) {
 						allColNames.append(",");
 					}
-					allColNames.append(entityMeta.convertReseredWord(allColumnNames.get(i), null));
+					allColNames.append(ReservedWordsUtil.convertReseredWord(allColumnNames.get(i), null));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
@@ -301,13 +302,13 @@ public class EntityManager {
 	 */
 	private void parseCustomAnnotation(EntityMeta entityMeta, Class entityClass) {
 		// 保留字
-		if (entityClass.isAnnotationPresent(ReservedWords.class)) {
-			ReservedWords reservedWords = (ReservedWords) entityClass.getAnnotation(ReservedWords.class);
-			String[] fields = reservedWords.fields();
-			for (String field : fields) {
-				entityMeta.getReservedWords().add(field.toLowerCase());
-			}
-		}
+//		if (entityClass.isAnnotationPresent(ReservedWords.class)) {
+//			ReservedWords reservedWords = (ReservedWords) entityClass.getAnnotation(ReservedWords.class);
+//			String[] fields = reservedWords.fields();
+//			for (String field : fields) {
+//				entityMeta.getReservedWords().add(field.toLowerCase());
+//			}
+//		}
 
 		// 单记录查询的自定义语句
 		if (entityClass.isAnnotationPresent(LoadSql.class)) {
@@ -486,7 +487,7 @@ public class EntityManager {
 				loadNamedWhereSql.append(" where ");
 				loadArgWhereSql.append(" where ");
 			}
-			idColName = entityMeta.convertReseredWord(column.name(), null);
+			idColName = ReservedWordsUtil.convertReseredWord(column.name(), null);
 			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
 			loadArgWhereSql.append(idColName).append("=?");
 		} else {
@@ -614,7 +615,7 @@ public class EntityManager {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 			}
-			subWhereSql = subWhereSql.concat(entityMeta.convertReseredWord(mappedColumns[i], null)).concat("=:")
+			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertReseredWord(mappedColumns[i], null)).concat("=:")
 					.concat(mappedFields[i]);
 		}
 		boolean matchedWhere = false;
@@ -653,7 +654,8 @@ public class EntityManager {
 			if (i > 0) {
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			subDeleteSql = subDeleteSql.concat(entityMeta.convertReseredWord(mappedColumns[i], null)).concat("=?");
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertReseredWord(mappedColumns[i], null))
+					.concat("=?");
 		}
 		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
 
