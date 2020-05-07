@@ -598,6 +598,8 @@ public class StringUtil {
 				result[0] = source.indexOf(filter[0], result[1] + 1);
 				if (result[0] > 0) {
 					result[1] = source.indexOf(filter[1], result[0] + 1);
+				} else {
+					result[1] = -1;
 				}
 			} else {
 				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
@@ -605,6 +607,8 @@ public class StringUtil {
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
 					result[1] = matchIndex(source, pattern, result[0] + 1)[0];
+				} else {
+					result[1] = -1;
 				}
 			}
 		}
