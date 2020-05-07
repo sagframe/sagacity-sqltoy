@@ -91,6 +91,12 @@ public class ReservedWordsUtil {
 		return column;
 	}
 
+	/**
+	 * @TODO 对整个sql进行保留字处理
+	 * @param sql
+	 * @param dbType
+	 * @return
+	 */
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
