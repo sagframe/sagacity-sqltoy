@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -44,8 +45,6 @@ import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 /**
  * @project sagacity-sqltoy
