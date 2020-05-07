@@ -14,8 +14,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 public class ReservedWordsUtil {
 	private static HashSet<String> reservedWords = new HashSet<String>();
-
-	private static Pattern reservedWordPattern = null;
+	private static Pattern singlePattern = null;
 
 	/**
 	 * 加载保留字
@@ -26,35 +25,75 @@ public class ReservedWordsUtil {
 		if (StringUtil.isBlank(words))
 			return;
 		String[] strs = words.split("\\,");
-		String regex = "(?i)\\W\\s*(`|\"|\\[)(";
+		String regex;
+		String fullRegex = "";
 		int index = 0;
 		for (String str : strs) {
-			if (!"".equals(str.trim())) {
-				reservedWords.add(str.trim().toLowerCase());
+			regex = str.trim().toLowerCase();
+			if (!"".equals(regex)) {
+				reservedWords.add(regex);
 				if (index > 0) {
-					regex = regex + "|";
+					fullRegex = fullRegex.concat("|");
 				}
-				regex = regex + str.trim();
+				fullRegex = fullRegex.concat(regex);
 				index++;
 			}
 		}
-		regex = regex + ")(`|\"|\\])\\s*\\W";
-		reservedWordPattern = Pattern.compile(regex);
+		singlePattern = Pattern.compile("(?i)(\\W|\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s|\\W)");
 	}
+
+//	public static String convertSql(String sql, Integer dbType) {
+//		if (reservedWords.isEmpty())
+//			return sql;
+//
+//		StringBuilder sqlBuff = new StringBuilder();
+//		Matcher matcher;
+//		String lastSql = sql;
+//		for (Pattern pattern : reservedWordPattern) {
+//			int start = 0;
+//			int end = 0;
+//			String keyWord;
+//			matcher = pattern.matcher(lastSql);
+//			while (matcher.find()) {
+//				end = matcher.start() + 1;
+//				sqlBuff.append(sql.substring(start, end));
+//				keyWord = matcher.group().trim();
+//				keyWord = keyWord.substring(2, keyWord.length() - 2);
+//				if (dbType == DBType.DB2 || dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL
+//						|| dbType == DBType.ORACLE11) {
+//					sqlBuff.append("\"").append(keyWord).append("\"");
+//				} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
+//					sqlBuff.append("[").append(keyWord).append("]");
+//				} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+//					sqlBuff.append("`").append(keyWord).append("`");
+//				} else {
+//					sqlBuff.append(keyWord);
+//				}
+//				start = matcher.end() - 1;
+//			}
+//			if (start > 0) {
+//				sqlBuff.append(sql.substring(start));
+//				lastSql = sqlBuff.toString();
+//			}
+//		}
+//		return lastSql;
+//	}
 
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
-		Matcher matcher = reservedWordPattern.matcher(sql);
+
 		StringBuilder sqlBuff = new StringBuilder();
+		Matcher matcher;
 		int start = 0;
 		int end = 0;
 		String keyWord;
+		matcher = singlePattern.matcher(sql);
 		while (matcher.find()) {
 			end = matcher.start() + 1;
 			sqlBuff.append(sql.substring(start, end));
 			keyWord = matcher.group().trim();
-			keyWord = keyWord.substring(1, keyWord.length() - 1);
+			keyWord = keyWord.substring(2, keyWord.length() - 2);
 			if (dbType == DBType.DB2 || dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL
 					|| dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
@@ -67,10 +106,13 @@ public class ReservedWordsUtil {
 			}
 			start = matcher.end() - 1;
 		}
-		if (start == 0)
-			return sql;
-		sqlBuff.append(sql.substring(start));
-		return sqlBuff.toString();
+
+		if (start > 0) {
+			sqlBuff.append(sql.substring(start));
+			return sqlBuff.toString();
+		}
+		return sql;
+
 	}
 
 	public static void main(String[] args) {
