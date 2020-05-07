@@ -582,21 +582,21 @@ public class StringUtil {
 		if (pattern == null) {
 			result[0] = source.indexOf(filter[0], skipIndex);
 			if (result[0] >= 0) {
-				result[1] = source.indexOf(filter[1], result[0] + 1);
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, skipIndex);
 			}
 		} else {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
 				result[0] = result[0] + 1;
-				result[1] = matchIndex(source, pattern, result[0] + 1)[0];
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
 			if (pattern == null) {
 				result[0] = source.indexOf(filter[0], result[1] + 1);
 				if (result[0] > 0) {
-					result[1] = source.indexOf(filter[1], result[0] + 1);
+					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 				} else {
 					result[1] = -1;
 				}
@@ -605,7 +605,7 @@ public class StringUtil {
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
-					result[1] = matchIndex(source, pattern, result[0] + 1)[0];
+					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 				} else {
 					result[1] = -1;
 				}
@@ -831,7 +831,7 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String tmp = "<span class=\"sag\" onclick=\"doOrder('#[orderId]')\">认领</span>,@switch(#[status],[COMPLETED],[,<span class=\"sag\" onclick=\"del('#[ord]')\">释</span>])";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
