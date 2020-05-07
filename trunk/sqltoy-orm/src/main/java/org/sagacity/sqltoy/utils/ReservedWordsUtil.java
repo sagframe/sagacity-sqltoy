@@ -42,9 +42,8 @@ public class ReservedWordsUtil {
 		singlePattern = Pattern.compile("(?i)(\\W|\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s|\\W)");
 	}
 
-
 	/**
-	 * @TODO 处理框架生成的简单sql
+	 * @TODO 处理框架生成的简单sql,默认以[]符号作为转义符号
 	 * @param sql
 	 * @param dbType
 	 * @return
@@ -52,12 +51,15 @@ public class ReservedWordsUtil {
 	public static String convertSimpleSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
-		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
-		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
-				|| dbType.intValue() == DBType.DB2 || dbType.intValue() == DBType.ORACLE11) {
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.DB2
+				|| dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
+		}
+		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
+			return sql;
 		}
 		// 剔除保留字符号
 		return sql.replaceAll("\\[", "").replaceAll("\\]", "");
@@ -77,15 +79,13 @@ public class ReservedWordsUtil {
 		if (!reservedWords.contains(column.toLowerCase()))
 			return column;
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
-		if (dbType == null || dbType.intValue() == DBType.SQLSERVER || dbType.intValue() == DBType.SQLITE
-				|| dbType.intValue() == DBType.SQLSERVER2012) {
+		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
 			return "[".concat(column).concat("]");
 		}
-		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 			return "`".concat(column).concat("`");
 		}
-		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
-				|| dbType.intValue() == DBType.ORACLE11) {
+		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE11) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -96,7 +96,7 @@ public class ReservedWordsUtil {
 			return sql;
 
 		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE)
-			return sql
+			return sql;
 		StringBuilder sqlBuff = new StringBuilder();
 		Matcher matcher;
 		int start = 0;
@@ -107,7 +107,7 @@ public class ReservedWordsUtil {
 			end = matcher.start() + 1;
 			sqlBuff.append(sql.substring(start, end));
 			keyWord = matcher.group().trim();
-			keyWord = keyWord.substring(2, keyWord.length() - 2)
+			keyWord = keyWord.substring(2, keyWord.length() - 2);
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE || dbType == DBType.DB2
 					|| dbType == DBType.GAUSSDB || dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
