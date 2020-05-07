@@ -22,6 +22,8 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -523,6 +525,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
+	 * 
 	 * @todo 处理sql 语句中的in 条件，功能有2类： 1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
 	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
 	 * @param sqlToyResult
@@ -541,7 +544,7 @@ public class SqlConfigParseUtils {
 		List paramValueList = CollectionUtil.arrayToList(paramsValue);
 		// ?符合出现的次数累计
 		int parameterMarkCnt = 0;
-		//通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
+		// 通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
 
@@ -586,7 +589,7 @@ public class SqlConfigParseUtils {
 				}
 			}
 
-			//用新的?,?,,, 代替原本单? 号
+			// 用新的?,?,,, 代替原本单? 号
 			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
 			start = end;
 			matched = m.find(end);
@@ -694,6 +697,7 @@ public class SqlConfigParseUtils {
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
+		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
