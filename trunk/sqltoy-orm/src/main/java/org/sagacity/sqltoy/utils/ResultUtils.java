@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -43,6 +44,8 @@ import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 /**
  * @project sagacity-sqltoy
@@ -716,7 +719,7 @@ public class ResultUtils {
 				} else {
 					fieldValue = fieldValue.toString();
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), fieldValue);
 			} else {
 				fieldValue = cacheValues[translate.getIndex()];
@@ -739,7 +742,7 @@ public class ResultUtils {
 				} else {
 					result.append(key);
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), key);
 			} else {
 				result.append(cacheValues[translate.getIndex()]);
@@ -755,6 +758,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param conn
+	 * @param dbType
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -850,6 +854,10 @@ public class ResultUtils {
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
+		// 返回数组类型
+		if (Array.class.equals(resultType)) {
+			return CollectionUtil.innerListToArray(queryResultRows);
+		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
@@ -859,9 +867,18 @@ public class ResultUtils {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;
+			boolean isMap = resultType.equals(Map.class);
+			boolean isConMap = resultType.equals(ConcurrentMap.class);
 			for (int i = 0, n = queryResultRows.size(); i < n; i++) {
 				rowList = (List) queryResultRows.get(i);
-				Map rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				Map rowMap;
+				if (isMap) {
+					rowMap = new HashMap();
+				} else if (isConMap) {
+					rowMap = new ConcurrentHashMap();
+				} else {
+					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				}
 				for (int j = 0; j < width; j++) {
 					rowMap.put(labelNames[j], rowList.get(j));
 				}
@@ -887,6 +904,12 @@ public class ResultUtils {
 		return result;
 	}
 
+	/**
+	 * @TODO 将字段名称变成驼峰模式
+	 * @param queryExecutor
+	 * @param labelNames
+	 * @return
+	 */
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getResultType();
 		boolean hump = true;

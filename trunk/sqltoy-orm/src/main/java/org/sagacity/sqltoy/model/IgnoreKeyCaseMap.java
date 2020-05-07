@@ -39,8 +39,8 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	@Override
 	public V get(Object key) {
 		if (key == null) {
-            return null;
-        }
+			return null;
+		}
 		return super.get(toLowCaseKey(key));
 	}
 
@@ -52,8 +52,8 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	@Override
 	public V put(K key, V value) {
 		if (key == null || value == null) {
-            return value;
-        }
+			return value;
+		}
 		return super.put((K) toLowCaseKey(key), value);
 	}
 
@@ -65,8 +65,8 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	@Override
 	public void putAll(Map<? extends K, ? extends V> map) {
 		if (map == null || map.isEmpty()) {
-            return;
-        }
+			return;
+		}
 		Iterator<?> iter = map.entrySet().iterator();
 		while (iter.hasNext()) {
 			Map.Entry<K, V> entry = (Map.Entry<K, V>) iter.next();
@@ -82,8 +82,8 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	@Override
 	public V remove(Object key) {
 		if (key == null) {
-            return null;
-        }
+			return null;
+		}
 		return super.remove(toLowCaseKey(key));
 	}
 

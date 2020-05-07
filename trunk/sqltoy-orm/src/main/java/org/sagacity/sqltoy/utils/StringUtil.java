@@ -839,13 +839,4 @@ public class StringUtil {
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
 	}
-
-	public static void main(String[] args) {
-		String tmp = "<span class=\"sag\" onclick=\"doOrder('#[orderId]')\">认领</span>,@switch(#[status],[COMPLETED],[,<span class=\"sag\" onclick=\"del('#[ord]')\">释</span>])";
-		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
-		for (String s : strs) {
-			System.err.println("[" + s.trim() + "]");
-		}
-
-	}
 }

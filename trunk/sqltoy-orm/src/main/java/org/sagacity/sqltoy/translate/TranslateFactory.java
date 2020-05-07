@@ -155,10 +155,12 @@ public class TranslateFactory {
 	 * @return
 	 */
 	private static List<CacheCheckResult> wrapClearCheckResult(List result, CheckerConfigModel config) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return null;
-		if (result.get(0) instanceof CacheCheckResult)
+		}
+		if (result.get(0) instanceof CacheCheckResult) {
 			return result;
+		}
 		List<Object[]> cacheSet = null;
 		if (result.get(0) instanceof Object[]) {
 			cacheSet = result;
@@ -191,10 +193,12 @@ public class TranslateFactory {
 	 * @return
 	 */
 	private static List<CacheCheckResult> wrapIncrementCheckResult(List result, CheckerConfigModel config) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return null;
-		if (result.get(0) instanceof CacheCheckResult)
+		}
+		if (result.get(0) instanceof CacheCheckResult) {
 			return result;
+		}
 		List<Object[]> cacheSet = null;
 		if (result.get(0) instanceof List) {
 			cacheSet = CollectionUtil.innerListToArray(result);
@@ -316,11 +320,13 @@ public class TranslateFactory {
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
 				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
 		if (jsonStr != null) {
-			if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0)
+			if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
 				return JSON.parseArray(jsonStr, Object[].class);
+			}
 			JSONArray jsonSet = JSON.parseArray(jsonStr);
-			if (jsonSet.isEmpty())
+			if (jsonSet.isEmpty()) {
 				return null;
+			}
 			List<Object[]> result = new ArrayList<Object[]>();
 			int size = cacheModel.getProperties().length;
 			JSONObject jsonObj;

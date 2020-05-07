@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -40,6 +41,7 @@ public class SqliteDialectUtils {
 			sql = new StringBuilder("insert into ");
 		}
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -47,7 +49,8 @@ public class SqliteDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");
@@ -58,19 +61,20 @@ public class SqliteDialectUtils {
 				if (i > 0) {
 					sql.append(",");
 				}
-				sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+				sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			}
 			sql.append(" ) DO UPDATE SET ");
 			// 需要被强制修改的字段
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.add(entityMeta.getColumnName(field));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-			String columnName;
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
@@ -104,6 +108,7 @@ public class SqliteDialectUtils {
 		}
 		StringBuilder sql = new StringBuilder("insert or ignore into ");
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -111,7 +116,8 @@ public class SqliteDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");

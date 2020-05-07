@@ -205,6 +205,12 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 自行定义的属性
 	 */
 	private Map keyValues;
+	
+	/**
+	 * 数据库保留字,用逗号分隔
+	 */
+	private String reservedWords;
+	
 
 	/**
 	 * 数据库保留字,用逗号分隔
@@ -238,6 +244,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化实体对象管理器
 		 */
 		entityManager.initialize(this);
+		
+		/**
+		 * 设置保留字
+		 */
+		ReservedWordsUtil.put(reservedWords);
 
 		/**
 		 * 设置保留字

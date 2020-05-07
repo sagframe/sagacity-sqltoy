@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
@@ -279,6 +280,7 @@ public class SqlXMLConfigParse {
 			// 清理sql中的一些注释、以及特殊的符号
 			countSql = StringUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
 			countSql = FunctionUtils.getDialectSql(countSql, dialect);
+			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
 		}
 		/**

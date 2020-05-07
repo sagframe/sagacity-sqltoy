@@ -256,7 +256,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 通过sql获取单条记录
-	 * @param sqlOrNamedSql
+	 * @param sqlOrNamedSql 直接代码中写的sql或者xml中定义的sql id
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param voClass
