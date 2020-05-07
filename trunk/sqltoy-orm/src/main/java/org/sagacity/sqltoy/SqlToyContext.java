@@ -210,12 +210,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 数据库保留字,用逗号分隔
 	 */
 	private String reservedWords;
-	
-
-	/**
-	 * 数据库保留字,用逗号分隔
-	 */
-	private String reservedWords;
 
 	/**
 	 * @todo 初始化
