@@ -240,7 +240,7 @@ public class EntityManager {
 					if (i > 0) {
 						allColNames.append(",");
 					}
-					allColNames.append(ReservedWordsUtil.convertReseredWord(allColumnNames.get(i), null));
+					allColNames.append(ReservedWordsUtil.convertWord(allColumnNames.get(i), null));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
@@ -487,7 +487,7 @@ public class EntityManager {
 				loadNamedWhereSql.append(" where ");
 				loadArgWhereSql.append(" where ");
 			}
-			idColName = ReservedWordsUtil.convertReseredWord(column.name(), null);
+			idColName = ReservedWordsUtil.convertWord(column.name(), null);
 			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
 			loadArgWhereSql.append(idColName).append("=?");
 		} else {
@@ -615,7 +615,7 @@ public class EntityManager {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 			}
-			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertReseredWord(mappedColumns[i], null)).concat("=:")
+			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=:")
 					.concat(mappedFields[i]);
 		}
 		boolean matchedWhere = false;
@@ -654,7 +654,7 @@ public class EntityManager {
 			if (i > 0) {
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertReseredWord(mappedColumns[i], null))
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null))
 					.concat("=?");
 		}
 		oneToManyModel.setDeleteSubTableSql(subDeleteSql);

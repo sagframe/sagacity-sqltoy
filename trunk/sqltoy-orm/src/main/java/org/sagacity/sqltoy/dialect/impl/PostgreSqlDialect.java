@@ -183,7 +183,7 @@ public class PostgreSqlDialect implements Dialect {
 			if (i > 0) {
 				loadSql.append(" and ");
 			}
-			loadSql.append(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
+			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		if (lockMode != null) {

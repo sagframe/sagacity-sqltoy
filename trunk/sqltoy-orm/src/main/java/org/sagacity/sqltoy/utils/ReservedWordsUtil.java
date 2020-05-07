@@ -43,7 +43,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 处理框架生成的sql
+	 * @TODO 处理框架生成的简单sql
 	 * @param sql
 	 * @param dbType
 	 * @return
@@ -62,7 +62,14 @@ public class ReservedWordsUtil {
 		return sql.replaceAll("\\[", "").replaceAll("\\]", "");
 	}
 
-	public static String convertReseredWord(String column, Integer dbType) {
+	/**
+	 * 转换单词
+	 * 
+	 * @param column
+	 * @param dbType
+	 * @return
+	 */
+	public static String convertWord(String column, Integer dbType) {
 		// 非保留字
 		if (reservedWords.isEmpty())
 			return column;
@@ -123,6 +130,8 @@ public class ReservedWordsUtil {
 	public static String convertSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
+		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE)
+			return sql;
 		StringBuilder sqlBuff = new StringBuilder();
 		Matcher matcher;
 		int start = 0;
@@ -134,8 +143,8 @@ public class ReservedWordsUtil {
 			sqlBuff.append(sql.substring(start, end));
 			keyWord = matcher.group().trim();
 			keyWord = keyWord.substring(2, keyWord.length() - 2);
-			if (dbType == DBType.DB2 || dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL
-					|| dbType == DBType.ORACLE11) {
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE || dbType == DBType.DB2
+					|| dbType == DBType.GAUSSDB || dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
 				sqlBuff.append("[").append(keyWord).append("]");

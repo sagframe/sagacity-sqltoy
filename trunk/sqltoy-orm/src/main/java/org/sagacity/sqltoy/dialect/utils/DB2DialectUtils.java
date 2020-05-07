@@ -103,7 +103,7 @@ public class DB2DialectUtils {
 		for (int i = 0; i < columnSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			// 处理保留字
-			columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
@@ -115,7 +115,7 @@ public class DB2DialectUtils {
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
 			// 处理保留字
-			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -138,7 +138,7 @@ public class DB2DialectUtils {
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
 					// 增加处理保留字
-					fupc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 
@@ -146,7 +146,7 @@ public class DB2DialectUtils {
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					sql.append(",");
 					insertRejIdCols.append(",");
@@ -189,7 +189,7 @@ public class DB2DialectUtils {
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -204,7 +204,7 @@ public class DB2DialectUtils {
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -258,7 +258,7 @@ public class DB2DialectUtils {
 		for (int i = 0; i < columnSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			// 增加处理保留字
-			columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
@@ -270,7 +270,7 @@ public class DB2DialectUtils {
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
 			// 增加处理保留字
-			columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -290,7 +290,7 @@ public class DB2DialectUtils {
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(fieldMeta.getColumnName(), dbType);
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
@@ -322,7 +322,7 @@ public class DB2DialectUtils {
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -337,7 +337,7 @@ public class DB2DialectUtils {
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
 				// 增加处理保留字
-				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);

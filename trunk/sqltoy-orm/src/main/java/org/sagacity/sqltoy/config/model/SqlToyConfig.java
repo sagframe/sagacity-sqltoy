@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -780,6 +782,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		String key = dialect.concat(".").concat(type);
 		if (!dialectSqlMap.contains(key)) {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
+			dialectSql=ReservedWordsUtil.convertSql(dialectSql, DataSourceUtils.getDBType(dialect));
 			dialectSqlMap.put(key, dialectSql);
 		}
 		return dialectSqlMap.get(key);

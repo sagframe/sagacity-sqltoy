@@ -50,7 +50,7 @@ public class SqliteDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");
@@ -62,25 +62,25 @@ public class SqliteDialectUtils {
 					sql.append(",");
 				}
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-				sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
+				sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			}
 			sql.append(" ) DO UPDATE SET ");
 			// 需要被强制修改的字段
-			HashSet<String> fuc = new HashSet<String>();
+			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fuc.add(ReservedWordsUtil.convertReseredWord(entityMeta.getColumnName(field), dbType));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = ReservedWordsUtil.convertReseredWord(columnName, dbType);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
 				sql.append(columnName).append("=");
 				// 强制修改
-				if (fuc.contains(columnName)) {
+				if (fupc.contains(columnName)) {
 					sql.append("excluded.").append(columnName);
 				} else {
 					sql.append("ifnull(excluded.");
@@ -117,7 +117,7 @@ public class SqliteDialectUtils {
 				values.append(",");
 			}
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(ReservedWordsUtil.convertReseredWord(columnName, dbType));
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (").append(values).append(") ");
