@@ -588,12 +588,10 @@ public class StringUtil {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
-				if (result[0] == 0) {
-					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
-				} else {
+				if (result[0] > 0) {
 					result[0] = result[0] + 1;
-					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 				}
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
