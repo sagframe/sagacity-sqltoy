@@ -533,14 +533,22 @@ public class StringUtil {
 		int skipIndex = 0;
 		int preSplitIndex = splitIndex;
 		ArrayList splitResults = new ArrayList();
+		int max = -1;
+		int[] startEnd;
 		while (splitIndex != -1) {
+			max = -1;
 			for (String[] filter : filters) {
-				int[] startEnd = getStartEndIndex(source, filter, skipIndex, splitIndex);
+				startEnd = getStartEndIndex(source, filter, skipIndex, splitIndex);
 				// 分隔符号整合在对称符号的首尾中间,表示分隔符号属于内部字符串,在对称符号的终止位置后面重新获取分隔符号的位置
 				if (startEnd[0] >= 0 && startEnd[0] < splitIndex && startEnd[1] > splitIndex) {
-					skipIndex = startEnd[1] + 1;
-					splitIndex = source.indexOf(splitSign, skipIndex);
+					if (startEnd[1] > max) {
+						max = startEnd[1];
+					}
 				}
+			}
+			if (max > -1) {
+				skipIndex = max + 1;
+				splitIndex = source.indexOf(splitSign, skipIndex);
 			}
 			// 分隔符号位置没有变化，表示其不在对称符号中间
 			if (preSplitIndex == splitIndex) {
