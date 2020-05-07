@@ -96,11 +96,6 @@ public class EntityMeta implements Serializable {
 	 */
 	private HashMap<String, Integer> fieldIndexs = new HashMap<String, Integer>();
 
-//	/**
-//	 * 表字段中的保留字
-//	 */
-//	private Set<String> reservedWords = new HashSet<String>();
-
 	/**
 	 * 业务主键生成的标志符号
 	 */
@@ -770,46 +765,4 @@ public class EntityMeta implements Serializable {
 		this.allColumnNames = allColumnNames;
 	}
 
-//	public Set<String> getReservedWords() {
-//		return reservedWords;
-//	}
-//
-//	public void setReservedWords(Set<String> reservedWords) {
-//		this.reservedWords = reservedWords;
-//	}
-
-//	public String convertReseredWord(String column, Integer dbType) {
-//		// 非保留字
-//		if (reservedWords.isEmpty())
-//			return column;
-//		if (!reservedWords.contains(column.toLowerCase()))
-//			return column;
-//		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
-//		if (dbType == null || dbType.intValue() == DBType.SQLSERVER || dbType.intValue() == DBType.SQLITE
-//				|| dbType.intValue() == DBType.SQLSERVER2012) {
-//			return "[".concat(column).concat("]");
-//		}
-//		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
-//			return "`".concat(column).concat("`");
-//		}
-//		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
-//				|| dbType.intValue() == DBType.ORACLE11) {
-//			return "\"".concat(column).concat("\"");
-//		}
-//		return column;
-//	}
-//
-//	public String convertReseredSql(String sql, Integer dbType) {
-//		if (reservedWords.isEmpty())
-//			return sql;
-//		if (dbType.intValue() == DBType.MYSQL || dbType.intValue() == DBType.MYSQL57) {
-//			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
-//		}
-//		if (dbType.intValue() == DBType.ORACLE || dbType.intValue() == DBType.POSTGRESQL
-//				|| dbType.intValue() == DBType.DB2 || dbType.intValue() == DBType.ORACLE11) {
-//			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
-//		}
-//		// 剔除保留字符号
-//		return sql.replaceAll("\\[", "").replaceAll("\\]", "");
-//	}
 }
