@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -13,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -850,6 +852,10 @@ public class ResultUtils {
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
 			return queryResultRows;
+		// 返回数组类型
+		if (Array.class.equals(resultType)) {
+			return CollectionUtil.innerListToArray(queryResultRows);
+		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
@@ -859,9 +865,18 @@ public class ResultUtils {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;
+			boolean isMap = resultType.equals(Map.class);
+			boolean isConMap = resultType.equals(ConcurrentMap.class);
 			for (int i = 0, n = queryResultRows.size(); i < n; i++) {
 				rowList = (List) queryResultRows.get(i);
-				Map rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				Map rowMap;
+				if (isMap) {
+					rowMap = new HashMap();
+				} else if (isConMap) {
+					rowMap = new ConcurrentHashMap();
+				} else {
+					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
+				}
 				for (int j = 0; j < width; j++) {
 					rowMap.put(labelNames[j], rowList.get(j));
 				}
