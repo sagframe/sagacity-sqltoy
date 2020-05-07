@@ -58,13 +58,26 @@ public class ReservedWordsUtil {
 			if (dbType == DBType.DB2 || dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL
 					|| dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
-			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2012) {
+			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 				sqlBuff.append("`").append(keyWord).append("`");
+			} else {
+				sqlBuff.append(keyWord);
 			}
 			start = matcher.end() - 1;
 		}
-		return sql;
+		if (start == 0)
+			return sql;
+		sqlBuff.append(sql.substring(start));
+		return sqlBuff.toString();
+	}
+
+	public static void main(String[] args) {
+		String sql = CommonUtils.readFileAsString("classpath:scripts/reservedWords.txt", "UTF-8");
+
+		ReservedWordsUtil.put("maxvalue,minvalue");
+		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.POSTGRESQL);
+		System.err.println(lastSql);
 	}
 }
