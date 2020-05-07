@@ -526,8 +526,7 @@ public class StringUtil {
 			return source.split(splitSign);
 		}
 		List<String[]> filters = matchFilters(source, filterMap);
-		int count = filters.size();
-		if (count == 0) {
+		if (filters.isEmpty()) {
 			return source.split(splitSign);
 		}
 		int start = 0;
