@@ -43,7 +43,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 处理框架生成的简单sql,默认以[]符号作为转义符号
+	 * @TODO 处理框架基于对象操作生成的简单sql,对默认[]符号进行数据库转换
 	 * @param sql
 	 * @param dbType
 	 * @return
