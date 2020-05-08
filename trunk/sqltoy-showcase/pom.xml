@@ -8,12 +8,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.6.RELEASE</version>
+		<version>2.2.7.RELEASE</version>
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.13.2</log4j.version>
-		<sagacity-sqltoy.version>4.11.7</sagacity-sqltoy.version>
+		<sagacity-sqltoy.version>4.11.8</sagacity-sqltoy.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<fastjson.version>1.2.68</fastjson.version>
 		<lettuce-core.version>5.2.2.RELEASE</lettuce-core.version>
