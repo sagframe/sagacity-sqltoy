@@ -278,7 +278,7 @@ public class QuickVOConstants implements Serializable {
 	public static String getPropertyValue(String key) {
 		if (StringUtil.isBlank(key))
 			return key;
-		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.]+\\}$"))
+		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.\\-]+\\}$"))
 			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
 		if (getKeyValue(key) != null)
 			return getKeyValue(key);
