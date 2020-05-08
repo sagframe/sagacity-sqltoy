@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,8 +197,8 @@ public class EntityManager {
 				// 表名
 				entityMeta.setTableName(entity.tableName());
 
-				// 解析自定义注解sql
-				parseAnnotationSql(entityMeta, entityClass);
+				// 解析自定义注解
+				parseCustomAnnotation(entityMeta, entityClass);
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 
@@ -238,7 +239,7 @@ public class EntityManager {
 					if (i > 0) {
 						allColNames.append(",");
 					}
-					allColNames.append(allColumnNames.get(i));
+					allColNames.append(ReservedWordsUtil.convertWord(allColumnNames.get(i), null));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
@@ -294,11 +295,11 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析注解sql语句
+	 * @todo 解析自定义注解
 	 * @param entityMeta
 	 * @param entityClass
 	 */
-	private void parseAnnotationSql(EntityMeta entityMeta, Class entityClass) {
+	private void parseCustomAnnotation(EntityMeta entityMeta, Class entityClass) {
 		// 单记录查询的自定义语句
 		if (entityClass.isAnnotationPresent(LoadSql.class)) {
 			LoadSql loadSql = (LoadSql) entityClass.getAnnotation(LoadSql.class);
@@ -458,6 +459,7 @@ public class EntityManager {
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
+		String idColName;
 		if (id != null) {
 			fieldMeta.setPK(true);
 			// 主键生成策略
@@ -475,8 +477,9 @@ public class EntityManager {
 				loadNamedWhereSql.append(" where ");
 				loadArgWhereSql.append(" where ");
 			}
-			loadNamedWhereSql.append(column.name()).append("=:").append(field.getName());
-			loadArgWhereSql.append(column.name()).append("=?");
+			idColName = ReservedWordsUtil.convertWord(column.name(), null);
+			loadNamedWhereSql.append(idColName).append("=:").append(field.getName());
+			loadArgWhereSql.append(idColName).append("=?");
 		} else {
 			rejectIdFieldList.add(field.getName());
 		}
@@ -602,7 +605,8 @@ public class EntityManager {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 			}
-			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
+			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=:")
+					.concat(mappedFields[i]);
 		}
 		boolean matchedWhere = false;
 		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
@@ -640,7 +644,8 @@ public class EntityManager {
 			if (i > 0) {
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null))
+					.concat("=?");
 		}
 		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
 

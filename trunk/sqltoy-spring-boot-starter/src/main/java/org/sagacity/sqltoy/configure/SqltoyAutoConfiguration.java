@@ -104,8 +104,14 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setFunctionConverts(properties.getFunctionConverts());
 		}
 
+		// 缓存翻译配置
 		if (properties.getTranslateConfig() != null) {
 			sqlToyContext.setTranslateConfig(properties.getTranslateConfig());
+		}
+
+		// 数据库保留字
+		if (properties.getReservedWords() != null) {
+			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());

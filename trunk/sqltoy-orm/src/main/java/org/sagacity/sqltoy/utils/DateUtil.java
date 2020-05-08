@@ -136,10 +136,9 @@ public class DateUtil {
 				return null;
 			}
 			return parseString(dateString, format, local);
-		} else {
-			String result = formatDate(data, format, local);
-			return parseString(result, format, local);
 		}
+		String result = formatDate(data, format, local);
+		return parseString(result, format, local);
 	}
 
 	public static Date parseString(String dateStr) {
@@ -420,8 +419,9 @@ public class DateUtil {
 	// Add millisecond
 	public static Date addMilliSecond(Object dt, long millisecond) {
 		Date result = convertDateObject(dt);
-		if (millisecond != 0)
+		if (millisecond != 0) {
 			result.setTime(result.getTime() + millisecond);
+		}
 		return result;
 	}
 
@@ -449,8 +449,9 @@ public class DateUtil {
 
 	public static int getYear(Object dateValue) {
 		GregorianCalendar currentDate = new GregorianCalendar();
-		if (dateValue != null)
+		if (dateValue != null) {
 			currentDate.setTime(convertDateObject(dateValue));
+		}
 		return currentDate.get(Calendar.YEAR);
 	}
 

@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DebugUtil;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -650,9 +651,11 @@ public class DialectUtils {
 		String field;
 		boolean isStart = true;
 		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
+		String columnName;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -662,7 +665,7 @@ public class DialectUtils {
 							sql.append(",");
 							values.append(",");
 						}
-						sql.append(fieldMeta.getColumnName());
+						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
@@ -672,7 +675,7 @@ public class DialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					if (isAssignPK && isSupportNULL) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
@@ -685,7 +688,7 @@ public class DialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
@@ -694,7 +697,7 @@ public class DialectUtils {
 					sql.append(",");
 					values.append(",");
 				}
-				sql.append(fieldMeta.getColumnName());
+				sql.append(columnName);
 				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
 					values.append("(?,");
@@ -744,6 +747,7 @@ public class DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -758,6 +762,7 @@ public class DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -779,14 +784,14 @@ public class DialectUtils {
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.add(entityMeta.getColumnName(field));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					sql.append(",");
 					insertRejIdCols.append(",");
@@ -827,6 +832,7 @@ public class DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -840,6 +846,7 @@ public class DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -891,6 +898,7 @@ public class DialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -905,6 +913,7 @@ public class DialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -924,7 +933,7 @@ public class DialectUtils {
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (i > 0) {
 					insertRejIdCols.append(",");
 					insertRejIdColValues.append(",");
@@ -954,6 +963,7 @@ public class DialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -967,6 +977,7 @@ public class DialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -1030,14 +1041,15 @@ public class DialectUtils {
 
 	/**
 	 * @todo 产生对象update的语句
+	 * @param dbType
 	 * @param entityMeta
 	 * @param nullFunction
 	 * @param forceUpdateFields
 	 * @param tableName
 	 * @return
 	 */
-	public static String generateUpdateSql(EntityMeta entityMeta, String nullFunction, String[] forceUpdateFields,
-			String tableName) {
+	public static String generateUpdateSql(Integer dbType, EntityMeta entityMeta, String nullFunction,
+			String[] forceUpdateFields, String tableName) {
 		if (entityMeta.getIdArray() == null)
 			return null;
 		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
@@ -1049,11 +1061,12 @@ public class DialectUtils {
 		HashSet<String> fupc = new HashSet<String>();
 		if (forceUpdateFields != null) {
 			for (String field : forceUpdateFields) {
-				fupc.add(entityMeta.getColumnName(field));
+				fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			}
 		}
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -1069,6 +1082,7 @@ public class DialectUtils {
 		sql.append(" where ");
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 			}
@@ -1510,7 +1524,7 @@ public class DialectUtils {
 			}
 		}
 		// 构建update语句
-		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
+		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -1656,7 +1670,7 @@ public class DialectUtils {
 		}
 
 		// 构建update语句
-		String updateSql = generateUpdateSql(entityMeta, nullFunction, forceUpdateFields, tableName);
+		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
@@ -1830,7 +1844,7 @@ public class DialectUtils {
 			if (null != entityMeta.getIdArray()) {
 				for (String idFieldName : entityMeta.getIdArray()) {
 					queryStr.append(",");
-					queryStr.append(entityMeta.getColumnName(idFieldName));
+					queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(idFieldName), dbType));
 				}
 			}
 			queryStr.append(" from ");
@@ -1840,7 +1854,8 @@ public class DialectUtils {
 				if (i > 0) {
 					queryStr.append(" and ");
 				}
-				queryStr.append(entityMeta.getColumnName(realParamNamed[i])).append("=? ");
+				queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
+						.append("=? ");
 			}
 
 			// 防止数据量过大，先用count方式查询提升效率

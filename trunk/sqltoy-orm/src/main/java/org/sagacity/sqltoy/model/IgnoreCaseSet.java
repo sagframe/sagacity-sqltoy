@@ -31,8 +31,9 @@ public class IgnoreCaseSet extends HashSet<String> {
 
 	@Override
 	public boolean contains(Object o) {
-		if (o == null)
+		if (o == null) {
 			return false;
+		}
 		return super.contains(o.toString().toLowerCase());
 	}
 
@@ -48,29 +49,33 @@ public class IgnoreCaseSet extends HashSet<String> {
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		if(a==null)
+		if (a == null) {
 			return null;
+		}
 		return super.toArray(a);
 	}
 
 	@Override
 	public boolean add(String e) {
-		if(e==null)
+		if (e == null) {
 			return false;
+		}
 		return super.add(e.toLowerCase());
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		if(o==null)
+		if (o == null) {
 			return true;
+		}
 		return super.remove(o.toString().toLowerCase());
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		if (c == null || c.isEmpty())
+		if (c == null || c.isEmpty()) {
 			return false;
+		}
 		List<String> tmp = new ArrayList<String>();
 		Iterator iter = c.iterator();
 		Object row;
@@ -85,8 +90,9 @@ public class IgnoreCaseSet extends HashSet<String> {
 
 	@Override
 	public boolean addAll(Collection<? extends String> c) {
-		if (c == null || c.isEmpty())
+		if (c == null || c.isEmpty()) {
 			return false;
+		}
 		List<String> tmp = new ArrayList<String>();
 		Iterator iter = c.iterator();
 		Object row;
@@ -101,8 +107,9 @@ public class IgnoreCaseSet extends HashSet<String> {
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		if (c == null || c.isEmpty())
+		if (c == null || c.isEmpty()) {
 			return false;
+		}
 		List<String> tmp = new ArrayList<String>();
 		Iterator iter = c.iterator();
 		Object row;
@@ -117,8 +124,9 @@ public class IgnoreCaseSet extends HashSet<String> {
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		if (c == null || c.isEmpty())
+		if (c == null || c.isEmpty()) {
 			return false;
+		}
 		List<String> tmp = new ArrayList<String>();
 		Iterator iter = c.iterator();
 		Object row;

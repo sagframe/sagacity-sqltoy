@@ -14,7 +14,7 @@ public class StringUtilsTest {
 		String tmp = CommonUtils.readFileAsString("classpath:scripts/function.txt", "UTF-8");
 		String[] strs = StringUtil.splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
-			System.err.println("[" + s.trim() + "]");
+			System.err.println("{" + s.trim() + "}");
 		}
 
 	}

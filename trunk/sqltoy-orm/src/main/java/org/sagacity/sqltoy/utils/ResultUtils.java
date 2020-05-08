@@ -718,7 +718,7 @@ public class ResultUtils {
 				} else {
 					fieldValue = fieldValue.toString();
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), fieldValue);
 			} else {
 				fieldValue = cacheValues[translate.getIndex()];
@@ -741,7 +741,7 @@ public class ResultUtils {
 				} else {
 					result.append(key);
 				}
-				logger.debug("translate cache:{},dictType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
+				logger.debug("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
 						translate.getDictType(), key);
 			} else {
 				result.append(cacheValues[translate.getIndex()]);
@@ -757,6 +757,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param conn
+	 * @param dbType
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -902,6 +903,12 @@ public class ResultUtils {
 		return result;
 	}
 
+	/**
+	 * @TODO 将字段名称变成驼峰模式
+	 * @param queryExecutor
+	 * @param labelNames
+	 * @return
+	 */
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getResultType();
 		boolean hump = true;

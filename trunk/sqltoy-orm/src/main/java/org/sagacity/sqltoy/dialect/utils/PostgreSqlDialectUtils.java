@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -253,6 +254,7 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -260,7 +262,8 @@ public class PostgreSqlDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -277,7 +280,8 @@ public class PostgreSqlDialectUtils {
 					if (i > 0) {
 						sql.append(",");
 					}
-					sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+					sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}
@@ -287,12 +291,13 @@ public class PostgreSqlDialectUtils {
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.add(entityMeta.getColumnName(field));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-			String columnName;
+
 			for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 				columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
@@ -329,6 +334,7 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
+		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -336,7 +342,8 @@ public class PostgreSqlDialectUtils {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			values.append("?");
 		}
 		sql.append(") values (");
@@ -353,7 +360,8 @@ public class PostgreSqlDialectUtils {
 					if (i > 0) {
 						sql.append(",");
 					}
-					sql.append(entityMeta.getColumnName(entityMeta.getIdArray()[i]));
+					columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+					sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 				}
 				sql.append(" ) ");
 			}

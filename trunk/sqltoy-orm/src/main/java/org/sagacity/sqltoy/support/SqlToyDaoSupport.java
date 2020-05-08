@@ -102,10 +102,12 @@ public class SqlToyDaoSupport {
 	 */
 	public DataSource getDataSource(DataSource dataSource) {
 		DataSource result = dataSource;
-		if (null == result)
+		if (null == result) {
 			result = this.dataSource;
-		if (null == result)
+		}
+		if (null == result) {
 			result = sqlToyContext.getDefaultDataSource();
+		}
 		return result;
 	}
 
@@ -119,14 +121,17 @@ public class SqlToyDaoSupport {
 		// 第一、接口调用时直接指定的数据源
 		DataSource result = dataSource;
 		// 第二、sql指定的数据源
-		if (null == result && null != sqltoyConfig.getDataSource())
+		if (null == result && null != sqltoyConfig.getDataSource()) {
 			result = sqlToyContext.getDataSource(sqltoyConfig.getDataSource());
+		}
 		// 第三、自动注入的数据源
-		if (null == result)
+		if (null == result) {
 			result = this.dataSource;
+		}
 		// 第四、sqltoyContext默认的数据源
-		if (null == result)
+		if (null == result) {
 			result = sqlToyContext.getDefaultDataSource();
+		}
 		return result;
 	}
 
@@ -264,11 +269,13 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T load(final T entity) {
-		if (entity == null)
+		if (entity == null) {
 			return null;
+		}
 		EntityMeta entityMeta = this.getEntityMeta(entity.getClass());
-		if (SqlConfigParseUtils.isNamedQuery(entityMeta.getLoadSql(null)))
+		if (SqlConfigParseUtils.isNamedQuery(entityMeta.getLoadSql(null))) {
 			return (T) this.loadBySql(entityMeta.getLoadSql(null), entity);
+		}
 		return load(entity, null, null);
 	}
 
@@ -300,8 +307,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
-		if (entity == null)
+		if (entity == null) {
 			return null;
+		}
 		return dialectFactory.load(sqlToyContext, entity,
 				sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes(), lockMode, this.getDataSource(null));
 	}
@@ -328,8 +336,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			return entities;
+		}
 		return dialectFactory.loadAll(sqlToyContext, entities,
 				sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes(), lockMode,
 				this.getDataSource(null));
@@ -349,15 +358,15 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
-	 * @param sql
+	 * @param sqlOrNamedSql
 	 * @param paramNames
 	 * @param paramValues
 	 * @param resultType
 	 * @return
 	 */
-	protected <T> T loadBySql(final String sql, final String[] paramNames, final Object[] paramValues,
+	protected <T> T loadBySql(final String sqlOrNamedSql, final String[] paramNames, final Object[] paramValues,
 			final Class<T> resultType) {
-		QueryExecutor query = new QueryExecutor(sql, paramNames, paramValues);
+		QueryExecutor query = new QueryExecutor(sqlOrNamedSql, paramNames, paramValues);
 		if (resultType != null) {
 			query.resultType(resultType);
 		}
@@ -448,11 +457,13 @@ public class SqlToyDaoSupport {
 	 * @todo 批量执行sql修改或删除操作(返回updateCount)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param reflectPropertyHandler
+	 * @param reflectPropertyHandler 反调函数(一般不需要)
 	 * @param autoCommit
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) {
+		// 例如sql 为:merge into table update set xxx=:param
+		// dataSet可以是VO List,可以根据属性自动映射到:param
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
 				autoCommit, this.getDataSource(null));
 	}
@@ -1131,8 +1142,9 @@ public class SqlToyDaoSupport {
 	protected void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) {
 		// 数据以及合法性校验
-		if (dataSet == null || dataSet.isEmpty())
+		if (dataSet == null || dataSet.isEmpty()) {
 			return;
+		}
 		if (cacheName == null) {
 			throw new IllegalArgumentException("缓存名称不能为空!");
 		}

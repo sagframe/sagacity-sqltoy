@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -162,6 +163,7 @@ public class SqlServerDialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -174,6 +176,7 @@ public class SqlServerDialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -195,7 +198,7 @@ public class SqlServerDialectUtils {
 			HashSet<String> fupc = new HashSet<String>();
 			if (forceUpdateFields != null) {
 				for (String field : forceUpdateFields) {
-					fupc.add(entityMeta.getColumnName(field));
+					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
 			FieldMeta fieldMeta;
@@ -204,6 +207,7 @@ public class SqlServerDialectUtils {
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				columnName = fieldMeta.getColumnName();
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (i > 0) {
 					sql.append(",");
 				}
@@ -252,6 +256,7 @@ public class SqlServerDialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -265,6 +270,7 @@ public class SqlServerDialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -314,6 +320,7 @@ public class SqlServerDialectUtils {
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -326,6 +333,7 @@ public class SqlServerDialectUtils {
 		// 组织on部分的主键条件判断
 		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 			if (i > 0) {
 				sql.append(" and ");
 				idColumns.append(",");
@@ -346,7 +354,7 @@ public class SqlServerDialectUtils {
 			boolean isStart = true;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				// sqlserver不支持timestamp类型的数据进行插入赋值
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
 					if (!isStart) {
@@ -382,6 +390,7 @@ public class SqlServerDialectUtils {
 			// sequence方式主键
 			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				sql.append(",");
 				sql.append(columnName);
 				sql.append(") values (");
@@ -395,6 +404,7 @@ public class SqlServerDialectUtils {
 				}
 			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
+				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
 				if (isAssignPK) {
 					sql.append(",");
 					sql.append(columnName);
@@ -439,9 +449,11 @@ public class SqlServerDialectUtils {
 		FieldMeta fieldMeta;
 		String field;
 		boolean isStart = true;
+		String columnName;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -450,7 +462,7 @@ public class SqlServerDialectUtils {
 							sql.append(",");
 							values.append(",");
 						}
-						sql.append(fieldMeta.getColumnName());
+						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
@@ -459,7 +471,7 @@ public class SqlServerDialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					if (isAssignPK) {
 						values.append(isNullFunction);
 						values.append("(?,").append(sequence).append(")");
@@ -472,7 +484,7 @@ public class SqlServerDialectUtils {
 						sql.append(",");
 						values.append(",");
 					}
-					sql.append(fieldMeta.getColumnName());
+					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}

@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,6 +205,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 自行定义的属性
 	 */
 	private Map keyValues;
+	
+	/**
+	 * 数据库保留字,用逗号分隔
+	 */
+	private String reservedWords;
 
 	/**
 	 * @todo 初始化
@@ -232,6 +238,16 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化实体对象管理器
 		 */
 		entityManager.initialize(this);
+		
+		/**
+		 * 设置保留字
+		 */
+		ReservedWordsUtil.put(reservedWords);
+
+		/**
+		 * 设置保留字
+		 */
+		ReservedWordsUtil.put(reservedWords);
 
 		/**
 		 * 初始化sql执行统计的基本参数
@@ -730,6 +746,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setDefaultElastic(String defaultElastic) {
 		this.defaultElastic = defaultElastic;
+	}
+
+	/**
+	 * @param reservedWords the reservedWords to set
+	 */
+	public void setReservedWords(String reservedWords) {
+		this.reservedWords = reservedWords;
 	}
 
 	public void destroy() {

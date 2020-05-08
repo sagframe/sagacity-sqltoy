@@ -68,8 +68,7 @@ public class TranslateManager {
 	private CacheUpdateWatcher cacheCheck;
 
 	/**
-	 * @param translateConfig
-	 *            the translateConfig to set
+	 * @param translateConfig the translateConfig to set
 	 */
 	public void setTranslateConfig(String translateConfig) {
 		this.translateConfig = translateConfig;
@@ -77,7 +76,7 @@ public class TranslateManager {
 
 	public synchronized void initialize(SqlToyContext sqlToyContext, TranslateCacheManager cacheManager,
 			int delayCheckCacheSeconds) throws Exception {
-		//防止被多次调用
+		// 防止被多次调用
 		if (initialized)
 			return;
 		try {
@@ -99,10 +98,10 @@ public class TranslateManager {
 					((TranslateEhcacheManager) translateCacheManager)
 							.setDiskStorePath(defaultConfig.getDiskStorePath());
 				}
-				//设置装入具体缓存配置
+				// 设置装入具体缓存配置
 				translateCacheManager.setTranslateMap(translateMap);
 				boolean initSuccess = translateCacheManager.init();
-				
+
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
@@ -146,8 +145,14 @@ public class TranslateManager {
 					result.put(translate.getColumn(), cache);
 				} else {
 					result.put(translate.getColumn(), new HashMap<String, Object[]>());
-					logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
-							cacheModel.getCache(), translate.getDictType(), translate.getColumn());
+					if (logger.isWarnEnabled()) {
+						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
+								cacheModel.getCache(), translate.getDictType(), translate.getColumn());
+					} else {
+						System.err.println("sqltoy translate:cacheName=" + cacheModel.getCache() + ",cache-type="
+								+ translate.getDictType() + ",column=" + translate.getColumn()
+								+ " 配置不正确,未获取对应cache数据!");
+					}
 				}
 			} else {
 				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", translate.getCache());
@@ -160,8 +165,7 @@ public class TranslateManager {
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
 	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType
-	 *            一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
@@ -218,8 +222,7 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @param charset
-	 *            the charset to set
+	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
