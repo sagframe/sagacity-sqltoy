@@ -115,14 +115,20 @@ public class SqlExecuteStat {
 		}
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript:{}", sql);
-			logger.error("执行异常对应的sqlParams:{}", paramStr);
+			if (paramValues != null) {
+				logger.error("执行异常对应的sqlParams:{}", paramStr);
+			}
 		} else {
 			if (isDebug) {
 				logger.debug("sqlScript:{}", sql);
-				logger.debug("sqlParams:{}", paramStr);
+				if (paramValues != null) {
+					logger.debug("sqlParams:{}", paramStr);
+				}
 			} else {
 				out.println("sqlScript:" + sql);
-				out.println("sqlParams:" + paramStr);
+				if (paramValues != null) {
+					out.println("sqlParams:" + paramStr);
+				}
 			}
 		}
 	}

@@ -112,7 +112,7 @@ public class ReservedWordsUtil {
 		while (matcher.find()) {
 			end = matcher.start() + 1;
 			sqlBuff.append(sql.substring(start, end));
-			keyWord = matcher.group().trim();
+			keyWord = matcher.group();
 			keyWord = keyWord.substring(2, keyWord.length() - 2);
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE || dbType == DBType.DB2
 					|| dbType == DBType.GAUSSDB || dbType == DBType.ORACLE11) {
