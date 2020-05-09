@@ -611,7 +611,7 @@ public class StringUtil {
 					result[1] = -1;
 				}
 			} else {
-				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
+				result[0] = matchIndex(source, pattern, result[1] + 2)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
