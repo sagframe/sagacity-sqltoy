@@ -33,13 +33,13 @@ public class ReservedWordsUtil {
 			if (!"".equals(regex)) {
 				reservedWords.add(regex);
 				if (index > 0) {
-					fullRegex = fullRegex.concat("|");
+					fullRegex = fullRegex.concat("||");
 				}
 				fullRegex = fullRegex.concat(regex);
 				index++;
 			}
 		}
-		singlePattern = Pattern.compile("(?i)(\\W|\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s|\\W)");
+		singlePattern = Pattern.compile("(?i)(\\W||\\s)[`\"\\[](" + fullRegex + ")[`\"\\]](\\s||\\W)");
 	}
 
 	/**
@@ -109,11 +109,17 @@ public class ReservedWordsUtil {
 		int end = 0;
 		String keyWord;
 		matcher = singlePattern.matcher(sql);
+		int subSize = 0;
 		while (matcher.find()) {
+			subSize = 0;
 			end = matcher.start() + 1;
 			sqlBuff.append(sql.substring(start, end));
-			keyWord = matcher.group();
-			keyWord = keyWord.substring(2, keyWord.length() - 2);
+			keyWord = matcher.group().substring(2);
+			keyWord = keyWord.substring(0, keyWord.length() - 1);
+			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]")) {
+				keyWord = keyWord.substring(0, keyWord.length() - 1);
+				subSize = 1;
+			}
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.ORACLE || dbType == DBType.DB2
 					|| dbType == DBType.GAUSSDB || dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
@@ -124,7 +130,7 @@ public class ReservedWordsUtil {
 			} else {
 				sqlBuff.append(keyWord);
 			}
-			start = matcher.end() - 1;
+			start = matcher.end() - subSize;
 		}
 
 		if (start > 0) {
@@ -135,11 +141,11 @@ public class ReservedWordsUtil {
 
 	}
 
-	public static void main(String[] args) {
-		String sql = CommonUtils.readFileAsString("classpath:scripts/reservedWords.txt", "UTF-8");
-
-		ReservedWordsUtil.put("maxvalue,minvalue");
-		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.POSTGRESQL);
-		System.err.println(lastSql);
-	}
+//	public static void main(String[] args) {
+//		String sql = "SELECT STAFF_ID, t.[SEX_TYPE`,  \"STATUS\" FROM SQLTOY_STAFF_INFO ssi WHERE ssi.`STATUS` IN (:status)";
+//
+//		ReservedWordsUtil.put("SEX_TYPE,STATUS");
+//		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.SQLSERVER);
+//		System.err.println(lastSql);
+//	}
 }
