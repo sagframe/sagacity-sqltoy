@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
@@ -836,5 +838,14 @@ public class StringUtil {
 		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
+	}
+
+	public static void main(String[] args) {
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
+		for (String s : strs) {
+			System.err.println("[" + s.trim() + "]");
+		}
+
 	}
 }

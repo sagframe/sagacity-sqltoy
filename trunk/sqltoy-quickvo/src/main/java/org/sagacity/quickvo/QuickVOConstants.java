@@ -6,7 +6,9 @@ package org.sagacity.quickvo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,6 +22,10 @@ import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
 /**
  * @project sagacity-quickvo
@@ -216,12 +222,16 @@ public class QuickVOConstants implements Serializable {
 		if (constantMap == null || constantMap.size() < 1 || target == null)
 			return target;
 		String result = target;
-		if (StringUtil.matches(result, "\\$\\{[\\w\\.]+\\}")) {
+		if (StringUtil.matches(result, "\\$\\{[\\w\\.\\-]+\\}")) {
 			Iterator iter = constantMap.entrySet().iterator();
 			Map.Entry entry;
+			String key;
+			String value;
 			while (iter.hasNext()) {
 				entry = (Map.Entry) iter.next();
-				result = StringUtil.replaceAllStr(result, "${" + entry.getKey() + "}", (String) entry.getValue());
+				key = "${" + entry.getKey() + "}";
+				value = (String) entry.getValue();
+				result = StringUtil.replaceAllStr(result, key, value);
 			}
 		}
 		return result;
@@ -244,13 +254,18 @@ public class QuickVOConstants implements Serializable {
 			if (!propFile.exists()) {
 				throw new Exception("参数文件:" + propertyFile + "不存在,请确认!");
 			}
-			Properties props = new Properties();
-			props.load(new FileInputStream(propFile));
-			Enumeration en = props.propertyNames();
-			String key;
-			while (en.hasMoreElements()) {
-				key = (String) en.nextElement();
-				constantMap.put(key, props.getProperty(key));
+			// yml格式
+			if (propertyFile.toLowerCase().endsWith("yml")) {
+				yml2Properties(propFile);
+			} else {
+				Properties props = new Properties();
+				props.load(new FileInputStream(propFile));
+				Enumeration en = props.propertyNames();
+				String key;
+				while (en.hasMoreElements()) {
+					key = (String) en.nextElement();
+					constantMap.put(key, props.getProperty(key));
+				}
 			}
 		}
 	}
@@ -263,7 +278,7 @@ public class QuickVOConstants implements Serializable {
 	public static String getPropertyValue(String key) {
 		if (StringUtil.isBlank(key))
 			return key;
-		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.]+\\}$"))
+		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.\\-]+\\}$"))
 			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
 		if (getKeyValue(key) != null)
 			return getKeyValue(key);
@@ -321,5 +336,51 @@ public class QuickVOConstants implements Serializable {
 		typeMapping2.setScaleMax(0);
 		typeMapping2.setResultType("Long");
 		typeMapping.add(typeMapping2);
+	}
+
+	public static void yml2Properties(File path) {
+		final String DOT = ".";
+		try {
+			YAMLFactory yamlFactory = new YAMLFactory();
+			YAMLParser parser = yamlFactory
+					.createParser(new InputStreamReader(new FileInputStream(path), Charset.forName("UTF-8")));
+			String key = "";
+			String value = null;
+			JsonToken token = parser.nextToken();
+			while (token != null) {
+				if (JsonToken.START_OBJECT.equals(token)) {
+					// do nothing
+				} else if (JsonToken.FIELD_NAME.equals(token)) {
+					if (key.length() > 0) {
+						key = key + DOT;
+					}
+					key = key + parser.getCurrentName();
+
+					token = parser.nextToken();
+					if (JsonToken.START_OBJECT.equals(token)) {
+						continue;
+					}
+					value = parser.getText();
+					System.err.println(key + "=" + value);
+					constantMap.put(key.trim(), value.trim());
+					int dotOffset = key.lastIndexOf(DOT);
+					if (dotOffset > 0) {
+						key = key.substring(0, dotOffset);
+					}
+					value = null;
+				} else if (JsonToken.END_OBJECT.equals(token)) {
+					int dotOffset = key.lastIndexOf(DOT);
+					if (dotOffset > 0) {
+						key = key.substring(0, dotOffset);
+					} else {
+						key = "";
+					}
+				}
+				token = parser.nextToken();
+			}
+			parser.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

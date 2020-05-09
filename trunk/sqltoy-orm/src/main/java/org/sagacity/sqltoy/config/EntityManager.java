@@ -533,7 +533,7 @@ public class EntityManager {
 				// redis 情况特殊,依赖redisTemplate,小心修改
 				if (generator.endsWith("RedisIdGenerator")) {
 					RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-					if (redis == null || redis.getRedisTemplate() == null) {
+					if (redis == null || !redis.hasRedisTemplate()) {
 						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
 								entityMeta.getEntityClass().getName());
 					}
@@ -644,8 +644,7 @@ public class EntityManager {
 			if (i > 0) {
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null))
-					.concat("=?");
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
 		}
 		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
 

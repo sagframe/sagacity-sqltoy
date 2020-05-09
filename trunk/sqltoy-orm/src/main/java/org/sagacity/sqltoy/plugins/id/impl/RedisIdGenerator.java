@@ -78,6 +78,13 @@ public class RedisIdGenerator implements IdGenerator {
 		return redisTemplate;
 	}
 
+	public boolean hasRedisTemplate() {
+		if (redisTemplate != null) {
+			return true;
+		}
+		return false;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
