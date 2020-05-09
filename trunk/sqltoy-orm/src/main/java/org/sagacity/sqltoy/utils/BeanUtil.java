@@ -308,7 +308,14 @@ public class BeanUtil {
 	 * @param typeName
 	 * @return
 	 */
-	public static Object convertType(Object paramValue, String typeName) throws Exception {
+	public static Object convertType(Object value, String typeName) throws Exception {
+		Object paramValue = value;
+		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
+		if (!typeName.contains("[") && !typeName.contains("]")) {
+			if (paramValue.getClass().isArray()) {
+				paramValue = CollectionUtil.convertArray(paramValue)[0];
+			}
+		}
 		if (paramValue == null) {
 			if (typeName.equals("int") || typeName.equals("long") || typeName.equals("double")
 					|| typeName.equals("float") || typeName.equals("short"))
@@ -427,7 +434,7 @@ public class BeanUtil {
 			return Byte.valueOf(valueStr).byteValue();
 		}
 		// byte数组
-		if (typeName.equals("[b")) {
+		if (typeName.equals("byte[]") || typeName.equals("[b")) {
 			if (paramValue instanceof byte[]) {
 				return (byte[]) paramValue;
 			}
@@ -490,7 +497,7 @@ public class BeanUtil {
 			return DateUtil.parseString(valueStr);
 		}
 		// 字符数组
-		if (typeName.equals("[c")) {
+		if (typeName.equals("char[]") || typeName.equals("[c")) {
 			if (paramValue instanceof char[])
 				return (char[]) paramValue;
 			if (paramValue instanceof java.sql.Clob) {
