@@ -545,9 +545,7 @@ public class DialectUtils {
 		}
 
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
-		if (sqlToyContext.isDebug()) {
-			logger.debug("saveOrUpdateAll={}", saveOrUpdateSql);
-		}
+		SqlExecuteStat.showSql("saveOrUpdateSql=" + saveOrUpdateSql, null);
 		return SqlUtil.batchUpdateByJdbc(saveOrUpdateSql, paramValues, batchSize, null, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
@@ -621,9 +619,7 @@ public class DialectUtils {
 		}
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		if (sqlToyContext.isDebug()) {
-			logger.debug("saveAllNotExistSql={}", saveAllNotExistSql);
-		}
+		SqlExecuteStat.showSql("saveAllNotExistSql=" + saveAllNotExistSql, null);
 		return SqlUtil.batchUpdateByJdbc(saveAllNotExistSql, paramValues, batchSize, null,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
@@ -1139,9 +1135,8 @@ public class DialectUtils {
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
 							oneToMany.getMappedFields(), pkValues);
-					if (sqlToyContext.isDebug()) {
-						logger.debug("auto load sub table dataSet sql:{}", sqlToyResult.getSql());
-					}
+					SqlExecuteStat.showSql("cascade load subtable sql:" + sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, dbType, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
@@ -1316,11 +1311,7 @@ public class DialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-
-		if (sqlToyContext.isDebug()) {
-			logger.debug(insertSql);
-		}
-
+		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
@@ -1486,9 +1477,8 @@ public class DialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("batch insert sql:{}", insertSql);
-		}
+
+		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
@@ -1528,9 +1518,8 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("update last execute sql:{}", updateSql);
-		}
+
+		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
 		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
 	}
 
@@ -1666,7 +1655,11 @@ public class DialectUtils {
 			index++;
 		}
 		if (skipCount > 0) {
-			logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
+			if (logger.isDebugEnabled()) {
+				logger.debug("共有{}行记录因为主键值为空跳过修改操作!", skipCount);
+			} else {
+				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
+			}
 		}
 
 		// 构建update语句
@@ -1674,9 +1667,7 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("updateAll last execute sql:{}", updateSql);
-		}
+		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
@@ -1728,9 +1719,7 @@ public class DialectUtils {
 				}
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug(entityMeta.getDeleteByIdsSql(tableName));
-		}
+		SqlExecuteStat.showSql("delete sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
 		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn,
 				dbType, null);
 	}
@@ -1786,9 +1775,8 @@ public class DialectUtils {
 				}
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("根据主键批量删除表sql:{}", entityMeta.getDeleteByIdsSql(tableName));
-		}
+		
+		SqlExecuteStat.showSql("delete all sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
 				parameterTypes, autoCommit, conn, dbType);
 	}
@@ -1866,7 +1854,7 @@ public class DialectUtils {
 			if (recordCnt > 1) {
 				return false;
 			}
-			SqlExecuteStat.showSql(queryStr.toString(), paramValues);
+			SqlExecuteStat.showSql("isUnique sql="+queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
 				return true;
