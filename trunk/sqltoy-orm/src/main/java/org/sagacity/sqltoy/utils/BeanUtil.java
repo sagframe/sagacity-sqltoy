@@ -311,10 +311,8 @@ public class BeanUtil {
 	public static Object convertType(Object value, String typeName) throws Exception {
 		Object paramValue = value;
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
-		if (!typeName.contains("[") && !typeName.contains("]")) {
-			if (paramValue.getClass().isArray()) {
-				paramValue = CollectionUtil.convertArray(paramValue)[0];
-			}
+		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
+			paramValue = CollectionUtil.convertArray(paramValue)[0];
 		}
 		if (paramValue == null) {
 			if (typeName.equals("int") || typeName.equals("long") || typeName.equals("double")
