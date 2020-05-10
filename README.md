@@ -1,6 +1,12 @@
 # 使用文档(完善进度73%,可以预览)
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
+# 作者和团队说明
+* 作者和团队一直从事信息化系统建设和数据平台建设
+* 目前就职于中化石化销售有限公司负责ERP项目和数据平台
+* 2014~2018年在拉卡拉支付集团负责数据部门，为集团各个部门、客户、代理商、其他业务系统提数据服务。
+* 核心作品:sqltoy-orm、nebula星云报表平台、sagacity-cronjob调度框架、sagframe-portal
+
 #  QQ交流群:531812227 
 
 # 致谢
