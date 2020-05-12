@@ -1,42 +1,4 @@
-﻿alter table SQLTOY_COMPLEXPK_ITEM 
-   drop foreign key FK_COMPLEXH_REF_ITEM;
-
-alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_DICT_TYPE_REF_ITEM;
-
-drop table if exists SQLTOY_AREA_INFO;
-
-drop table if exists SQLTOY_COMPLEXPK_HEAD;
-
-
-alter table SQLTOY_COMPLEXPK_ITEM 
-   drop foreign key FK_COMPLEXH_REF_ITEM;
-
-drop table if exists SQLTOY_COMPLEXPK_ITEM;
-
-drop table if exists SQLTOY_DEVICE_ORDER_INFO;
-
-
-alter table SQLTOY_DICT_DETAIL 
-   drop foreign key FK_DICT_TYPE_REF_ITEM;
-
-drop table if exists SQLTOY_DICT_DETAIL;
-
-drop table if exists SQLTOY_DICT_TYPE;
-
-drop table if exists SQLTOY_ORGAN_INFO;
-
-drop table if exists SQLTOY_STAFF_AUTH_ORGS;
-
-drop table if exists SQLTOY_STAFF_INFO;
-
-drop table if exists SQLTOY_TRANS_INFO_15D;
-
-drop table if exists SQLTOY_TRANS_INFO_HIS;
-
-drop table if exists SQLTOY_USER_LOG;
-
-/*==============================================================*/
+﻿/*==============================================================*/
 /* Table: SQLTOY_AREA_INFO                                      */
 /*==============================================================*/
 create table SQLTOY_AREA_INFO
