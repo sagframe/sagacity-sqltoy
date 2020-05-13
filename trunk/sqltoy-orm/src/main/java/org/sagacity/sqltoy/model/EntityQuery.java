@@ -5,7 +5,7 @@ package org.sagacity.sqltoy.model;
  * @author zhongxuchen
  * @param <T>
  */
-public class EntityQuery<T> implements GenericsType<T> {
+public class EntityQuery<T> implements Query<T> {
 
 	/**
 	 * 
