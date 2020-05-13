@@ -1,4 +1,4 @@
 package org.sagacity.sqltoy.model;
 
-public interface Query<T> {
+public interface GenericsType<T> {
 }

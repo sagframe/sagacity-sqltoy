@@ -5,7 +5,7 @@ package org.sagacity.sqltoy.model;
  * @author zhongxuchen
  * @param <T>
  */
-public class EntityQuery<T> implements Query<T> {
+public class EntityQuery<T> implements GenericsType<T> {
 
 	/**
 	 * 
@@ -27,17 +27,17 @@ public class EntityQuery<T> implements Query<T> {
 	 */
 	private Object[] values;
 
-	public EntityQuery where(String where) {
+	public EntityQuery<T> where(String where) {
 		this.where = where;
 		return this;
 	}
 
-	public EntityQuery values(String... names) {
+	public EntityQuery<T> values(String... names) {
 		this.names = names;
 		return this;
 	}
 
-	public EntityQuery values(Object... values) {
+	public EntityQuery<T> values(Object... values) {
 		this.values = values;
 		return this;
 	}
