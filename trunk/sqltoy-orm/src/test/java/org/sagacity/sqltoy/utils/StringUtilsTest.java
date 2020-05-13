@@ -13,16 +13,8 @@ import org.sagacity.sqltoy.model.EntityQuery;
 public class StringUtilsTest {
 	public static void main(String[] args) {
 		// where中写条件，利用sqltoy自身特性#[] 实现值为null的判断，简化sql组装
-
 		// 第一种模式:直接传参
 		EntityQuery query = new EntityQuery();
-
-		// Type type = ((ParameterizedType)
-		// query.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-
-		// System.out.println(type);
-		// 在类的内部这样获取
-		// System.out.println(query.getTClass());
 		StringUtilsTest test = new StringUtilsTest();
 		test.selectList(query);
 //		// 第二种模式:对象传参
@@ -35,11 +27,6 @@ public class StringUtilsTest {
 
 	public void selectList(EntityQuery<StaffInfoVO> query) {
 		Class result = BeanUtil.getSuperClassGenricType(query.getClass(), 0);
-		// Type type = ((ParameterizedType)
-		// query.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-
 		System.out.println(result.getName());
-		// 在类的内部这样获取
-		// System.out.println(query.getTClass());
 	}
 }
