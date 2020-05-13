@@ -222,7 +222,8 @@ public class QuickVOConstants implements Serializable {
 		if (constantMap == null || constantMap.size() < 1 || target == null)
 			return target;
 		String result = target;
-		if (StringUtil.matches(result, "\\$\\{[\\w\\.\\-]+\\}")) {
+		// 简化匹配规则
+		if (StringUtil.matches(result, "\\$\\{") && StringUtil.matches(result, "\\}")) {
 			Iterator iter = constantMap.entrySet().iterator();
 			Map.Entry entry;
 			String key;
@@ -278,8 +279,10 @@ public class QuickVOConstants implements Serializable {
 	public static String getPropertyValue(String key) {
 		if (StringUtil.isBlank(key))
 			return key;
-		if (StringUtil.matches(key.trim(), "^\\$\\{[\\w\\.\\-]+\\}$"))
-			return (String) getKeyValue(key.substring(key.indexOf("${") + 2, key.lastIndexOf("}")));
+		String realKey = key.trim();
+		// 简化匹配规则
+		if (realKey.startsWith("${") && realKey.endsWith("}"))
+			return (String) getKeyValue(realKey.substring(2, realKey.length() - 1));
 		if (getKeyValue(key) != null)
 			return getKeyValue(key);
 		return key;
@@ -361,7 +364,6 @@ public class QuickVOConstants implements Serializable {
 						continue;
 					}
 					value = parser.getText();
-					System.err.println(key + "=" + value);
 					constantMap.put(key.trim(), value.trim());
 					int dotOffset = key.lastIndexOf(DOT);
 					if (dotOffset > 0) {
@@ -383,4 +385,5 @@ public class QuickVOConstants implements Serializable {
 			throw new RuntimeException(e);
 		}
 	}
+
 }
