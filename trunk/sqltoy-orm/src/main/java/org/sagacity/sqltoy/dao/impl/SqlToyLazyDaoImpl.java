@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.link.Store;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
+import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -899,6 +900,18 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public Set<String> getCacheNames() {
 		return super.getCacheNames();
+	}
+
+	@Override
+	public <T> List<T> selectList(EntityQuery<T> entityQuery) {
+		
+		return null;
+	}
+
+	@Override
+	public <T> Integer deleteByQuery(EntityQuery<T> entityQuery) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

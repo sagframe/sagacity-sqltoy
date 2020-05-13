@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.link.Store;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
+import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -359,7 +360,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass    返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -370,7 +371,7 @@ public interface SqlToyLazyDao {
 	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity  
+	 * @param entity
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -601,4 +602,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Set<String> getCacheNames();
+
+	public <T> List<T> selectList(EntityQuery<T> entityQuery);
+
+	public <T> Integer deleteByQuery(EntityQuery<T> entityQuery);
 }
