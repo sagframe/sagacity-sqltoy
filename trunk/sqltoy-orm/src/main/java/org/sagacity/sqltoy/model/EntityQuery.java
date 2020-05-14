@@ -1,16 +1,17 @@
 package org.sagacity.sqltoy.model;
 
+import java.io.Serializable;
+
 /**
  * 
  * @author zhongxuchen
- * @param <T>
  */
-public class EntityQuery<T> implements GenericsType<T> {
+public class EntityQuery implements Serializable {
 
 	/**
 	 * 
 	 */
-	// private static final long serialVersionUID = 5223170071884950204L;
+	private static final long serialVersionUID = 5223170071884950204L;
 
 	/**
 	 * 条件语句
@@ -27,19 +28,42 @@ public class EntityQuery<T> implements GenericsType<T> {
 	 */
 	private Object[] values;
 
-	public EntityQuery<T> where(String where) {
+	public EntityQuery where(String where) {
 		this.where = where;
 		return this;
 	}
 
-	public EntityQuery<T> values(String... names) {
+	public EntityQuery values(String... names) {
 		this.names = names;
 		return this;
 	}
 
-	public EntityQuery<T> values(Object... values) {
+	public EntityQuery values(Object... values) {
 		this.values = values;
 		return this;
 	}
 
+	/**
+	 * @return the where
+	 */
+	public String getWhere() {
+		return where;
+	}
+
+	/**
+	 * @return the names
+	 */
+	public String[] getNames() {
+		return names;
+	}
+
+	/**
+	 * @return the values
+	 */
+	public Object[] getValues() {
+		return values;
+	}
+
+	
+	
 }

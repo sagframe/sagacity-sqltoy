@@ -81,6 +81,9 @@ public class StringUtil {
 		if ((str instanceof Map) && ((Map) str).isEmpty()) {
 			return true;
 		}
+		if ((str instanceof Object[]) && ((Object[]) str).length == 0) {
+			return true;
+		}
 		return false;
 	}
 

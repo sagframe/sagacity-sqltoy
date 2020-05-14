@@ -603,7 +603,11 @@ public interface SqlToyLazyDao {
 	 */
 	public Set<String> getCacheNames();
 
-	public <T> List<T> selectList(EntityQuery<T> entityQuery);
+	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery);
 
-	public <T> Integer deleteByQuery(EntityQuery<T> entityQuery);
+	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery, DataSource dataSource);
+
+	public <T> Integer deleteByQuery(Class<T> entityClass, EntityQuery entityQuery);
+
+	public <T> Integer deleteByQuery(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource);
 }

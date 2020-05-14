@@ -35,10 +35,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -1288,5 +1291,33 @@ public class SqlUtil {
 		if (StringUtil.matches(lastSql.toString(), UNION_PATTERN))
 			return true;
 		return false;
+	}
+
+	public static String convertFields(EntityMeta entityMeta, String sql) {
+		String[] fields = entityMeta.getFieldsArray();
+		return null;
+	}
+
+	/**
+	 * @TODO 补全sql
+	 * @param sqlToyContext
+	 * @param entityClass
+	 * @param sql
+	 * @return
+	 */
+	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
+		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql))
+			return sql;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
+		if (entityMeta == null)
+			return sql;
+		String sqlLow = sql.toLowerCase().trim();
+		if (sqlLow.startsWith("where")) {
+			return "select * from ".concat(entityMeta.getSchemaTable()).concat(" ").concat(sql);
+		}
+		if (sqlLow.startsWith("from")) {
+			return "select * ".concat(sql);
+		}
+		return sql;
 	}
 }

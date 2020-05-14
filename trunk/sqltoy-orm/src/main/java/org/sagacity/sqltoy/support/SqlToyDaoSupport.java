@@ -384,16 +384,17 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如: 
+	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如:
 	 * <p>
-	 * 1、new QueryExecutor(sql,entity).dataSource(dataSource) 
-	 * 2、new QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
+	 * 1、new QueryExecutor(sql,entity).dataSource(dataSource) 2、new
+	 * QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
 	 * </p>
+	 * 
 	 * @param queryExecutor
 	 * @return
 	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 		List rows = result.getRows();
@@ -557,7 +558,7 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
@@ -569,7 +570,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 跳过查询总记录数量
 		if (paginationModel.getSkipQueryCount() != null && paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
@@ -627,7 +628,7 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
@@ -640,7 +641,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}

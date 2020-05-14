@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
@@ -25,6 +26,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,7 +207,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 自行定义的属性
 	 */
 	private Map keyValues;
-	
+
 	/**
 	 * 数据库保留字,用逗号分隔
 	 */
@@ -238,7 +240,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化实体对象管理器
 		 */
 		entityManager.initialize(this);
-		
+
 		/**
 		 * 设置保留字
 		 */
@@ -331,6 +333,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type) {
+		return scriptLoader.getSqlConfig(sqlKey, type);
+	}
+
+	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType type) {
+		String sqlKey = queryExecutor.getSql();
+		// 补全sql
+		if (SqlType.search.equals(type) && queryExecutor.getResultType() != null) {
+			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getResultType(), sqlKey);
+		}
 		return scriptLoader.getSqlConfig(sqlKey, type);
 	}
 
