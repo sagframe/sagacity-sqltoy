@@ -33,13 +33,13 @@ public class ReservedWordsUtil {
 			if (!"".equals(regex)) {
 				reservedWords.add(regex);
 				if (index > 0) {
-					fullRegex = fullRegex.concat("||");
+					fullRegex = fullRegex.concat("|");
 				}
 				fullRegex = fullRegex.concat(regex);
 				index++;
 			}
 		}
-		singlePattern = Pattern.compile("(?i)(\\W||\\s)[`\"\\[](" + fullRegex + ")[`\"\\]](\\s||\\W)");
+		singlePattern = Pattern.compile("(?i)(\\W||\\s)(`|\"|\\[)(" + fullRegex + ")(`|\"|\\])(\\s||\\W)");
 	}
 
 	/**
@@ -113,8 +113,11 @@ public class ReservedWordsUtil {
 		while (matcher.find()) {
 			subSize = 0;
 			end = matcher.start() + 1;
+			keyWord = matcher.group().substring(1);
+			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")) {
+				keyWord = keyWord.substring(1);
+			}
 			sqlBuff.append(sql.substring(start, end));
-			keyWord = matcher.group().substring(2);
 			keyWord = keyWord.substring(0, keyWord.length() - 1);
 			if (keyWord.endsWith("`") || keyWord.endsWith("\"") || keyWord.endsWith("]")) {
 				keyWord = keyWord.substring(0, keyWord.length() - 1);
@@ -141,11 +144,11 @@ public class ReservedWordsUtil {
 
 	}
 
-//	public static void main(String[] args) {
-//		String sql = "SELECT STAFF_ID, t.[SEX_TYPE`,  \"STATUS\" FROM SQLTOY_STAFF_INFO ssi WHERE ssi.`STATUS` IN (:status)";
-//
-//		ReservedWordsUtil.put("SEX_TYPE,STATUS");
-//		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.SQLSERVER);
-//		System.err.println(lastSql);
-//	}
+	public static void main(String[] args) {
+		String sql = "SELECT [SEX_TYPE] FROM SQLTOY_STAFF_INFO WHERE #[`STATUS` IN (:status)]";
+
+		ReservedWordsUtil.put("SEX_TYPE,STATUS");
+		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.MYSQL);
+		System.err.println(lastSql);
+	}
 }
