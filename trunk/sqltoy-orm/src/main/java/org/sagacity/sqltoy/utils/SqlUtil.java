@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -42,6 +43,7 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -91,6 +93,11 @@ public class SqlUtil {
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
+
+	/**
+	 * 存放转换后的sql
+	 */
+	private static ConcurrentHashMap<String, String> convertSqlMap = new ConcurrentHashMap<String, String>();
 
 	// sql 注释过滤器
 	private static HashMap sqlCommentfilters = new HashMap();
@@ -1293,13 +1300,46 @@ public class SqlUtil {
 		return false;
 	}
 
-	public static String convertFields(EntityMeta entityMeta, String sql) {
+	/**
+	 * @TODO 转化对象字段名称为数据库字段名称
+	 * @param entityMeta
+	 * @param sql
+	 * @return
+	 */
+	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
+		String key = entityMeta.getTableName() + sql;
+		if (convertSqlMap.contains(key)) {
+			return convertSqlMap.get(key);
+		}
 		String[] fields = entityMeta.getFieldsArray();
-		return null;
+		StringBuilder sqlBuff = new StringBuilder();
+		String realSql = sql;
+		int start = 0;
+		int index;
+		String preSql;
+		String columnName;
+		for (String field : fields) {
+			columnName = entityMeta.getColumnName(field);
+			start = 0;
+			index = StringUtil.indexOfIgnoreCase(realSql, field, start);
+			while (index != -1) {
+				preSql = realSql.substring(start, index);
+				// 非条件参数
+				if (!preSql.trim().endsWith(":")) {
+					sqlBuff.append(preSql).append(columnName);
+					start = index + field.length();
+				}
+				index = StringUtil.indexOfIgnoreCase(realSql, field, index + field.length());
+			}
+			sqlBuff.append(realSql.substring(start));
+			realSql = sqlBuff.toString();
+			sqlBuff.delete(0, sqlBuff.length());
+		}
+		return realSql;
 	}
 
 	/**
-	 * @TODO 补全sql
+	 * @TODO 针对对象查询补全sql中的select * from table 部分
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param sql
@@ -1313,11 +1353,31 @@ public class SqlUtil {
 			return sql;
 		String sqlLow = sql.toLowerCase().trim();
 		if (sqlLow.startsWith("where")) {
-			return "select * from ".concat(entityMeta.getSchemaTable()).concat(" ").concat(sql);
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
+					.concat(" ").concat(sql);
 		}
 		if (sqlLow.startsWith("from")) {
-			return "select * ".concat(sql);
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
 		return sql;
+	}
+
+	public static void main(String[] args) {
+		String sql = "select   staffName,'sexType' from table where staffName like ? and sexType=:sexType";
+		EntityMeta entityMeta = new EntityMeta();
+		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+		FieldMeta staffMeta = new FieldMeta();
+		staffMeta.setFieldName("staffName");
+		staffMeta.setColumnName("STAFF_NAME");
+		fieldsMeta.put("staffname", staffMeta);
+
+		FieldMeta sexMeta = new FieldMeta();
+		sexMeta.setFieldName("sexType");
+		sexMeta.setColumnName("SEX_TYPE");
+		fieldsMeta.put("sextype", sexMeta);
+		entityMeta.setFieldsMeta(fieldsMeta);
+		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
+		sql = convertFieldsToColumns(entityMeta, sql);
+		System.err.println(sql);
 	}
 }

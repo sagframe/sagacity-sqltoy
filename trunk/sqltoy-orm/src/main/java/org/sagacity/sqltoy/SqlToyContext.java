@@ -338,7 +338,7 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType type) {
 		String sqlKey = queryExecutor.getSql();
-		// 补全sql
+		// 查询语句补全select * from table,避免一些sql直接从from 开始
 		if (SqlType.search.equals(type) && queryExecutor.getResultType() != null) {
 			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getResultType(), sqlKey);
 		}

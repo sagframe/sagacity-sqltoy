@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
+import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -37,6 +38,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1180,4 +1182,44 @@ public class SqlToyDaoSupport {
 			}
 		}
 	}
+
+	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
+				|| StringUtil.isBlank(entityQuery.getValues())) {
+			throw new IllegalArgumentException("selectList entityClass、where、value 值不能为空!");
+		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		String sql = "select " + entityMeta.getAllColumnNames()
+				+ " from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		// :named 模式
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
+			// 参数名称为空
+			return (List<T>) findByQuery(new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0])
+					.resultType(entityClass).dataSource(dataSource)).getRows();
+
+		}
+		return (List<T>) findByQuery(new QueryExecutor(sql).names(entityQuery.getNames())
+				.values(entityQuery.getValues()).resultType(entityClass).dataSource(dataSource)).getRows();
+	}
+
+	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
+				|| StringUtil.isBlank(entityQuery.getValues())) {
+			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		// :named 模式
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
+			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
+			// 根据sql中的变量从entity对象中提取参数值
+			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
+					(Serializable) entityQuery.getValues()[0], null);
+			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false, dataSource);
+		}
+		return executeSql(sql, entityQuery.getNames(), entityQuery.getValues(), false, dataSource);
+	}
+
 }

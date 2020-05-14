@@ -906,40 +906,22 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery) {
-		return selectList(entityClass, entityQuery, null);
+		return super.selectList(entityClass, entityQuery, null);
 	}
 
 	@Override
 	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
-				|| StringUtil.isBlank(entityQuery.getValues())) {
-			throw new IllegalArgumentException("selectList entityClass、where、value 值不能为空!");
-		}
-		EntityMeta entityMeta = super.getEntityMeta(entityClass);
-		String sql = "select * from ".concat(entityMeta.getSchemaTable()).concat(" ").concat(entityQuery.getWhere());
-		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(entityQuery.getWhere()) && StringUtil.isBlank(entityQuery.getNames())) {
-			// 参数名称为空
-			return (List<T>) super.findByQuery(new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0])
-					.resultType(entityClass).dataSource(dataSource)).getRows();
-
-		}
-		return (List<T>) super.findByQuery(new QueryExecutor(sql).names(entityQuery.getNames())
-				.values(entityQuery.getValues()).resultType(entityClass).dataSource(dataSource)).getRows();
+		return super.selectList(entityClass, entityQuery, dataSource);
 	}
 
 	@Override
-	public <T> Integer deleteByQuery(Class<T> entityClass, EntityQuery entityQuery) {
-		return deleteByQuery(entityClass, entityQuery, null);
+	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery) {
+		return super.deleteByQuery(entityClass, entityQuery, null);
 	}
 
 	@Override
-	public <T> Integer deleteByQuery(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
-				|| StringUtil.isBlank(entityQuery.getValues())) {
-			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
-		}
-		return null;
+	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource) {
+		return super.deleteByQuery(entityClass, entityQuery, dataSource);
 	}
 
 }

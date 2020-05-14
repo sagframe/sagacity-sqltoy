@@ -150,6 +150,12 @@ public class StringUtil {
 		return source.toLowerCase().indexOf(pattern.toLowerCase());
 	}
 
+	public static int indexOfIgnoreCase(String source, String pattern, int start) {
+		if (source == null || pattern == null)
+			return -1;
+		return source.toLowerCase().indexOf(pattern.toLowerCase(), start);
+	}
+
 	/**
 	 * @todo 左补零
 	 * @param source
