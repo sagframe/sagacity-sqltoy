@@ -24,10 +24,6 @@ public class EntityUpdate implements Serializable {
 	 */
 	private String where;
 
-	/**
-	 * 参数名称
-	 */
-	private String[] names;
 
 	/**
 	 * 参数值
@@ -48,10 +44,6 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
-	public EntityUpdate names(String... names) {
-		this.names = names;
-		return this;
-	}
 
 	public EntityUpdate values(Object... values) {
 		this.values = values;
@@ -70,12 +62,6 @@ public class EntityUpdate implements Serializable {
 		return where;
 	}
 
-	/**
-	 * @return the names
-	 */
-	public String[] getNames() {
-		return names;
-	}
 
 	/**
 	 * @return the values

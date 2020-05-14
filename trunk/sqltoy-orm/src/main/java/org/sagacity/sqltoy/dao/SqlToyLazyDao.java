@@ -35,6 +35,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -606,5 +607,7 @@ public interface SqlToyLazyDao {
 	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery);
 
 	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery);
+
+	public <T> Long update(Class<T> entityClass, EntityUpdate entityUpdate);
 
 }

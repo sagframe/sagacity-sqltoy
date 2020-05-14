@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -912,4 +913,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.deleteByQuery(entityClass, entityQuery);
 	}
 
+	@Override
+	public <T> Long update(Class<T> entityClass, EntityUpdate entityUpdate) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
 }

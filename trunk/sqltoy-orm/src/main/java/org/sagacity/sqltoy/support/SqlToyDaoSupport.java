@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -1184,7 +1185,8 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供针对单表简易快捷查询 EntityQuery.where("#[name like ?]#[and status in (?)]").values(new Object[]{xxx,xxx})
+	 * @TODO 提供针对单表简易快捷查询 EntityQuery.where("#[name like ?]#[and status in
+	 *       (?)]").values(new Object[]{xxx,xxx})
 	 * @param <T>
 	 * @param entityClass
 	 * @param entityQuery
@@ -1197,8 +1199,8 @@ public class SqlToyDaoSupport {
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
-		String sql = "select " + entityMeta.getAllColumnNames()
-				+ " from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
 			// 参数名称为空
@@ -1237,6 +1239,22 @@ public class SqlToyDaoSupport {
 		}
 		return executeSql(sql, entityQuery.getNames(), entityQuery.getValues(), false,
 				getDataSource(entityQuery.getDataSource()));
+	}
+
+	public <T> Long updateByQuery(Class<T> entityClass, EntityUpdate entityUpdate) {
+		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getWhere())
+				|| StringUtil.isBlank(entityUpdate.getValues())) {
+			throw new IllegalArgumentException("updateByQuery entityClass、where、value 值不能为空!");
+		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityUpdate.getWhere());
+		StringBuilder sql = new StringBuilder();
+		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
+		// :named 模式
+		if (SqlConfigParseUtils.hasNamedParam(where)) {
+			//for()
+		}
+		return null;
 	}
 
 }
