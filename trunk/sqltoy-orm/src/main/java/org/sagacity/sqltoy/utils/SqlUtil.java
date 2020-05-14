@@ -1320,22 +1320,26 @@ public class SqlUtil {
 		String columnName;
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
-			start = 0;
-			index = StringUtil.indexOfIgnoreCase(realSql, field, start);
-			while (index != -1) {
-				preSql = realSql.substring(start, index);
-				// 非条件参数
-				if (!preSql.trim().endsWith(":")) {
-					sqlBuff.append(preSql).append(columnName);
-					start = index + field.length();
+			if (!columnName.equalsIgnoreCase(field)) {
+				start = 0;
+				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
+				while (index != -1) {
+					preSql = realSql.substring(start, index);
+					// 非条件参数
+					if (!preSql.trim().endsWith(":")) {
+						sqlBuff.append(preSql).append(columnName);
+						start = index + field.length();
+					}
+					index = StringUtil.indexOfIgnoreCase(realSql, field, index + field.length());
 				}
-				index = StringUtil.indexOfIgnoreCase(realSql, field, index + field.length());
+				if (start > 0) {
+					sqlBuff.append(realSql.substring(start));
+					realSql = sqlBuff.toString();
+					sqlBuff.delete(0, sqlBuff.length());
+				}
 			}
-			sqlBuff.append(realSql.substring(start));
-			realSql = sqlBuff.toString();
-			sqlBuff.delete(0, sqlBuff.length());
 		}
-		//放入缓存
+		// 放入缓存
 		convertSqlMap.put(key, realSql);
 		return realSql;
 	}
@@ -1364,22 +1368,22 @@ public class SqlUtil {
 		return sql;
 	}
 
-//	public static void main(String[] args) {
-//		String sql = "select   staffName,'sexType' from table where staffName like ? and sexType=:sexType";
-//		EntityMeta entityMeta = new EntityMeta();
-//		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-//		FieldMeta staffMeta = new FieldMeta();
-//		staffMeta.setFieldName("staffName");
-//		staffMeta.setColumnName("STAFF_NAME");
-//		fieldsMeta.put("staffname", staffMeta);
-//
-//		FieldMeta sexMeta = new FieldMeta();
-//		sexMeta.setFieldName("sexType");
-//		sexMeta.setColumnName("SEX_TYPE");
-//		fieldsMeta.put("sextype", sexMeta);
-//		entityMeta.setFieldsMeta(fieldsMeta);
-//		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
-//		sql = convertFieldsToColumns(entityMeta, sql);
-//		System.err.println(sql);
-//	}
+	public static void main(String[] args) {
+		String sql = "select   staffName,'sexType' from table where #[t.staffName like ?] and sexType=:sexType";
+		EntityMeta entityMeta = new EntityMeta();
+		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+		FieldMeta staffMeta = new FieldMeta();
+		staffMeta.setFieldName("staffName");
+		staffMeta.setColumnName("STAFF_NAME");
+		fieldsMeta.put("staffname", staffMeta);
+
+		FieldMeta sexMeta = new FieldMeta();
+		sexMeta.setFieldName("sexType");
+		sexMeta.setColumnName("SEX_TYPE");
+		fieldsMeta.put("sextype", sexMeta);
+		entityMeta.setFieldsMeta(fieldsMeta);
+		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
+		sql = convertFieldsToColumns(entityMeta, sql);
+		System.err.println(sql);
+	}
 }

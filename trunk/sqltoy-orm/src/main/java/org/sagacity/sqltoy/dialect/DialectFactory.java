@@ -664,7 +664,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							Integer realTopSize;
 							if (topSize < 1) {
 								Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
@@ -727,7 +727,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									queryExecutor.getParamsName(realSqlToyConfig),
@@ -780,7 +780,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							this.setResult(getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
 									dialect));
 						}
@@ -1351,7 +1351,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									queryExecutor.getParamsName(realSqlToyConfig),
 									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
@@ -1388,7 +1388,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									queryExecutor.getParamsName(realSqlToyConfig),
@@ -1426,7 +1426,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, true);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									queryExecutor.getParamsName(realSqlToyConfig),
 									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
