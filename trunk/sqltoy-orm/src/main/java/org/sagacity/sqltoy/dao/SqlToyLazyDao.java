@@ -605,9 +605,6 @@ public interface SqlToyLazyDao {
 
 	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery);
 
-	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery, DataSource dataSource);
-
 	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery);
 
-	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery, DataSource dataSource);
 }

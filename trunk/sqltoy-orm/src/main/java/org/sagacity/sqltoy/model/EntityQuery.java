@@ -2,6 +2,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import javax.sql.DataSource;
+
 /**
  * 
  * @author zhongxuchen
@@ -28,6 +30,8 @@ public class EntityQuery implements Serializable {
 	 */
 	private Object[] values;
 
+	private DataSource dataSource;
+
 	public EntityQuery where(String where) {
 		this.where = where;
 		return this;
@@ -40,6 +44,11 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery values(Object... values) {
 		this.values = values;
+		return this;
+	}
+
+	public EntityQuery dataSource(DataSource dataSource) {
+		this.dataSource = dataSource;
 		return this;
 	}
 
@@ -64,6 +73,12 @@ public class EntityQuery implements Serializable {
 		return values;
 	}
 
-	
+	/**
+	 * @return the dataSource
+	 */
+	public DataSource getDataSource() {
+		return dataSource;
+	}
+
 	
 }
