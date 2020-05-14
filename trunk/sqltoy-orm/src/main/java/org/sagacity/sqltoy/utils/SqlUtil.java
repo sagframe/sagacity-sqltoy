@@ -1335,6 +1335,8 @@ public class SqlUtil {
 			realSql = sqlBuff.toString();
 			sqlBuff.delete(0, sqlBuff.length());
 		}
+		//放入缓存
+		convertSqlMap.put(key, realSql);
 		return realSql;
 	}
 
@@ -1362,22 +1364,22 @@ public class SqlUtil {
 		return sql;
 	}
 
-	public static void main(String[] args) {
-		String sql = "select   staffName,'sexType' from table where staffName like ? and sexType=:sexType";
-		EntityMeta entityMeta = new EntityMeta();
-		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-		FieldMeta staffMeta = new FieldMeta();
-		staffMeta.setFieldName("staffName");
-		staffMeta.setColumnName("STAFF_NAME");
-		fieldsMeta.put("staffname", staffMeta);
-
-		FieldMeta sexMeta = new FieldMeta();
-		sexMeta.setFieldName("sexType");
-		sexMeta.setColumnName("SEX_TYPE");
-		fieldsMeta.put("sextype", sexMeta);
-		entityMeta.setFieldsMeta(fieldsMeta);
-		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
-		sql = convertFieldsToColumns(entityMeta, sql);
-		System.err.println(sql);
-	}
+//	public static void main(String[] args) {
+//		String sql = "select   staffName,'sexType' from table where staffName like ? and sexType=:sexType";
+//		EntityMeta entityMeta = new EntityMeta();
+//		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+//		FieldMeta staffMeta = new FieldMeta();
+//		staffMeta.setFieldName("staffName");
+//		staffMeta.setColumnName("STAFF_NAME");
+//		fieldsMeta.put("staffname", staffMeta);
+//
+//		FieldMeta sexMeta = new FieldMeta();
+//		sexMeta.setFieldName("sexType");
+//		sexMeta.setColumnName("SEX_TYPE");
+//		fieldsMeta.put("sextype", sexMeta);
+//		entityMeta.setFieldsMeta(fieldsMeta);
+//		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
+//		sql = convertFieldsToColumns(entityMeta, sql);
+//		System.err.println(sql);
+//	}
 }
