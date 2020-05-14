@@ -114,7 +114,7 @@ public class ReservedWordsUtil {
 			subSize = 0;
 			end = matcher.start() + 1;
 			keyWord = matcher.group().substring(1);
-			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("]")) {
+			if (keyWord.startsWith("`") || keyWord.startsWith("\"") || keyWord.startsWith("[")) {
 				keyWord = keyWord.substring(1);
 			}
 			sqlBuff.append(sql.substring(start, end));
@@ -145,7 +145,7 @@ public class ReservedWordsUtil {
 	}
 
 	public static void main(String[] args) {
-		String sql = "SELECT * FROM SQLTOY_STAFF_INFO WHERE #[`STATUS` IN (:status)]";
+		String sql = "SELECT [SEX_TYPE] FROM SQLTOY_STAFF_INFO WHERE #[`STATUS` IN (:status)]";
 
 		ReservedWordsUtil.put("SEX_TYPE,STATUS");
 		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.MYSQL);
