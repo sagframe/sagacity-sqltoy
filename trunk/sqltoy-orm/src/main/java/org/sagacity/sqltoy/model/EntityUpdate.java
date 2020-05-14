@@ -1,19 +1,23 @@
+/**
+ * 
+ */
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
 /**
- * 
- * @author zhongxuchen
+ * @author zhong
+ *
  */
-public class EntityQuery implements Serializable {
+public class EntityUpdate implements Serializable {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 5223170071884950204L;
+	private static final long serialVersionUID = -6476698994760985087L;
 
 	/**
 	 * 条件语句
@@ -32,22 +36,29 @@ public class EntityQuery implements Serializable {
 
 	private DataSource dataSource;
 
-	public EntityQuery where(String where) {
+	private LinkedHashMap<String, Object> setValues = new LinkedHashMap<String, Object>();
+
+	public EntityUpdate set(String param, Object value) {
+		setValues.put(param, value);
+		return this;
+	}
+
+	public EntityUpdate where(String where) {
 		this.where = where;
 		return this;
 	}
 
-	public EntityQuery names(String... names) {
+	public EntityUpdate names(String... names) {
 		this.names = names;
 		return this;
 	}
 
-	public EntityQuery values(Object... values) {
+	public EntityUpdate values(Object... values) {
 		this.values = values;
 		return this;
 	}
 
-	public EntityQuery dataSource(DataSource dataSource) {
+	public EntityUpdate dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 		return this;
 	}
@@ -79,6 +90,4 @@ public class EntityQuery implements Serializable {
 	public DataSource getDataSource() {
 		return dataSource;
 	}
-
-	
 }
