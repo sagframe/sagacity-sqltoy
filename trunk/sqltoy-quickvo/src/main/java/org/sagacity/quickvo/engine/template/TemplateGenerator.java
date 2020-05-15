@@ -11,9 +11,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 
 import freemarker.cache.StringTemplateLoader;
@@ -31,7 +31,7 @@ public class TemplateGenerator {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(TemplateGenerator.class);
+	private static Logger logger = LoggerUtil.getLogger();
 	private static Configuration cfg = null;
 
 	public static TemplateGenerator me;
@@ -90,7 +90,7 @@ public class TemplateGenerator {
 			result = writer.getBuffer().toString();
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e.getMessage(), e);
+			logger.info(e.getMessage());
 		} finally {
 			if (writer != null) {
 				try {
@@ -141,7 +141,7 @@ public class TemplateGenerator {
 			writer.flush();
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e.getMessage(), e);
+			logger.info(e.getMessage());
 		} finally {
 			if (out != null) {
 				try {

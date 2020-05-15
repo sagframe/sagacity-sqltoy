@@ -12,9 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.quickvo.QuickVOConstants;
 import org.sagacity.quickvo.model.DataSourceModel;
 import org.sagacity.quickvo.model.TableColumnMeta;
@@ -36,7 +35,7 @@ public class DBHelper {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(DBHelper.class);
+	private static Logger logger = LoggerUtil.getLogger();
 
 	/**
 	 * 数据库连接
@@ -54,7 +53,7 @@ public class DBHelper {
 	 */
 	public static void loadDatasource(NodeList datasouceElts) throws Exception {
 		if (datasouceElts == null || datasouceElts.getLength() == 0) {
-			logger.error("没有配置相应的数据库");
+			logger.info("没有配置相应的数据库");
 			throw new Exception("没有配置相应的数据库");
 		}
 		Element datasouceElt;
@@ -91,17 +90,17 @@ public class DBHelper {
 			dbConfig = dbMaps.values().iterator().next();
 		}
 		if (dbConfig != null) {
-			logger.info("开始连接数据库:{},url:{}", dbName, dbConfig.getUrl());
+			logger.info("开始连接数据库:" + dbName + ",url:" + dbConfig.getUrl());
 			try {
 				Class.forName(dbConfig.getDriver());
 				conn = DriverManager.getConnection(dbConfig.getUrl(), dbConfig.getUsername(), dbConfig.getPassword());
 				return true;
 			} catch (ClassNotFoundException cnfe) {
 				cnfe.printStackTrace();
-				logger.error("数据库驱动未能加载，请在/drivers 目录下放入正确的数据库驱动jar包!");
+				logger.info("数据库驱动未能加载，请在/libs 目录下放入正确的数据库驱动jar包!");
 				throw cnfe;
 			} catch (SQLException se) {
-				logger.error("获取数据库连接失败!");
+				logger.info("获取数据库连接失败!");
 				throw se;
 			}
 		}

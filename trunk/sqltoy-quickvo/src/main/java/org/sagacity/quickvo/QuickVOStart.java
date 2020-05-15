@@ -7,14 +7,19 @@ import static java.lang.System.out;
 
 import java.io.File;
 import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
 import org.sagacity.quickvo.config.XMLConfigLoader;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.ConfigModel;
 import org.sagacity.quickvo.utils.ClassLoaderUtil;
 import org.sagacity.quickvo.utils.FileUtil;
+import org.sagacity.quickvo.utils.LoggerUtil;
 
 /**
  * @project sagacity-tools
@@ -28,7 +33,7 @@ public class QuickVOStart {
 	 */
 	private String DB_DRIVER_FILE = "drivers/";
 
-	private Logger logger = LogManager.getLogger(getClass());
+	private static Logger logger;
 
 	private ConfigModel configModel;
 
@@ -37,12 +42,13 @@ public class QuickVOStart {
 	 */
 	public void init() {
 		try {
+			logger = LoggerUtil.getLogger();
 			out.println("=========     welcome use sagacity-quickvo-4.11.9     ==========");
 			out.println("======      使用java -cp jarPath mainClass args模式启动                =======");
 			configModel = XMLConfigLoader.parse();
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("加载系统参数或解析任务xml文件出错!", e);
+			logger.info("加载系统参数或解析任务xml文件出错!" + e.getMessage());
 		}
 	}
 
@@ -61,7 +67,7 @@ public class QuickVOStart {
 				logger.info("请使用java -cp jarPath mainClass args 模式启动!");
 			} else {
 				// 加载位于driver目录下的jdbc驱动程序类库
-				logger.info("Begin load jdbc driver jar path from ./drivers!");
+				logger.info("Begin load jdbc driver jar path from ./libs!");
 				List jars = FileUtil.getPathFiles(new File(QuickVOConstants.BASE_LOCATE, DB_DRIVER_FILE),
 						new String[] { "[\\w\\-\\.]+\\.jar$" });
 				ClassLoaderUtil.loadJarFiles(jars);
@@ -72,10 +78,9 @@ public class QuickVOStart {
 			TemplateGenerator.destory();
 			logger.info("成功完成vo以及vo<-->po映射类的生成!");
 		} catch (ClassNotFoundException connectionException) {
-			logger.error("数据库驱动加载失败!请将数据库驱动jar文件放到当前目录drivers目录下!" + connectionException.getMessage(),
-					connectionException);
+			logger.info("数据库驱动加载失败!请将数据库驱动jar文件放到当前目录drivers目录下!" + connectionException.getMessage());
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.info(e.getMessage());
 		}
 	}
 
