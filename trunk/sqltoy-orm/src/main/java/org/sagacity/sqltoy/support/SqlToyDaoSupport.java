@@ -1291,7 +1291,7 @@ public class SqlToyDaoSupport {
 			sql.append(columnName).append("=?");
 			index++;
 		}
-		sql.append(" ").append(where);
+		sql.append(" where ").append(where);
 		return executeSql(sql.toString(), null, realValues, false, getDataSource(entityUpdate.getDataSource()));
 	}
 
