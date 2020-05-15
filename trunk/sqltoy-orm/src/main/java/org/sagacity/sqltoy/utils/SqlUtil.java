@@ -1355,7 +1355,7 @@ public class SqlUtil {
 		String columnName;
 		for (String field : fields) {
 			columnName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), null);
-			sqlBuff.append("#[and ").append(columnName).append(":").append(field).append("]");
+			sqlBuff.append("#[and ").append(columnName).append("=:").append(field).append("]");
 		}
 		return sqlBuff.toString();
 	}
