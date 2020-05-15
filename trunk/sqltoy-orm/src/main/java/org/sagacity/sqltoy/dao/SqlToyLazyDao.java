@@ -128,6 +128,14 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable serializableVO, String[] forceUpdateProps);
 
 	/**
+	 * @基于对象单表对象查询进行数据更新
+	 * @param entityClass
+	 * @param entityUpdate
+	 * @return
+	 */
+	public Long update(Class entityClass, EntityUpdate entityUpdate);
+
+	/**
 	 * @todo 深度修改
 	 * @param serializableVO
 	 */
@@ -192,6 +200,14 @@ public interface SqlToyLazyDao {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
+	
+	/**
+	 * @TODO 基于单表查询进行删除操作
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @todo truncate表
@@ -238,6 +254,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
+	
+	public <T> List<T> selectEntity(Class<T> resultType, EntityQuery entityQuery);
 
 	/**
 	 * @todo 级联加载子表数据
@@ -604,10 +622,8 @@ public interface SqlToyLazyDao {
 	 */
 	public Set<String> getCacheNames();
 
-	public <T> List<T> selectList(Class<T> resultType, EntityQuery entityQuery);
+	
 
-	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery);
-
-	public <T> Long update(Class<T> entityClass, EntityUpdate entityUpdate);
+	
 
 }

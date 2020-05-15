@@ -5,11 +5,13 @@ package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -39,6 +41,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -958,6 +961,33 @@ public class SqlToyDaoSupport {
 		return dialectFactory.delete(sqlToyContext, entity, this.getDataSource(dataSource));
 	}
 
+	/**
+	 * @TODO 提供单表简易查询进行删除操作
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
+				|| StringUtil.isBlank(entityQuery.getValues())) {
+			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+		}
+		EntityMeta entityMeta = getEntityMeta(entityClass);
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		// :named 模式
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
+			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
+			// 根据sql中的变量从entity对象中提取参数值
+			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
+					(Serializable) entityQuery.getValues()[0], null);
+			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
+					getDataSource(entityQuery.getDataSource()));
+		}
+		return executeSql(sql, entityQuery.getNames(), entityQuery.getValues(), false,
+				getDataSource(entityQuery.getDataSource()));
+	}
+
 	protected <T extends Serializable> Long deleteAll(final List<T> entities) {
 		return this.deleteAll(entities, null);
 	}
@@ -1193,12 +1223,17 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
-				|| StringUtil.isBlank(entityQuery.getValues())) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getValues())) {
 			throw new IllegalArgumentException("selectList entityClass、where、value 值不能为空!");
 		}
+		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
-		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
+		if (StringUtil.isBlank(entityQuery.getWhere())) {
+			where = SqlUtil.wrapWhere(entityMeta);
+		} else {
+			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		}
 		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// :named 模式
@@ -1214,47 +1249,50 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供单表简易查询进行删除操作
-	 * @param <T>
+	 * @TODO 针对单表对象查询进行更新操作
 	 * @param entityClass
-	 * @param entityQuery
+	 * @param entityUpdate
 	 * @return
 	 */
-	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
-				|| StringUtil.isBlank(entityQuery.getValues())) {
-			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
-		}
-		EntityMeta entityMeta = getEntityMeta(entityClass);
-		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
-		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
-		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
-			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
-			// 根据sql中的变量从entity对象中提取参数值
-			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-					(Serializable) entityQuery.getValues()[0], null);
-			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
-					getDataSource(entityQuery.getDataSource()));
-		}
-		return executeSql(sql, entityQuery.getNames(), entityQuery.getValues(), false,
-				getDataSource(entityQuery.getDataSource()));
-	}
-
-	public <T> Long updateByQuery(Class<T> entityClass, EntityUpdate entityUpdate) {
+	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getWhere())
-				|| StringUtil.isBlank(entityUpdate.getValues())) {
-			throw new IllegalArgumentException("updateByQuery entityClass、where、value 值不能为空!");
+				|| StringUtil.isBlank(entityUpdate.getValues()) || entityUpdate.getUpdateValues().isEmpty()) {
+			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
+		}
+		if (SqlConfigParseUtils.hasNamedParam(entityUpdate.getWhere())) {
+			throw new IllegalArgumentException("updateByQuery: wheret条件语句不支持:paramName 模式,请直接使用name=? 模式!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
+		// 处理where 中写的java 字段名称为数据库表字段名称
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityUpdate.getWhere());
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
-		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where)) {
-			//for()
+		Iterator<Entry<String, Object>> iter = entityUpdate.getUpdateValues().entrySet().iterator();
+		Entry<String, Object> entry;
+		String field;
+		String columnName;
+		List values = new ArrayList();
+		Object[] realValues = new Object[values.size() + entityUpdate.getValues().length];
+		System.arraycopy(entityUpdate.getValues(), 0, realValues, entityUpdate.getValues().length, values.size());
+		int index = 0;
+		while (iter.hasNext()) {
+			entry = iter.next();
+			field = entry.getKey();
+			columnName = entityMeta.getColumnName(field);
+			if (columnName == null) {
+				columnName = field;
+			}
+			// 保留字处理
+			columnName = ReservedWordsUtil.convertWord(columnName, null);
+			realValues[index] = entry.getValue();
+			if (index > 0) {
+				sql.append(",");
+			}
+			sql.append(columnName).append("=?");
+			index++;
 		}
-		return null;
+		sql.append(" ").append(where);
+		return executeSql(sql.toString(), null, realValues, false, getDataSource(entityUpdate.getDataSource()));
 	}
 
 }

@@ -1345,6 +1345,22 @@ public class SqlUtil {
 	}
 
 	/**
+	 * @TODO 组合动态条件
+	 * @param entityMeta
+	 * @return
+	 */
+	public static String wrapWhere(EntityMeta entityMeta) {
+		String[] fields = entityMeta.getFieldsArray();
+		StringBuilder sqlBuff = new StringBuilder(" 1=1 ");
+		String columnName;
+		for (String field : fields) {
+			columnName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), null);
+			sqlBuff.append("#[and ").append(columnName).append(":").append(field).append("]");
+		}
+		return sqlBuff.toString();
+	}
+
+	/**
 	 * @TODO 针对对象查询补全sql中的select * from table 部分
 	 * @param sqlToyContext
 	 * @param entityClass

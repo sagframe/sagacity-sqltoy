@@ -904,20 +904,18 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery) {
+	public <T> List<T> selectEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		return super.selectList(entityClass, entityQuery);
 	}
 
 	@Override
-	public <T> Long deleteByQuery(Class<T> entityClass, EntityQuery entityQuery) {
+	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
 		return super.deleteByQuery(entityClass, entityQuery);
 	}
 
 	@Override
-	public <T> Long update(Class<T> entityClass, EntityUpdate entityUpdate) {
-		// TODO Auto-generated method stub
-		return null;
+	public Long update(Class entityClass, EntityUpdate entityUpdate) {
+		return super.updateByQuery(entityClass, entityUpdate);
 	}
 
-	
 }

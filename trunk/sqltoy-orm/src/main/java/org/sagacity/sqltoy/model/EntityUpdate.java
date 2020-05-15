@@ -32,10 +32,10 @@ public class EntityUpdate implements Serializable {
 
 	private DataSource dataSource;
 
-	private LinkedHashMap<String, Object> setValues = new LinkedHashMap<String, Object>();
+	private LinkedHashMap<String, Object> updateValues = new LinkedHashMap<String, Object>();
 
 	public EntityUpdate set(String param, Object value) {
-		setValues.put(param, value);
+		updateValues.put(param, value);
 		return this;
 	}
 
@@ -76,4 +76,13 @@ public class EntityUpdate implements Serializable {
 	public DataSource getDataSource() {
 		return dataSource;
 	}
+
+	/**
+	 * @return the updateValues
+	 */
+	public LinkedHashMap<String, Object> getUpdateValues() {
+		return updateValues;
+	}
+	
+	
 }
