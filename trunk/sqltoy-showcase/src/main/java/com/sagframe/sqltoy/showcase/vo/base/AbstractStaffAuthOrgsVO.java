@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_staff_auth_orgs,Remark:员工机构授权表 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_staff_auth_orgs,Remark:员工机构授权表  
  */
 @Entity(tableName="sqltoy_staff_auth_orgs",pk_constraint="PRIMARY")
 public abstract class AbstractStaffAuthOrgsVO implements Serializable,
@@ -87,7 +86,6 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	protected Integer status;
 	
 
-
 	/** default constructor */
 	public AbstractStaffAuthOrgsVO() {
 	}
@@ -116,8 +114,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param authId the authId to set
 	 */
-	public void setAuthId(String authId) {
+	public AbstractStaffAuthOrgsVO setAuthId(String authId) {
 		this.authId=authId;
+		return this;
 	}
 		
 	/**
@@ -130,8 +129,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param staffId the staffId to set
 	 */
-	public void setStaffId(String staffId) {
+	public AbstractStaffAuthOrgsVO setStaffId(String staffId) {
 		this.staffId=staffId;
+		return this;
 	}
 		
 	/**
@@ -144,8 +144,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param organId the organId to set
 	 */
-	public void setOrganId(String organId) {
+	public AbstractStaffAuthOrgsVO setOrganId(String organId) {
 		this.organId=organId;
+		return this;
 	}
 		
 	/**
@@ -158,8 +159,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param showIndex the showIndex to set
 	 */
-	public void setShowIndex(Integer showIndex) {
+	public AbstractStaffAuthOrgsVO setShowIndex(Integer showIndex) {
 		this.showIndex=showIndex;
+		return this;
 	}
 		
 	/**
@@ -172,8 +174,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public void setCreateBy(String createBy) {
+	public AbstractStaffAuthOrgsVO setCreateBy(String createBy) {
 		this.createBy=createBy;
+		return this;
 	}
 		
 	/**
@@ -186,8 +189,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(LocalDateTime createTime) {
+	public AbstractStaffAuthOrgsVO setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
+		return this;
 	}
 		
 	/**
@@ -200,8 +204,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public void setUpdateBy(String updateBy) {
+	public AbstractStaffAuthOrgsVO setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
+		return this;
 	}
 		
 	/**
@@ -214,8 +219,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(LocalDateTime updateTime) {
+	public AbstractStaffAuthOrgsVO setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
+		return this;
 	}
 		
 	/**
@@ -228,8 +234,9 @@ public abstract class AbstractStaffAuthOrgsVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractStaffAuthOrgsVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**

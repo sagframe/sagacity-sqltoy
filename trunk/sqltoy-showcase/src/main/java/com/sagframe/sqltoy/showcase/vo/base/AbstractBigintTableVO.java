@@ -13,8 +13,7 @@ import java.math.BigInteger;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_bigint_table 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_bigint_table  
  */
 @Entity(tableName="sqltoy_bigint_table",pk_constraint="PRIMARY")
 public abstract class AbstractBigintTableVO implements Serializable,
@@ -45,7 +44,6 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	protected String name;
 	
 
-
 	/** default constructor */
 	public AbstractBigintTableVO() {
 	}
@@ -67,8 +65,9 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	/**
 	 *@param id the id to set
 	 */
-	public void setId(BigInteger id) {
+	public AbstractBigintTableVO setId(BigInteger id) {
 		this.id=id;
+		return this;
 	}
 		
 	/**
@@ -81,8 +80,9 @@ public abstract class AbstractBigintTableVO implements Serializable,
 	/**
 	 *@param name the name to set
 	 */
-	public void setName(String name) {
+	public AbstractBigintTableVO setName(String name) {
 		this.name=name;
+		return this;
 	}
 		
 	/**

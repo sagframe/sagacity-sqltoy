@@ -15,8 +15,7 @@ import java.time.LocalDate;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_trans_info_his,Remark:支付交易流水表 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_trans_info_his,Remark:支付交易流水表  
  */
 @Entity(tableName="sqltoy_trans_info_his",pk_constraint="PRIMARY")
 public abstract class AbstractTransInfoHisVO implements Serializable,
@@ -95,7 +94,6 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	protected String cardNo;
 	
 
-
 	/** default constructor */
 	public AbstractTransInfoHisVO() {
 	}
@@ -138,8 +136,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param transId the transId to set
 	 */
-	public void setTransId(String transId) {
+	public AbstractTransInfoHisVO setTransId(String transId) {
 		this.transId=transId;
+		return this;
 	}
 		
 	/**
@@ -152,8 +151,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param transCode the transCode to set
 	 */
-	public void setTransCode(String transCode) {
+	public AbstractTransInfoHisVO setTransCode(String transCode) {
 		this.transCode=transCode;
+		return this;
 	}
 		
 	/**
@@ -166,8 +166,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param transChannel the transChannel to set
 	 */
-	public void setTransChannel(String transChannel) {
+	public AbstractTransInfoHisVO setTransChannel(String transChannel) {
 		this.transChannel=transChannel;
+		return this;
 	}
 		
 	/**
@@ -180,8 +181,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param amt the amt to set
 	 */
-	public void setAmt(BigDecimal amt) {
+	public AbstractTransInfoHisVO setAmt(BigDecimal amt) {
 		this.amt=amt;
+		return this;
 	}
 		
 	/**
@@ -194,8 +196,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractTransInfoHisVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**
@@ -208,8 +211,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param resultCode the resultCode to set
 	 */
-	public void setResultCode(String resultCode) {
+	public AbstractTransInfoHisVO setResultCode(String resultCode) {
 		this.resultCode=resultCode;
+		return this;
 	}
 		
 	/**
@@ -222,8 +226,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param transTime the transTime to set
 	 */
-	public void setTransTime(LocalDateTime transTime) {
+	public AbstractTransInfoHisVO setTransTime(LocalDateTime transTime) {
 		this.transTime=transTime;
+		return this;
 	}
 		
 	/**
@@ -236,8 +241,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(LocalDate transDate) {
+	public AbstractTransInfoHisVO setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
+		return this;
 	}
 		
 	/**
@@ -250,8 +256,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param userId the userId to set
 	 */
-	public void setUserId(String userId) {
+	public AbstractTransInfoHisVO setUserId(String userId) {
 		this.userId=userId;
+		return this;
 	}
 		
 	/**
@@ -264,8 +271,9 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	/**
 	 *@param cardNo the cardNo to set
 	 */
-	public void setCardNo(String cardNo) {
+	public AbstractTransInfoHisVO setCardNo(String cardNo) {
 		this.cardNo=cardNo;
+		return this;
 	}
 		
 	/**
