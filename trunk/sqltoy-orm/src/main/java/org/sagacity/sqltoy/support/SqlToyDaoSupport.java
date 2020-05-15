@@ -5,7 +5,6 @@ package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,6 +23,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -1259,21 +1259,28 @@ public class SqlToyDaoSupport {
 				|| StringUtil.isBlank(entityUpdate.getValues()) || entityUpdate.getUpdateValues().isEmpty()) {
 			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
 		}
-		if (SqlConfigParseUtils.hasNamedParam(entityUpdate.getWhere())) {
-			throw new IllegalArgumentException("updateByQuery: wheret条件语句不支持:paramName 模式,请直接使用name=? 模式!");
+		boolean isName = SqlConfigParseUtils.hasNamedParam(entityUpdate.getWhere());
+		Object[] values = entityUpdate.getValues();
+		String where = entityUpdate.getWhere();
+		// 重新通过对象反射获取参数条件的值
+		if (isName) {
+			String[] paramName = SqlConfigParseUtils.getSqlParamsName(where, false);
+			values = BeanUtil.reflectBeanToAry(values[0], paramName, null, null);
+			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(where, paramName, values);
+			where = sqlToyResult.getSql();
+			values = sqlToyResult.getParamsValue();
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		// 处理where 中写的java 字段名称为数据库表字段名称
-		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityUpdate.getWhere());
+		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
 		Iterator<Entry<String, Object>> iter = entityUpdate.getUpdateValues().entrySet().iterator();
 		Entry<String, Object> entry;
 		String field;
 		String columnName;
-		List values = new ArrayList();
-		Object[] realValues = new Object[values.size() + entityUpdate.getValues().length];
-		System.arraycopy(entityUpdate.getValues(), 0, realValues, entityUpdate.getValues().length, values.size());
+		Object[] realValues = new Object[entityUpdate.getUpdateValues().size() + values.length];
+		System.arraycopy(values, 0, realValues, entityUpdate.getUpdateValues().size(), values.length);
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
@@ -1288,6 +1295,7 @@ public class SqlToyDaoSupport {
 			if (index > 0) {
 				sql.append(",");
 			}
+
 			sql.append(columnName).append("=?");
 			index++;
 		}
