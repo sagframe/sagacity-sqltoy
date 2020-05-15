@@ -444,7 +444,7 @@ public class DialectUtils {
 	 * @param startIndex
 	 * @return
 	 */
-	private static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
+	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
 		UnifySqlParams sqlParam = new UnifySqlParams();
 		if (sql == null || sql.trim().equals(""))
 			return sqlParam;
@@ -1775,7 +1775,7 @@ public class DialectUtils {
 				}
 			}
 		}
-		
+
 		SqlExecuteStat.showSql("delete all sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
 				parameterTypes, autoCommit, conn, dbType);
@@ -1854,7 +1854,7 @@ public class DialectUtils {
 			if (recordCnt > 1) {
 				return false;
 			}
-			SqlExecuteStat.showSql("isUnique sql="+queryStr.toString(), paramValues);
+			SqlExecuteStat.showSql("isUnique sql=" + queryStr.toString(), paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
 				return true;
@@ -2210,5 +2210,11 @@ public class DialectUtils {
 			return StringUtil.matchCnt(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
 		}
 		return StringUtil.matchCnt(queryStr, "\\?");
+	}
+
+	public static void main(String[] args) {
+		String sql = "select * from table where #[`status` in (?)]";
+		String lastSql = DialectUtils.convertParamsToNamed(sql, 0).getSql();
+		System.err.println(lastSql);
 	}
 }

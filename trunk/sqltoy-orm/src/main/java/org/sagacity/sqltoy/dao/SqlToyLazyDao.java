@@ -34,6 +34,8 @@ import org.sagacity.sqltoy.link.Store;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
+import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -126,6 +128,14 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable serializableVO, String[] forceUpdateProps);
 
 	/**
+	 * @基于对象单表对象查询进行数据更新
+	 * @param entityClass
+	 * @param entityUpdate
+	 * @return
+	 */
+	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
+
+	/**
 	 * @todo 深度修改
 	 * @param serializableVO
 	 */
@@ -192,6 +202,14 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
 
 	/**
+	 * @TODO 基于单表查询进行删除操作
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery);
+
+	/**
 	 * @todo truncate表
 	 * @param entityClass
 	 */
@@ -236,6 +254,15 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
+
+	/**
+	 * TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
+	 * @param <T>
+	 * @param resultType
+	 * @param entityQuery
+	 * @return
+	 */
+	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
 	/**
 	 * @todo 级联加载子表数据
@@ -359,7 +386,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass    返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -370,7 +397,7 @@ public interface SqlToyLazyDao {
 	 * @todo 基于对象传参数模式(内部会根据sql中的参数提取对象对应属性的值),并返回对象对应类型的List
 	 * @param <T>
 	 * @param sqlOrNamedSql
-	 * @param entity  
+	 * @param entity
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -601,4 +628,5 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Set<String> getCacheNames();
+
 }

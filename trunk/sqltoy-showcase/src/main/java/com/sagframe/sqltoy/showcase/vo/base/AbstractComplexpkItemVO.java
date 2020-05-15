@@ -15,8 +15,7 @@ import java.time.LocalDateTime;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_complexpk_item,Remark:复合主键级联操作子表 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_complexpk_item,Remark:复合主键级联操作子表  
  */
 @Entity(tableName="sqltoy_complexpk_item",pk_constraint="PRIMARY")
 public abstract class AbstractComplexpkItemVO implements Serializable,
@@ -83,7 +82,6 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	protected LocalDateTime createTime;
 	
 
-
 	/** default constructor */
 	public AbstractComplexpkItemVO() {
 	}
@@ -121,8 +119,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param id the id to set
 	 */
-	public void setId(String id) {
+	public AbstractComplexpkItemVO setId(String id) {
 		this.id=id;
+		return this;
 	}
 		
 	/**
@@ -135,8 +134,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(LocalDate transDate) {
+	public AbstractComplexpkItemVO setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
+		return this;
 	}
 		
 	/**
@@ -149,8 +149,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param transCode the transCode to set
 	 */
-	public void setTransCode(String transCode) {
+	public AbstractComplexpkItemVO setTransCode(String transCode) {
 		this.transCode=transCode;
+		return this;
 	}
 		
 	/**
@@ -163,8 +164,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param productId the productId to set
 	 */
-	public void setProductId(String productId) {
+	public AbstractComplexpkItemVO setProductId(String productId) {
 		this.productId=productId;
+		return this;
 	}
 		
 	/**
@@ -177,8 +179,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param quantity the quantity to set
 	 */
-	public void setQuantity(BigDecimal quantity) {
+	public AbstractComplexpkItemVO setQuantity(BigDecimal quantity) {
 		this.quantity=quantity;
+		return this;
 	}
 		
 	/**
@@ -191,8 +194,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param price the price to set
 	 */
-	public void setPrice(BigDecimal price) {
+	public AbstractComplexpkItemVO setPrice(BigDecimal price) {
 		this.price=price;
+		return this;
 	}
 		
 	/**
@@ -205,8 +209,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param amt the amt to set
 	 */
-	public void setAmt(BigDecimal amt) {
+	public AbstractComplexpkItemVO setAmt(BigDecimal amt) {
 		this.amt=amt;
+		return this;
 	}
 		
 	/**
@@ -219,8 +224,9 @@ public abstract class AbstractComplexpkItemVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(LocalDateTime createTime) {
+	public AbstractComplexpkItemVO setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
+		return this;
 	}
 		
 	/**

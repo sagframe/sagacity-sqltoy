@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -1143,4 +1145,25 @@ public class BeanUtil {
 		return method.invoke(bean);
 	}
 
+	/**
+	 * @TODO 获取泛型的类型
+	 * @param clazz
+	 * @param index
+	 * @return
+	 * @throws IndexOutOfBoundsException
+	 */
+	public static Class getSuperClassGenricType(Class clazz, int index) throws IndexOutOfBoundsException {
+		Type genType = clazz.getGenericSuperclass();
+		if (!(genType instanceof ParameterizedType)) {
+			return Object.class;
+		}
+		Type[] params = ((ParameterizedType) genType).getActualTypeArguments();
+		if (index >= params.length || index < 0) {
+			return Object.class;
+		}
+		if (!(params[index] instanceof Class)) {
+			return Object.class;
+		}
+		return (Class) params[index];
+	}
 }

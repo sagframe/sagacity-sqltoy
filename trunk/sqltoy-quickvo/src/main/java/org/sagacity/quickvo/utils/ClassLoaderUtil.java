@@ -11,9 +11,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * @project sagacity-quickvo
  * @description 类加载器工具包，提供jar、class等动态加载功能
@@ -22,12 +19,6 @@ import org.apache.logging.log4j.Logger;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ClassLoaderUtil {
-	/**
-	 * 定义日志
-	 */
-	@SuppressWarnings("unused")
-	private final static Logger logger = LogManager.getLogger(ClassLoaderUtil.class);
-
 	private static Method addURL;
 	static {
 		try {
