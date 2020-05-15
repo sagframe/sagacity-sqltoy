@@ -15,6 +15,10 @@ public class EntityQuery implements Serializable {
 	 */
 	private static final long serialVersionUID = 5223170071884950204L;
 
+	public static EntityQuery create() {
+		return new EntityQuery();
+	}
+
 	/**
 	 * 条件语句
 	 */
@@ -80,5 +84,4 @@ public class EntityQuery implements Serializable {
 		return dataSource;
 	}
 
-	
 }

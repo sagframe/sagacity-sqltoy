@@ -19,11 +19,14 @@ public class EntityUpdate implements Serializable {
 	 */
 	private static final long serialVersionUID = -6476698994760985087L;
 
+	public static EntityUpdate create() {
+		return new EntityUpdate();
+	}
+
 	/**
 	 * 条件语句
 	 */
 	private String where;
-
 
 	/**
 	 * 参数值
@@ -44,7 +47,6 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
-
 	public EntityUpdate values(Object... values) {
 		this.values = values;
 		return this;
@@ -61,7 +63,6 @@ public class EntityUpdate implements Serializable {
 	public String getWhere() {
 		return where;
 	}
-
 
 	/**
 	 * @return the values
@@ -83,6 +84,5 @@ public class EntityUpdate implements Serializable {
 	public LinkedHashMap<String, Object> getUpdateValues() {
 		return updateValues;
 	}
-	
-	
+
 }
