@@ -18,7 +18,7 @@
 					</xsd:complexType>
 				</xsd:element>
 				<xsd:element name="property" maxOccurs="unbounded">
-					<xsd:complexType>
+					<xsd:complexType mixed="true">
 						<xsd:attribute name="file" type="xsd:string" />
 						<xsd:attribute name="name" type="xsd:string" />
 						<xsd:attribute name="value" type="xsd:string" />
