@@ -200,7 +200,7 @@ public interface SqlToyLazyDao {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
-	
+
 	/**
 	 * @TODO 基于单表查询进行删除操作
 	 * @param entityClass
@@ -254,7 +254,14 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
-	
+
+	/**
+	 * TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
+	 * @param <T>
+	 * @param resultType
+	 * @param entityQuery
+	 * @return
+	 */
 	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
 	/**
@@ -621,9 +628,5 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Set<String> getCacheNames();
-
-	
-
-	
 
 }
