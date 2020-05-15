@@ -1264,11 +1264,18 @@ public class SqlToyDaoSupport {
 		String where = entityUpdate.getWhere();
 		// 重新通过对象反射获取参数条件的值
 		if (isName) {
+			if (values.length > 1) {
+				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO对象!");
+			}
 			String[] paramName = SqlConfigParseUtils.getSqlParamsName(where, false);
 			values = BeanUtil.reflectBeanToAry(values[0], paramName, null, null);
 			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(where, paramName, values);
 			where = sqlToyResult.getSql();
 			values = sqlToyResult.getParamsValue();
+		} else {
+			if (StringUtil.matchCnt(where, "\\?") != values.length) {
+				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
+			}
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		// 处理where 中写的java 字段名称为数据库表字段名称
