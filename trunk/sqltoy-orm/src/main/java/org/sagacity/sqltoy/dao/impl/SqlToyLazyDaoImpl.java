@@ -904,8 +904,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> List<T> selectEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		return super.selectList(entityClass, entityQuery);
+	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		return super.findEntity(entityClass, entityQuery);
 	}
 
 	@Override

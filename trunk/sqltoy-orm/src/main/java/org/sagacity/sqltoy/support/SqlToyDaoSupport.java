@@ -1222,7 +1222,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> List<T> selectList(Class<T> entityClass, EntityQuery entityQuery) {
+	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getValues())) {
 			throw new IllegalArgumentException("selectList entityClass、where、value 值不能为空!");
 		}

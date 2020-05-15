@@ -255,7 +255,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 	
-	public <T> List<T> selectEntity(Class<T> resultType, EntityQuery entityQuery);
+	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
 	/**
 	 * @todo 级联加载子表数据
