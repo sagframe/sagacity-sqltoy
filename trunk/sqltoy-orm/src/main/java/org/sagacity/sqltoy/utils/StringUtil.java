@@ -613,6 +613,7 @@ public class StringUtil {
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
 			if (pattern == null) {
+				//非正则表达式,往后移动一位
 				result[0] = source.indexOf(filter[0], result[1] + 1);
 				if (result[0] > 0) {
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
@@ -620,6 +621,7 @@ public class StringUtil {
 					result[1] = -1;
 				}
 			} else {
+				//twoQuotaPattern 和 quotaPattern 表达式末尾匹配占用了2位长度,所以+2
 				result[0] = matchIndex(source, pattern, result[1] + 2)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
