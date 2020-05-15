@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_device_order_info,Remark:硬件购销定单表(演示有规则单号) 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_device_order_info,Remark:硬件购销定单表(演示有规则单号)  
  */
 @Entity(tableName="sqltoy_device_order_info",pk_constraint="PRIMARY")
 public abstract class AbstractDeviceOrderInfoVO implements Serializable,
@@ -133,7 +132,6 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	protected Integer status;
 	
 
-
 	/** default constructor */
 	public AbstractDeviceOrderInfoVO() {
 	}
@@ -182,8 +180,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param orderId the orderId to set
 	 */
-	public void setOrderId(String orderId) {
+	public AbstractDeviceOrderInfoVO setOrderId(String orderId) {
 		this.orderId=orderId;
+		return this;
 	}
 		
 	/**
@@ -196,8 +195,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param deviceType the deviceType to set
 	 */
-	public void setDeviceType(String deviceType) {
+	public AbstractDeviceOrderInfoVO setDeviceType(String deviceType) {
 		this.deviceType=deviceType;
+		return this;
 	}
 		
 	/**
@@ -210,8 +210,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param psType the psType to set
 	 */
-	public void setPsType(String psType) {
+	public AbstractDeviceOrderInfoVO setPsType(String psType) {
 		this.psType=psType;
+		return this;
 	}
 		
 	/**
@@ -224,8 +225,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param totalCnt the totalCnt to set
 	 */
-	public void setTotalCnt(BigDecimal totalCnt) {
+	public AbstractDeviceOrderInfoVO setTotalCnt(BigDecimal totalCnt) {
 		this.totalCnt=totalCnt;
+		return this;
 	}
 		
 	/**
@@ -238,8 +240,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param totalAmt the totalAmt to set
 	 */
-	public void setTotalAmt(BigDecimal totalAmt) {
+	public AbstractDeviceOrderInfoVO setTotalAmt(BigDecimal totalAmt) {
 		this.totalAmt=totalAmt;
+		return this;
 	}
 		
 	/**
@@ -252,8 +255,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param buyer the buyer to set
 	 */
-	public void setBuyer(String buyer) {
+	public AbstractDeviceOrderInfoVO setBuyer(String buyer) {
 		this.buyer=buyer;
+		return this;
 	}
 		
 	/**
@@ -266,8 +270,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param saler the saler to set
 	 */
-	public void setSaler(String saler) {
+	public AbstractDeviceOrderInfoVO setSaler(String saler) {
 		this.saler=saler;
+		return this;
 	}
 		
 	/**
@@ -280,8 +285,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param transDate the transDate to set
 	 */
-	public void setTransDate(LocalDate transDate) {
+	public AbstractDeviceOrderInfoVO setTransDate(LocalDate transDate) {
 		this.transDate=transDate;
+		return this;
 	}
 		
 	/**
@@ -294,8 +300,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param deliveryTerm the deliveryTerm to set
 	 */
-	public void setDeliveryTerm(LocalDate deliveryTerm) {
+	public AbstractDeviceOrderInfoVO setDeliveryTerm(LocalDate deliveryTerm) {
 		this.deliveryTerm=deliveryTerm;
+		return this;
 	}
 		
 	/**
@@ -308,8 +315,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param staffId the staffId to set
 	 */
-	public void setStaffId(String staffId) {
+	public AbstractDeviceOrderInfoVO setStaffId(String staffId) {
 		this.staffId=staffId;
+		return this;
 	}
 		
 	/**
@@ -322,8 +330,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param organId the organId to set
 	 */
-	public void setOrganId(String organId) {
+	public AbstractDeviceOrderInfoVO setOrganId(String organId) {
 		this.organId=organId;
+		return this;
 	}
 		
 	/**
@@ -336,8 +345,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param createBy the createBy to set
 	 */
-	public void setCreateBy(String createBy) {
+	public AbstractDeviceOrderInfoVO setCreateBy(String createBy) {
 		this.createBy=createBy;
+		return this;
 	}
 		
 	/**
@@ -350,8 +360,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param createTime the createTime to set
 	 */
-	public void setCreateTime(LocalDateTime createTime) {
+	public AbstractDeviceOrderInfoVO setCreateTime(LocalDateTime createTime) {
 		this.createTime=createTime;
+		return this;
 	}
 		
 	/**
@@ -364,8 +375,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param updateBy the updateBy to set
 	 */
-	public void setUpdateBy(String updateBy) {
+	public AbstractDeviceOrderInfoVO setUpdateBy(String updateBy) {
 		this.updateBy=updateBy;
+		return this;
 	}
 		
 	/**
@@ -378,8 +390,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param updateTime the updateTime to set
 	 */
-	public void setUpdateTime(LocalDateTime updateTime) {
+	public AbstractDeviceOrderInfoVO setUpdateTime(LocalDateTime updateTime) {
 		this.updateTime=updateTime;
+		return this;
 	}
 		
 	/**
@@ -392,8 +405,9 @@ public abstract class AbstractDeviceOrderInfoVO implements Serializable,
 	/**
 	 *@param status the status to set
 	 */
-	public void setStatus(Integer status) {
+	public AbstractDeviceOrderInfoVO setStatus(Integer status) {
 		this.status=status;
+		return this;
 	}
 		
 	/**

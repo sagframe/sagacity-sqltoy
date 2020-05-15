@@ -6,12 +6,11 @@ package org.sagacity.quickvo.config;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.quickvo.QuickVOConstants;
 import org.sagacity.quickvo.model.BusinessIdConfig;
 import org.sagacity.quickvo.model.CascadeModel;
@@ -21,6 +20,7 @@ import org.sagacity.quickvo.model.PrimaryKeyStrategy;
 import org.sagacity.quickvo.model.QuickModel;
 import org.sagacity.quickvo.utils.DBHelper;
 import org.sagacity.quickvo.utils.FileUtil;
+import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -37,7 +37,7 @@ public class XMLConfigLoader {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(XMLConfigLoader.class);
+	private static Logger logger = LoggerUtil.getLogger();
 
 	/**
 	 * @todo 解析配置文件
@@ -50,8 +50,8 @@ public class XMLConfigLoader {
 		if (!xmlFile.exists()) {
 			xmlFile = new File(QuickVOConstants.QUICK_CONFIG_FILE);
 			if (!xmlFile.exists()) {
-				logger.error("相对路径:{},配置文件:{}不存在,请正确配置!", QuickVOConstants.BASE_LOCATE,
-						QuickVOConstants.QUICK_CONFIG_FILE);
+				logger.info("相对路径:" + QuickVOConstants.BASE_LOCATE + ",配置文件:[" + QuickVOConstants.QUICK_CONFIG_FILE
+						+ "]不存在,请正确配置!");
 				throw new Exception("配置文件:" + xmlFile.getAbsolutePath() + " 不存在,请正确配置!");
 			}
 		}

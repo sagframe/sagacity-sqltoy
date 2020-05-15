@@ -17,9 +17,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.BusinessIdConfig;
 import org.sagacity.quickvo.model.CascadeModel;
@@ -34,6 +33,7 @@ import org.sagacity.quickvo.model.TableConstractModel;
 import org.sagacity.quickvo.model.TableMeta;
 import org.sagacity.quickvo.utils.DBHelper;
 import org.sagacity.quickvo.utils.FileUtil;
+import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.StringUtil;
 
 /**
@@ -74,7 +74,7 @@ public class TaskController {
 	/**
 	 * 定义全局日志
 	 */
-	private final static Logger logger = LogManager.getLogger(TaskController.class);
+	private static Logger logger = LoggerUtil.getLogger();
 
 	/**
 	 * @todo 加载freemarker模板
@@ -118,9 +118,9 @@ public class TaskController {
 			quickModel = (QuickModel) iter.next();
 			boolean isConn = DBHelper.getConnection(quickModel.getDataSource());
 			if (!isConn) {
-				logger.error("数据库:{}连接异常,请确认你的数据库配置信息或者数据库环境!", quickModel.getDataSource());
+				logger.info("数据库:[" + quickModel.getDataSource() + "]连接异常,请确认你的数据库配置信息或者数据库环境!");
 			} else {
-				logger.info("开始执行第:{} 个任务,includes=:{}", i, quickModel.getIncludeTables());
+				logger.info("开始执行第:{" + i + "} 个任务,includes=:" + quickModel.getIncludeTables());
 				createTask(quickModel, isSupport);
 				// 销毁数据库连接
 				DBHelper.close();
@@ -251,7 +251,7 @@ public class TaskController {
 				// 无主键
 				if (pks == null || pks.size() == 0) {
 					quickVO.setSinglePk("-1");
-					logger.warn("======表" + tableName + "无主键!请检查数据库配置是否正确!");
+					logger.info("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
 					// 设置主键约束配置,对postgresql 有意义
 					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
@@ -565,9 +565,9 @@ public class TaskController {
 			// 默认数据类型都是非原始类型
 			quickColMeta.setColTypeFlag("0");
 			if (quickColMeta.getResultType() == null) {
-				logger.error("字段:[" + colMeta.getColName() + "]数据类型:[" + colMeta.getTypeName() + "]数据长度:["
+				logger.info("字段:[" + colMeta.getColName() + "]数据类型:[" + colMeta.getTypeName() + "]数据长度:["
 						+ colMeta.getPrecision() + "]小数位:[" + colMeta.getScale() + "]没有设置对应的java-type!");
-				logger.error(
+				logger.info(
 						"请在quickvo.xml 正确配置<sql-type native-types=\"" + colMeta.getTypeName() + "\" java-type=\"\" />");
 			} else {
 				for (int m = 0; m < QuickVOConstants.prototype.length; m++) {
@@ -737,7 +737,7 @@ public class TaskController {
 		}
 		// 需要产生
 		if (needGen) {
-			logger.info("正在生成文件:{}", file);
+			logger.info("正在生成文件:" + file);
 			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
 					file);
 		}
@@ -793,7 +793,7 @@ public class TaskController {
 				FileUtil.putStringToFile(before + constructor + after, file, charset);
 			}
 		} else {
-			logger.error("vo 文件中的构造函数默认开始结束符号被修改!表发生修改无法更新vo!");
+			logger.info("vo 文件中的构造函数默认开始结束符号被修改!表发生修改无法更新vo!");
 		}
 	}
 
@@ -893,7 +893,7 @@ public class TaskController {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(e.getMessage());
+			logger.info(e.getMessage());
 		} finally {
 			FileUtil.closeQuietly(in);
 		}

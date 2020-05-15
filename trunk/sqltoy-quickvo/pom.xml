@@ -10,10 +10,8 @@
 	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<log4j.version>2.13.2</log4j.version>
+		<!-- <log4j.version>2.13.2</log4j.version> -->
 		<freemarker.version>2.3.30</freemarker.version>
-		<!-- <mysql.version>8.0.20</mysql.version> -->
-		<!-- <ojdbc.version>19.3.0.0</ojdbc.version> -->
 		<jackson-dataformat.version>2.11.0</jackson-dataformat.version>
 	</properties>
 	<licenses>
@@ -70,7 +68,7 @@
 			<version>${ojdbc.version}</version> <optional>true</optional> <exclusions> 
 			<exclusion> <groupId>*</groupId> <artifactId>*</artifactId> </exclusion> 
 			</exclusions> </dependency> -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
@@ -91,7 +89,7 @@
 					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
 			<artifactId>freemarker</artifactId>
@@ -206,7 +204,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.6</version>
@@ -218,7 +216,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 </project>

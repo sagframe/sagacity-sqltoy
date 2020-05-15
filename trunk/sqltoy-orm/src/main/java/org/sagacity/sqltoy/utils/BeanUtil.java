@@ -1142,5 +1142,4 @@ public class BeanUtil {
 		}
 		return method.invoke(bean);
 	}
-
 }

@@ -12,8 +12,7 @@ import org.sagacity.sqltoy.config.annotation.Column;
 /**
  * @project sqltoy-showcase
  * @version 1.0.0
- * Table: sqltoy_fruit_order 
- * pk_constraint only for postgresql  
+ * Table: sqltoy_fruit_order  
  */
 @Entity(tableName="sqltoy_fruit_order")
 public abstract class AbstractFruitOrderVO implements Serializable,
@@ -46,7 +45,6 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	protected Long totalAmt;
 	
 
-
 	/** default constructor */
 	public AbstractFruitOrderVO() {
 	}
@@ -66,8 +64,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param fruitName the fruitName to set
 	 */
-	public void setFruitName(String fruitName) {
+	public AbstractFruitOrderVO setFruitName(String fruitName) {
 		this.fruitName=fruitName;
+		return this;
 	}
 		
 	/**
@@ -80,8 +79,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param orderMonth the orderMonth to set
 	 */
-	public void setOrderMonth(Integer orderMonth) {
+	public AbstractFruitOrderVO setOrderMonth(Integer orderMonth) {
 		this.orderMonth=orderMonth;
+		return this;
 	}
 		
 	/**
@@ -94,8 +94,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleCount the saleCount to set
 	 */
-	public void setSaleCount(Long saleCount) {
+	public AbstractFruitOrderVO setSaleCount(Long saleCount) {
 		this.saleCount=saleCount;
+		return this;
 	}
 		
 	/**
@@ -108,8 +109,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param saleAmt the saleAmt to set
 	 */
-	public void setSaleAmt(Long saleAmt) {
+	public AbstractFruitOrderVO setSaleAmt(Long saleAmt) {
 		this.saleAmt=saleAmt;
+		return this;
 	}
 		
 	/**
@@ -122,8 +124,9 @@ public abstract class AbstractFruitOrderVO implements Serializable,
 	/**
 	 *@param totalAmt the totalAmt to set
 	 */
-	public void setTotalAmt(Long totalAmt) {
+	public AbstractFruitOrderVO setTotalAmt(Long totalAmt) {
 		this.totalAmt=totalAmt;
+		return this;
 	}
 		
 	/**
