@@ -7,12 +7,7 @@ import static java.lang.System.out;
 
 import java.io.File;
 import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import org.sagacity.quickvo.config.XMLConfigLoader;
 import org.sagacity.quickvo.engine.template.TemplateGenerator;
