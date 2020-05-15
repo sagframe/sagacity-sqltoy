@@ -12,8 +12,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.13.2</log4j.version>
 		<freemarker.version>2.3.30</freemarker.version>
-		<!-- <mysql.version>8.0.20</mysql.version> -->
-		<!-- <ojdbc.version>19.3.0.0</ojdbc.version> -->
 		<jackson-dataformat.version>2.11.0</jackson-dataformat.version>
 	</properties>
 	<licenses>
