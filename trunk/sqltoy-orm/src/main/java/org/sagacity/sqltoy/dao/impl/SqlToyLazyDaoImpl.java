@@ -914,7 +914,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public Long update(Class entityClass, EntityUpdate entityUpdate) {
+	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		return super.updateByQuery(entityClass, entityUpdate);
 	}
 

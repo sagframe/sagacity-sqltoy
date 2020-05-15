@@ -133,7 +133,7 @@ public interface SqlToyLazyDao {
 	 * @param entityUpdate
 	 * @return
 	 */
-	public Long update(Class entityClass, EntityUpdate entityUpdate);
+	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	/**
 	 * @todo 深度修改
