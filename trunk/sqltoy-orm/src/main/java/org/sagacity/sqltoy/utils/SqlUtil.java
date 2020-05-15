@@ -43,7 +43,6 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -1374,32 +1373,46 @@ public class SqlUtil {
 		if (entityMeta == null)
 			return sql;
 		String sqlLow = sql.toLowerCase().trim();
+		// 包含了select 直接返回
+		if (sqlLow.startsWith("select") || sqlLow.startsWith("with"))
+			return sql;
+		//from 开头补齐select * 
+		if (sqlLow.startsWith("from")) {
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
+		}
+		// 没有where和from(排除 select * from table),补齐select * from table where
+		if (!StringUtil.matches(sqlLow, "(from|where)\\W")) {
+			if (sqlLow.startsWith("and") || sqlLow.startsWith("or")) {
+				return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+						.concat(entityMeta.getSchemaTable()).concat(" where 1=1 ").concat(sql);
+			}
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
+					.concat(" where ").concat(sql);
+		}
+		// where开头 补齐select * from
 		if (sqlLow.startsWith("where")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
 					.concat(" ").concat(sql);
-		}
-		if (sqlLow.startsWith("from")) {
-			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
 		return sql;
 	}
 
 	public static void main(String[] args) {
-		String sql = "select   staffName,'sexType' from table where #[t.staffName like ?] and sexType=:sexType";
-		EntityMeta entityMeta = new EntityMeta();
-		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-		FieldMeta staffMeta = new FieldMeta();
-		staffMeta.setFieldName("staffName");
-		staffMeta.setColumnName("STAFF_NAME");
-		fieldsMeta.put("staffname", staffMeta);
-
-		FieldMeta sexMeta = new FieldMeta();
-		sexMeta.setFieldName("sexType");
-		sexMeta.setColumnName("SEX_TYPE");
-		fieldsMeta.put("sextype", sexMeta);
-		entityMeta.setFieldsMeta(fieldsMeta);
-		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
-		sql = convertFieldsToColumns(entityMeta, sql);
-		System.err.println(sql);
+//		String sql = "select   staffName,'sexType' from table where #[t.staffName like ?] and sexType=:sexType";
+//		EntityMeta entityMeta = new EntityMeta();
+//		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+//		FieldMeta staffMeta = new FieldMeta();
+//		staffMeta.setFieldName("staffName");
+//		staffMeta.setColumnName("STAFF_NAME");
+//		fieldsMeta.put("staffname", staffMeta);
+//
+//		FieldMeta sexMeta = new FieldMeta();
+//		sexMeta.setFieldName("sexType");
+//		sexMeta.setColumnName("SEX_TYPE");
+//		fieldsMeta.put("sextype", sexMeta);
+//		entityMeta.setFieldsMeta(fieldsMeta);
+//		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
+//		sql = convertFieldsToColumns(entityMeta, sql);
+//		System.err.println(sql);
 	}
 }
