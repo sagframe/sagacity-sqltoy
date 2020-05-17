@@ -853,7 +853,8 @@ public class StringUtil {
 
 	public static void main(String[] args) {
 		//String tmp="#[testNum],'#,#0.00'";
-		String tmp="'\\'', t.`ORGAN_ID`, '\\''";
+		String tmp="',',[][,],a";
+		//String tmp="'\\'', t.`ORGAN_ID`, '\\''";
 		//String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
