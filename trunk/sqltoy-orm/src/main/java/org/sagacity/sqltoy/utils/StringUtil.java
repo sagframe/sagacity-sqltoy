@@ -31,7 +31,7 @@ public class StringUtil {
 	/**
 	 * 单引号匹配正则表达式
 	 */
-	private static Pattern quotaPattern = Pattern.compile("(^\')|([^\\\\]\')");
+	private static Pattern quotaPattern = Pattern.compile("(^')|([^\\\\]')");
 
 	/**
 	 * 双引号匹配正则表达式
