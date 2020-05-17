@@ -31,7 +31,7 @@ public class StringUtil {
 	/**
 	 * 单引号匹配正则表达式
 	 */
-	private static Pattern quotaPattern = Pattern.compile("(^\\')|([^\\\\]\\')");
+	private static Pattern quotaPattern = Pattern.compile("(^\')|([^\\\\]\')");
 
 	/**
 	 * 双引号匹配正则表达式
@@ -287,7 +287,7 @@ public class StringUtil {
 		} else {
 			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 			// 转义符号占一位,开始位后移一位
-			if (endIndex >= beginSignIndex + 1) {
+			if (endIndex > beginSignIndex + 1) {
 				endIndex = endIndex + 1;
 			}
 		}
@@ -299,7 +299,7 @@ public class StringUtil {
 			} else {
 				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (beginSignIndex >= endIndex + 1) {
+				if (beginSignIndex > endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
 				}
 			}
@@ -316,7 +316,7 @@ public class StringUtil {
 			} else {
 				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (endIndex >= beginSignIndex + 1) {
+				if (endIndex > beginSignIndex + 1) {
 					endIndex = endIndex + 1;
 				}
 			}
