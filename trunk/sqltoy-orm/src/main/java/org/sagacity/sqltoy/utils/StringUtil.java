@@ -287,7 +287,7 @@ public class StringUtil {
 		} else {
 			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 			// 转义符号占一位,开始位后移一位
-			if (endIndex > beginSignIndex + 1) {
+			if (endIndex >= beginSignIndex + 1) {
 				endIndex = endIndex + 1;
 			}
 		}
@@ -299,7 +299,7 @@ public class StringUtil {
 			} else {
 				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (beginSignIndex > endIndex + 1) {
+				if (beginSignIndex >= endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
 				}
 			}
@@ -316,7 +316,7 @@ public class StringUtil {
 			} else {
 				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (endIndex > beginSignIndex + 1) {
+				if (endIndex >= beginSignIndex + 1) {
 					endIndex = endIndex + 1;
 				}
 			}
@@ -622,7 +622,7 @@ public class StringUtil {
 				}
 			} else {
 				//twoQuotaPattern 和 quotaPattern 表达式末尾匹配占用了2位长度,所以+2
-				result[0] = matchIndex(source, pattern, result[1] + 2)[0];
+				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
@@ -852,7 +852,9 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		//String tmp="#[testNum],'#,#0.00'";
+		//String tmp="dict,'a''b',a";
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
