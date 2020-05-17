@@ -549,7 +549,7 @@ public class StringUtil {
 			for (String[] filter : filters) {
 				startEnd = getStartEndIndex(source, filter, skipIndex, splitIndex);
 				// 分隔符号整合在对称符号的首尾中间,表示分隔符号属于内部字符串,在对称符号的终止位置后面重新获取分隔符号的位置
-				if (startEnd[0] >= 0 && startEnd[0] < splitIndex && startEnd[1] > splitIndex) {
+				if (startEnd[0] >= 0 && startEnd[0] <= splitIndex && startEnd[1] >= splitIndex) {
 					if (startEnd[1] > max) {
 						max = startEnd[1];
 					}
@@ -605,10 +605,10 @@ public class StringUtil {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
 				}
-				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
@@ -625,8 +625,8 @@ public class StringUtil {
 				result[0] = matchIndex(source, pattern, result[1] + 2)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
-					result[0] = result[0] + 1;
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
+					result[0] = result[0] + 1;
 				} else {
 					result[1] = -1;
 				}
