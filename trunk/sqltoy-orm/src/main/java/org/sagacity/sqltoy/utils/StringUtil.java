@@ -287,7 +287,7 @@ public class StringUtil {
 		} else {
 			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 			// 转义符号占一位,开始位后移一位
-			if (endIndex >= beginSignIndex + 1) {
+			if (endIndex > beginSignIndex + 1) {
 				endIndex = endIndex + 1;
 			}
 		}
@@ -299,7 +299,7 @@ public class StringUtil {
 			} else {
 				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (beginSignIndex >= endIndex + 1) {
+				if (beginSignIndex > endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
 				}
 			}
@@ -316,7 +316,7 @@ public class StringUtil {
 			} else {
 				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
-				if (endIndex >= beginSignIndex + 1) {
+				if (endIndex > beginSignIndex + 1) {
 					endIndex = endIndex + 1;
 				}
 			}
@@ -854,11 +854,16 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		//String tmp="#[testNum],'#,#0.00'";
-		//String tmp="',',[][,],a";
-		//String tmp="'\\'', t.`ORGAN_ID`, '\\''";
-		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
-		//String tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
+		String tmp="";
+		tmp="#[testNum],'#,#0.00'";
+		//tmp="',',[][,],a";
+		tmp="'\\'', t.`ORGAN_ID`, '\\''";
+		//tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		//tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
+		
+		//tmp="a,\"\"\",\",a";
+		//tmp="a,\'\'\',\',a";
+		//tmp="a,''',',a";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
