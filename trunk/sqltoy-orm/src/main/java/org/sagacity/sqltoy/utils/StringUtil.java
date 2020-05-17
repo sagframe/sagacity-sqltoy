@@ -31,7 +31,7 @@ public class StringUtil {
 	/**
 	 * 单引号匹配正则表达式
 	 */
-	private static Pattern quotaPattern = Pattern.compile("(^\\')|([^\\\\]\\')");
+	private static Pattern quotaPattern = Pattern.compile("(^\')|([^\\\\]\')");
 
 	/**
 	 * 双引号匹配正则表达式
@@ -862,7 +862,7 @@ public class StringUtil {
 		//tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
 		
 		//tmp="a,\"\"\",\",a";
-		//tmp="a,\'\'\',\',a";
+		tmp="a,\'\'\',\',a";
 		//tmp="a,''',',a";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
