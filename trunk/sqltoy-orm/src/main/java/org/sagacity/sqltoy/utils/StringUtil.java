@@ -31,7 +31,7 @@ public class StringUtil {
 	/**
 	 * 单引号匹配正则表达式
 	 */
-	private static Pattern quotaPattern = Pattern.compile("(^\\')|([^\\\\]\\')");
+	private static Pattern quotaPattern = Pattern.compile("(^')|([^\\\\]')");
 
 	/**
 	 * 双引号匹配正则表达式
@@ -852,9 +852,16 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		//String tmp="#[testNum],'#,#0.00'";
-		//String tmp="dict,'a''b',a";
-		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String tmp="";
+		//tmp="#[testNum],'#,#0.00'";
+		//tmp="',',[][,],a";
+		//tmp="'\\'', t.`ORGAN_ID`, '\\''";
+		tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
+		
+		//tmp="a,\"\"\",\",a";
+		//tmp="a,\'\'\',\',a";
+		tmp="a,''',',a";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
