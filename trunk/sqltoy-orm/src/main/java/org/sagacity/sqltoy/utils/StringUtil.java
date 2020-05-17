@@ -606,9 +606,9 @@ public class StringUtil {
 			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
 				if (result[0] > 0) {
+					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 					result[0] = result[0] + 1;
 				}
-				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
@@ -625,8 +625,8 @@ public class StringUtil {
 				result[0] = matchIndex(source, pattern, result[1] + 2)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
-					result[0] = result[0] + 1;
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
+					result[0] = result[0] + 1;
 				} else {
 					result[1] = -1;
 				}
@@ -852,7 +852,8 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String tmp="#[testNum],'#,#0.00'";
+		//String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size(,)]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
