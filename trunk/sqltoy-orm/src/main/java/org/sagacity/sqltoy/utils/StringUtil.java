@@ -591,10 +591,12 @@ public class StringUtil {
 	private static int[] getStartEndIndex(String source, String[] filter, int skipIndex, int splitIndex) {
 		int[] result = { -1, -1 };
 		Pattern pattern = null;
+		int addMeter=0;
 		if (filter[0].equals("'")) {
 			pattern = quotaPattern;
 		} else if (filter[0].equals("\"")) {
 			pattern = twoQuotaPattern;
+			addMeter=1;
 		}
 		if (pattern == null) {
 			result[0] = source.indexOf(filter[0], skipIndex);
@@ -605,7 +607,7 @@ public class StringUtil {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
 			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
-				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]+addMeter);
 				if (result[0] > 0) {
 					result[0] = result[0] + 1;
 				}
@@ -622,10 +624,10 @@ public class StringUtil {
 				}
 			} else {
 				//twoQuotaPattern 和 quotaPattern 表达式末尾匹配占用了2位长度,所以+2
-				result[0] = matchIndex(source, pattern, result[1] + 1)[0];
+				result[0] = matchIndex(source, pattern, result[1] + 1+addMeter)[0];
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
-					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
+					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]+addMeter);
 					result[0] = result[0] + 1;
 				} else {
 					result[1] = -1;
@@ -853,9 +855,10 @@ public class StringUtil {
 
 	public static void main(String[] args) {
 		//String tmp="#[testNum],'#,#0.00'";
-		String tmp="',',[][,],a";
+		//String tmp="',',[][,],a";
 		//String tmp="'\\'', t.`ORGAN_ID`, '\\''";
-		//String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		String tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		//String tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
