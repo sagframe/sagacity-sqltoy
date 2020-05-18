@@ -591,13 +591,12 @@ public class StringUtil {
 	private static int[] getStartEndIndex(String source, String[] filter, int skipIndex, int splitIndex) {
 		int[] result = { -1, -1 };
 		Pattern pattern = null;
-		int addMeter=0;
 		if (filter[0].equals("'")) {
 			pattern = quotaPattern;
 		} else if (filter[0].equals("\"")) {
 			pattern = twoQuotaPattern;
-			addMeter=1;
 		}
+		String tmp;
 		if (pattern == null) {
 			result[0] = source.indexOf(filter[0], skipIndex);
 			if (result[0] >= 0) {
@@ -605,17 +604,17 @@ public class StringUtil {
 			}
 		} else {
 			result[0] = matchIndex(source, pattern, skipIndex)[0];
-			// 正则表达式有一个转义符号占一位
 			if (result[0] >= 0) {
-				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]+addMeter);
-				if (result[0] > 0) {
+				tmp = source.substring(result[0], result[0] + 1);
+				if (!tmp.equals("'") && !tmp.equals("\"")) {
 					result[0] = result[0] + 1;
 				}
+				result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 			}
 		}
 		while (result[1] > 0 && result[1] < splitIndex) {
 			if (pattern == null) {
-				//非正则表达式,往后移动一位
+				// 非正则表达式,往后移动一位
 				result[0] = source.indexOf(filter[0], result[1] + 1);
 				if (result[0] > 0) {
 					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
@@ -623,12 +622,19 @@ public class StringUtil {
 					result[1] = -1;
 				}
 			} else {
-				//twoQuotaPattern 和 quotaPattern 表达式末尾匹配占用了2位长度,所以+2
-				result[0] = matchIndex(source, pattern, result[1] + 1+addMeter)[0];
+				tmp = source.substring(result[1], result[1] + 1);
+				if (!tmp.equals("'") && !tmp.equals("\"")) {
+					result[0] = matchIndex(source, pattern, result[1] + 2)[0];
+				} else {
+					result[0] = matchIndex(source, pattern, result[1] + 1)[0];
+				}
 				// 正则表达式有一个转义符号占一位
 				if (result[0] > 0) {
-					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]+addMeter);
-					result[0] = result[0] + 1;
+					tmp = source.substring(result[0], result[0] + 1);
+					if (!tmp.equals("'") && !tmp.equals("\"")) {
+						result[0] = result[0] + 1;
+					}
+					result[1] = getSymMarkIndex(filter[0], filter[1], source, result[0]);
 				} else {
 					result[1] = -1;
 				}
