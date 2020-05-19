@@ -42,7 +42,6 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
-import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
