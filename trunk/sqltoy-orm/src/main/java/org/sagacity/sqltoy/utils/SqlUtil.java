@@ -1369,9 +1369,9 @@ public class SqlUtil {
 	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
 		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql))
 			return sql;
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-		if (entityMeta == null)
+		if(!sqlToyContext.isEntity(entityClass))
 			return sql;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		String sqlLow = sql.toLowerCase().trim();
 		// 包含了select 直接返回
 		if (sqlLow.startsWith("select") || sqlLow.startsWith("with"))

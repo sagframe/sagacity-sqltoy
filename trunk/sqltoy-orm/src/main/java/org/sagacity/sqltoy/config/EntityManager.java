@@ -106,6 +106,28 @@ public class EntityManager {
 	 */
 	private ConcurrentHashMap<Class, EntityMeta> entitysMetaMap = new ConcurrentHashMap<Class, EntityMeta>();
 
+	private ConcurrentHashMap<Class, String> NOTEntityMap = new ConcurrentHashMap<Class, String>();
+
+	/**
+	 * @TODO 判断是否是实体对象
+	 * @param sqlToyContext
+	 * @param entityClass
+	 * @return
+	 */
+	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
+		if (NOTEntityMap.contains(entityClass))
+			return false;
+		if (entitysMetaMap.contains(entityClass)) {
+			return true;
+		}
+
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+		if (entityMeta != null)
+			return true;
+		NOTEntityMap.put(entityClass, "1");
+		return false;
+	}
+
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
 	 * @param sqlToyContext
