@@ -401,7 +401,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0) {
@@ -565,7 +565,7 @@ public class SqlToyDaoSupport {
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
-		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
 	}
 
@@ -1236,16 +1236,44 @@ public class SqlToyDaoSupport {
 		}
 		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		// 处理order by 排序
+		if (!entityQuery.getOrderBy().isEmpty()) {
+			sql = sql.concat(" order by ");
+			Iterator<Entry<String, String>> iter = entityQuery.getOrderBy().entrySet().iterator();
+			Entry<String, String> entry;
+			String field;
+			String columnName;
+			String orderWay;
+			int index = 0;
+			while (iter.hasNext()) {
+				entry = iter.next();
+				field = entry.getKey();
+				columnName = entityMeta.getColumnName(field);
+				if (columnName == null) {
+					columnName = field;
+				}
+				// 保留字处理
+				columnName = ReservedWordsUtil.convertWord(columnName, null);
+				orderWay = entry.getValue();
+				if (index > 0) {
+					sql = sql.concat(",");
+				}
+				sql = sql.concat(columnName).concat(orderWay);
+				index++;
+			}
+		}
+		QueryExecutor queryExecutor;
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
-			// 参数名称为空
-			return (List<T>) findByQuery(new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0])
-					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()))).getRows();
-
+			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0]).resultType(entityClass)
+					.dataSource(getDataSource(entityQuery.getDataSource()));
+		} else {
+			queryExecutor = new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
+					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
 		}
-		return (List<T>) findByQuery(
-				new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
-						.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()))).getRows();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		return (List<T>) dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+				entityQuery.getLockMode(), this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 	}
 
 	/**

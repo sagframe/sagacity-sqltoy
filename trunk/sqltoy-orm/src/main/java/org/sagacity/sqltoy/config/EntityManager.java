@@ -104,7 +104,30 @@ public class EntityManager {
 	/**
 	 * 存放每个对象跟数据库表的关系信息
 	 */
-	private ConcurrentHashMap<Class, EntityMeta> entitysMetaMap = new ConcurrentHashMap<Class, EntityMeta>();
+	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
+
+	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
+
+	/**
+	 * @TODO 判断是否是实体对象
+	 * @param sqlToyContext
+	 * @param entityClass
+	 * @return
+	 */
+	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
+		String className = entityClass.getName();
+		if (unEntityMap.contains(className))
+			return false;
+		if (entitysMetaMap.contains(className)) {
+			return true;
+		}
+
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+		if (entityMeta != null)
+			return true;
+		unEntityMap.put(className, "1");
+		return false;
+	}
 
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
@@ -115,13 +138,14 @@ public class EntityManager {
 	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
 		if (entityClass == null)
 			return null;
-		EntityMeta entityMeta = entitysMetaMap.get(entityClass);
+		String className = entityClass.getName();
+		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,让sqltoy可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 			if (entityMeta == null) {
-				throw new IllegalArgumentException("您传入的对象:[".concat(entityClass.getName())
+				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
 			}
 		}
@@ -170,9 +194,10 @@ public class EntityManager {
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
 		if (entityClass == null)
 			return null;
+		String className = entityClass.getName();
 		// 避免重复解析
-		if (entitysMetaMap.containsKey(entityClass))
-			return entitysMetaMap.get(entityClass);
+		if (entitysMetaMap.containsKey(className))
+			return entitysMetaMap.get(className);
 		EntityMeta entityMeta = null;
 		try {
 			Class realEntityClass = entityClass;
@@ -283,13 +308,13 @@ public class EntityManager {
 				parseFieldTypeAndDefault(entityMeta);
 			}
 		} catch (Exception e) {
-			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", entityClass.getName());
+			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
 			e.printStackTrace();
 		}
 		if (entityMeta != null) {
-			entitysMetaMap.put(entityClass, entityMeta);
+			entitysMetaMap.put(className, entityMeta);
 		} else {
-			logger.error("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", entityClass.getName());
+			logger.error("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
 		}
 		return entityMeta;
 	}

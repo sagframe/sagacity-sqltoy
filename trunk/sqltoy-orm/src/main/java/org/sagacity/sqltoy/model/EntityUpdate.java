@@ -9,8 +9,9 @@ import java.util.LinkedHashMap;
 import javax.sql.DataSource;
 
 /**
- * @author zhong
- *
+ * @description 提供给代码中组织sql进行数据库update操作
+ * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:EntityUpdate.java,Revision:v1.0,Date:2020-5-15
  */
 public class EntityUpdate implements Serializable {
 

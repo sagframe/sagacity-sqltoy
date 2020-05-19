@@ -90,7 +90,7 @@ public class SqlToyConstants {
 	/**
 	 * 存放sqltoy的系统参数
 	 */
-	private static Properties PROP_ELEMENTS = new Properties();
+	private static Map<String, String> sqlToyProps = new HashMap<String, String>();
 
 	/**
 	 * sqltoy 默认的配置文件
@@ -130,7 +130,7 @@ public class SqlToyConstants {
 	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("\\W\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
 			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
-	
+
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
 	// with aliasTable as materialized ()
@@ -175,9 +175,10 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static String getKeyValue(String key) {
-		String result = PROP_ELEMENTS.getProperty(key);
-		if (result == null)
+		String result = sqlToyProps.get(key);
+		if (result == null) {
 			result = System.getProperty(key);
+		}
 		return result;
 	}
 
@@ -188,7 +189,7 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static String getKeyValue(String key, String defaultValue) {
-		String result = PROP_ELEMENTS.getProperty(key);
+		String result = sqlToyProps.get(key);
 		if (result == null) {
 			result = System.getProperty(key);
 		}
@@ -303,10 +304,10 @@ public class SqlToyConstants {
 			return;
 		InputStream fis = null;
 		try {
-			Properties sagacityProps = new Properties();
+			Properties props = new Properties();
 			fis = CommonUtils.getFileInputStream(propertiesFile);
-			sagacityProps.load(fis);
-			PROP_ELEMENTS.putAll(sagacityProps);
+			props.load(fis);
+			sqlToyProps.putAll((Map) props);
 			fis.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -326,13 +327,13 @@ public class SqlToyConstants {
 	 * @param propertyFile
 	 * @param keyValues
 	 */
-	public static void loadProperties(String propertyFile, Map keyValues) {
+	public static void loadProperties(String propertyFile, Map<String, String> keyValues) {
 		// 加载默认参数
 		loadPropertyFile(DEFAULT_CONFIG);
 		// 加载额外的配置文件
 		loadPropertyFile(propertyFile);
 		if (keyValues != null && !keyValues.isEmpty()) {
-			PROP_ELEMENTS.putAll(keyValues);
+			sqlToyProps.putAll(keyValues);
 		}
 	}
 

@@ -198,7 +198,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private int pageAliveSeconds = 90;
 
 	/**
-	 * debug模式下是否打印
+	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
 	 */
 	private boolean showSql = true;
 
