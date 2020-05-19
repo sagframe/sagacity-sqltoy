@@ -106,7 +106,7 @@ public class EntityManager {
 	 */
 	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
 
-	private ConcurrentHashMap<String, String> NOTEntityMap = new ConcurrentHashMap<String, String>();
+	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
 
 	/**
 	 * @TODO 判断是否是实体对象
@@ -116,7 +116,7 @@ public class EntityManager {
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
 		String className = entityClass.getName();
-		if (NOTEntityMap.contains(className))
+		if (unEntityMap.contains(className))
 			return false;
 		if (entitysMetaMap.contains(className)) {
 			return true;
@@ -125,7 +125,7 @@ public class EntityManager {
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 		if (entityMeta != null)
 			return true;
-		NOTEntityMap.put(className, "1");
+		unEntityMap.put(className, "1");
 		return false;
 	}
 
