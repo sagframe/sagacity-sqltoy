@@ -162,7 +162,7 @@ public class Query extends BaseLink {
 	public Object getValue() {
 		QueryExecutor queryExecute = new QueryExecutor(sql, names, values);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search);
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0)
@@ -177,7 +177,7 @@ public class Query extends BaseLink {
 	public Object getOne() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search);
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0)
@@ -202,7 +202,7 @@ public class Query extends BaseLink {
 	public List<?> find() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search);
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
 		return result.getRows();
 	}

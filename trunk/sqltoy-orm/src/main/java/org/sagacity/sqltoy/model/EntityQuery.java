@@ -62,12 +62,12 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
-		orderBy.put(field, "asc");
+		orderBy.put(field, " ");
 		return this;
 	}
 
 	public EntityQuery orderByDesc(String field) {
-		orderBy.put(field, "desc");
+		orderBy.put(field, " desc ");
 		return this;
 	}
 

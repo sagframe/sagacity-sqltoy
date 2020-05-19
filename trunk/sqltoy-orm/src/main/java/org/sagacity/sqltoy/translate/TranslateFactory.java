@@ -94,7 +94,7 @@ public class TranslateFactory {
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(config.getSql(), sqlToyConfig.getParamsName(),
 								new Object[] { new Date(preCheckTime.getTime()) }),
-						sqlToyConfig, StringUtil.isBlank(dataSourceName) ? sqlToyContext.getDefaultDataSource()
+						sqlToyConfig, null, StringUtil.isBlank(dataSourceName) ? sqlToyContext.getDefaultDataSource()
 								: sqlToyContext.getDataSource(dataSourceName))
 				.getRows();
 	}
@@ -287,7 +287,7 @@ public class TranslateFactory {
 					new Object[] { cacheType.trim() });
 		}
 		return DialectFactory.getInstance()
-				.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+				.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 						StringUtil.isBlank(dataSourceName) ? sqlToyContext.getDefaultDataSource()
 								: sqlToyContext.getDataSource(dataSourceName))
 				.getRows();
