@@ -288,7 +288,7 @@ public class DB2Dialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -320,7 +320,7 @@ public class DB2Dialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -335,9 +335,24 @@ public class DB2Dialect implements Dialect {
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, appendWithUR(sql), paramsValue, rowCallbackHandler,
-				conn, dbType, 0, fetchSize, maxRows);
+			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		String realSql;
+		// db2 锁记录
+		if (lockMode != null) {
+			realSql = sql;
+			switch (lockMode) {
+			case UPGRADE_NOWAIT:
+			case UPGRADE:
+				realSql = realSql.concat(" for update with rs");
+				break;
+			}
+		} else {
+			realSql = appendWithUR(sql);
+		}
+
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
+				dbType, 0, fetchSize, maxRows);
 	}
 
 	/*

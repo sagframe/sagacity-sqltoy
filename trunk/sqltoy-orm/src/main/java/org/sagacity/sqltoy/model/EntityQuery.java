@@ -1,12 +1,14 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
 /**
- * 
- * @author zhongxuchen
+ * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
+ * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:EntityQuery.java,Revision:v1.0,Date:2020-5-15
  */
 public class EntityQuery implements Serializable {
 
@@ -36,6 +38,13 @@ public class EntityQuery implements Serializable {
 
 	private DataSource dataSource;
 
+	/**
+	 * 锁类型
+	 */
+	private LockMode lockMode;
+
+	private LinkedHashMap<String, String> orderBy = new LinkedHashMap<String, String>();
+
 	public EntityQuery where(String where) {
 		this.where = where;
 		return this;
@@ -48,6 +57,22 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery values(Object... values) {
 		this.values = values;
+		return this;
+	}
+
+	public EntityQuery orderBy(String field) {
+		// 默认为升序
+		orderBy.put(field, " ");
+		return this;
+	}
+
+	public EntityQuery orderByDesc(String field) {
+		orderBy.put(field, " desc ");
+		return this;
+	}
+
+	public EntityQuery lock(LockMode lockMode) {
+		this.lockMode = lockMode;
 		return this;
 	}
 
@@ -82,6 +107,14 @@ public class EntityQuery implements Serializable {
 	 */
 	public DataSource getDataSource() {
 		return dataSource;
+	}
+
+	public LockMode getLockMode() {
+		return lockMode;
+	}
+
+	public LinkedHashMap<String, String> getOrderBy() {
+		return orderBy;
 	}
 
 }

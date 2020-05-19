@@ -151,7 +151,7 @@ public class SybaseIQDialect implements Dialect {
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
 					CommonUtils.randomArray(totalCount.intValue(), randomCount.intValue()), null);
 			queryResult = findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-					queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
+					queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect, queryExecutor.getFetchSize(),
 					queryExecutor.getMaxRows());
 		} catch (Exception e) {
 			throw e;
@@ -196,7 +196,7 @@ public class SybaseIQDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -238,7 +238,7 @@ public class SybaseIQDialect implements Dialect {
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, dialect, queryExecutor.getFetchSize(),
+				queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect, queryExecutor.getFetchSize(),
 				queryExecutor.getMaxRows());
 	}
 
@@ -252,7 +252,11 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		if (null != lockMode) {
+			throw new UnsupportedOperationException("sybase iq lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
+		}
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
 				0, fetchSize, maxRows);
 	}

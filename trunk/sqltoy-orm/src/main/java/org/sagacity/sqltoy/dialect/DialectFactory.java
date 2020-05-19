@@ -42,6 +42,7 @@ import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
+import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
@@ -601,7 +602,7 @@ public class DialectFactory {
 											queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 									queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 											realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-											queryExecutor.getRowCallbackHandler(), conn, dbType, dialect,
+											queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect,
 											queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
 									long totalRecord = (queryResult.getRows() == null) ? 0
 											: queryResult.getRows().size();
@@ -710,11 +711,12 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param queryExecutor
 	 * @param sqlToyConfig
+	 * @param lockMode
 	 * @param dataSource
 	 * @return
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
+			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
 		if (queryExecutor.getSql() == null) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
@@ -734,7 +736,7 @@ public class DialectFactory {
 									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									queryExecutor.getRowCallbackHandler(), conn, dbType, dialect,
+									queryExecutor.getRowCallbackHandler(), conn, lockMode, dbType, dialect,
 									queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
