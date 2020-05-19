@@ -1241,24 +1241,21 @@ public class SqlToyDaoSupport {
 			sql = sql.concat(" order by ");
 			Iterator<Entry<String, String>> iter = entityQuery.getOrderBy().entrySet().iterator();
 			Entry<String, String> entry;
-			String field;
 			String columnName;
-			String orderWay;
 			int index = 0;
 			while (iter.hasNext()) {
 				entry = iter.next();
-				field = entry.getKey();
-				columnName = entityMeta.getColumnName(field);
+				columnName = entityMeta.getColumnName(entry.getKey());
 				if (columnName == null) {
-					columnName = field;
+					columnName = entry.getKey();
 				}
 				// 保留字处理
 				columnName = ReservedWordsUtil.convertWord(columnName, null);
-				orderWay = entry.getValue();
 				if (index > 0) {
 					sql = sql.concat(",");
 				}
-				sql = sql.concat(columnName).concat(orderWay);
+				// entry.getValue() is order way,like: desc or " "
+				sql = sql.concat(columnName).concat(entry.getValue());
 				index++;
 			}
 		}
@@ -1312,17 +1309,15 @@ public class SqlToyDaoSupport {
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
 		Iterator<Entry<String, Object>> iter = entityUpdate.getUpdateValues().entrySet().iterator();
 		Entry<String, Object> entry;
-		String field;
 		String columnName;
 		Object[] realValues = new Object[entityUpdate.getUpdateValues().size() + values.length];
 		System.arraycopy(values, 0, realValues, entityUpdate.getUpdateValues().size(), values.length);
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
-			field = entry.getKey();
-			columnName = entityMeta.getColumnName(field);
+			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
-				columnName = field;
+				columnName = entry.getKey();
 			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
@@ -1330,7 +1325,6 @@ public class SqlToyDaoSupport {
 			if (index > 0) {
 				sql.append(",");
 			}
-
 			sql.append(columnName).append("=?");
 			index++;
 		}
