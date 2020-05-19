@@ -206,7 +206,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 自行定义的属性
 	 */
-	private Map keyValues;
+	private Map<String, String> keyValues;
 
 	/**
 	 * 数据库保留字,用逗号分隔
@@ -450,7 +450,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public EntityMeta getEntityMeta(Class<?> entityClass) {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
-	
+
 	public boolean isEntity(Class<?> entityClass) {
 		return entityManager.isEntity(this, entityClass);
 	}
