@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.12.0</version>
+	<version>4.12.0.RC2</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -59,7 +59,8 @@
 		</repository>
 		<snapshotRepository>
 			<id>nexus-snapshots</id>
-			<name>Department Repository</name>
+			<name>Department 
+			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
 		</snapshotRepository> -->
 	</distributionManagement>

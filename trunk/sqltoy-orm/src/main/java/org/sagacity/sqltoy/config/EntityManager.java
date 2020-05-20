@@ -314,7 +314,7 @@ public class EntityManager {
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
 		} else {
-			logger.error("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+			logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
 		}
 		return entityMeta;
 	}

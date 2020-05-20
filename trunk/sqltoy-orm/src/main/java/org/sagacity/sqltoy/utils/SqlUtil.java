@@ -1369,13 +1369,13 @@ public class SqlUtil {
 	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
 		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql))
 			return sql;
-		if (!sqlToyContext.isEntity(entityClass))
-			return sql;
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		String sqlLow = sql.toLowerCase().trim();
 		// 包含了select 直接返回
 		if (sqlLow.startsWith("select") || sqlLow.startsWith("with"))
 			return sql;
+		if (!sqlToyContext.isEntity(entityClass))
+			return sql;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select *
 		if (sqlLow.startsWith("from")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);

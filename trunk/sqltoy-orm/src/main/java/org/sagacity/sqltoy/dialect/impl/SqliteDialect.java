@@ -270,12 +270,6 @@ public class SqliteDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search);
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		// switch (lockMode) {
-		// case UPGRADE_NOWAIT:
-		// case UPGRADE:
-		// loadSql = loadSql + " for update";
-		// break;
-		// }
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -313,14 +307,6 @@ public class SqliteDialect implements Dialect {
 			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
-		// if (lockMode != null) {
-		// switch (lockMode) {
-		// case UPGRADE_NOWAIT:
-		// case UPGRADE:
-		// loadSql.append(" for update with rs ");
-		// break;
-		// }
-		// }
 		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 

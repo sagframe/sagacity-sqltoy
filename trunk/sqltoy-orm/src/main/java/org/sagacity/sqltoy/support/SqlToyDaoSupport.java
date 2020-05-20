@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +23,8 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.QueryShardingModel;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -1254,6 +1257,8 @@ public class SqlToyDaoSupport {
 				if (index > 0) {
 					sql = sql.concat(",");
 				}
+
+				// entry.getValue() is order way,like: desc or " "
 				sql = sql.concat(columnName).concat(entry.getValue());
 				index++;
 			}
@@ -1268,6 +1273,29 @@ public class SqlToyDaoSupport {
 					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		// 分库分表策略
+		if (entityMeta.getShardingConfig() != null) {
+			// dataSource sharding
+			ShardingStrategyConfig shardingStrategy = entityMeta.getShardingConfig().getShardingDBStrategy();
+			if (shardingStrategy != null) {
+				sqlToyConfig.setDataSourceShardingStragety(shardingStrategy.getName());
+				sqlToyConfig.setDataSourceShardingParams(shardingStrategy.getFields());
+				sqlToyConfig.setDataSourceShardingParamsAlias(shardingStrategy.getAliasNames());
+			}
+			// table sharding
+			shardingStrategy = entityMeta.getShardingConfig().getShardingTableStrategy();
+			if (shardingStrategy != null) {
+				sqlToyConfig.setTableShardingParams(shardingStrategy.getFields());
+				List<QueryShardingModel> queryShardings = new ArrayList<QueryShardingModel>();
+				QueryShardingModel model = new QueryShardingModel();
+				model.setParams(shardingStrategy.getFields());
+				model.setParamsAlias(shardingStrategy.getAliasNames());
+				model.setStrategy(shardingStrategy.getName());
+				model.setTables(new String[] { entityMeta.getSchemaTable() });
+				queryShardings.add(model);
+				sqlToyConfig.setTablesShardings(queryShardings);
+			}
+		}
 		return (List<T>) dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				entityQuery.getLockMode(), this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 	}
@@ -1314,6 +1342,7 @@ public class SqlToyDaoSupport {
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
+
 			// entry.getKey() is field
 			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
@@ -1325,7 +1354,6 @@ public class SqlToyDaoSupport {
 			if (index > 0) {
 				sql.append(",");
 			}
-
 			sql.append(columnName).append("=?");
 			index++;
 		}
