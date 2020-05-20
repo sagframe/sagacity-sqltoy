@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
+import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -106,6 +107,9 @@ public class CrudCaseServiceTest {
 		sqlToyCRUDService.saveOrUpdate(staffInfo);
 	}
 
+	/**
+	 * 通过where设置条件，对单表对象进行查询
+	 */
 	@Test
 	public void findEntityByWhere() {
 		List<StaffInfoVO> staffVOs = sqlToyLazyDao.findEntity(StaffInfoVO.class,
@@ -114,10 +118,10 @@ public class CrudCaseServiceTest {
 	}
 
 	/**
-	 * 单表查询通过对象传参数据且不设置where 场景，自动根据对象属性值组织sql
+	 * 单表查询通过对象传参数据且不设置where 场景，自动根据对象属性值组织sql(非推荐功能)
 	 */
 	@Test
-	public void findEntityByNoWhereVO() {
+	public void findEntityByNoWhere() {
 		List<StaffInfoVO> staffVOs = sqlToyLazyDao.findEntity(StaffInfoVO.class,
 				EntityQuery.create().values(new StaffInfoVO().setStatus(1).setEmail("test3@aliyun.com")));
 		System.err.println(JSON.toJSONString(staffVOs));
@@ -135,12 +139,18 @@ public class CrudCaseServiceTest {
 	}
 
 	/**
-	 * 指定where 通过数组值传参
+	 * findEntity 模式,简化sql编写模式,面向接口服务层提供快捷数据查询和处理
+	 * 1、通过where指定条件
+	 * 2、支持lock
+	 * 3、支持order by (order by 在接口服务 层意义不大)
+	 * 4、自动将对象属性映射成表字段
 	 */
 	@Test
 	public void findEntity() {
+		//条件利用sqltoy特有的#[]充当动态条件判断,#[]是支持嵌套的
+		String conditions = "#[staffName like ?] #[ and status=?]";
 		List<StaffInfoVO> staffVOs = sqlToyLazyDao.findEntity(StaffInfoVO.class,
-				EntityQuery.create().where("#[staffName like ?] #[ and status=?]").values("张", 1));
+				EntityQuery.create().where(conditions).lock(LockMode.UPGRADE).orderBy("staffName").orderByDesc("createTime").values("陈", 1));
 		System.err.println(JSON.toJSONString(staffVOs));
 	}
 
