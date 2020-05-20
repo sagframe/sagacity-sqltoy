@@ -1334,10 +1334,10 @@ public class SqlUtil {
 						isBlank = true;
 					}
 					varSql = preSql.trim();
-					// 首位字符不是字母、下划线、冒号
+					// 首位字符不是数字(48~57)、字母(65~90,97~122)、下划线(95)、冒号(58)
 					preChar = varSql.charAt(varSql.length() - 1);
 					tailChar = realSql.charAt(index + field.length());
-					// 非条件参数
+					// 非条件参数(58为冒号)
 					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
