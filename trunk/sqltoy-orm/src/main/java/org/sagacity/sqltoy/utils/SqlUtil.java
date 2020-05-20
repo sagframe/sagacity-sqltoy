@@ -1312,11 +1312,13 @@ public class SqlUtil {
 		}
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
-		String realSql = sql;
-		int start = 0;
+		String realSql = sql.concat(" ");
+		int start = 0; 
 		int index;
 		String preSql;
 		String columnName;
+		char preChar,tailChar;
+		String tmp;
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
 			if (!columnName.equalsIgnoreCase(field)) {
@@ -1324,8 +1326,12 @@ public class SqlUtil {
 				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
 				while (index != -1) {
 					preSql = realSql.substring(start, index);
+					tmp=preSql.trim();
+					preChar=tmp.charAt(tmp.length()-1);
+					tailChar=realSql.charAt(index + field.length());
 					// 非条件参数
-					if (!preSql.trim().endsWith(":")) {
+					if (((preChar>58 &&preChar<97 && preChar!=95) ||preChar<48 ||preChar>122) &&
+							((tailChar>58 &&tailChar<97 && tailChar!=95) ||tailChar<48 ||tailChar>122)) {
 						sqlBuff.append(preSql).append(columnName);
 						start = index + field.length();
 					}
