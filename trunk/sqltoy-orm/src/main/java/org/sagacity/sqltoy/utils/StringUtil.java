@@ -861,15 +861,17 @@ public class StringUtil {
 	public static void main(String[] args) {
 		String tmp = "";
 		tmp = "#[testNum],'#,#0.00'";
+		// tmp = ",'#,#0.00'";
 		// tmp="dict,'a''b',a";
 		// tmp="',',[][,],a";
-		tmp = "'\\'', t.`ORGAN_ID`, '\\''";
+		// tmp = "'\\'', t.`ORGAN_ID`, '\\''";
 		// tmp = "orderNo,<td align=\"center\"
 		// rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
-		// tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
+		// tmp =
+		// "reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
 
 		// tmp="a,\"\"\",\",a";
-		tmp = "a,\'\'\',\',a";
+		// tmp = "a,\'\'\',\',a";
 		// tmp="a,''',',a";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
