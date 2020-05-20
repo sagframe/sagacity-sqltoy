@@ -1314,32 +1314,34 @@ public class SqlUtil {
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
 		String realSql = sql.concat(" ");
-		int start = 0; 
+		int start = 0;
 		int index;
 		String preSql;
 		String columnName;
-		char preChar,tailChar;
+		char preChar, tailChar;
 		String varSql;
 		boolean isBlank;
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
-			//对象属性和表字段一致,无需处理
+			// 对象属性和表字段一致,无需处理
 			if (!columnName.equalsIgnoreCase(field)) {
 				start = 0;
 				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
 				while (index != -1) {
 					preSql = realSql.substring(start, index);
-					isBlank=false;
-					if(StringUtil.matches(preSql, "\\s$")) {
-						isBlank=true;
+					isBlank = false;
+					if (StringUtil.matches(preSql, "\\s$")) {
+						isBlank = true;
 					}
-					varSql=preSql.trim();
-					//首位字符不是字母、下划线、冒号
-					preChar=varSql.charAt(varSql.length()-1);
-					tailChar=realSql.charAt(index + field.length());
+					varSql = preSql.trim();
+					// 首位字符不是字母、下划线、冒号
+					preChar = varSql.charAt(varSql.length() - 1);
+					tailChar = realSql.charAt(index + field.length());
 					// 非条件参数
-					if (((isBlank && preChar!=58)||(preChar>58 &&preChar<65) || (preChar>90 && preChar<97 && preChar!=95) ||preChar<48 ||preChar>122) &&
-							((tailChar>58 &&tailChar<65)||( tailChar>90 && tailChar<97 && tailChar!=95) ||tailChar<48 ||tailChar>122)) {
+					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
+							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
+							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
+									|| tailChar < 48 || tailChar > 122)) {
 						sqlBuff.append(preSql).append(columnName);
 						start = index + field.length();
 					}
@@ -1424,18 +1426,18 @@ public class SqlUtil {
 		bizStaffMeta.setFieldName("bizStaffName");
 		bizStaffMeta.setColumnName("BIZ_STAFF_NAME");
 		fieldsMeta.put("bizstaffname", bizStaffMeta);
-		
+
 		FieldMeta nameMeta = new FieldMeta();
 		nameMeta.setFieldName("name");
 		nameMeta.setColumnName("NAME");
 		fieldsMeta.put("name", nameMeta);
-		
+
 		FieldMeta sexMeta = new FieldMeta();
 		sexMeta.setFieldName("sexType");
 		sexMeta.setColumnName("SEX_TYPE");
 		fieldsMeta.put("sextype", sexMeta);
 		entityMeta.setFieldsMeta(fieldsMeta);
-		entityMeta.setFieldsArray(new String[] {"name", "staffName","bizStaffName", "sexType" });
+		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
 		sql = convertFieldsToColumns(entityMeta, sql);
 		System.err.println(sql);
 	}
