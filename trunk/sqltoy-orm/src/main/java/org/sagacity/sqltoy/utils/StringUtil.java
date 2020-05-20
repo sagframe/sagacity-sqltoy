@@ -272,7 +272,7 @@ public class StringUtil {
 		if (pattern == null) {
 			beginSignIndex = source.indexOf(beginMarkSign, startIndex);
 		} else {
-			beginSignIndex = StringUtil.matchIndex(source, pattern, startIndex)[0];
+			beginSignIndex = matchIndex(source, pattern, startIndex)[0];
 			// 转义符号占一位,开始位后移一位
 			if (beginSignIndex > startIndex) {
 				beginSignIndex = beginSignIndex + 1;
@@ -285,7 +285,7 @@ public class StringUtil {
 		if (pattern == null) {
 			endIndex = source.indexOf(endMarkSign, beginSignIndex + 1);
 		} else {
-			endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+			endIndex = matchIndex(source, pattern, beginSignIndex + 1)[0];
 			// 转义符号占一位,开始位后移一位
 			if (endIndex > beginSignIndex + 1) {
 				endIndex = endIndex + 1;
@@ -297,7 +297,7 @@ public class StringUtil {
 			if (pattern == null) {
 				beginSignIndex = source.indexOf(beginMarkSign, (symMarkIsEqual ? endIndex : beginSignIndex) + 1);
 			} else {
-				beginSignIndex = StringUtil.matchIndex(source, pattern, endIndex + 1)[0];
+				beginSignIndex = matchIndex(source, pattern, endIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
 				if (beginSignIndex > endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
@@ -314,7 +314,7 @@ public class StringUtil {
 			if (pattern == null) {
 				endIndex = source.indexOf(endMarkSign, (symMarkIsEqual ? beginSignIndex : endIndex) + 1);
 			} else {
-				endIndex = StringUtil.matchIndex(source, pattern, beginSignIndex + 1)[0];
+				endIndex = matchIndex(source, pattern, beginSignIndex + 1)[0];
 				// 转义符号占一位,开始位后移一位
 				if (endIndex > beginSignIndex + 1) {
 					endIndex = endIndex + 1;
@@ -355,23 +355,22 @@ public class StringUtil {
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
 		Pattern startP = Pattern.compile(beginMarkSign);
 		Pattern endP = Pattern.compile(endMarkSign);
-		int[] beginSignIndex = StringUtil.matchIndex(source, startP, startIndex);
+		int[] beginSignIndex = matchIndex(source, startP, startIndex);
 		if (beginSignIndex[0] == -1) {
-			return StringUtil.matchIndex(source, endP, startIndex)[0];
+			return matchIndex(source, endP, startIndex)[0];
 		}
-		int[] endIndex = StringUtil.matchIndex(source, endP, beginSignIndex[1] + 1);
+		int[] endIndex = matchIndex(source, endP, beginSignIndex[1] + 1);
 		int[] tmpIndex = { 0, 0 };
 		while (endIndex[0] > beginSignIndex[0]) {
 			// 寻找下一个开始符号
-			beginSignIndex = StringUtil.matchIndex(source, startP,
-					(symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
+			beginSignIndex = matchIndex(source, startP, (symMarkIsEqual ? endIndex[1] : beginSignIndex[1]) + 1);
 			// 找不到或则下一个开始符号位置大于截止符号则返回
 			if (beginSignIndex[0] == -1 || beginSignIndex[0] > endIndex[0]) {
 				return endIndex[0];
 			}
 			tmpIndex = endIndex;
 			// 开始符号在截止符号前则寻找下一个截止符号
-			endIndex = StringUtil.matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
+			endIndex = matchIndex(source, endP, (symMarkIsEqual ? beginSignIndex[1] : endIndex[1]) + 1);
 			// 找不到则返回
 			if (endIndex[0] == -1) {
 				return tmpIndex[0];
@@ -701,7 +700,7 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase) {
-		if (StringUtil.isBlank(source))
+		if (isBlank(source))
 			return source;
 		// update 2018-3-22 将-复活统一成_
 		String[] humpAry = source.trim().replace("-", "_").split("\\_");
@@ -860,17 +859,18 @@ public class StringUtil {
 	}
 
 	public static void main(String[] args) {
-		String tmp="";
-		tmp="#[testNum],'#,#0.00'";
-		//tmp="dict,'a''b',a";
-		//tmp="',',[][,],a";
-		tmp="'\\'', t.`ORGAN_ID`, '\\''";
-		//tmp = "orderNo,<td align=\"center\" rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
-		//tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
-		
-		//tmp="a,\"\"\",\",a";
-		tmp="a,\'\'\',\',a";
-		//tmp="a,''',',a";
+		String tmp = "";
+		tmp = "#[testNum],'#,#0.00'";
+		// tmp="dict,'a''b',a";
+		// tmp="',',[][,],a";
+		tmp = "'\\'', t.`ORGAN_ID`, '\\''";
+		// tmp = "orderNo,<td align=\"center\"
+		// rowspan=\"#[group('orderNo,').size()]\">,@dict(EC_PAY_TYPE,#[payType])</td>";
+		// tmp="reportId=\"RPT_DEMO_005\",chart-index=\"1\",style=\"width:49%;height:350px;display:inline-block;\"";
+
+		// tmp="a,\"\"\",\",a";
+		tmp = "a,\'\'\',\',a";
+		// tmp="a,''',',a";
 		String[] strs = splitExcludeSymMark(tmp, ",", SqlToyConstants.filters);
 		for (String s : strs) {
 			System.err.println("[" + s.trim() + "]");
