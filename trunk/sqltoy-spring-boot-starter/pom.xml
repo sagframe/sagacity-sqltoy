@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.12.0.RC1</version>
+	<version>4.12.0.RC2</version>
 	<name>sagacity-sqltoy-starter</name>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
 	<description>sqltoy springboot starter</description>
@@ -36,11 +36,11 @@
 		</developer>
 	</developers>
 	<distributionManagement>
-		<snapshotRepository> <id>sonatype-nexus-snapshots</id> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
+		<!-- <snapshotRepository> <id>sonatype-nexus-snapshots</id> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
 			</snapshotRepository> <repository> <id>sonatype-nexus-staging</id> <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url> 
-			</repository>
+			</repository> -->
 
-		<!-- <repository>
+		<repository>
 			<id>nexus-release</id>
 			<name>3rd party</name>
 			<url>https://nexus.1chemic.com/repository/releases/</url>
@@ -50,7 +50,7 @@
 			<name>Department 
 			Repository</name>
 			<url>https://nexus.1chemic.com/repository/snapshots/</url>
-		</snapshotRepository> -->
+		</snapshotRepository>
 	</distributionManagement>
 
 	<dependencyManagement>
@@ -135,19 +135,9 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-gpg-plugin</artifactId> 
+				<version>1.6</version> <executions> <execution> <phase>verify</phase> <goals> 
+				<goal>sign</goal> </goals> </execution> </executions> </plugin> -->
 		</plugins>
 	</build>
 </project>
