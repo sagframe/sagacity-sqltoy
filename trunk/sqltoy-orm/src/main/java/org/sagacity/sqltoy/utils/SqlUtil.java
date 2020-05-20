@@ -1319,7 +1319,7 @@ public class SqlUtil {
 		String preSql;
 		String columnName;
 		char preChar,tailChar;
-		String tmp;
+		String varSql;
 		boolean isBlank;
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
@@ -1333,8 +1333,9 @@ public class SqlUtil {
 					if(StringUtil.matches(preSql, "\\s$")) {
 						isBlank=true;
 					}
-					tmp=preSql.trim();
-					preChar=tmp.charAt(tmp.length()-1);
+					varSql=preSql.trim();
+					//首位字符不是字母、下划线、冒号
+					preChar=varSql.charAt(varSql.length()-1);
 					tailChar=realSql.charAt(index + field.length());
 					// 非条件参数
 					if (((isBlank && preChar!=58)||(preChar>58 &&preChar<65) || (preChar>90 && preChar<97 && preChar!=95) ||preChar<48 ||preChar>122) &&
