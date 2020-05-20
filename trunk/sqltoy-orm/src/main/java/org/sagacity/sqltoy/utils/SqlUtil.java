@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -1312,20 +1313,35 @@ public class SqlUtil {
 		}
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
-		String realSql = sql;
+		String realSql = sql.concat(" ");
 		int start = 0;
 		int index;
 		String preSql;
 		String columnName;
+		char preChar, tailChar;
+		String varSql;
+		boolean isBlank;
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
+			// 对象属性和表字段一致,无需处理
 			if (!columnName.equalsIgnoreCase(field)) {
 				start = 0;
 				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
 				while (index != -1) {
 					preSql = realSql.substring(start, index);
-					// 非条件参数
-					if (!preSql.trim().endsWith(":")) {
+					isBlank = false;
+					if (StringUtil.matches(preSql, "\\s$")) {
+						isBlank = true;
+					}
+					varSql = preSql.trim();
+					// 首位字符不是数字(48~57)、字母(65~90,97~122)、下划线(95)、冒号(58)
+					preChar = varSql.charAt(varSql.length() - 1);
+					tailChar = realSql.charAt(index + field.length());
+					// 非条件参数(58为冒号)
+					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
+							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
+							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
+									|| tailChar < 48 || tailChar > 122)) {
 						sqlBuff.append(preSql).append(columnName);
 						start = index + field.length();
 					}
@@ -1398,21 +1414,31 @@ public class SqlUtil {
 	}
 
 	public static void main(String[] args) {
-//		String sql = "select   staffName,'sexType' from table where #[t.staffName like ?] and sexType=:sexType";
-//		EntityMeta entityMeta = new EntityMeta();
-//		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-//		FieldMeta staffMeta = new FieldMeta();
-//		staffMeta.setFieldName("staffName");
-//		staffMeta.setColumnName("STAFF_NAME");
-//		fieldsMeta.put("staffname", staffMeta);
-//
-//		FieldMeta sexMeta = new FieldMeta();
-//		sexMeta.setFieldName("sexType");
-//		sexMeta.setColumnName("SEX_TYPE");
-//		fieldsMeta.put("sextype", sexMeta);
-//		entityMeta.setFieldsMeta(fieldsMeta);
-//		entityMeta.setFieldsArray(new String[] { "staffName", "sexType" });
-//		sql = convertFieldsToColumns(entityMeta, sql);
-//		System.err.println(sql);
+		String sql = "select staffName,'sexType',name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		EntityMeta entityMeta = new EntityMeta();
+		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
+		FieldMeta staffMeta = new FieldMeta();
+		staffMeta.setFieldName("staffName");
+		staffMeta.setColumnName("STAFF_NAME");
+		fieldsMeta.put("staffname", staffMeta);
+
+		FieldMeta bizStaffMeta = new FieldMeta();
+		bizStaffMeta.setFieldName("bizStaffName");
+		bizStaffMeta.setColumnName("BIZ_STAFF_NAME");
+		fieldsMeta.put("bizstaffname", bizStaffMeta);
+
+		FieldMeta nameMeta = new FieldMeta();
+		nameMeta.setFieldName("name");
+		nameMeta.setColumnName("NAME");
+		fieldsMeta.put("name", nameMeta);
+
+		FieldMeta sexMeta = new FieldMeta();
+		sexMeta.setFieldName("sexType");
+		sexMeta.setColumnName("SEX_TYPE");
+		fieldsMeta.put("sextype", sexMeta);
+		entityMeta.setFieldsMeta(fieldsMeta);
+		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
+		sql = convertFieldsToColumns(entityMeta, sql);
+		System.err.println(sql);
 	}
 }
