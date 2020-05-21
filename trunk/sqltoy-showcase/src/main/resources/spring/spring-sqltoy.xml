@@ -25,8 +25,7 @@
 			<bean class="com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler" />
 		</property>
 		<!-- 缓存翻译管理器,非必须属性 -->
-		<property name="translateConfig"
-			value="classpath:sqltoy-translate.xml" />
+		<property name="translateConfig" value="classpath:sqltoy-translate.xml" />
 		<!-- 非必须属性:集成elasticsearch,可以配置多个地址 -->
 		<property name="elasticEndpoints">
 			<list>
