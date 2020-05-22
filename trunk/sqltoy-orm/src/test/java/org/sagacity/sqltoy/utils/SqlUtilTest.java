@@ -1,12 +1,12 @@
 package org.sagacity.sqltoy.utils;
 
-import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
+
+import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 
 public class SqlUtilTest {
 
