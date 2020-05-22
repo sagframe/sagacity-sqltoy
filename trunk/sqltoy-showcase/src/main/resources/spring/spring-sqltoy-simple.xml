@@ -21,5 +21,7 @@
 			value="classpath:sqltoy-translate.xml" />
 		<!--非必须属性:默认值为false -->
 		<property name="debug" value="${sqltoy.debug}" />
+		<!--非必须属性:数据库保留字兼容处理 -->
+		<property name="reservedWords" value="maxvalue,minvalue"/>
 	</bean>
 </beans>

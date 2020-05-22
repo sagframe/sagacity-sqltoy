@@ -202,7 +202,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
 
 	/**
-	 * @TODO 基于单表查询进行删除操作
+	 * @TODO 基于单表查询进行删除操作,提供在代码中进行快捷操作
 	 * @param entityClass
 	 * @param entityQuery
 	 * @return
