@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.SqlToyConstants;
-
 /**
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
