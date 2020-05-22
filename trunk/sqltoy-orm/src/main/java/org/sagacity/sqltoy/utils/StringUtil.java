@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:StringUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM
  * @Modification {Date:2020-01-14,优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除}
+ * @Modification {Date:2020-05-18,完整修复splitExcludeSymMark bug}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class StringUtil {
