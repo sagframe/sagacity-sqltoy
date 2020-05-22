@@ -1313,6 +1313,7 @@ public class SqlUtil {
 		}
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
+		// 末尾补齐一位空白,便于后续取index时避免越界
 		String realSql = sql.concat(" ");
 		int start = 0;
 		int index;
@@ -1334,7 +1335,7 @@ public class SqlUtil {
 						isBlank = true;
 					}
 					varSql = preSql.trim();
-					// 首位字符不是数字(48~57)、字母(65~90,97~122)、下划线(95)、冒号(58)
+					// 首位字符不是数字(48~57)、(A-Z|a-z)字母(65~90,97~122)、下划线(95)、冒号(58)
 					preChar = varSql.charAt(varSql.length() - 1);
 					tailChar = realSql.charAt(index + field.length());
 					// 非条件参数(58为冒号)
@@ -1376,7 +1377,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 针对对象查询补全sql中的select * from table 部分
+	 * @TODO 针对对象查询补全sql中的select * from table 部分,适度让代码中的sql简短一些(并不推荐)
 	 * @param sqlToyContext
 	 * @param entityClass
 	 * @param sql
@@ -1386,13 +1387,13 @@ public class SqlUtil {
 		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql))
 			return sql;
 		String sqlLow = sql.toLowerCase().trim();
-		// 包含了select 直接返回
+		// 包含了select 或with as模式开头直接返回
 		if (sqlLow.startsWith("select") || sqlLow.startsWith("with"))
 			return sql;
 		if (!sqlToyContext.isEntity(entityClass))
 			return sql;
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-		// from 开头补齐select *
+		// from 开头补齐select col1,col2,...
 		if (sqlLow.startsWith("from")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
@@ -1411,34 +1412,5 @@ public class SqlUtil {
 					.concat(" ").concat(sql);
 		}
 		return sql;
-	}
-
-	public static void main(String[] args) {
-		String sql = "select staffName,'sexType',name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
-		EntityMeta entityMeta = new EntityMeta();
-		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-		FieldMeta staffMeta = new FieldMeta();
-		staffMeta.setFieldName("staffName");
-		staffMeta.setColumnName("STAFF_NAME");
-		fieldsMeta.put("staffname", staffMeta);
-
-		FieldMeta bizStaffMeta = new FieldMeta();
-		bizStaffMeta.setFieldName("bizStaffName");
-		bizStaffMeta.setColumnName("BIZ_STAFF_NAME");
-		fieldsMeta.put("bizstaffname", bizStaffMeta);
-
-		FieldMeta nameMeta = new FieldMeta();
-		nameMeta.setFieldName("name");
-		nameMeta.setColumnName("NAME");
-		fieldsMeta.put("name", nameMeta);
-
-		FieldMeta sexMeta = new FieldMeta();
-		sexMeta.setFieldName("sexType");
-		sexMeta.setColumnName("SEX_TYPE");
-		fieldsMeta.put("sextype", sexMeta);
-		entityMeta.setFieldsMeta(fieldsMeta);
-		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
-		sql = convertFieldsToColumns(entityMeta, sql);
-		System.err.println(sql);
 	}
 }

@@ -143,11 +143,4 @@ public class ReservedWordsUtil {
 		return sql;
 
 	}
-
-	public static void main(String[] args) {
-		String sql = "SELECT STAFF_NAME,[SEX_TYPE],\"STATUS\" FROM SQLTOY_STAFF_INFO WHERE #[`STATUS` IN (:status)]";
-		ReservedWordsUtil.put("SEX_TYPE,STATUS");
-		String lastSql = ReservedWordsUtil.convertSql(sql, DBType.MYSQL);
-		System.err.println(lastSql);
-	}
 }
