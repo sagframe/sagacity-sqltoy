@@ -12,7 +12,6 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

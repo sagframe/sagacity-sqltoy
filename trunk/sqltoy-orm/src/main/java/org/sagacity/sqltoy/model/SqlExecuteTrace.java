@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
  * @project sagacity-sqltoy4.2
  * @description sql执行日志
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ExecuteLog.java,Revision:v1.0,Date:2018年3月24日
+ * @version id:SqlExecuteTrace.java,Revision:v1.0,Date:2018年3月24日
  */
 public class SqlExecuteTrace implements Serializable {
 	/**

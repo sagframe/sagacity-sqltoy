@@ -18,6 +18,5 @@ public abstract class GenerateSqlHandler {
 	 * @param forceUpdateFields
 	 * @return
 	 */
-	public abstract String generateSql(EntityMeta entityMeta,
-			String[] forceUpdateFields);
+	public abstract String generateSql(EntityMeta entityMeta, String[] forceUpdateFields);
 }

@@ -7,7 +7,7 @@ package org.sagacity.sqltoy.model;
  * @project sagacity-sqltoy
  * @description 记录存在是如何处理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ExistsMode.java,Revision:v1.0,Date:2017年10月10日
+ * @version id:SaveMode.java,Revision:v1.0,Date:2017年10月10日
  */
 public enum SaveMode {
 	// 默认为插入
