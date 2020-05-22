@@ -1,5 +1,8 @@
-# 使用文档(完善进度75%,可以预览)
+# 在线文档(完善进度75%,可以预览)
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
+
+# WORD版详细文档(完整)
+## 请见:docs/睿智平台SqlToy4.12使用手册.doc
 
 # 作者和团队说明
 * 作者和团队一直从事信息化系统建设和数据平台建设
