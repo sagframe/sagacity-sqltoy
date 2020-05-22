@@ -257,6 +257,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
+	 * 
 	 * @param <T>
 	 * @param resultType
 	 * @param entityQuery
