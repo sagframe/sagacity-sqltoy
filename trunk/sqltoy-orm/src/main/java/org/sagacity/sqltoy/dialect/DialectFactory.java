@@ -218,7 +218,7 @@ public class DialectFactory {
 					}
 					SqlExecuteStat.showSql(realSql, null);
 					this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler, fieldTypes,
-							(autoCommit == null) ? false : autoCommit, conn, dbType));
+							autoCommit, conn, dbType));
 				}
 			});
 		} catch (Exception e) {
@@ -924,8 +924,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, reflectPropertyHandler,
-													forceUpdateProps, conn, dbType, dialect,
-													(autoCommit == null) ? false : autoCommit,
+													forceUpdateProps, conn, dbType, dialect, autoCommit,
 													shardingModel.getTableName()));
 										}
 									});
@@ -978,8 +977,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(
 													sqlToyContext, batchModel.getEntities(), batchSize,
-													reflectPropertyHandler, conn, dbType, dialect,
-													(autoCommit == null) ? false : autoCommit,
+													reflectPropertyHandler, conn, dbType, dialect, autoCommit,
 													shardingModel.getTableName()));
 										}
 									});
@@ -1138,8 +1136,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).saveAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
-													dbType, dialect, (autoCommit == null) ? false : autoCommit,
-													shardingModel.getTableName()));
+													dbType, dialect, autoCommit, shardingModel.getTableName()));
 										}
 									});
 							List<Long> tmp = new ArrayList();
@@ -1227,8 +1224,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).updateAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, forceUpdateFields,
-													reflectPropertyHandler, conn, dbType, dialect,
-													(autoCommit == null) ? false : autoCommit,
+													reflectPropertyHandler, conn, dbType, dialect, autoCommit,
 													shardingModel.getTableName()));
 										}
 									});
@@ -1308,8 +1304,7 @@ public class DialectFactory {
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).deleteAll(sqlToyContext,
 													batchModel.getEntities(), batchSize, conn, dbType, dialect,
-													(autoCommit == null) ? false : autoCommit,
-													shardingModel.getTableName()));
+													autoCommit, shardingModel.getTableName()));
 										}
 									});
 							List<Long> tmp = new ArrayList();

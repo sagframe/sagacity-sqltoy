@@ -745,8 +745,9 @@ public class SqlUtil {
 			boolean hasSetAutoCommit = false;
 			boolean useCallHandler = true;
 			// 是否使用反调方式
-			if (insertCallhandler == null)
+			if (insertCallhandler == null) {
 				useCallHandler = false;
+			}
 			// 是否自动提交
 			if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
 				conn.setAutoCommit(autoCommit.booleanValue());
@@ -1306,7 +1307,7 @@ public class SqlUtil {
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
 		String key = entityMeta.getTableName() + sql;
-		//从缓存中直接获取,避免每次都处理提升效率
+		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {
 			return convertSqlMap.get(key);
 		}
@@ -1321,13 +1322,13 @@ public class SqlUtil {
 		char preChar, tailChar;
 		String varSql;
 		boolean isBlank;
-		//转换sql中的对应 vo属性为具体表字段
+		// 转换sql中的对应 vo属性为具体表字段
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
 			// 对象属性和表字段一致,无需处理
 			if (!columnName.equalsIgnoreCase(field)) {
 				start = 0;
-				//定位匹配到field,判断匹配的前一位和后一位字符,前一位是:的属于条件,且都不能是字符和数字以及下划线
+				// 定位匹配到field,判断匹配的前一位和后一位字符,前一位是:的属于条件,且都不能是字符和数字以及下划线
 				index = StringUtil.indexOfIgnoreCase(realSql, field, start);
 				while (index != -1) {
 					preSql = realSql.substring(start, index);
