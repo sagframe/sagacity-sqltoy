@@ -13,7 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<log4j.version>2.13.2</log4j.version>
-		<sagacity-sqltoy.version>4.12.2</sagacity-sqltoy.version>
+		<sagacity-sqltoy.version>4.12.3</sagacity-sqltoy.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<fastjson.version>1.2.68</fastjson.version>
 		<lettuce-core.version>5.2.2.RELEASE</lettuce-core.version>
