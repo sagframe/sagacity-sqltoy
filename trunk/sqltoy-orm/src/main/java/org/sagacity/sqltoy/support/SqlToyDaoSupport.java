@@ -1257,6 +1257,7 @@ public class SqlToyDaoSupport {
 				if (index > 0) {
 					sql = sql.concat(",");
 				}
+
 				// entry.getValue() is order way,like: desc or " "
 				sql = sql.concat(columnName).concat(entry.getValue());
 				index++;
@@ -1341,6 +1342,8 @@ public class SqlToyDaoSupport {
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
+
+			// entry.getKey() is field
 			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
 				columnName = entry.getKey();

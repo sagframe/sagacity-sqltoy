@@ -146,8 +146,14 @@ public class ElasticSearchPlugin {
 			// 没有设置显示字段,且是非聚合查询时将配置的fields设置到查询json中
 			if (!hasFields && !noSqlModel.isHasAggs()) {
 				JSONArray array = new JSONArray();
+				int aliasIndex;
 				for (String field : fields) {
-					array.add(field);
+					aliasIndex = field.indexOf(":");
+					if (aliasIndex == -1) {
+						array.add(field);
+					} else {
+						array.add(field.substring(0, aliasIndex).trim());
+					}
 				}
 				jsonQuery.fluentPut("_source", array);
 			}
