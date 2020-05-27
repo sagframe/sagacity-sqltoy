@@ -696,6 +696,11 @@
 		<xsd:attribute name="cache-indexs" type="xsd:string" />
 		<xsd:attribute name="uncached-template"
 			type="xsd:string" />
+		<xsd:attribute name="alias-name" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[服务于elastic、mongo在不使用sql模式,无法select staff_id as staffName,这里alias-name 对应staff_id]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoySecureMaskType">

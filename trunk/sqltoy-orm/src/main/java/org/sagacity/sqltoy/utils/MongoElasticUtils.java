@@ -528,6 +528,7 @@ public class MongoElasticUtils {
 				keyValues = translateCache.get(lables[i]);
 				translateModel = translateMap.get(lables[i]);
 				cacheIndex = translateModel.getIndex();
+				//实际列
 				value = dataMap.get(translateModel.getAlias());
 				if (value != null) {
 					translateAry = keyValues.get(value.toString());

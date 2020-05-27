@@ -114,8 +114,9 @@ public class Elastic extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
-			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+			if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 				return ElasticSqlPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
+			}
 			return ElasticSearchPlugin.findTop(sqlToyContext, sqlToyConfig, queryExecutor, null);
 		} catch (Exception e) {
 			e.printStackTrace();
