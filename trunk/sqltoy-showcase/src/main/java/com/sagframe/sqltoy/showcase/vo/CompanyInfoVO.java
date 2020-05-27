@@ -29,6 +29,10 @@ public class CompanyInfoVO implements Serializable {
 	private String registAddress;
 	
 	private String creditCode;
+	
+	private String companyType;
+	
+	private String companyTypeName;
 
 	/**
 	 * @return the companyId
@@ -112,6 +116,34 @@ public class CompanyInfoVO implements Serializable {
 	 */
 	public void setCreditCode(String creditCode) {
 		this.creditCode = creditCode;
+	}
+
+	/**
+	 * @return the companyType
+	 */
+	public String getCompanyType() {
+		return companyType;
+	}
+
+	/**
+	 * @param companyType the companyType to set
+	 */
+	public void setCompanyType(String companyType) {
+		this.companyType = companyType;
+	}
+
+	/**
+	 * @return the companyTypeName
+	 */
+	public String getCompanyTypeName() {
+		return companyTypeName;
+	}
+
+	/**
+	 * @param companyTypeName the companyTypeName to set
+	 */
+	public void setCompanyTypeName(String companyTypeName) {
+		this.companyTypeName = companyTypeName;
 	}
 	
 }

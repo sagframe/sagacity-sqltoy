@@ -149,11 +149,12 @@
 		</value>
 	</eql>
 
-	<eql id="es_find_company_page"
-		fields="company_id,company_name,company_type" mode="sql">
+	<eql id="es_find_company_page" fields="company_id,company_name,company_type,company_type:companyTypeName" mode="sql">
+		<translate cache="dictKeyName" cache-type="COMPANY_TYPE" columns="companyTypeName"/> 
 		<value>
 		<![CDATA[
-		select * from cc_company_info where company_type='1' 
+		select company_id,company_name,company_type
+		from cc_company_info where company_type='1' 
 		]]>
 		</value>
 	</eql>
@@ -170,7 +171,7 @@
 	<!-- 基于elasticsearch json rest原生查询,当存在_source 提供了字段时fields属性可以不用填写 -->
 	<eql id="sys_elastic_test_json" fields="company_id,company_name,company_type:companyTypeName" index="cc_company_info">
 		<!-- 如果需要依然可以使用translate 缓存翻译,alias-name指向对应编码的列 -->
-		<translate cache="dictKeyName" columns="companyTypeName" alias-name="company_type"/> 
+		<translate cache="dictKeyName" cache-type="COMPANY_TYPE" columns="companyTypeName" alias-name="company_type"/> 
 		<value>
 	<![CDATA[
 		{
