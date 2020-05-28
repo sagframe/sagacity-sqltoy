@@ -322,7 +322,6 @@ public class DataSourceUtils {
 			else if (dbDialect.equals(Dialect.CLICKHOUSE)) {
 				dbType = DBType.CLICKHOUSE;
 			}
-
 			// OCEANBASE
 			else if (dbDialect.equals(Dialect.OCEANBASE)) {
 				dbType = DBType.OCEANBASE;
@@ -366,6 +365,7 @@ public class DataSourceUtils {
 			return "select 1 from sysibm.sysdummy1";
 		}
 		case DBType.ORACLE:
+		case DBType.OCEANBASE:
 		case DBType.ORACLE11: {
 			return "select 1 from dual";
 		}
