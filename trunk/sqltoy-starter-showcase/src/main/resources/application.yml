@@ -24,6 +24,13 @@ spring:
          testOnReturn: false
          removeAbandoned: true
          removeAbandonedTimeout: 300
+    data:
+       mongodb:
+           host: 192.168.56.109
+           port: 27017
+           database: sagframe
+           username: sagframe
+           password: sagframe
     sqltoy:
         # 多个路径用逗号分隔
         sqlResourcesDir: classpath:com/sagframe/sqltoy/showcase
