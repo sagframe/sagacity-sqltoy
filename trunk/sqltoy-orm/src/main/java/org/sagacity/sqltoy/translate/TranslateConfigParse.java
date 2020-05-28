@@ -177,7 +177,7 @@ public class TranslateConfigParse {
 									sqlToyConfig.setShowSql(!isShowSql);
 									sqlToyConfig.setParamsName(
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
-									//增加条件参数检查,避免开发者手误然后找不到原因!有出现:lastUpdateTime 和 lastUpdateTimee 的找半天发现不了问题的!
+									// 增加条件参数检查,避免开发者手误然后找不到原因!有出现:lastUpdateTime 和 lastUpdateTimee 的找半天发现不了问题的!
 									if (sqlToyConfig.getParamsName() != null
 											&& sqlToyConfig.getParamsName().length > 1) {
 										throw new IllegalArgumentException(

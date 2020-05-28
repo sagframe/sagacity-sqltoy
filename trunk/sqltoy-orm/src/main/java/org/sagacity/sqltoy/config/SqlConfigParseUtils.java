@@ -339,7 +339,7 @@ public class SqlConfigParseUtils {
 		}
 		return paramsNameList.toArray(new String[paramsNameList.size()]);
 	}
-
+	
 	/**
 	 * @todo 判断条件是否为null,过滤sql的组合查询条件 example: select t1.* from xx_table t1 where
 	 *       #[t1.status=?] #[and t1.auditTime=?]
