@@ -139,6 +139,7 @@ public class TranslateConfigParse {
 				}
 				String nodeType;
 				index = 1;
+				// 缓存更新检测
 				for (String translateType : TRANSLATE_CHECKER_TYPES) {
 					nodeType = translateType.concat(CHECKER_SUFFIX);
 					elts = node.getElementsByTagName(nodeType);
@@ -176,6 +177,13 @@ public class TranslateConfigParse {
 									sqlToyConfig.setShowSql(!isShowSql);
 									sqlToyConfig.setParamsName(
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
+									// 增加条件参数检查,避免开发者手误然后找不到原因!有出现:lastUpdateTime 和 lastUpdateTimee 的找半天发现不了问题的!
+									if (sqlToyConfig.getParamsName() != null
+											&& sqlToyConfig.getParamsName().length > 1) {
+										throw new IllegalArgumentException(
+												"请检查缓存更新检测sql语句中的参数名称,所有参数名称要保持一致为lastUpdateTime!当前有:"
+														+ sqlToyConfig.getParamsName().length + " 个不同条件参数名!");
+									}
 									sqlToyContext.putSqlToyConfig(sqlToyConfig);
 									checherConfigModel.setSql(sqlId);
 									index++;
