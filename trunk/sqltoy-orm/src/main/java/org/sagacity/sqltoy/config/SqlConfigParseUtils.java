@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -283,22 +284,25 @@ public class SqlConfigParseUtils {
 		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
+		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
 		while (m.find()) {
 			// 剔除\\W\\:两位字符
 			paramName = m.group().substring(2).trim();
 			// 去除重复
 			if (distinct) {
-				if (!paramsNameList.contains(paramName)) {
+				if (!distinctSet.contains(paramName.toLowerCase())) {
 					paramsNameList.add(paramName);
+					distinctSet.add(paramName.toLowerCase());
 				}
 			} else {
 				paramsNameList.add(paramName);
 			}
 		}
 		// 没有别名参数
-		if (paramsNameList.isEmpty())
+		if (paramsNameList.isEmpty()) {
 			return null;
+		}
 		return paramsNameList.toArray(new String[paramsNameList.size()]);
 	}
 
@@ -312,6 +316,7 @@ public class SqlConfigParseUtils {
 		Matcher m = SqlToyConstants.NOSQL_NAMED_PATTERN.matcher(queryStr);
 		// 用来替换:paramName
 		List<String> paramsNameList = new ArrayList<String>();
+		HashSet<String> distinctSet = new HashSet<String>();
 		String paramName;
 		String groupStr;
 		while (m.find()) {
@@ -319,19 +324,21 @@ public class SqlConfigParseUtils {
 			paramName = groupStr.substring(groupStr.indexOf(":") + 1, groupStr.indexOf(")")).trim();
 			// 去除重复
 			if (distinct) {
-				if (!paramsNameList.contains(paramName)) {
+				if (!distinctSet.contains(paramName.toLowerCase())) {
 					paramsNameList.add(paramName);
+					distinctSet.add(paramName.toLowerCase());
 				}
 			} else {
 				paramsNameList.add(paramName);
 			}
 		}
 		// 没有别名参数
-		if (paramsNameList.isEmpty())
+		if (paramsNameList.isEmpty()) {
 			return null;
+		}
 		return paramsNameList.toArray(new String[paramsNameList.size()]);
 	}
-
+	
 	/**
 	 * @todo 判断条件是否为null,过滤sql的组合查询条件 example: select t1.* from xx_table t1 where
 	 *       #[t1.status=?] #[and t1.auditTime=?]
