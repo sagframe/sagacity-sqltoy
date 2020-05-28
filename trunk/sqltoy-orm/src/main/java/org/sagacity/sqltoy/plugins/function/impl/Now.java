@@ -48,7 +48,7 @@ public class Now extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.POSTGRESQL) {
 			return wrapArgs("now", args);
 		}
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
 			return "sysdate";
 		}
 		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012) {
