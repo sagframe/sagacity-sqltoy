@@ -18,6 +18,7 @@
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 		<junit-platform.version>1.6.2</junit-platform.version>
 		<spring.version>5.2.6.RELEASE</spring.version>
+		<spring-mongo-starter.version>2.3.0.RELEASE</spring-mongo-starter.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -70,7 +71,11 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+			<version>${spring-mongo-starter.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
