@@ -51,6 +51,7 @@ public class DateFormat extends IFunction {
 		switch (dialect) {
 		case DBType.POSTGRESQL:
 		case DBType.ORACLE:
+		case DBType.OCEANBASE:
 		case DBType.ORACLE11: {
 			// 日期
 			format = args[1].replace("%Y", "yyyy").replace("%y", "yy").replace("%m", "MM").replace("%d", "dd");

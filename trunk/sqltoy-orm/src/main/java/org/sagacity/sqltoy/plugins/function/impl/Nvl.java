@@ -58,7 +58,7 @@ public class Nvl extends IFunction {
 		}
 		if (dialect == DBType.SQLITE)
 			return wrapArgs("ifnull", args);
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11)
+		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11)
 			return wrapArgs("nvl", args);
 		return super.IGNORE;
 	}

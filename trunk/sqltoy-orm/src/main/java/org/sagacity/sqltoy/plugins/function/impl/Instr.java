@@ -69,8 +69,8 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.MYSQL
-				|| dialect == DBType.MYSQL57) {
+		if (dialect == DBType.DB2 || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE
+				|| dialect == DBType.ORACLE11 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
 			if (functionName.equalsIgnoreCase("instr"))
 				return super.IGNORE;
 			result.append("instr(").append(realArgs[1]).append(",").append(realArgs[0]);
