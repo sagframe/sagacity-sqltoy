@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.12.3</version>
+	<version>4.12.4</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -11,19 +11,19 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.2.6.RELEASE</spring-framework.version>
-		<spring-data-redis.version>2.2.7.RELEASE</spring-data-redis.version>
-		<spring-data-mongo.version>2.2.7.RELEASE</spring-data-mongo.version>
+		<spring-data-redis.version>2.3.0.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>3.0.0.RELEASE</spring-data-mongo.version>
 		<ojdbc.version>19.3.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.12</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
-		<elastic-rest-client.version>7.6.2</elastic-rest-client.version>
+		<elastic-rest-client.version>7.7.0</elastic-rest-client.version>
 		<fastjson.version>1.2.68</fastjson.version>
-		<mongo.version>3.12.2</mongo.version>
-		<junit-jupiter.version>5.6.1</junit-jupiter.version>
-		<junit-platform.version>1.6.1</junit-platform.version>
+		<mongo.version>3.12.4</mongo.version>
+		<junit-jupiter.version>5.6.2</junit-jupiter.version>
+		<junit-platform.version>1.6.2</junit-platform.version>
 		<slf4j.version>1.7.30</slf4j.version>
-		<log4j.version>2.13.2</log4j.version>
+		<log4j.version>2.13.3</log4j.version>
 	</properties>
 	<licenses>
 		<license>
@@ -49,20 +49,22 @@
 	</developers>
 	<distributionManagement>
 
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
+		<!-- <snapshotRepository> <id>sonatype-nexus-snapshots</id> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
+			</snapshotRepository> <repository> <id>sonatype-nexus-staging</id> <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url> 
+			</repository> -->
+
+
 		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<id>nexus-release</id>
+			<name>3rd party</name>
+			<url>https://nexus.1chemic.com/repository/releases/</url>
 		</repository>
-
-
-		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
-			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
-			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
-			</snapshotRepository> -->
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<name>Department 
+			Repository</name>
+			<url>https://nexus.1chemic.com/repository/snapshots/</url>
+		</snapshotRepository>
 	</distributionManagement>
 	<dependencies>
 		<dependency>
@@ -320,7 +322,7 @@
 				</executions>
 			</plugin>
 
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.6</version>
@@ -332,7 +334,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 </project>
