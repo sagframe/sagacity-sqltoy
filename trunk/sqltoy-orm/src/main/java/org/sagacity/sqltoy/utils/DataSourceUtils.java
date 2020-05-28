@@ -70,6 +70,9 @@ public class DataSourceUtils {
 		// 19.x版本
 		public final static String CLICKHOUSE = "clickhouse";
 
+		// 阿里 oceanbase
+		public final static String OCEANBASE = "oceanbase";
+		
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
