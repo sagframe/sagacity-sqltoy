@@ -121,7 +121,8 @@ public class DialectFactory {
 			Dialect dialectSqlWrapper = null;
 			switch (dbType) {
 			// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
-			case DBType.ORACLE: {
+			case DBType.ORACLE:
+			case DBType.OCEANBASE: {
 				dialectSqlWrapper = new OracleDialect();
 				break;
 			}
