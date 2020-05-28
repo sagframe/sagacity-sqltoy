@@ -232,6 +232,7 @@ public class SqlConfigParseUtils {
 				i++;
 			}
 			i = 0;
+			//不区分大小写匹配
 			for (String name : sqlParamsName) {
 				result[i] = nameValueMap.get(name.toLowerCase());
 				i++;
