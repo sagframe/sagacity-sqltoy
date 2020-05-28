@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.nosql;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -166,8 +168,9 @@ public class ElasticSearchPlugin {
 		} else if (resultClass != null) {
 			Class superClass = resultClass.getSuperclass();
 			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-					&& !resultClass.equals(Map.class) && !resultClass.equals(ConcurrentHashMap.class)
+					&& !resultClass.equals(Array.class) && !resultClass.equals(Collection.class)
+					&& !resultClass.equals(HashMap.class) && !resultClass.equals(Map.class)
+					&& !resultClass.equals(ConcurrentMap.class) && !resultClass.equals(ConcurrentHashMap.class)
 					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
 					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
 				fields = BeanUtil.matchSetMethodNames(resultClass);

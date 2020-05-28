@@ -860,9 +860,9 @@ public class ResultUtils {
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
-				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-				|| Map.class.equals(superClass)) {
+				|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
+				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
+				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;

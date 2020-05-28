@@ -191,8 +191,9 @@ public class SqlScriptLoader {
 		if (null == result) {
 			result = codeSqlCache.get(sqlKey);
 		}
-		if (null != result)
+		if (null != result) {
 			return result;
+		}
 		// 判断是否是sqlId,非在xml中定义id的sql
 		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
 			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), type);
