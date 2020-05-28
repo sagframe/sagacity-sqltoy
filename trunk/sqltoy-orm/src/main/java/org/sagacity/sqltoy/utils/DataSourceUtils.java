@@ -72,7 +72,7 @@ public class DataSourceUtils {
 
 		// 阿里 oceanbase
 		public final static String OCEANBASE = "oceanbase";
-		
+
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -104,8 +104,8 @@ public class DataSourceUtils {
 
 		public final static int SYBASE_IQ = 80;
 		public final static int SQLITE = 90;
-
 		public final static int MONGO = 110;
+		public final static int OCEANBASE = 100;
 		public final static int ES = 120;
 		public final static int CLICKHOUSE = 130;
 	}
@@ -131,6 +131,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
 		DBNameTypeMap.put(Dialect.CLICKHOUSE, DBType.CLICKHOUSE);
+		DBNameTypeMap.put(Dialect.OCEANBASE, DBType.OCEANBASE);
 	}
 
 	public static String getDialect(Integer dbType) {
@@ -147,6 +148,8 @@ public class DataSourceUtils {
 			return Dialect.SQLSERVER;
 		case DBType.DB2:
 			return Dialect.DB2;
+		case DBType.OCEANBASE:
+			return Dialect.OCEANBASE;
 		case DBType.GAUSSDB:
 			return Dialect.GAUSSDB;
 		case DBType.ES:
@@ -226,6 +229,10 @@ public class DataSourceUtils {
 			// clickhouse
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.CLICKHOUSE) != -1) {
 				return Dialect.CLICKHOUSE;
+			}
+			// OCEANBASE
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.OCEANBASE) != -1) {
+				return Dialect.OCEANBASE;
 			}
 			// GAUSSDB
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
@@ -315,6 +322,11 @@ public class DataSourceUtils {
 			else if (dbDialect.equals(Dialect.CLICKHOUSE)) {
 				dbType = DBType.CLICKHOUSE;
 			}
+
+			// OCEANBASE
+			else if (dbDialect.equals(Dialect.OCEANBASE)) {
+				dbType = DBType.OCEANBASE;
+			}
 			// sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
@@ -326,7 +338,7 @@ public class DataSourceUtils {
 			// sqlite
 			else if (dbDialect.equals(Dialect.SQLITE)) {
 				dbType = DBType.SQLITE;
-			} // sqlite
+			} // hana
 			else if (dbDialect.equals(Dialect.SAP_HANA)) {
 				dbType = DBType.SAP_HANA;
 			}
