@@ -122,7 +122,6 @@ public class ResultUtils {
 			// if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
 			// formatColumn(result, sqlToyConfig, labelIndexMap);
 			// }
-
 		}
 		// 填充记录数
 		if (result.getRows() != null) {
@@ -459,7 +458,7 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("Max Large Result:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
+			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
 					sqlToyConfig.getSql(null));
 		}
 		return items;
@@ -505,7 +504,7 @@ public class ResultUtils {
 	private static Integer[] mappingLabelIndex(String[] columnLabels, HashMap<String, Integer> labelIndexMap) {
 		Integer[] result = new Integer[columnLabels.length];
 		for (int i = 0; i < result.length; i++) {
-			if (CommonUtils.isInteger(columnLabels[i])) {
+			if (NumberUtil.isInteger(columnLabels[i])) {
 				result[i] = Integer.parseInt(columnLabels[i]);
 			} else {
 				result[i] = labelIndexMap.get(columnLabels[i].toLowerCase());
@@ -849,6 +848,11 @@ public class ResultUtils {
 		}
 	}
 
+	/**
+	 * @TODO 建立列名称跟列index的对应关系
+	 * @param fields
+	 * @return
+	 */
 	private static HashMap<String, Integer> wrapLabelIndexMap(String[] fields) {
 		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 		if (fields != null && fields.length > 0) {

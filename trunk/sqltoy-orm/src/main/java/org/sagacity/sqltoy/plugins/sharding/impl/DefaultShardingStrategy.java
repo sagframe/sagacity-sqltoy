@@ -15,8 +15,8 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
-import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +166,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		String chooseDataSource = null;
 		// 根据权重进行随机取具体哪个dataSource
 		if (dataSourceWeightConfig.length > 1) {
-			index = CommonUtils.getProbabilityIndex(weights);
+			index = NumberUtil.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
 		logger.debug("本次sharding选择中的数据库为:{}", chooseDataSource);

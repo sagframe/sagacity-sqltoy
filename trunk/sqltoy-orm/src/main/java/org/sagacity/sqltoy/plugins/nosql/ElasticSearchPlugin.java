@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
@@ -191,8 +192,23 @@ public class ElasticSearchPlugin {
 		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(
-				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
+				ResultUtils.wrapQueryResult(resultSet.getRows(), wrapFields(resultSet.getLabelNames()), resultClass));
 		return resultSet;
 	}
 
+	private static String[] wrapFields(String[] fields) {
+		if (fields == null)
+			return null;
+		String[] aliasFields = new String[fields.length];
+		System.arraycopy(fields, 0, aliasFields, 0, fields.length);
+		int aliasIndex = 0;
+		for (int i = 0; i < aliasFields.length; i++) {
+			aliasIndex = aliasFields[i].indexOf(":");
+			if (aliasIndex != -1) {
+				aliasFields[i] = aliasFields[i].substring(aliasIndex + 1).trim();
+			}
+		}
+		String[] aliasNames = CommonUtils.humpFieldNames(aliasFields);
+		return aliasNames;
+	}
 }

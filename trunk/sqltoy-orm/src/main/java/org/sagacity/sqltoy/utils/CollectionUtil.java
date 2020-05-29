@@ -493,7 +493,7 @@ public class CollectionUtil {
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
 			boolean isLinkedHash) {
 		int dimen = judgeObjectDimen(data);
-		boolean isBean = CommonUtils.isInteger(keyProp.toString()) ? false : true;
+		boolean isBean = NumberUtil.isInteger(keyProp.toString()) ? false : true;
 		int keyIndex = -1;
 		int valueIndex = -1;
 		String valueProperty = null;

@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
@@ -198,7 +199,7 @@ public class TranslateConfigParse {
 								frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
 								// 0~24点 统一的检测频率
 								// 可以是单个频率值,表示0到24小时采用统一的频率
-								if (CommonUtils.isInteger(frequency)) {
+								if (NumberUtil.isInteger(frequency)) {
 									TimeSection section = new TimeSection();
 									section.setStart(0);
 									section.setEnd(2400);
@@ -239,7 +240,7 @@ public class TranslateConfigParse {
 	 */
 	private static int getHourMinute(String hourMinuteStr) {
 		// 320(3点20分)
-		if (CommonUtils.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
+		if (NumberUtil.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
 			return Integer.parseInt(hourMinuteStr);
 		}
 		String tmp = hourMinuteStr.replaceAll("\\.", ":");

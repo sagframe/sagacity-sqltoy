@@ -981,7 +981,7 @@ public class SqlUtil {
 					nodeRoute = "";
 					if (!treeTableModel.isChar() || treeTableModel.isAppendZero()) {
 						// 负数
-						if (CommonUtils.isInteger(pid) && pid.indexOf("-") == 0) {
+						if (NumberUtil.isInteger(pid) && pid.indexOf("-") == 0) {
 							nodeRoute = nodeRoute.concat("-")
 									.concat(StringUtil.addLeftZero2Len(pid.substring(1), size - 1));
 						} else {

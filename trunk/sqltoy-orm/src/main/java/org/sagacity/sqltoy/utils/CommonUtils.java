@@ -35,84 +35,6 @@ public class CommonUtils {
 	private final static Logger logger = LoggerFactory.getLogger(CommonUtils.class);
 
 	/**
-	 * 整数数字正则表达式
-	 */
-	private final static String INTEGER_REGEX = "^[+-]?[\\d]+$";
-
-	/**
-	 * 数字格式正则表达式(整数浮点数)
-	 */
-	private final static String NUMBER_REGEX = "^[+-]?[\\d]+(\\.\\d+)?$";
-
-	/**
-	 * @todo 判断字符串是整数
-	 * @param obj
-	 * @return
-	 */
-	public static boolean isInteger(String obj) {
-		return StringUtil.matches(obj, INTEGER_REGEX);
-	}
-
-	/**
-	 * @todo 判断字符串是否为数字
-	 * @param numberStr
-	 * @return
-	 */
-	public static boolean isNumber(String numberStr) {
-		return StringUtil.matches(numberStr, NUMBER_REGEX);
-	}
-
-	/**
-	 * @todo 产生随机数数组
-	 * @param maxValue
-	 *            随机数的最大值
-	 * @param size
-	 *            随机数的个数
-	 * @return
-	 */
-	public static Object[] randomArray(int maxValue, int size) {
-		int realSize = size;
-		if (realSize > maxValue)
-			realSize = maxValue;
-		// 长度等于最大值
-		if (realSize == maxValue) {
-			Object[] result = new Object[maxValue];
-			for (int i = 0; i < maxValue; i++) {
-				result[i] = i;
-			}
-			return result;
-		}
-		Set<Integer> resultSet = new HashSet<Integer>(realSize);
-		int randomNum;
-		while (resultSet.size() < realSize) {
-			randomNum = (int) (Math.random() * maxValue);
-			resultSet.add(randomNum);
-		}
-		return resultSet.toArray();
-	}
-
-	/**
-	 * @todo 按照概率获取对应概率的数据索引，如：A：概率80%，B：10%，C：6%，D：4%，将出现概率放入数组， 按随机规则返回对应概率的索引
-	 * @param probabilities
-	 * @return
-	 */
-	public static int getProbabilityIndex(int[] probabilities) {
-		int total = 0;
-		for (int probabilitiy : probabilities) {
-			total = total + probabilitiy;
-		}
-		int randomData = (int) (Math.random() * total) + 1;
-		int base = 0;
-		for (int i = 0; i < probabilities.length; i++) {
-			if (randomData > base && randomData <= base + probabilities[i]) {
-				return i;
-			}
-			base = base + probabilities[i];
-		}
-		return 0;
-	}
-
-	/**
 	 * @TODO 读取文件存为字符串
 	 * @param file
 	 * @param charset
@@ -124,8 +46,7 @@ public class CommonUtils {
 
 	/**
 	 * @todo 获得指定路径的文件
-	 * @param file
-	 *            文件路径like:classpath:xxx.xml或xxx.xml
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
@@ -383,7 +304,7 @@ public class CommonUtils {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) >= 0;
 		}
 		// 数字
-		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
+		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
 			return Double.parseDouble(valueStr) >= Double.parseDouble(compare);
 		}
 		return valueStr.compareTo(compare) >= 0;
@@ -402,7 +323,7 @@ public class CommonUtils {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) <= 0;
 		}
 		// 数字
-		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
+		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
 			return Double.parseDouble(valueStr) <= Double.parseDouble(compare);
 		}
 		return valueStr.compareTo(compare) <= 0;
@@ -421,7 +342,7 @@ public class CommonUtils {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) > 0;
 		}
 		// 数字
-		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
+		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
 			return Double.parseDouble(valueStr) > Double.parseDouble(compare);
 		}
 		return valueStr.compareTo(compare) > 0;
@@ -440,7 +361,7 @@ public class CommonUtils {
 			return DateUtil.convertDateObject(valueStr).compareTo(DateUtil.convertDateObject(compare)) < 0;
 		}
 		// 数字
-		if (CommonUtils.isNumber(valueStr) && CommonUtils.isNumber(compare)) {
+		if (NumberUtil.isNumber(valueStr) && NumberUtil.isNumber(compare)) {
 			return Double.parseDouble(valueStr) < Double.parseDouble(compare);
 		}
 		return valueStr.compareTo(compare) < 0;
@@ -463,8 +384,7 @@ public class CommonUtils {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -479,8 +399,7 @@ public class CommonUtils {
 
 	/**
 	 * @todo 关闭一个或多个流对象
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {
