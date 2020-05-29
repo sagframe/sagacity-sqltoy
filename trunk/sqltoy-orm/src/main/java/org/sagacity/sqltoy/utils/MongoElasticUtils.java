@@ -323,7 +323,6 @@ public class MongoElasticUtils {
 				}
 			}
 			index++;
-			// realMql.append(BLANK);
 		}
 		realMql.append(sql.substring(start));
 		return realMql.toString();
@@ -391,48 +390,6 @@ public class MongoElasticUtils {
 	private static String removeDangerWords(String paramValue) {
 		return paramValue.replaceAll("(\"|\'|\\{|\\[|\\}|\\]|\\$|&quot;)", "");
 	}
-
-//	/**
-//	 * @todo 将结果构造到具体对象中
-//	 * @param rowSet
-//	 * @param fileds
-//	 * @param resultClass
-//	 * @return
-//	 * @throws Exception
-//	 */
-//	public static List wrapResultClass(List rowSet, String[] fields, Class resultType) throws Exception {
-//		if (rowSet == null || rowSet.isEmpty() || null == resultType || resultType.equals(List.class)
-//				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
-//			return rowSet;
-//		String[] aliasFields = new String[fields.length];
-//		System.arraycopy(fields, 0, aliasFields, 0, fields.length);
-//		int aliasIndex = 0;
-//		for (int i = 0; i < aliasFields.length; i++) {
-//			aliasIndex = aliasFields[i].indexOf(":");
-//			if (aliasIndex != -1) {
-//				aliasFields[i] = aliasFields[i].substring(aliasIndex + 1).trim();
-//			}
-//		}
-//		String[] aliasNames = StringUtil.humpFieldNames(aliasFields);
-//		Class superClass = resultType.getSuperclass();
-//		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-//				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
-//				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-//				|| Map.class.equals(superClass)) {
-//			List result = new ArrayList();
-//			List rowList;
-//			for (int i = 0; i < rowSet.size(); i++) {
-//				rowList = (List) rowSet.get(i);
-//				Map row = (Map) resultType.getDeclaredConstructor().newInstance();
-//				for (int j = 0; j < aliasNames.length; j++) {
-//					row.put(aliasNames[j], rowList.get(j));
-//				}
-//				result.add(row);
-//			}
-//			return result;
-//		}
-//		return BeanUtil.reflectListToBean(rowSet, aliasNames, resultType);
-//	}
 
 	/**
 	 * @todo 处理缓存翻译
