@@ -60,8 +60,6 @@ public class HttpClientUtils {
 
 	private final static String CONTENT_TYPE = "application/json";
 
-	// private final static String GET = "GET";
-
 	private final static String POST = "POST";
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
