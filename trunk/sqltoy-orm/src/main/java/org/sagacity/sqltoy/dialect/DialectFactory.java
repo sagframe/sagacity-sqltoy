@@ -116,69 +116,68 @@ public class DialectFactory {
 		// 从map中直接获取实例，避免重复创建和判断
 		if (dialects.containsKey(dbType)) {
 			return dialects.get(dbType);
-		} else {
-			// 按照市场排名作为优先顺序
-			Dialect dialectSqlWrapper = null;
-			switch (dbType) {
-			// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
-			case DBType.ORACLE:
-			case DBType.OCEANBASE: {
-				dialectSqlWrapper = new OracleDialect();
-				break;
-			}
-			// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不同在一个查询中多次引用)
-			// 8.x+(支持with as语法)
-			// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
-			case DBType.MYSQL:
-			case DBType.MYSQL57: {
-				dialectSqlWrapper = new MySqlDialect();
-				break;
-			}
-			// sqlserver2012 以后分页方式更简单
-			case DBType.SQLSERVER:
-			case DBType.SQLSERVER2012: {
-				dialectSqlWrapper = new SqlServerDialect();
-				break;
-			}
-			// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-			case DBType.POSTGRESQL:
-			case DBType.GAUSSDB: {
-				dialectSqlWrapper = new PostgreSqlDialect();
-				break;
-			}
-			// db2 10.x版本分页支持offset模式
-			case DBType.DB2: {
-				dialectSqlWrapper = new DB2Dialect();
-				break;
-			}
-			// clickhouse 19.x 版本开始支持
-			case DBType.CLICKHOUSE: {
-				dialectSqlWrapper = new ClickHouseDialect();
-				break;
-			}
-			// 基本支持(sqlite 本身功能就相对简单)
-			case DBType.SQLITE: {
-				dialectSqlWrapper = new SqliteDialect();
-				break;
-			}
-			// 10g,11g
-			case DBType.ORACLE11: {
-				dialectSqlWrapper = new Oracle11gDialect();
-				break;
-			}
-			// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
-			case DBType.SYBASE_IQ: {
-				dialectSqlWrapper = new SybaseIQDialect();
-				break;
-			}
-			// 如果匹配不上抛出异常
-			default:
-				// 不支持
-				throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
-			}
-			dialects.put(dbType, dialectSqlWrapper);
-			return dialectSqlWrapper;
 		}
+		// 按照市场排名作为优先顺序
+		Dialect dialectSqlWrapper = null;
+		switch (dbType) {
+		// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
+		case DBType.ORACLE:
+		case DBType.OCEANBASE: {
+			dialectSqlWrapper = new OracleDialect();
+			break;
+		}
+		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不同在一个查询中多次引用)
+		// 8.x+(支持with as语法)
+		// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
+		case DBType.MYSQL:
+		case DBType.MYSQL57: {
+			dialectSqlWrapper = new MySqlDialect();
+			break;
+		}
+		// sqlserver2012 以后分页方式更简单
+		case DBType.SQLSERVER:
+		case DBType.SQLSERVER2012: {
+			dialectSqlWrapper = new SqlServerDialect();
+			break;
+		}
+		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
+		case DBType.POSTGRESQL:
+		case DBType.GAUSSDB: {
+			dialectSqlWrapper = new PostgreSqlDialect();
+			break;
+		}
+		// db2 10.x版本分页支持offset模式
+		case DBType.DB2: {
+			dialectSqlWrapper = new DB2Dialect();
+			break;
+		}
+		// clickhouse 19.x 版本开始支持
+		case DBType.CLICKHOUSE: {
+			dialectSqlWrapper = new ClickHouseDialect();
+			break;
+		}
+		// 基本支持(sqlite 本身功能就相对简单)
+		case DBType.SQLITE: {
+			dialectSqlWrapper = new SqliteDialect();
+			break;
+		}
+		// 10g,11g
+		case DBType.ORACLE11: {
+			dialectSqlWrapper = new Oracle11gDialect();
+			break;
+		}
+		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
+		case DBType.SYBASE_IQ: {
+			dialectSqlWrapper = new SybaseIQDialect();
+			break;
+		}
+		// 如果匹配不上抛出异常
+		default:
+			// 不支持
+			throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
+		}
+		dialects.put(dbType, dialectSqlWrapper);
+		return dialectSqlWrapper;
 	}
 
 	/**
