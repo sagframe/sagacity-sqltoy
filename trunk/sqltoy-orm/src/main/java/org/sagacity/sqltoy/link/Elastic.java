@@ -33,11 +33,6 @@ public class Elastic extends BaseLink {
 	 */
 	private static final long serialVersionUID = -3963816230256439625L;
 
-	/**
-	 * 定义日志
-	 */
-	private final Logger logger = LoggerFactory.getLogger(Elastic.class);
-
 	private final String ERROR_MESSAGE = "ES查询请使用<eql></eql>配置!";
 
 	/**

@@ -246,9 +246,9 @@ public class Mongo extends BaseLink {
 		}
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {
-				logger.debug("query mongo script=" + query.getQueryObject());
+				logger.debug("findPageByMongo script=" + query.getQueryObject());
 			} else {
-				System.out.println("query mongo script=" + query.getQueryObject());
+				System.out.println("findPageByMongo script=" + query.getQueryObject());
 			}
 		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
@@ -283,9 +283,9 @@ public class Mongo extends BaseLink {
 		}
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {
-				logger.debug("query mongo script=" + query.getQueryObject());
+				logger.debug("findTopByMongo script=" + query.getQueryObject());
 			} else {
-				System.out.println("query mongo script=" + query.getQueryObject());
+				System.out.println("findTopByMongo script=" + query.getQueryObject());
 			}
 		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
@@ -316,9 +316,9 @@ public class Mongo extends BaseLink {
 
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {
-				logger.debug("aggregate mongo script=" + realMql);
+				logger.debug("aggregateByMongo script=" + realMql);
 			} else {
-				System.out.println("aggregate mongo script=" + realMql);
+				System.out.println("aggregateByMongo script=" + realMql);
 			}
 		}
 

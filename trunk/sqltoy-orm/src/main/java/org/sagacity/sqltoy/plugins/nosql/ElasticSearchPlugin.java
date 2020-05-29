@@ -70,9 +70,7 @@ public class ElasticSearchPlugin {
 			logger.error("分页解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
-		}
+		
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
@@ -111,9 +109,6 @@ public class ElasticSearchPlugin {
 		} catch (Exception e) {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
-		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
 				(Class) queryExecutor.getResultType());
@@ -176,6 +171,14 @@ public class ElasticSearchPlugin {
 				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("execute elastic eql=" + jsonQuery.toJSONString());
+			} else {
+				System.out.println("execute elastic eql=" + jsonQuery.toJSONString());
+			}
+		}
+
 		// 执行请求
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
 		if (json == null || json.isEmpty()) {
