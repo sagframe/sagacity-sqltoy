@@ -353,9 +353,7 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("collection")) {
 			noSqlConfig.setCollection(sqlElt.getAttribute("collection"));
 		}
-		if (sqlElt.hasAttribute("mongo-factory")) {
-			noSqlConfig.setMongoFactory(sqlElt.getAttribute("mongo-factory"));
-		}
+
 		// url应该是一个变量如:${es_url}
 		if (sqlElt.hasAttribute("url")) {
 			noSqlConfig.setEndpoint(SqlToyConstants.replaceParams(sqlElt.getAttribute("url")));
@@ -895,7 +893,7 @@ public class SqlXMLConfigParse {
 			} else if (translate.hasAttribute("original-columns")) {
 				aliasNames = trimParams(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
-			
+
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
 			if (translate.hasAttribute("cache-indexs")) {

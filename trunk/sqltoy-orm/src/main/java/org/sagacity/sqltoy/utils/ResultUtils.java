@@ -802,17 +802,26 @@ public class ResultUtils {
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			boolean debug) {
-		HashMap<String, Integer> labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+		HashMap<String, Integer> labelIndexMap = null;
 		// 字段脱敏
 		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
+			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
 		}
 
 		// 自动格式化
 		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
+			if (labelIndexMap == null) {
+				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			}
 			formatColumn(dataSetResult, sqlToyConfig, labelIndexMap);
 		}
+
+		// 计算
 		if (sqlToyConfig.getResultProcessor() != null) {
+			if (labelIndexMap == null) {
+				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			}
 			List items = dataSetResult.getRows();
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;

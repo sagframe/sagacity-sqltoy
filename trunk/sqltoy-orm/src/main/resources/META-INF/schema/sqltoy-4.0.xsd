@@ -331,14 +331,12 @@
 			<!-- 分页优化 -->
 			<xsd:element name="page-optimize" minOccurs="0"
 				maxOccurs="1" type="sqltoyPageOptimizeType" />
-			<xsd:element name="fields" type="xsd:string" />
 		</xsd:choice>
 		<xsd:attribute name="id" type="xsd:string"
 			use="required" />
 		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
 		<xsd:attribute name="collection" type="xsd:string"
 			use="required" />
-		<xsd:attribute name="mongo-factory" type="xsd:string" />
 		<xsd:attribute name="is-aggregate" type="xsd:boolean"
 			default="false" />
 		<xsd:attribute name="fields" use="required" />
@@ -365,8 +363,6 @@
 				type="sqltoyUnpivotType" />
 			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
 				type="sqltoySummaryType" />
-			<xsd:element name="fields" minOccurs="0" maxOccurs="1"
-				type="xsd:string" />
 		</xsd:choice>
 		<xsd:attribute name="id" type="xsd:string"
 			use="required" />

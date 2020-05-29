@@ -23,11 +23,6 @@ public class NoSqlConfigModel implements Serializable {
 	private String collection;
 
 	/**
-	 * mongo对应的连接工厂类
-	 */
-	private String mongoFactory;
-
-	/**
 	 * es的url地址
 	 */
 	private String endpoint;
@@ -45,19 +40,23 @@ public class NoSqlConfigModel implements Serializable {
 	/**
 	 * 请求获取数据超时时间默认为30秒
 	 */
+	@Deprecated
 	private int requestTimeout = 30000;
 
 	// 连接超时时间为10秒
+	@Deprecated
 	private int connectTimeout = 10000;
 
 	/**
 	 * 整个请求超时时长,3分钟
 	 */
+	@Deprecated
 	private int socketTimeout = 180000;
 
 	/**
 	 * url请求是字符集类型
 	 */
+	@Deprecated
 	private String charset = "UTF-8";
 
 	/**
@@ -85,8 +84,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param collection
-	 *            the collection to set
+	 * @param collection the collection to set
 	 */
 	public void setCollection(String collection) {
 		this.collection = collection;
@@ -114,8 +112,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -129,8 +126,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param index
-	 *            the index to set
+	 * @param index the index to set
 	 */
 	public void setIndex(String index) {
 		this.index = index;
@@ -144,8 +140,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param requestTimeout
-	 *            the requestTimeout to set
+	 * @param requestTimeout the requestTimeout to set
 	 */
 	public void setRequestTimeout(int requestTimeout) {
 		this.requestTimeout = requestTimeout;
@@ -159,8 +154,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param connectTimeout
-	 *            the connectTimeout to set
+	 * @param connectTimeout the connectTimeout to set
 	 */
 	public void setConnectTimeout(int connectTimeout) {
 		this.connectTimeout = connectTimeout;
@@ -174,8 +168,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param charset
-	 *            the charset to set
+	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
@@ -189,8 +182,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param hasAggs
-	 *            the hasAggs to set
+	 * @param hasAggs the hasAggs to set
 	 */
 	public void setHasAggs(boolean hasAggs) {
 		this.hasAggs = hasAggs;
@@ -204,8 +196,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param fields
-	 *            the fields to set
+	 * @param fields the fields to set
 	 */
 	public void setFields(String[] fields) {
 		this.fields = fields;
@@ -219,8 +210,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param valueRoot
-	 *            the valueRoot to set
+	 * @param valueRoot the valueRoot to set
 	 */
 	public void setValueRoot(String[] valueRoot) {
 		this.valueRoot = valueRoot;
@@ -234,8 +224,7 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param sqlMode
-	 *            the sqlMode to set
+	 * @param sqlMode the sqlMode to set
 	 */
 	public void setSqlMode(boolean sqlMode) {
 		this.sqlMode = sqlMode;
@@ -249,26 +238,10 @@ public class NoSqlConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param socketTimeout
-	 *            the socketTimeout to set
+	 * @param socketTimeout the socketTimeout to set
 	 */
 	public void setSocketTimeout(int socketTimeout) {
 		this.socketTimeout = socketTimeout;
-	}
-
-	/**
-	 * @return the mongoFactory
-	 */
-	public String getMongoFactory() {
-		return mongoFactory;
-	}
-
-	/**
-	 * @param mongoFactory
-	 *            the mongoFactory to set
-	 */
-	public void setMongoFactory(String mongoFactory) {
-		this.mongoFactory = mongoFactory;
 	}
 
 }
