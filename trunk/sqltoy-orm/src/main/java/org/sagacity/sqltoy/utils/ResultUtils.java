@@ -136,7 +136,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(QueryResult result, SqlToyConfig sqlToyConfig,
+	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig,
 			HashMap<String, Integer> labelIndexMap) {
 		List<List> rows = result.getRows();
 		SecureMask[] masks = sqlToyConfig.getSecureMasks();
@@ -162,7 +162,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(QueryResult result, SqlToyConfig sqlToyConfig,
+	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig,
 			HashMap<String, Integer> labelIndexMap) {
 		List<List> rows = result.getRows();
 		FormatModel[] formats = sqlToyConfig.getFormatModels();
@@ -805,12 +805,12 @@ public class ResultUtils {
 		HashMap<String, Integer> labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 		// 字段脱敏
 		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
-			secureMask((QueryResult) dataSetResult, sqlToyConfig, labelIndexMap);
+			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
 		}
 
 		// 自动格式化
 		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
-			formatColumn((QueryResult) dataSetResult, sqlToyConfig, labelIndexMap);
+			formatColumn(dataSetResult, sqlToyConfig, labelIndexMap);
 		}
 		if (sqlToyConfig.getResultProcessor() != null) {
 			List items = dataSetResult.getRows();
