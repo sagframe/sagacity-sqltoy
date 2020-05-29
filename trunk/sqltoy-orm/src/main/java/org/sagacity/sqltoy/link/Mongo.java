@@ -24,7 +24,6 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 
@@ -48,7 +47,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 基于spring-data的mongo工厂类
 	 */
-	private MongoDbFactory mongoDbFactory;
+	private MongoTemplate mongoTemplate;
 
 	/**
 	 * 查询语句
@@ -83,8 +82,8 @@ public class Mongo extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	public void mongoDbFactory(MongoDbFactory mongoDbFactory) {
-		this.mongoDbFactory = mongoDbFactory;
+	public void mongoTemplate(MongoTemplate mongoTemplate) {
+		this.mongoTemplate = mongoTemplate;
 	}
 
 	public Mongo sql(String sql) {
@@ -139,11 +138,9 @@ public class Mongo extends BaseLink {
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
-						realMql, (Class) queryExecutor.getResultType());
+				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) queryExecutor.getResultType());
 			}
-			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-					realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -165,8 +162,7 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-					realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -188,8 +184,8 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-					realMql, (Class) queryExecutor.getResultType());
+			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql,
+					(Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -345,11 +341,9 @@ public class Mongo extends BaseLink {
 	 * @param mongoFactory
 	 * @return
 	 */
-	private MongoDbFactory getMongoDbFactory(String mongoFactory) {
-		if (StringUtil.isNotBlank(mongoFactory))
-			return (MongoDbFactory) sqlToyContext.getBean(mongoFactory);
-		if (this.mongoDbFactory != null)
-			return mongoDbFactory;
-		return (MongoDbFactory) sqlToyContext.getBean(sqlToyContext.getMongoFactoryName());
+	private MongoTemplate getMongoTemplate() {
+		if (this.mongoTemplate != null)
+			return mongoTemplate;
+		return (MongoTemplate) sqlToyContext.getBean(MongoTemplate.class);
 	}
 }

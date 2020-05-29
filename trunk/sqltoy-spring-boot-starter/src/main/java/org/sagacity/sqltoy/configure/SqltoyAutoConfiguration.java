@@ -46,8 +46,8 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {
 			List<String> resList = new ArrayList<String>();
-			for (String s : properties.getSqlResources()) {
-				resList.add(s);
+			for (String prop : properties.getSqlResources()) {
+				resList.add(prop);
 			}
 			sqlToyContext.setSqlResources(resList);
 		}
@@ -152,10 +152,6 @@ public class SqltoyAutoConfiguration {
 				endpoints.add(ep);
 			}
 			sqlToyContext.setElasticEndpoints(endpoints);
-		}
-		// mongodb
-		if (properties.getMongoFactoryName() != null) {
-			sqlToyContext.setMongoFactoryName(properties.getMongoFactoryName());
 		}
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {

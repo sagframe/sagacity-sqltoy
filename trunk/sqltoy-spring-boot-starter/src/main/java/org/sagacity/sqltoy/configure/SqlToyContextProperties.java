@@ -104,7 +104,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * sqltoy默认数据库
 	 */
 	private String defaultDataSource;
-	
+
 	/**
 	 * 数据库保留字,用逗号分隔
 	 */
@@ -242,14 +242,6 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
-	}
-
-	public String getMongoFactoryName() {
-		return mongoFactoryName;
-	}
-
-	public void setMongoFactoryName(String mongoFactoryName) {
-		this.mongoFactoryName = mongoFactoryName;
 	}
 
 	public Integer getPrintSqlTimeoutMillis() {
