@@ -154,6 +154,49 @@ public class FileUtil {
 		return new String(fileBytes, charset);
 	}
 
+	/**
+	 * @TODO 读取文件存为字符串
+	 * @param file
+	 * @param charset
+	 * @return
+	 */
+	public static String readFileAsString(Object file, String charset) {
+		return inputStream2String(getFileInputStream(file), charset);
+	}
+
+	/**
+	 * 转换InputStream为String
+	 *
+	 * @param is
+	 * @param encoding
+	 * @return
+	 */
+	public static String inputStream2String(InputStream is, String encoding) {
+		if (null == is) {
+			return null;
+		}
+		StringBuilder buffer = new StringBuilder();
+		BufferedReader in = null;
+		try {
+			if (StringUtil.isNotBlank(encoding)) {
+				in = new BufferedReader(new InputStreamReader(is, encoding));
+			} else {
+				in = new BufferedReader(new InputStreamReader(is));
+			}
+			String line = "";
+			while ((line = in.readLine()) != null) {
+				buffer.append(line);
+				buffer.append("\r\n");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		} finally {
+			IOUtil.closeQuietly(in);
+		}
+		return buffer.toString();
+	}
+
 	public static String readLineAsString(File file, String charset) {
 		BufferedReader reader = null;
 		StringBuilder result = new StringBuilder();
@@ -737,9 +780,8 @@ public class FileUtil {
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
-		if (file == null) {
+		if (file == null)
 			return null;
-		}
 		try {
 			if (file instanceof InputStream) {
 				return (InputStream) file;
@@ -747,11 +789,15 @@ public class FileUtil {
 			if (file instanceof File) {
 				return new FileInputStream((File) file);
 			}
-			// 文件路径
-			if (new File((String) file).exists()) {
-				return new FileInputStream((String) file);
-			}
+
 			String realFile = (String) file;
+			if (StringUtil.isBlank(realFile)) {
+				return null;
+			}
+			// 文件路径
+			if (new File(realFile).exists()) {
+				return new FileInputStream(realFile);
+			}
 			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
 				realFile = realFile.trim().substring(10).trim();
 			}
@@ -766,9 +812,8 @@ public class FileUtil {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						result = new FileInputStream(url.getFile());
-						if (result != null) {
+						if (result != null)
 							break;
-						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -31,7 +31,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testProcessSql() {
-		String sql = CommonUtils.readFileAsString("classpath:scripts/ifScriptSql.sql", "UTF-8");
+		String sql = FileUtil.readFileAsString("classpath:scripts/ifScriptSql.sql", "UTF-8");
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
 				new Object[] { null, "chen", "1" });
 		System.err.println("id==null:" + JSON.toJSONString(result));
@@ -45,7 +45,7 @@ public class SqlConfigParseUtilsTest {
 	public void testParseSql() throws Exception {
 		String sqlFile = "classpath:scripts/showcase-sql.sql.xml";
 		List<SqlToyConfig> result = new ArrayList<SqlToyConfig>();
-		InputStream fileIS = CommonUtils.getFileInputStream(sqlFile);
+		InputStream fileIS = FileUtil.getFileInputStream(sqlFile);
 		domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
 		DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
 		Document doc = domBuilder.parse(fileIS);

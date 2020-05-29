@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.FileUtil;
 
 public class FunctionUtilTest {
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
@@ -25,7 +25,7 @@ public class FunctionUtilTest {
 	@Test
 	public void testInstr() {
 		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
-		String sql = CommonUtils.readFileAsString("classpath:/scripts/instr_function.txt", "UTF-8");
+		String sql = FileUtil.readFileAsString("classpath:/scripts/instr_function.txt", "UTF-8");
 		String dialectSql = FunctionUtils.getDialectSql(sql, "oracle");
 		System.err.println(dialectSql);
 	}

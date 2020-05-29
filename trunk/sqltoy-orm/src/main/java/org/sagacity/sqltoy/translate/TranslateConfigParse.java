@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -57,7 +57,7 @@ public class TranslateConfigParse {
 			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
 			String translateConfig, String charset) throws Exception {
 		// 判断缓存翻译的配置文件是否存在
-		if (CommonUtils.getFileInputStream(translateConfig) == null) {
+		if (FileUtil.getFileInputStream(translateConfig) == null) {
 			logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性,如不使用缓存翻译可忽略此提示!", translateConfig);
 			return null;
 		}

@@ -13,8 +13,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -305,7 +305,7 @@ public class SqlToyConstants {
 		InputStream fis = null;
 		try {
 			Properties props = new Properties();
-			fis = CommonUtils.getFileInputStream(propertiesFile);
+			fis = FileUtil.getFileInputStream(propertiesFile);
 			props.load(fis);
 			sqlToyProps.putAll((Map) props);
 			fis.close();
