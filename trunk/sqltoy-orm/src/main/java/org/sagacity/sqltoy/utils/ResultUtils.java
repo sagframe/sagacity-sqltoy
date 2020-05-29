@@ -111,7 +111,7 @@ public class ResultUtils {
 			} catch (Exception e) {
 				throw e;
 			}
-
+// 移到calculate 计算方法中，兼容mongo、es 的处理
 //			// 字段脱敏
 //			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
 //				secureMask(result, sqlToyConfig, labelIndexMap);
