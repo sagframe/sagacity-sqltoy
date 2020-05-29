@@ -146,9 +146,6 @@ public class HttpClientUtils {
 				Request request = new Request(POST, realUrl);
 				request.setEntity(httpEntity);
 				Response response = restClient.performRequest(request);
-				// Response response = restClient.performRequest("POST", realUrl,
-				// Collections.<String, String>emptyMap(),
-				// httpEntity);
 				reponseEntity = response.getEntity();
 			} catch (Exception e) {
 				throw e;
