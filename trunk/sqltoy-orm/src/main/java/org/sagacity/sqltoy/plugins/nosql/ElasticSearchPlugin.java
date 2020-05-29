@@ -70,7 +70,7 @@ public class ElasticSearchPlugin {
 			logger.error("分页解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		
+
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
@@ -188,7 +188,7 @@ public class ElasticSearchPlugin {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
+		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(
 				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));

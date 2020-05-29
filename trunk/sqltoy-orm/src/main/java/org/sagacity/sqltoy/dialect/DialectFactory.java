@@ -362,8 +362,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
-									sqlToyContext.isDebug());
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -512,8 +511,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
-									sqlToyContext.isDebug());
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -621,8 +619,7 @@ public class DialectFactory {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
-								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
-										sqlToyContext.isDebug());
+								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 								// 结果映射成对象
 								if (queryExecutor.getResultType() != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -686,8 +683,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
-									sqlToyContext.isDebug());
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -740,8 +736,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
-									sqlToyContext.isDebug());
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
 							if (queryExecutor.getResultType() != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -1492,7 +1487,7 @@ public class DialectFactory {
 									inParamsValue);
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet, sqlToyContext.isDebug());
+							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet);
 							// }
 							// 映射成对象
 							if (resultType != null) {

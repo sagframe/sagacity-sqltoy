@@ -18,8 +18,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.1

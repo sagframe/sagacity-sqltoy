@@ -370,7 +370,7 @@ public class Mongo extends BaseLink {
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
-		ResultUtils.calculate(sqlToyConfig, dataSetResult, null, sqlToyContext.isDebug());
+		ResultUtils.calculate(sqlToyConfig, dataSetResult, null);
 		return MongoElasticUtils.wrapResultClass(resultSet, translateFields, resultClass);
 	}
 

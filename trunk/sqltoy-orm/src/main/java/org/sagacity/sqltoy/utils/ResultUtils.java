@@ -797,11 +797,9 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet
-	 * @param debug
 	 * @throws Exception
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
-			boolean debug) {
+	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet) {
 		HashMap<String, Integer> labelIndexMap = null;
 		// 字段脱敏
 		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {

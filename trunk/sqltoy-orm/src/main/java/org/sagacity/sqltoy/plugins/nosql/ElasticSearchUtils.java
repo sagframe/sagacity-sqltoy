@@ -90,7 +90,7 @@ public class ElasticSearchUtils {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
+		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(
@@ -479,7 +479,7 @@ public class ElasticSearchUtils {
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
-				//{value:xxx} 模式
+				// {value:xxx} 模式
 				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value"))
 					return rowJson;
 				return getRealJSONObject(tmp, realFields, isSuggest);
