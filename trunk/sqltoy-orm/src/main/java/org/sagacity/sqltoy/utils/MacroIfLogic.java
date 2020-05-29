@@ -25,8 +25,9 @@ public class MacroIfLogic {
 	 * @return
 	 */
 	public static boolean evalLogic(String sql, List paramValues, int preCount, int logicParamCnt) {
-		if (logicParamCnt == 0)
+		if (logicParamCnt == 0) {
 			return true;
+		}
 		Object value;
 		for (int i = 0; i < logicParamCnt; i++) {
 			value = paramValues.get(preCount + i);

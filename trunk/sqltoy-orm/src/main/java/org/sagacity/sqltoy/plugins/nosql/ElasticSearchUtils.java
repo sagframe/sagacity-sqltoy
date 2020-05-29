@@ -430,8 +430,9 @@ public class ElasticSearchUtils {
 	 */
 	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {
 		Object result = rowJson.get("_source");
-		if (result != null && result instanceof JSONObject)
+		if (result != null && result instanceof JSONObject) {
 			return result;
+		}
 		result = rowJson.get("buckets");
 		if (result != null) {
 			if (result instanceof JSONArray) {
@@ -461,8 +462,9 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
-			if (isRoot(rowJson, realFields))
+			if (isRoot(rowJson, realFields)) {
 				return rowJson;
+			}
 			Object[] keys = rowJson.keySet().toArray();
 			for (Object key : keys) {
 				if (!key.equals("key") && !key.equals("doc_count")) {
@@ -481,8 +483,9 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
 				// {value:xxx} 模式
-				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value"))
+				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value")) {
 					return rowJson;
+				}
 				return getRealJSONObject(tmp, realFields, isSuggest);
 			} else if (result instanceof JSONArray) {
 				return result;
