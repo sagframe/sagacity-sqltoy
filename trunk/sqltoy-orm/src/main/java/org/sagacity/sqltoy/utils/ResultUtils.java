@@ -808,10 +808,14 @@ public class ResultUtils {
 			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 			String realLabelName;
 			String[] fields = dataSetResult.getLabelNames();
+			int index;
 			for (int i = 0, n = fields.length; i < n; i++) {
 				realLabelName = fields[i].toLowerCase();
-				if (realLabelName.indexOf(":") != -1) {
-					realLabelName = realLabelName.substring(0, realLabelName.indexOf(":")).trim();
+				index = realLabelName.indexOf(":");
+				if (index != -1) {
+					// realLabelName = realLabelName.substring(0,
+					// realLabelName.indexOf(":")).trim();
+					realLabelName = realLabelName.substring(index + 1).trim();
 				}
 				labelIndexMap.put(realLabelName, i);
 			}
