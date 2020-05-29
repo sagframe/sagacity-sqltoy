@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
+ * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResultUtils {
@@ -111,16 +112,16 @@ public class ResultUtils {
 			} catch (Exception e) {
 				throw e;
 			}
-// 移到calculate 计算方法中，兼容mongo、es 的处理
-//			// 字段脱敏
-//			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
-//				secureMask(result, sqlToyConfig, labelIndexMap);
-//			}
-//
-//			// 自动格式化
-//			if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
-//				formatColumn(result, sqlToyConfig, labelIndexMap);
-//			}
+			// 2020-05-29 移到calculate 计算方法中，兼容mongo、es 的处理
+			// 字段脱敏
+			// if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
+			// secureMask(result, sqlToyConfig, labelIndexMap);
+			// }
+			//
+			// 自动格式化
+			// if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
+			// formatColumn(result, sqlToyConfig, labelIndexMap);
+			// }
 
 		}
 		// 填充记录数
