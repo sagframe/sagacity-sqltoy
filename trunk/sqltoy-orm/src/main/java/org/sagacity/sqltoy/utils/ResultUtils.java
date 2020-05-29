@@ -112,15 +112,15 @@ public class ResultUtils {
 				throw e;
 			}
 
-			// 字段脱敏
-			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
-				secureMask(result, sqlToyConfig, labelIndexMap);
-			}
-
-			// 自动格式化
-			if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
-				formatColumn(result, sqlToyConfig, labelIndexMap);
-			}
+//			// 字段脱敏
+//			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
+//				secureMask(result, sqlToyConfig, labelIndexMap);
+//			}
+//
+//			// 自动格式化
+//			if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
+//				formatColumn(result, sqlToyConfig, labelIndexMap);
+//			}
 
 		}
 		// 填充记录数
@@ -308,8 +308,9 @@ public class ResultUtils {
 		// 是否判断全部为null的行记录
 		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
 		// 最大值要大于等于警告阀值
-		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
+		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
+		}
 		List rowTemp;
 		if (linkModel != null) {
 			Object identity = null;
@@ -801,25 +802,20 @@ public class ResultUtils {
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			boolean debug) {
+		HashMap<String, Integer> labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+		// 字段脱敏
+		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
+			secureMask((QueryResult) dataSetResult, sqlToyConfig, labelIndexMap);
+		}
+
+		// 自动格式化
+		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
+			formatColumn((QueryResult) dataSetResult, sqlToyConfig, labelIndexMap);
+		}
 		if (sqlToyConfig.getResultProcessor() != null) {
 			List items = dataSetResult.getRows();
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
-			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
-			String realLabelName;
-			String[] fields = dataSetResult.getLabelNames();
-			int index;
-			for (int i = 0, n = fields.length; i < n; i++) {
-				realLabelName = fields[i].toLowerCase();
-				index = realLabelName.indexOf(":");
-				if (index != -1) {
-					// realLabelName = realLabelName.substring(0,
-					// realLabelName.indexOf(":")).trim();
-					realLabelName = realLabelName.substring(index + 1).trim();
-				}
-				labelIndexMap.put(realLabelName, i);
-			}
-
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
 				// 数据旋转
@@ -843,6 +839,25 @@ public class ResultUtils {
 			}
 			dataSetResult.setRows(items);
 		}
+	}
+
+	private static HashMap<String, Integer> wrapLabelIndexMap(String[] fields) {
+		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		if (fields != null && fields.length > 0) {
+			String realLabelName;
+			int index;
+			for (int i = 0, n = fields.length; i < n; i++) {
+				realLabelName = fields[i].toLowerCase();
+				index = realLabelName.indexOf(":");
+				if (index != -1) {
+					// realLabelName = realLabelName.substring(0,
+					// realLabelName.indexOf(":")).trim();
+					realLabelName = realLabelName.substring(index + 1).trim();
+				}
+				labelIndexMap.put(realLabelName, i);
+			}
+		}
+		return labelIndexMap;
 	}
 
 	/**
