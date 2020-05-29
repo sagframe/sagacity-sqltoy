@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.MacroIfLogic;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -381,7 +381,7 @@ public class SqlConfigParseUtils {
 					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
 					int logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
-					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
+					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
 						markContentSql = BLANK;

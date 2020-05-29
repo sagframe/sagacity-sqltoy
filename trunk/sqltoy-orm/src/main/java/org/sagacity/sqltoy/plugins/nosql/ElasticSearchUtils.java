@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,8 +94,8 @@ public class ElasticSearchUtils {
 		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(
-				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
+		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));
 		return resultSet;
 	}
 

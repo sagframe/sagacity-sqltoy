@@ -70,7 +70,7 @@ public class StringUtil {
 		}
 		return obj.toString();
 	}
-	
+
 	/**
 	 * @todo 判断字符串是空或者空白
 	 * @param str
@@ -789,6 +789,27 @@ public class StringUtil {
 			result.append(Character.toString(chars[i]));
 		}
 		return result.toString();
+	}
+
+	/**
+	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
+	 * @param labelNames
+	 * @return
+	 */
+	public static String[] humpFieldNames(String[] labelNames) {
+		if (labelNames == null)
+			return null;
+		String[] result = new String[labelNames.length];
+		int aliasIndex = 0;
+		for (int i = 0, n = labelNames.length; i < n; i++) {
+			aliasIndex = labelNames[i].indexOf(":");
+			if (aliasIndex != -1) {
+				result[i] = toHumpStr(labelNames[i].substring(aliasIndex + 1), false);
+			} else {
+				result[i] = toHumpStr(labelNames[i], false);
+			}
+		}
+		return result;
 	}
 
 	/**
