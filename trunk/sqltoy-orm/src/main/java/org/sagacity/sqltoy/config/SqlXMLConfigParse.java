@@ -892,7 +892,10 @@ public class SqlXMLConfigParse {
 			// 使用alias时只能针对单列处理
 			if (translate.hasAttribute("alias-name")) {
 				aliasNames = trimParams(translate.getAttribute("alias-name").toLowerCase().split("\\,"));
+			} else if (translate.hasAttribute("original-columns")) {
+				aliasNames = trimParams(translate.getAttribute("original-columns").toLowerCase().split("\\,"));
 			}
+			
 			// 翻译key对应value的在缓存数组中对应的列
 			cacheIndexs = null;
 			if (translate.hasAttribute("cache-indexs")) {
