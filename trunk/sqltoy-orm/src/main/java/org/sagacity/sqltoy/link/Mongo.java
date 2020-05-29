@@ -34,6 +34,7 @@ import com.mongodb.client.AggregateIterable;
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:Mongo.java,Revision:v1.0,Date:2018年1月1日
+ * @Modification {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  */
 public class Mongo extends BaseLink {
 
@@ -235,8 +236,9 @@ public class Mongo extends BaseLink {
 		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
-		if (rs == null || rs.isEmpty())
+		if (rs == null || rs.isEmpty()) {
 			return result;
+		}
 		result.setRows(extractFieldValues(sqlToyConfig, rs.iterator(), resultClass));
 		return result;
 	}
@@ -264,8 +266,9 @@ public class Mongo extends BaseLink {
 		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
-		if (rs == null || rs.isEmpty())
+		if (rs == null || rs.isEmpty()) {
 			return null;
+		}
 		return extractFieldValues(sqlToyConfig, rs.iterator(), resultClass);
 	}
 
@@ -295,8 +298,9 @@ public class Mongo extends BaseLink {
 		}
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
-		if (out == null)
+		if (out == null) {
 			return null;
+		}
 		return extractFieldValues(sqlToyConfig, out.iterator(), resultClass);
 	}
 
@@ -342,8 +346,9 @@ public class Mongo extends BaseLink {
 	 * @return
 	 */
 	private MongoTemplate getMongoTemplate() {
-		if (this.mongoTemplate != null)
+		if (this.mongoTemplate != null) {
 			return mongoTemplate;
+		}
 		return (MongoTemplate) sqlToyContext.getBean(MongoTemplate.class);
 	}
 }
