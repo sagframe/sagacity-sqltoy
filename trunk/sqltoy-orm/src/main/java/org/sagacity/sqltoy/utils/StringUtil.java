@@ -60,6 +60,18 @@ public class StringUtil {
 	}
 
 	/**
+	 * @todo 将对象转为字符串排除null
+	 * @param obj
+	 * @return
+	 */
+	public static String toString(Object obj) {
+		if (null == obj) {
+			return "";
+		}
+		return obj.toString();
+	}
+	
+	/**
 	 * @todo 判断字符串是空或者空白
 	 * @param str
 	 * @return
