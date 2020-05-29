@@ -178,8 +178,9 @@ public class ElasticSearchPlugin {
 		}
 		// 执行请求
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
-		if (json == null || json.isEmpty())
+		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
+		}
 		DataSetResult resultSet = ElasticSearchUtils.extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
