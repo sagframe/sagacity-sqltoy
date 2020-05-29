@@ -106,6 +106,9 @@ public class EntityManager {
 	 */
 	private ConcurrentHashMap<String, EntityMeta> entitysMetaMap = new ConcurrentHashMap<String, EntityMeta>();
 
+	/**
+	 * 非sqltoy entity类,一般指仅用于查询作为返回结果的VO
+	 */
 	private ConcurrentHashMap<String, String> unEntityMap = new ConcurrentHashMap<String, String>();
 
 	/**
@@ -196,8 +199,9 @@ public class EntityManager {
 			return null;
 		String className = entityClass.getName();
 		// 避免重复解析
-		if (entitysMetaMap.containsKey(className))
+		if (entitysMetaMap.containsKey(className)) {
 			return entitysMetaMap.get(className);
+		}
 		EntityMeta entityMeta = null;
 		try {
 			Class realEntityClass = entityClass;
