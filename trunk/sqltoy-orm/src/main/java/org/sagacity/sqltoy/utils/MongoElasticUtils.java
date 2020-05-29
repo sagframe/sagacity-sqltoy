@@ -77,8 +77,9 @@ public class MongoElasticUtils {
 			return sqlToyConfig.getSql(null);
 		}
 		SqlToyResult sqlToyResult = wrapNoSql(sqlToyConfig, paramNames, paramValues);
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
+		}
 		String mongoJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'").trim();
 		// json格式补全
 		if (!mongoJson.startsWith("{")) {
@@ -528,7 +529,7 @@ public class MongoElasticUtils {
 				keyValues = translateCache.get(lables[i]);
 				translateModel = translateMap.get(lables[i]);
 				cacheIndex = translateModel.getIndex();
-				//实际列
+				// 实际列
 				value = dataMap.get(translateModel.getAlias());
 				if (value != null) {
 					translateAry = keyValues.get(value.toString());

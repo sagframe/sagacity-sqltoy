@@ -18,6 +18,8 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.1
@@ -30,6 +32,11 @@ public class Elastic extends BaseLink {
 	 * 
 	 */
 	private static final long serialVersionUID = -3963816230256439625L;
+
+	/**
+	 * 定义日志
+	 */
+	private final Logger logger = LoggerFactory.getLogger(Elastic.class);
 
 	private final String ERROR_MESSAGE = "ES查询请使用<eql></eql>配置!";
 

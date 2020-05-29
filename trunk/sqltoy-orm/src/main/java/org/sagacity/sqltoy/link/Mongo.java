@@ -24,6 +24,8 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 
@@ -42,6 +44,11 @@ public class Mongo extends BaseLink {
 	 * 
 	 */
 	private static final long serialVersionUID = -4443964509492022973L;
+
+	/**
+	 * 定义日志
+	 */
+	private final Logger logger = LoggerFactory.getLogger(Mongo.class);
 
 	private final String ERROR_MESSAGE = "mongo查询请使用<mql id=\"\" collection=\"\" fields=\"\"></mql>配置,请确定相关配置正确性!";
 
@@ -159,8 +166,9 @@ public class Mongo extends BaseLink {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
-		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
+		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
@@ -236,6 +244,13 @@ public class Mongo extends BaseLink {
 		} else {
 			query.skip((pageModel.getPageNo() - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("query mongo script=" + query.getQueryObject());
+			} else {
+				System.out.println("query mongo script=" + query.getQueryObject());
+			}
+		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
 		if (rs == null || rs.isEmpty()) {
@@ -266,6 +281,13 @@ public class Mongo extends BaseLink {
 				query.limit(Double.valueOf(count * topSize.floatValue()).intValue());
 			}
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("query mongo script=" + query.getQueryObject());
+			} else {
+				System.out.println("query mongo script=" + query.getQueryObject());
+			}
+		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
 		if (rs == null || rs.isEmpty()) {
@@ -291,6 +313,15 @@ public class Mongo extends BaseLink {
 		if (realMql.startsWith("[") && realMql.endsWith("]")) {
 			realMql = realMql.substring(1, realMql.length() - 1);
 		}
+
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("aggregate mongo script=" + realMql);
+			} else {
+				System.out.println("aggregate mongo script=" + realMql);
+			}
+		}
+
 		String[] aggregates = StringUtil.splitExcludeSymMark(realMql, ",", SqlToyConstants.filters);
 		List<Bson> dbObjects = new ArrayList<Bson>();
 		for (String json : aggregates) {
@@ -298,6 +329,7 @@ public class Mongo extends BaseLink {
 				dbObjects.add(Document.parse(json));
 			}
 		}
+
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
 		if (out == null) {
