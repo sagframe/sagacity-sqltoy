@@ -43,16 +43,6 @@ public class StringUtil {
 	private StringUtil() {
 	}
 
-	@Deprecated
-	public static boolean isNotNullAndBlank(Object str) {
-		return !isBlank(str);
-	}
-
-	@Deprecated
-	public static boolean isNullOrBlank(Object str) {
-		return isBlank(str);
-	}
-
 	public static String trim(String str) {
 		if (str == null) {
 			return null;
