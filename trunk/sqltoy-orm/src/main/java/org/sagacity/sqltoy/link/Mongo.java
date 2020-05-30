@@ -189,8 +189,9 @@ public class Mongo extends BaseLink {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
-		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
+		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
