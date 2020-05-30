@@ -815,8 +815,9 @@ public class FileUtil {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						result = new FileInputStream(url.getFile());
-						if (result != null)
+						if (result != null) {
 							break;
+						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
