@@ -417,14 +417,16 @@ public class StringUtil {
 
 	public static int matchIndex(String source, Pattern p) {
 		Matcher m = p.matcher(source);
-		if (m.find())
+		if (m.find()) {
 			return m.start();
+		}
 		return -1;
 	}
 
 	public static int[] matchIndex(String source, Pattern p, int start) {
-		if (source.length() <= start)
+		if (source.length() <= start) {
 			return new int[] { -1, -1 };
+		}
 		Matcher m = p.matcher(source.substring(start));
 		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
@@ -494,8 +496,9 @@ public class StringUtil {
 		int count = 0;
 		int index = source.indexOf(regex, begin);
 		while (index != -1) {
-			if (count == order)
+			if (count == order) {
 				return index;
+			}
 			begin = index + 1;
 			index = source.indexOf(regex, begin);
 			count++;
@@ -718,8 +721,9 @@ public class StringUtil {
 			}
 		}
 		// 首字母变大写
-		if (firstIsUpperCase)
+		if (firstIsUpperCase) {
 			return firstToUpperCase(result.toString());
+		}
 		return firstToLowerCase(result.toString());
 	}
 
@@ -760,8 +764,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String humpToSplitStr(String source, String split) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		char[] chars = source.trim().toCharArray();
 		StringBuilder result = new StringBuilder();
 		int charInt;
