@@ -54,8 +54,9 @@ public class StringUtil {
 	}
 
 	public static String trim(String str) {
-		if (str == null)
+		if (str == null) {
 			return null;
+		}
 		return str.trim();
 	}
 
