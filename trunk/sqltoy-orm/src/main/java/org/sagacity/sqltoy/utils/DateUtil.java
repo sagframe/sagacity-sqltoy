@@ -153,10 +153,13 @@ public class DateUtil {
 	 * @return
 	 */
 	public static Date parseString(String dateVar, String dateFormat, String locale) {
-		if (dateVar == null || "".equals(dateVar.trim())) {
+		if (dateVar == null) {
 			return null;
 		}
 		String dateStr = dateVar.trim();
+		if(dateStr.equals("")) {
+			return null;
+		}
 		String realDF = null;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
