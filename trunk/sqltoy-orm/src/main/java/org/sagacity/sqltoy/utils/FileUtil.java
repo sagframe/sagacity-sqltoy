@@ -161,7 +161,7 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String readFileAsString(Object file, String charset) {
-		return inputStream2String(getFileInputStream(file), charset);
+		return inputStreamToStr(getFileInputStream(file), charset);
 	}
 
 	/**
@@ -171,7 +171,7 @@ public class FileUtil {
 	 * @param encoding
 	 * @return
 	 */
-	public static String inputStream2String(InputStream is, String encoding) {
+	public static String inputStreamToStr(InputStream is, String encoding) {
 		if (null == is) {
 			return null;
 		}
@@ -337,7 +337,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 匹配文件
+	 * @todo 递归匹配文件名称获取文件
 	 * @param fileList
 	 * @param file
 	 * @param filters
@@ -432,7 +432,9 @@ public class FileUtil {
 	 */
 	public static void delFolder(String folderPath) {
 		try {
-			delAllFile(folderPath); // 删除完里面所有内??
+			// 删除子文件
+			delAllFile(folderPath);
+			// 删除当前文件夹
 			new File(folderPath).delete();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -594,7 +596,7 @@ public class FileUtil {
 	 * @todo 移动文件
 	 * @param oldPath
 	 * @param newPath
-	 * @return
+	 * @param deleteOldFile
 	 */
 	public static void moveFile(String oldPath, String newPath, boolean deleteOldFile) {
 		copyFile(oldPath, newPath);
@@ -780,8 +782,9 @@ public class FileUtil {
 	 * @return
 	 */
 	public static InputStream getFileInputStream(Object file) {
-		if (file == null)
+		if (file == null) {
 			return null;
+		}
 		try {
 			if (file instanceof InputStream) {
 				return (InputStream) file;
@@ -843,7 +846,6 @@ public class FileUtil {
 			if (!appendFile.exists()) {
 				appendFile.createNewFile();
 			}
-
 			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appendFile, true)));
 			out.write(conent);
 		} catch (Exception e) {
@@ -950,14 +952,5 @@ public class FileUtil {
 			index = realFile.indexOf(pattern);
 		}
 		return linkPath(lastFile, realFile);
-	}
-
-	/**
-	 * @todo 获取Resource
-	 * @param reasource
-	 * @return
-	 */
-	public static InputStream getResourceAsStream(String reasource) {
-		return getFileInputStream(reasource);
 	}
 }
