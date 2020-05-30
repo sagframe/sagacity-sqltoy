@@ -181,8 +181,9 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static Integer[] matchMethodsType(Class voClass, String[] properties) {
-		if (properties == null || properties.length == 0)
+		if (properties == null || properties.length == 0) {
 			return null;
+		}
 		int indexSize = properties.length;
 		Method[] methods = voClass.getMethods();
 		Integer[] fieldsType = new Integer[indexSize];
@@ -263,8 +264,9 @@ public class BeanUtil {
 	public static Object invokeMethod(Object bean, String methodName, Object[] args) throws Exception {
 		try {
 			Method method = getMethod(bean.getClass(), methodName, args == null ? 0 : args.length);
-			if (method == null)
+			if (method == null) {
 				return null;
+			}
 			return method.invoke(bean, args);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -293,12 +295,15 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static boolean equalsIgnoreType(Object target, Object compared, boolean ignoreCase) {
-		if (target == null || compared == null)
+		if (target == null || compared == null) {
 			return target == compared;
-		if (target.getClass().equals(compared.getClass()) && !(target instanceof CharSequence))
+		}
+		if (target.getClass().equals(compared.getClass()) && !(target instanceof CharSequence)) {
 			return target.equals(compared);
-		if (ignoreCase)
+		}
+		if (ignoreCase) {
 			return target.toString().equalsIgnoreCase(compared.toString());
+		}
 		return target.toString().equals(compared.toString());
 	}
 
@@ -316,10 +321,12 @@ public class BeanUtil {
 		}
 		if (paramValue == null) {
 			if (typeName.equals("int") || typeName.equals("long") || typeName.equals("double")
-					|| typeName.equals("float") || typeName.equals("short"))
+					|| typeName.equals("float") || typeName.equals("short")) {
 				return 0;
-			if (typeName.equals("boolean") || typeName.equals("java.lang.boolean"))
+			}
+			if (typeName.equals("boolean") || typeName.equals("java.lang.boolean")) {
 				return false;
+			}
 			return null;
 		}
 		// 转换为小写
@@ -342,14 +349,16 @@ public class BeanUtil {
 		}
 		// 第三优先
 		if (typeName.equals("java.time.localdatetime")) {
-			if (paramValue instanceof LocalDateTime)
+			if (paramValue instanceof LocalDateTime) {
 				return (LocalDateTime) paramValue;
+			}
 			return DateUtil.asLocalDateTime(DateUtil.parseString(valueStr));
 		}
 		// 第四
 		if (typeName.equals("java.time.localdate")) {
-			if (paramValue instanceof LocalDate)
+			if (paramValue instanceof LocalDate) {
 				return (LocalDate) paramValue;
+			}
 			return DateUtil.asLocalDate(DateUtil.parseString(valueStr));
 		}
 		// 第五
@@ -445,8 +454,9 @@ public class BeanUtil {
 		}
 
 		if (typeName.equals("java.lang.boolean") || typeName.equals("boolean")) {
-			if (valueStr.equalsIgnoreCase("true") || valueStr.equals("1"))
+			if (valueStr.equalsIgnoreCase("true") || valueStr.equals("1")) {
 				return Boolean.TRUE;
+			}
 			return Boolean.FALSE;
 		}
 		if (typeName.equals("java.lang.short")) {
@@ -496,8 +506,9 @@ public class BeanUtil {
 		}
 		// 字符数组
 		if (typeName.equals("char[]") || typeName.equals("[c")) {
-			if (paramValue instanceof char[])
+			if (paramValue instanceof char[]) {
 				return (char[]) paramValue;
+			}
 			if (paramValue instanceof java.sql.Clob) {
 				java.sql.Clob clob = (java.sql.Clob) paramValue;
 				BufferedReader in = new BufferedReader(clob.getCharacterStream());
@@ -514,10 +525,12 @@ public class BeanUtil {
 	}
 
 	private static String convertBoolean(String var) {
-		if (var.equals("true"))
+		if (var.equals("true")) {
 			return "1";
-		if (var.equals("false"))
+		}
+		if (var.equals("false")) {
 			return "0";
+		}
 		return var;
 	}
 
@@ -548,8 +561,9 @@ public class BeanUtil {
 		List datas = new ArrayList();
 		datas.add(data);
 		List result = reflectBeansToList(datas, properties, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty())
+		if (null != result && !result.isEmpty()) {
 			return (List) result.get(0);
+		}
 		return null;
 	}
 
@@ -570,8 +584,9 @@ public class BeanUtil {
 	 */
 	public static List reflectBeansToList(List datas, String[] properties,
 			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) throws Exception {
-		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1)
+		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
+		}
 		// 数据的长度
 		int maxLength = Integer.toString(datas.size()).length();
 		List resultList = new ArrayList();
@@ -647,8 +662,9 @@ public class BeanUtil {
 		List datas = new ArrayList();
 		datas.add(serializable);
 		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty())
+		if (null != result && !result.isEmpty()) {
 			return (Object[]) result.get(0);
+		}
 		return null;
 	}
 
@@ -665,8 +681,9 @@ public class BeanUtil {
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
 			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) {
-		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1)
+		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1) {
 			return null;
+		}
 		// 数据的长度
 		int maxLength = Integer.toString(dataSet.size()).length();
 		List<Object[]> resultList = new ArrayList<Object[]>();
@@ -775,14 +792,16 @@ public class BeanUtil {
 	 */
 	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass,
 			boolean autoConvertType) {
-		if (null == datas || datas.isEmpty())
+		if (null == datas || datas.isEmpty()) {
 			return null;
+		}
 		if (null == properties || properties.length < 1 || null == voClass || null == indexs || indexs.length == 0
 				|| properties.length != indexs.length) {
 			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
 		}
-		if (Modifier.isAbstract(voClass.getModifiers()) || Modifier.isInterface(voClass.getModifiers()))
+		if (Modifier.isAbstract(voClass.getModifiers()) || Modifier.isInterface(voClass.getModifiers())) {
 			throw new IllegalArgumentException("toClassType:" + voClass.getName() + " 是抽象类或接口,非法参数!");
+		}
 		List resultList = new ArrayList();
 		Object cellData = null;
 		String propertyName = null;
@@ -876,8 +895,9 @@ public class BeanUtil {
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType, boolean forceUpdate) {
-		if (null == voList || voList.isEmpty())
+		if (null == voList || voList.isEmpty()) {
 			return;
+		}
 		if (null == properties || properties.length < 1 || null == values || values.length < 1
 				|| properties.length != values.length) {
 			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
@@ -934,8 +954,9 @@ public class BeanUtil {
 
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
 			boolean autoConvertType, boolean forceUpdate) throws Exception {
-		if (null == voList || voList.isEmpty())
+		if (null == voList || voList.isEmpty()) {
 			return;
+		}
 		if (null == properties || properties.length < 1 || null == values || values.get(0).length < 1
 				|| properties.length != index.length) {
 			throw new IllegalArgumentException("集合或属性名称数组为空,请检查参数信息!");
@@ -950,8 +971,9 @@ public class BeanUtil {
 			int rowIndex = 0;
 			Object[] rowData;
 			while (iter.hasNext()) {
-				if (rowIndex > values.size() - 1)
+				if (rowIndex > values.size() - 1) {
 					break;
+				}
 				rowData = values.get(rowIndex);
 				bean = iter.next();
 				if (null != bean) {

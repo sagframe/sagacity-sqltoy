@@ -6,14 +6,11 @@ package org.sagacity.sqltoy.utils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,8 +74,9 @@ public class MongoElasticUtils {
 			return sqlToyConfig.getSql(null);
 		}
 		SqlToyResult sqlToyResult = wrapNoSql(sqlToyConfig, paramNames, paramValues);
-		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode())
+		if (sqlToyConfig.getNoSqlConfigModel().isSqlMode()) {
 			return replaceSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'");
+		}
 		String mongoJson = replaceNoSqlParams(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), "'").trim();
 		// json格式补全
 		if (!mongoJson.startsWith("{")) {
@@ -172,7 +170,7 @@ public class MongoElasticUtils {
 							.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
 					int logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
 					// update 2017-4-14 增加@if()简单逻辑判断
-					logicValue = CommonUtils.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
+					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
 						markContentSql = BLANK;
@@ -325,7 +323,6 @@ public class MongoElasticUtils {
 				}
 			}
 			index++;
-			// realMql.append(BLANK);
 		}
 		realMql.append(sql.substring(start));
 		return realMql.toString();
@@ -392,48 +389,6 @@ public class MongoElasticUtils {
 	 */
 	private static String removeDangerWords(String paramValue) {
 		return paramValue.replaceAll("(\"|\'|\\{|\\[|\\}|\\]|\\$|&quot;)", "");
-	}
-
-	/**
-	 * @todo 将结果构造到具体对象中
-	 * @param rowSet
-	 * @param fileds
-	 * @param resultClass
-	 * @return
-	 * @throws Exception
-	 */
-	public static List wrapResultClass(List rowSet, String[] fields, Class resultType) throws Exception {
-		if (rowSet == null || rowSet.isEmpty() || null == resultType || resultType.equals(List.class)
-				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
-			return rowSet;
-		String[] aliasFields = new String[fields.length];
-		System.arraycopy(fields, 0, aliasFields, 0, fields.length);
-		int aliasIndex = 0;
-		for (int i = 0; i < aliasFields.length; i++) {
-			aliasIndex = aliasFields[i].indexOf(":");
-			if (aliasIndex != -1) {
-				aliasFields[i] = aliasFields[i].substring(aliasIndex + 1).trim();
-			}
-		}
-		String[] aliasNames = CommonUtils.humpFieldNames(aliasFields);
-		Class superClass = resultType.getSuperclass();
-		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
-				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-				|| Map.class.equals(superClass)) {
-			List result = new ArrayList();
-			List rowList;
-			for (int i = 0; i < rowSet.size(); i++) {
-				rowList = (List) rowSet.get(i);
-				Map row = (Map) resultType.getDeclaredConstructor().newInstance();
-				for (int j = 0; j < aliasNames.length; j++) {
-					row.put(aliasNames[j], rowList.get(j));
-				}
-				result.add(row);
-			}
-			return result;
-		}
-		return BeanUtil.reflectListToBean(rowSet, aliasNames, resultType);
 	}
 
 	/**
@@ -528,7 +483,7 @@ public class MongoElasticUtils {
 				keyValues = translateCache.get(lables[i]);
 				translateModel = translateMap.get(lables[i]);
 				cacheIndex = translateModel.getIndex();
-				//实际列
+				// 实际列
 				value = dataMap.get(translateModel.getAlias());
 				if (value != null) {
 					translateAry = keyValues.get(value.toString());

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+	<!-- mongo普通查询 -->
+	<mql id="sqltoy_mongo_find" fields="" collection="">
+		<value>
+			<![CDATA[
+				]]>
+		</value>
+	</mql>
+	
+	<!-- mongo分页查询 -->
+	<mql id="sqltoy_mongo_findPage" fields="" collection="">
+		<value>
+			<![CDATA[
+				]]>
+		</value>
+	</mql>
+</sqltoy>

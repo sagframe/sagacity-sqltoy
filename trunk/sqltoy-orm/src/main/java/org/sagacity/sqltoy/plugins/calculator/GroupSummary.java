@@ -8,8 +8,8 @@ import java.util.List;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
-import org.sagacity.sqltoy.utils.CommonUtils;
 import org.sagacity.sqltoy.utils.ExpressionUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 
 /**
  * @project sqltoy-orm
@@ -39,13 +39,13 @@ public class GroupSummary {
 				String[] beginToEnd = column.split("\\.\\.");
 				int begin = 0;
 				int end = 0;
-				if (CommonUtils.isInteger(beginToEnd[0])) {
+				if (NumberUtil.isInteger(beginToEnd[0])) {
 					begin = Integer.parseInt(beginToEnd[0]);
 				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
 				}
 				endColumnStr = beginToEnd[1];
-				if (CommonUtils.isInteger(endColumnStr)) {
+				if (NumberUtil.isInteger(endColumnStr)) {
 					end = Integer.parseInt(endColumnStr);
 					// 负数表示用列宽减去相应值
 					if (end < 0) {
@@ -64,7 +64,7 @@ public class GroupSummary {
 						sumColList.add(j);
 					}
 				}
-			} else if (CommonUtils.isInteger(column)) {
+			} else if (NumberUtil.isInteger(column)) {
 				if (!sumColList.contains(Integer.parseInt(column))) {
 					sumColList.add(Integer.parseInt(column));
 				}
@@ -95,14 +95,14 @@ public class GroupSummary {
 			for (int i = 0; i < groupIndexs.length; i++) {
 				Object[] group = new Object[5];
 				groupMeta = summaryModel.getGroupMeta()[i];
-				group[0] = CommonUtils.isInteger(groupMeta.getGroupColumn())
+				group[0] = NumberUtil.isInteger(groupMeta.getGroupColumn())
 						? Integer.parseInt(groupMeta.getGroupColumn())
 						: labelIndexMap.get(groupMeta.getGroupColumn().toLowerCase());
 				group[1] = groupMeta.getSumTitle();
 				group[2] = groupMeta.getAverageTitle();
 				group[3] = summaryModel.getSumSite();
 				if (groupMeta.getLabelColumn() != null) {
-					group[4] = CommonUtils.isInteger(groupMeta.getLabelColumn())
+					group[4] = NumberUtil.isInteger(groupMeta.getLabelColumn())
 							? Integer.parseInt(groupMeta.getLabelColumn())
 							: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase());
 				}
@@ -111,7 +111,7 @@ public class GroupSummary {
 		}
 		int globalLabelIndex = -1;
 		if (summaryModel.getGlobalLabelColumn() != null) {
-			if (CommonUtils.isInteger(summaryModel.getGlobalLabelColumn())) {
+			if (NumberUtil.isInteger(summaryModel.getGlobalLabelColumn())) {
 				globalLabelIndex = Integer.parseInt(summaryModel.getGlobalLabelColumn());
 			} else {
 				globalLabelIndex = labelIndexMap.get(summaryModel.getGlobalLabelColumn().toLowerCase());

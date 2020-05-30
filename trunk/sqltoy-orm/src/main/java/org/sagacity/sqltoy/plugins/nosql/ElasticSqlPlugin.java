@@ -37,19 +37,23 @@ public class ElasticSqlPlugin {
 	 */
 	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
-		String realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
-		realMql = realMql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
+		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
 		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + realMql + "}");
+			if (logger.isDebugEnabled()) {
+				logger.debug("findPageByElastic sql=" + realSql);
+			} else {
+				System.out.println("findPageByElastic sql=" + realSql);
+			}
 		}
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realMql,
-				(Class)queryExecutor.getResultType());
+		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
+				(Class) queryExecutor.getResultType());
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -66,17 +70,21 @@ public class ElasticSqlPlugin {
 	 */
 	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
-		String realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		if (topSize != null) {
-			realMql = realMql + " limit 0," + topSize;
+			realSql = realSql + " limit 0," + topSize;
 		}
 		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + realMql + "}");
+			if (logger.isDebugEnabled()) {
+				logger.debug("findTopByElastic sql=" + realSql);
+			} else {
+				System.out.println("findTopByElastic sql=" + realSql);
+			}
 		}
-		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realMql,
-				(Class)queryExecutor.getResultType());
+		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
+				(Class) queryExecutor.getResultType());
 		return result.getRows();
 	}
 

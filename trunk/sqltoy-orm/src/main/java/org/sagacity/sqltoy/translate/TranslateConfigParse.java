@@ -16,7 +16,8 @@ import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
-import org.sagacity.sqltoy.utils.CommonUtils;
+import org.sagacity.sqltoy.utils.FileUtil;
+import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.sagacity.sqltoy.utils.XMLUtil;
@@ -56,7 +57,7 @@ public class TranslateConfigParse {
 			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
 			String translateConfig, String charset) throws Exception {
 		// 判断缓存翻译的配置文件是否存在
-		if (CommonUtils.getFileInputStream(translateConfig) == null) {
+		if (FileUtil.getFileInputStream(translateConfig) == null) {
 			logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性,如不使用缓存翻译可忽略此提示!", translateConfig);
 			return null;
 		}
@@ -198,7 +199,7 @@ public class TranslateConfigParse {
 								frequency = StringUtil.toDBC(frequency).replaceAll("\\;", ",").trim();
 								// 0~24点 统一的检测频率
 								// 可以是单个频率值,表示0到24小时采用统一的频率
-								if (CommonUtils.isInteger(frequency)) {
+								if (NumberUtil.isInteger(frequency)) {
 									TimeSection section = new TimeSection();
 									section.setStart(0);
 									section.setEnd(2400);
@@ -239,7 +240,7 @@ public class TranslateConfigParse {
 	 */
 	private static int getHourMinute(String hourMinuteStr) {
 		// 320(3点20分)
-		if (CommonUtils.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
+		if (NumberUtil.isInteger(hourMinuteStr) && hourMinuteStr.length() > 2) {
 			return Integer.parseInt(hourMinuteStr);
 		}
 		String tmp = hourMinuteStr.replaceAll("\\.", ":");

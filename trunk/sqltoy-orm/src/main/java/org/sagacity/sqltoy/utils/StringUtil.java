@@ -43,20 +43,23 @@ public class StringUtil {
 	private StringUtil() {
 	}
 
-	@Deprecated
-	public static boolean isNotNullAndBlank(Object str) {
-		return !isBlank(str);
-	}
-
-	@Deprecated
-	public static boolean isNullOrBlank(Object str) {
-		return isBlank(str);
-	}
-
 	public static String trim(String str) {
-		if (str == null)
+		if (str == null) {
 			return null;
+		}
 		return str.trim();
+	}
+
+	/**
+	 * @todo 将对象转为字符串排除null
+	 * @param obj
+	 * @return
+	 */
+	public static String toString(Object obj) {
+		if (null == obj) {
+			return "";
+		}
+		return obj.toString();
 	}
 
 	/**
@@ -414,14 +417,16 @@ public class StringUtil {
 
 	public static int matchIndex(String source, Pattern p) {
 		Matcher m = p.matcher(source);
-		if (m.find())
+		if (m.find()) {
 			return m.start();
+		}
 		return -1;
 	}
 
 	public static int[] matchIndex(String source, Pattern p, int start) {
-		if (source.length() <= start)
+		if (source.length() <= start) {
 			return new int[] { -1, -1 };
+		}
 		Matcher m = p.matcher(source.substring(start));
 		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
@@ -491,8 +496,9 @@ public class StringUtil {
 		int count = 0;
 		int index = source.indexOf(regex, begin);
 		while (index != -1) {
-			if (count == order)
+			if (count == order) {
 				return index;
+			}
 			begin = index + 1;
 			index = source.indexOf(regex, begin);
 			count++;
@@ -715,8 +721,9 @@ public class StringUtil {
 			}
 		}
 		// 首字母变大写
-		if (firstIsUpperCase)
+		if (firstIsUpperCase) {
 			return firstToUpperCase(result.toString());
+		}
 		return firstToLowerCase(result.toString());
 	}
 
@@ -757,8 +764,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String humpToSplitStr(String source, String split) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		char[] chars = source.trim().toCharArray();
 		StringBuilder result = new StringBuilder();
 		int charInt;
@@ -777,6 +785,27 @@ public class StringUtil {
 			result.append(Character.toString(chars[i]));
 		}
 		return result.toString();
+	}
+
+	/**
+	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
+	 * @param labelNames
+	 * @return
+	 */
+	public static String[] humpFieldNames(String[] labelNames) {
+		if (labelNames == null)
+			return null;
+		String[] result = new String[labelNames.length];
+		int aliasIndex = 0;
+		for (int i = 0, n = labelNames.length; i < n; i++) {
+			aliasIndex = labelNames[i].indexOf(":");
+			if (aliasIndex != -1) {
+				result[i] = toHumpStr(labelNames[i].substring(aliasIndex + 1), false);
+			} else {
+				result[i] = toHumpStr(labelNames[i], false);
+			}
+		}
+		return result;
 	}
 
 	/**

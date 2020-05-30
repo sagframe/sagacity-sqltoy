@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,11 +91,11 @@ public class ElasticSearchUtils {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
+		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(
-				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
+		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));
 		return resultSet;
 	}
 
@@ -429,8 +430,9 @@ public class ElasticSearchUtils {
 	 */
 	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {
 		Object result = rowJson.get("_source");
-		if (result != null && result instanceof JSONObject)
+		if (result != null && result instanceof JSONObject) {
 			return result;
+		}
 		result = rowJson.get("buckets");
 		if (result != null) {
 			if (result instanceof JSONArray) {
@@ -460,8 +462,9 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (rowJson.containsKey("key") && rowJson.containsKey("doc_count")) {
-			if (isRoot(rowJson, realFields))
+			if (isRoot(rowJson, realFields)) {
 				return rowJson;
+			}
 			Object[] keys = rowJson.keySet().toArray();
 			for (Object key : keys) {
 				if (!key.equals("key") && !key.equals("doc_count")) {
@@ -479,9 +482,10 @@ public class ElasticSearchUtils {
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
-				//{value:xxx} 模式
-				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value"))
+				// {value:xxx} 模式
+				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value")) {
 					return rowJson;
+				}
 				return getRealJSONObject(tmp, realFields, isSuggest);
 			} else if (result instanceof JSONArray) {
 				return result;

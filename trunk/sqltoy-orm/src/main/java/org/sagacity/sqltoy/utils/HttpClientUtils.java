@@ -60,8 +60,6 @@ public class HttpClientUtils {
 
 	private final static String CONTENT_TYPE = "application/json";
 
-	// private final static String GET = "GET";
-
 	private final static String POST = "POST";
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
@@ -148,9 +146,6 @@ public class HttpClientUtils {
 				Request request = new Request(POST, realUrl);
 				request.setEntity(httpEntity);
 				Response response = restClient.performRequest(request);
-				// Response response = restClient.performRequest("POST", realUrl,
-				// Collections.<String, String>emptyMap(),
-				// httpEntity);
 				reponseEntity = response.getEntity();
 			} catch (Exception e) {
 				throw e;

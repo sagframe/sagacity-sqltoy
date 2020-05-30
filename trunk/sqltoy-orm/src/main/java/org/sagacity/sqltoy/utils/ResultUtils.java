@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
+ * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResultUtils {
@@ -111,17 +112,16 @@ public class ResultUtils {
 			} catch (Exception e) {
 				throw e;
 			}
-
+			// 2020-05-29 移到calculate 计算方法中，兼容mongo、es 的处理
 			// 字段脱敏
-			if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
-				secureMask(result, sqlToyConfig, labelIndexMap);
-			}
-
+			// if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
+			// secureMask(result, sqlToyConfig, labelIndexMap);
+			// }
+			//
 			// 自动格式化
-			if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
-				formatColumn(result, sqlToyConfig, labelIndexMap);
-			}
-
+			// if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
+			// formatColumn(result, sqlToyConfig, labelIndexMap);
+			// }
 		}
 		// 填充记录数
 		if (result.getRows() != null) {
@@ -136,7 +136,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(QueryResult result, SqlToyConfig sqlToyConfig,
+	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig,
 			HashMap<String, Integer> labelIndexMap) {
 		List<List> rows = result.getRows();
 		SecureMask[] masks = sqlToyConfig.getSecureMasks();
@@ -162,7 +162,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(QueryResult result, SqlToyConfig sqlToyConfig,
+	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig,
 			HashMap<String, Integer> labelIndexMap) {
 		List<List> rows = result.getRows();
 		FormatModel[] formats = sqlToyConfig.getFormatModels();
@@ -308,8 +308,9 @@ public class ResultUtils {
 		// 是否判断全部为null的行记录
 		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
 		// 最大值要大于等于警告阀值
-		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
+		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
+		}
 		List rowTemp;
 		if (linkModel != null) {
 			Object identity = null;
@@ -457,7 +458,7 @@ public class ResultUtils {
 		}
 		// 超过最大提取数据阀值
 		if (maxLimit) {
-			logger.error("Max Large Result:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
+			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
 					sqlToyConfig.getSql(null));
 		}
 		return items;
@@ -503,7 +504,7 @@ public class ResultUtils {
 	private static Integer[] mappingLabelIndex(String[] columnLabels, HashMap<String, Integer> labelIndexMap) {
 		Integer[] result = new Integer[columnLabels.length];
 		for (int i = 0; i < result.length; i++) {
-			if (CommonUtils.isInteger(columnLabels[i])) {
+			if (NumberUtil.isInteger(columnLabels[i])) {
 				result[i] = Integer.parseInt(columnLabels[i]);
 			} else {
 				result[i] = labelIndexMap.get(columnLabels[i].toLowerCase());
@@ -796,26 +797,32 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet
-	 * @param debug
 	 * @throws Exception
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
-			boolean debug) {
+	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet) {
+		HashMap<String, Integer> labelIndexMap = null;
+		// 字段脱敏
+		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
+			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
+		}
+
+		// 自动格式化
+		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
+			if (labelIndexMap == null) {
+				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			}
+			formatColumn(dataSetResult, sqlToyConfig, labelIndexMap);
+		}
+
+		// 计算
 		if (sqlToyConfig.getResultProcessor() != null) {
+			if (labelIndexMap == null) {
+				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			}
 			List items = dataSetResult.getRows();
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
-			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
-			String realLabelName;
-			String[] fields = dataSetResult.getLabelNames();
-			for (int i = 0, n = fields.length; i < n; i++) {
-				realLabelName = fields[i].toLowerCase();
-				if (realLabelName.indexOf(":") != -1) {
-					realLabelName = realLabelName.substring(0, realLabelName.indexOf(":")).trim();
-				}
-				labelIndexMap.put(realLabelName, i);
-			}
-
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
 				// 数据旋转
@@ -842,6 +849,30 @@ public class ResultUtils {
 	}
 
 	/**
+	 * @TODO 建立列名称跟列index的对应关系
+	 * @param fields
+	 * @return
+	 */
+	private static HashMap<String, Integer> wrapLabelIndexMap(String[] fields) {
+		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		if (fields != null && fields.length > 0) {
+			String realLabelName;
+			int index;
+			for (int i = 0, n = fields.length; i < n; i++) {
+				realLabelName = fields[i].toLowerCase();
+				index = realLabelName.indexOf(":");
+				if (index != -1) {
+					// realLabelName = realLabelName.substring(0,
+					// realLabelName.indexOf(":")).trim();
+					realLabelName = realLabelName.substring(index + 1).trim();
+				}
+				labelIndexMap.put(realLabelName, i);
+			}
+		}
+		return labelIndexMap;
+	}
+
+	/**
 	 * @todo 根据查询结果的类型，构造相应对象集合(增加map形式的结果返回机制)
 	 * @param queryResultRows
 	 * @param labelNames
@@ -860,9 +891,9 @@ public class ResultUtils {
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
-				|| resultType.equals(Map.class) || HashMap.class.equals(superClass)
-				|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-				|| Map.class.equals(superClass)) {
+				|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
+				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
+				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;

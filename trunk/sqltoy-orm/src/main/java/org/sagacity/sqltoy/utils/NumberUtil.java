@@ -346,7 +346,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal getAverage(BigDecimal[] bigArray) {
-		BigDecimal sum = new BigDecimal("0");
+		BigDecimal sum = BigDecimal.ZERO;
 		if (bigArray == null || bigArray.length == 0) {
 			return sum;
 		}
@@ -362,7 +362,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static BigDecimal summary(BigDecimal[] bigArray) {
-		BigDecimal sum = new BigDecimal("0");
+		BigDecimal sum = BigDecimal.ZERO;
 		if (bigArray == null || bigArray.length == 0) {
 			return sum;
 		}
@@ -418,7 +418,7 @@ public class NumberUtil {
 	 */
 	private static BigDecimal parseMillMoney(String capitalMoneyStr) {
 		if (capitalMoneyStr.equals("") || capitalMoneyStr.equals("0"))
-			return new BigDecimal("0");
+			return BigDecimal.ZERO;
 		String millStr = "0";
 		String lowthousand = "0";
 		int millIndex = capitalMoneyStr.indexOf("万");
@@ -472,13 +472,14 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static BigDecimal parseLowThousandMoney(String capitalMoneyStr) {
-		if (capitalMoneyStr.equalsIgnoreCase("0"))
-			return new BigDecimal("0");
+		if (capitalMoneyStr.equalsIgnoreCase("0")) {
+			return BigDecimal.ZERO;
+		}
 		String lastStr = capitalMoneyStr.substring(capitalMoneyStr.length() - 1);
 		int lastAscii = StringUtil.str2ASCII(lastStr)[0];
 		String[] uoms = { "仟", "佰", "拾", "角", "分", "厘" };
 		double multiples[] = { 1000, 100, 10, 0.1, 0.01, 0.001 };
-		BigDecimal moneyNum = new BigDecimal("0");
+		BigDecimal moneyNum = BigDecimal.ZERO;
 		int index;
 		double splitMoneyNum;
 		for (int i = 0; i < uoms.length; i++) {
@@ -529,8 +530,9 @@ public class NumberUtil {
 	 */
 	public static Object[] randomArray(int maxValue, int size) {
 		int realSize = size;
-		if (realSize > maxValue)
+		if (realSize > maxValue) {
 			realSize = maxValue;
+		}
 		// 长度等于最大值
 		if (realSize == maxValue) {
 			Object[] result = new Object[maxValue];
@@ -561,8 +563,9 @@ public class NumberUtil {
 		int randomData = (int) (Math.random() * total) + 1;
 		int base = 0;
 		for (int i = 0; i < probabilities.length; i++) {
-			if (randomData > base && randomData <= base + probabilities[i])
+			if (randomData > base && randomData <= base + probabilities[i]) {
 				return i;
+			}
 			base = base + probabilities[i];
 		}
 		return 0;

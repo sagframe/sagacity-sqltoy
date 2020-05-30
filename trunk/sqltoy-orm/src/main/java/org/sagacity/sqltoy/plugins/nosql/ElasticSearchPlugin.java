@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.plugins.nosql;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
@@ -22,6 +24,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,9 +71,7 @@ public class ElasticSearchPlugin {
 			logger.error("分页解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
-		}
+
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
@@ -109,9 +110,6 @@ public class ElasticSearchPlugin {
 		} catch (Exception e) {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
-		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("execute eql={" + jsonQuery.toJSONString() + "}");
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
 				(Class) queryExecutor.getResultType());
@@ -166,26 +164,35 @@ public class ElasticSearchPlugin {
 		} else if (resultClass != null) {
 			Class superClass = resultClass.getSuperclass();
 			if (!resultClass.equals(ArrayList.class) && !resultClass.equals(List.class)
-					&& !resultClass.equals(Collection.class) && !resultClass.equals(HashMap.class)
-					&& !resultClass.equals(Map.class) && !resultClass.equals(ConcurrentHashMap.class)
+					&& !resultClass.equals(Array.class) && !resultClass.equals(Collection.class)
+					&& !resultClass.equals(HashMap.class) && !resultClass.equals(Map.class)
+					&& !resultClass.equals(ConcurrentMap.class) && !resultClass.equals(ConcurrentHashMap.class)
 					&& !HashMap.class.equals(superClass) && !Map.class.equals(superClass)
 					&& !LinkedHashMap.class.equals(superClass) && !ConcurrentHashMap.class.equals(superClass)) {
 				fields = BeanUtil.matchSetMethodNames(resultClass);
 			}
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("execute elastic eql=" + jsonQuery.toJSONString());
+			} else {
+				System.out.println("execute elastic eql=" + jsonQuery.toJSONString());
+			}
+		}
+
 		// 执行请求
 		JSONObject json = HttpClientUtils.doPost(sqlToyContext, noSqlModel, esConfig, jsonQuery);
-		if (json == null || json.isEmpty())
+		if (json == null || json.isEmpty()) {
 			return new DataSetResult();
+		}
 		DataSetResult resultSet = ElasticSearchUtils.extractFieldValue(sqlToyContext, sqlToyConfig, json, fields);
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null, sqlToyContext.isDebug());
+		ResultUtils.calculate(sqlToyConfig, resultSet, null);
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(
-				MongoElasticUtils.wrapResultClass(resultSet.getRows(), resultSet.getLabelNames(), resultClass));
+		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));
 		return resultSet;
 	}
-
 }

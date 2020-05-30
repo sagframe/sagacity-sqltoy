@@ -175,7 +175,7 @@ public class XMLUtil {
 				factory.setFeature(NO_VALIDATOR_FEATURE, false);
 			}
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			fileIS = CommonUtils.getFileInputStream(xmlFile);
+			fileIS = FileUtil.getFileInputStream(xmlFile);
 			if (fileIS != null) {
 				Document doc = builder.parse(fileIS);
 				if (null != doc) {

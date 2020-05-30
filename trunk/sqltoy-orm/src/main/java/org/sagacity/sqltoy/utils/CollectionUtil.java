@@ -47,57 +47,65 @@ public class CollectionUtil {
 		if (obj instanceof int[]) {
 			int[] tmp = (int[]) obj;
 			Integer[] result = new Integer[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof short[]) {
 			short[] tmp = (short[]) obj;
 			Short[] result = new Short[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof long[]) {
 			long[] tmp = (long[]) obj;
 			Long[] result = new Long[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof float[]) {
 			float[] tmp = (float[]) obj;
 			Float[] result = new Float[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof double[]) {
 			double[] tmp = (double[]) obj;
 			Double[] result = new Double[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof boolean[]) {
 			boolean[] tmp = (boolean[]) obj;
 			Boolean[] result = new Boolean[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		if (obj instanceof char[]) {
 			char[] tmp = (char[]) obj;
 			String[] result = new String[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = String.valueOf(tmp[i]);
+			}
 			return result;
 		}
 		if (obj instanceof byte[]) {
 			byte[] tmp = (byte[]) obj;
 			Byte[] result = new Byte[tmp.length];
-			for (int i = 0; i < tmp.length; i++)
+			for (int i = 0; i < tmp.length; i++) {
 				result[i] = tmp[i];
+			}
 			return result;
 		}
 		return new Object[] { obj };
@@ -152,8 +160,9 @@ public class CollectionUtil {
 			logger.error("arrayToList:the Ary Source is Null");
 			return null;
 		}
-		if (arySource instanceof List)
+		if (arySource instanceof List) {
 			return (List) arySource;
+		}
 		List resultList = new ArrayList();
 		if (arySource.getClass().isArray()) {
 			Object[] aryObject = convertArray(arySource);
@@ -218,10 +227,12 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static Object[] subtractArray(Object[] sourceAry, int begin, int length) {
-		if (sourceAry == null || sourceAry.length == 0)
+		if (sourceAry == null || sourceAry.length == 0) {
 			return null;
-		if (begin + length > sourceAry.length || length == 0)
+		}
+		if (begin + length > sourceAry.length || length == 0) {
 			return sourceAry;
+		}
 		Object[] distinctAry = new Object[sourceAry.length - length];
 		if (begin == 0) {
 			System.arraycopy(sourceAry, length, distinctAry, 0, sourceAry.length - length);
@@ -238,8 +249,9 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static Object[][] twoDimenlistToArray(Collection source) {
-		if (source == null || source.isEmpty())
+		if (source == null || source.isEmpty()) {
 			return null;
+		}
 		Object[][] result = new Object[source.size()][];
 		int index = 0;
 		Object obj;
@@ -264,8 +276,9 @@ public class CollectionUtil {
 	 */
 	public static int judgeObjectDimen(Object obj) {
 		int result = 0;
-		if (obj == null)
+		if (obj == null) {
 			return -1;
+		}
 
 		if (obj instanceof Collection || obj.getClass().isArray() || obj instanceof Map) {
 			result = 1;
@@ -331,8 +344,9 @@ public class CollectionUtil {
 	 */
 	public static List pivotList(List data, List categorys, Integer[] categoryCol, Integer[] pkColumns,
 			Integer[] categCompareCol, int startCol, int endCol, Object defaultValue) {
-		if (data == null || data.isEmpty())
+		if (data == null || data.isEmpty()) {
 			return data;
+		}
 		Integer[] categCol;
 		if (categoryCol == null) {
 			categCol = new Integer[categCompareCol.length];
@@ -493,7 +507,7 @@ public class CollectionUtil {
 	public static HashMap hashList(Object data, Object keyProp, Object valueProp, boolean keyToStr,
 			boolean isLinkedHash) {
 		int dimen = judgeObjectDimen(data);
-		boolean isBean = CommonUtils.isInteger(keyProp.toString()) ? false : true;
+		boolean isBean = NumberUtil.isInteger(keyProp.toString()) ? false : true;
 		int keyIndex = -1;
 		int valueIndex = -1;
 		String valueProperty = null;
@@ -586,8 +600,9 @@ public class CollectionUtil {
 	 * @param source
 	 */
 	public static void innerArrayToList(List source) {
-		if (source == null || source.isEmpty())
+		if (source == null || source.isEmpty()) {
 			return;
+		}
 		if (source.get(0).getClass().isArray()) {
 			Object[] rowAry;
 			for (int i = 0, n = source.size(); i < n; i++) {
@@ -608,8 +623,9 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static List innerListToArray(List source) {
-		if (source == null || source.isEmpty())
+		if (source == null || source.isEmpty()) {
 			return source;
+		}
 		List result = new ArrayList();
 		Object sonList;
 		for (int i = 0, n = source.size(); i < n; i++) {
@@ -663,8 +679,9 @@ public class CollectionUtil {
 			String totalLabel, boolean hasAverage, String averageLabel, int radixSize, String sumRecordSite,
 			boolean totalSumReverse) {
 		boolean hasTotalSum = false;
-		if (globalSumSite >= 0 || hasAverage)
+		if (globalSumSite >= 0 || hasAverage) {
 			hasTotalSum = true;
+		}
 		List rowList;
 		int groupTotal = (groupIndexs == null) ? 0 : groupIndexs.length;
 		int columns = ((List) sumData.get(0)).size();
@@ -1025,8 +1042,9 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static List convertColToRow(List data, Integer[] colIndex) {
-		if (data == null || data.isEmpty())
+		if (data == null || data.isEmpty()) {
 			return data;
+		}
 		boolean innerAry = data.get(0).getClass().isArray();
 		int newResultRowCnt = 0;
 		if (colIndex == null) {
@@ -1075,8 +1093,9 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static boolean any(String compareStr, String[] compareAry, boolean ignoreCase) {
-		if (compareStr == null || (compareAry == null || compareAry.length == 0))
+		if (compareStr == null || (compareAry == null || compareAry.length == 0)) {
 			return false;
+		}
 		for (String s : compareAry) {
 			if (ignoreCase) {
 				if (compareStr.equalsIgnoreCase(s)) {
@@ -1096,8 +1115,9 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static Object[] toArray(String[] values, String argType) {
-		if (values == null)
+		if (values == null) {
 			return null;
+		}
 		String type = argType.toLowerCase();
 		Object[] result = null;
 		if (type.equals("string")) {

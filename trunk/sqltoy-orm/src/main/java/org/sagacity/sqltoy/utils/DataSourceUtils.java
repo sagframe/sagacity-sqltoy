@@ -347,8 +347,9 @@ public class DataSourceUtils {
 	}
 
 	public static int getDBType(String dialect) {
-		if (StringUtil.isBlank(dialect))
+		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
+		}
 		return DBNameTypeMap.get(dialect.toLowerCase());
 	}
 

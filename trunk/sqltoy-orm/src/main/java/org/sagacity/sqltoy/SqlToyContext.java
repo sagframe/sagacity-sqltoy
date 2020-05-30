@@ -41,6 +41,7 @@ import org.springframework.context.ApplicationContextAware;
  * @version id:SqlToyContext.java,Revision:v1.0,Date:2009-12-11 下午09:48:15
  * @Modification {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @Modification {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
+ * @Modification {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  */
 public class SqlToyContext implements ApplicationContextAware {
 	/**
@@ -173,11 +174,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 默认数据库连接池
 	 */
 	private DataSource defaultDataSource;
-
-	/**
-	 * 定义mongodb处理的Factory类在spring中的bean实例名称 用名称方式避免强依赖
-	 */
-	private String mongoFactoryName = "mongoDbFactory";
 
 	/**
 	 * sql脚本检测间隔时长(默认为3秒)
@@ -522,6 +518,8 @@ public class SqlToyContext implements ApplicationContextAware {
 				this.dialect = Dialect.SAP_HANA;
 			} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
 				this.dialect = Dialect.CLICKHOUSE;
+			} else if (tmp.startsWith(Dialect.OCEANBASE)) {
+				this.dialect = Dialect.OCEANBASE;
 			} else {
 				this.dialect = dialect;
 			}
@@ -658,20 +656,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
-	}
-
-	/**
-	 * @param mongoDbFactory the mongoDbFactory to set
-	 */
-	public void setMongoFactoryName(String mongoFactoryName) {
-		this.mongoFactoryName = mongoFactoryName;
-	}
-
-	/**
-	 * @return the mongoFactoryName
-	 */
-	public String getMongoFactoryName() {
-		return mongoFactoryName;
 	}
 
 	/**

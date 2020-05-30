@@ -24,7 +24,8 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 
@@ -35,6 +36,7 @@ import com.mongodb.client.AggregateIterable;
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:Mongo.java,Revision:v1.0,Date:2018年1月1日
+ * @Modification {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  */
 public class Mongo extends BaseLink {
 
@@ -43,12 +45,17 @@ public class Mongo extends BaseLink {
 	 */
 	private static final long serialVersionUID = -4443964509492022973L;
 
+	/**
+	 * 定义日志
+	 */
+	private final Logger logger = LoggerFactory.getLogger(Mongo.class);
+
 	private final String ERROR_MESSAGE = "mongo查询请使用<mql id=\"\" collection=\"\" fields=\"\"></mql>配置,请确定相关配置正确性!";
 
 	/**
 	 * 基于spring-data的mongo工厂类
 	 */
-	private MongoDbFactory mongoDbFactory;
+	private MongoTemplate mongoTemplate;
 
 	/**
 	 * 查询语句
@@ -83,8 +90,8 @@ public class Mongo extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	public void mongoDbFactory(MongoDbFactory mongoDbFactory) {
-		this.mongoDbFactory = mongoDbFactory;
+	public void mongoTemplate(MongoTemplate mongoTemplate) {
+		this.mongoTemplate = mongoTemplate;
 	}
 
 	public Mongo sql(String sql) {
@@ -118,8 +125,9 @@ public class Mongo extends BaseLink {
 	 */
 	public Object getOne() throws Exception {
 		List<?> result = find();
-		if (result != null && !result.isEmpty())
+		if (result != null && !result.isEmpty()) {
 			return result.get(0);
+		}
 		return null;
 	}
 
@@ -131,19 +139,18 @@ public class Mongo extends BaseLink {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
-		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
+		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig,
-						realMql, (Class) queryExecutor.getResultType());
+				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) queryExecutor.getResultType());
 			}
-			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, null,
-					realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -159,14 +166,14 @@ public class Mongo extends BaseLink {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search);
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
-		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null)
+		if (noSqlModel == null || noSqlModel.getCollection() == null || noSqlModel.getFields() == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
+		}
 		try {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findTop(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, topSize,
-					realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -188,8 +195,8 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
 					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findPage(new MongoTemplate(getMongoDbFactory(noSqlModel.getMongoFactory())), sqlToyConfig, pageModel,
-					realMql, (Class) queryExecutor.getResultType());
+			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql,
+					(Class) queryExecutor.getResultType());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -237,10 +244,18 @@ public class Mongo extends BaseLink {
 		} else {
 			query.skip((pageModel.getPageNo() - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("findPageByMongo script=" + query.getQueryObject());
+			} else {
+				System.out.println("findPageByMongo script=" + query.getQueryObject());
+			}
+		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
-		if (rs == null || rs.isEmpty())
+		if (rs == null || rs.isEmpty()) {
 			return result;
+		}
 		result.setRows(extractFieldValues(sqlToyConfig, rs.iterator(), resultClass));
 		return result;
 	}
@@ -266,10 +281,18 @@ public class Mongo extends BaseLink {
 				query.limit(Double.valueOf(count * topSize.floatValue()).intValue());
 			}
 		}
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("findTopByMongo script=" + query.getQueryObject());
+			} else {
+				System.out.println("findTopByMongo script=" + query.getQueryObject());
+			}
+		}
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
-		if (rs == null || rs.isEmpty())
+		if (rs == null || rs.isEmpty()) {
 			return null;
+		}
 		return extractFieldValues(sqlToyConfig, rs.iterator(), resultClass);
 	}
 
@@ -290,6 +313,15 @@ public class Mongo extends BaseLink {
 		if (realMql.startsWith("[") && realMql.endsWith("]")) {
 			realMql = realMql.substring(1, realMql.length() - 1);
 		}
+
+		if (sqlToyContext.isDebug()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("aggregateByMongo script=" + realMql);
+			} else {
+				System.out.println("aggregateByMongo script=" + realMql);
+			}
+		}
+
 		String[] aggregates = StringUtil.splitExcludeSymMark(realMql, ",", SqlToyConstants.filters);
 		List<Bson> dbObjects = new ArrayList<Bson>();
 		for (String json : aggregates) {
@@ -297,10 +329,12 @@ public class Mongo extends BaseLink {
 				dbObjects.add(Document.parse(json));
 			}
 		}
+
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
-		if (out == null)
+		if (out == null) {
 			return null;
+		}
 		return extractFieldValues(sqlToyConfig, out.iterator(), resultClass);
 	}
 
@@ -336,20 +370,18 @@ public class Mongo extends BaseLink {
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
-		ResultUtils.calculate(sqlToyConfig, dataSetResult, null, sqlToyContext.isDebug());
-		MongoElasticUtils.wrapResultClass(resultSet, translateFields, resultClass);
-		return resultSet;
+		ResultUtils.calculate(sqlToyConfig, dataSetResult, null);
+		return ResultUtils.wrapQueryResult(resultSet, StringUtil.humpFieldNames(translateFields), resultClass);
 	}
 
 	/**
 	 * @param mongoFactory
 	 * @return
 	 */
-	private MongoDbFactory getMongoDbFactory(String mongoFactory) {
-		if (StringUtil.isNotBlank(mongoFactory))
-			return (MongoDbFactory) sqlToyContext.getBean(mongoFactory);
-		if (this.mongoDbFactory != null)
-			return mongoDbFactory;
-		return (MongoDbFactory) sqlToyContext.getBean(sqlToyContext.getMongoFactoryName());
+	private MongoTemplate getMongoTemplate() {
+		if (this.mongoTemplate != null) {
+			return mongoTemplate;
+		}
+		return (MongoTemplate) sqlToyContext.getBean(MongoTemplate.class);
 	}
 }
