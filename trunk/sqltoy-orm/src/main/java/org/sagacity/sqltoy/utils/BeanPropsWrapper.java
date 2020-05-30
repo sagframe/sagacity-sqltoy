@@ -83,8 +83,9 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Collection wrap(Type type) throws Exception {
-		if (null == names || names.length != 1 || null == values || values.length < 1 || null == type)
+		if (null == names || names.length != 1 || null == values || values.length < 1 || null == type) {
 			return null;
+		}
 		List valuesSet = new ArrayList();
 		for (int i = 0; i < values.length; i++) {
 			List rowList = new ArrayList();

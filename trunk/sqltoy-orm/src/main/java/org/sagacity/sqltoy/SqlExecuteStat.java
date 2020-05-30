@@ -70,8 +70,9 @@ public class SqlExecuteStat {
 		try {
 			// debug模式直接输出
 			if (debug || printSqlStrategy.equals("debug")) {
-				if (threadLocal.get() != null && threadLocal.get().isPrint() == false)
+				if (threadLocal.get() != null && threadLocal.get().isPrint() == false) {
 					return;
+				}
 				printSql(sql, paramValues, false);
 			} else if (threadLocal.get() != null) {
 				threadLocal.get().addSqlToyResult(sql, paramValues);
@@ -139,8 +140,9 @@ public class SqlExecuteStat {
 	private static void loggerSql() {
 		try {
 			SqlExecuteTrace sqlTrace = threadLocal.get();
-			if (sqlTrace == null)
+			if (sqlTrace == null) {
 				return;
+			}
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {

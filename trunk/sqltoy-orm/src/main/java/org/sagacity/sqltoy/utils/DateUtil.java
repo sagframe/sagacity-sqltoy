@@ -147,17 +147,16 @@ public class DateUtil {
 
 	/**
 	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
-	 * @param dateStr
+	 * @param dateVar
 	 * @param dateFormat
 	 * @param locale
 	 * @return
 	 */
-	public static Date parseString(String dateStr, String dateFormat, String locale) {
-		if (dateStr == null)
+	public static Date parseString(String dateVar, String dateFormat, String locale) {
+		if (dateVar == null || "".equals(dateVar.trim())) {
 			return null;
-		dateStr = dateStr.trim();
-		if ("".equals(dateStr))
-			return null;
+		}
+		String dateStr = dateVar.trim();
 		String realDF = null;
 		if (StringUtil.isNotBlank(dateFormat)) {
 			realDF = dateFormat;
@@ -175,8 +174,9 @@ public class DateUtil {
 				}
 				try {
 					result = dateParser.parse(dateStr);
-					if (result != null)
+					if (result != null) {
 						break;
+					}
 				} catch (ParseException pe) {
 				}
 			}
@@ -343,8 +343,9 @@ public class DateUtil {
 	}
 
 	public static String formatDate(Object dt, String fmt, String locale) {
-		if (dt == null)
+		if (dt == null) {
 			return null;
+		}
 		if (fmt.equalsIgnoreCase("YY")) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
@@ -397,8 +398,9 @@ public class DateUtil {
 	}
 
 	public static LocalDate getDate(Object date) {
-		if (date instanceof LocalDate)
+		if (date instanceof LocalDate) {
 			return (LocalDate) date;
+		}
 		return asLocalDate(convertDateObject(date));
 	}
 
@@ -407,8 +409,9 @@ public class DateUtil {
 	}
 
 	public static LocalDateTime getDateTime(Object date) {
-		if (date instanceof LocalDateTime)
+		if (date instanceof LocalDateTime) {
 			return (LocalDateTime) date;
+		}
 		return asLocalDateTime(convertDateObject(date));
 	}
 
@@ -501,8 +504,9 @@ public class DateUtil {
 	 */
 	public static String format2China(Object dateValue) {
 		Date date = convertDateObject(dateValue);
-		if (null == date)
+		if (null == date) {
 			return null;
+		}
 		GregorianCalendar pointDate = new GregorianCalendar();
 		pointDate.setTime(convertDateObject(dateValue));
 		String tmpDate;
