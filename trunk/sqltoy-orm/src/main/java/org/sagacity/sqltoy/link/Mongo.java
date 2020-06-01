@@ -357,11 +357,31 @@ public class Mongo extends BaseLink {
 				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
 			}
 		}
+		String[] keys;
+		int size;
+		String key;
+		Document val;
+		List rowData;
 		while (iter.hasNext()) {
 			row = iter.next();
-			List rowData = new ArrayList();
+			rowData = new ArrayList();
 			for (String name : realFields) {
-				rowData.add(row.get(name));
+				// 存在_id.xxx 模式
+				keys = name.split("\\.");
+				if (keys.length == 1) {
+					rowData.add(row.get(name));
+				} else {
+					val = row;
+					size = keys.length;
+					for (int i = 0; i < size; i++) {
+						key = keys[i];
+						if (i == size - 1) {
+							rowData.add(val.get(key));
+						} else {
+							val = (Document) val.get(key);
+						}
+					}
+				}
 			}
 			resultSet.add(rowData);
 		}
