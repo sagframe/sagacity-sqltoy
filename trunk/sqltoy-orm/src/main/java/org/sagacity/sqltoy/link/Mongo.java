@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -350,11 +351,15 @@ public class Mongo extends BaseLink {
 		System.arraycopy(fields, 0, realFields, 0, fields.length);
 		System.arraycopy(fields, 0, translateFields, 0, fields.length);
 		int aliasIndex = 0;
+		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();
 		for (int i = 0; i < realFields.length; i++) {
 			aliasIndex = realFields[i].indexOf(":");
 			if (aliasIndex != -1) {
 				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
 				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+			}
+			if (realFields[i].contains(".")) {
+				linkMap.put(realFields[i], realFields[i].split("\\."));
 			}
 		}
 		String[] keys;
@@ -367,14 +372,15 @@ public class Mongo extends BaseLink {
 			rowData = new ArrayList();
 			for (String name : realFields) {
 				// 存在_id.xxx 模式
-				keys = name.split("\\.");
-				if (keys.length == 1) {
+				keys = linkMap.get(name);
+				if (null == keys) {
 					rowData.add(row.get(name));
 				} else {
 					val = row;
 					size = keys.length;
 					for (int i = 0; i < size; i++) {
 						key = keys[i];
+						//最后一个.xx
 						if (i == size - 1) {
 							rowData.add(val.get(key));
 						} else {
