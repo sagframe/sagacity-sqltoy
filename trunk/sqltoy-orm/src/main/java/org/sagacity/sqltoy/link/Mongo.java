@@ -380,6 +380,7 @@ public class Mongo extends BaseLink {
 					size = keys.length;
 					for (int i = 0; i < size; i++) {
 						key = keys[i];
+						//最后一个.xx
 						if (i == size - 1) {
 							rowData.add(val.get(key));
 						} else {
