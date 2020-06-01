@@ -337,10 +337,9 @@
 		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
 		<xsd:attribute name="collection" type="xsd:string"
 			use="required" />
-		<xsd:attribute name="is-aggregate" type="xsd:boolean"
+		<xsd:attribute name="aggregate" type="xsd:boolean"
 			default="false" />
 		<xsd:attribute name="fields" use="required" />
-
 	</xsd:complexType>
 	<xsd:complexType name="sqlToyEqlType" mixed="true">
 		<xsd:annotation>
@@ -372,6 +371,8 @@
 		<xsd:attribute name="value-root" type="xsd:string" />
 		<xsd:attribute name="index" />
 		<xsd:attribute name="type" />
+		<xsd:attribute name="aggregate" type="xsd:boolean"
+			default="false" />
 		<xsd:attribute name="fields" use="required" />
 		<!-- es语法模式 -->
 		<xsd:attribute name="mode">
