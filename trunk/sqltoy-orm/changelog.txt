@@ -1,10 +1,4 @@
-﻿离完美剩余的点：
-1、实现缓存的近实时更新和精准增量更新策略，针对变化相对频繁的采用精准增量更新
-2、数据库不同方言函数替换解析在有引号情况下的缺陷(不用担心，99.9%的情况下你不会用到)
-3、支持elasticsearch7.x 的sql分页（目前6.x版本可以通过elasticsearch-sql插件已经支持，但7.x已经支持sql但分页未有标准策略）
-4、增加支持solr、clickHouse、oceanBase、guassDB、hbase等
-
-v4.8.2 2019-10-12
+﻿v4.8.2 2019-10-12
 1、修复#[@if(:param==null) and t.name=:name] 其中:param为null则剔除整个#[] 之间sql的不合理规则
 2、开放TranslateCacheManager的扩展注入，便于可以替换目前的默认实现
 3、增加了缓存更新检测的集群节点时间差异参数[sqltoy-translate.xml配置]，保障集群环境下缓存更新检测的时效：

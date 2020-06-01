@@ -410,7 +410,9 @@ public class MongoElasticUtils {
 		// 存在缓存翻译,利用sqltoy的缓存管理
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, null, translateMap);
-			if (translateCache == null) {
+			if (translateCache == null || translateCache.isEmpty()) {
+				logger.warn("mongo or elastic cache:{} has no data!{}", sqlToyConfig.getTranslateMap().keySet(),
+						sqlToyConfig.getSql());
 				hasTranslate = false;
 			}
 		}
