@@ -337,7 +337,7 @@
 		<xsd:attribute name="blank-to-null" type="xsd:boolean" />
 		<xsd:attribute name="collection" type="xsd:string"
 			use="required" />
-		<xsd:attribute name="is-aggregate" type="xsd:boolean"
+		<xsd:attribute name="aggregate" type="xsd:boolean"
 			default="false" />
 		<xsd:attribute name="fields" use="required" />
 
@@ -373,6 +373,8 @@
 		<xsd:attribute name="index" />
 		<xsd:attribute name="type" />
 		<xsd:attribute name="fields" use="required" />
+		<xsd:attribute name="aggregate" type="xsd:boolean"
+			default="false" />
 		<!-- es语法模式 -->
 		<xsd:attribute name="mode">
 			<xsd:simpleType>
