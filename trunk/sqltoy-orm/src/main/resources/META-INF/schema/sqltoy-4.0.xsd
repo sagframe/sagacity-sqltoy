@@ -374,6 +374,8 @@
 		<xsd:attribute name="aggregate" type="xsd:boolean"
 			default="false" />
 		<xsd:attribute name="fields" use="required" />
+		<xsd:attribute name="aggregate" type="xsd:boolean"
+			default="false" />
 		<!-- es语法模式 -->
 		<xsd:attribute name="mode">
 			<xsd:simpleType>
