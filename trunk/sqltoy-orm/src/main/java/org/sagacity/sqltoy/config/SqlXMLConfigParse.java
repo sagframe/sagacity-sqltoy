@@ -76,7 +76,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern ES_AGGS_PATTERN = Pattern
 			.compile("(?i)\\W(\"|\')(aggregations|aggs)(\"|\')\\s*\\:\\s*\\{");
 
-	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\\\$group\\\\s*\\\\:");
+	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\$group\\s*\\:");
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
@@ -410,6 +410,8 @@ public class SqlXMLConfigParse {
 		if (sqlElt.getNodeName().equalsIgnoreCase("eql")) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
+			} else if (sqlElt.hasAttribute("is-aggregate")) {
+				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("is-aggregate")));
 			} else {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), ES_AGGS_PATTERN));
 			}
@@ -425,6 +427,8 @@ public class SqlXMLConfigParse {
 		} else if (sqlElt.getNodeName().equalsIgnoreCase("mql")) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
+			} else if (sqlElt.hasAttribute("is-aggregate")) {
+				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("is-aggregate")));
 			} else {
 				noSqlConfig.setHasAggs(StringUtil.matches(sqlToyConfig.getSql(null), MONGO_AGGS_PATTERN));
 			}
