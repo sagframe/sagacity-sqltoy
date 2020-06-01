@@ -76,7 +76,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern ES_AGGS_PATTERN = Pattern
 			.compile("(?i)\\W(\"|\')(aggregations|aggs)(\"|\')\\s*\\:\\s*\\{");
 
-	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\\\$group\\\\s*\\\\:");
+	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\$group\\s*\\:");
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
