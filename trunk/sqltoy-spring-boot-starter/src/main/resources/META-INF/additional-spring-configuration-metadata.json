@@ -49,7 +49,7 @@
 		{
 			"name": "spring.sqltoy.functionConverts",
 			"type": "java.lang.String",
-			"description": "跨数据库方言适配",
+			"description": "跨数据库方言适配扩展函数",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": "defaults"
 		}
