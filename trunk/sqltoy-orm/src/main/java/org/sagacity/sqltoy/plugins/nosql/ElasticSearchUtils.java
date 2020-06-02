@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
+import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -113,25 +114,7 @@ public class ElasticSearchUtils {
 		Object realRoot = json.get("rows");
 		if (realRoot == null)
 			return resultModel;
-		String[] realFields = new String[fields.length];
-		String[] translateFields = new String[fields.length];
-		int index = 0;
-		int aliasIndex = 0;
-		for (String field : fields) {
-			realFields[index] = field;
-			translateFields[index] = field;
-			aliasIndex = field.indexOf(":");
-			if (aliasIndex != -1) {
-				realFields[index] = field.substring(0, aliasIndex).trim();
-				translateFields[index] = field.substring(aliasIndex + 1).trim();
-			} else {
-				aliasIndex = field.lastIndexOf(".");
-				if (aliasIndex != -1) {
-					translateFields[index] = field.substring(aliasIndex + 1).trim();
-				}
-			}
-			index++;
-		}
+		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
 		List<List<Object>> resultSet = new ArrayList<List<Object>>();
@@ -144,7 +127,7 @@ public class ElasticSearchUtils {
 			resultSet.add(result);
 		}
 		resultModel.setRows(resultSet);
-		resultModel.setLabelNames(translateFields);
+		resultModel.setLabelNames(fieldModel.getAliasLabels());
 		return resultModel;
 	}
 
@@ -189,27 +172,11 @@ public class ElasticSearchUtils {
 			}
 		}
 		Object realRoot = root.get(lastKey);
-		if (realRoot == null)
+		if (realRoot == null) {
 			return resultModel;
-		String[] realFields = new String[fields.length];
-		String[] translateFields = new String[fields.length];
-		int index = 0;
-		int aliasIndex = 0;
-		for (String field : fields) {
-			realFields[index] = field;
-			translateFields[index] = field;
-			aliasIndex = field.indexOf(":");
-			if (aliasIndex != -1) {
-				realFields[index] = field.substring(0, aliasIndex).trim();
-				translateFields[index] = field.substring(aliasIndex + 1).trim();
-			} else {
-				aliasIndex = field.lastIndexOf(".");
-				if (aliasIndex != -1) {
-					translateFields[index] = field.substring(aliasIndex + 1).trim();
-				}
-			}
-			index++;
 		}
+		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		String[] realFields = fieldModel.getFields();
 		JSONObject rowJson, sourceData;
 		if (realRoot instanceof JSONArray) {
 			JSONArray array = (JSONArray) realRoot;
@@ -223,7 +190,7 @@ public class ElasticSearchUtils {
 			addRow(result, (JSONObject) realRoot, realFields);
 		}
 		resultModel.setRows(result);
-		resultModel.setLabelNames(translateFields);
+		resultModel.setLabelNames(fieldModel.getAliasLabels());
 		return resultModel;
 	}
 
@@ -239,25 +206,8 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		String[] realFields = new String[fields.length];
-		String[] translateFields = new String[fields.length];
-		int index = 0;
-		int aliasIndex = 0;
-		for (String field : fields) {
-			realFields[index] = field;
-			translateFields[index] = field;
-			aliasIndex = field.indexOf(":");
-			if (aliasIndex != -1) {
-				realFields[index] = field.substring(0, aliasIndex).trim();
-				translateFields[index] = field.substring(aliasIndex + 1).trim();
-			} else {
-				aliasIndex = field.lastIndexOf(".");
-				if (aliasIndex != -1) {
-					translateFields[index] = field.substring(aliasIndex + 1).trim();
-				}
-			}
-			index++;
-		}
+		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null) ? new String[] { "suggest" }
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
@@ -286,7 +236,7 @@ public class ElasticSearchUtils {
 			resultModel.setTotalCount(Long.valueOf(result.size()));
 		}
 		resultModel.setRows(result);
-		resultModel.setLabelNames(translateFields);
+		resultModel.setLabelNames(fieldModel.getAliasLabels());
 		return resultModel;
 	}
 
@@ -302,25 +252,8 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		// 切取实际字段{field:aliasName}模式,冒号前面的实际字段
-		String[] realFields = new String[fields.length];
-		String[] translateFields = new String[fields.length];
-		int index = 0;
-		int aliasIndex = 0;
-		for (String field : fields) {
-			realFields[index] = field;
-			translateFields[index] = field;
-			aliasIndex = field.indexOf(":");
-			if (aliasIndex != -1) {
-				realFields[index] = field.substring(0, aliasIndex).trim();
-				translateFields[index] = field.substring(aliasIndex + 1).trim();
-			} else {
-				aliasIndex = field.lastIndexOf(".");
-				if (aliasIndex != -1) {
-					translateFields[index] = field.substring(aliasIndex + 1).trim();
-				}
-			}
-			index++;
-		}
+		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
+		String[] realFields = fieldModel.getFields();
 		// 获取json对象的根
 		String[] rootPath = (sqlToyConfig.getNoSqlConfigModel().getValueRoot() == null)
 				? new String[] { "aggregations" }
@@ -376,7 +309,7 @@ public class ElasticSearchUtils {
 			resultModel.setTotalCount(Long.valueOf(result.size()));
 		}
 		resultModel.setRows(result);
-		resultModel.setLabelNames(translateFields);
+		resultModel.setLabelNames(fieldModel.getAliasLabels());
 		return resultModel;
 	}
 
@@ -503,8 +436,9 @@ public class ElasticSearchUtils {
 			}
 		} else if (rowJson.keySet().size() == 1) {
 			// 单一取值
-			if (rowJson.keySet().iterator().next().equalsIgnoreCase(realFields[0]) && realFields.length == 1)
+			if (rowJson.keySet().iterator().next().equalsIgnoreCase(realFields[0]) && realFields.length == 1) {
 				return rowJson;
+			}
 			result = rowJson.values().iterator().next();
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;

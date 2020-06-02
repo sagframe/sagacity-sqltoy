@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlTranslate;
@@ -496,4 +497,39 @@ public class MongoElasticUtils {
 			}
 		}
 	}
+
+	/**
+	 * @TODO 统一解析elastic或mongodb 的fields 信息,分解成fieldName 和 aliasName
+	 * @param fields
+	 * @param fieldMap
+	 * @return
+	 */
+	public static NoSqlFieldsModel processFields(String[] fields, HashMap<String, String[]> fieldMap) {
+		NoSqlFieldsModel result = new NoSqlFieldsModel();
+		String[] realFields = new String[fields.length];
+		String[] aliasFields = new String[fields.length];
+		int aliasIndex = 0;
+		for (int i = 0; i < fields.length; i++) {
+			realFields[i] = fields[i];
+			aliasFields[i] = fields[i];
+			aliasIndex = fields[i].indexOf(":");
+			if (aliasIndex != -1) {
+				realFields[i] = fields[i].substring(0, aliasIndex).trim();
+				aliasFields[i] = fields[i].substring(aliasIndex + 1).trim();
+			} else {
+				aliasIndex = fields[i].lastIndexOf(".");
+				if (aliasIndex != -1) {
+					aliasFields[i] = fields[i].substring(aliasIndex + 1).trim();
+				}
+			}
+			// 放入缓存为了提升效率
+			if (fieldMap != null && realFields[i].contains(".")) {
+				fieldMap.put(realFields[i], realFields[i].split("\\."));
+			}
+		}
+		result.setFields(realFields);
+		result.setAliasLabels(aliasFields);
+		return result;
+	}
+
 }

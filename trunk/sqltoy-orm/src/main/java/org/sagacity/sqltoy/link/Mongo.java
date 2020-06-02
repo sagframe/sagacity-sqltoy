@@ -16,6 +16,7 @@ import org.bson.conversions.Bson;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
+import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -344,30 +345,12 @@ public class Mongo extends BaseLink {
 			throws Exception {
 		List resultSet = new ArrayList();
 		Document row;
-		String[] fields = sqlToyConfig.getNoSqlConfigModel().getFields();
-		// 解决field采用id.name:aliasName 或 id.name 形式
-		String[] realFields = new String[fields.length];
-		String[] translateFields = new String[fields.length];
-		int aliasIndex = 0;
 		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();
-		for (int i = 0; i < fields.length; i++) {
-			realFields[i] = fields[i];
-			translateFields[i] = fields[i];
-			aliasIndex = fields[i].indexOf(":");
-			if (aliasIndex != -1) {
-				realFields[i] = fields[i].substring(0, aliasIndex).trim();
-				translateFields[i] = fields[i].substring(aliasIndex + 1).trim();
-			} else {
-				aliasIndex = fields[i].lastIndexOf(".");
-				if (aliasIndex != -1) {
-					translateFields[i] = fields[i].substring(aliasIndex + 1).trim();
-				}
-			}
-			// 放入缓存为了提升效率
-			if (realFields[i].contains(".")) {
-				linkMap.put(realFields[i], realFields[i].split("\\."));
-			}
-		}
+		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(sqlToyConfig.getNoSqlConfigModel().getFields(),
+				linkMap);
+		// 解决field采用id.name:aliasName 或 id.name 形式
+		String[] realFields = fieldModel.getFields();
+		String[] translateFields = fieldModel.getAliasLabels();
 		String[] keys;
 		int size;
 		String key;
