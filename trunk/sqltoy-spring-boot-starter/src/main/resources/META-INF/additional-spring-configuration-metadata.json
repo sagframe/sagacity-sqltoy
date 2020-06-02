@@ -1,0 +1,18 @@
+{
+  "properties": [
+    {
+      "name": "spring.sqltoy.dialect",
+      "type": "java.lang.String",
+      "description": "Description for spring.sqltoy.dialect.",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": "mysql"
+    },
+    {
+      "name": "spring.sqltoy.batch-size",
+      "type": "java.lang.Integer",
+      "description": "Description for spring.sqltoy.batchSize.",
+      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+      "defaultValue": 200
+    }
+  ]
+}
