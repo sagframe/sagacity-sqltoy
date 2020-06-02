@@ -59,6 +59,42 @@
 			"description": "跨数据库方言适配扩展函数",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": "defaults"
+		},
+		{
+			"name": "spring.sqltoy.elastic.defaultId",
+			"type": "java.lang.String",
+			"description": "elasticsearch 多个连接集群下的默认连接id",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.elastic.endpoints[0].id",
+			"type": "java.lang.String",
+			"description": "单个es集群id",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.elastic.endpoints[0].url",
+			"type": "java.lang.String",
+			"description": "es集群url地址,多个节点用逗号分隔",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.elastic.endpoints[0].username",
+			"type": "java.lang.String",
+			"description": "es连接用户名",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.elastic.endpoints[0].password",
+			"type": "java.lang.String",
+			"description": "es连接用户密码",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.elastic.endpoints[0].version",
+			"type": "java.lang.String",
+			"description": "es集群的版本 ,sqltoy会根据版本确定是否支持sql",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
 		}
 	]
 }
