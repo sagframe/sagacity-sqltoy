@@ -133,6 +133,7 @@ public class HttpClientUtils {
 		String realUrl;
 		// 返回结果
 		HttpEntity reponseEntity = null;
+		// 使用elastic rest client(默认)
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
@@ -154,7 +155,8 @@ public class HttpClientUtils {
 					restClient.close();
 				}
 			}
-		} else {
+		} // 组织httpclient模式调用(此种模式不推荐使用)
+		else {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug()) {
