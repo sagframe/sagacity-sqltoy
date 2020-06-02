@@ -82,6 +82,16 @@ public class SqlXMLConfigParse {
 
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 
+	public static HashMap<String, String> filters = new HashMap<String, String>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1636155921862321269L;
+		{
+			put("[", "]");
+		}
+	};
+
 	/**
 	 * @todo 判断文件 是否被修改，修改了则重新解析文件重置缓存
 	 * @param xmlFiles
@@ -391,12 +401,12 @@ public class SqlXMLConfigParse {
 		// fields
 		if (sqlElt.hasAttribute("fields")) {
 			if (StringUtil.isNotBlank(sqlElt.getAttribute("fields"))) {
-				noSqlConfig.setFields(trimParams(sqlElt.getAttribute("fields").split("\\,")));
+				noSqlConfig.setFields(splitFields(sqlElt.getAttribute("fields")));
 			}
 		} else {
 			nodeList = sqlElt.getElementsByTagName("fields");
 			if (nodeList.getLength() > 0) {
-				noSqlConfig.setFields(trimParams(nodeList.item(0).getTextContent().split("\\,")));
+				noSqlConfig.setFields(splitFields(nodeList.item(0).getTextContent()));
 			}
 		}
 
@@ -1214,4 +1224,43 @@ public class SqlXMLConfigParse {
 		}
 		return realParamNames;
 	}
+
+	/**
+	 * @TODO 切割nosql 定义的fields,让其符合预期格式
+	 * @param fields
+	 * @return
+	 */
+	private static String[] splitFields(String fields) {
+		if (StringUtil.isBlank(fields))
+			return null;
+		List<String> fieldSet = new ArrayList<String>();
+		String[] strs = StringUtil.splitExcludeSymMark(fields, ",", filters);
+		String pre;
+		String[] params;
+		for (String str : strs) {
+			if (str.contains("[") && str.contains("]")) {
+				pre = str.substring(0, str.indexOf("[")).trim();
+				params = str.substring(str.indexOf("[") + 1, str.indexOf("]")).split(",");
+				for (String param : params) {
+					fieldSet.add(pre.concat(".").concat(param.trim()));
+				}
+			} else {
+				fieldSet.add(str.trim());
+			}
+		}
+		String[] result = new String[fieldSet.size()];
+		fieldSet.toArray(result);
+		return result;
+	}
+
+//	public static void main(String[] args) {
+//		String fields;
+//		fields = "id[code,sexType:sexTypeName],name";
+//		fields = "id[code,sexType],name";
+//		fields = "id.code,sexType,name";
+//		String[] result = splitFields(fields);
+//		for (String str : result) {
+//			System.err.println("[" + str + "]");
+//		}
+//	}
 }
