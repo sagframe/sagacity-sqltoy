@@ -44,8 +44,7 @@ public class ElasticSearchUtils {
 	 * @todo 执行实际查询处理
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
-	 * @param noSqlModel
-	 * @param jsonQuery
+	 * @param sql
 	 * @param resultClass
 	 * @return
 	 * @throws Exception
