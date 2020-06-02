@@ -27,6 +27,13 @@
 			"defaultValue": "classpath:sqltoy-translate.xml"
 		},
 		{
+			"name": "spring.sqltoy.batchSize",
+			"type": "java.lang.Integer",
+			"description": "非必选项,批量执行默认每个批次提交的记录数量",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": 200
+		},
+		{
 			"name": "spring.sqltoy.printSqlTimeoutMillis",
 			"type": "java.lang.Integer",
 			"description": "非必选项,慢sql执行超过多少毫秒则打印,默认30秒",
