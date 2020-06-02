@@ -115,15 +115,22 @@ public class ElasticSearchUtils {
 			return resultModel;
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
-		System.arraycopy(fields, 0, realFields, 0, fields.length);
-		System.arraycopy(fields, 0, translateFields, 0, fields.length);
+		int index = 0;
 		int aliasIndex = 0;
-		for (int i = 0; i < realFields.length; i++) {
-			aliasIndex = realFields[i].indexOf(":");
+		for (String field : fields) {
+			realFields[index] = field;
+			translateFields[index] = field;
+			aliasIndex = field.indexOf(":");
 			if (aliasIndex != -1) {
-				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
-				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+				realFields[index] = field.substring(0, aliasIndex).trim();
+				translateFields[index] = field.substring(aliasIndex + 1).trim();
+			} else {
+				aliasIndex = field.lastIndexOf(".");
+				if (aliasIndex != -1) {
+					translateFields[index] = field.substring(aliasIndex + 1).trim();
+				}
 			}
+			index++;
 		}
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
@@ -186,15 +193,22 @@ public class ElasticSearchUtils {
 			return resultModel;
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
-		System.arraycopy(fields, 0, realFields, 0, fields.length);
-		System.arraycopy(fields, 0, translateFields, 0, fields.length);
+		int index = 0;
 		int aliasIndex = 0;
-		for (int i = 0; i < realFields.length; i++) {
-			aliasIndex = realFields[i].indexOf(":");
+		for (String field : fields) {
+			realFields[index] = field;
+			translateFields[index] = field;
+			aliasIndex = field.indexOf(":");
 			if (aliasIndex != -1) {
-				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
-				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+				realFields[index] = field.substring(0, aliasIndex).trim();
+				translateFields[index] = field.substring(aliasIndex + 1).trim();
+			} else {
+				aliasIndex = field.lastIndexOf(".");
+				if (aliasIndex != -1) {
+					translateFields[index] = field.substring(aliasIndex + 1).trim();
+				}
 			}
+			index++;
 		}
 		JSONObject rowJson, sourceData;
 		if (realRoot instanceof JSONArray) {
@@ -228,13 +242,19 @@ public class ElasticSearchUtils {
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
 		int index = 0;
+		int aliasIndex = 0;
 		for (String field : fields) {
-			if (field.indexOf(":") != -1) {
-				realFields[index] = field.substring(0, field.indexOf(":")).trim();
-				translateFields[index] = field.substring(field.indexOf(":") + 1).trim();
+			realFields[index] = field;
+			translateFields[index] = field;
+			aliasIndex = field.indexOf(":");
+			if (aliasIndex != -1) {
+				realFields[index] = field.substring(0, aliasIndex).trim();
+				translateFields[index] = field.substring(aliasIndex + 1).trim();
 			} else {
-				realFields[index] = field;
-				translateFields[index] = field;
+				aliasIndex = field.lastIndexOf(".");
+				if (aliasIndex != -1) {
+					translateFields[index] = field.substring(aliasIndex + 1).trim();
+				}
 			}
 			index++;
 		}
@@ -285,13 +305,19 @@ public class ElasticSearchUtils {
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
 		int index = 0;
+		int aliasIndex = 0;
 		for (String field : fields) {
-			if (field.indexOf(":") != -1) {
-				realFields[index] = field.substring(0, field.indexOf(":")).trim();
-				translateFields[index] = field.substring(field.indexOf(":") + 1).trim();
+			realFields[index] = field;
+			translateFields[index] = field;
+			aliasIndex = field.indexOf(":");
+			if (aliasIndex != -1) {
+				realFields[index] = field.substring(0, aliasIndex).trim();
+				translateFields[index] = field.substring(aliasIndex + 1).trim();
 			} else {
-				realFields[index] = field;
-				translateFields[index] = field;
+				aliasIndex = field.lastIndexOf(".");
+				if (aliasIndex != -1) {
+					translateFields[index] = field.substring(aliasIndex + 1).trim();
+				}
 			}
 			index++;
 		}

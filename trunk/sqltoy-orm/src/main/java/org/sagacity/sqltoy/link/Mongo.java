@@ -345,19 +345,25 @@ public class Mongo extends BaseLink {
 		List resultSet = new ArrayList();
 		Document row;
 		String[] fields = sqlToyConfig.getNoSqlConfigModel().getFields();
-		// 解决field采用name:aliasName形式
+		// 解决field采用id.name:aliasName 或 id.name 形式
 		String[] realFields = new String[fields.length];
 		String[] translateFields = new String[fields.length];
-		System.arraycopy(fields, 0, realFields, 0, fields.length);
-		System.arraycopy(fields, 0, translateFields, 0, fields.length);
 		int aliasIndex = 0;
 		HashMap<String, String[]> linkMap = new HashMap<String, String[]>();
-		for (int i = 0; i < realFields.length; i++) {
-			aliasIndex = realFields[i].indexOf(":");
+		for (int i = 0; i < fields.length; i++) {
+			realFields[i] = fields[i];
+			translateFields[i] = fields[i];
+			aliasIndex = fields[i].indexOf(":");
 			if (aliasIndex != -1) {
-				realFields[i] = realFields[i].substring(0, aliasIndex).trim();
-				translateFields[i] = translateFields[i].substring(aliasIndex + 1).trim();
+				realFields[i] = fields[i].substring(0, aliasIndex).trim();
+				translateFields[i] = fields[i].substring(aliasIndex + 1).trim();
+			} else {
+				aliasIndex = fields[i].lastIndexOf(".");
+				if (aliasIndex != -1) {
+					translateFields[i] = fields[i].substring(aliasIndex + 1).trim();
+				}
 			}
+			// 放入缓存为了提升效率
 			if (realFields[i].contains(".")) {
 				linkMap.put(realFields[i], realFields[i].split("\\."));
 			}
@@ -380,7 +386,7 @@ public class Mongo extends BaseLink {
 					size = keys.length;
 					for (int i = 0; i < size; i++) {
 						key = keys[i];
-						//最后一个.xx
+						// 最后一个.xx
 						if (i == size - 1) {
 							rowData.add(val.get(key));
 						} else {
