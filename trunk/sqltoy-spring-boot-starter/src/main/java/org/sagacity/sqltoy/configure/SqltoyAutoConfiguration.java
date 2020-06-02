@@ -151,6 +151,7 @@ public class SqltoyAutoConfiguration {
 				ep.setKeyStore(esconfig.getKeyStore());
 				endpoints.add(ep);
 			}
+			// 这里已经完成了当没有设置默认节点时将第一个节点作为默认节点
 			sqlToyContext.setElasticEndpoints(endpoints);
 		}
 		// 设置默认数据库

@@ -98,8 +98,6 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Map<String, String> dialectProperties;
 
-	private String mongoFactoryName;
-
 	/**
 	 * sqltoy默认数据库
 	 */
