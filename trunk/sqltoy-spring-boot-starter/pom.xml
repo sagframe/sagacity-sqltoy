@@ -101,6 +101,7 @@
 				<filtering>false</filtering>
 				<includes>
 					<include>META-INF/spring.factories</include>
+					<include>META-INF/additional-spring-configuration-metadata.json</include>
 				</includes>
 			</resource>
 		</resources>

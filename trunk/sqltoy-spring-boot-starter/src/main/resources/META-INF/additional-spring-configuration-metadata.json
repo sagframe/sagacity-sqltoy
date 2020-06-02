@@ -1,18 +1,57 @@
 {
-  "properties": [
-    {
-      "name": "spring.sqltoy.dialect",
-      "type": "java.lang.String",
-      "description": "Description for spring.sqltoy.dialect.",
-      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
-      "defaultValue": "mysql"
-    },
-    {
-      "name": "spring.sqltoy.batch-size",
-      "type": "java.lang.Integer",
-      "description": "Description for spring.sqltoy.batchSize.",
-      "sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
-      "defaultValue": 200
-    }
-  ]
+	"properties": [
+		{
+			"name": "spring.sqltoy.sqlResourcesDir",
+			"type": "java.lang.String",
+			"description": "scan path for *.sql.xml resources",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.debug",
+			"type": "java.lang.Boolean",
+			"description": "is debug mode for develop",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": false
+		},
+		{
+			"name": "spring.sqltoy.unifyFieldsHandler",
+			"type": "java.lang.String",
+			"description": "统一对createBy、createTime、updateBy、updateTime 进行赋值的扩展实现",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.translateConfig",
+			"type": "java.lang.String",
+			"description": "缓存配置文件路径",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": "classpath:sqltoy-translate.xml"
+		},
+		{
+			"name": "spring.sqltoy.printSqlTimeoutMillis",
+			"type": "java.lang.Integer",
+			"description": "慢sql执行超过多少毫秒则打印,默认30秒",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": 300000
+		},
+		{
+			"name": "spring.sqltoy.defaultDataSource",
+			"type": "java.lang.String",
+			"description": "非必要参数指定默认数据源",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": "dataSource"
+		},
+		{
+			"name": "spring.sqltoy.reservedWords",
+			"type": "java.lang.String",
+			"description": "数据库兼容保留字,设置当前项目误用到的保留字,多个用逗号分隔",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
+		},
+		{
+			"name": "spring.sqltoy.functionConverts",
+			"type": "java.lang.String",
+			"description": "跨数据库方言适配",
+			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
+			"defaultValue": "defaults"
+		}
+	]
 }
