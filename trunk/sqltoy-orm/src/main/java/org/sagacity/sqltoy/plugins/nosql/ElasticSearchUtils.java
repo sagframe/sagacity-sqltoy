@@ -112,8 +112,9 @@ public class ElasticSearchUtils {
 			JSONObject json, String[] fields) {
 		DataSetResult resultModel = new DataSetResult();
 		Object realRoot = json.get("rows");
-		if (realRoot == null)
+		if (realRoot == null) {
 			return resultModel;
+		}
 		NoSqlFieldsModel fieldModel = MongoElasticUtils.processFields(fields, null);
 		JSONArray rows = (JSONArray) realRoot;
 		JSONArray item;
