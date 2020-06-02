@@ -1226,7 +1226,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @TODO 切割nosql 定义的fields,让其符合预期格式
+	 * @TODO 切割nosql 定义的fields,让其符合预期格式,格式为id[col1,col2:aliasName],col3,col4 将其按逗号分隔成
+	 * id.col1,id.cols2:aliasName,col3,col4
 	 * @param fields
 	 * @return
 	 */
