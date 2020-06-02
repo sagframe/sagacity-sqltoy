@@ -3,53 +3,53 @@
 		{
 			"name": "spring.sqltoy.sqlResourcesDir",
 			"type": "java.lang.String",
-			"description": "É¨ÃèsqlÎÄ¼ş×ÊÔ´Â·¾¶,¶à¸öÓÃ¶ººÅ·Ö¸ô,scan path for *.sql.xml resources",
+			"description": "æ‰«æsqlæ–‡ä»¶èµ„æºè·¯å¾„,å¤šä¸ªç”¨é€—å·åˆ†éš”,scan path for *.sql.xml resources",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
 		},
 		{
 			"name": "spring.sqltoy.debug",
 			"type": "java.lang.Boolean",
-			"description": "open or close debug mode for develop,is true »á´òÓ¡Ö´ĞĞsql",
+			"description": "open or close debug mode for develop,is true ä¼šæ‰“å°æ‰§è¡Œsql",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": false
 		},
 		{
 			"name": "spring.sqltoy.unifyFieldsHandler",
 			"type": "java.lang.String",
-			"description": "Í³Ò»¶ÔcreateBy¡¢createTime¡¢updateBy¡¢updateTime ½øĞĞ¸³ÖµµÄÀ©Õ¹ÊµÏÖ",
+			"description": "ç»Ÿä¸€å¯¹createByã€createTimeã€updateByã€updateTime è¿›è¡Œèµ‹å€¼çš„æ‰©å±•å®ç°",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
 		},
 		{
 			"name": "spring.sqltoy.translateConfig",
 			"type": "java.lang.String",
-			"description": "»º´æÅäÖÃÎÄ¼şÂ·¾¶",
+			"description": "ç¼“å­˜é…ç½®æ–‡ä»¶è·¯å¾„",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": "classpath:sqltoy-translate.xml"
 		},
 		{
 			"name": "spring.sqltoy.printSqlTimeoutMillis",
 			"type": "java.lang.Integer",
-			"description": "·Ç±ØÑ¡Ïî,ÂısqlÖ´ĞĞ³¬¹ı¶àÉÙºÁÃëÔò´òÓ¡,Ä¬ÈÏ30Ãë",
+			"description": "éå¿…é€‰é¡¹,æ…¢sqlæ‰§è¡Œè¶…è¿‡å¤šå°‘æ¯«ç§’åˆ™æ‰“å°,é»˜è®¤30ç§’",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": 300000
 		},
 		{
 			"name": "spring.sqltoy.defaultDataSource",
 			"type": "java.lang.String",
-			"description": "·Ç±ØÑ¡Ïî,Ö¸¶¨sqltoy¿ò¼ÜÄ¬ÈÏÖ¸¶¨µÄÊı¾İÔ´",
+			"description": "éå¿…é€‰é¡¹,æŒ‡å®šsqltoyæ¡†æ¶é»˜è®¤æŒ‡å®šçš„æ•°æ®æº",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": "dataSource"
 		},
 		{
 			"name": "spring.sqltoy.reservedWords",
 			"type": "java.lang.String",
-			"description": "¼æÈİÊı¾İ¿â±£Áô×Ö´¦Àí,ÉèÖÃµ±Ç°ÏîÄ¿ÎóÓÃµ½µÄ±£Áô×Ö,¶à¸öÓÃ¶ººÅ·Ö¸ô",
+			"description": "å…¼å®¹æ•°æ®åº“ä¿ç•™å­—å¤„ç†,è®¾ç½®å½“å‰é¡¹ç›®è¯¯ç”¨åˆ°çš„ä¿ç•™å­—,å¤šä¸ªç”¨é€—å·åˆ†éš”",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties"
 		},
 		{
 			"name": "spring.sqltoy.functionConverts",
 			"type": "java.lang.String",
-			"description": "¿çÊı¾İ¿â·½ÑÔÊÊÅä",
+			"description": "è·¨æ•°æ®åº“æ–¹è¨€é€‚é…",
 			"sourceType": "org.sagacity.sqltoy.configure.SqlToyContextProperties",
 			"defaultValue": "defaults"
 		}
