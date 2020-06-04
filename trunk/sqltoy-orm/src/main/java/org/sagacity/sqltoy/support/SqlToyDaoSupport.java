@@ -1227,8 +1227,30 @@ public class SqlToyDaoSupport {
 	 */
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getValues())) {
-			throw new IllegalArgumentException("selectList entityClass、where、value 值不能为空!");
+			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
 		}
+		return (List<T>) findEntityUtil(entityClass, null, entityQuery);
+	}
+
+	/**
+	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
+	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * @param <T>
+	 * @param entityClass
+	 * @param paginationModel
+	 * @param entityQuery
+	 * @return
+	 */
+	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
+			EntityQuery entityQuery) {
+		if (null == entityClass || null == paginationModel || null == entityQuery
+				|| StringUtil.isBlank(entityQuery.getValues())) {
+			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、value 值不能为空!");
+		}
+		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery);
+	}
+
+	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery) {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
@@ -1296,8 +1318,22 @@ public class SqlToyDaoSupport {
 				sqlToyConfig.setTablesShardings(queryShardings);
 			}
 		}
-		return (List<T>) dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
-				entityQuery.getLockMode(), this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+		// 非分页
+		if (paginationModel == null) {
+			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, entityQuery.getLockMode(),
+					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+		}
+		// 跳过总记录数形式的分页
+		if (paginationModel.getSkipQueryCount()) {
+			return dialectFactory
+					.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
+							paginationModel.getPageSize(), getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
+					.getPageResult();
+		}
+		return dialectFactory
+				.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
+						paginationModel.getPageSize(), getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
+				.getPageResult();
 	}
 
 	/**

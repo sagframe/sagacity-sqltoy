@@ -265,6 +265,9 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
+	public <T> PaginationModel<T> findEntity(Class<T> resultType, final PaginationModel paginationModel,
+			EntityQuery entityQuery);
+
 	/**
 	 * @todo 级联加载子表数据
 	 * @param entities

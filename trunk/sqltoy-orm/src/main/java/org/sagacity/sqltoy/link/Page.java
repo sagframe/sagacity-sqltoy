@@ -19,7 +19,9 @@ import org.sagacity.sqltoy.model.PaginationModel;
  * @description 分页查询
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:Page.java,Revision:v1.0,Date:2017年10月9日
+ * @See Query.findPage()
  */
+@Deprecated
 public class Page extends BaseLink {
 
 	/**
