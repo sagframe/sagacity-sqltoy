@@ -112,6 +112,7 @@ public class LinkDaoSupport {
 	 * @todo 分页操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Page page() {
 		return new Page(sqlToyContext, getDataSource(dataSource));
 	}
