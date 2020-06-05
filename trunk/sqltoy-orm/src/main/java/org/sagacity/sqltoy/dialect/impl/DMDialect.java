@@ -214,20 +214,32 @@ public class DMDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
-					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("修改记录数为:{}", updateCnt);
+			return updateCnt;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+				dialect, autoCommit, tableName);
+		logger.debug("变更记录数:{},新建记录数为:{}", updateCnt, saveCnt);
+		return updateCnt + saveCnt;
+//		
+//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+//		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+//				new GenerateSqlHandler() {
+//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+//						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+//						String sequence = entityMeta.getSequence() + ".nextval";
+//						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+//							pkStrategy = PKStrategy.SEQUENCE;
+//							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+//						}
+//						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
+//								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+//					}
+//				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
