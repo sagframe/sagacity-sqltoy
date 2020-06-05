@@ -145,6 +145,11 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 	}
 
+	/**
+	 * @todo 获取数据库类型名称
+	 * @param dbType
+	 * @return
+	 */
 	public static String getDialect(Integer dbType) {
 		switch (dbType) {
 		case DBType.MYSQL:
