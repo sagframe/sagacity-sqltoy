@@ -55,16 +55,13 @@ public class DataSourceUtils {
 		// 华为gaussdb(源于postgresql)
 		public final static String GAUSSDB = "gaussdb";
 
-		// 以15.4为基准起始版(基本目前没有用户)
-		public final static String SYBASE_IQ = "sybase_iq";
-
-		// 暂不支持
-		public final static String SAP_HANA = "hana";
-
-		// 未充分验证
+		// 3.0以上版本
 		public final static String SQLITE = "sqlite";
 
+		// mongodb
 		public final static String MONGO = "mongo";
+
+		// elasticsearch
 		public final static String ES = "elastic";
 
 		// 19.x版本
@@ -73,9 +70,13 @@ public class DataSourceUtils {
 		// 阿里 oceanbase
 		public final static String OCEANBASE = "oceanbase";
 
-		// 达梦数据库
+		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
+		// 以15.4为基准起始版(基本目前没有用户)
+		public final static String SYBASE_IQ = "sybase_iq";
 
+		// sap hana 暂不支持
+		public final static String SAP_HANA = "hana";
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -94,24 +95,25 @@ public class DataSourceUtils {
 		// 2017及以上版本
 		public final static int SQLSERVER = 30;
 		public final static int SQLSERVER2012 = 35;
-
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
-
-		public final static int SAP_HANA = 50;
+		// clickhouse
+		public final static int CLICKHOUSE = 50;
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 60;
 
 		// gaussdb
 		public final static int GAUSSDB = 70;
-
-		public final static int SYBASE_IQ = 80;
+		// 达梦
+		public final static int DM = 80;
 		public final static int SQLITE = 90;
-		public final static int MONGO = 110;
 		public final static int OCEANBASE = 100;
+		public final static int MONGO = 110;
 		public final static int ES = 120;
-		public final static int CLICKHOUSE = 130;
-		public final static int DM = 140;
+		//下面2个将逐步淘汰
+		// sap hana
+		public final static int SAP_HANA = 130;
+		public final static int SYBASE_IQ = 140;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();

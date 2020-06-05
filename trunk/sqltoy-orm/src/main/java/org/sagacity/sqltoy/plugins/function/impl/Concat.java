@@ -46,7 +46,8 @@ public class Concat extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		// 只针对oracle数据库,其他数据库原样返回
-		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
+		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
+				|| dialect == DBType.ORACLE11) {
 			// 超过2个参数
 			if (args != null && args.length > 2) {
 				StringBuilder result = new StringBuilder();
