@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 
 /**
  * @project sqltoy-orm
- * @description 国产达梦数据库方言支持
+ * @description 国产达梦数据库方言支持(从DM8开始支持)
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2020-06-05
  * @Modification Date:2020-06-05 初始创建达梦数据库支持
