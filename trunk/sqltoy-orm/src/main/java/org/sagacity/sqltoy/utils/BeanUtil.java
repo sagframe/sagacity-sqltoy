@@ -363,7 +363,7 @@ public class BeanUtil {
 		}
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
-			return Integer.valueOf(convertBoolean(valueStr));
+			return Integer.valueOf(Double.valueOf(convertBoolean(valueStr)).intValue());
 		}
 		// 第六
 		if (typeName.equals("java.sql.timestamp") || typeName.equals("timestamp")) {
@@ -403,10 +403,10 @@ public class BeanUtil {
 			return DateUtil.parseString(valueStr);
 		}
 		if (typeName.equals("java.lang.long")) {
-			return Long.valueOf(convertBoolean(valueStr));
+			return Long.valueOf(Double.valueOf(convertBoolean(valueStr)).longValue());
 		}
 		if (typeName.equals("int")) {
-			return Integer.valueOf(convertBoolean(valueStr)).intValue();
+			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
 		if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
@@ -428,7 +428,7 @@ public class BeanUtil {
 			return new BigInteger(convertBoolean(valueStr));
 		}
 		if (typeName.equals("long")) {
-			return Long.valueOf(convertBoolean(valueStr)).longValue();
+			return Double.valueOf(convertBoolean(valueStr)).longValue();
 		}
 		if (typeName.equals("double")) {
 			return Double.valueOf(valueStr).doubleValue();
@@ -460,10 +460,10 @@ public class BeanUtil {
 			return Boolean.FALSE;
 		}
 		if (typeName.equals("java.lang.short")) {
-			return Short.valueOf(convertBoolean(valueStr));
+			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
 		}
 		if (typeName.equals("short")) {
-			return Short.valueOf(convertBoolean(valueStr)).shortValue();
+			return Double.valueOf(convertBoolean(valueStr)).shortValue();
 		}
 		if (typeName.equals("java.lang.float")) {
 			return Float.valueOf(valueStr);
