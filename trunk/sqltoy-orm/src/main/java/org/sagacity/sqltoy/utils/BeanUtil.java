@@ -344,7 +344,7 @@ public class BeanUtil {
 			return valueStr;
 		}
 		// 第二优先
-		if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal")|| typeName.equals("bigdecimal")) {
+		if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal") || typeName.equals("bigdecimal")) {
 			return new BigDecimal(convertBoolean(valueStr));
 		}
 		// 第三优先
@@ -361,7 +361,7 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalDate(DateUtil.parseString(valueStr));
 		}
-		//为什么先转Double?因为部分场景下valueStr是0.00这种形态(数据库默认值),导致转换失败
+		// 为什么先转Double?因为部分场景下valueStr是0.00这种形态(数据库默认值),导致转换失败
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
 			return Integer.valueOf(Double.valueOf(convertBoolean(valueStr)).intValue());
@@ -426,7 +426,7 @@ public class BeanUtil {
 		}
 		// add 2020-4-9
 		if (typeName.equals("java.math.biginteger") || typeName.equals("biginteger")) {
-			return new BigInteger(convertBoolean(valueStr));
+			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("long")) {
 			return Double.valueOf(convertBoolean(valueStr)).longValue();
