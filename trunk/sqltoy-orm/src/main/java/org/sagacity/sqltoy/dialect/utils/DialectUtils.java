@@ -1113,8 +1113,7 @@ public class DialectUtils {
 			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
-		// 显示sql
-		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+
 		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), null, conn, dbType, 0, -1, -1);
 		List rows = queryResult.getRows();

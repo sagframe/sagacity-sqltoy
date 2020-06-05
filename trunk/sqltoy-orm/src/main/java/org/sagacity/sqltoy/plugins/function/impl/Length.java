@@ -46,16 +46,18 @@ public class Length extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012) {
-			if (functionName.equalsIgnoreCase("datalength"))
+			if (functionName.equalsIgnoreCase("datalength")) {
 				return wrapArgs("datalength", args);
+			}
 			return wrapArgs("len", args);
 		}
 		if (dialect == DBType.SYBASE_IQ) {
-			if (functionName.equalsIgnoreCase("char_length"))
+			if (functionName.equalsIgnoreCase("char_length")) {
 				return wrapArgs(functionName, args);
+			}
 			return wrapArgs("datalength", args);
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE
+		if (dialect == DBType.DB2 || dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
 				|| dialect == DBType.ORACLE11 || dialect == DBType.POSTGRESQL) {
 			if (functionName.equalsIgnoreCase("datalength") || functionName.equalsIgnoreCase("char_length")
 					|| functionName.equalsIgnoreCase("len")) {
@@ -64,8 +66,9 @@ public class Length extends IFunction {
 			return wrapArgs(functionName, args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
-			if (functionName.equalsIgnoreCase("char_length"))
+			if (functionName.equalsIgnoreCase("char_length")) {
 				return wrapArgs(functionName, args);
+			}
 			return wrapArgs("length", args);
 		}
 		return super.IGNORE;

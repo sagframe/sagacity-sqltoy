@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
+import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
 import org.sagacity.sqltoy.dialect.impl.OracleDialect;
@@ -154,6 +155,10 @@ public class DialectFactory {
 		// clickhouse 19.x 版本开始支持
 		case DBType.CLICKHOUSE: {
 			dialectSqlWrapper = new ClickHouseDialect();
+			break;
+		} // dm数据库支持(以oracle为蓝本)
+		case DBType.DM: {
+			dialectSqlWrapper = new DMDialect();
 			break;
 		}
 		// 基本支持(sqlite 本身功能就相对简单)

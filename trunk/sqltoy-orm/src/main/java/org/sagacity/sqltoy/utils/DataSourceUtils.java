@@ -55,16 +55,17 @@ public class DataSourceUtils {
 		// 华为gaussdb(源于postgresql)
 		public final static String GAUSSDB = "gaussdb";
 
-		// 以15.4为基准起始版(基本目前没有用户)
-		public final static String SYBASE_IQ = "sybase_iq";
-
 		// 暂不支持
 		public final static String SAP_HANA = "hana";
 
-		// 3.0版本
+
+		// 3.0以上版本
 		public final static String SQLITE = "sqlite";
 
+		// mongodb
 		public final static String MONGO = "mongo";
+
+		// elasticsearch
 		public final static String ES = "elastic";
 
 		// 19.x版本
@@ -73,6 +74,13 @@ public class DataSourceUtils {
 		// 阿里 oceanbase
 		public final static String OCEANBASE = "oceanbase";
 
+		// 达梦数据库(dm8验证)
+		public final static String DM = "dm";
+		// 以15.4为基准起始版(基本目前没有用户)
+		public final static String SYBASE_IQ = "sybase_iq";
+
+		// sap hana 暂不支持
+		public final static String SAP_HANA = "hana";
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -91,23 +99,25 @@ public class DataSourceUtils {
 		// 2017及以上版本
 		public final static int SQLSERVER = 30;
 		public final static int SQLSERVER2012 = 35;
-
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
-
-		public final static int SAP_HANA = 50;
+		// clickhouse
+		public final static int CLICKHOUSE = 50;
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 60;
 
 		// gaussdb
 		public final static int GAUSSDB = 70;
-
-		public final static int SYBASE_IQ = 80;
+		// 达梦
+		public final static int DM = 80;
 		public final static int SQLITE = 90;
-		public final static int MONGO = 110;
 		public final static int OCEANBASE = 100;
+		public final static int MONGO = 110;
 		public final static int ES = 120;
-		public final static int CLICKHOUSE = 130;
+		//下面2个将逐步淘汰
+		// sap hana
+		public final static int SAP_HANA = 130;
+		public final static int SYBASE_IQ = 140;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -132,6 +142,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.SQLITE, DBType.SQLITE);
 		DBNameTypeMap.put(Dialect.CLICKHOUSE, DBType.CLICKHOUSE);
 		DBNameTypeMap.put(Dialect.OCEANBASE, DBType.OCEANBASE);
+		// 2020-6-5 增加对达梦数据库的支持
+		DBNameTypeMap.put(Dialect.DM, DBType.DM);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 	}
 
@@ -161,6 +173,8 @@ public class DataSourceUtils {
 			return Dialect.SQLITE;
 		case DBType.MONGO:
 			return Dialect.MONGO;
+		case DBType.DM:
+			return Dialect.DM;
 		case DBType.SYBASE_IQ:
 			return Dialect.SYBASE_IQ;
 		case DBType.SAP_HANA:
@@ -239,12 +253,15 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GAUSSDB) != -1) {
 				return Dialect.GAUSSDB;
 			}
-			// hana
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
-				return Dialect.SAP_HANA;
-			} // sqlite
+			// sqlite
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLITE) != -1) {
 				return Dialect.SQLITE;
+			} // dm
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DM) != -1) {
+				return Dialect.DM;
+			} // hana
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
+				return Dialect.SAP_HANA;
 			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
@@ -327,10 +344,6 @@ public class DataSourceUtils {
 			else if (dbDialect.equals(Dialect.OCEANBASE)) {
 				dbType = DBType.OCEANBASE;
 			}
-			// sybase IQ
-			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
-				dbType = DBType.SYBASE_IQ;
-			}
 			// GAUSSDB
 			else if (dbDialect.equals(Dialect.GAUSSDB)) {
 				dbType = DBType.GAUSSDB;
@@ -338,6 +351,12 @@ public class DataSourceUtils {
 			// sqlite
 			else if (dbDialect.equals(Dialect.SQLITE)) {
 				dbType = DBType.SQLITE;
+			} // dm
+			else if (dbDialect.equals(Dialect.DM)) {
+				dbType = DBType.DM;
+			} // sybase IQ
+			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
+				dbType = DBType.SYBASE_IQ;
 			} // hana
 			else if (dbDialect.equals(Dialect.SAP_HANA)) {
 				dbType = DBType.SAP_HANA;
@@ -368,6 +387,7 @@ public class DataSourceUtils {
 		}
 		case DBType.ORACLE:
 		case DBType.OCEANBASE:
+		case DBType.DM:
 		case DBType.ORACLE11: {
 			return "select 1 from dual";
 		}

@@ -28,8 +28,9 @@ public class GroupConcat extends IFunction {
 
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (args == null || args.length == 0)
+		if (args == null || args.length == 0) {
 			return super.IGNORE;
+		}
 		String tmp = args[args.length - 1];
 		String sign = "','";
 		int matchIndex = StringUtil.matchIndex(tmp.toLowerCase(), separtorPattern);
@@ -48,8 +49,9 @@ public class GroupConcat extends IFunction {
 			}
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
-			if (functionName.equalsIgnoreCase("group_concat"))
+			if (functionName.equalsIgnoreCase("group_concat")) {
 				return super.IGNORE;
+			}
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";
 		}
 		return super.IGNORE;
