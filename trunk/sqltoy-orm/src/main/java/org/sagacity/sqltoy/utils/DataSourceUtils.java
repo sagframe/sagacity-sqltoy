@@ -131,8 +131,7 @@ public class DataSourceUtils {
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
-		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
-		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
+
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
 		DBNameTypeMap.put(Dialect.SQLITE, DBType.SQLITE);
@@ -141,6 +140,9 @@ public class DataSourceUtils {
 		// 2020-6-5 增加对达梦数据库的支持
 		DBNameTypeMap.put(Dialect.DM, DBType.DM);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
+		//纳入将不再支持范围
+		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
+		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 	}
 
 	public static String getDialect(Integer dbType) {
