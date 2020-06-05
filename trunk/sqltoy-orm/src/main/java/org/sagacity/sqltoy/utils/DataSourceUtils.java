@@ -110,7 +110,7 @@ public class DataSourceUtils {
 		public final static int OCEANBASE = 100;
 		public final static int MONGO = 110;
 		public final static int ES = 120;
-		//下面2个将逐步淘汰
+		// 下面2个将逐步淘汰
 		// sap hana
 		public final static int SAP_HANA = 130;
 		public final static int SYBASE_IQ = 140;
@@ -362,6 +362,11 @@ public class DataSourceUtils {
 		return DBNameTypeMap.get(dbKey);
 	}
 
+	/**
+	 * @TODO 这里的方言已经在SqlToyContext中已经做了规整(因此不会超出范围)
+	 * @param dialect
+	 * @return
+	 */
 	public static int getDBType(String dialect) {
 		if (StringUtil.isBlank(dialect)) {
 			return DBType.UNDEFINE;
