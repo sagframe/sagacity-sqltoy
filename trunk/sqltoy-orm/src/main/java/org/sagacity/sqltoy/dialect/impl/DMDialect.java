@@ -225,21 +225,6 @@ public class DMDialect implements Dialect {
 				dialect, autoCommit, tableName);
 		logger.debug("变更记录数:{},新建记录数为:{}", updateCnt, saveCnt);
 		return updateCnt + saveCnt;
-//		
-//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-//		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-//				new GenerateSqlHandler() {
-//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-//						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-//						String sequence = entityMeta.getSequence() + ".nextval";
-//						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-//							pkStrategy = PKStrategy.SEQUENCE;
-//							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-//						}
-//						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-//								"dual", NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
-//					}
-//				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
