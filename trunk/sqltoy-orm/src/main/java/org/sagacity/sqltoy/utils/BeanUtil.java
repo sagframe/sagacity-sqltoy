@@ -344,7 +344,7 @@ public class BeanUtil {
 			return valueStr;
 		}
 		// 第二优先
-		if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal")) {
+		if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal")|| typeName.equals("bigdecimal")) {
 			return new BigDecimal(convertBoolean(valueStr));
 		}
 		// 第三优先
