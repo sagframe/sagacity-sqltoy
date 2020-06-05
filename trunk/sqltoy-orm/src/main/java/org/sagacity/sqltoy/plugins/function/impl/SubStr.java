@@ -39,8 +39,8 @@ public class SubStr extends IFunction {
 				|| dialect == DBType.SYBASE_IQ) {
 			return wrapArgs("substring", args);
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.ORACLE
-				|| dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
+		if (dialect == DBType.DB2 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.DM
+				|| dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改

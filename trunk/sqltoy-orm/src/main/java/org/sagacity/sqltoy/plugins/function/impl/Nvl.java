@@ -52,14 +52,17 @@ public class Nvl extends IFunction {
 		if (dialect == DBType.DB2 || dialect == DBType.POSTGRESQL)
 			return wrapArgs("coalesce", args);
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.SYBASE_IQ) {
-			if (args.length == 1)
+			if (args.length == 1) {
 				return wrapArgs("isnull", args);
+			}
 			return wrapArgs("ifnull", args);
 		}
 		if (dialect == DBType.SQLITE)
 			return wrapArgs("ifnull", args);
-		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11)
+		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
+				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("nvl", args);
+		}
 		return super.IGNORE;
 	}
 

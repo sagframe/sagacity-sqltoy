@@ -43,7 +43,8 @@ public class Decode extends IFunction {
 		 * wrapArgs("ELT", args); } else
 		 */
 		// oracle支持decode
-		if (dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
+		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
+				|| dialect == DBType.ORACLE11) {
 			return super.IGNORE;
 		}
 		// decode(param,a1,a11,a2,a21,other)

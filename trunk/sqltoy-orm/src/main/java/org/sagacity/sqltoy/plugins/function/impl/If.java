@@ -29,8 +29,9 @@ public class If extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
 			return super.IGNORE;
 		}
-		if (args == null || args.length < 3)
+		if (args == null || args.length < 3) {
 			return super.IGNORE;
+		}
 		return " case when " + args[0] + " then " + args[1] + " else " + args[2] + " end ";
 	}
 
