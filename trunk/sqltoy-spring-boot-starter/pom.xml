@@ -37,20 +37,22 @@
 	</developers>
 	<distributionManagement>
 
-		<!-- <snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
+		<!-- <snapshotRepository> <id>sonatype-nexus-snapshots</id> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
+			</snapshotRepository> <repository> <id>sonatype-nexus-staging</id> <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url> 
+			</repository> -->
+
+
 		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository> -->
-
-
-		<repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
-			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
-			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
-			</snapshotRepository>
+			<id>nexus-release</id>
+			<name>3rd party</name>
+			<url>https://nexus.1chemic.com/repository/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<name>Department 
+			Repository</name>
+			<url>https://nexus.1chemic.com/repository/snapshots/</url>
+		</snapshotRepository>
 
 	</distributionManagement>
 
@@ -76,6 +78,11 @@
 			<artifactId>spring-boot-autoconfigure</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy</artifactId>
 			<version>${version}</version>
@@ -99,7 +106,6 @@
 				<filtering>false</filtering>
 				<includes>
 					<include>META-INF/spring.factories</include>
-					<include>META-INF/additional-spring-configuration-metadata.json</include>
 				</includes>
 			</resource>
 		</resources>
@@ -137,19 +143,9 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-gpg-plugin</artifactId> 
+				<version>1.6</version> <executions> <execution> <phase>verify</phase> <goals> 
+				<goal>sign</goal> </goals> </execution> </executions> </plugin> -->
 		</plugins>
 	</build>
 </project>
