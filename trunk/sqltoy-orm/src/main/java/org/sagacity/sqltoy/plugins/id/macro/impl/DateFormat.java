@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * @project sagacity-sqltoy4.2
- * @description 进行日期格式化
+ * @description 进行日期格式化,如果想不包含日期@df('')
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DateFormat.java,Revision:v1.0,Date:2018年5月25日
  */
@@ -39,16 +39,17 @@ public class DateFormat extends AbstractMacro {
 					if (keyValues != null && keyValues.containsKey(params[0])) {
 						dateValue = keyValues.get(params[0]).toString();
 					} else {
-						dateValue=params[0];
+						dateValue = params[0];
 					}
 				}
 				fmt = params[1];
 			}
 		}
-		String emptyFmt = fmt.replaceAll("\"", "").replaceAll("\\'", "");
-		if (emptyFmt.equals("") || emptyFmt.equalsIgnoreCase("null"))
+		// 提出单引号和双引号
+		String realFmt = fmt.replaceAll("\"", "").replaceAll("\\'", "").trim();
+		if (realFmt.equals("") || realFmt.equalsIgnoreCase("null"))
 			return "";
-		return DateUtil.formatDate(dateValue, fmt);
+		return DateUtil.formatDate(dateValue, realFmt);
 	}
 
 }
