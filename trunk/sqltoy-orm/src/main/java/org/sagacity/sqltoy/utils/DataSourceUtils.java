@@ -61,7 +61,7 @@ public class DataSourceUtils {
 		// 暂不支持
 		public final static String SAP_HANA = "hana";
 
-		// 未充分验证
+		// 3.0版本
 		public final static String SQLITE = "sqlite";
 
 		public final static String MONGO = "mongo";
