@@ -361,6 +361,7 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalDate(DateUtil.parseString(valueStr));
 		}
+		//为什么先转Double?因为部分场景下valueStr是0.00这种形态(数据库默认值),导致转换失败
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
 			return Integer.valueOf(Double.valueOf(convertBoolean(valueStr)).intValue());
