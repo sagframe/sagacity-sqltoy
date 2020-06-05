@@ -127,11 +127,12 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
-		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		DBNameTypeMap.put(Dialect.MONGO, DBType.MONGO);
 		DBNameTypeMap.put(Dialect.ES, DBType.ES);
+		DBNameTypeMap.put(Dialect.SQLITE, DBType.SQLITE);
 		DBNameTypeMap.put(Dialect.CLICKHOUSE, DBType.CLICKHOUSE);
 		DBNameTypeMap.put(Dialect.OCEANBASE, DBType.OCEANBASE);
+		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 	}
 
 	public static String getDialect(Integer dbType) {
