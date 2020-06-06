@@ -309,7 +309,7 @@ public class DateUtil {
 			return null;
 		}
 		Date result = null;
-		String dtStr = dt.toString();
+		String dtStr = dt.toString().trim();
 		if (dt instanceof String) {
 			if (dtStr.length() == 13 && NumberUtil.isInteger(dtStr)) {
 				result = new java.util.Date(Long.valueOf(dtStr));
