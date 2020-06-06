@@ -422,7 +422,7 @@ public class BeanUtil {
 		if (typeName.equals("java.time.localtime")) {
 			if (paramValue instanceof LocalTime)
 				return (LocalTime) paramValue;
-			return DateUtil.asLocalTime(DateUtil.parseString(valueStr));
+			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
 		}
 		// add 2020-4-9
 		if (typeName.equals("java.math.biginteger") || typeName.equals("biginteger")) {
