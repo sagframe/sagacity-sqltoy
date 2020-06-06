@@ -157,7 +157,7 @@ public class DateUtil {
 			return null;
 		}
 		String dateStr = dateVar.trim();
-		if(dateStr.equals("")) {
+		if (dateStr.equals("")) {
 			return null;
 		}
 		String realDF = null;
@@ -311,7 +311,11 @@ public class DateUtil {
 		Date result = null;
 		String dtStr = dt.toString();
 		if (dt instanceof String) {
-			result = parseString(dtStr, format, local);
+			if (dtStr.length() == 13 && NumberUtil.isInteger(dtStr)) {
+				result = new java.util.Date(Long.valueOf(dtStr));
+			} else {
+				result = parseString(dtStr, format, local);
+			}
 		} else if (dt instanceof java.util.Date) {
 			result = new java.util.Date(((java.util.Date) dt).getTime());
 		} else if (dt instanceof java.time.LocalDate) {
