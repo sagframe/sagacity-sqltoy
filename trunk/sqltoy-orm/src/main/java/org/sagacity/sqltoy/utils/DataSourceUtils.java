@@ -72,6 +72,10 @@ public class DataSourceUtils {
 
 		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
+
+		// tidb(语法遵循mysql)
+		public final static String TIDB = "tidb";
+
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
 
@@ -106,10 +110,12 @@ public class DataSourceUtils {
 		public final static int GAUSSDB = 70;
 		// 达梦
 		public final static int DM = 80;
+		public final static int TIDB = 85;
 		public final static int SQLITE = 90;
 		public final static int OCEANBASE = 100;
 		public final static int MONGO = 110;
 		public final static int ES = 120;
+
 		// 下面2个将逐步淘汰
 		// sap hana
 		public final static int SAP_HANA = 130;
@@ -139,8 +145,11 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.OCEANBASE, DBType.OCEANBASE);
 		// 2020-6-5 增加对达梦数据库的支持
 		DBNameTypeMap.put(Dialect.DM, DBType.DM);
+		// 2020-6-7 启动增加对tidb的支持
+		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
+
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
-		//纳入将不再支持范围
+		// 纳入将不再支持范围
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 	}
@@ -178,6 +187,8 @@ public class DataSourceUtils {
 			return Dialect.MONGO;
 		case DBType.DM:
 			return Dialect.DM;
+		case DBType.TIDB:
+			return Dialect.TIDB;
 		case DBType.SYBASE_IQ:
 			return Dialect.SYBASE_IQ;
 		case DBType.SAP_HANA:
@@ -262,6 +273,9 @@ public class DataSourceUtils {
 			} // dm
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DM) != -1) {
 				return Dialect.DM;
+			} // TIDB
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
+				return Dialect.TIDB;
 			} // hana
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
 				return Dialect.SAP_HANA;
@@ -357,6 +371,9 @@ public class DataSourceUtils {
 			} // dm
 			else if (dbDialect.equals(Dialect.DM)) {
 				dbType = DBType.DM;
+			} // TIDB
+			else if (dbDialect.equals(Dialect.TIDB)) {
+				dbType = DBType.TIDB;
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
@@ -403,6 +420,7 @@ public class DataSourceUtils {
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
+		//mysql 系列
 		default:
 			return "select 1";
 		}

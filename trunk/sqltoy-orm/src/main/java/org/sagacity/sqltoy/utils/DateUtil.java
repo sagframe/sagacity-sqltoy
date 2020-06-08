@@ -316,16 +316,13 @@ public class DateUtil {
 			} else {
 				result = parseString(dtStr, format, local);
 			}
-		} else if (dt instanceof java.util.Date) {
+		} // 为什么要new 一个，目的是避免前面日期对象变化导致后续转化后的也变化，所以这里是新建
+		else if (dt instanceof java.util.Date) {
 			result = new java.util.Date(((java.util.Date) dt).getTime());
 		} else if (dt instanceof java.time.LocalDate) {
 			result = asDate((LocalDate) dt);
-		} else if (dt instanceof java.time.LocalTime) {
-			result = asDate((LocalTime) dt);
 		} else if (dt instanceof java.time.LocalDateTime) {
 			result = asDate((LocalDateTime) dt);
-		} else if (dt instanceof java.sql.Date) {
-			result = new java.util.Date(((java.sql.Date) dt).getTime());
 		} else if (dt instanceof java.lang.Number) {
 			// 13位表示毫秒数
 			if (dtStr.length() != 13) {
@@ -333,6 +330,8 @@ public class DateUtil {
 			} else {
 				result = new java.util.Date(((Number) dt).longValue());
 			}
+		} else if (dt instanceof java.time.LocalTime) {
+			result = asDate((LocalTime) dt);
 		} else {
 			throw new IllegalArgumentException(dt + "日期数据必须是String、Date、Long、Integer类型,请正确输入!");
 		}
