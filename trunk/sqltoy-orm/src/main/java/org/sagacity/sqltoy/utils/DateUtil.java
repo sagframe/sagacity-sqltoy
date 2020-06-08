@@ -316,7 +316,7 @@ public class DateUtil {
 			} else {
 				result = parseString(dtStr, format, local);
 			}
-		} // 为什么要new 一个，目的是避免前面日期发生变化，所以这里是新建
+		} // 为什么要new 一个，目的是避免前面日期对象变化导致后续转化后的也变化，所以这里是新建
 		else if (dt instanceof java.util.Date) {
 			result = new java.util.Date(((java.util.Date) dt).getTime());
 		} else if (dt instanceof java.time.LocalDate) {
