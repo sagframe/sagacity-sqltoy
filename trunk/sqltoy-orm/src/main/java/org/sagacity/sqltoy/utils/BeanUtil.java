@@ -371,9 +371,6 @@ public class BeanUtil {
 			if (paramValue instanceof java.sql.Timestamp) {
 				return (java.sql.Timestamp) paramValue;
 			}
-			if (paramValue instanceof java.sql.Date) {
-				return new Timestamp(((java.sql.Date) paramValue).getTime());
-			}
 			if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
 			}
@@ -386,14 +383,8 @@ public class BeanUtil {
 			return Double.valueOf(valueStr);
 		}
 		if (typeName.equals("java.util.date") || typeName.equals("date")) {
-			if (paramValue instanceof java.sql.Date) {
-				return new java.util.Date(((java.sql.Date) paramValue).getTime());
-			}
 			if (paramValue instanceof java.util.Date) {
 				return (java.util.Date) paramValue;
-			}
-			if (paramValue instanceof java.sql.Timestamp) {
-				return new java.util.Date(((java.sql.Timestamp) paramValue).getTime());
 			}
 			if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
@@ -479,9 +470,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
-			if (paramValue instanceof java.sql.Timestamp) {
-				return new java.sql.Date(((java.sql.Timestamp) paramValue).getTime());
-			}
+			
 			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
@@ -497,9 +486,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
 			}
-			if (paramValue instanceof java.sql.Timestamp) {
-				return new java.sql.Time(((java.sql.Timestamp) paramValue).getTime());
-			}
+			
 			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
