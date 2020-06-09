@@ -26,6 +26,13 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @project sqltoy-orm
+ * @description 提供适配华为guassdb数据库方言的实现(以postgresql9.5+为蓝本实现)
+ * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:GuassDBDialect.java,Revision:v1.0,Date:2020-6-9
+ * @modify {Date:2020-6-9,初始创建}
+ */
 public class GuassDBDialect implements Dialect {
 
 	/**
