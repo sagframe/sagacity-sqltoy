@@ -116,9 +116,7 @@ public class DataSourceUtils {
 		public final static int MONGO = 110;
 		public final static int ES = 120;
 
-		// 下面2个将逐步淘汰
-		// sap hana
-		public final static int SAP_HANA = 130;
+		// 下面将逐步淘汰
 		public final static int SYBASE_IQ = 140;
 	}
 
@@ -151,7 +149,6 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		// 纳入将不再支持范围
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
-		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 	}
 
 	/**
@@ -191,8 +188,6 @@ public class DataSourceUtils {
 			return Dialect.TIDB;
 		case DBType.SYBASE_IQ:
 			return Dialect.SYBASE_IQ;
-		case DBType.SAP_HANA:
-			return Dialect.SAP_HANA;
 		case DBType.ORACLE11:
 			return Dialect.ORACLE11;
 		case DBType.SQLSERVER2012:
@@ -377,9 +372,6 @@ public class DataSourceUtils {
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
-			} // hana
-			else if (dbDialect.equals(Dialect.SAP_HANA)) {
-				dbType = DBType.SAP_HANA;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}
@@ -420,7 +412,7 @@ public class DataSourceUtils {
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
-		//mysql 系列
+		// mysql 系列
 		default:
 			return "select 1";
 		}
