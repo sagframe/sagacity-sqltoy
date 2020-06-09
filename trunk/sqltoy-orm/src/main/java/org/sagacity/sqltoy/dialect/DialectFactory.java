@@ -31,7 +31,9 @@ import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
+import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
+import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
 import org.sagacity.sqltoy.dialect.impl.OracleDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
@@ -123,8 +125,7 @@ public class DialectFactory {
 		Dialect dialectSqlWrapper = null;
 		switch (dbType) {
 		// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
-		case DBType.ORACLE:
-		case DBType.OCEANBASE: {
+		case DBType.ORACLE: {
 			dialectSqlWrapper = new OracleDialect();
 			break;
 		}
@@ -143,9 +144,13 @@ public class DialectFactory {
 			break;
 		}
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-		case DBType.POSTGRESQL:
-		case DBType.GAUSSDB: {
+		case DBType.POSTGRESQL: {
 			dialectSqlWrapper = new PostgreSqlDialect();
+			break;
+		}
+		// oceanbase 数据库支持
+		case DBType.OCEANBASE: {
+			dialectSqlWrapper = new OceanBaseDialect();
 			break;
 		}
 		// db2 10.x版本分页支持offset模式
@@ -161,6 +166,11 @@ public class DialectFactory {
 		// Tidb方言支持
 		case DBType.TIDB: {
 			dialectSqlWrapper = new TidbDialect();
+			break;
+		}
+		// 华为guassdb(postgresql 为蓝本的)
+		case DBType.GAUSSDB: {
+			dialectSqlWrapper = new GuassDBDialect();
 			break;
 		}
 		// dm数据库支持(以oracle为蓝本)

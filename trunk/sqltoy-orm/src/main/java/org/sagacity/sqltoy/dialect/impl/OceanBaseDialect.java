@@ -42,7 +42,7 @@ public class OceanBaseDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(OracleDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(OceanBaseDialect.class);
 
 	/**
 	 * 判定为null的函数
