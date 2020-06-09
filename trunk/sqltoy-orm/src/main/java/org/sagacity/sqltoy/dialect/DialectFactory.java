@@ -38,6 +38,7 @@ import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
+import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -156,7 +157,13 @@ public class DialectFactory {
 		case DBType.CLICKHOUSE: {
 			dialectSqlWrapper = new ClickHouseDialect();
 			break;
-		} // dm数据库支持(以oracle为蓝本)
+		}
+		// Tidb方言支持
+		case DBType.TIDB: {
+			dialectSqlWrapper = new TidbDialect();
+			break;
+		}
+		// dm数据库支持(以oracle为蓝本)
 		case DBType.DM: {
 			dialectSqlWrapper = new DMDialect();
 			break;
