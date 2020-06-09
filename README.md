@@ -79,6 +79,9 @@ sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤
 * 条件判断保留#[@if(:param>=xx ||:param<=xx1) sql语句] 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙
 
 ```
+<sql id="show_case">
+<value>
+<![CDATA[
 select 	*
 from sqltoy_device_order_info t 
 where #[t.ORDER_ID=:orderId]
@@ -86,11 +89,15 @@ where #[t.ORDER_ID=:orderId]
       #[and t.STAFF_ID in (:staffIds)]
       #[and t.TRANS_DATE>=:beginDate]
       #[and t.TRANS_DATE<:endDate]  
+]]>	
+</value>
+</sql>
 ```
 
 * mybatis的写法(一板一眼很工程化),sqltoy比这个香多少倍?其实根本就无法比,因为mybatis这种写法就是一个负数!
 
 ```
+<select id="show_case" resultMap="BaseResultMap">
  select *
  from sqltoy_device_order_info t 
  <where>
@@ -116,6 +123,7 @@ where #[t.ORDER_ID=:orderId]
 	and t.TRANS_DATE<#{endDate}
     </if>
 </where>
+</select>
 ```
 
 ## 2.2 天然防止sql注入,执行过程:
