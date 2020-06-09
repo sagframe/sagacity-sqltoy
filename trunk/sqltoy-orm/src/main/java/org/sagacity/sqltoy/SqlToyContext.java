@@ -35,7 +35,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 //------------------了解 sqltoy的关键优势: --------------------------*/
-//1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql部分跟客户端保持高度一致
+//1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
 //  (很多框架没有悟到这一点，且没有发现条件参数95%以上为null或为空白就表示不参与条件检索,少量特殊情况
 //   只需稍做处理即可规整，所以总是摆脱不了if(param!=null)形态的显式逻辑判断)
 //2、sql中支持注释(规避了对hint特性的影响)，和动态更新加载，便于开发和后期维护整个过程的管理
