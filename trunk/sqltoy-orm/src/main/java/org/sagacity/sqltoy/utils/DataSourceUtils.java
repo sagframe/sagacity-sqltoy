@@ -108,11 +108,11 @@ public class DataSourceUtils {
 		public final static int GAUSSDB = 70;
 		// 达梦
 		public final static int DM = 80;
-		public final static int TIDB = 85;
-		public final static int SQLITE = 90;
-		public final static int OCEANBASE = 100;
-		public final static int MONGO = 110;
-		public final static int ES = 120;
+		public final static int TIDB = 90;
+		public final static int SQLITE = 100;
+		public final static int OCEANBASE = 110;
+		public final static int MONGO = 120;
+		public final static int ES = 130;
 
 		// 下面将逐步淘汰
 		public final static int SYBASE_IQ = 140;
