@@ -232,7 +232,7 @@ public class SqlConfigParseUtils {
 				i++;
 			}
 			i = 0;
-			//不区分大小写匹配
+			// 不区分大小写匹配
 			for (String name : sqlParamsName) {
 				result[i] = nameValueMap.get(name.toLowerCase());
 				i++;
@@ -339,7 +339,7 @@ public class SqlConfigParseUtils {
 		}
 		return paramsNameList.toArray(new String[paramsNameList.size()]);
 	}
-	
+
 	/**
 	 * @todo 判断条件是否为null,过滤sql的组合查询条件 example: select t1.* from xx_table t1 where
 	 *       #[t1.status=?] #[and t1.auditTime=?]
@@ -418,8 +418,9 @@ public class SqlConfigParseUtils {
 						}
 
 						// 判断是否是is 条件
-						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN))
+						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
 							sqlhasIs = true;
+						}
 						value = paramValuesList.get(i);
 						// 1、参数值为null且非is 条件sql语句
 						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
