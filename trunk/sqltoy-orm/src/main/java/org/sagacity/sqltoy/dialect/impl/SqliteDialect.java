@@ -228,7 +228,7 @@ public class SqliteDialect implements Dialect {
 			logger.debug("修改记录数为:{}", updateCnt);
 			return updateCnt;
 		}
-		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				dialect, autoCommit, tableName);
 		logger.debug("修改记录数为:{},新建记录数为:{}", updateCnt, saveCnt);
 		return updateCnt + saveCnt;
