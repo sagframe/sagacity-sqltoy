@@ -188,6 +188,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new Oracle11gDialect();
 			break;
 		}
+		// sybase iq基本淘汰
 		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
 		case DBType.SYBASE_IQ: {
 			dialectSqlWrapper = new SybaseIQDialect();

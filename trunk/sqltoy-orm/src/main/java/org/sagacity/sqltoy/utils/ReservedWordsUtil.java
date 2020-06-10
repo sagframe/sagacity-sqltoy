@@ -51,7 +51,7 @@ public class ReservedWordsUtil {
 	public static String convertSimpleSql(String sql, Integer dbType) {
 		if (reservedWords.isEmpty())
 			return sql;
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.DB2 || dbType == DBType.DM
@@ -82,7 +82,7 @@ public class ReservedWordsUtil {
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
 			return "[".concat(column).concat("]");
 		}
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
 			return "`".concat(column).concat("`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
@@ -130,7 +130,7 @@ public class ReservedWordsUtil {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
 				sqlBuff.append("[").append(keyWord).append("]");
-			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else {
 				sqlBuff.append(keyWord);
