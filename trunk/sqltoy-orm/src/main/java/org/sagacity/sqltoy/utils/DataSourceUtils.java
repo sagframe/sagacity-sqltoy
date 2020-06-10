@@ -87,7 +87,7 @@ public class DataSourceUtils {
 	 * 数据库类型数字标识
 	 */
 	public static final class DBType {
-		// 通常的通用的
+		// 未定义未识别
 		public final static int UNDEFINE = 0;
 		// 12c+
 		public final static int ORACLE = 10;
@@ -99,18 +99,23 @@ public class DataSourceUtils {
 		public final static int SQLSERVER = 30;
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
-		// clickhouse
-		public final static int CLICKHOUSE = 50;
+
 		// 默认9.5+版本
-		public final static int POSTGRESQL = 60;
+		public final static int POSTGRESQL = 50;
+
+		// clickhouse
+		public final static int CLICKHOUSE = 60;
 
 		// gaussdb
 		public final static int GAUSSDB = 70;
-		// 达梦
-		public final static int DM = 80;
+		// sqlite
+		public final static int SQLITE = 80;
+		// tidb
 		public final static int TIDB = 90;
-		public final static int SQLITE = 100;
-		public final static int OCEANBASE = 110;
+		// 阿里oceanbase
+		public final static int OCEANBASE = 100;
+		// 达梦
+		public final static int DM = 110;
 		public final static int MONGO = 120;
 		public final static int ES = 130;
 
