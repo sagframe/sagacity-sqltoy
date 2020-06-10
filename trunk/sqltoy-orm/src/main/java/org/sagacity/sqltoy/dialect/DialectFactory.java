@@ -66,10 +66,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 根据不同数据库类型提取不同数据库的处理handler,避免2.0之前版本:一个功能不同数据库写在一个方法中的弊端,
- *              每次修改容易产生连锁反应,分不同数据库方言虽然代码量多了一些，但可读性和可维护性变得更强
+ * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
+ * @modify data:2020-06-05 增加dm(达梦)数据库支持
+ * @modify data:2020-06-10
+ *         增加tidb、guassdb、oceanbase支持,规整sqlserver提出2012版本(默认仅支持2012+)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -79,7 +81,7 @@ public class DialectFactory {
 	protected final Logger logger = LoggerFactory.getLogger(DialectFactory.class);
 
 	/**
-	 * 不同数据库方言的处理器实例
+	 * 不同数据库方言的处理器实例(为什么不采用并发map?因为这里只有取,几乎不存在放入)
 	 */
 	private static HashMap<Integer, Dialect> dialects = new HashMap<Integer, Dialect>();
 
