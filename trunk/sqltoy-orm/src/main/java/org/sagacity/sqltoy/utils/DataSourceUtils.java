@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
  * @description 提供统一的dataSource管理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DataSourceUtils.java,Revision:v1.0,Date:2015年3月3日
+ * @modify data:2020-06-10
+ *         剔除sqlserver2012,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  */
 public class DataSourceUtils {
 	/**
@@ -39,9 +41,8 @@ public class DataSourceUtils {
 		// 10.x
 		public final static String DB2 = "db2";
 
-		// sqlserver建议采用2012或以上版本
+		// sqlserver2012或以上版本
 		public final static String SQLSERVER = "sqlserver";
-		public final static String SQLSERVER2012 = "sqlserver2012";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
@@ -79,8 +80,6 @@ public class DataSourceUtils {
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
 
-		// sap hana 暂不支持
-		public final static String SAP_HANA = "hana";
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -88,7 +87,7 @@ public class DataSourceUtils {
 	 * 数据库类型数字标识
 	 */
 	public static final class DBType {
-		// 通常的通用的
+		// 未定义未识别
 		public final static int UNDEFINE = 0;
 		// 12c+
 		public final static int ORACLE = 10;
@@ -98,27 +97,29 @@ public class DataSourceUtils {
 		public final static int DB2 = 20;
 		// 2017及以上版本
 		public final static int SQLSERVER = 30;
-		public final static int SQLSERVER2012 = 35;
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
-		// clickhouse
-		public final static int CLICKHOUSE = 50;
+
 		// 默认9.5+版本
-		public final static int POSTGRESQL = 60;
+		public final static int POSTGRESQL = 50;
+
+		// clickhouse
+		public final static int CLICKHOUSE = 60;
 
 		// gaussdb
 		public final static int GAUSSDB = 70;
-		// 达梦
-		public final static int DM = 80;
-		public final static int TIDB = 85;
-		public final static int SQLITE = 90;
+		// sqlite
+		public final static int SQLITE = 80;
+		// tidb
+		public final static int TIDB = 90;
+		// 阿里oceanbase
 		public final static int OCEANBASE = 100;
-		public final static int MONGO = 110;
-		public final static int ES = 120;
+		// 达梦
+		public final static int DM = 110;
+		public final static int MONGO = 120;
+		public final static int ES = 130;
 
-		// 下面2个将逐步淘汰
-		// sap hana
-		public final static int SAP_HANA = 130;
+		// 下面将逐步淘汰
 		public final static int SYBASE_IQ = 140;
 	}
 
@@ -128,7 +129,6 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
-		DBNameTypeMap.put(Dialect.SQLSERVER2012, DBType.SQLSERVER2012);
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
@@ -151,7 +151,6 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		// 纳入将不再支持范围
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
-		DBNameTypeMap.put(Dialect.SAP_HANA, DBType.SAP_HANA);
 	}
 
 	/**
@@ -191,12 +190,8 @@ public class DataSourceUtils {
 			return Dialect.TIDB;
 		case DBType.SYBASE_IQ:
 			return Dialect.SYBASE_IQ;
-		case DBType.SAP_HANA:
-			return Dialect.SAP_HANA;
 		case DBType.ORACLE11:
 			return Dialect.ORACLE11;
-		case DBType.SQLSERVER2012:
-			return Dialect.SQLSERVER2012;
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -211,7 +206,7 @@ public class DataSourceUtils {
 		try {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2012 || dbType == DBType.SYBASE_IQ) {
+			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -245,7 +240,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
 			}
-			// sqlserver,只支持2008或以上版本
+			// sqlserver,只支持2012或以上版本
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "mssql") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "microsoftsqlserver") != -1) {
@@ -276,9 +271,6 @@ public class DataSourceUtils {
 			} // TIDB
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
-			} // hana
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
-				return Dialect.SAP_HANA;
 			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
@@ -344,10 +336,6 @@ public class DataSourceUtils {
 			else if (dbDialect.equals(Dialect.SQLSERVER)) {
 				// 2014+
 				dbType = DBType.SQLSERVER;
-				// 2012
-				if (majorVersion <= 2012) {
-					dbType = DBType.SQLSERVER2012;
-				}
 			}
 			// db2 10+版本
 			else if (dbDialect.equals(Dialect.DB2)) {
@@ -377,9 +365,6 @@ public class DataSourceUtils {
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
-			} // hana
-			else if (dbDialect.equals(Dialect.SAP_HANA)) {
-				dbType = DBType.SAP_HANA;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}
@@ -420,7 +405,7 @@ public class DataSourceUtils {
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
-		//mysql 系列
+		// mysql、tidb、sqlserver等
 		default:
 			return "select 1";
 		}

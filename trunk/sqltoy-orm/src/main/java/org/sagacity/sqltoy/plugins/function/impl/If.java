@@ -26,7 +26,7 @@ public class If extends IFunction {
 
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
 			return super.IGNORE;
 		}
 		if (args == null || args.length < 3) {

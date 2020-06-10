@@ -52,7 +52,7 @@ public class Instr extends IFunction {
 			realArgs = args;
 		}
 		StringBuilder result = new StringBuilder();
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012 || dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.SQLSERVER || dialect == DBType.SYBASE_IQ) {
 			if (functionName.equalsIgnoreCase("charindex"))
 				return super.IGNORE;
 			result.append("charindex(");
@@ -69,8 +69,9 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
-				|| dialect == DBType.ORACLE11 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
+		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.DB2 || dialect == DBType.OCEANBASE
+				|| dialect == DBType.DM || dialect == DBType.TIDB || dialect == DBType.ORACLE11
+				|| dialect == DBType.MYSQL57) {
 			if (functionName.equalsIgnoreCase("instr"))
 				return super.IGNORE;
 			result.append("instr(").append(realArgs[1]).append(",").append(realArgs[0]);
@@ -82,7 +83,7 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		if (dialect == DBType.POSTGRESQL) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
 			if (functionName.equalsIgnoreCase("position"))
 				return super.IGNORE;
 			if (realArgs.length == 2) {

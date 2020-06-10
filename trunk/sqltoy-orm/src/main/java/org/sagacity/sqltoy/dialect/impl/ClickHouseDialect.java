@@ -131,7 +131,7 @@ public class ClickHouseDialect implements Dialect {
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, Connection conn, final LockMode lockMode,
 			Integer dbType, String dialect, int fetchSize, int maxRows) throws Exception {
-		//clickhouse目前不支持锁查询
+		// clickhouse目前不支持锁查询
 		if (null != lockMode) {
 			throw new UnsupportedOperationException("clickHouse lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
 		}

@@ -130,6 +130,9 @@ public class DBHelper {
 	 */
 	public static List getTableAndView(final String[] includes, final String[] excludes) throws Exception {
 		int dbType = DBUtil.getDbType(conn);
+		String schema = dbConfig.getSchema();
+		String catalog = dbConfig.getCatalog();
+		logger.info("提取数据库:schema=[" + schema + "]和 catalog=[" + catalog + "]");
 		String[] types = new String[] { "TABLE", "VIEW" };
 		PreparedStatement pst = null;
 		ResultSet rs = null;
@@ -144,10 +147,10 @@ public class DBHelper {
 		else if (dbType == DbType.MYSQL) {
 			StringBuilder queryStr = new StringBuilder("SELECT TABLE_NAME,TABLE_SCHEMA,TABLE_TYPE,TABLE_COMMENT ");
 			queryStr.append(" FROM INFORMATION_SCHEMA.TABLES where 1=1 ");
-			if (dbConfig.getSchema() != null) {
-				queryStr.append(" and TABLE_SCHEMA='").append(dbConfig.getSchema()).append("'");
-			} else if (dbConfig.getCatalog() != null) {
-				queryStr.append(" and TABLE_SCHEMA='").append(dbConfig.getCatalog()).append("'");
+			if (schema != null) {
+				queryStr.append(" and TABLE_SCHEMA='").append(schema).append("'");
+			} else if (catalog != null) {
+				queryStr.append(" and TABLE_SCHEMA='").append(catalog).append("'");
 			}
 			if (types != null) {
 				queryStr.append(" and (");
@@ -163,7 +166,7 @@ public class DBHelper {
 			rs = pst.executeQuery();
 			commentName = "TABLE_COMMENT";
 		} else {
-			rs = conn.getMetaData().getTables(dbConfig.getCatalog(), dbConfig.getSchema(), null, types);
+			rs = conn.getMetaData().getTables(catalog, schema, null, types);
 		}
 		return (List) DBUtil.preparedStatementProcess(commentName, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {

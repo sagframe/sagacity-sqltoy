@@ -25,8 +25,7 @@ public class DateFormat extends IFunction {
 	 */
 	@Override
 	public String dialects() {
-		// TODO Auto-generated method stub
-		return "oracle,mysql,postgresql";
+		return super.ALL;
 	}
 
 	/*
@@ -51,6 +50,7 @@ public class DateFormat extends IFunction {
 		switch (dialect) {
 		case DBType.POSTGRESQL:
 		case DBType.ORACLE:
+		case DBType.GAUSSDB:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {
@@ -62,6 +62,7 @@ public class DateFormat extends IFunction {
 			return "to_char(" + args[0] + "," + format + ")";
 		}
 		case DBType.MYSQL:
+		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");

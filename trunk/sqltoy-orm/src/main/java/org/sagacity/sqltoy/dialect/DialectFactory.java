@@ -31,13 +31,16 @@ import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
+import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
+import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
 import org.sagacity.sqltoy.dialect.impl.OracleDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
 import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
+import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -63,10 +66,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 根据不同数据库类型提取不同数据库的处理handler,避免2.0之前版本:一个功能不同数据库写在一个方法中的弊端,
- *              每次修改容易产生连锁反应,分不同数据库方言虽然代码量多了一些，但可读性和可维护性变得更强
+ * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
+ * @modify data:2020-06-05 增加dm(达梦)数据库支持
+ * @modify data:2020-06-10
+ *         增加tidb、guassdb、oceanbase支持,规整sqlserver提出2012版本(默认仅支持2012+)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -76,7 +81,7 @@ public class DialectFactory {
 	protected final Logger logger = LoggerFactory.getLogger(DialectFactory.class);
 
 	/**
-	 * 不同数据库方言的处理器实例
+	 * 不同数据库方言的处理器实例(为什么不采用并发map?因为这里只有取,几乎不存在放入)
 	 */
 	private static HashMap<Integer, Dialect> dialects = new HashMap<Integer, Dialect>();
 
@@ -122,8 +127,7 @@ public class DialectFactory {
 		Dialect dialectSqlWrapper = null;
 		switch (dbType) {
 		// oracle12c(分页方式有了改变,支持identity主键策略(内部其实还是sequence模式))
-		case DBType.ORACLE:
-		case DBType.OCEANBASE: {
+		case DBType.ORACLE: {
 			dialectSqlWrapper = new OracleDialect();
 			break;
 		}
@@ -136,15 +140,18 @@ public class DialectFactory {
 			break;
 		}
 		// sqlserver2012 以后分页方式更简单
-		case DBType.SQLSERVER:
-		case DBType.SQLSERVER2012: {
+		case DBType.SQLSERVER: {
 			dialectSqlWrapper = new SqlServerDialect();
 			break;
 		}
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-		case DBType.POSTGRESQL:
-		case DBType.GAUSSDB: {
+		case DBType.POSTGRESQL: {
 			dialectSqlWrapper = new PostgreSqlDialect();
+			break;
+		}
+		// oceanbase 数据库支持
+		case DBType.OCEANBASE: {
+			dialectSqlWrapper = new OceanBaseDialect();
 			break;
 		}
 		// db2 10.x版本分页支持offset模式
@@ -156,7 +163,18 @@ public class DialectFactory {
 		case DBType.CLICKHOUSE: {
 			dialectSqlWrapper = new ClickHouseDialect();
 			break;
-		} // dm数据库支持(以oracle为蓝本)
+		}
+		// Tidb方言支持
+		case DBType.TIDB: {
+			dialectSqlWrapper = new TidbDialect();
+			break;
+		}
+		// 华为guassdb(postgresql 为蓝本的)
+		case DBType.GAUSSDB: {
+			dialectSqlWrapper = new GuassDBDialect();
+			break;
+		}
+		// dm数据库支持(以oracle为蓝本)
 		case DBType.DM: {
 			dialectSqlWrapper = new DMDialect();
 			break;
@@ -171,6 +189,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new Oracle11gDialect();
 			break;
 		}
+		// sybase iq基本淘汰
 		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
 		case DBType.SYBASE_IQ: {
 			dialectSqlWrapper = new SybaseIQDialect();

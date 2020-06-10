@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @description 基于sqlite数据库方言的各类操作实现
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-8-29
- * @Modification Date:2013-8-29 {填写修改说明}
+ * @Modification Date:2020-3-12 完成完整验证测试
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqliteDialect implements Dialect {
@@ -228,7 +228,7 @@ public class SqliteDialect implements Dialect {
 			logger.debug("修改记录数为:{}", updateCnt);
 			return updateCnt;
 		}
-		Long saveCnt = this.saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				dialect, autoCommit, tableName);
 		logger.debug("修改记录数为:{},新建记录数为:{}", updateCnt, saveCnt);
 		return updateCnt + saveCnt;

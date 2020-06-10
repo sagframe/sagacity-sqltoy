@@ -31,6 +31,7 @@ public class ToChar extends IFunction {
 		String format;
 		switch (dialect) {
 		case DBType.MYSQL:
+		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// 日期
 			format = args[1].replace("yyyy", "%Y").replace("yy", "%y").replace("MM", "%m").replace("dd", "%d");
@@ -40,6 +41,7 @@ public class ToChar extends IFunction {
 		}
 		case DBType.POSTGRESQL:
 		case DBType.ORACLE:
+		case DBType.GAUSSDB:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 		case DBType.ORACLE11: {
