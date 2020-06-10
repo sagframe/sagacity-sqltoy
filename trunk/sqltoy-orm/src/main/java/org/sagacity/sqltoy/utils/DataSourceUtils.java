@@ -80,8 +80,6 @@ public class DataSourceUtils {
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
 
-		// sap hana 暂不支持
-		public final static String SAP_HANA = "hana";
 		public final static String UNDEFINE = "UNDEFINE";
 	}
 
@@ -268,9 +266,6 @@ public class DataSourceUtils {
 			} // TIDB
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
-			} // hana
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SAP_HANA) != -1) {
-				return Dialect.SAP_HANA;
 			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
@@ -405,7 +400,7 @@ public class DataSourceUtils {
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
-		// mysql 系列
+		// mysql、tidb、sqlserver等
 		default:
 			return "select 1";
 		}
