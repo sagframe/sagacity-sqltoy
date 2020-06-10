@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialect.java,Revision:v1.0,Date:2015年8月10日
+ * @Modification Date:2019-3-12 修复saveOrUpdate的缺陷
  */
 @SuppressWarnings({ "rawtypes" })
 public class PostgreSqlDialect implements Dialect {
