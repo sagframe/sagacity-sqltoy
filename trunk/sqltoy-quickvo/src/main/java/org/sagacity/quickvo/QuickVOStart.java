@@ -26,7 +26,7 @@ public class QuickVOStart {
 	/**
 	 * 数据库驱动文件路径
 	 */
-	private String DB_DRIVER_FILE = "drivers/";
+	private String DB_DRIVER_FILE = "libs/";
 
 	private static Logger logger;
 
@@ -38,7 +38,7 @@ public class QuickVOStart {
 	public void init() {
 		try {
 			logger = LoggerUtil.getLogger();
-			out.println("=========     welcome use sagacity-quickvo-4.12.3     ==========");
+			out.println("=========     welcome use sagacity-quickvo-4.12.9     ==========");
 			out.println("======      使用java -cp jarPath mainClass args模式启动                =======");
 			configModel = XMLConfigLoader.parse();
 		} catch (Exception e) {
@@ -53,8 +53,9 @@ public class QuickVOStart {
 	 * @throws Exception
 	 */
 	public void doStart() {
-		if (configModel == null)
+		if (configModel == null) {
 			return;
+		}
 		try {
 			int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
 			// jdk9 之后加载类的方式不一样
