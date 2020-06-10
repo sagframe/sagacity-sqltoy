@@ -188,10 +188,10 @@ public class DataSourceUtils {
 			return Dialect.DM;
 		case DBType.TIDB:
 			return Dialect.TIDB;
-		case DBType.SYBASE_IQ:
-			return Dialect.SYBASE_IQ;
 		case DBType.ORACLE11:
 			return Dialect.ORACLE11;
+		case DBType.SYBASE_IQ:
+			return Dialect.SYBASE_IQ;
 		default:
 			return Dialect.UNDEFINE;
 		}
