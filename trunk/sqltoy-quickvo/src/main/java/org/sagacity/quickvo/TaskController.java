@@ -144,8 +144,10 @@ public class TaskController {
 		// (?i)忽略大小写
 		List tables = DBHelper.getTableAndView(includes, quickModel.getExcludeTables() == null ? null
 				: new String[] { "(?i)".concat(quickModel.getExcludeTables()) });
-		if (tables == null || tables.isEmpty())
+		if (tables == null || tables.isEmpty()) {
+			logger.info("没有取到匹配的表,请检查数据库配置是否正确,尤其关注:catalog 或 schema 配置以及任务中 includes 正则表达式配置!");
 			return;
+		}
 		logger.info("当前任务共取出:" + tables.size() + " 张表或视图!");
 		QuickVO quickVO;
 		String entityName;
