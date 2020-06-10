@@ -47,18 +47,22 @@ public class Nvl extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012)
+		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("isnull", args);
-		if (dialect == DBType.DB2 || dialect == DBType.POSTGRESQL)
+		}
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.DB2 || dialect == DBType.GAUSSDB) {
 			return wrapArgs("coalesce", args);
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.SYBASE_IQ) {
+		}
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57
+				|| dialect == DBType.SYBASE_IQ) {
 			if (args.length == 1) {
 				return wrapArgs("isnull", args);
 			}
 			return wrapArgs("ifnull", args);
 		}
-		if (dialect == DBType.SQLITE)
+		if (dialect == DBType.SQLITE) {
 			return wrapArgs("ifnull", args);
+		}
 		if (dialect == DBType.ORACLE || dialect == DBType.DM || dialect == DBType.OCEANBASE
 				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("nvl", args);

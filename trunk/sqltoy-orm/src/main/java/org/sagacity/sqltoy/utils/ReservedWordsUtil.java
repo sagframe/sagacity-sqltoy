@@ -58,7 +58,7 @@ public class ReservedWordsUtil {
 				|| dbType == DBType.GAUSSDB || dbType == DBType.OCEANBASE || dbType == DBType.ORACLE11) {
 			return sql.replaceAll("\\[", "\"").replaceAll("\\]", "\"");
 		}
-		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
+		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
 		}
 		// 剔除保留字符号
@@ -79,7 +79,7 @@ public class ReservedWordsUtil {
 		if (!reservedWords.contains(column.toLowerCase()))
 			return column;
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
-		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
+		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return "[".concat(column).concat("]");
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
@@ -128,7 +128,7 @@ public class ReservedWordsUtil {
 					|| dbType == DBType.GAUSSDB || dbType == DBType.DM || dbType == DBType.OCEANBASE
 					|| dbType == DBType.ORACLE11) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
-			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE || dbType == DBType.SQLSERVER2012) {
+			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
 			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
 				sqlBuff.append("`").append(keyWord).append("`");

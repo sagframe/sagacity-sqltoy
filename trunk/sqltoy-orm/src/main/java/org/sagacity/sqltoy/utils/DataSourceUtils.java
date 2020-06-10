@@ -41,7 +41,6 @@ public class DataSourceUtils {
 
 		// sqlserver建议采用2012或以上版本
 		public final static String SQLSERVER = "sqlserver";
-		public final static String SQLSERVER2012 = "sqlserver2012";
 
 		// mysql的三个变种，5.6版本或以上
 		public final static String MYSQL = "mysql";
@@ -98,7 +97,6 @@ public class DataSourceUtils {
 		public final static int DB2 = 20;
 		// 2017及以上版本
 		public final static int SQLSERVER = 30;
-		public final static int SQLSERVER2012 = 35;
 		public final static int MYSQL = 40;
 		public final static int MYSQL57 = 42;
 		// clickhouse
@@ -126,7 +124,6 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.ORACLE, DBType.ORACLE);
 		DBNameTypeMap.put(Dialect.ORACLE11, DBType.ORACLE11);
 		DBNameTypeMap.put(Dialect.SQLSERVER, DBType.SQLSERVER);
-		DBNameTypeMap.put(Dialect.SQLSERVER2012, DBType.SQLSERVER2012);
 		DBNameTypeMap.put(Dialect.MYSQL, DBType.MYSQL);
 		DBNameTypeMap.put(Dialect.MYSQL57, DBType.MYSQL57);
 		// mariaDB的方言以mysql为基准
@@ -190,8 +187,6 @@ public class DataSourceUtils {
 			return Dialect.SYBASE_IQ;
 		case DBType.ORACLE11:
 			return Dialect.ORACLE11;
-		case DBType.SQLSERVER2012:
-			return Dialect.SQLSERVER2012;
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -206,7 +201,7 @@ public class DataSourceUtils {
 		try {
 			int dbType = getDbType(conn);
 			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SQLSERVER2012 || dbType == DBType.SYBASE_IQ) {
+			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -240,7 +235,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.POSTGRESQL) != -1) {
 				return Dialect.POSTGRESQL;
 			}
-			// sqlserver,只支持2008或以上版本
+			// sqlserver,只支持2012或以上版本
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SQLSERVER) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "mssql") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "microsoftsqlserver") != -1) {
@@ -339,10 +334,6 @@ public class DataSourceUtils {
 			else if (dbDialect.equals(Dialect.SQLSERVER)) {
 				// 2014+
 				dbType = DBType.SQLSERVER;
-				// 2012
-				if (majorVersion <= 2012) {
-					dbType = DBType.SQLSERVER2012;
-				}
 			}
 			// db2 10+版本
 			else if (dbDialect.equals(Dialect.DB2)) {

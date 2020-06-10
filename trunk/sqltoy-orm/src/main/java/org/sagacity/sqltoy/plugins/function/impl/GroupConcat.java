@@ -37,7 +37,7 @@ public class GroupConcat extends IFunction {
 		if (matchIndex > 0) {
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
-		if (dialect == DBType.POSTGRESQL) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
 			if (args.length > 1) {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
@@ -48,7 +48,7 @@ public class GroupConcat extends IFunction {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + sign + ") ";
 			}
 		}
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
+		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
 			if (functionName.equalsIgnoreCase("group_concat")) {
 				return super.IGNORE;
 			}

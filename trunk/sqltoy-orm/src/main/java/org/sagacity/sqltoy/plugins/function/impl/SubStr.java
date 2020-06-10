@@ -35,12 +35,13 @@ public class SubStr extends IFunction {
 	 * 针对不同数据库对如：substr(arg1,arg2,arg3)进行转换，框架自动将arg1和arg2等参数作为数组传进来
 	 */
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.SQLSERVER || dialect == DBType.SQLSERVER2012
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB || dialect == DBType.SQLSERVER
 				|| dialect == DBType.SYBASE_IQ) {
 			return wrapArgs("substring", args);
 		}
-		if (dialect == DBType.DB2 || dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.DM
-				|| dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.ORACLE11) {
+		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.TIDB || dialect == DBType.MYSQL57
+				|| dialect == DBType.DB2 || dialect == DBType.DM || dialect == DBType.OCEANBASE
+				|| dialect == DBType.ORACLE11) {
 			return wrapArgs("substr", args);
 		}
 		// 表示不做修改
