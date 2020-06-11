@@ -35,6 +35,11 @@ public class QuickColMeta implements Serializable {
 	private String colJavaName;
 
 	/**
+	 * 字段类型
+	 */
+	private String colType;
+
+	/**
 	 * jdbc中的数据类型
 	 */
 	private String jdbcType;
@@ -130,8 +135,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param colName
-	 *            the colName to set
+	 * @param colName the colName to set
 	 */
 	public void setColName(String colName) {
 		this.colName = colName;
@@ -145,8 +149,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param colJavaName
-	 *            the colJavaName to set
+	 * @param colJavaName the colJavaName to set
 	 */
 	public void setColJavaName(String colJavaName) {
 		this.colJavaName = colJavaName;
@@ -160,8 +163,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param jdbcType
-	 *            the jdbcType to set
+	 * @param jdbcType the jdbcType to set
 	 */
 	public void setJdbcType(String jdbcType) {
 		this.jdbcType = jdbcType;
@@ -175,8 +177,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param precision
-	 *            the precision to set
+	 * @param precision the precision to set
 	 */
 	public void setPrecision(Integer precision) {
 		this.precision = precision;
@@ -190,8 +191,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param scale
-	 *            the scale to set
+	 * @param scale the scale to set
 	 */
 	public void setScale(Integer scale) {
 		this.scale = scale;
@@ -205,8 +205,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param resultType
-	 *            the resultType to set
+	 * @param resultType the resultType to set
 	 */
 	public void setResultType(String resultType) {
 		this.resultType = resultType;
@@ -220,8 +219,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param nullable
-	 *            the nullable to set
+	 * @param nullable the nullable to set
 	 */
 	public void setNullable(String nullable) {
 		this.nullable = nullable;
@@ -235,8 +233,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param fkRefTableName
-	 *            the fkRefTableName to set
+	 * @param fkRefTableName the fkRefTableName to set
 	 */
 	public void setFkRefTableName(String fkRefTableName) {
 		this.fkRefTableName = fkRefTableName;
@@ -250,8 +247,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param fkRefJavaTableName
-	 *            the fkRefJavaTableName to set
+	 * @param fkRefJavaTableName the fkRefJavaTableName to set
 	 */
 	public void setFkRefJavaTableName(String fkRefJavaTableName) {
 		this.fkRefJavaTableName = fkRefJavaTableName;
@@ -265,8 +261,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param fkRefTableColName
-	 *            the fkRefTableColName to set
+	 * @param fkRefTableColName the fkRefTableColName to set
 	 */
 	public void setFkRefTableColName(String fkRefTableColName) {
 		this.fkRefTableColName = fkRefTableColName;
@@ -280,8 +275,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param fkRefTableColJavaName
-	 *            the fkRefTableColJavaName to set
+	 * @param fkRefTableColJavaName the fkRefTableColJavaName to set
 	 */
 	public void setFkRefTableColJavaName(String fkRefTableColJavaName) {
 		this.fkRefTableColJavaName = fkRefTableColJavaName;
@@ -295,8 +289,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param colRemark
-	 *            the colRemark to set
+	 * @param colRemark the colRemark to set
 	 */
 	public void setColRemark(String colRemark) {
 		this.colRemark = colRemark;
@@ -310,8 +303,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param colTypeFlag
-	 *            the colTypeFlag to set
+	 * @param colTypeFlag the colTypeFlag to set
 	 */
 	public void setColTypeFlag(String colTypeFlag) {
 		this.colTypeFlag = colTypeFlag;
@@ -325,8 +317,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param dataType
-	 *            the dataType to set
+	 * @param dataType the dataType to set
 	 */
 	public void setDataType(String dataType) {
 		this.dataType = dataType;
@@ -340,8 +331,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param strategy
-	 *            the strategy to set
+	 * @param strategy the strategy to set
 	 */
 	public void setStrategy(String strategy) {
 		this.strategy = strategy;
@@ -355,8 +345,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param sequence
-	 *            the sequence to set
+	 * @param sequence the sequence to set
 	 */
 	public void setSequence(String sequence) {
 		this.sequence = sequence;
@@ -370,8 +359,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param generator
-	 *            the generator to set
+	 * @param generator the generator to set
 	 */
 	public void setGenerator(String generator) {
 		this.generator = generator;
@@ -385,8 +373,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param autoIncrement
-	 *            the autoIncrement to set
+	 * @param autoIncrement the autoIncrement to set
 	 */
 	public void setAutoIncrement(String autoIncrement) {
 		this.autoIncrement = autoIncrement;
@@ -400,8 +387,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param defaultValue
-	 *            the defaultValue to set
+	 * @param defaultValue the defaultValue to set
 	 */
 	public void setDefaultValue(String defaultValue) {
 		this.defaultValue = defaultValue;
@@ -415,8 +401,7 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param pkRefConstract
-	 *            the pkRefConstract to set
+	 * @param pkRefConstract the pkRefConstract to set
 	 */
 	public void setPkRefConstract(List<TableConstractModel> pkRefConstract) {
 		this.pkRefConstract = pkRefConstract;
@@ -434,13 +419,18 @@ public class QuickColMeta implements Serializable {
 	}
 
 	/**
-	 * @param businessIdConfig
-	 *            the businessIdConfig to set
+	 * @param businessIdConfig the businessIdConfig to set
 	 */
 	public void setBusinessIdConfig(BusinessIdConfig businessIdConfig) {
 		this.businessIdConfig = businessIdConfig;
 	}
 
+	public String getColType() {
+		return colType;
+	}
 
+	public void setColType(String colType) {
+		this.colType = colType;
+	}
 
 }

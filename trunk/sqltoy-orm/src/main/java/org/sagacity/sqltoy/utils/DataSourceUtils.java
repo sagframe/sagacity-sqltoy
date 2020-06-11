@@ -53,7 +53,7 @@ public class DataSourceUtils {
 		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
 
-		// 华为gaussdb(源于postgresql)
+		// 华为gaussdb(源于postgresql)未验证
 		public final static String GAUSSDB = "gaussdb";
 
 		// 3.0以上版本
@@ -68,14 +68,14 @@ public class DataSourceUtils {
 		// 19.x版本
 		public final static String CLICKHOUSE = "clickhouse";
 
-		// 阿里 oceanbase
+		// 阿里 oceanbase(未验证)
 		public final static String OCEANBASE = "oceanbase";
+
+		// tidb(语法遵循mysql)未验证
+		public final static String TIDB = "tidb";
 
 		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
-
-		// tidb(语法遵循mysql)
-		public final static String TIDB = "tidb";
 
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";

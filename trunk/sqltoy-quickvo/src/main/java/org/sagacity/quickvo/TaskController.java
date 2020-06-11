@@ -442,6 +442,8 @@ public class TaskController {
 			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
+			//原始数据类型输出在vo字段上,便于开发者调整
+			quickColMeta.setColType(jdbcType);
 			// 提取原始类型
 			sqlType = jdbcType.toLowerCase();
 			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);

@@ -55,11 +55,10 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	private static final long serialVersionUID = ${quickVO.abstractVOSerialUID}L;
 	
 <#list quickVO.columns as column>
-<#if (column.colRemark?exists && column.colRemark!='')>
 	/**
-	 * ${column.colRemark}
+	 * column type:${column.colType!""}
+	 * colRemark:${column.colRemark!""}
 	 */
-</#if>
 	<#if (quickVO.swaggerModel)>
 	@ApiModelProperty(value="${column.colRemark}"<#if (column.nullable=='0')>,allowEmptyValue=false<#else>,allowEmptyValue=true</#if>)
 	</#if>
