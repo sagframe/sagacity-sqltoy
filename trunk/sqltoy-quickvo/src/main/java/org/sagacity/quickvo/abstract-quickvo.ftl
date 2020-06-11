@@ -56,8 +56,8 @@ public abstract class Abstract${quickVO.voName} implements Serializable,
 	
 <#list quickVO.columns as column>
 	/**
-	 * column type:${column.colType!""}
-	 * colRemark:${column.colRemark!""}
+	 * jdbcType:${column.colType!""}
+	 * ${column.colRemark!""}
 	 */
 	<#if (quickVO.swaggerModel)>
 	@ApiModelProperty(value="${column.colRemark}"<#if (column.nullable=='0')>,allowEmptyValue=false<#else>,allowEmptyValue=true</#if>)
