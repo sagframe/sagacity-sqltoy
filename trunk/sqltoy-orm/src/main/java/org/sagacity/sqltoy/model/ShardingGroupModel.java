@@ -18,10 +18,19 @@ public class ShardingGroupModel implements Serializable {
 	 */
 	private static final long serialVersionUID = -1188114638866564391L;
 
+	/**
+	 * dataSourceName + tableName 组成一个分组
+	 */
 	private String key;
 
+	/**
+	 * 分组对应的sharding配置(对应db和table)
+	 */
 	private ShardingModel shardingModel;
 
+	/**
+	 * 分组的数据集合(根据数据源或表切分出的数据集合)
+	 */
 	private List entities;
 
 	/**
@@ -32,8 +41,7 @@ public class ShardingGroupModel implements Serializable {
 	}
 
 	/**
-	 * @param key
-	 *            the key to set
+	 * @param key the key to set
 	 */
 	public void setKey(String key) {
 		this.key = key;
@@ -47,8 +55,7 @@ public class ShardingGroupModel implements Serializable {
 	}
 
 	/**
-	 * @param shardingModel
-	 *            the shardingModel to set
+	 * @param shardingModel the shardingModel to set
 	 */
 	public void setShardingModel(ShardingModel shardingModel) {
 		this.shardingModel = shardingModel;
@@ -62,8 +69,7 @@ public class ShardingGroupModel implements Serializable {
 	}
 
 	/**
-	 * @param entities
-	 *            the entities to set
+	 * @param entities the entities to set
 	 */
 	public void setEntities(List entities) {
 		this.entities = entities;
