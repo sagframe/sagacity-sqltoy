@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialect.java,Revision:v1.0,Date:2015年8月10日
  * @Modification Date:2019-3-12 修复saveOrUpdate的缺陷
+ * @Modification Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 @SuppressWarnings({ "rawtypes" })
 public class PostgreSqlDialect implements Dialect {
@@ -256,10 +257,9 @@ public class PostgreSqlDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
+							sequence = "DEFAULT";
 						}
 						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
 								forceUpdateFields, null);
@@ -345,10 +345,9 @@ public class PostgreSqlDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
+							sequence = "DEFAULT";
 						}
 						return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence,
 								tableName);
