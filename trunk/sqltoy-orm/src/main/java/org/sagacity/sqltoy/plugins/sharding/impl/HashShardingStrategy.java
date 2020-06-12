@@ -23,10 +23,13 @@ public class HashShardingStrategy implements ShardingStrategy {
 	private HashMap<String, String> tableMap = new HashMap<String, String>();
 
 	/**
-	 * 取模数值
+	 * db取模数值
 	 */
-	private int mode;
+	private int dataSourceMode;
 
+	/**
+	 * table取模数组
+	 */
 	private int tableMode;
 
 	/*
@@ -59,12 +62,12 @@ public class HashShardingStrategy implements ShardingStrategy {
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,
 			String strategyVar, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		ShardingDBModel shardingModel = new ShardingDBModel();
-		if (mode < 1 || paramsMap == null || paramsMap.isEmpty())
+		if (dataSourceMode < 1 || paramsMap == null || paramsMap.isEmpty())
 			return shardingModel;
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		shardingModel.setDataSourceName(dataSourceMap.get(Integer.toString(hashCode % mode)));
+		shardingModel.setDataSourceName(dataSourceMap.get(Integer.toString(hashCode % dataSourceMode)));
 		return shardingModel;
 	}
 
@@ -75,8 +78,8 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 */
 	@Override
 	public void initialize() {
-		if (mode == 0) {
-			mode = dataSourceMap.size();
+		if (dataSourceMode == 0) {
+			dataSourceMode = dataSourceMap.size();
 		}
 		if (tableMode == 0) {
 			tableMode = tableMap.size();
@@ -91,8 +94,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	}
 
 	/**
-	 * @param dataSourceMap
-	 *            the dataSourceMap to set
+	 * @param dataSourceMap the dataSourceMap to set
 	 */
 	public void setDataSourceMap(HashMap<String, String> dataSourceMap) {
 		this.dataSourceMap = dataSourceMap;
@@ -106,8 +108,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	}
 
 	/**
-	 * @param tableMap
-	 *            the tableMap to set
+	 * @param tableMap the tableMap to set
 	 */
 	public void setTableMap(HashMap<String, String> tableMap) {
 		this.tableMap = tableMap;
