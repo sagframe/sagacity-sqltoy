@@ -23,10 +23,13 @@ public class HashShardingStrategy implements ShardingStrategy {
 	private HashMap<String, String> tableMap = new HashMap<String, String>();
 
 	/**
-	 * 取模数值
+	 * db取模数值
 	 */
 	private int dataSourceMode;
 
+	/**
+	 * table取模数组
+	 */
 	private int tableMode;
 
 	/*
@@ -91,8 +94,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	}
 
 	/**
-	 * @param dataSourceMap
-	 *            the dataSourceMap to set
+	 * @param dataSourceMap the dataSourceMap to set
 	 */
 	public void setDataSourceMap(HashMap<String, String> dataSourceMap) {
 		this.dataSourceMap = dataSourceMap;
@@ -106,8 +108,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	}
 
 	/**
-	 * @param tableMap
-	 *            the tableMap to set
+	 * @param tableMap the tableMap to set
 	 */
 	public void setTableMap(HashMap<String, String> tableMap) {
 		this.tableMap = tableMap;
