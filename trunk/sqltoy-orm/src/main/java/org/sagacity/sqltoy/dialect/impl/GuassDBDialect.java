@@ -252,10 +252,9 @@ public class GuassDBDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
+							sequence = "DEFAULT";
 						}
 						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
 								forceUpdateFields, null);
@@ -311,7 +310,7 @@ public class GuassDBDialect implements Dialect {
 			throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		
+
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("修改记录数为:{}", updateCnt);
@@ -342,10 +341,9 @@ public class GuassDBDialect implements Dialect {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
+							sequence = "DEFAULT";
 						}
 						return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence,
 								tableName);

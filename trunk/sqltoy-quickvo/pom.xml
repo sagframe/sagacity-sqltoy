@@ -12,6 +12,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<freemarker.version>2.3.30</freemarker.version>
 		<jackson-dataformat.version>2.11.0</jackson-dataformat.version>
+		<postgresql.version>42.2.14</postgresql.version>
 	</properties>
 	<licenses>
 		<license>
@@ -74,8 +75,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-	<!-- <dependency> <groupId>mysql</groupId> <artifactId>mysql-connector-java</artifactId> 
-		<version>${mysql.version}</version> </dependency> -->
+		<!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>sqltoy-quickvo-${version}</finalName>
