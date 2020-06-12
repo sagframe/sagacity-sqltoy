@@ -90,8 +90,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		// 检测时间小于等于零,则表示不做自动检测
 		if (checkSeconds <= 0)
 			return;
-		if (checkSeconds < 60)
+		if (checkSeconds < 60) {
 			checkSeconds = 60;
+		}
 
 		IdleConnectionMonitor monitor = new IdleConnectionMonitor(applicationContext, dataSourceWeightConfig, weights,
 				60, checkSeconds);
@@ -132,8 +133,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		// 返回null,表示使用原表
-		if (index == -1)
+		if (index == -1) {
 			return null;
+		}
 		if (index > shardingTable.length - 1) {
 			return shardingTable[shardingTable.length - 1].trim();
 		}
@@ -151,8 +153,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		// 为null则使用service或dao中默认注入的dataSource
-		if (dataSourceWeight == null || dataSourceWeight.isEmpty())
+		if (dataSourceWeight == null || dataSourceWeight.isEmpty()) {
 			return null;
+		}
 		return getDataSource();
 	}
 
