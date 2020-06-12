@@ -29,6 +29,9 @@ public class ShardingModel implements Serializable {
 	 */
 	private DataSource dataSource;
 
+	/**
+	 * 表名
+	 */
 	private String tableName;
 
 	/**
@@ -39,8 +42,7 @@ public class ShardingModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSourceName
-	 *            the dataSourceName to set
+	 * @param dataSourceName the dataSourceName to set
 	 */
 	public void setDataSourceName(String dataSourceName) {
 		this.dataSourceName = dataSourceName;
@@ -54,8 +56,7 @@ public class ShardingModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource
-	 *            the dataSource to set
+	 * @param dataSource the dataSource to set
 	 */
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
@@ -69,8 +70,7 @@ public class ShardingModel implements Serializable {
 	}
 
 	/**
-	 * @param tableName
-	 *            the tableName to set
+	 * @param tableName the tableName to set
 	 */
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
