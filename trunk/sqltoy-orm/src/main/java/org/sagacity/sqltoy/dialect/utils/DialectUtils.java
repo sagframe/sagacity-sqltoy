@@ -705,8 +705,13 @@ public class DialectUtils {
 				isStart = false;
 			}
 		}
-
-		sql.append(") values (");
+		// OVERRIDING SYSTEM VALUE
+		sql.append(") ");
+		/*
+		 * if ((dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) && isAssignPK)
+		 * { sql.append(" OVERRIDING SYSTEM VALUE "); }
+		 */
+		sql.append(" values (");
 		sql.append(values);
 		sql.append(")");
 		return sql.toString();
