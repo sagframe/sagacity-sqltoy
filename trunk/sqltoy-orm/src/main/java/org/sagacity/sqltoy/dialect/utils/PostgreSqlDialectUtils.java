@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialectUtils.java,Revision:v1.0,Date:2015年3月5日
+ * @Modification Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 public class PostgreSqlDialectUtils {
 	/**
@@ -171,9 +172,11 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		// 从10版本开始支持identity
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+			// 伪造成sequence模式
 			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "nextval(" + entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue() + ")";
+			sequence = "DEFAULT";
 		}
 
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
@@ -185,10 +188,9 @@ public class PostgreSqlDialectUtils {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
 							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = "nextval("
-									+ entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue()
-									+ ")";
+							sequence = "DEFAULT";
 						}
 						return DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
 								sequence, isAssignPKValue(pkStrategy), null);
@@ -220,11 +222,12 @@ public class PostgreSqlDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
+		// identity模式用关键词default 代替
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+			// 伪造成sequence模式
 			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = "nextval(" + entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue() + ")";
+			sequence = "DEFAULT";
 		}
-
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
 				sequence, isAssignPK, tableName);
@@ -370,14 +373,20 @@ public class PostgreSqlDialectUtils {
 		return sql.toString();
 	}
 
+	/**
+	 * @TODO 定义当使用sequence或identity时,是否允许自定义值(即不通过sequence或identity产生，而是由外部直接赋值)
+	 * @param pkStrategy
+	 * @return
+	 */
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null)
 			return true;
-		// 目前不支持sequence模式
+		// sequence
 		if (pkStrategy.equals(PKStrategy.SEQUENCE))
-			return true;
+			return false;
+		// postgresql10+ 支持identity
 		if (pkStrategy.equals(PKStrategy.IDENTITY))
-			return true;
+			return false;
 		return true;
 	}
 }
