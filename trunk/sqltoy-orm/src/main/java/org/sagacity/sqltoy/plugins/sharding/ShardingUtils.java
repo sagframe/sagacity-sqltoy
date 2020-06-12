@@ -189,6 +189,7 @@ public class ShardingUtils {
 				tableName = tableStrategy.getShardingTable(sqlToyContext, entityClass, entityTable,
 						tableConfig.getDecisionType(), valueMap);
 			}
+			// 分组key
 			dataGroupKey = dataSourceName + tableName;
 			// 归并到相同分组
 			if (shardingGroupMaps.containsKey(dataGroupKey)) {
