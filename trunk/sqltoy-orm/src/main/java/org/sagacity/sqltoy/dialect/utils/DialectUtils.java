@@ -1067,11 +1067,9 @@ public class DialectUtils {
 			}
 		}
 		FieldMeta fieldMeta;
-		String field;
 		boolean isPostgre = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB);
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-			field = entityMeta.getRejectIdFieldArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(field);
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
@@ -1081,6 +1079,7 @@ public class DialectUtils {
 			if (fupc.contains(columnName)) {
 				sql.append("?");
 			} else {
+				//2020-6-13 修复postgresql bytea类型处理错误
 				if (isPostgre && fieldMeta.getFieldType().equals("byte[]")) {
 					sql.append(" cast(");
 					sql.append(nullFunction);
