@@ -234,7 +234,13 @@ public class SqlUtil {
 		String tmpStr;
 		if (null == paramValue) {
 			if (jdbcType != -1) {
-				pst.setNull(paramIndex, jdbcType);
+				//postgresql bytea类型需要统一处理成BINARY
+				if ((jdbcType == java.sql.Types.BLOB || jdbcType == java.sql.Types.BINARY)
+						&& (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
+					pst.setNull(paramIndex, java.sql.Types.BINARY);
+				} else {
+					pst.setNull(paramIndex, jdbcType);
+				}
 			} else {
 				pst.setNull(paramIndex, java.sql.Types.NULL);
 			}
@@ -1191,9 +1197,9 @@ public class SqlUtil {
 			}
 		}
 		PreparedStatement pst = conn.prepareStatement(executeSql);
-		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				SqlUtil.setParamsValue(conn, dbType, pst, params, paramsType, 0);
+				setParamsValue(conn, dbType, pst, params, paramsType, 0);
 				pst.executeUpdate();
 				// 返回update的记录数量
 				this.setResult(Long.valueOf(pst.getUpdateCount()));

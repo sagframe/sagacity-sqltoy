@@ -506,8 +506,8 @@ public class EntityMeta implements Serializable {
 		this.loadSql = loadSql;
 	}
 
-	public FieldMeta getFieldMeta(String filed) {
-		return fieldsMeta.get(filed.toLowerCase());
+	public FieldMeta getFieldMeta(String field) {
+		return fieldsMeta.get(field.toLowerCase());
 	}
 
 	/**
