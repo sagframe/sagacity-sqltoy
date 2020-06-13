@@ -169,7 +169,7 @@ public class QuickVOConstants implements Serializable {
 			{ "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" }, { "FixedSTRING", "VARCHAR" },
 			{ "LONG VARGRAPHIC", "CLOB" }, { "LONG VARCHAR", "VARCHAR" }, { "DATE", "DATE" }, { "DATETIME", "DATE" },
 			{ "TIMESTAMP", "TIMESTAMP" }, { "TIMESTAMP(6)", "TIMESTAMP" }, { "TIME", "TIME" }, { "CHAR", "CHAR" },
-			{ "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "BINARY", "BLOB" }, { "BYTEA", "BLOB" }, { "LONGBLOB", "BLOB" },
+			{ "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "BINARY", "BINARY" }, { "BYTEA", "BINARY" }, { "LONGBLOB", "BLOB" },
 			{ "BOOLEAN", "BOOLEAN" }, { "BOOL", "BOOLEAN" }, { "MEDIUMBLOB", "BLOB" }, { "LONGTEXT", "VARCHAR" },
 			{ "MEDIUMTEXT", "VARCHAR" }, { "TEXT", "VARCHAR" }, { "JSON", "VARCHAR" }, { "TINYTEXT", "VARCHAR" },
 			{ "VARCHAR", "VARCHAR" }, { "BPCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" },
