@@ -56,6 +56,7 @@ import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1065,9 +1066,13 @@ public class DialectUtils {
 				fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			}
 		}
+		FieldMeta fieldMeta;
+		String field;
+		boolean isPostgre = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB);
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getRejectIdFieldArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+			field = entityMeta.getRejectIdFieldArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (i > 0) {
 				sql.append(",");
 			}
@@ -1076,8 +1081,15 @@ public class DialectUtils {
 			if (fupc.contains(columnName)) {
 				sql.append("?");
 			} else {
-				sql.append(nullFunction);
-				sql.append("(?,").append(columnName).append(")");
+				if (isPostgre && fieldMeta.getFieldType().equals("byte[]")) {
+					sql.append(" cast(");
+					sql.append(nullFunction);
+					sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
+					sql.append(" as bytea)");
+				} else {
+					sql.append(nullFunction);
+					sql.append("(?,").append(columnName).append(")");
+				}
 			}
 		}
 		sql.append(" where ");
