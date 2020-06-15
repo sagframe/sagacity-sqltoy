@@ -126,21 +126,18 @@ public class SqlExecuteStat {
 			}
 		}
 		if (isErrorOrWarn) {
-			logger.error("---------- 执行异常的sql脚本(为调试方便将条件值带入了sql)--------------");
-			logger.error("sql={}", fitSqlParams(sql, paramValues));
+			logger.error("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
 				logger.error("params:{}", paramStr);
 			}
 		} else {
 			if (isDebug) {
-				logger.debug("---------- 执行的sql脚本(为调试方便将条件值带入了sql)--------------");
-				logger.debug("sql={}", fitSqlParams(sql, paramValues));
+				logger.debug("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					logger.debug("params:{}", paramStr);
 				}
 			} else {
-				out.println("---------- 执行的sql脚本(为调试方便将条件值带入了sql)--------------");
-				out.println("sql=" + fitSqlParams(sql, paramValues));
+				out.println("为方便调试带入参数值后的sql=" + fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					out.println("params:" + paramStr);
 				}
