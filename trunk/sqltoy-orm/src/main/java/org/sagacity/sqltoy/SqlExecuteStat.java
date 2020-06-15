@@ -220,6 +220,7 @@ public class SqlExecuteStat {
 		int index = 0;
 		int paramSize = params.length;
 		Object paramValue;
+
 		while (matcher.find()) {
 			end = matcher.start() + 1;
 			lastSql.append(sql.substring(start, end));
@@ -238,6 +239,9 @@ public class SqlExecuteStat {
 				} else {
 					lastSql.append("'" + paramValue + "'");
 				}
+			} else {
+				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
+				return sql;
 			}
 			start = matcher.end();
 			index++;
