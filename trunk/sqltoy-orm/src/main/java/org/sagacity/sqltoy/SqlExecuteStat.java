@@ -126,6 +126,7 @@ public class SqlExecuteStat {
 			}
 		}
 		if (isErrorOrWarn) {
+			//为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
 			logger.error("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
 				logger.error("params:{}", paramStr);
