@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlExecuteStat.java,Revision:v1.0,Date:2015年6月12日
+ * @Modification {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
  */
 public class SqlExecuteStat {
 	/**
@@ -204,7 +205,7 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @TODO 将参数值拟合到sql中作为debug输出,便于开发进行调试
+	 * @TODO 将参数值拟合到sql中作为debug输出,便于开发进行调试(2020-06-15)
 	 * @param sql
 	 * @param params
 	 * @return
@@ -251,11 +252,11 @@ public class SqlExecuteStat {
 		return lastSql.toString();
 	}
 
-	public static void main(String[] args) {
-		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and sex='F'";
-		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
-		String result = fitSqlParams(sql, params);
-		System.err.println(result);
-	}
+//	public static void main(String[] args) {
+//		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and sex='F'";
+//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
+//		String result = fitSqlParams(sql, params);
+//		System.err.println(result);
+//	}
 
 }
