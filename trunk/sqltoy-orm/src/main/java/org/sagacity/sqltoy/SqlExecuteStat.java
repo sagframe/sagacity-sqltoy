@@ -46,6 +46,7 @@ public class SqlExecuteStat {
 	 */
 	private static int printSqlTimeoutMillis = 30000;
 
+	// 用于拟合sql中的条件值表达式
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?");
 
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
