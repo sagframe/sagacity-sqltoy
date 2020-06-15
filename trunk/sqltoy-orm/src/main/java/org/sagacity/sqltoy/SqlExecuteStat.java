@@ -126,18 +126,18 @@ public class SqlExecuteStat {
 		if (isErrorOrWarn) {
 			logger.error("执行异常对应的sqlScript[辅助拟合了条件值]:{}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
-				logger.error("执行异常对应的sqlParams:{}", paramStr);
+				logger.error("执行异常对应的sqlParams值为:{}", paramStr);
 			}
 		} else {
 			if (isDebug) {
 				logger.debug("sqlScript[辅助拟合了条件值]:{}", fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
-					logger.debug("sqlParams:{}", paramStr);
+					logger.debug("实际sqlParams值为:{}", paramStr);
 				}
 			} else {
 				out.println("sqlScript[辅助拟合了条件值]:" + fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
-					out.println("sqlParams:" + paramStr);
+					out.println("实际sqlParams值为:" + paramStr);
 				}
 			}
 		}
