@@ -220,7 +220,7 @@ public class SqlExecuteStat {
 		int index = 0;
 		int paramSize = params.length;
 		Object paramValue;
-
+		// 逐个查找?用实际参数值进行替换
 		while (matcher.find()) {
 			end = matcher.start() + 1;
 			lastSql.append(sql.substring(start, end));
@@ -250,11 +250,11 @@ public class SqlExecuteStat {
 		return lastSql.toString();
 	}
 
-//	public static void main(String[] args) {
-//		String sql = "select * from table where name=? and status in(?,?) and create_date>=?";
-//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
-//		String result = fitSqlParams(sql, params);
-//		System.err.println(result);
-//	}
+	public static void main(String[] args) {
+		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and sex='F'";
+		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
+		String result = fitSqlParams(sql, params);
+		System.err.println(result);
+	}
 
 }
