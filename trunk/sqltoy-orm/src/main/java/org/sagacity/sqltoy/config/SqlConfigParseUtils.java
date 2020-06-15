@@ -811,10 +811,4 @@ public class SqlConfigParseUtils {
 		}
 		return null;
 	}
-
-	public static void main(String[] args) {
-		String sql = "select * from table where #[`status` in (?)]";
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { new Object[] { 1, 2 } });
-		System.err.println(result.getSql());
-	}
 }
