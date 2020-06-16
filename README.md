@@ -80,17 +80,20 @@ sqltoy-orm 来源于个人亲身经历的无数个项目的总结和思考，尤
 
 ```
 <sql id="show_case">
-<value>
-<![CDATA[
-select 	*
-from sqltoy_device_order_info t 
-where #[t.ORDER_ID=:orderId]
-      #[and t.ORGAN_ID in (:authedOrganIds)]
-      #[and t.STAFF_ID in (:staffIds)]
-      #[and t.TRANS_DATE>=:beginDate]
-      #[and t.TRANS_DATE<:endDate]  
-]]>	
-</value>
+<filters>
+   <!-- 参数statusAry只要包含-1(代表全部)则将statusAry设置为null不参与条件检索 -->
+   <eq params="statusAry" value="-1" />
+</filters>
+<value><![CDATA[
+	select 	*
+	from sqltoy_device_order_info t 
+	where #[t.status in (:statusAry)]
+		  #[and t.ORDER_ID=:orderId]
+		  #[and t.ORGAN_ID in (:authedOrganIds)]
+		  #[and t.STAFF_ID in (:staffIds)]
+		  #[and t.TRANS_DATE>=:beginDate]
+		  #[and t.TRANS_DATE<:endDate]    
+	]]></value>
 </sql>
 ```
 
@@ -101,6 +104,12 @@ where #[t.ORDER_ID=:orderId]
  select *
  from sqltoy_device_order_info t 
  <where>
+     <if test="statusAry!=null">
+	and t.status in
+	<foreach collection="status" item="statusAry" separator="," open="(" close=")">  
+            #{status}  
+ 	</foreach>  
+    </if>
     <if test="orderId!=null">
 	and t.ORDER_ID=#{orderId}
     </if>

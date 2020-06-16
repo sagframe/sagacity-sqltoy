@@ -49,8 +49,9 @@ public class ParamFilterUtils {
 	 */
 	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
 			ParamFilterModel[] filters) {
-		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0)
+		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0) {
 			return values;
+		}
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
 		int paramSize = paramsName.length;
 		Object[] paramValues = new Object[paramSize];
@@ -125,8 +126,9 @@ public class ParamFilterUtils {
 			if (index >= 0) {
 				paramValue = (paramValues[index] == null) ? null : paramValues[index].toString();
 			}
-			if (paramValue == null)
+			if (paramValue == null) {
 				return;
+			}
 			// 是否将转化的值按新的条件参数存储
 			String aliasName = paramFilterModel.getAliasName();
 			if (StringUtil.isBlank(aliasName)) {
@@ -356,8 +358,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterSingleParam(Object paramValue, ParamFilterModel paramFilterModel) {
-		if (null == paramValue)
+		if (null == paramValue) {
 			return null;
+		}
 		Object result = paramValue;
 		String filterType = paramFilterModel.getFilterType();
 		if (filterType.equals("blank")) {
@@ -706,16 +709,21 @@ public class ParamFilterUtils {
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
 		}
-		if (type.equals("localdate"))
+		if (type.equals("localdate")) {
 			return DateUtil.asLocalDate((Date) result);
-		if (type.equals("localdatetime"))
+		}
+		if (type.equals("localdatetime")) {
 			return DateUtil.asLocalDateTime((Date) result);
-		if (type.equals("timestamp"))
+		}
+		if (type.equals("timestamp")) {
 			return java.sql.Timestamp.valueOf(DateUtil.asLocalDateTime((Date) result));
-		if (type.equals("localtime"))
+		}
+		if (type.equals("localtime")) {
 			return DateUtil.asLocalTime((Date) result);
-		if (type.equals("time"))
+		}
+		if (type.equals("time")) {
 			return java.sql.Time.valueOf(DateUtil.asLocalTime((Date) result));
+		}
 		return result;
 	}
 
@@ -726,8 +734,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterEquals(Object param, String[] contrasts) {
-		if (null == param || contrasts == null || contrasts.length == 0)
+		if (null == param || contrasts == null || contrasts.length == 0) {
 			return null;
+		}
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
 				|| param instanceof LocalDateTime) {
@@ -746,8 +755,9 @@ public class ParamFilterUtils {
 					Date compareDate = contrast.equalsIgnoreCase("sysdate")
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 							: DateUtil.convertDateObject(contrast);
-					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
 						return null;
+					}
 				}
 			} else if (type == 2) {
 				if (NumberUtil.isNumber(contrast)
@@ -768,10 +778,12 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterNotEquals(Object param, String[] contrasts) {
-		if (null == param)
+		if (null == param) {
 			return null;
-		if (contrasts == null || contrasts.length == 0)
+		}
+		if (contrasts == null || contrasts.length == 0) {
 			return param;
+		}
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
 				|| param instanceof LocalDateTime) {
@@ -786,14 +798,16 @@ public class ParamFilterUtils {
 			}
 			if (type == 1) {
 				if (param instanceof LocalTime) {
-					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0)
+					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
 						return param;
+					}
 				} else {
 					Date compareDate = contrast.equalsIgnoreCase("sysdate")
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 							: DateUtil.convertDateObject(contrast);
-					if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0)
+					if (DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
 						return param;
+					}
 				}
 			} else if (type == 2) {
 				// 非数字或相等
@@ -815,8 +829,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterLess(Object param, String contrast) {
-		if (null == param)
+		if (null == param) {
 			return null;
+		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate")) {
@@ -828,11 +843,13 @@ public class ParamFilterUtils {
 				return null;
 			}
 		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).isBefore(LocalTime.parse(contrast)))
+			if (((LocalTime) param).isBefore(LocalTime.parse(contrast))) {
 				return null;
+			}
 		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) < 0)
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) < 0) {
 				return null;
+			}
 		} else if (param.toString().compareTo(contrast) < 0) {
 			return null;
 		}
@@ -846,8 +863,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterLessEquals(Object param, String contrast) {
-		if (null == param)
+		if (null == param) {
 			return null;
+		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate")) {
@@ -855,14 +873,17 @@ public class ParamFilterUtils {
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) <= 0)
+			if (DateUtil.convertDateObject(param).compareTo(compareDate) <= 0) {
 				return null;
+			}
 		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) <= 0)
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) <= 0) {
 				return null;
+			}
 		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) <= 0)
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) <= 0) {
 				return null;
+			}
 		} else if (param.toString().compareTo(contrast) <= 0) {
 			return null;
 		}
@@ -876,8 +897,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterMore(Object param, String contrast) {
-		if (null == param)
+		if (null == param) {
 			return null;
+		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate")) {
@@ -885,14 +907,17 @@ public class ParamFilterUtils {
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) > 0)
+			if (DateUtil.convertDateObject(param).compareTo(compareDate) > 0) {
 				return null;
+			}
 		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) > 0)
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) > 0) {
 				return null;
+			}
 		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) > 0)
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) > 0) {
 				return null;
+			}
 		} else if (param.toString().compareTo(contrast) > 0) {
 			return null;
 		}
@@ -906,8 +931,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterMoreEquals(Object param, String contrast) {
-		if (null == param)
+		if (null == param) {
 			return null;
+		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.equalsIgnoreCase("sysdate")) {
@@ -915,14 +941,17 @@ public class ParamFilterUtils {
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
 			}
-			if (DateUtil.convertDateObject(param).compareTo(compareDate) >= 0)
+			if (DateUtil.convertDateObject(param).compareTo(compareDate) >= 0) {
 				return null;
+			}
 		} else if (param instanceof LocalTime) {
-			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) >= 0)
+			if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) >= 0) {
 				return null;
+			}
 		} else if (param instanceof Number) {
-			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) >= 0)
+			if (new BigDecimal(param.toString()).compareTo(new BigDecimal(contrast)) >= 0) {
 				return null;
+			}
 		} else if (param.toString().compareTo(contrast) >= 0) {
 			return null;
 		}
@@ -937,21 +966,25 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object filterBetween(Object param, String beginContrast, String endContrast) {
-		if (null == param)
+		if (null == param) {
 			return null;
+		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date var = DateUtil.convertDateObject(param);
 			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
-					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0)
+					&& var.compareTo(DateUtil.convertDateObject(endContrast)) <= 0) {
 				return null;
+			}
 		} else if (param instanceof LocalTime) {
 			if (((LocalTime) param).compareTo(LocalTime.parse(beginContrast)) >= 0
-					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0)
+					&& ((LocalTime) param).compareTo(LocalTime.parse(endContrast)) <= 0) {
 				return null;
+			}
 		} else if (param instanceof Number) {
 			if ((new BigDecimal(param.toString()).compareTo(new BigDecimal(beginContrast)) >= 0)
-					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0))
+					&& (new BigDecimal(param.toString()).compareTo(new BigDecimal(endContrast)) <= 0)) {
 				return null;
+			}
 		} else if (param.toString().compareTo(beginContrast) >= 0 && param.toString().compareTo(endContrast) <= 0) {
 			return null;
 		}
