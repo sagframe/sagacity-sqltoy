@@ -236,32 +236,8 @@
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
-					<groupId>org.apache.logging.log4j</groupId>
-					<artifactId>log4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch</groupId>
-					<artifactId>elasticsearch</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch</groupId>
-					<artifactId>elasticsearch-cli</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch</groupId>
-					<artifactId>elasticsearch-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch.client</groupId>
-					<artifactId>elasticsearch-rest-client</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch</groupId>
-					<artifactId>elasticsearch-secure-sm</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.elasticsearch</groupId>
-					<artifactId>elasticsearch-x-content</artifactId>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
