@@ -63,7 +63,7 @@ public class HttpClientUtils {
 	private final static String POST = "POST";
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
-			String paramName, String paramValue) throws Exception {
+			String[] paramName, String[] paramValue) throws Exception {
 		HttpPost httpPost = new HttpPost(url);
 		// 设置connection是否自动关闭
 		httpPost.setHeader("Connection", "close");
@@ -80,9 +80,13 @@ public class HttpClientUtils {
 			} else {
 				client = HttpClients.createDefault();
 			}
-			if (paramValue != null) {
+			if (paramValue != null && paramValue.length > 0) {
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-				nvps.add(new BasicNameValuePair(paramName, paramValue));
+				for (int i = 0; i < paramValue.length; i++) {
+					if (paramValue[i] != null) {
+						nvps.add(new BasicNameValuePair(paramName[i], paramValue[i]));
+					}
+				}
 				HttpEntity httpEntity = new UrlEncodedFormEntity(nvps, CHARSET);
 				((UrlEncodedFormEntity) httpEntity).setContentType(CONTENT_TYPE);
 				httpPost.setEntity(httpEntity);
