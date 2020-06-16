@@ -167,13 +167,6 @@ public interface SqlToyCRUDService {
 	 */
 	public void truncate(final Class entityClass);
 
-//	/**
-//	 * @todo 判断是否唯一
-//	 * @param entity
-//	 * @return
-//	 */
-//	public boolean isUnique(Serializable entity);
-
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param entity
