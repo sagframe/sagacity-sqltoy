@@ -662,7 +662,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * @todo 当sql语句中对应?号的值为null时，将该?号用字符串null替换 其意义在于jdbc 对null参数必须要指定NULL
-	 *       TYPE,为了保证通用性，将null部分数据参数 直接改为如:name = null
+	 *       TYPE,为了保证通用性，将null部分数据参数 直接改为 t.field = null
 	 * @param sqlToyResult
 	 * @param afterParamIndex
 	 */
@@ -674,6 +674,7 @@ public class SqlConfigParseUtils {
 		int index = StringUtil.indexOrder(sql, ARG_NAME, afterParamIndex);
 		if (index == -1)
 			return;
+		// 将条件值为null的替换到sql中，同时剔除该参数
 		for (int i = 0; i < paramList.size(); i++) {
 			if (null == paramList.get(i)) {
 				sql = sql.substring(0, index).concat(" null ").concat(sql.substring(index + 1));
