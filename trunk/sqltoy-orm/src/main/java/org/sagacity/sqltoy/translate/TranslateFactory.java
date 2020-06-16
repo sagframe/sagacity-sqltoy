@@ -303,6 +303,7 @@ public class TranslateFactory {
 	 */
 	private static Object getServiceCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
+		//getDictCache(String cacheType)返回List<List> 或List<Object[]> 参照sql模式
 		return sqlToyContext.getServiceData(cacheModel.getService(), cacheModel.getMethod(),
 				StringUtil.isBlank(cacheType) ? new Object[] {} : new Object[] { cacheType.trim() });
 	}

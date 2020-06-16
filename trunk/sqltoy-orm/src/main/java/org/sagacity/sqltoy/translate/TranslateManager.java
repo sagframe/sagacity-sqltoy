@@ -171,7 +171,9 @@ public class TranslateManager {
 	 */
 	private HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) {
+		//从缓存中提取数据
 		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), cacheType);
+		//数据为空则执行调用逻辑提取数据放入缓存，否则直接返回
 		if (result == null || result.isEmpty()) {
 			result = TranslateFactory.getCacheData(sqlToyContext, cacheModel, cacheType);
 			// 放入缓存
