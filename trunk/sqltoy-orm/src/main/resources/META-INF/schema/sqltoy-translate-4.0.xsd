@@ -76,11 +76,28 @@
 							</xsd:element>
 							<xsd:element name="service-translate" minOccurs="0"
 								maxOccurs="unbounded">
+								<xsd:annotation>
+									<xsd:documentation>
+										<![CDATA[通过spring service调用获取缓存,返回结果为List<List>或List<Object[]>类型]]>
+									</xsd:documentation>
+								</xsd:annotation>
 								<xsd:complexType>
 									<xsd:attribute name="service" type="xsd:string"
-										use="required" />
+										use="required">
+										<xsd:annotation>
+											<xsd:documentation>
+										<![CDATA[对应serviceName或者对应java类型,如:com.xxx.TranslateService]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
 									<xsd:attribute name="method" type="xsd:string"
-										use="required" />
+										use="required">
+										<xsd:annotation>
+											<xsd:documentation>
+										<![CDATA[服务对应的method必须有一个字符型参数,例如:getDictCache(String cacheType)]]>
+											</xsd:documentation>
+										</xsd:annotation>
+									</xsd:attribute>
 									<xsd:attributeGroup
 										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
