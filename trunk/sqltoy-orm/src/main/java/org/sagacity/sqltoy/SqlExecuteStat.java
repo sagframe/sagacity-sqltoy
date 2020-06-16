@@ -5,7 +5,6 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
