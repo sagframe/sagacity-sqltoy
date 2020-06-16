@@ -737,6 +737,21 @@ public class ParamFilterUtils {
 		if (null == param || contrasts == null || contrasts.length == 0) {
 			return null;
 		}
+		// 数组等于in 处理
+		if (param.getClass().isArray() && contrasts.length == 1) {
+			Object[] ary = CollectionUtil.convertArray(param);
+			// 空数据
+			if (ary.length == 0) {
+				return null;
+			}
+			String contrast = contrasts[0];
+			for (Object var : ary) {
+				if (var != null && var.toString().equals(contrast)) {
+					return null;
+				}
+			}
+			return param;
+		}
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
 				|| param instanceof LocalDateTime) {
@@ -749,8 +764,9 @@ public class ParamFilterUtils {
 		for (String contrast : contrasts) {
 			if (type == 1) {
 				if (param instanceof LocalTime) {
-					if (contrast != null && ((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0)
+					if (contrast != null && ((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
 						return null;
+					}
 				} else {
 					Date compareDate = contrast.equalsIgnoreCase("sysdate")
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
@@ -783,6 +799,22 @@ public class ParamFilterUtils {
 		}
 		if (contrasts == null || contrasts.length == 0) {
 			return param;
+		}
+		// 数组等于 not in 处理
+		if (param.getClass().isArray() && contrasts.length == 1) {
+			Object[] ary = CollectionUtil.convertArray(param);
+			// 空数据
+			if (ary.length == 0) {
+				return null;
+			}
+			String contrast = contrasts[0];
+			for (Object var : ary) {
+				// 相等则表示存在，not equals则不成立
+				if (var != null && var.toString().equals(contrast)) {
+					return param;
+				}
+			}
+			return null;
 		}
 		int type = 0;
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalTime
