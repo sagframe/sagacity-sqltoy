@@ -331,11 +331,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#isNotUnique(java.io
 	 * .Serializable)
 	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public boolean isUnique(Serializable entity) {
-		return sqlToyLazyDao.isUnique(entity, null);
-	}
+//	@Override
+//	@Transactional(propagation = Propagation.SUPPORTS)
+//	public boolean isUnique(Serializable entity) {
+//		return sqlToyLazyDao.isUnique(entity);
+//	}
 
 	/*
 	 * (non-Javadoc)
@@ -345,7 +345,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
-	public boolean isUnique(Serializable entity, String[] paramsNamed) {
+	public boolean isUnique(Serializable entity, String... paramsNamed) {
 		return sqlToyLazyDao.isUnique(entity, paramsNamed);
 	}
 

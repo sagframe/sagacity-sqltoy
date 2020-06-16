@@ -281,7 +281,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.String[])
 	 */
 	@Override
-	public boolean isUnique(Serializable entity, String[] paramsNamed) {
+	public boolean isUnique(Serializable entity, String... paramsNamed) {
 		return super.isUnique(entity, paramsNamed);
 	}
 

@@ -75,7 +75,7 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed
 	 * @return boolean true：唯一；false：不唯一
 	 */
-	public boolean isUnique(Serializable entity, String[] paramsNamed);
+	public boolean isUnique(Serializable entity, String... paramsNamed);
 
 	/**
 	 * @todo 获取符合条件的查询对应的记录数量
@@ -103,8 +103,20 @@ public interface SqlToyLazyDao {
 	 */
 	public Object save(Serializable serializableVO);
 
+	/**
+	 * @TODO 批量保存对象，并返回数据更新记录量
+	 * @param <T>
+	 * @param entities
+	 * @return 数据库记录变更量(插入数据量)
+	 */
 	public <T extends Serializable> Long saveAll(List<T> entities);
 
+	/**
+	 * @TODO 批量保存对象并忽视已经存在的记录
+	 * @param <T>
+	 * @param entities
+	 * @return 数据库记录变更量(插入数据量)
+	 */
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
 	/**
@@ -115,7 +127,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 非深度修改
+	 * @todo 基于对象对单条记录进行变更，后台数据库是一次交互,且字段值为null的自动忽视掉
 	 * @param serializableVO
 	 */
 	public Long update(Serializable serializableVO);
@@ -331,23 +343,23 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue   对应Named参数的值
 	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
 	 */
-	public <T> List<T> findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
+	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
 	/**
 	 * @TODO 将查询结果直接按二维List返回
-	 * @param sqlOrNamedSql
+	 * @param sqlOrSqlId
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 */
-	public List findBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+	public List findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询

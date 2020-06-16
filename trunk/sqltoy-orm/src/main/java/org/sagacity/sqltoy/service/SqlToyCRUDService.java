@@ -167,12 +167,12 @@ public interface SqlToyCRUDService {
 	 */
 	public void truncate(final Class entityClass);
 
-	/**
-	 * @todo 判断是否唯一
-	 * @param entity
-	 * @return
-	 */
-	public boolean isUnique(Serializable entity);
+//	/**
+//	 * @todo 判断是否唯一
+//	 * @param entity
+//	 * @return
+//	 */
+//	public boolean isUnique(Serializable entity);
 
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
@@ -180,7 +180,7 @@ public interface SqlToyCRUDService {
 	 * @param paramsNamed group+uniqueField
 	 * @return
 	 */
-	public boolean isUnique(Serializable entity, final String[] paramsNamed);
+	public boolean isUnique(Serializable entity, final String... paramsNamed);
 
 	/**
 	 * @todo 对树形数据进行封装，构造对象对应表的nodeRoute，nodeLevel，isLeaf等信息 便于对树形结构数据快速查询
