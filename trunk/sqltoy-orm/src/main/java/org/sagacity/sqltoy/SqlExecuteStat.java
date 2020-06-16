@@ -33,7 +33,7 @@ public class SqlExecuteStat {
 	private final static Logger logger = LoggerFactory.getLogger(SqlExecuteStat.class);
 
 	/**
-	 * 输出sql的策略
+	 * 输出sql的策略(error/debug 两种)
 	 */
 	private static String printSqlStrategy = "error";
 
@@ -43,7 +43,7 @@ public class SqlExecuteStat {
 	private static boolean debug = false;
 
 	/**
-	 * 超时打印sql(毫秒,默认30秒)
+	 * 打印慢sql(单位毫秒,默认超过30秒)
 	 */
 	private static int printSqlTimeoutMillis = 30000;
 

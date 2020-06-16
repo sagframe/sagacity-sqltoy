@@ -171,15 +171,6 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see isUnique(final Serializable entity, final String[] paramsNamed)
-	 * @param entity
-	 * @return
-	 */
-	protected boolean isUnique(final Serializable entity) {
-		return isUnique(new UniqueExecutor(entity));
-	}
-
-	/**
 	 * @todo 判断数据库中数据是否唯一，true 表示唯一(可以插入)，false表示不唯一(数据库已经存在该数据)，用法
 	 *       isUnique(dictDetailVO,new
 	 *       String[]{"dictTypeCode","dictName"})，将会根据给定的2个参数
@@ -188,7 +179,7 @@ public class SqlToyDaoSupport {
 	 * @param paramsNamed
 	 * @return
 	 */
-	protected boolean isUnique(final Serializable entity, final String[] paramsNamed) {
+	protected boolean isUnique(final Serializable entity, final String... paramsNamed) {
 		return isUnique(new UniqueExecutor(entity, paramsNamed));
 	}
 

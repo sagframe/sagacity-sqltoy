@@ -200,8 +200,9 @@ public class ResultUtils {
 		String realStr = value.toString();
 		int size = realStr.length();
 		// 单字符无需脱敏
-		if (size == 1)
+		if (size == 1) {
 			return realStr;
+		}
 		String maskCode = mask.getMaskCode();
 		int headSize = mask.getHeadSize();
 		int tailSize = mask.getTailSize();

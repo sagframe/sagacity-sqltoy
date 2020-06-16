@@ -123,8 +123,10 @@ public class TranslateFactory {
 	 */
 	private static List doRestCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
 			Timestamp preCheckTime) throws Exception {
+		String[] paramNames = { "lastUpdateTime" };
+		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, config.getUrl(), config.getUsername(),
-				config.getPassword(), "lastUpdateTime", DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS"));
+				config.getPassword(), paramNames, paramValues);
 		List result = null;
 		if (jsonStr != null) {
 			boolean fatal = false;
@@ -172,9 +174,10 @@ public class TranslateFactory {
 		if (cacheSet != null) {
 			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
 			Object[] row;
+			CacheCheckResult item;
 			for (int i = 0; i < cacheSet.size(); i++) {
 				row = (Object[]) cacheSet.get(i);
-				CacheCheckResult item = new CacheCheckResult();
+				item = new CacheCheckResult();
 				item.setCacheName((String) row[0]);
 				if (row.length > 1) {
 					item.setCacheType((String) row[1]);
@@ -212,14 +215,16 @@ public class TranslateFactory {
 			boolean hasInsideGroup = config.isHasInsideGroup();
 			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
 			Object[] row;
+			CacheCheckResult item;
+			Object[] cacheValue;
 			for (int i = 0; i < cacheSet.size(); i++) {
 				row = (Object[]) cacheSet.get(i);
-				CacheCheckResult item = new CacheCheckResult();
+				item = new CacheCheckResult();
 				item.setCacheName(cacheName);
 				// 缓存内部存在分组(参考数据字典表中的字典分类)
 				if (hasInsideGroup) {
 					item.setCacheType((String) row[0]);
-					Object[] cacheValue = new Object[row.length - 1];
+					cacheValue = new Object[row.length - 1];
 					// 跳过第一列缓存类别
 					System.arraycopy(row, 1, cacheValue, 0, row.length - 1);
 					item.setItem(cacheValue);
@@ -303,6 +308,7 @@ public class TranslateFactory {
 	 */
 	private static Object getServiceCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
+		// getDictCache(String cacheType)返回List<List> 或List<Object[]> 参照sql模式
 		return sqlToyContext.getServiceData(cacheModel.getService(), cacheModel.getMethod(),
 				StringUtil.isBlank(cacheType) ? new Object[] {} : new Object[] { cacheType.trim() });
 	}
@@ -317,8 +323,14 @@ public class TranslateFactory {
 	 */
 	private static List<Object[]> getRestCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
+		// 冗余一个参数名称
+		String[] paramNames = { "cacheType", "type" };
+		String[] paramValues = null;
+		if (StringUtil.isNotBlank(cacheType)) {
+			paramValues = new String[] { cacheType.trim(), cacheType.trim() };
+		}
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
-				cacheModel.getPassword(), "type", StringUtil.isBlank(cacheType) ? null : cacheType.trim());
+				cacheModel.getPassword(), paramNames, paramValues);
 		if (jsonStr != null) {
 			if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
 				return JSON.parseArray(jsonStr, Object[].class);
@@ -330,9 +342,10 @@ public class TranslateFactory {
 			List<Object[]> result = new ArrayList<Object[]>();
 			int size = cacheModel.getProperties().length;
 			JSONObject jsonObj;
+			Object[] row;
 			for (Object obj : jsonSet) {
 				jsonObj = (JSONObject) obj;
-				Object[] row = new Object[size];
+				row = new Object[size];
 				for (int i = 0; i < size; i++) {
 					row[i] = jsonObj.get(cacheModel.getProperties()[i]);
 				}
@@ -364,16 +377,19 @@ public class TranslateFactory {
 			if (!((HashMap) target).isEmpty()) {
 				if (((HashMap) target).values().iterator().next() instanceof List) {
 					Iterator<Map.Entry<String, List>> iter = ((HashMap<String, List>) target).entrySet().iterator();
+					Map.Entry<String, List> entry;
+					Object[] row;
 					while (iter.hasNext()) {
-						Map.Entry<String, List> entry = iter.next();
-						Object[] row = new Object[entry.getValue().size()];
+						entry = iter.next();
+						row = new Object[entry.getValue().size()];
 						entry.getValue().toArray(row);
 						result.put(entry.getKey(), row);
 					}
 				} else {
 					Iterator<Map.Entry<String, Object>> iter = ((HashMap<String, Object>) target).entrySet().iterator();
+					Map.Entry<String, Object> entry;
 					while (iter.hasNext()) {
-						Map.Entry<String, Object> entry = iter.next();
+						entry = iter.next();
 						result.put(entry.getKey(), new Object[] { entry.getKey(), entry.getValue() });
 					}
 				}
@@ -384,9 +400,10 @@ public class TranslateFactory {
 				int cacheIndex = cacheModel.getKeyIndex();
 				if (tempList.get(0) instanceof List) {
 					List row;
+					Object[] rowAry;
 					for (int i = 0, n = tempList.size(); i < n; i++) {
 						row = (List) tempList.get(i);
-						Object[] rowAry = new Object[row.size()];
+						rowAry = new Object[row.size()];
 						row.toArray(rowAry);
 						result.put(rowAry[cacheIndex].toString(), rowAry);
 					}
