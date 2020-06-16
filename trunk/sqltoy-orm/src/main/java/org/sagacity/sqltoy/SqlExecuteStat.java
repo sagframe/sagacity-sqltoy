@@ -5,6 +5,7 @@ package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -126,7 +127,7 @@ public class SqlExecuteStat {
 			}
 		}
 		if (isErrorOrWarn) {
-			//为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
+			// 为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
 			logger.error("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
 				logger.error("params:{}", paramStr);
@@ -252,12 +253,5 @@ public class SqlExecuteStat {
 		lastSql.append(sql.substring(start));
 		return lastSql.toString();
 	}
-
-//	public static void main(String[] args) {
-//		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and sex='F'";
-//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
-//		String result = fitSqlParams(sql, params);
-//		System.err.println(result);
-//	}
 
 }
