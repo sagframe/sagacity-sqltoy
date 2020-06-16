@@ -26,6 +26,7 @@
 		<slf4j.version>1.7.30</slf4j.version>
 		<httpclient.version>4.5.12</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
+		<httpasync.version>4.1.4</httpasync.version>
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 		<junit-platform.version>1.6.2</junit-platform.version>
 	</properties>
@@ -357,7 +358,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpasyncclient</artifactId>
-			<version>4.1.4</version>
+			<version>${httpasync.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
