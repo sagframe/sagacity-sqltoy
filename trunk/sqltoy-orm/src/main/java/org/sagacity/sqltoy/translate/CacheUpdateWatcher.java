@@ -166,8 +166,9 @@ public class CacheUpdateWatcher extends Thread {
 	private void doCheck(SqlToyContext sqlToyContext, CheckerConfigModel checkerConfig, Long lastCheckTime) {
 		List<CacheCheckResult> results = TranslateFactory.doCheck(sqlToyContext, checkerConfig,
 				DateUtil.getTimestamp(lastCheckTime));
-		if (results == null || results.isEmpty())
+		if (results == null || results.isEmpty()) {
 			return;
+		}
 		// 非增量更新检测(发生变更即清空缓存)
 		if (!checkerConfig.isIncrement()) {
 			try {
@@ -189,8 +190,9 @@ public class CacheUpdateWatcher extends Thread {
 				if (!checkerConfig.isHasInsideGroup()) {
 					cacheData = translateCacheManager.getCache(cacheName, null);
 					// 缓存为null,等待首次调用进行加载
-					if (cacheData == null)
+					if (cacheData == null) {
 						return;
+					}
 					for (CacheCheckResult result : results) {
 						// key不能为null
 						if (result.getItem()[0] != null) {
@@ -202,7 +204,7 @@ public class CacheUpdateWatcher extends Thread {
 					for (CacheCheckResult result : results) {
 						if (result.getItem()[0] != null) {
 							cacheData = translateCacheManager.getCache(cacheName, result.getCacheType());
-							//为null则等待首次调用加载
+							// 为null则等待首次调用加载
 							if (cacheData != null) {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
 							}
