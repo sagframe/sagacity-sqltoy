@@ -345,7 +345,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
@@ -525,7 +525,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
@@ -576,7 +576,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = null;
@@ -683,7 +683,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							Integer realTopSize;
@@ -746,7 +746,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
@@ -798,7 +798,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
+							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							this.setResult(getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,

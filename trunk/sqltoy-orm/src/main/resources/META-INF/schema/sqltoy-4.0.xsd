@@ -45,13 +45,25 @@
 			<xsd:element name="value" type="xsd:string" minOccurs="1"
 				maxOccurs="1" />
 			<xsd:element name="count-sql" type="xsd:string"
-				minOccurs="0" maxOccurs="1" />
+				minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[用于分页在极端优化场景下自定义统计count的sql,绝大多数情况下无需定义]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="pivot" minOccurs="0" maxOccurs="1"
 				type="sqltoyPivotType" />
 			<xsd:element name="unpivot" minOccurs="0" maxOccurs="1"
 				type="sqltoyUnpivotType" />
 			<xsd:element name="summary" minOccurs="0" maxOccurs="1"
-				type="sqltoySummaryType" />
+				type="sqltoySummaryType">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[用算法来完成sql分组汇总、求平均计算]]>
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
 			<xsd:element name="date-format" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:complexType>
@@ -115,7 +127,13 @@
 				maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:attribute name="tables" type="xsd:string"
-						use="required" />
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+								<![CDATA[定义针对哪几张表进行sharding策略替换]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="strategy" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="strategy-value"
@@ -388,11 +406,14 @@
 	<!-- 全局filter type -->
 	<xsd:complexType name="sqltoyFiltersType">
 		<xsd:annotation>
-			<xsd:documentation><![CDATA[通用filter]]></xsd:documentation>
+			<xsd:documentation><![CDATA[通用filter定义,用于对条件参数进行转null处理或者进行格式化或类型转换、或加减处理,便于后续条件判断]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice maxOccurs="unbounded">
 			<xsd:element name="blank" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为空白的将条件值转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						default="*" />
@@ -401,6 +422,11 @@
 			</xsd:element>
 			<xsd:element name="eq" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为等于给定值，将条件值转为null,如果条件值是数组，给定值等于数组中的任意一个值则将条件值转为null!
+					例如:params="status" value="-1", 如果status==-1 则转为null; status={"-1","1"} 也会将status转为null
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -411,6 +437,9 @@
 			</xsd:element>
 			<xsd:element name="gt" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值大于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -420,6 +449,9 @@
 			</xsd:element>
 			<xsd:element name="gte" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值大于等于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -429,6 +461,9 @@
 			</xsd:element>
 			<xsd:element name="date-format" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[对日期进行格式化,一般较少使用]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -438,6 +473,9 @@
 			</xsd:element>
 			<xsd:element name="lt" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值小于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -448,6 +486,9 @@
 
 			<xsd:element name="lte" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值小于等于给定值，则转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -458,6 +499,9 @@
 
 			<xsd:element name="between" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值在给定的区间范围内，则转为null]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -469,14 +513,30 @@
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="primary" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					设定首要参数，比如页面查询条件：订单编号，当订单编号有值时表示进行精准查询，除了部分数据权限过滤条件外其他条件不再参与过滤!
+					(excludes设置排除的参数，比如账套或归属企业id等权限过滤条件)
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="param" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="excludes" type="xsd:string" />
+					<xsd:attribute name="excludes" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[排除哪些参数不被设置为null]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="to-number" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数类型转为数字类型
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -495,6 +555,11 @@
 			</xsd:element>
 			<xsd:element name="to-array" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数转化为数组,如单值也转化为长度为1的数组
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -514,22 +579,51 @@
 			</xsd:element>
 			<xsd:element name="to-date" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+					将条件参数值类型转化为date类型,并可以设定对应的格式
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
 					<xsd:attribute name="format" default="yyyy-MM-dd">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="first_day" />
-								<xsd:enumeration value="last_day" />
+								<xsd:enumeration value="first_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期月份的第一天,如日期值为2020-06-17,处理后的值为:2020-06-01]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="last_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期月份的最后一天,如日期值为2020-06-17,处理后的值为:2020-06-30]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
 								<xsd:enumeration value="yyyy-MM-dd" />
 								<xsd:enumeration value="yyyyMMdd" />
 								<xsd:enumeration value="yyyyMMddHHmmss" />
 								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
-								<xsd:enumeration value="first_year_day" />
-								<xsd:enumeration value="last_year_day" />
-								<xsd:enumeration value="first_week_day" />
-								<xsd:enumeration value="last_week_day" />
+								<xsd:enumeration value="first_year_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期年份的第一天,如日期值为2020-06-17,处理后的值为:2020-01-01]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="last_year_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期年份的最后一天,如日期值为2020-06-17,处理后的值为:2020-12-31]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="first_week_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期所在周的第一天即周一,如日期值为2020-06-17,处理后的值为:2020-06-15]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
+								<xsd:enumeration value="last_week_day">
+									<xsd:annotation>
+										<xsd:documentation><![CDATA[当前日期所在周的最后一天即周日,如日期值为2020-06-17,处理后的值为:2020-06-21]]></xsd:documentation>
+									</xsd:annotation>
+								</xsd:enumeration>
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
@@ -551,6 +645,11 @@
 			</xsd:element>
 			<xsd:element name="neq" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[条件值为不等于给定值，将条件值转为null,如果条件值是数组，给定值不在数组范围内则将条件值转为null!
+					例如:params="status" value="-1",如果status=1 则转为null; status={"1","2"} 也会将status转为null
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -560,6 +659,10 @@
 			</xsd:element>
 			<xsd:element name="split" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[一般针对in条件查询，查询条件值是字符串多个值拼接的,用相关符号切割成数组再作为条件值
+					]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -580,6 +683,9 @@
 			</xsd:element>
 			<xsd:element name="replace" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[帮助对条件参数进行特定符号替换处理]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -593,6 +699,9 @@
 			</xsd:element>
 			<xsd:element name="to-in-arg" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[将数组拼接成单个字符串作为in (:args)的条件值]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
 						use="required" />
@@ -602,6 +711,9 @@
 			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[利用缓存将名称匹配成对应的代码，比如员工姓名页面输入了"张明"，利用员工和工号缓存匹配出姓名中包含"张明" 的工号数组,然后再参与sql查询]]></xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:choice minOccurs="0" maxOccurs="unbounded">
 						<xsd:element name="filter" minOccurs="0"
@@ -628,12 +740,28 @@
 						use="required" />
 					<xsd:attribute name="cache-type" type="xsd:string" />
 					<xsd:attribute name="cache-mapping-indexes"
-						type="xsd:string" default="1" />
+						type="xsd:string" default="1">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[缓存数组中哪几列参与名称检索匹配,默认第2列(值为1)作为名称]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="cache-mapping-max"
-						type="xsd:integer" default="500" />
+						type="xsd:integer" default="500">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[设置最大批量量,默认500,比如姓名输入:陈,员工姓陈的可能有1000个,但这里只匹配出部分]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="cache-not-matched-value"
-						type="xsd:string" />
-					<xsd:attribute name="alias-name" type="xsd:string" />
+						type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[缓存中不能匹配成功赋予一个值,sqltoy会将其转为数组]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="alias-name" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[为从缓存中匹配出的编码数组定义一个变量名称,便于在sql中引用]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 
