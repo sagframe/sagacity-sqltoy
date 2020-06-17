@@ -63,6 +63,13 @@
 						<xsd:choice maxOccurs="unbounded">
 							<xsd:element name="sql-translate" minOccurs="0"
 								maxOccurs="unbounded">
+								<xsd:annotation>
+									<xsd:documentation>
+										<![CDATA[基于sql直接查询,将结果放入缓存,一般格式:key、name、segment1、segment2、status
+										第一列放编码,第二列放名称、后续作为扩展列自行定义,一般将状态放于最后一列
+										]]>
+									</xsd:documentation>
+								</xsd:annotation>
 								<xsd:complexType mixed="true">
 									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
