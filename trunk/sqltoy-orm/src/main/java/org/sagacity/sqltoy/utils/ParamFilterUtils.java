@@ -737,13 +737,10 @@ public class ParamFilterUtils {
 		if (null == param || contrasts == null || contrasts.length == 0) {
 			return null;
 		}
-		// 数组等于in 处理
+		// 条件参数是数组，则等价于in 处理,即对比值在条件值数组中，就表示成立，将条件值转为null
+		// 这个属于极端少量的场景
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
-			// 空数据
-			if (ary.length == 0) {
-				return null;
-			}
 			String contrast = contrasts[0];
 			for (Object var : ary) {
 				if (var != null && var.toString().equals(contrast)) {
@@ -800,13 +797,10 @@ public class ParamFilterUtils {
 		if (contrasts == null || contrasts.length == 0) {
 			return param;
 		}
-		// 数组等于 not in 处理
+		// 条件参数是数组，则等价于做not in 处理,即对比值不在条件值数组中，就表示成立，将条件值转为null
+		// 这个属于极端少量的场景
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
-			// 空数据
-			if (ary.length == 0) {
-				return null;
-			}
 			String contrast = contrasts[0];
 			for (Object var : ary) {
 				// 相等则表示存在，not equals则不成立
