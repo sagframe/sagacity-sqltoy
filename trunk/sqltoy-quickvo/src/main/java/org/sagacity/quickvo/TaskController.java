@@ -136,6 +136,7 @@ public class TaskController {
 	 */
 	public static void createTask(QuickModel quickModel, boolean supportLinkSet) throws Exception {
 		String[] includes = null;
+		boolean skipPkConstraint = QuickVOConstants.getSkipPkConstraint();
 		if (quickModel.getIncludeTables() != null) {
 			includes = new String[] { "(?i)".concat(quickModel.getIncludeTables()) };
 		}
@@ -256,7 +257,9 @@ public class TaskController {
 					logger.info("======表" + tableName + "无主键!请检查数据库配置是否正确!");
 				} else {
 					// 设置主键约束配置,对postgresql 有意义
-					quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
+					if (!skipPkConstraint) {
+						quickVO.setPkConstraint(DBHelper.getTablePKConstraint(tableName));
+					}
 					String pkCol;
 					QuickColMeta quickColMeta;
 					List pkList = new ArrayList();
@@ -442,7 +445,7 @@ public class TaskController {
 			}
 			// sqlserver 和sybase、sybase iq数据库identity主键类别包含identity字符
 			jdbcType = jdbcType.replaceFirst("(?i)\\s*identity", "").trim();
-			//原始数据类型输出在vo字段上,便于开发者调整
+			// 原始数据类型输出在vo字段上,便于开发者调整
 			quickColMeta.setColType(jdbcType);
 			// 提取原始类型
 			sqlType = jdbcType.toLowerCase();

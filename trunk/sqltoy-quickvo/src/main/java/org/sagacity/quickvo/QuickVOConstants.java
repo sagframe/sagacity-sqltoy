@@ -245,6 +245,18 @@ public class QuickVOConstants implements Serializable {
 	}
 
 	/**
+	 * @TODO 是否忽视主键约束信息提取(主要针对postgresql)
+	 * @return
+	 */
+	public static boolean getSkipPkConstraint() {
+		String pkConstraint = getKeyValue("skip.primary.constraint");
+		if (StringUtil.isBlank(pkConstraint)) {
+			return false;
+		}
+		return Boolean.parseBoolean(pkConstraint);
+	}
+
+	/**
 	 * @todo 加载properties文件
 	 * @param propertyFile
 	 * @throws IOException
