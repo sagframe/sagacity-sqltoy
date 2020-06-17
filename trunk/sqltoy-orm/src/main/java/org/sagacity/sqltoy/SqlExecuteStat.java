@@ -47,8 +47,8 @@ public class SqlExecuteStat {
 	 */
 	private static int printSqlTimeoutMillis = 30000;
 
-	// 用于拟合sql中的条件值表达式
-	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?");
+	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
+	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
 
@@ -224,7 +224,7 @@ public class SqlExecuteStat {
 		int paramSize = params.length;
 		Object paramValue;
 		// 逐个查找?用实际参数值进行替换
-		while (matcher.find()) {
+		while (matcher.find(start)) {
 			end = matcher.start() + 1;
 			lastSql.append(sql.substring(start, end));
 			if (index < paramSize) {
@@ -245,11 +245,18 @@ public class SqlExecuteStat {
 				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
 				return sql;
 			}
-			start = matcher.end();
+			//正则匹配最后是\\W,所以要-1
+			start = matcher.end() - 1;
 			index++;
 		}
 		lastSql.append(sql.substring(start));
 		return lastSql.toString();
 	}
 
+//	public static void main(String[] args) {
+//		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and t.sex_type='F'";
+//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
+//		String result = fitSqlParams(sql, params);
+//		System.err.println(result);
+//	}
 }
