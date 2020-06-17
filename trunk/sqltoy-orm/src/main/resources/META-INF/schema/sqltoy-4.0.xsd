@@ -66,6 +66,11 @@
 			</xsd:element>
 			<xsd:element name="date-format" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对查询结果集合的列进行日期格式化]]>
+					</xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
@@ -84,6 +89,11 @@
 			</xsd:element>
 			<xsd:element name="number-format" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[对查询结果集合的列进行数字格式化]]>
+					</xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="columns" type="xsd:string"
 						use="required" />
@@ -115,6 +125,11 @@
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[设置分库策略,根据查询条件自动定向到不同的数据库进行查询,减轻单一数据库压力]]>
+					</xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="strategy" type="xsd:string"
 						use="required" />
@@ -125,6 +140,11 @@
 			</xsd:element>
 			<xsd:element name="sharding-table" minOccurs="0"
 				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[设置分表策略,根据查询条件自动将sql中的表替换成实际目标表,从而将查询分散到不同的表中,实现了单一表数据规模的降低]]>
+					</xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="tables" type="xsd:string"
 						use="required">
@@ -862,15 +882,23 @@
 	<xsd:complexType name="sqltoyPageOptimizeType">
 		<!-- 保留多少个不同查询 -->
 		<xsd:attribute name="alive-max"
-			type="xsd:nonNegativeInteger" default="100" />
+			type="xsd:nonNegativeInteger" default="100">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[最大允许保存多少条不同查询条件组合对应的count记录,默认100]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<!-- 相同查询间隔多久刷新 -->
 		<xsd:attribute name="alive-seconds"
-			type="xsd:nonNegativeInteger" default="90" />
+			type="xsd:nonNegativeInteger" default="90">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[每个查询条件以及对应count记录在内存中存放的有效时长(秒),默认90秒,确保及时进行刷新查询]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 
 	<xsd:complexType name="sqltoyPivotType">
 		<xsd:annotation>
-			<xsd:documentation><![CDATA[行转列]]></xsd:documentation>
+			<xsd:documentation><![CDATA[对查询结果做行转列操作]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:attribute name="group-columns" type="xsd:string"
 			use="required" />
