@@ -1,4 +1,4 @@
-# 在线文档(完善进度75%,可以预览)
+# 在线文档
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 # WORD版详细文档(完整)
