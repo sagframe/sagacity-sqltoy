@@ -37,22 +37,20 @@
 	</developers>
 	<distributionManagement>
 
-		<!-- <snapshotRepository> <id>sonatype-nexus-snapshots</id> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
-			</snapshotRepository> <repository> <id>sonatype-nexus-staging</id> <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url> 
-			</repository> -->
-
-
-		<repository>
-			<id>nexus-release</id>
-			<name>3rd party</name>
-			<url>https://nexus.1chemic.com/repository/releases/</url>
-		</repository>
 		<snapshotRepository>
-			<id>nexus-snapshots</id>
-			<name>Department 
-			Repository</name>
-			<url>https://nexus.1chemic.com/repository/snapshots/</url>
+			<id>sonatype-nexus-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
+		<repository>
+			<id>sonatype-nexus-staging</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+
+
+		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
+			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
+			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
+			</snapshotRepository> -->
 	</distributionManagement>
 
 	<dependencyManagement>
@@ -142,7 +140,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- <plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.6</version>
@@ -154,7 +152,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin> -->
+			</plugin>
 		</plugins>
 	</build>
 </project>
