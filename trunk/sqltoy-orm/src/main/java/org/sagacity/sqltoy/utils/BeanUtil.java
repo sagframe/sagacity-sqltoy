@@ -315,6 +315,8 @@ public class BeanUtil {
 	 */
 	public static Object convertType(Object value, String typeName) throws Exception {
 		Object paramValue = value;
+		// 转换为小写
+		typeName = typeName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
@@ -329,8 +331,6 @@ public class BeanUtil {
 			}
 			return null;
 		}
-		// 转换为小写
-		typeName = typeName.toLowerCase();
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
 		if (typeName.equals("string") || typeName.equals("java.lang.string")) {
@@ -470,7 +470,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
-			
+
 			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
@@ -486,7 +486,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
 			}
-			
+
 			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
