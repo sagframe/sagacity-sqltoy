@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2017-6-5 {剔除注释时用空白填补,防止出现类似原本:select xxx from 变成select xxxfrom }
  * @modify $Date:2017-6-14 {修复针对阿里的druid数据库datasource针对clob类型处理的错误}
  * @modify $Date:2019-7-5 剔除对druid clob bug的支持(druid 1.1.10 已经修复)
+ * @modify $Date:2020-06-18 用BeanUtil代替BeanInfo中getWriteMethod,完成对象属性赋值
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlUtil {
@@ -357,11 +358,11 @@ public class SqlUtil {
 		}
 		// 匹配对应的set方法
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
-		// set方法对应参数的类型
+		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName().toLowerCase();
 			}
 		}
 		int index = 0;
@@ -411,6 +412,7 @@ public class SqlUtil {
 		Object fieldValue;
 		boolean allNull = true;
 		Method method;
+		//已经小写
 		String typeName;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			method = setMethods[i];

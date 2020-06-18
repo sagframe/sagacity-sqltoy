@@ -254,7 +254,7 @@ public class XMLUtil {
 				if (method != null) {
 					try {
 						argType = method.getParameterTypes()[0];
-						className = argType.getTypeName();
+						className = argType.getTypeName().toLowerCase();
 						className = className.substring(className.lastIndexOf(".") + 1);
 						if (argType.isArray()) {
 							// 替换全角为半角
@@ -297,11 +297,11 @@ public class XMLUtil {
 								}
 								method.invoke(entity, arrayData);
 							} else {
-								Object valueAry = CollectionUtil.toArray(args, className.toLowerCase());
+								Object valueAry = CollectionUtil.toArray(args, className);
 								method.invoke(entity, valueAry);
 							}
 						} else if (BeanUtil.isBaseDataType(argType)) {
-							method.invoke(entity, BeanUtil.convertType(values[i], className.toLowerCase()));
+							method.invoke(entity, BeanUtil.convertType(values[i], className));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
