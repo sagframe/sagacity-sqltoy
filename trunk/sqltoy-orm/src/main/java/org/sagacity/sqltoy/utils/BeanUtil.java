@@ -310,13 +310,13 @@ public class BeanUtil {
 	/**
 	 * @todo 类型转换
 	 * @param paramValue
-	 * @param typeName
+	 * @param typeName 小写
 	 * @return
 	 */
 	public static Object convertType(Object value, String typeName) throws Exception {
 		Object paramValue = value;
 		// 转换为小写
-		typeName = typeName.toLowerCase();
+		//typeName = typeName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
@@ -807,7 +807,7 @@ public class BeanUtil {
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
 					}
 				}
 			}
@@ -1131,7 +1131,7 @@ public class BeanUtil {
 			setMethods.put(key, method);
 		}
 		// 将数据类型进行转换再赋值
-		String type = method.getParameterTypes()[0].getTypeName();
+		String type = method.getParameterTypes()[0].getTypeName().toLowerCase();
 		method.invoke(bean, convertType(value, type));
 	}
 

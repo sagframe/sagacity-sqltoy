@@ -1083,7 +1083,7 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("default-value")) {
 						String defaultValue = elt.getAttribute("default-value");
 						if (elt.hasAttribute("default-type")) {
-							String defaultType = elt.getAttribute("default-type");
+							String defaultType = elt.getAttribute("default-type").toLowerCase();
 							try {
 								pivotModel.setDefaultValue(BeanUtil.convertType(defaultValue, defaultType));
 							} catch (Exception e) {
