@@ -366,11 +366,11 @@ public class SqlUtil {
 		}
 		int index = 0;
 		// 循环通过java reflection将rs中的值映射到VO中
-		Object rowTemp;
+		Object rowData;
 		while (rs.next()) {
-			rowTemp = reflectResultRowToVOClass(rs, columnNames, setMethods, propTypes, voClass, ignoreAllEmptySet);
-			if (rowTemp != null) {
-				resultList.add(rowTemp);
+			rowData = reflectResultRowToVOClass(rs, columnNames, setMethods, propTypes, voClass, ignoreAllEmptySet);
+			if (rowData != null) {
+				resultList.add(rowData);
 			}
 			index++;
 			// 存在超出25000条数据的查询
@@ -397,14 +397,14 @@ public class SqlUtil {
 	/**
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param rs
-	 * @param matchedFields
+	 * @param columnLabels
 	 * @param pds
 	 * @param voClass
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(ResultSet rs, String[] matchedFields, Method[] setMethods,
+	private static Object reflectResultRowToVOClass(ResultSet rs, String[] columnLabels, Method[] setMethods,
 			String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
@@ -412,11 +412,11 @@ public class SqlUtil {
 		boolean allNull = true;
 		Method method;
 		String typeName;
-		for (int i = 0, n = matchedFields.length; i < n; i++) {
+		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			method = setMethods[i];
 			typeName = propTypes[i];
 			if (method != null) {
-				fieldValue = rs.getObject(matchedFields[i]);
+				fieldValue = rs.getObject(columnLabels[i]);
 				if (null != fieldValue) {
 					allNull = false;
 					method.invoke(bean, BeanUtil.convertType(fieldValue, typeName));
