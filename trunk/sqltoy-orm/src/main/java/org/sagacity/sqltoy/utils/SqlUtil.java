@@ -358,11 +358,11 @@ public class SqlUtil {
 		}
 		// 匹配对应的set方法
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
-		// set方法对应参数的类型
+		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName().toLowerCase();
 			}
 		}
 		int index = 0;
@@ -412,6 +412,7 @@ public class SqlUtil {
 		Object fieldValue;
 		boolean allNull = true;
 		Method method;
+		//已经小写
 		String typeName;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			method = setMethods[i];
