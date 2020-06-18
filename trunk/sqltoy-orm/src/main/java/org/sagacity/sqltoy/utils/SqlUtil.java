@@ -234,9 +234,8 @@ public class SqlUtil {
 		String tmpStr;
 		if (null == paramValue) {
 			if (jdbcType != -1) {
-				//postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB
-						&& (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
+				// postgresql bytea类型需要统一处理成BINARY
+				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
 				} else {
 					pst.setNull(paramIndex, jdbcType);
@@ -348,8 +347,9 @@ public class SqlUtil {
 		long maxThresholds = SqlToyConstants.getMaxThresholds();
 		boolean maxLimit = false;
 		// 最大值要大于等于警告阀值
-		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
+		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
+		}
 		// 获取voClass对象字段属性
 		BeanInfo bi = Introspector.getBeanInfo(voClass);
 		PropertyDescriptor[] pds = bi.getPropertyDescriptors();
