@@ -351,6 +351,7 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
+		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
 			fields[i] = columnNames[i].replaceAll("_", "").toLowerCase();
 		}
