@@ -3,13 +3,11 @@
  */
 package org.sagacity.sqltoy.utils;
 
-import java.beans.BeanInfo;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -43,7 +41,6 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.TableColumnMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
@@ -350,16 +347,27 @@ public class SqlUtil {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		// 获取voClass对象字段属性
-		BeanInfo bi = Introspector.getBeanInfo(voClass);
-		PropertyDescriptor[] pds = bi.getPropertyDescriptors();
-		// 获取数据库查询结果中的字段信息
-		List matchedFields = getPropertiesAndResultSetMatch(rs.getMetaData(), pds);
+		// rs 中的列名称
+		String[] columnNames = getColumnLabels(rs.getMetaData());
+		// 组织vo中对应的属性
+		String[] fields = new String[columnNames.length];
+		for (int i = 0; i < fields.length; i++) {
+			fields[i] = columnNames[i].replaceAll("_", "").toLowerCase();
+		}
+		// 匹配对应的set方法
+		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
+		// set方法对应参数的类型
+		String[] propTypes = new String[setMethods.length];
+		for (int i = 0; i < propTypes.length; i++) {
+			if (setMethods[i] != null) {
+				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+			}
+		}
 		int index = 0;
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowTemp;
 		while (rs.next()) {
-			rowTemp = reflectResultRowToVOClass(rs, matchedFields, pds, voClass, ignoreAllEmptySet);
+			rowTemp = reflectResultRowToVOClass(rs, columnNames, setMethods, propTypes, voClass, ignoreAllEmptySet);
 			if (rowTemp != null) {
 				resultList.add(rowTemp);
 			}
@@ -395,26 +403,23 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(ResultSet rs, List matchedFields, PropertyDescriptor[] pds,
-			Class voClass, boolean ignoreAllEmptySet) throws Exception {
+	private static Object reflectResultRowToVOClass(ResultSet rs, String[] matchedFields, Method[] setMethods,
+			String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
-		TableColumnMeta colMeta;
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
 		boolean allNull = true;
-		for (int i = 0, n = matchedFields.size(); i < n; i++) {
-			colMeta = (TableColumnMeta) matchedFields.get(i);
-			if (colMeta.getDataType() == java.sql.Types.CLOB) {
-				fieldValue = rs.getString(colMeta.getColName());
-			} else {
-				fieldValue = rs.getObject(colMeta.getColName());
-			}
-			if (null != fieldValue) {
-				allNull = false;
-				// java 反射调用
-				pds[colMeta.getColIndex()].getWriteMethod().invoke(bean,
-						// rs对象类型转java对象类型
-						BeanUtil.convertType(fieldValue, colMeta.getTypeName()));
+		Method method;
+		String typeName;
+		for (int i = 0, n = matchedFields.length; i < n; i++) {
+			method = setMethods[i];
+			typeName = propTypes[i];
+			if (method != null) {
+				fieldValue = rs.getObject(matchedFields[i]);
+				if (null != fieldValue) {
+					allNull = false;
+					method.invoke(bean, BeanUtil.convertType(fieldValue, typeName));
+				}
 			}
 		}
 		if (allNull && ignoreAllEmptySet) {
@@ -424,39 +429,18 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @todo 获取VO属性和ResultSet 字段之间的对照关系
+	 * @TODO 获取ResultSet 里面的列名称
 	 * @param rsmd
-	 * @param pds
 	 * @return
+	 * @throws SQLException
 	 */
-	private static List getPropertiesAndResultSetMatch(ResultSetMetaData rsmd, PropertyDescriptor[] pds)
-			throws Exception {
-		List matchedFields = new ArrayList();
-		// 获取数据库查询结果中的字段信息
-		HashMap colsHash = new HashMap();
+	private static String[] getColumnLabels(ResultSetMetaData rsmd) throws SQLException {
 		int fieldCnt = rsmd.getColumnCount();
-		String colName;
+		String[] columnNames = new String[fieldCnt];
 		for (int i = 1; i < fieldCnt + 1; i++) {
-			colName = rsmd.getColumnLabel(i);
-			// 剔除数据库字段中的"_"符号
-			colsHash.put(colName.replaceAll("_", "").toLowerCase(), colName);
+			columnNames[i - 1] = rsmd.getColumnLabel(i);
 		}
-		String property;
-		// 提取java对象属性跟数据库结果集字段属性一致的放入List中
-		for (int i = 0, n = pds.length; i < n; i++) {
-			property = pds[i].getName();
-			colName = (String) colsHash.get(property.toLowerCase());
-			// vo 属性跟数据库查询结果集字段匹配
-			if (null != colName) {
-				TableColumnMeta colMeta = new TableColumnMeta();
-				colMeta.setColName(colName);
-				colMeta.setColIndex(i);
-				colMeta.setAliasName(property);
-				colMeta.setTypeName(pds[i].getPropertyType().getName());
-				matchedFields.add(colMeta);
-			}
-		}
-		return matchedFields;
+		return columnNames;
 	}
 
 	/**
@@ -659,8 +643,9 @@ public class SqlUtil {
 		long maxThresholds = SqlToyConstants.getMaxThresholds();
 		boolean maxLimit = false;
 		// 最大值要大于等于警告阀值
-		if (maxThresholds > 1 && maxThresholds <= warnThresholds)
+		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
+		}
 		List result;
 		if (voClass != null) {
 			result = reflectResultToValueObject(rs, voClass, ignoreAllEmptySet);

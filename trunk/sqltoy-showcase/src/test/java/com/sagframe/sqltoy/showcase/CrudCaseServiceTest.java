@@ -37,7 +37,7 @@ import com.sagframe.sqltoy.utils.ShowCaseUtils;
 public class CrudCaseServiceTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
-	
+
 	@Autowired
 	private SqlToyLazyDao sqlToyLazyDao;
 
@@ -126,20 +126,17 @@ public class CrudCaseServiceTest {
 				EntityQuery.create().values(new StaffInfoVO().setStatus(1).setEmail("test3@aliyun.com")));
 		System.err.println(JSON.toJSONString(staffVOs));
 	}
-	
+
 	/**
-	 * findEntity 模式,简化sql编写模式,面向接口服务层提供快捷数据查询和处理
-	 * 1、通过where指定条件
-	 * 2、支持lock
-	 * 3、支持order by (order by 在接口服务 层意义不大)
-	 * 4、自动将对象属性映射成表字段
+	 * findEntity 模式,简化sql编写模式,面向接口服务层提供快捷数据查询和处理 1、通过where指定条件 2、支持lock 3、支持order
+	 * by (order by 在接口服务 层意义不大) 4、自动将对象属性映射成表字段
 	 */
 	@Test
 	public void findEntity() {
-		//条件利用sqltoy特有的#[]充当动态条件判断,#[]是支持嵌套的
+		// 条件利用sqltoy特有的#[]充当动态条件判断,#[]是支持嵌套的
 		List<StaffInfoVO> staffVOs = sqlToyLazyDao.findEntity(StaffInfoVO.class,
-				EntityQuery.create().where("#[staffName like ?] #[ and status=?]").values("陈", 1)
-				.lock(LockMode.UPGRADE).orderBy("staffName").orderByDesc("createTime"));
+				EntityQuery.create().where("#[staffName like ?] #[ and status=?]").values("陈", 1).lock(LockMode.UPGRADE)
+						.orderBy("staffName").orderByDesc("createTime"));
 		System.err.println(JSON.toJSONString(staffVOs));
 	}
 
@@ -154,7 +151,6 @@ public class CrudCaseServiceTest {
 		System.err.println(JSON.toJSONString(staffVOs));
 	}
 
-	
 	/**
 	 * 通过参数传值进行删除，where必须有值(后端会校验)，delete操作属于危险操作
 	 */
@@ -197,7 +193,8 @@ public class CrudCaseServiceTest {
 		for (String id : ids) {
 			staffs.add(new StaffInfoVO(id));
 		}
-		sqlToyCRUDService.loadAll(staffs);
+		staffs=sqlToyCRUDService.loadAll(staffs);
+		System.err.println(JSON.toJSONString(staffs));
 	}
 
 	@Test
