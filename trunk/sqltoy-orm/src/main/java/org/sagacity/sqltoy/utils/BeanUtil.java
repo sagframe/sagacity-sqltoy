@@ -316,7 +316,7 @@ public class BeanUtil {
 	public static Object convertType(Object value, String typeName) throws Exception {
 		Object paramValue = value;
 		// 转换为小写
-		//typeName = typeName.toLowerCase();
+		typeName = typeName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
