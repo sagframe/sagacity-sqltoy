@@ -18,4 +18,5 @@ trunk/sqltoy-orm/.settings/org.eclipse.core.resources.prefs
 bin
 trunk/sqltoy-orm/.classpath
 trunk/sqltoy-quickvo/dependency-reduced-pom.xml
-trunk/sqltoy-orm/sagacity-sqltoy.iml
+*.iml
+
