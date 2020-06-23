@@ -310,7 +310,7 @@ public class BeanUtil {
 	/**
 	 * @todo 类型转换
 	 * @param paramValue
-	 * @param typeName 小写
+	 * @param typeName   小写
 	 * @return
 	 */
 	public static Object convertType(Object value, String typeName) throws Exception {
@@ -401,6 +401,8 @@ public class BeanUtil {
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
 		if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
+			if (paramValue instanceof String)
+				return valueStr;
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
 			BufferedReader in = new BufferedReader(clob.getCharacterStream());
 			StringWriter out = new StringWriter();
