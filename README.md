@@ -76,7 +76,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(这还是一个简单的查询，你用良知来说比sqltoy差多远，如果其他功能都对等的情况下，就这一点mybatis就可以扔到垃圾篓里去，因为真没有脸将这么别扭的sql再拿出来了，从sqltoy的写法再去写mybatis那种心情就好比一万万匹草泥马奔过)!
+* mybatis同样的功能的写法(你自己对比差距有多大)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
