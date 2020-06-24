@@ -360,6 +360,7 @@ public class SqlXMLConfigParse {
 	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt) {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
 		NodeList nodeList;
+
 		if (sqlElt.hasAttribute("collection")) {
 			noSqlConfig.setCollection(sqlElt.getAttribute("collection"));
 		}
@@ -416,8 +417,9 @@ public class SqlXMLConfigParse {
 		} else if (sqlElt.hasAttribute("value-path")) {
 			noSqlConfig.setValueRoot(trimParams(sqlElt.getAttribute("value-path").split("\\,")));
 		}
+		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 是否有聚合查询
-		if (sqlElt.getNodeName().equalsIgnoreCase("eql")) {
+		if (nodeName.equals("eql")) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -434,7 +436,7 @@ public class SqlXMLConfigParse {
 					noSqlConfig.setHasAggs(true);
 				}
 			}
-		} else if (sqlElt.getNodeName().equalsIgnoreCase("mql")) {
+		} else if (nodeName.equals("mql")) {
 			if (sqlElt.hasAttribute("aggregate")) {
 				noSqlConfig.setHasAggs(Boolean.parseBoolean(sqlElt.getAttribute("aggregate")));
 			} else if (sqlElt.hasAttribute("is-aggregate")) {
@@ -1226,8 +1228,8 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @TODO 切割nosql 定义的fields,让其符合预期格式,格式为id[col1,col2:aliasName],col3,col4 将其按逗号分隔成
-	 * id.col1,id.cols2:aliasName,col3,col4
+	 * @TODO 切割nosql 定义的fields,让其符合预期格式,格式为id[col1,col2:aliasName],col3,col4
+	 *       将其按逗号分隔成 id.col1,id.cols2:aliasName,col3,col4
 	 * @param fields
 	 * @return
 	 */
