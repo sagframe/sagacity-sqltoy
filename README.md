@@ -50,7 +50,7 @@
 
 
 # 2. 快速特点说明
-## 2.1 最优雅直观的sql编写模式
+## 2.1 极致朴素的sql编写方式(跟dbeaver客户端调试后的高度一致,两边copy)
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
 * sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
