@@ -401,6 +401,7 @@ public class BeanUtil {
 		if (typeName.equals("int")) {
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
+		//clob 类型比较特殊,对外转类型全部转为字符串
 		if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
 			// update 2020-6-23 增加兼容性判断
 			if (paramValue instanceof String) {
@@ -511,7 +512,7 @@ public class BeanUtil {
 				while ((c = in.read()) != -1) {
 					out.write(c);
 				}
-				return out.toString();
+				return out.toString().toCharArray();
 			}
 			return valueStr.toCharArray();
 		}
