@@ -213,7 +213,7 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].equalsIgnoreCase("suggest")) {
+		if (!rootPath[0].toLowerCase().equals("suggest")) {
 			root = ((JSONObject) root).get("suggest");
 		}
 		for (String str : rootPath) {
@@ -260,7 +260,7 @@ public class ElasticSearchUtils {
 				: sqlToyConfig.getNoSqlConfigModel().getValueRoot();
 		Object root = json;
 		// 确保第一个路径是聚合统一的名词
-		if (!rootPath[0].equalsIgnoreCase("aggregations")) {
+		if (!rootPath[0].toLowerCase().equals("aggregations")) {
 			root = ((JSONObject) root).get("aggregations");
 		}
 		for (String str : rootPath) {
@@ -443,7 +443,7 @@ public class ElasticSearchUtils {
 			if (result instanceof JSONObject) {
 				JSONObject tmp = (JSONObject) result;
 				// {value:xxx} 模式
-				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().equalsIgnoreCase("value")) {
+				if (tmp.keySet().size() == 1 && tmp.keySet().iterator().next().toLowerCase().equals("value")) {
 					return rowJson;
 				}
 				return getRealJSONObject(tmp, realFields, isSuggest);

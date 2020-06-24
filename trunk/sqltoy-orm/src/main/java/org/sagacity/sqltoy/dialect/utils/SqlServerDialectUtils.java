@@ -940,11 +940,11 @@ public class SqlServerDialectUtils {
 			for (int i = 0; i < chipSize; i++) {
 				tmp = sqlChips[i];
 				if (tmp.toLowerCase().indexOf(realTableName.toLowerCase()) != -1) {
-					if (sqlChips[i + 1].equalsIgnoreCase("as")) {
+					if (sqlChips[i + 1].toLowerCase().equals("as")) {
 						regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
 						replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
 						break;
-					} else if (sqlChips[i + 2].equalsIgnoreCase("where")) {
+					} else if (sqlChips[i + 2].toLowerCase().equals("where")) {
 						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
 						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 						break;
@@ -952,7 +952,7 @@ public class SqlServerDialectUtils {
 						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
 						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 						break;
-					} else if (i + 3 < chipSize && sqlChips[i + 3].equalsIgnoreCase("join")) {
+					} else if (i + 3 < chipSize && sqlChips[i + 3].toLowerCase().equals("join")) {
 						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
 						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
 						break;

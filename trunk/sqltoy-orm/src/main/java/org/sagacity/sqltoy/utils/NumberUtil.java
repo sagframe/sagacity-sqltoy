@@ -55,7 +55,7 @@ public class NumberUtil {
 
 	public final static class Pattern {
 		public final static String CAPITAL = "capital";
-		public final static String CAPITAL_MONEY = "capitalMoney";
+		public final static String CAPITAL_MONEY = "capitalmoney";
 		public final static String CAPITAL_RMB = "capital-rmb";
 	}
 
@@ -84,12 +84,13 @@ public class NumberUtil {
 				return "";
 			}
 			BigDecimal tmp = new BigDecimal(tmpStr);
+			String lowPattern = pattern.toLowerCase();
 			// 将数字转换成大写汉字
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL)) {
+			if (lowPattern.equals(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
 			}
 			// 数字转换成大写汉字金额
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
+			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
 			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
@@ -122,13 +123,15 @@ public class NumberUtil {
 		}
 		try {
 			String tmpStr = target.toString().replace(",", "").trim().toLowerCase();
-			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan"))
+			if (tmpStr.equals("") || tmpStr.equals("null") || tmpStr.equals("nan")) {
 				return "";
+			}
+			String lowPattern = pattern.toLowerCase();
 			BigDecimal tmp = new BigDecimal(tmpStr);
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL)) {
+			if (lowPattern.equals(Pattern.CAPITAL)) {
 				return numberToChina(tmpStr, false);
 			}
-			if (pattern.equalsIgnoreCase(Pattern.CAPITAL_MONEY) || pattern.equalsIgnoreCase(Pattern.CAPITAL_RMB)) {
+			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
 			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
@@ -148,8 +151,9 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static Float parsePercent(String percent) {
-		if (StringUtil.isBlank(percent))
+		if (StringUtil.isBlank(percent)) {
 			return null;
+		}
 		NumberFormat nf = NumberFormat.getPercentInstance();
 		try {
 			return Float.valueOf(nf.parse(percent).floatValue());
@@ -183,8 +187,9 @@ public class NumberUtil {
 	 */
 	public static BigDecimal parseDecimal(String decimalStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(decimalStr, maxIntDigits, null, maxFractionDigits, null);
-		if (number != null)
+		if (number != null) {
 			return new BigDecimal(number.doubleValue());
+		}
 		return null;
 	}
 
@@ -197,8 +202,9 @@ public class NumberUtil {
 	 */
 	public static Double parseDouble(String doubleStr, Integer maxIntDigits, Integer maxFractionDigits) {
 		Number number = parseStr(doubleStr, maxIntDigits, null, maxFractionDigits, null);
-		if (number != null)
+		if (number != null) {
 			return Double.valueOf(number.doubleValue());
+		}
 		return null;
 	}
 
@@ -249,8 +255,9 @@ public class NumberUtil {
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
-		if (realMoney.compareTo(new BigDecimal(0)) == 0)
+		if (realMoney.compareTo(new BigDecimal(0)) == 0) {
 			return "零元";
+		}
 		// 绝对值字符串
 		String sourceStr = realMoney.toString();
 
@@ -266,7 +273,7 @@ public class NumberUtil {
 		if (result.startsWith("壹拾")) {
 			result = result.substring(1);
 		}
-		if (!result.equalsIgnoreCase("")) {
+		if (!result.equals("")) {
 			result += "元";
 		}
 
@@ -383,8 +390,9 @@ public class NumberUtil {
 	 */
 	private static Number parseStr(String parseTarget, Integer maxIntDigits, Integer minIntDigits,
 			Integer maxFractionDigits, Integer minFractionDigits) {
-		if (StringUtil.isBlank(parseTarget))
+		if (StringUtil.isBlank(parseTarget)) {
 			return null;
+		}
 		NumberFormat nf = NumberFormat.getInstance();
 		try {
 			// 最大整数位
@@ -417,8 +425,9 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static BigDecimal parseMillMoney(String capitalMoneyStr) {
-		if (capitalMoneyStr.equals("") || capitalMoneyStr.equals("0"))
+		if (capitalMoneyStr.equals("") || capitalMoneyStr.equals("0")) {
 			return BigDecimal.ZERO;
+		}
 		String millStr = "0";
 		String lowthousand = "0";
 		int millIndex = capitalMoneyStr.indexOf("万");
@@ -437,8 +446,9 @@ public class NumberUtil {
 	 * @return String
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
-		if (sourceInt.equals("0"))
+		if (sourceInt.equals("0")) {
 			return "";
+		}
 		String[] chinaNum = (isMoney ? capitalMoneyNumber : captialNumber);
 		String[] realUOM = (isMoney ? moneyUOM : numUOM);
 		int temp;
@@ -472,7 +482,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	private static BigDecimal parseLowThousandMoney(String capitalMoneyStr) {
-		if (capitalMoneyStr.equalsIgnoreCase("0")) {
+		if (capitalMoneyStr.equals("0")) {
 			return BigDecimal.ZERO;
 		}
 		String lastStr = capitalMoneyStr.substring(capitalMoneyStr.length() - 1);

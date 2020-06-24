@@ -37,12 +37,15 @@ public class CollectionUtil {
 	 * @return
 	 */
 	public static Object[] convertArray(Object obj) {
-		if (obj == null)
+		if (obj == null) {
 			return null;
-		if (obj instanceof Object[])
+		}
+		if (obj instanceof Object[]) {
 			return (Object[]) obj;
-		if (obj instanceof Collection)
+		}
+		if (obj instanceof Collection) {
 			return ((Collection) obj).toArray();
+		}
 		// 原始数组类型判断,原始类型直接(Object[])强制转换会发生错误
 		if (obj instanceof int[]) {
 			int[] tmp = (int[]) obj;
@@ -284,22 +287,25 @@ public class CollectionUtil {
 			result = 1;
 			if (obj instanceof Collection) {
 				Collection tmp = (Collection) obj;
-				if (tmp.isEmpty())
+				if (tmp.isEmpty()) {
 					return result;
+				}
 				if (((List) obj).get(0) != null && ((List) obj).get(0) instanceof List) {
 					result = 2;
 				}
 			} else if (obj.getClass().isArray()) {
 				Object[] tmp = convertArray(obj);
-				if (tmp.length == 0)
+				if (tmp.length == 0) {
 					return result;
+				}
 				if (tmp[0] != null && tmp[0].getClass().isArray()) {
 					result = 2;
 				}
 			} else if (obj instanceof Map) {
 				Map tmp = (Map) obj;
-				if (tmp.isEmpty())
+				if (tmp.isEmpty()) {
 					return result;
+				}
 				Object setItem = tmp.values().iterator().next();
 				if (setItem.getClass().isArray() || setItem instanceof Collection || setItem instanceof Map) {
 					result = 2;
@@ -528,10 +534,12 @@ public class CollectionUtil {
 						: new String[] { keyProperty, valueProperty };
 			}
 			switch (dimen) {
-			case -1:
+			case -1: {
 				break;
-			case 0:
+			}
+			case 0: {
 				break;
+			}
 			// 一维
 			case 1: {
 				if (data.getClass().isArray()) {
@@ -856,8 +864,9 @@ public class CollectionUtil {
 				// 不相等
 				if (!BeanUtil.equals(nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]),
 						preGroupCompareIndexs.get((Integer) groupIndexs[j][0]))) {
-					if (j == groupTotal - 1)
+					if (j == groupTotal - 1) {
 						isEqual = true;
+					}
 					sumData.addAll(i + 1,
 							createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
 									(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],

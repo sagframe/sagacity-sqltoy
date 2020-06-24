@@ -11,15 +11,15 @@ package org.sagacity.sqltoy.config.model;
  */
 public enum SqlType {
 	search("search"),
-	
+
 	insert("insert"),
-	
+
 	update("update"),
-	
+
 	delete("delete");
-	
+
 	private final String sqlType;
-	
+
 	private SqlType(String sqlType) {
 		this.sqlType = sqlType;
 	}
@@ -40,11 +40,11 @@ public enum SqlType {
 	public static SqlType getSqlType(String sqlType) {
 		if (sqlType.equalsIgnoreCase(search.getValue()))
 			return search;
-		else if (sqlType.equalsIgnoreCase(insert.getValue()))
+		if (sqlType.equalsIgnoreCase(insert.getValue()))
 			return insert;
-		else if (sqlType.equalsIgnoreCase(update.getValue()))
+		if (sqlType.equalsIgnoreCase(update.getValue()))
 			return update;
-		else if (sqlType.equalsIgnoreCase(delete.getValue()))
+		if (sqlType.equalsIgnoreCase(delete.getValue()))
 			return delete;
 		return search;
 	}

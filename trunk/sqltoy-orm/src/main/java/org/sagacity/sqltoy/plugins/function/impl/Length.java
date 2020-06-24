@@ -45,8 +45,9 @@ public class Length extends IFunction {
 	 */
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+		String funLow = functionName.toLowerCase();
 		if (dialect == DBType.SQLSERVER) {
-			if (functionName.equalsIgnoreCase("datalength")) {
+			if (funLow.equals("datalength")) {
 				return wrapArgs("datalength", args);
 			}
 			return wrapArgs("len", args);
@@ -54,20 +55,19 @@ public class Length extends IFunction {
 		if (dialect == DBType.ORACLE || dialect == DBType.POSTGRESQL || dialect == DBType.DB2
 				|| dialect == DBType.GAUSSDB || dialect == DBType.OCEANBASE || dialect == DBType.DM
 				|| dialect == DBType.ORACLE11) {
-			if (functionName.equalsIgnoreCase("datalength") || functionName.equalsIgnoreCase("char_length")
-					|| functionName.equalsIgnoreCase("len")) {
+			if (funLow.equals("datalength") || funLow.equals("char_length") || funLow.equals("len")) {
 				return wrapArgs("length", args);
 			}
 			return wrapArgs(functionName, args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
-			if (functionName.equalsIgnoreCase("char_length")) {
+			if (funLow.equals("char_length")) {
 				return wrapArgs(functionName, args);
 			}
 			return wrapArgs("length", args);
 		}
 		if (dialect == DBType.SYBASE_IQ) {
-			if (functionName.equalsIgnoreCase("char_length")) {
+			if (funLow.equals("char_length")) {
 				return wrapArgs(functionName, args);
 			}
 			return wrapArgs("datalength", args);

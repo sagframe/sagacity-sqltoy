@@ -49,7 +49,7 @@ public class GroupConcat extends IFunction {
 			}
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.TIDB || dialect == DBType.MYSQL57) {
-			if (functionName.equalsIgnoreCase("group_concat")) {
+			if (functionName.toLowerCase().equals("group_concat")) {
 				return super.IGNORE;
 			}
 			return " group_concat(" + args[0] + " separator " + args[1] + ") ";

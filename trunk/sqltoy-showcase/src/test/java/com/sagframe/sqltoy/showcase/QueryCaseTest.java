@@ -33,6 +33,7 @@ import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
 import com.sagframe.sqltoy.showcase.vo.TestVO;
 import com.sagframe.sqltoy.utils.ShowCaseUtils;
+import com.sun.javafx.collections.MappingChange.Map;
 
 /**
  * @project sqltoy-boot-showcase
@@ -161,6 +162,16 @@ public class QueryCaseTest {
 	}
 
 	/**
+	 * 演示返回Map同时不做命名骆驼命名转换
+	 */
+	@Test
+	public void findByQuery() {
+		List<Map> subOrgans = sqlToyLazyDao.findByQuery(new QueryExecutor("sqltoy_treeTable_search").names("nodeRoute")
+				.values(",100008,").resultType(Map.class).humpMapLabel(false)).getRows();
+		System.out.print(JSON.toJSONString(subOrgans));
+	}
+
+	/**
 	 * 唯一性验证 返回false表示已经存在;返回true表示唯一可以插入
 	 */
 	@Test
@@ -235,7 +246,6 @@ public class QueryCaseTest {
 		String[] authedOrgans = { "100004", "100007" };
 		String[] paramNames = { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" };
 		Object[] paramValues = { null, authedOrgans, "陈", "2018-09-01", null };
-		// QueryExecuter query = new QueryExecutor();
 		double topSize = 20;
 		List<DeviceOrderInfoVO> result = sqlToyLazyDao.findTopByQuery(new QueryExecutor("sqltoy_order_search")
 				.names(paramNames).values(paramValues).resultType(DeviceOrderInfoVO.class), topSize).getRows();
