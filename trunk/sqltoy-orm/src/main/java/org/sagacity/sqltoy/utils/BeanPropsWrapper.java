@@ -43,8 +43,9 @@ public class BeanPropsWrapper {
 	 * @throws Exception
 	 */
 	public Object[] mappingAry(List dataSet) throws Exception {
-		if (null == names || names.length != 1 || null == dataSet || dataSet.isEmpty())
+		if (null == names || names.length != 1 || null == dataSet || dataSet.isEmpty()) {
 			return null;
+		}
 		List<List> reflectValue = BeanUtil.reflectBeansToList(dataSet, names);
 		List result = new ArrayList();
 		for (List rowList : reflectValue) {

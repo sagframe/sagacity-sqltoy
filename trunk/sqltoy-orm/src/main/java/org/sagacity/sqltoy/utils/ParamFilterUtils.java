@@ -765,7 +765,7 @@ public class ParamFilterUtils {
 						return null;
 					}
 				} else {
-					Date compareDate = contrast.equalsIgnoreCase("sysdate")
+					Date compareDate = contrast.toLowerCase().equals("sysdate")
 							? DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT)
 							: DateUtil.convertDateObject(contrast);
 					if (compareDate != null && DateUtil.convertDateObject(param).compareTo(compareDate) == 0) {
@@ -860,7 +860,7 @@ public class ParamFilterUtils {
 		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate")) {
+			if (contrast.toLowerCase().equals("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -894,7 +894,7 @@ public class ParamFilterUtils {
 		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate")) {
+			if (contrast.toLowerCase().equals("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -928,7 +928,7 @@ public class ParamFilterUtils {
 		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate")) {
+			if (contrast.toLowerCase().equals("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);
@@ -962,7 +962,7 @@ public class ParamFilterUtils {
 		}
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
-			if (contrast.equalsIgnoreCase("sysdate")) {
+			if (contrast.toLowerCase().equals("sysdate")) {
 				compareDate = DateUtil.parse(DateUtil.getNowTime(), DAY_FORMAT);
 			} else {
 				compareDate = DateUtil.convertDateObject(contrast);

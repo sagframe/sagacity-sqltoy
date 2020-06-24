@@ -352,18 +352,19 @@ public class DateUtil {
 		if (dt == null) {
 			return null;
 		}
-		if (fmt.equalsIgnoreCase("YY")) {
+		String fmtUpper = fmt.toUpperCase();
+		if (fmtUpper.equals("YY")) {
 			String year = Integer.toString(getYear(dt));
 			return year.substring(year.length() - 2);
 		}
-		if (fmt.equalsIgnoreCase("YYYY")) {
+		if (fmtUpper.equals("YYYY")) {
 			return Integer.toString(getYear(dt));
 		}
-		if (fmt.equalsIgnoreCase("MM")) {
+		if (fmtUpper.equals("MM")) {
 			int month = getMonth(dt);
 			return (month < 10 ? "0" : "").concat(Integer.toString(month));
 		}
-		if (fmt.equalsIgnoreCase("dd")) {
+		if (fmtUpper.equals("DD")) {
 			int day = getDay(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}

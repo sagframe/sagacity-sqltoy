@@ -648,15 +648,16 @@ public class EntityManager {
 				.concat(subSchemaTable).concat(subWhereSql));
 		// 自动加载
 		if (StringUtil.isNotBlank(oneToMany.load())) {
+			String loadLow = oneToMany.load().toLowerCase();
 			// 是否是:xxx形式的参数条件
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
 			if (isNamedSql && !StringUtil.matches(oneToMany.load(), "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
 				// 自定义加载sql
-				if (!oneToMany.load().equalsIgnoreCase("default") && !oneToMany.load().equalsIgnoreCase("true")) {
+				if (!loadLow.equals("default") && !loadLow.equals("true")) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				}
 			} else {
-				matchedWhere = StringUtil.matches(oneToMany.load().toLowerCase(), "\\s+where\\s+");
+				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				} else {
@@ -679,12 +680,13 @@ public class EntityManager {
 
 		// 深度级联修改
 		if (StringUtil.isNotBlank(oneToMany.update())) {
+			String updateLow = oneToMany.update().toLowerCase();
 			// 表示先删除子表
-			if (oneToMany.update().equalsIgnoreCase("delete")) {
+			if (updateLow.equals("delete")) {
 				oneToManyModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
 			} else {
 				// 修改数据(如设置记录状态为失效)
-				matchedWhere = StringUtil.matches(oneToMany.update().toLowerCase(), "\\s+where\\s+");
+				matchedWhere = StringUtil.matches(updateLow, "\\s+where\\s+");
 				oneToManyModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ")
 						.concat(oneToMany.update()).concat(matchedWhere ? "" : subWhereSql));
 			}

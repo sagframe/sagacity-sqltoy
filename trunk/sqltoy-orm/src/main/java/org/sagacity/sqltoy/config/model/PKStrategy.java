@@ -13,16 +13,16 @@ package org.sagacity.sqltoy.config.model;
 public enum PKStrategy {
 	// 手工赋值
 	ASSIGN("assign"),
-	
+
 	// 数据库sequence
 	SEQUENCE("sequence"),
-	
+
 	// 数据库identity自增模式,oracle,db2中对应always identity
 	IDENTITY("identity"),
-	
+
 	// 自定义类产生一个不唯一的主键
 	GENERATOR("generator");
-	
+
 	private final String strategy;
 
 	private PKStrategy(String strategy) {
@@ -45,11 +45,11 @@ public enum PKStrategy {
 	public static PKStrategy getPKStrategy(String strategy) {
 		if (strategy.equalsIgnoreCase(ASSIGN.getValue()))
 			return ASSIGN;
-		else if (strategy.equalsIgnoreCase(SEQUENCE.getValue()))
+		if (strategy.equalsIgnoreCase(SEQUENCE.getValue()))
 			return SEQUENCE;
-		else if (strategy.equalsIgnoreCase(IDENTITY.getValue()))
+		if (strategy.equalsIgnoreCase(IDENTITY.getValue()))
 			return IDENTITY;
-		else if (strategy.equalsIgnoreCase(GENERATOR.getValue()))
+		if (strategy.equalsIgnoreCase(GENERATOR.getValue()))
 			return GENERATOR;
 		return ASSIGN;
 	}

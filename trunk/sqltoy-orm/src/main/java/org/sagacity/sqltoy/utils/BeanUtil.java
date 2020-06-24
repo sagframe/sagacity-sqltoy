@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10 下午10:27:57
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
+ * @modify data:2020-06-23 优化convertType(Object, String) 方法
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -374,7 +375,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
 			}
-			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
+			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return oracleTimeStampConvert(paramValue);
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
@@ -389,7 +390,7 @@ public class BeanUtil {
 			if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
 			}
-			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
+			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.util.Date(oracleDateConvert(paramValue).getTime());
 			}
 			return DateUtil.parseString(valueStr);
@@ -400,9 +401,12 @@ public class BeanUtil {
 		if (typeName.equals("int")) {
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
+		//clob 类型比较特殊,对外转类型全部转为字符串
 		if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
-			if (paramValue instanceof String)
+			// update 2020-6-23 增加兼容性判断
+			if (paramValue instanceof String) {
 				return valueStr;
+			}
 			java.sql.Clob clob = (java.sql.Clob) paramValue;
 			BufferedReader in = new BufferedReader(clob.getCharacterStream());
 			StringWriter out = new StringWriter();
@@ -413,8 +417,9 @@ public class BeanUtil {
 			return out.toString();
 		}
 		if (typeName.equals("java.time.localtime")) {
-			if (paramValue instanceof LocalTime)
+			if (paramValue instanceof LocalTime) {
 				return (LocalTime) paramValue;
+			}
 			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
 		}
 		// add 2020-4-9
@@ -446,9 +451,9 @@ public class BeanUtil {
 			}
 			return valueStr.getBytes();
 		}
-
+		// 字符串转 boolean 型
 		if (typeName.equals("java.lang.boolean") || typeName.equals("boolean")) {
-			if (valueStr.equalsIgnoreCase("true") || valueStr.equals("1")) {
+			if (valueStr.toLowerCase().equals("true") || valueStr.equals("1")) {
 				return Boolean.TRUE;
 			}
 			return Boolean.FALSE;
@@ -473,7 +478,7 @@ public class BeanUtil {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
+			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
@@ -489,7 +494,7 @@ public class BeanUtil {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getName().equalsIgnoreCase("oracle.sql.TIMESTAMP")) {
+			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
 			return DateUtil.parseString(valueStr);
@@ -507,7 +512,7 @@ public class BeanUtil {
 				while ((c = in.read()) != -1) {
 					out.write(c);
 				}
-				return out.toString();
+				return out.toString().toCharArray();
 			}
 			return valueStr.toCharArray();
 		}
