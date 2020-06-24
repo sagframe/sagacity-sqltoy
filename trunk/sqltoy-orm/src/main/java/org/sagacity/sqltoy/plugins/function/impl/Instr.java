@@ -46,17 +46,19 @@ public class Instr extends IFunction {
 	@Override
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		String[] realArgs;
-		if (functionName.equalsIgnoreCase("position")) {
+		String funLow = functionName.toLowerCase();
+		if (funLow.equals("position")) {
 			realArgs = args[0].split("(?i)\\sin\\s");
 		} else {
 			realArgs = args;
 		}
 		StringBuilder result = new StringBuilder();
 		if (dialect == DBType.SQLSERVER || dialect == DBType.SYBASE_IQ) {
-			if (functionName.equalsIgnoreCase("charindex"))
+			if (funLow.equals("charindex")) {
 				return super.IGNORE;
+			}
 			result.append("charindex(");
-			if (functionName.equalsIgnoreCase("position")) {
+			if (funLow.equals("position")) {
 				result.append(realArgs[0]).append(",").append(realArgs[1]);
 			} else {
 				result.append(realArgs[1]).append(",").append(realArgs[0]);
@@ -72,8 +74,9 @@ public class Instr extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.DB2 || dialect == DBType.OCEANBASE
 				|| dialect == DBType.DM || dialect == DBType.TIDB || dialect == DBType.ORACLE11
 				|| dialect == DBType.MYSQL57) {
-			if (functionName.equalsIgnoreCase("instr"))
+			if (funLow.equals("instr")) {
 				return super.IGNORE;
+			}
 			result.append("instr(").append(realArgs[1]).append(",").append(realArgs[0]);
 			if (realArgs.length > 2) {
 				result.append(",").append(realArgs[2]);
@@ -84,11 +87,12 @@ public class Instr extends IFunction {
 			return result.append(")").toString();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
-			if (functionName.equalsIgnoreCase("position"))
+			if (funLow.equals("position")) {
 				return super.IGNORE;
+			}
 			if (realArgs.length == 2) {
 				result.append("position(");
-				if (functionName.equalsIgnoreCase("charindex")) {
+				if (funLow.equals("charindex")) {
 					result.append(realArgs[0]).append(" in ").append(realArgs[1]);
 				} else {
 					result.append(realArgs[1]).append(" in ").append(realArgs[0]);
