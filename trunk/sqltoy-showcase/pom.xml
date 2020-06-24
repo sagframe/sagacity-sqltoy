@@ -374,15 +374,15 @@
 				</excludes>
 				<includes>
 					<include>**/*.xml</include>
-					<include>**/*.properties</include>
-					<include>**/*.yml</include>
 				</includes>
 			</resource>
 			<resource>
 				<directory>src/main/resources</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+					<include>**/*.yml</include>
+				</includes>
 			</resource>
 		</resources>
 		<testResources>
@@ -393,15 +393,15 @@
 				</excludes>
 				<includes>
 					<include>**/*.xml</include>
-					<include>**/*.properties</include>
-					<include>**/*.yml</include>
 				</includes>
 			</testResource>
 			<testResource>
 				<directory>src/test/resources</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+					<include>**/*.yml</include>
+				</includes>
 			</testResource>
 		</testResources>
 		<plugins>
