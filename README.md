@@ -24,7 +24,7 @@
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有hibernate增删改和对象加载的便捷性同时也具有比myBatis更加灵活优雅的自定义sql查询功能。
+   sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
    * oracle 从oracle11g到19c
    * db2 9.5+,建议从10.5 开始
