@@ -74,8 +74,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	@Override
 	public void initialize() {
-		if (dataSourceWeight == null || dataSourceWeight.isEmpty())
+		if (dataSourceWeight == null || dataSourceWeight.isEmpty()) {
 			return;
+		}
 		dataSourceWeightConfig = new Object[dataSourceWeight.size()][2];
 		weights = new int[dataSourceWeight.size()];
 		Iterator<Entry<String, Integer>> entryIter = dataSourceWeight.entrySet().iterator();
@@ -88,8 +89,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			i++;
 		}
 		// 检测时间小于等于零,则表示不做自动检测
-		if (checkSeconds <= 0)
+		if (checkSeconds <= 0) {
 			return;
+		}
 		if (checkSeconds < 60) {
 			checkSeconds = 60;
 		}
@@ -108,10 +110,12 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
-		if (paramsMap == null || baseTableName == null || dateParams == null || tableNamesMap == null)
+		if (paramsMap == null || baseTableName == null || dateParams == null || tableNamesMap == null) {
 			return null;
-		if (tableNamesMap.get(baseTableName.toUpperCase()) == null)
+		}
+		if (tableNamesMap.get(baseTableName.toUpperCase()) == null) {
 			return null;
+		}
 		Object bizDate = null;
 		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split(",");
 		for (int i = 0; i < dateParams.length; i++) {
