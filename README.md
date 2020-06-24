@@ -39,7 +39,7 @@
    * sybase_iq 支持15.4以上版本，建议使用16版本
    
 ## 1.2 sqltoy-orm 发展轨迹
-* 2007~2008年，因项目的特殊性，发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。
+* 2007~2008年，因项目的特殊性，灵感式发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。
 * 2008~2012年，sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
 * 2013~2014年，发现hibernate jpa的价值越来越低，因此在sqltoy里面增加了jpa 对象操作功能(同时规避了hibernate jpa的一些缺陷)，从此sqltoy发展成了完整的ORM框架。
 * 2014~2017年, 对sqltoy进行了大幅重构，实现了底层结构的合理化，增加了对不同方言的测试验证，并在拉卡拉CRM和日均千万级的数据平台上得到了充分体现。
@@ -50,7 +50,7 @@
 
 
 # 2. 快速特点说明
-## 2.1 极致朴素的sql编写方式(跟dbeaver客户端调试后的高度一致,两边copy)
+## 2.1 极致朴素的sql编写方式(基于本质性规律发现)
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
 * sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
@@ -76,7 +76,7 @@
 </sql>
 ```
 
-* mybatis的写法(一板一眼很工程化),sqltoy比这个香多少倍?其实根本就无法比,因为mybatis这种写法就是一个负数!
+* mybatis同样的功能的写法(这还是一个简单的查询，你用良知来说比sqltoy差多远，如果其他功能都对等的情况下，就这一点mybatis就可以扔到垃圾篓里去，因为真没有脸将这么别扭的sql再拿出来了，从sqltoy的写法再去写mybatis那种心情就好比一万万匹草泥马奔过)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
