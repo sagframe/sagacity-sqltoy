@@ -240,14 +240,16 @@ public class ShardingUtils {
 		// 优先以直接指定的dataSource为基准
 		DataSource shardingDataSource = dataSource;
 		// 如果没有sharding策略，则返回dataSource，否则以sharding的结果dataSource为基准
-		if (null == sqlToyConfig || null == sqlToyConfig.getDataSourceShardingStragety())
+		if (null == sqlToyConfig || null == sqlToyConfig.getDataSourceShardingStragety()) {
 			return shardingDataSource;
+		}
 		String[] paramNames = queryExecutor.getDataSourceShardingParamsName(sqlToyConfig);
 		Object[] paramValues = queryExecutor.getDataSourceShardingParamsValue(sqlToyConfig);
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
 		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, valueMap);
-		if (result != null)
+		if (result != null) {
 			return result;
+		}
 		return shardingDataSource;
 	}
 
@@ -260,12 +262,14 @@ public class ShardingUtils {
 	 */
 	private static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			IgnoreCaseLinkedMap<String, Object> valueMap) {
-		if (sqlToyConfig.getDataSourceShardingStragety() == null)
+		if (sqlToyConfig.getDataSourceShardingStragety() == null) {
 			return null;
+		}
 		ShardingStrategy shardingStrategy = sqlToyContext
 				.getShardingStrategy(sqlToyConfig.getDataSourceShardingStragety());
-		if (shardingStrategy == null)
+		if (shardingStrategy == null) {
 			return null;
+		}
 		IgnoreCaseLinkedMap<String, Object> realDataMap = null;
 		if (sqlToyConfig.getDataSourceShardingParams() != null) {
 			realDataMap = new IgnoreCaseLinkedMap<String, Object>();
@@ -293,12 +297,14 @@ public class ShardingUtils {
 	 */
 	public static void replaceShardingSqlToyConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			String dialect, String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null)
+		if (sqlToyConfig.getTablesShardings() == null) {
 			return;
+		}
 		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
 				paramValues);
-		if (shardingTableMap == null || shardingTableMap.isEmpty())
+		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return;
+		}
 		Iterator iter = shardingTableMap.entrySet().iterator();
 		Map.Entry entry;
 		String sqlTable;
@@ -336,12 +342,14 @@ public class ShardingUtils {
 	 */
 	public static String replaceShardingTables(SqlToyContext sqlToyContext, String sql, SqlToyConfig sqlToyConfig,
 			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null)
+		if (sqlToyConfig.getTablesShardings() == null) {
 			return sql;
+		}
 		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
 				paramValues);
-		if (shardingTableMap == null || shardingTableMap.isEmpty())
+		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return sql;
+		}
 
 		Iterator iter = shardingTableMap.entrySet().iterator();
 		Map.Entry entry;
@@ -367,8 +375,9 @@ public class ShardingUtils {
 	 */
 	private static HashMap<String, String> getShardingTables(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null)
+		if (sqlToyConfig.getTablesShardings() == null) {
 			return null;
+		}
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
 		HashMap<String, String> tableMap = new HashMap<String, String>();
 		String[] tables;
@@ -413,8 +422,9 @@ public class ShardingUtils {
 	 * @return
 	 */
 	private static String matchReplace(String sql, String sourceTable, String targetTable) {
-		if (sql == null || sql.trim().equals(""))
+		if (sql == null || sql.trim().equals("")) {
 			return sql;
+		}
 		// 用正则表达式前后各加上非数字好字符的目的就是防止:sql中有字符串包含sourceTable
 		// 如: from biz_notice,biz_notice_item 就出现了包含情况
 		Pattern p = Pattern.compile("(?i)\\W".concat(sourceTable).concat("\\W"));
@@ -446,8 +456,9 @@ public class ShardingUtils {
 	 */
 	private static IgnoreCaseLinkedMap<String, Object> hashParams(String[] paramNames, Object[] paramValues) {
 		IgnoreCaseLinkedMap<String, Object> valuesMap = new IgnoreCaseLinkedMap<String, Object>();
-		if (paramValues == null || paramValues.length == 0)
+		if (paramValues == null || paramValues.length == 0) {
 			return valuesMap;
+		}
 		if (paramNames == null || paramNames.length == 0) {
 			for (int i = 0; i < paramValues.length; i++) {
 				valuesMap.put(Integer.toString(i), paramValues[i]);
@@ -486,8 +497,9 @@ public class ShardingUtils {
 		IdGenerator idGenerator = entityMeta.getIdGenerator();
 		String[] pks = entityMeta.getIdArray();
 		// 存在主键策略，且只能是单主键
-		if (idGenerator == null || pks == null || pks.length > 1)
+		if (idGenerator == null || pks == null || pks.length > 1) {
 			return;
+		}
 		if (idGenerator != null) {
 			String table = entityMeta.getSchemaTable();
 			String idType = entityMeta.getIdType();
