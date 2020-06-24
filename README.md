@@ -76,7 +76,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(你自己对比差距有多大)!
+* mybatis同样的功能的写法(你自己对比差距有多大，是不是美玉和砖头块的差距)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
