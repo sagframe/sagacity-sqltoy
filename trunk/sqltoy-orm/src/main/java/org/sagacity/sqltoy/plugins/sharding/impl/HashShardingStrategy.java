@@ -43,8 +43,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 	@Override
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
-		if (tableMode < 1 || paramsMap == null || paramsMap.isEmpty())
+		if (tableMode < 1 || paramsMap == null || paramsMap.isEmpty()) {
 			return null;
+		}
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
@@ -62,8 +63,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,
 			String strategyVar, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		ShardingDBModel shardingModel = new ShardingDBModel();
-		if (dataSourceMode < 1 || paramsMap == null || paramsMap.isEmpty())
+		if (dataSourceMode < 1 || paramsMap == null || paramsMap.isEmpty()) {
 			return shardingModel;
+		}
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
