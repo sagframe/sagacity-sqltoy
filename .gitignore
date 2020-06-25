@@ -19,3 +19,4 @@ bin
 trunk/sqltoy-orm/.classpath
 trunk/sqltoy-quickvo/dependency-reduced-pom.xml
 *.iml
+
