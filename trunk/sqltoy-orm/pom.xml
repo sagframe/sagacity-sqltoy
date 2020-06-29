@@ -253,7 +253,7 @@
 					<exclude>**/*.java</exclude>
 				</excludes>
 				<includes>
-					<include>org/sagacity/sqltoy/config/xml/*.xsd</include>
+					<include>**/*.xsd</include>
 				</includes>
 			</resource>
 			<resource>
