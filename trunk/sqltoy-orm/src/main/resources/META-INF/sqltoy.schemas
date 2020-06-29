@@ -1,0 +1,4 @@
+http\://www.sagframe.com/schema/sqltoy/sqltoy.xsd=org/sagacity/sqltoy/config/xml/sqltoy.xsd
+https\://www.sagframe.com/schema/sqltoy/sqltoy.xsd=org/sagacity/sqltoy/config/xml/sqltoy.xsd
+http\://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd=org/sagacity/sqltoy/config/xml/sqltoy-translate.xsd
+https\://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd=org/sagacity/sqltoy/config/xml/sqltoy-translate.xsd
