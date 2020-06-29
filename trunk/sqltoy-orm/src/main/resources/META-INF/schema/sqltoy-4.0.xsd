@@ -248,6 +248,9 @@
 						</xsd:annotation>
 					</xsd:attribute>
 					<xsd:attribute name="multiply" default="1">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[乘数,1表示按小数显示，100则表示百分比,1000则表示千分比]]></xsd:documentation>
+						</xsd:annotation>
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:integer">
 								<xsd:enumeration value="1" />
