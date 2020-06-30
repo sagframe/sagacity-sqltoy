@@ -5,7 +5,7 @@
 ## 请见:docs/睿智平台SqlToy4.12使用手册.doc
 
 # QQ交流群:531812227 
-# 码云地址: https://gitee.com/sagacity/sagacity-sqltoy# 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
+# 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.12.14 发版日期: 2020-06-25
 * 增强BeanUtil 被外部直接调用的兼容性处理。
