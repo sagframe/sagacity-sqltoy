@@ -2,7 +2,7 @@
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.12使用手册.doc
+## [请见:docs/睿智平台SqlToy4.12使用手册.doc](https://github.com/chenrenfei/sagacity-sqltoy/blob/master/docs/%E7%9D%BF%E6%99%BA%E5%B9%B3%E5%8F%B0SqlToy4.12%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C.doc)
 
 # QQ交流群:531812227 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
