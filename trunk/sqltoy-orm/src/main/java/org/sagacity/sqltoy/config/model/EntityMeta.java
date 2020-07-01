@@ -239,8 +239,9 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getIdType() {
-		if (idArray == null)
+		if (idArray == null) {
 			return "";
+		}
 		if (idJavaType == null) {
 			idJavaType = getColumnJavaType(idArray[0]);
 		}
@@ -248,8 +249,9 @@ public class EntityMeta implements Serializable {
 	}
 
 	public int getIdLength() {
-		if (idArray == null)
+		if (idArray == null) {
 			return -1;
+		}
 		return this.getFieldMeta(idArray[0]).getLength();
 	}
 
@@ -385,8 +387,9 @@ public class EntityMeta implements Serializable {
 	 * @return the deleteByIdsSql
 	 */
 	public String getDeleteByIdsSql(String tableName) {
-		if (StringUtil.isBlank(tableName))
+		if (StringUtil.isBlank(tableName)) {
 			return deleteByIdsSql;
+		}
 		return "delete from ".concat(tableName).concat(" ").concat(idArgWhereSql);
 	}
 
@@ -399,8 +402,9 @@ public class EntityMeta implements Serializable {
 
 	public String getColumnName(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
-		if (fieldMeta == null)
+		if (fieldMeta == null) {
 			return null;
+		}
 		return fieldMeta.getColumnName();
 	}
 
@@ -411,22 +415,25 @@ public class EntityMeta implements Serializable {
 	 */
 	public String getColumnOptName(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
-		if (fieldMeta == null)
+		if (fieldMeta == null) {
 			return null;
+		}
 		return fieldMeta.getColumnOptName();
 	}
 
 	public int getColumnJdbcType(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
-		if (fieldMeta == null)
+		if (fieldMeta == null) {
 			return -1;
+		}
 		return fieldMeta.getType();
 	}
 
 	public String getColumnJavaType(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
-		if (fieldMeta == null)
+		if (fieldMeta == null) {
 			return null;
+		}
 		return fieldMeta.getFieldType();
 	}
 
@@ -438,8 +445,9 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getSchemaTable(String tableName) {
-		if (StringUtil.isNotBlank(tableName))
+		if (StringUtil.isNotBlank(tableName)) {
 			return tableName;
+		}
 		return schemaTable;
 	}
 
@@ -465,8 +473,9 @@ public class EntityMeta implements Serializable {
 	 * @return the pageSql
 	 */
 	public String getPageSql() {
-		if (StringUtil.isBlank(this.pageSql))
+		if (StringUtil.isBlank(this.pageSql)) {
 			return this.listSql;
+		}
 		return pageSql;
 	}
 
@@ -492,8 +501,9 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getLoadSql(String tableName) {
-		if (tableName == null || tableName.equals(schemaTable))
+		if (tableName == null || tableName.equals(schemaTable)) {
 			return loadSql;
+		}
 		// 针对sharding 分表情况使用重新组织表名
 		return "select ".concat(allColumnNames).concat(" from ").concat(tableName).concat(" ")
 				.concat(this.idNameWhereSql);
@@ -676,8 +686,9 @@ public class EntityMeta implements Serializable {
 	 */
 	public Integer getBizIdLength() {
 		// 默认26位nanotime主键策略
-		if (bizIdLength == null)
+		if (bizIdLength == null) {
 			return 26;
+		}
 		return bizIdLength;
 	}
 
