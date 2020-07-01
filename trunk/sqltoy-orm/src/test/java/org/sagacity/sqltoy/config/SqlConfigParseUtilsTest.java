@@ -1,4 +1,4 @@
-package org.sagacity.sqltoy;
+package org.sagacity.sqltoy.config;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -8,8 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
-import org.sagacity.sqltoy.config.SqlXMLConfigParse;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.utils.FileUtil;
