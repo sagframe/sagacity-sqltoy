@@ -883,8 +883,9 @@ public class ResultUtils {
 	 */
 	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
-				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class))
+				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
+		}
 		// 返回数组类型
 		if (Array.class.equals(resultType)) {
 			return CollectionUtil.innerListToArray(queryResultRows);
@@ -926,8 +927,9 @@ public class ResultUtils {
 	 * @return
 	 */
 	public static String[] humpFieldNames(String[] labelNames) {
-		if (labelNames == null)
+		if (labelNames == null) {
 			return null;
+		}
 		String[] result = new String[labelNames.length];
 		for (int i = 0, n = labelNames.length; i < n; i++) {
 			result[i] = StringUtil.toHumpStr(labelNames[i], false);

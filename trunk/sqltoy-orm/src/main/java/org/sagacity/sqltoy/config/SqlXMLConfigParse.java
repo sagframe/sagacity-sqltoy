@@ -220,6 +220,7 @@ public class SqlXMLConfigParse {
 		if (sqlSegment instanceof String) {
 			Document doc = domFactory.newDocumentBuilder().parse(
 					new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding == null ? "UTF-8" : encoding)));
+			// doc.
 			sqlToyConfig = parseSingleSql(doc.getDocumentElement(), dialect);
 		} else if (sqlSegment instanceof Element) {
 			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect);
@@ -1255,15 +1256,4 @@ public class SqlXMLConfigParse {
 		fieldSet.toArray(result);
 		return result;
 	}
-
-//	public static void main(String[] args) {
-//		String fields;
-//		fields = "id[code,sexType:sexTypeName],name";
-//		fields = "id[code,sexType],name";
-//		fields = "id.code,sexType,name";
-//		String[] result = splitFields(fields);
-//		for (String str : result) {
-//			System.err.println("[" + str + "]");
-//		}
-//	}
 }

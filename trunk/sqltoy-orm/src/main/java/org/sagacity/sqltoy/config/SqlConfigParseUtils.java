@@ -149,12 +149,14 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean isNamedQuery(String queryStr) {
-		if (StringUtil.isBlank(queryStr))
+		if (StringUtil.isBlank(queryStr)) {
 			return false;
+		}
 		// 强制约定sqlId key必须没有空格、回车、tab和换行符号
 		String tmp = queryStr.trim();
-		if (StringUtil.matches(tmp, SQL_ID_PATTERN))
+		if (StringUtil.matches(tmp, SQL_ID_PATTERN)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -167,8 +169,9 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		if (null == paramsValue || paramsValue.length == 0)
+		if (null == paramsValue || paramsValue.length == 0) {
 			return new SqlToyResult(queryStr, paramsValue);
+		}
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		// 是否:paramName 形式的参数模式
 		boolean isNamedArgs = StringUtil.matches(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
@@ -348,8 +351,9 @@ public class SqlConfigParseUtils {
 	private static void processNullConditions(SqlToyResult sqlToyResult) {
 		String queryStr = sqlToyResult.getSql();
 		int pseudoMarkStart = queryStr.indexOf(SQL_PSEUDO_START_MARK);
-		if (pseudoMarkStart == -1)
+		if (pseudoMarkStart == -1) {
 			return;
+		}
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql, iMarkSql;
 		List paramValuesList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
@@ -451,8 +455,9 @@ public class SqlConfigParseUtils {
 	 * @param sqlToyResult
 	 */
 	private static void processBlank(SqlToyResult sqlToyResult) {
-		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
+		}
 		String queryStr = sqlToyResult.getSql().toLowerCase();
 		Matcher m = BLANK_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -480,8 +485,9 @@ public class SqlConfigParseUtils {
 	 * @param sqlToyResult
 	 */
 	private static void processValue(SqlToyResult sqlToyResult) {
-		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
+		}
 		String queryStr = sqlToyResult.getSql().toLowerCase();
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -513,8 +519,9 @@ public class SqlConfigParseUtils {
 	 * @param sqlToyResult
 	 */
 	private static void processLike(SqlToyResult sqlToyResult) {
-		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
+		}
 		String queryStr = sqlToyResult.getSql().toLowerCase();
 		Matcher m = LIKE_PATTERN.matcher(queryStr);
 		int index = 0;
@@ -540,14 +547,16 @@ public class SqlConfigParseUtils {
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {
-		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0)
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
+		}
 		int end = 0;
 		String queryStr = sqlToyResult.getSql();
 		Matcher m = IN_PATTERN.matcher(queryStr);
 		boolean matched = m.find(end);
-		if (!matched)
+		if (!matched) {
 			return;
+		}
 		int start = 0;
 		Object[] paramsValue = sqlToyResult.getParamsValue();
 		List paramValueList = CollectionUtil.arrayToList(paramsValue);
@@ -667,13 +676,15 @@ public class SqlConfigParseUtils {
 	 * @param afterParamIndex
 	 */
 	public static void replaceNull(SqlToyResult sqlToyResult, int afterParamIndex) {
-		if (null == sqlToyResult.getParamsValue())
+		if (null == sqlToyResult.getParamsValue()) {
 			return;
+		}
 		String sql = sqlToyResult.getSql().concat(BLANK);
 		List paramList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 		int index = StringUtil.indexOrder(sql, ARG_NAME, afterParamIndex);
-		if (index == -1)
+		if (index == -1) {
 			return;
+		}
 		// 将条件值为null的替换到sql中，同时剔除该参数
 		for (int i = 0; i < paramList.size(); i++) {
 			if (null == paramList.get(i)) {
@@ -755,44 +766,45 @@ public class SqlConfigParseUtils {
 	 * @param dialect
 	 */
 	public static void processFastWith(SqlToyConfig sqlToyConfig, String dialect) {
+		//不存在fast 和with 不做处理
+		if (!sqlToyConfig.isHasFast() || !sqlToyConfig.isHasWith()) {
+			return;
+		}
 		// 提取with as 和fast部分的sql，用于分页或取随机记录查询记录数量提供最简sql
-		if (sqlToyConfig.isHasFast() && sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect));
-			// 存在with xxx as () 形式的查询
-			if (null != sqlWith.getWithSqlSet()) {
-				String[] aliasTableAs;
-				int endIndex = -1;
-				int withSqlSize = sqlWith.getWithSqlSet().size();
-				// 判定fast查询引用到第几个位置的with
-				for (int i = withSqlSize - 1; i >= 0; i--) {
-					aliasTableAs = sqlWith.getWithSqlSet().get(i);
-					if (StringUtil.matches(sqlToyConfig.getFastSql(dialect),
-							"\\W".concat(aliasTableAs[0]).concat("\\W"))) {
-						endIndex = i;
-						sqlToyConfig.setFastWithIndex(endIndex);
-						break;
-					}
+		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect));
+		// 存在with xxx as () 形式的查询
+		if (null != sqlWith.getWithSqlSet()) {
+			String[] aliasTableAs;
+			int endIndex = -1;
+			int withSqlSize = sqlWith.getWithSqlSet().size();
+			// 判定fast查询引用到第几个位置的with
+			for (int i = withSqlSize - 1; i >= 0; i--) {
+				aliasTableAs = sqlWith.getWithSqlSet().get(i);
+				if (StringUtil.matches(sqlToyConfig.getFastSql(dialect), "\\W".concat(aliasTableAs[0]).concat("\\W"))) {
+					endIndex = i;
+					sqlToyConfig.setFastWithIndex(endIndex);
+					break;
 				}
-				// 组装with xx as () +fastsql
-				if (endIndex != -1) {
-					if (endIndex == withSqlSize - 1) {
-						sqlToyConfig.setFastWithSql(sqlWith.getWithSql());
-					} else {
-						StringBuilder buffer = new StringBuilder();
-						for (int i = 0; i < endIndex + 1; i++) {
-							aliasTableAs = sqlWith.getWithSqlSet().get(i);
-							if (i == 0) {
-								buffer.append(" with ").append(aliasTableAs[3]);
-							}
-							if (i > 0) {
-								buffer.append(",").append(aliasTableAs[3]);
-							}
-							// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容,with 和aliasTable之间的参数}
-							buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
-									.append(aliasTableAs[2]).append(") ");
+			}
+			// 组装with xx as () +fastsql
+			if (endIndex != -1) {
+				if (endIndex == withSqlSize - 1) {
+					sqlToyConfig.setFastWithSql(sqlWith.getWithSql());
+				} else {
+					StringBuilder buffer = new StringBuilder();
+					for (int i = 0; i < endIndex + 1; i++) {
+						aliasTableAs = sqlWith.getWithSqlSet().get(i);
+						if (i == 0) {
+							buffer.append(" with ").append(aliasTableAs[3]);
 						}
-						sqlToyConfig.setFastWithSql(buffer.toString());
+						if (i > 0) {
+							buffer.append(",").append(aliasTableAs[3]);
+						}
+						// aliasTableAs 结构{aliasName,as和括号之间的字符串,as内容,with 和aliasTable之间的参数}
+						buffer.append(aliasTableAs[0]).append(" as ").append(aliasTableAs[1]).append(" (")
+								.append(aliasTableAs[2]).append(") ");
 					}
+					sqlToyConfig.setFastWithSql(buffer.toString());
 				}
 			}
 		}

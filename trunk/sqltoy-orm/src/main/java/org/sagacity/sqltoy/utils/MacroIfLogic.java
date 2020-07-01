@@ -59,8 +59,9 @@ public class MacroIfLogic {
 	 */
 	private static String evalSimpleExpress(String sql, List paramValues, int preCount) {
 		// 不能超过两个运算符
-		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1)
+		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1) {
 			return "undefine";
+		}
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=" };
 		String splitStr = "==";

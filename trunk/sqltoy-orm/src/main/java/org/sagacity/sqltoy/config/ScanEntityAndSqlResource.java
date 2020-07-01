@@ -182,8 +182,9 @@ public class ScanEntityAndSqlResource {
 	 * @return
 	 */
 	public static boolean isSqlToyEntity(Class entityClass) {
-		if (entityClass.isAnnotationPresent(SqlToyEntity.class))
+		if (entityClass.isAnnotationPresent(SqlToyEntity.class)) {
 			return true;
+		}
 		return false;
 	}
 
@@ -231,7 +232,8 @@ public class ScanEntityAndSqlResource {
 								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
 								entry = entries.nextElement();
 								sqlFile = entry.getName();
-								if (sqlFile.startsWith(realRes) && sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
+								if (sqlFile.startsWith(realRes)
+										&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()) {
 									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
 									result.add(0, sqlFile);
@@ -291,8 +293,9 @@ public class ScanEntityAndSqlResource {
 	 */
 	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
-		if (StringUtil.isBlank(resource))
+		if (StringUtil.isBlank(resource)) {
 			return urls;
+		}
 		if (!startClasspath) {
 			File file = new File(resource);
 			if (file.exists()) {
@@ -320,8 +323,9 @@ public class ScanEntityAndSqlResource {
 	 * @param fileList
 	 */
 	private static void getPathFiles(File parentFile, List fileList) {
-		if (null == parentFile)
+		if (null == parentFile) {
 			return;
+		}
 		String fileName = parentFile.getName();
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();

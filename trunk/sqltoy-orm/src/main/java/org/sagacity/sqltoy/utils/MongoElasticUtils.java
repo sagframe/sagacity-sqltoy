@@ -127,8 +127,9 @@ public class MongoElasticUtils {
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		sqlToyResult.setSql(queryStr);
 		sqlToyResult.setParamsValue(paramValues);
-		if (queryStr.indexOf(SQL_PSEUDO_START_MARK) == -1 && queryStr.indexOf(MQL_PSEUDO_START_MARK) == -1)
+		if (queryStr.indexOf(SQL_PSEUDO_START_MARK) == -1 && queryStr.indexOf(MQL_PSEUDO_START_MARK) == -1) {
 			return sqlToyResult;
+		}
 		boolean isMqlMark = false;
 		if (queryStr.indexOf(MQL_PSEUDO_START_MARK) != -1) {
 			isMqlMark = true;
@@ -241,8 +242,9 @@ public class MongoElasticUtils {
 	 */
 	public static String processComma(String sql) {
 		String[] sqlSlice = sql.split("(?i)\\@(dot|comma)\\(\\s*\\)");
-		if (sqlSlice.length == 1)
+		if (sqlSlice.length == 1) {
 			return sql;
+		}
 		StringBuilder result = new StringBuilder();
 		String fragment;
 		for (int i = 0; i < sqlSlice.length; i++) {
@@ -270,8 +272,9 @@ public class MongoElasticUtils {
 	 * @return
 	 */
 	public static String replaceNoSqlParams(String sql, Object[] paramValues, String charSign) {
-		if (paramValues == null || paramValues.length == 0)
+		if (paramValues == null || paramValues.length == 0) {
 			return sql;
+		}
 		Matcher m = SqlToyConstants.NOSQL_NAMED_PATTERN.matcher(sql);
 		StringBuilder realMql = new StringBuilder();
 		String method;
@@ -337,8 +340,9 @@ public class MongoElasticUtils {
 	 * @return
 	 */
 	public static String replaceSqlParams(String sql, Object[] paramValues, String charSign) {
-		if (paramValues == null || paramValues.length == 0)
+		if (paramValues == null || paramValues.length == 0) {
 			return sql;
+		}
 		Matcher m = SqlToyConstants.SQL_NAMED_PATTERN.matcher(sql);
 		StringBuilder realMql = new StringBuilder();
 		int start = 0;
@@ -433,10 +437,12 @@ public class MongoElasticUtils {
 	 */
 	private static void translate(HashMap<String, HashMap<String, Object[]>> translateCache,
 			HashMap<String, SqlTranslate> translateMap, List<List> dataSet, Map dataMap, String[] fields) {
-		if (translateMap == null || translateMap.isEmpty())
+		if (translateMap == null || translateMap.isEmpty()) {
 			return;
-		if ((dataSet == null || dataSet.isEmpty()) && (dataMap == null || dataMap.isEmpty()))
+		}
+		if ((dataSet == null || dataSet.isEmpty()) && (dataMap == null || dataMap.isEmpty())) {
 			return;
+		}
 		int[] cacheMapIndex = new int[translateMap.size()];
 		int[] realIndex = new int[translateMap.size()];
 		String[] lables = new String[translateMap.size()];
