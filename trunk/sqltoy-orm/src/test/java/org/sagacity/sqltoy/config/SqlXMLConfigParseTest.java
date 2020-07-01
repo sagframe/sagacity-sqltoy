@@ -1,12 +1,10 @@
 package org.sagacity.sqltoy.config;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
 
 public class SqlXMLConfigParseTest {
 	/**
@@ -19,13 +17,13 @@ public class SqlXMLConfigParseTest {
 	 */
 	@Test
 	public void testParseSegmentXML() {
-		String sql = FileUtil.readFileAsString("classpath:scripts/ifScriptSql.sql", "UTF-8");
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { null, "chen", "1" });
-		System.err.println("id==null:" + JSON.toJSONString(result));
-
-		SqlToyResult result1 = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { "1", "chen", "1" });
-		System.err.println("id<>null:" + JSON.toJSONString(result1));
+		String sql = FileUtil.readFileAsString("classpath:scripts/report.xml", "UTF-8");
+		try {
+			SqlToyConfig result = SqlXMLConfigParse.parseSagment(sql, "utf-8", "mysql");
+			//System.err.println(result.getSql());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

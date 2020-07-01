@@ -12,7 +12,9 @@ import java.io.InputStream;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -221,12 +223,65 @@ public class SqlXMLConfigParse {
 		if (sqlSegment instanceof String) {
 			Document doc = domFactory.newDocumentBuilder().parse(
 					new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding == null ? "UTF-8" : encoding)));
-			// doc.
+			// 对xml字符串剔除xml命名空间的前缀
+			String realContent = getNoPrefixXML(doc.getDocumentElement(), (String) sqlSegment);
+			if (!realContent.equals(sqlSegment)) {
+				doc = domFactory.newDocumentBuilder()
+						.parse(new ByteArrayInputStream(realContent.getBytes(encoding == null ? "UTF-8" : encoding)));
+			}
 			sqlToyConfig = parseSingleSql(doc.getDocumentElement(), dialect);
 		} else if (sqlSegment instanceof Element) {
 			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect);
 		}
 		return sqlToyConfig;
+	}
+
+	/**
+	 * @todo 将xml element的namespace前缀剔除并返回xml字符串
+	 * @param elt
+	 * @return
+	 */
+	public static String getNoPrefixXML(Element elt, String xmlStr) {
+		HashMap<String, String> nodeNames = new HashMap<String, String>();
+		getElementPrefixName(elt, nodeNames);
+		String xml = xmlStr;
+		if (nodeNames.isEmpty()) {
+			return xml;
+		}
+		Iterator<Map.Entry<String, String>> iterator = nodeNames.entrySet().iterator();
+		Map.Entry<String, String> entry;
+		// 替换掉namespace前缀
+		while (iterator.hasNext()) {
+			entry = iterator.next();
+			xml = xml.replace("<" + entry.getKey(), "<" + entry.getValue());
+			xml = xml.replace("</" + entry.getKey(), "</" + entry.getValue());
+		}
+		return xml;
+	}
+
+	/**
+	 * @TODO 递归获取element的所有子element的前缀和nodeName组合
+	 * @param sqlElement
+	 * @param nodeNames
+	 */
+	private static void getElementPrefixName(Element sqlElement, HashMap<String, String> nodeNames) {
+		String nodeName = sqlElement.getTagName();
+		int index = nodeName.indexOf(":");
+		if (index > 0) {
+			nodeNames.put(nodeName, nodeName.substring(index + 1));
+		}
+		// 没有子节点则返回
+		if (!sqlElement.hasChildNodes()) {
+			return;
+		}
+		NodeList nodeList = sqlElement.getChildNodes();
+		Node node;
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			node = nodeList.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				getElementPrefixName((Element) node, nodeNames);
+			}
+		}
 	}
 
 	/**
