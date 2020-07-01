@@ -19,13 +19,15 @@ public class ReverseList {
 	 * @param result
 	 */
 	public static void process(ReverseModel reverseModel, HashMap<String, Integer> labelIndexMap, List result) {
-		if (result == null || result.size() < 2)
+		if (result == null || result.size() < 2) {
 			return;
+		}
 		int dataSize = result.size();
 		int start = (reverseModel.getStartRow() == null) ? 0 : reverseModel.getStartRow();
 		// 不合法反转
-		if (start > dataSize - 1)
+		if (start > dataSize - 1) {
 			return;
+		}
 		int end = (reverseModel.getEndRow() == null) ? dataSize - 1 : reverseModel.getEndRow();
 		if (end < 0) {
 			end = dataSize - 1 + end;

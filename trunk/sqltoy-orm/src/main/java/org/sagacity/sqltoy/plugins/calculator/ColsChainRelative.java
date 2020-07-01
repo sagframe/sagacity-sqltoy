@@ -18,8 +18,9 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 public class ColsChainRelative {
 	public static void process(ColsChainRelativeModel relativeModel, HashMap<String, Integer> labelIndexMap,
 			List result) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return;
+		}
 		// |------- 1月-------|------- 2月 ------|------ 3月--------|
 		// |交易笔数 | 金额 | 收入 |交易笔数 | 金额 | 收入 |交易笔数 | 金额 | 收入 |
 		int dataSize = result.size();
