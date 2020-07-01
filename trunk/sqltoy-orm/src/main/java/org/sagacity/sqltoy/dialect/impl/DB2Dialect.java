@@ -67,8 +67,9 @@ public class DB2Dialect implements Dialect {
 	public static final String VIRTUAL_TABLE = "SYSIBM.SYSDUMMY1";
 
 	private String appendWithUR(String sql) {
-		if (SqlToyConstants.db2WithUR())
+		if (SqlToyConstants.db2WithUR()) {
 			return StringUtil.matches(sql, DB2_QUERY_UR_PATTERN) ? sql : sql + DB2_QUERY_APPEND;
+		}
 		return sql;
 	}
 
@@ -112,8 +113,9 @@ public class DB2Dialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {
@@ -538,12 +540,15 @@ public class DB2Dialect implements Dialect {
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
+		}
 		return true;
 	}
 }

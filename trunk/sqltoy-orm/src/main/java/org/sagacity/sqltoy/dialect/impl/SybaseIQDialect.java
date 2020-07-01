@@ -211,8 +211,9 @@ public class SybaseIQDialect implements Dialect {
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast())
+		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		String partSql = " select top " + topSize + " ";
 		if (sqlToyConfig.isHasWith()) {
@@ -391,8 +392,9 @@ public class SybaseIQDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {
@@ -609,13 +611,16 @@ public class SybaseIQDialect implements Dialect {
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
+		}
 		// 目前不支持sequence模式
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
+		}
 		return true;
 	}
 

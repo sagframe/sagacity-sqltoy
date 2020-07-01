@@ -172,8 +172,9 @@ public class GuassDBDialect implements Dialect {
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
 			Connection conn, final Integer dbType, final String dialect, final String tableName) throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {

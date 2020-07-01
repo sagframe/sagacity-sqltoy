@@ -1564,7 +1564,7 @@ public class DialectUtils {
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
 		// 不存在级联操作
-		if (!cascade || entityMeta.getOneToManys().isEmpty()) {
+		if (!cascade || entityMeta.getOneToManys() == null || entityMeta.getOneToManys().isEmpty()) {
 			return updateCnt;
 		}
 		// 级联保存

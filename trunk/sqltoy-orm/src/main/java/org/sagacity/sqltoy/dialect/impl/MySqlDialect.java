@@ -519,13 +519,16 @@ public class MySqlDialect implements Dialect {
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
+		}
 		// 目前不支持sequence模式
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return false;
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return true;
+		}
 		return true;
 	}
 

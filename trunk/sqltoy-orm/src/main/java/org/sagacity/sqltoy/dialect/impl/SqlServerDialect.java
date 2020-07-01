@@ -172,7 +172,7 @@ public class SqlServerDialect implements Dialect {
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		String realSql = sql;
-		//重新组织锁表语句
+		// 重新组织锁表语句
 		if (lockMode != null) {
 			realSql = SqlServerDialectUtils.lockSql(realSql, null, lockMode);
 		}
@@ -239,7 +239,8 @@ public class SqlServerDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		final String realTable = entityMeta.getSchemaTable(tableName);
 		// sqlserver merge into must end with ";" charater
-		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+		// 返回变更的记录数量
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta,
@@ -253,7 +254,6 @@ public class SqlServerDialect implements Dialect {
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-		return updateCount;
 	}
 
 	/*
@@ -287,8 +287,9 @@ public class SqlServerDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {
