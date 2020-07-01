@@ -106,8 +106,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public Long update(Serializable entity) {
-		if (null == entity)
-			throw new IllegalArgumentException("数据对象为null!");
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		}
 		return sqlToyLazyDao.update(entity);
 	}
 
@@ -121,8 +122,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public Long updateDeeply(Serializable entity) {
-		if (null == entity)
-			throw new IllegalArgumentException("数据对象为null!");
+		if (null == entity) {
+			throw new IllegalArgumentException("updateDeeply 数据对象为null!");
+		}
 		return sqlToyLazyDao.updateDeeply(entity);
 	}
 
@@ -136,8 +138,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public Long update(Serializable entity, String[] forceUpdateProps) {
-		if (null == entity)
-			throw new IllegalArgumentException("数据对象为null!");
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		}
 		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
@@ -198,8 +201,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public Long saveOrUpdate(Serializable entity) {
-		if (null == entity)
-			throw new IllegalArgumentException("数据对象为null!");
+		if (null == entity) {
+			throw new IllegalArgumentException("saveOrUpdate 数据对象为null!");
+		}
 		return sqlToyLazyDao.saveOrUpdate(entity);
 
 	}
@@ -213,8 +217,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) {
-		if (null == entity)
-			throw new IllegalArgumentException("数据对象为null!");
+		if (null == entity) {
+			throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
+		}
 		return sqlToyLazyDao.saveOrUpdate(entity, forceUpdateProps);
 	}
 

@@ -103,8 +103,9 @@ public class SqlXMLConfigParse {
 	 */
 	public static void parseXML(List xmlFiles, ConcurrentHashMap<String, Long> filesLastModifyMap,
 			ConcurrentHashMap<String, SqlToyConfig> cache, String encoding, String dialect) throws Exception {
-		if (xmlFiles == null || xmlFiles.isEmpty())
+		if (xmlFiles == null || xmlFiles.isEmpty()) {
 			return;
+		}
 		File sqlFile;
 		String fileName;
 		Object resource;
@@ -239,8 +240,9 @@ public class SqlXMLConfigParse {
 		String realDialect = dialect;
 		String nodeName = sqlElt.getNodeName().toLowerCase();
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
-		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql"))
+		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql")) {
 			return null;
+		}
 		String id = sqlElt.getAttribute("id");
 		if (id == null) {
 			throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
@@ -460,74 +462,76 @@ public class SqlXMLConfigParse {
 	 * @param maskElts
 	 */
 	public static void parseSecureMask(SqlToyConfig sqlToyConfig, NodeList maskElts) {
-		if (maskElts != null && maskElts.getLength() > 0) {
-			// <secure-mask columns="" type="name" head-size="" tail-size=""
-			// mask-code="*****" mask-rate="50%"/>
-			List<SecureMask> secureMasks = new ArrayList<SecureMask>();
-			String tmp;
-			Element elt;
-			for (int i = 0; i < maskElts.getLength(); i++) {
-				elt = (Element) maskElts.item(i);
-				tmp = getAttrValue(elt, "columns");
-				// 兼容老版本
-				if (tmp == null) {
-					tmp = getAttrValue(elt, "column");
-				}
-				String[] columns = tmp.toLowerCase().split("\\,");
-				String type = getAttrValue(elt, "type").toLowerCase();
-				String maskCode = getAttrValue(elt, "mask-code");
-				String headSize = getAttrValue(elt, "head-size");
-				String tailSize = getAttrValue(elt, "tail-size");
-				String maskRate = getAttrValue(elt, "mask-rate");
-				if (maskRate == null) {
-					maskRate = getAttrValue(elt, "mask-percent");
-				}
-				// 剔除百分号
-				if (maskRate != null) {
-					maskRate = maskRate.replace("%", "").trim();
-				}
-				for (String col : columns) {
-					SecureMask secureMask = new SecureMask();
-					secureMask.setColumn(col);
-					secureMask.setType(type);
-					secureMask.setMaskCode(maskCode);
-					if (secureMask.getMaskCode() == null) {
-						if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
-								|| secureMask.getType().equals("email") || secureMask.getType().equals("address")
-								|| secureMask.getType().equals("address")) {
-							secureMask.setMaskCode("******");
-						} else if (secureMask.getType().equals("name")) {
-							secureMask.setMaskCode("**");
-						} else {
-							secureMask.setMaskCode("****");
-						}
-					}
-					if (StringUtil.isNotBlank(headSize)) {
-						secureMask.setHeadSize(Integer.parseInt(headSize));
-					}
-					if (StringUtil.isNotBlank(tailSize)) {
-						secureMask.setTailSize(Integer.parseInt(tailSize));
-					}
-					if (StringUtil.isNotBlank(maskRate)) {
-						// 小数
-						if (Double.parseDouble(maskRate) < 1) {
-							secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
-						} else {
-							secureMask.setMaskRate(Double.valueOf(maskRate).intValue());
-						}
-					}
-					secureMasks.add(secureMask);
-				}
-			}
-			SecureMask[] masks = new SecureMask[secureMasks.size()];
-			secureMasks.toArray(masks);
-			sqlToyConfig.setSecureMasks(masks);
+		if (maskElts == null || maskElts.getLength() == 0) {
+			return;
 		}
+		// <secure-mask columns="" type="name" head-size="" tail-size=""
+		// mask-code="*****" mask-rate="50%"/>
+		List<SecureMask> secureMasks = new ArrayList<SecureMask>();
+		String tmp;
+		Element elt;
+		for (int i = 0; i < maskElts.getLength(); i++) {
+			elt = (Element) maskElts.item(i);
+			tmp = getAttrValue(elt, "columns");
+			// 兼容老版本
+			if (tmp == null) {
+				tmp = getAttrValue(elt, "column");
+			}
+			String[] columns = tmp.toLowerCase().split("\\,");
+			String type = getAttrValue(elt, "type").toLowerCase();
+			String maskCode = getAttrValue(elt, "mask-code");
+			String headSize = getAttrValue(elt, "head-size");
+			String tailSize = getAttrValue(elt, "tail-size");
+			String maskRate = getAttrValue(elt, "mask-rate");
+			if (maskRate == null) {
+				maskRate = getAttrValue(elt, "mask-percent");
+			}
+			// 剔除百分号
+			if (maskRate != null) {
+				maskRate = maskRate.replace("%", "").trim();
+			}
+			for (String col : columns) {
+				SecureMask secureMask = new SecureMask();
+				secureMask.setColumn(col);
+				secureMask.setType(type);
+				secureMask.setMaskCode(maskCode);
+				if (secureMask.getMaskCode() == null) {
+					if (secureMask.getType().equals("id-card") || secureMask.getType().equals("bank-card")
+							|| secureMask.getType().equals("email") || secureMask.getType().equals("address")
+							|| secureMask.getType().equals("address")) {
+						secureMask.setMaskCode("******");
+					} else if (secureMask.getType().equals("name")) {
+						secureMask.setMaskCode("**");
+					} else {
+						secureMask.setMaskCode("****");
+					}
+				}
+				if (StringUtil.isNotBlank(headSize)) {
+					secureMask.setHeadSize(Integer.parseInt(headSize));
+				}
+				if (StringUtil.isNotBlank(tailSize)) {
+					secureMask.setTailSize(Integer.parseInt(tailSize));
+				}
+				if (StringUtil.isNotBlank(maskRate)) {
+					// 小数
+					if (Double.parseDouble(maskRate) < 1) {
+						secureMask.setMaskRate(Double.valueOf(Double.parseDouble(maskRate) * 100).intValue());
+					} else {
+						secureMask.setMaskRate(Double.valueOf(maskRate).intValue());
+					}
+				}
+				secureMasks.add(secureMask);
+			}
+		}
+		SecureMask[] masks = new SecureMask[secureMasks.size()];
+		secureMasks.toArray(masks);
+		sqlToyConfig.setSecureMasks(masks);
 	}
 
 	private static String getAttrValue(Element elt, String attrName) {
-		if (elt.hasAttribute(attrName))
+		if (elt.hasAttribute(attrName)) {
 			return elt.getAttribute(attrName);
+		}
 		return null;
 	}
 
@@ -537,8 +541,9 @@ public class SqlXMLConfigParse {
 	 * @param shardingDataSource
 	 */
 	private static void parseShardingDataSource(SqlToyConfig sqlToyConfig, NodeList shardingDBNode) {
-		if (shardingDBNode == null || shardingDBNode.getLength() == 0)
+		if (shardingDBNode == null || shardingDBNode.getLength() == 0) {
 			return;
+		}
 		Element shardingDataSource = (Element) shardingDBNode.item(0);
 		// 策略辨别值
 		if (shardingDataSource.hasAttribute("strategy-value")) {
@@ -566,8 +571,9 @@ public class SqlXMLConfigParse {
 	 * @param shardingTables
 	 */
 	private static void parseShardingTables(SqlToyConfig sqlToyConfig, NodeList shardingTables) {
-		if (shardingTables == null || shardingTables.getLength() == 0)
+		if (shardingTables == null || shardingTables.getLength() == 0) {
 			return;
+		}
 		List<QueryShardingModel> tablesShardings = new ArrayList();
 		String[] paramName;
 		String[] paramsAlias;
@@ -843,8 +849,9 @@ public class SqlXMLConfigParse {
 	 * @param translates
 	 */
 	public static void parseTranslate(SqlToyConfig sqlToyConfig, NodeList translates) {
-		if (translates == null || translates.getLength() == 0)
+		if (translates == null || translates.getLength() == 0) {
 			return;
+		}
 		// 翻译器
 		HashMap<String, SqlTranslate> translateMap = new HashMap<String, SqlTranslate>();
 		String cacheType;
@@ -965,8 +972,9 @@ public class SqlXMLConfigParse {
 	 * @param link
 	 */
 	private static void parseLink(SqlToyConfig sqlToyConfig, NodeList linkNode) {
-		if (linkNode == null || linkNode.getLength() == 0)
+		if (linkNode == null || linkNode.getLength() == 0) {
 			return;
+		}
 		Element link = (Element) linkNode.item(0);
 		LinkModel linkModel = new LinkModel();
 		linkModel.setColumn(link.getAttribute("column"));
@@ -1235,8 +1243,9 @@ public class SqlXMLConfigParse {
 	 * @return
 	 */
 	private static String[] splitFields(String fields) {
-		if (StringUtil.isBlank(fields))
+		if (StringUtil.isBlank(fields)) {
 			return null;
+		}
 		List<String> fieldSet = new ArrayList<String>();
 		String[] strs = StringUtil.splitExcludeSymMark(fields, ",", filters);
 		String pre;

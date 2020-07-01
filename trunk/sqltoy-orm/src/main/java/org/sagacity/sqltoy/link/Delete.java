@@ -66,8 +66,9 @@ public class Delete extends BaseLink {
 	 * @param entity
 	 */
 	public Long one(final Serializable entity) {
-		if (entity == null)
+		if (entity == null) {
 			throw new IllegalArgumentException("delete entity is null!");
+		}
 		return dialectFactory.delete(sqlToyContext, entity, dataSource);
 	}
 
@@ -76,8 +77,9 @@ public class Delete extends BaseLink {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long many(final List<T> entities) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			throw new IllegalArgumentException("deleteAll entities is null or empty!");
+		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		return dialectFactory.deleteAll(sqlToyContext, entities, realBatchSize, dataSource, autoCommit);
 	}
