@@ -117,8 +117,9 @@ public class SqlServerDialectUtils {
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// sqlserver merge into must end with ";" charater
-		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
-				forceUpdateFields, new GenerateSqlHandler() {
+		// 返回记录变更量
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
@@ -131,8 +132,6 @@ public class SqlServerDialectUtils {
 						return sql.concat(";");
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-
-		return updateCount;
 	}
 
 	/**
@@ -675,9 +674,9 @@ public class SqlServerDialectUtils {
 			insertSql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence() + " "
 					+ insertSql;
 		}
-		Long updateCount = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, reflectPropertyHandler, conn, dbType, autoCommit);
-		return updateCount;
+		// 返回记录修改量
+		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/**
@@ -923,60 +922,65 @@ public class SqlServerDialectUtils {
 	 * @return
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
-		if (lockMode != null) {
-			int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
-			String selectPart = loadSql.substring(0, fromIndex);
-			String fromPart = loadSql.substring(fromIndex);
-			String[] sqlChips = fromPart.trim().split("\\s+");
-			String realTableName = (tableName == null) ? sqlChips[1] : tableName;
-			if (realTableName.indexOf(",") != -1) {
-				realTableName = realTableName.substring(0, realTableName.indexOf(","));
-			}
-			String tmp;
-			int chipSize = sqlChips.length;
-			String replaceStr = realTableName;
-			String regex = realTableName;
-			// sqlserver lock 必须在table 后面(如果有别名则在别名后面),这里实现对table和别名位置的查找
-			for (int i = 0; i < chipSize; i++) {
-				tmp = sqlChips[i];
-				if (tmp.toLowerCase().indexOf(realTableName.toLowerCase()) != -1) {
-					if (sqlChips[i + 1].toLowerCase().equals("as")) {
-						regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
-						replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
-						break;
-					} else if (sqlChips[i + 2].toLowerCase().equals("where")) {
-						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
-						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-						break;
-					} else if (sqlChips[i + 2].equals(",")) {
-						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
-						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-						break;
-					} else if (i + 3 < chipSize && sqlChips[i + 3].toLowerCase().equals("join")) {
-						regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
-						replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-						break;
-					}
+		// 锁为null直接返回
+		if (lockMode == null) {
+			return loadSql;
+		}
+		int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
+		String selectPart = loadSql.substring(0, fromIndex);
+		String fromPart = loadSql.substring(fromIndex);
+		String[] sqlChips = fromPart.trim().split("\\s+");
+		String realTableName = (tableName == null) ? sqlChips[1] : tableName;
+		if (realTableName.indexOf(",") != -1) {
+			realTableName = realTableName.substring(0, realTableName.indexOf(","));
+		}
+		String tmp;
+		int chipSize = sqlChips.length;
+		String replaceStr = realTableName;
+		String regex = realTableName;
+		// sqlserver lock 必须在table 后面(如果有别名则在别名后面),这里实现对table和别名位置的查找
+		for (int i = 0; i < chipSize; i++) {
+			tmp = sqlChips[i];
+			if (tmp.toLowerCase().indexOf(realTableName.toLowerCase()) != -1) {
+				if (sqlChips[i + 1].toLowerCase().equals("as")) {
+					regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
+					replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
+					break;
+				} else if (sqlChips[i + 2].toLowerCase().equals("where")) {
+					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
+					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
+					break;
+				} else if (sqlChips[i + 2].equals(",")) {
+					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
+					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
+					break;
+				} else if (i + 3 < chipSize && sqlChips[i + 3].toLowerCase().equals("join")) {
+					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
+					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
+					break;
 				}
 			}
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
-						.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
-				break;
-			}
+		}
+		switch (lockMode) {
+		case UPGRADE_NOWAIT:
+		case UPGRADE:
+			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
+					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
+			break;
 		}
 		return loadSql;
 	}
 
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return true;
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
+		}
 		return true;
 	}
 }

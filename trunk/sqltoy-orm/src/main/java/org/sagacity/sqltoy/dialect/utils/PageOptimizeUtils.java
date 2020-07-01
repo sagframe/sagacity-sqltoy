@@ -40,14 +40,16 @@ public class PageOptimizeUtils {
 	public static String generateOptimizeKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor) throws Exception {
 		// 没有开放分页优化或sql id为null都不执行优化操作
-		if (!sqlToyConfig.isPageOptimize() || null == sqlToyConfig.getId())
+		if (!sqlToyConfig.isPageOptimize() || null == sqlToyConfig.getId()) {
 			return null;
+		}
 
 		String[] paramNames = queryExecutor.getParamsName(sqlToyConfig);
 		Object[] paramValues = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
-		if (paramValues == null || paramValues.length == 0)
+		if (paramValues == null || paramValues.length == 0) {
 			return sqlToyConfig.getId();
+		}
 		StringBuilder cacheKey = new StringBuilder();
 		boolean isParamsNamed = true;
 		if (null == paramNames || paramNames.length == 0) {
@@ -96,8 +98,9 @@ public class PageOptimizeUtils {
 		}
 		Object[] values = map.get(conditionsKey);
 		// 为null表示条件初次查询或已经全部过期移除
-		if (null == values)
+		if (null == values) {
 			return null;
+		}
 		// 总记录数
 		Long totalCount = (Long) values[1];
 		// 失效时间

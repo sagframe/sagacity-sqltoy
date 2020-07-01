@@ -73,8 +73,9 @@ public class OracleDialectUtils {
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {
@@ -218,12 +219,15 @@ public class OracleDialectUtils {
 	}
 
 	public static String lockSql(String sql, LockMode lockMode) {
-		if (lockMode == null)
+		if (lockMode == null) {
 			return sql;
-		if (lockMode == LockMode.UPGRADE_NOWAIT)
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
 			return sql.concat(" for update nowait ");
-		if (lockMode == LockMode.UPGRADE)
+		}
+		if (lockMode == LockMode.UPGRADE) {
 			return sql.concat(" for update  ");
+		}
 		return sql;
 	}
 }
