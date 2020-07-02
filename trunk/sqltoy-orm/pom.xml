@@ -256,6 +256,7 @@
 				</excludes>
 				<includes>
 					<include>**/*.xsd</include>
+					<include>**/*.properties</include>
 				</includes>
 			</resource>
 			<resource>
