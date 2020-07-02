@@ -247,7 +247,7 @@ public void findPageByParams() {
 	</value>
 </sql>
 ```
-## 2.4 最跨数据库
+## 2.5 最跨数据库
 * 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
 * 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
 * 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
@@ -271,7 +271,7 @@ public void findPageByParams() {
 
 ```
   
-## 2.5 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.6 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 
 ```xml
         <!-- 列转行测试 -->
@@ -305,7 +305,7 @@ public void findPageByParams() {
 			group-columns="TRANS_DATE" />
 	</sql>
 ```
-## 2.6 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+## 2.7 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
 ```xml
 	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
 	<sql id="sys_summarySearch">
@@ -326,8 +326,8 @@ public void findPageByParams() {
 		</summary>
 	</sql>
 ```
-## 2.7 分库分表
-### 2.7.1 查询分库分表（分库和分表策略可以同时使用）
+## 2.8 分库分表
+### 2.8.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
         sql参见showcase项目:com/sagframe/sqltoy/showcase/sqltoy-showcase.sql.xml 文件
         sharding策略配置参见:src/main/resources/spring/spring-sqltoy-sharding.xml 配置
@@ -361,7 +361,7 @@ public void findPageByParams() {
         
 ```
    
-### 2.7.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+### 2.8.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -407,20 +407,20 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.8 五种非数据库相关主键生成策略
+## 2.9 五种非数据库相关主键生成策略
     主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
-### 2.8.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
-### 2.8.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
-### 2.8.3 uuid:32 位uuid
-### 2.8.4 SnowflakeId 雪花算法ID
-### 2.8.5 redisId  基于redis 来产生规则的ID主键
+### 2.9.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
+### 2.9.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
+### 2.9.3 uuid:32 位uuid
+### 2.9.4 SnowflakeId 雪花算法ID
+### 2.9.5 redisId  基于redis 来产生规则的ID主键
    根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
    订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
    最终会生成单号为:SI191120001 
    
 
-## 2.9 elastic原生查询支持
-## 2.10 elasticsearch-sql 插件模式sql模式支持
+## 2.10 elastic原生查询支持
+## 2.11 elasticsearch-sql 插件模式sql模式支持
 
 # 3.集成说明
 
