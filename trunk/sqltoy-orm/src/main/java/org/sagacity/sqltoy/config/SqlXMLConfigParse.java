@@ -62,6 +62,7 @@ import org.w3c.dom.NodeList;
  * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
  * @modify Date:2020-3-27 {增加rows-chain-relative 和 cols-chain-relative
  *         环比计算功能,并优化unpivot解析改用XMLUtil类}
+ * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}       
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
@@ -172,8 +173,9 @@ public class SqlXMLConfigParse {
 				DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
 				Document doc = domBuilder.parse(fileIS);
 				NodeList sqlElts = doc.getDocumentElement().getChildNodes();
-				if (sqlElts == null || sqlElts.getLength() == 0)
+				if (sqlElts == null || sqlElts.getLength() == 0) {
 					return;
+				}
 				// 解析单个sql
 				SqlToyConfig sqlToyConfig;
 				Element sqlElt;
@@ -257,7 +259,7 @@ public class SqlXMLConfigParse {
 	}
 
 	/**
-	 * @todo 解析单个sql element元素
+	 * @todo 解析单个sql element元素,update 2020-7-2 支持外部集成命名空间前缀适配
 	 * @param sqlElt
 	 * @param dialect
 	 * @return
@@ -654,7 +656,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param filterSet
 	 * @param blankToNull
-	 * @param local 命名空间前缀
+	 * @param local        命名空间前缀
 	 */
 	private static void parseFilters(SqlToyConfig sqlToyConfig, NodeList filterSet, int blankToNull, String local) {
 		List<ParamFilterModel> filterModels = new ArrayList<ParamFilterModel>();
