@@ -12,9 +12,7 @@ import java.io.InputStream;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -219,69 +217,43 @@ public class SqlXMLConfigParse {
 	 * @throws Exception
 	 */
 	public static SqlToyConfig parseSagment(Object sqlSegment, String encoding, String dialect) throws Exception {
-		SqlToyConfig sqlToyConfig = null;
+		Element elt = null;
 		if (sqlSegment instanceof String) {
 			Document doc = domFactory.newDocumentBuilder().parse(
 					new ByteArrayInputStream(((String) sqlSegment).getBytes(encoding == null ? "UTF-8" : encoding)));
-			// 对xml字符串剔除xml命名空间的前缀
-			String realContent = getNoPrefixXML(doc.getDocumentElement(), (String) sqlSegment);
-			if (!realContent.equals(sqlSegment)) {
-				doc = domFactory.newDocumentBuilder()
-						.parse(new ByteArrayInputStream(realContent.getBytes(encoding == null ? "UTF-8" : encoding)));
-			}
-			sqlToyConfig = parseSingleSql(doc.getDocumentElement(), dialect);
+			elt = doc.getDocumentElement();
 		} else if (sqlSegment instanceof Element) {
-			sqlToyConfig = parseSingleSql((Element) sqlSegment, dialect);
+			elt = (Element) sqlSegment;
 		}
-		return sqlToyConfig;
+		if (elt == null) {
+			logger.error("sqlSegment type must is String or org.w3c.dom.Element!");
+			throw new IllegalArgumentException("sqlSegment type must is String or org.w3c.dom.Element!");
+		}
+		return parseSingleSql(elt, dialect);
 	}
 
 	/**
-	 * @todo 将xml element的namespace前缀剔除并返回xml字符串
-	 * @param elt
+	 * @TODO 获取sql xml element的namespace前缀
+	 * @param sqlElement
 	 * @return
 	 */
-	public static String getNoPrefixXML(Element elt, String xmlStr) {
-		HashMap<String, String> nodeNames = new HashMap<String, String>();
-		getElementPrefixName(elt, nodeNames);
-		String xml = xmlStr;
-		if (nodeNames.isEmpty()) {
-			return xml;
-		}
-		Iterator<Map.Entry<String, String>> iterator = nodeNames.entrySet().iterator();
-		Map.Entry<String, String> entry;
-		// 替换掉namespace前缀
-		while (iterator.hasNext()) {
-			entry = iterator.next();
-			xml = xml.replace("<" + entry.getKey(), "<" + entry.getValue());
-			xml = xml.replace("</" + entry.getKey(), "</" + entry.getValue());
-		}
-		return xml;
-	}
-
-	/**
-	 * @TODO 递归获取element的所有子element的前缀和nodeName组合
-	 * @param sqlElement
-	 * @param nodeNames
-	 */
-	private static void getElementPrefixName(Element sqlElement, HashMap<String, String> nodeNames) {
-		String nodeName = sqlElement.getTagName();
-		int index = nodeName.indexOf(":");
-		if (index > 0) {
-			nodeNames.put(nodeName, nodeName.substring(index + 1));
-		}
-		// 没有子节点则返回
-		if (!sqlElement.hasChildNodes()) {
-			return;
-		}
+	private static String getElementPrefixName(Element sqlElement) {
 		NodeList nodeList = sqlElement.getChildNodes();
 		Node node;
+		String nodeName = null;
+		int index;
 		for (int i = 0; i < nodeList.getLength(); i++) {
 			node = nodeList.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
-				getElementPrefixName((Element) node, nodeNames);
+				nodeName = node.getNodeName();
+				index = nodeName.indexOf(":");
+				if (index > 0) {
+					nodeName = nodeName.substring(0, index);
+				}
+				break;
 			}
 		}
+		return nodeName;
 	}
 
 	/**
@@ -294,6 +266,11 @@ public class SqlXMLConfigParse {
 	public static SqlToyConfig parseSingleSql(Element sqlElt, String dialect) throws Exception {
 		String realDialect = dialect;
 		String nodeName = sqlElt.getNodeName().toLowerCase();
+		// 剔除前缀
+		int prefixIndex = nodeName.indexOf(":");
+		if (prefixIndex > 0) {
+			nodeName = nodeName.substring(prefixIndex + 1);
+		}
 		// 目前只支持传统sql、elastic、mongo三种类型的语法
 		if (!nodeName.equals("sql") && !nodeName.equals("eql") && !nodeName.equals("mql")) {
 			return null;
@@ -302,9 +279,11 @@ public class SqlXMLConfigParse {
 		if (id == null) {
 			throw new RuntimeException("请检查sql配置,没有给定sql对应的 id值!");
 		}
-
+		// 获取元素的namespace前缀
+		String localName = getElementPrefixName(sqlElt);
+		String local = StringUtil.isBlank(localName) ? "" : localName.concat(":");
 		// 判断是否xml为精简模式即只有<sql id=""><![CDATA[]]></sql>模式
-		NodeList nodeList = sqlElt.getElementsByTagName("value");
+		NodeList nodeList = sqlElt.getElementsByTagName(local.concat("value"));
 		String sqlContent = null;
 		if (nodeList.getLength() > 0) {
 			sqlContent = StringUtil.trim(nodeList.item(0).getTextContent());
@@ -314,7 +293,7 @@ public class SqlXMLConfigParse {
 		if (StringUtil.isBlank(sqlContent)) {
 			throw new RuntimeException("请检查sql-id='" + id + "' 的配置,没有正确填写sql内容!");
 		}
-		nodeList = sqlElt.getElementsByTagName("count-sql");
+		nodeList = sqlElt.getElementsByTagName(local.concat("count-sql"));
 		String countSql = null;
 		if (nodeList.getLength() > 0) {
 			countSql = StringUtil.trim(nodeList.item(0).getTextContent());
@@ -359,29 +338,30 @@ public class SqlXMLConfigParse {
 			sqlToyConfig.setUnionAllCount(Boolean.parseBoolean(sqlElt.getAttribute("union-all-count")));
 		}
 		// 解析sql对应dataSource的sharding配置
-		parseShardingDataSource(sqlToyConfig, sqlElt.getElementsByTagName("sharding-datasource"));
+		parseShardingDataSource(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("sharding-datasource")));
 
 		// 解析sql对应的table的sharding配置
-		parseShardingTables(sqlToyConfig, sqlElt.getElementsByTagName("sharding-table"));
+		parseShardingTables(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("sharding-table")));
 		// 解析格式化
-		parseFormat(sqlToyConfig, sqlElt.getElementsByTagName("date-format"),
-				sqlElt.getElementsByTagName("number-format"));
+		parseFormat(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("date-format")),
+				sqlElt.getElementsByTagName(local.concat("number-format")));
 		// 参数值为空白是否当中null处理,默认为-1
 		int blankToNull = -1;
 		if (sqlElt.hasAttribute("blank-to-null")) {
 			blankToNull = (Boolean.parseBoolean(sqlElt.getAttribute("blank-to-null"))) ? 1 : 0;
 		}
-		nodeList = sqlElt.getElementsByTagName("filters");
+		// 参数加工过滤器
+		nodeList = sqlElt.getElementsByTagName(local.concat("filters"));
 		// 解析参数过滤器
 		if (nodeList.getLength() > 0) {
-			parseFilters(sqlToyConfig, nodeList.item(0).getChildNodes(), blankToNull);
+			parseFilters(sqlToyConfig, nodeList.item(0).getChildNodes(), blankToNull, local);
 		} else {
-			parseFilters(sqlToyConfig, null, blankToNull);
+			parseFilters(sqlToyConfig, null, blankToNull, local);
 		}
 
 		// 解析分页优化器
 		// <page-optimize alive-max="100" alive-seconds="90"/>
-		nodeList = sqlElt.getElementsByTagName("page-optimize");
+		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
 			Element pageOptimize = (Element) nodeList.item(0);
 			sqlToyConfig.setPageOptimize(true);
@@ -395,14 +375,14 @@ public class SqlXMLConfigParse {
 		}
 
 		// 解析翻译器
-		parseTranslate(sqlToyConfig, sqlElt.getElementsByTagName("translate"));
+		parseTranslate(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("translate")));
 		// 解析link
-		parseLink(sqlToyConfig, sqlElt.getElementsByTagName("link"));
+		parseLink(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("link")), local);
 		// 解析对结果的运算
 		parseCalculator(sqlToyConfig, sqlElt);
 
 		// 解析安全脱敏配置
-		parseSecureMask(sqlToyConfig, sqlElt.getElementsByTagName("secure-mask"));
+		parseSecureMask(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("secure-mask")));
 		// mongo/elastic查询语法
 		if (isNoSql) {
 			parseNoSql(sqlToyConfig, sqlElt);
@@ -674,8 +654,9 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param filterSet
 	 * @param blankToNull
+	 * @param local 命名空间前缀
 	 */
-	public static void parseFilters(SqlToyConfig sqlToyConfig, NodeList filterSet, int blankToNull) {
+	private static void parseFilters(SqlToyConfig sqlToyConfig, NodeList filterSet, int blankToNull, String local) {
 		List<ParamFilterModel> filterModels = new ArrayList<ParamFilterModel>();
 		// 1:强制将空白当做null;0:强制对空白不作为null处理;-1:默认值,用户不配置blank过滤器则视同为1,配置了则视同为0
 		if (blankToNull == 1) {
@@ -686,11 +667,17 @@ public class SqlXMLConfigParse {
 			String filterType;
 			boolean blank = false;
 			Element filter;
+			int prefixIndex;
 			for (int i = 0; i < filterSet.getLength(); i++) {
 				if (filterSet.item(i).getNodeType() == Node.ELEMENT_NODE) {
 					filter = (Element) filterSet.item(i);
 					blank = false;
+					// 剔除xml命名空间的前缀部分
 					filterType = filter.getNodeName();
+					prefixIndex = filterType.indexOf(":");
+					if (prefixIndex > 0) {
+						filterType = filterType.substring(prefixIndex + 1);
+					}
 					// 当开发者配置了blank过滤器时，则表示关闭默认将全部空白当做null处理的逻辑
 					if (filterType.equals("blank")) {
 						hasBlank = true;
@@ -716,7 +703,7 @@ public class SqlXMLConfigParse {
 							filterType = "date-format";
 						}
 						filterModel.setFilterType(filterType);
-						parseFilterElt(sqlToyConfig, filterModel, filter);
+						parseFilterElt(sqlToyConfig, filterModel, filter, local);
 						filterModels.add(filterModel);
 					}
 				}
@@ -726,8 +713,9 @@ public class SqlXMLConfigParse {
 		if (!hasBlank && blankToNull == -1) {
 			filterModels.add(0, new ParamFilterModel("blank", new String[] { "*" }));
 		}
-		if (filterModels.isEmpty())
+		if (filterModels.isEmpty()) {
 			return;
+		}
 		ParamFilterModel[] result = new ParamFilterModel[filterModels.size()];
 		filterModels.toArray(result);
 		sqlToyConfig.setFilters(result);
@@ -739,7 +727,8 @@ public class SqlXMLConfigParse {
 	 * @param filterModel
 	 * @param filter
 	 */
-	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter) {
+	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter,
+			String local) {
 		// 没有设置参数名称，则表示全部参数用*表示
 		if (!filter.hasAttribute("params")) {
 			filterModel.setParams(new String[] { "*" });
@@ -829,7 +818,7 @@ public class SqlXMLConfigParse {
 				filterModel.setCacheNotMatchedValue(filter.getAttribute("cache-not-matched-value"));
 			}
 			// 针对缓存的二级过滤,比如员工信息的缓存,过滤机构是当前人授权的
-			NodeList nodeList = filter.getElementsByTagName("filter");
+			NodeList nodeList = filter.getElementsByTagName(local.concat("filter"));
 			if (nodeList.getLength() > 0) {
 				CacheFilterModel[] cacheFilterModels = new CacheFilterModel[nodeList.getLength()];
 				Element cacheFilter;
@@ -1026,7 +1015,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param link
 	 */
-	private static void parseLink(SqlToyConfig sqlToyConfig, NodeList linkNode) {
+	private static void parseLink(SqlToyConfig sqlToyConfig, NodeList linkNode, String local) {
 		if (linkNode == null || linkNode.getLength() == 0) {
 			return;
 		}
@@ -1039,7 +1028,7 @@ public class SqlXMLConfigParse {
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
 		}
-		NodeList nodeList = link.getElementsByTagName("decorate");
+		NodeList nodeList = link.getElementsByTagName(local.concat("decorate"));
 		if (nodeList.getLength() > 0) {
 			Element decorateElt = (Element) nodeList.item(0);
 			if (decorateElt.hasAttribute("align")) {
