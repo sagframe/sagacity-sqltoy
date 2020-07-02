@@ -333,10 +333,8 @@ public class SqlXMLConfigParse {
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
 		}
-		/**
-		 * 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 select 1
-		 * from,减少不必要的执行运算，提升效率)
-		 */
+		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 
+		// select 1 from,减少不必要的执行运算，提升效率)
 		if (sqlElt.hasAttribute("union-all-count")) {
 			sqlToyConfig.setUnionAllCount(Boolean.parseBoolean(sqlElt.getAttribute("union-all-count")));
 		}
@@ -397,6 +395,7 @@ public class SqlXMLConfigParse {
 	 * @todo 解析nosql的相关配置
 	 * @param sqlToyConfig
 	 * @param sqlElt
+	 * @param local
 	 */
 	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt, String local) {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
@@ -729,6 +728,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param filterModel
 	 * @param filter
+	 * @param local
 	 */
 	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter,
 			String local) {
@@ -1016,7 +1016,8 @@ public class SqlXMLConfigParse {
 	/**
 	 * @todo 解析Link 查询
 	 * @param sqlToyConfig
-	 * @param link
+	 * @param linkNode
+	 * @param local
 	 */
 	private static void parseLink(SqlToyConfig sqlToyConfig, NodeList linkNode, String local) {
 		if (linkNode == null || linkNode.getLength() == 0) {
@@ -1107,6 +1108,8 @@ public class SqlXMLConfigParse {
 	 * @todo 解析对sqltoy查询结果的计算处理逻辑定义(包含:旋转、汇总等)
 	 * @param sqlToyConfig
 	 * @param sqlElt
+	 * @param local
+	 * @throws Exception
 	 */
 	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt, String local) throws Exception {
 		NodeList elements = sqlElt.getChildNodes();
