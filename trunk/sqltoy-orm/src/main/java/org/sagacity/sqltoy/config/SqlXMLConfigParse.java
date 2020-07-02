@@ -252,6 +252,8 @@ public class SqlXMLConfigParse {
 				index = nodeName.indexOf(":");
 				if (index > 0) {
 					nodeName = nodeName.substring(0, index);
+				} else {
+					nodeName = null;
 				}
 				break;
 			}
@@ -333,7 +335,7 @@ public class SqlXMLConfigParse {
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
 		}
-		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 
+		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成
 		// select 1 from,减少不必要的执行运算，提升效率)
 		if (sqlElt.hasAttribute("union-all-count")) {
 			sqlToyConfig.setUnionAllCount(Boolean.parseBoolean(sqlElt.getAttribute("union-all-count")));

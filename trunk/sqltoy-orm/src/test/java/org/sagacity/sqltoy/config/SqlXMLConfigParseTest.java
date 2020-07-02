@@ -28,4 +28,19 @@ public class SqlXMLConfigParseTest {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * 测试外部报表平台集成sqltoy传递xml字符串片段解析
+	 */
+	@Test
+	public void testParseSqlXML() {
+		String sql = FileUtil.readFileAsString("classpath:scripts/sql.xml", "UTF-8");
+		try {
+			SqlToyConfig result = SqlXMLConfigParse.parseSagment(sql, "utf-8", "mysql");
+			System.err.println(JSON.toJSONString(result));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
