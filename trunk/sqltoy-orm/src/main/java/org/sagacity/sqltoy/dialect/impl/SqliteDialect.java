@@ -284,8 +284,9 @@ public class SqliteDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return null;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// 判断是否存在主键
 		if (null == entityMeta.getIdArray()) {
@@ -485,13 +486,16 @@ public class SqliteDialect implements Dialect {
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
+		}
 		// 目前不支持sequence模式
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return false;
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
+		}
 		return true;
 	}
 }

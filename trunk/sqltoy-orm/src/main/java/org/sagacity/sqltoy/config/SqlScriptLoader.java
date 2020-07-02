@@ -94,8 +94,9 @@ public class SqlScriptLoader {
 	 * @param scriptCheckIntervalSeconds
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds) {
-		if (initialized)
+		if (initialized) {
 			return;
+		}
 		initialized = true;
 		boolean enabledDebug = logger.isDebugEnabled();
 		if (enabledDebug) {
@@ -229,14 +230,17 @@ public class SqlScriptLoader {
 	 * @throws Exception
 	 */
 	public void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
-		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
-			if (sqlCache.containsKey(sqlToyConfig.getId())) {
-				logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
-				// 移除分页优化缓存
-				PageOptimizeUtils.remove(sqlToyConfig.getId());
-			}
-			sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
+		if (sqlToyConfig == null || StringUtil.isBlank(sqlToyConfig.getId())) {
+			logger.warn("sqlToyConfig is null 或者 id 为null!");
+			return;
 		}
+		// 判断是否已经存在，存在则清理一下分页优化的缓存
+		if (sqlCache.containsKey(sqlToyConfig.getId())) {
+			logger.warn("发现重复的SQL语句:id={} 将被覆盖!", sqlToyConfig.getId());
+			// 移除分页优化缓存
+			PageOptimizeUtils.remove(sqlToyConfig.getId());
+		}
+		sqlCache.put(sqlToyConfig.getId(), sqlToyConfig);
 	}
 
 	/**

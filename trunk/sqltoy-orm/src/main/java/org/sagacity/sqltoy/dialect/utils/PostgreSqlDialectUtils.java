@@ -379,14 +379,17 @@ public class PostgreSqlDialectUtils {
 	 * @return
 	 */
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null)
+		if (pkStrategy == null) {
 			return true;
+		}
 		// sequence
-		if (pkStrategy.equals(PKStrategy.SEQUENCE))
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 			return false;
+		}
 		// postgresql10+ 支持identity
-		if (pkStrategy.equals(PKStrategy.IDENTITY))
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return false;
+		}
 		return true;
 	}
 }

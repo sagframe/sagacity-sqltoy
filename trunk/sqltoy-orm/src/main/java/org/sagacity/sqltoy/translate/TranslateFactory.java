@@ -127,25 +127,26 @@ public class TranslateFactory {
 		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, config.getUrl(), config.getUsername(),
 				config.getPassword(), paramNames, paramValues);
+		if (jsonStr == null) {
+			return null;
+		}
 		List result = null;
-		if (jsonStr != null) {
-			boolean fatal = false;
+		boolean fatal = false;
+		try {
+			result = JSON.parseArray(jsonStr, CacheCheckResult.class);
+		} catch (Exception e) {
+			fatal = true;
+		}
+		if (fatal) {
 			try {
-				result = JSON.parseArray(jsonStr, CacheCheckResult.class);
+				result = JSON.parseArray(jsonStr, Object[].class);
+				fatal = false;
 			} catch (Exception e) {
 				fatal = true;
 			}
-			if (fatal) {
-				try {
-					result = JSON.parseArray(jsonStr, Object[].class);
-					fatal = false;
-				} catch (Exception e) {
-					fatal = true;
-				}
-			}
-			if (fatal) {
-				logger.warn("rest模式检测缓存是否更新数据格式转换异常,数据格式是数组或CacheCheckResult对象类型的数组!");
-			}
+		}
+		if (fatal) {
+			logger.warn("rest模式检测缓存是否更新数据格式转换异常,数据格式是数组或CacheCheckResult对象类型的数组!");
 		}
 		return result;
 	}
@@ -171,22 +172,22 @@ public class TranslateFactory {
 		} else if (config.getProperties() != null && config.getProperties().length > 0) {
 			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
 		}
-		if (cacheSet != null) {
-			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
-			Object[] row;
-			CacheCheckResult item;
-			for (int i = 0; i < cacheSet.size(); i++) {
-				row = (Object[]) cacheSet.get(i);
-				item = new CacheCheckResult();
-				item.setCacheName((String) row[0]);
-				if (row.length > 1) {
-					item.setCacheType((String) row[1]);
-				}
-				checkResult.add(item);
-			}
-			return checkResult;
+		if (cacheSet == null) {
+			return null;
 		}
-		return null;
+		List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
+		Object[] row;
+		CacheCheckResult item;
+		for (int i = 0; i < cacheSet.size(); i++) {
+			row = (Object[]) cacheSet.get(i);
+			item = new CacheCheckResult();
+			item.setCacheName((String) row[0]);
+			if (row.length > 1) {
+				item.setCacheType((String) row[1]);
+			}
+			checkResult.add(item);
+		}
+		return checkResult;
 	}
 
 	/**
@@ -210,32 +211,32 @@ public class TranslateFactory {
 		} else if (config.getProperties() != null && config.getProperties().length > 0) {
 			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
 		}
-		if (cacheSet != null) {
-			String cacheName = config.getCache();
-			boolean hasInsideGroup = config.isHasInsideGroup();
-			List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
-			Object[] row;
-			CacheCheckResult item;
-			Object[] cacheValue;
-			for (int i = 0; i < cacheSet.size(); i++) {
-				row = (Object[]) cacheSet.get(i);
-				item = new CacheCheckResult();
-				item.setCacheName(cacheName);
-				// 缓存内部存在分组(参考数据字典表中的字典分类)
-				if (hasInsideGroup) {
-					item.setCacheType((String) row[0]);
-					cacheValue = new Object[row.length - 1];
-					// 跳过第一列缓存类别
-					System.arraycopy(row, 1, cacheValue, 0, row.length - 1);
-					item.setItem(cacheValue);
-				} else {
-					item.setItem(row);
-				}
-				checkResult.add(item);
-			}
-			return checkResult;
+		if (cacheSet == null) {
+			return null;
 		}
-		return null;
+		String cacheName = config.getCache();
+		boolean hasInsideGroup = config.isHasInsideGroup();
+		List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
+		Object[] row;
+		CacheCheckResult item;
+		Object[] cacheValue;
+		for (int i = 0; i < cacheSet.size(); i++) {
+			row = (Object[]) cacheSet.get(i);
+			item = new CacheCheckResult();
+			item.setCacheName(cacheName);
+			// 缓存内部存在分组(参考数据字典表中的字典分类)
+			if (hasInsideGroup) {
+				item.setCacheType((String) row[0]);
+				cacheValue = new Object[row.length - 1];
+				// 跳过第一列缓存类别
+				System.arraycopy(row, 1, cacheValue, 0, row.length - 1);
+				item.setItem(cacheValue);
+			} else {
+				item.setItem(row);
+			}
+			checkResult.add(item);
+		}
+		return checkResult;
 	}
 
 	/**
@@ -331,29 +332,29 @@ public class TranslateFactory {
 		}
 		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
 				cacheModel.getPassword(), paramNames, paramValues);
-		if (jsonStr != null) {
-			if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
-				return JSON.parseArray(jsonStr, Object[].class);
-			}
-			JSONArray jsonSet = JSON.parseArray(jsonStr);
-			if (jsonSet.isEmpty()) {
-				return null;
-			}
-			List<Object[]> result = new ArrayList<Object[]>();
-			int size = cacheModel.getProperties().length;
-			JSONObject jsonObj;
-			Object[] row;
-			for (Object obj : jsonSet) {
-				jsonObj = (JSONObject) obj;
-				row = new Object[size];
-				for (int i = 0; i < size; i++) {
-					row[i] = jsonObj.get(cacheModel.getProperties()[i]);
-				}
-				result.add(row);
-			}
-			return result;
+		if (jsonStr == null) {
+			return null;
 		}
-		return null;
+		if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
+			return JSON.parseArray(jsonStr, Object[].class);
+		}
+		JSONArray jsonSet = JSON.parseArray(jsonStr);
+		if (jsonSet.isEmpty()) {
+			return null;
+		}
+		List<Object[]> result = new ArrayList<Object[]>();
+		int size = cacheModel.getProperties().length;
+		JSONObject jsonObj;
+		Object[] row;
+		for (Object obj : jsonSet) {
+			jsonObj = (JSONObject) obj;
+			row = new Object[size];
+			for (int i = 0; i < size; i++) {
+				row[i] = jsonObj.get(cacheModel.getProperties()[i]);
+			}
+			result.add(row);
+		}
+		return result;
 	}
 
 	/**

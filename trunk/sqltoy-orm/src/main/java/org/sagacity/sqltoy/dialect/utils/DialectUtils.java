@@ -447,8 +447,9 @@ public class DialectUtils {
 	 */
 	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
 		UnifySqlParams sqlParam = new UnifySqlParams();
-		if (sql == null || sql.trim().equals(""))
+		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
+		}
 		// 不以转义符开始的问号
 		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
 		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
@@ -1052,8 +1053,9 @@ public class DialectUtils {
 	 */
 	public static String generateUpdateSql(Integer dbType, EntityMeta entityMeta, String nullFunction,
 			String[] forceUpdateFields, String tableName) {
-		if (entityMeta.getIdArray() == null)
+		if (entityMeta.getIdArray() == null) {
 			return null;
+		}
 		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
 		sql.append(" update  ");
 		sql.append(entityMeta.getSchemaTable(tableName));
@@ -1079,7 +1081,7 @@ public class DialectUtils {
 			if (fupc.contains(columnName)) {
 				sql.append("?");
 			} else {
-				//2020-6-13 修复postgresql bytea类型处理错误
+				// 2020-6-13 修复postgresql bytea类型处理错误
 				if (isPostgre && fieldMeta.getFieldType().equals("byte[]")) {
 					sql.append(" cast(");
 					sql.append(nullFunction);
@@ -1139,8 +1141,9 @@ public class DialectUtils {
 					entity.getClass());
 			result = (Serializable) rows.get(0);
 		}
-		if (result == null)
+		if (result == null) {
 			return null;
+		}
 
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
@@ -1176,8 +1179,9 @@ public class DialectUtils {
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, String sql, List<?> entities,
 			List<Class> cascadeTypes, Connection conn, final Integer dbType) throws Exception {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			return entities;
+		}
 		Class entityClass = entities.get(0).getClass();
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 
@@ -1559,52 +1563,54 @@ public class DialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
+		// 不存在级联操作
+		if (!cascade || entityMeta.getOneToManys() == null || entityMeta.getOneToManys().isEmpty()) {
+			return updateCnt;
+		}
 		// 级联保存
-		if (cascade && !entityMeta.getOneToManys().isEmpty()) {
-			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			// 即使子对象数据是null,也强制进行级联修改(null表示删除子表数据)
-			if (forceCascadeClasses != null) {
-				for (Type type : forceCascadeClasses) {
-					typeMap.put(type, "");
-				}
+		HashMap<Type, String> typeMap = new HashMap<Type, String>();
+		// 即使子对象数据是null,也强制进行级联修改(null表示删除子表数据)
+		if (forceCascadeClasses != null) {
+			for (Type type : forceCascadeClasses) {
+				typeMap.put(type, "");
 			}
-			// 级联子表数据
-			List subTableData;
-			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-			String[] forceUpdateProps = null;
-			EntityMeta subTableEntityMeta;
-			// 对子表进行级联处理
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-				subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
-				forceUpdateProps = (subTableForceUpdateProps == null) ? null
-						: subTableForceUpdateProps.get(oneToMany.getMappedType());
-				subTableData = (List) BeanUtil.invokeMethod(entity,
-						"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
-				final String[] mappedFields = oneToMany.getMappedFields();
-				/**
-				 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-				 */
-				if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
-						|| typeMap.containsKey(oneToMany.getMappedType()))) {
-					// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
-					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
-							mappedFields, IdValues);
-					executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType,
-							null);
-				}
-				// 子表数据不为空,采取saveOrUpdateAll操作
-				if (subTableData != null && !subTableData.isEmpty()) {
-					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
-							forceUpdateProps, generateSqlHandler,
-							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropertyHandler() {
-								public void process() {
-									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], IdValues[i]);
-									}
+		}
+		// 级联子表数据
+		List subTableData;
+		final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		String[] forceUpdateProps = null;
+		EntityMeta subTableEntityMeta;
+		// 对子表进行级联处理
+		for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+			forceUpdateProps = (subTableForceUpdateProps == null) ? null
+					: subTableForceUpdateProps.get(oneToMany.getMappedType());
+			subTableData = (List) BeanUtil.invokeMethod(entity,
+					"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
+			final String[] mappedFields = oneToMany.getMappedFields();
+			/**
+			 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
+			 */
+			if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
+					|| typeMap.containsKey(oneToMany.getMappedType()))) {
+				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
+				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
+						mappedFields, IdValues);
+				executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType,
+						null);
+			}
+			// 子表数据不为空,采取saveOrUpdateAll操作
+			if (subTableData != null && !subTableData.isEmpty()) {
+				saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
+						forceUpdateProps, generateSqlHandler,
+						// 设置关联外键字段的属性值(来自主表的主键)
+						new ReflectPropertyHandler() {
+							public void process() {
+								for (int i = 0; i < mappedFields.length; i++) {
+									this.setValue(mappedFields[i], IdValues[i]);
 								}
-							}, conn, dbType, null);
-				}
+							}
+						}, conn, dbType, null);
 			}
 		}
 		return updateCnt;
@@ -1630,8 +1636,9 @@ public class DialectUtils {
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, String nullFunction,
 			Connection conn, final Integer dbType, final Boolean autoCommit, String tableName, boolean skipNull)
 			throws Exception {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			return 0L;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 全部是主键则无需update，无主键则同样不符合修改规则
@@ -1699,8 +1706,9 @@ public class DialectUtils {
 	 */
 	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String tableName) throws Exception {
-		if (entity == null)
+		if (entity == null) {
 			return 0L;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
@@ -1753,8 +1761,9 @@ public class DialectUtils {
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return 0L;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
@@ -1878,8 +1887,9 @@ public class DialectUtils {
 				return false;
 			}
 			// 表没有主键,单条记录算重复
-			if (null == entityMeta.getIdArray())
+			if (null == entityMeta.getIdArray()) {
 				return false;
+			}
 			boolean allPK = false;
 			// 判断是否是主键字段的唯一性验证
 			if (realParamNamed.length == entityMeta.getIdArray().length) {
@@ -1954,8 +1964,9 @@ public class DialectUtils {
 	 */
 	public static boolean hasOrderByOrUnion(String sql) {
 		String unDisturbSql = clearDisturbSql(sql);
-		if (StringUtil.matches(unDisturbSql, UNION_PATTERN) || StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN))
+		if (StringUtil.matches(unDisturbSql, UNION_PATTERN) || StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN)) {
 			return true;
+		}
 		return false;
 	}
 
@@ -2099,11 +2110,13 @@ public class DialectUtils {
 	 */
 	public static ReflectPropertyHandler getAddReflectHandler(SqlToyContext sqlToyContext,
 			final ReflectPropertyHandler preHandler) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null)
+		if (sqlToyContext.getUnifyFieldsHandler() == null) {
 			return preHandler;
+		}
 		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().createUnifyFields();
-		if (keyValues == null || keyValues.isEmpty())
+		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
+		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
@@ -2135,11 +2148,13 @@ public class DialectUtils {
 	 */
 	public static ReflectPropertyHandler getUpdateReflectHandler(SqlToyContext sqlToyContext,
 			final ReflectPropertyHandler preHandler) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null)
+		if (sqlToyContext.getUnifyFieldsHandler() == null) {
 			return preHandler;
+		}
 		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
-		if (keyValues == null || keyValues.isEmpty())
+		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
+		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
@@ -2173,12 +2188,15 @@ public class DialectUtils {
 	 */
 	public static ReflectPropertyHandler getSaveOrUpdateReflectHandler(SqlToyContext sqlToyContext,
 			final String[] idFields, final ReflectPropertyHandler preHandler) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null)
+		if (sqlToyContext.getUnifyFieldsHandler() == null) {
 			return preHandler;
+		}
 		final Map<String, Object> addKeyValues = sqlToyContext.getUnifyFieldsHandler().createUnifyFields();
 		final Map<String, Object> updateKeyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
-		if ((addKeyValues == null || addKeyValues.isEmpty()) && (updateKeyValues == null || updateKeyValues.isEmpty()))
+		if ((addKeyValues == null || addKeyValues.isEmpty())
+				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return preHandler;
+		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
@@ -2218,18 +2236,13 @@ public class DialectUtils {
 	 * @return
 	 */
 	private static int getParamsCount(String queryStr) {
-		if (StringUtil.isBlank(queryStr))
+		if (StringUtil.isBlank(queryStr)) {
 			return 0;
+		}
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
 		if (queryStr.indexOf("?") == -1) {
 			return StringUtil.matchCnt(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
 		}
 		return StringUtil.matchCnt(queryStr, "\\?");
-	}
-
-	public static void main(String[] args) {
-		String sql = "select * from table where #[`status` in (?)]";
-		String lastSql = DialectUtils.convertParamsToNamed(sql, 0).getSql();
-		System.err.println(lastSql);
 	}
 }

@@ -552,8 +552,9 @@ public class DateUtil {
 	 * @return
 	 */
 	public static String parseChinaDate(String chinaDate, String fmt) {
-		if (StringUtil.isBlank(chinaDate))
+		if (StringUtil.isBlank(chinaDate)) {
 			return null;
+		}
 		// 去除中文日期文字之间的空格
 		String tmp = chinaDate.replaceAll("\\s+", "");
 		for (int i = 0; i < CHINA_DATE_KEYS.length; i++) {
@@ -563,8 +564,9 @@ public class DateUtil {
 		if (tmp.endsWith("-") || tmp.endsWith(":")) {
 			tmp = tmp.substring(0, tmp.length() - 1);
 		}
-		if (StringUtil.isBlank(fmt))
+		if (StringUtil.isBlank(fmt)) {
 			return tmp.toString();
+		}
 		return formatDate(tmp, fmt);
 	}
 
@@ -584,8 +586,9 @@ public class DateUtil {
 	 */
 	public static Date firstDayOfMonth(Object objectDate) {
 		Date date = convertDateObject(objectDate);
-		if (null == date)
+		if (null == date) {
 			return null;
+		}
 		String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
 		return parse(tmp, FORMAT.YEAR_MONTH);
 	}
@@ -597,8 +600,9 @@ public class DateUtil {
 	 */
 	public static Date lastDayOfMonth(Object objectDate) {
 		Date date = convertDateObject(objectDate);
-		if (null == date)
+		if (null == date) {
 			return null;
+		}
 		String tmp = formatDate(date, FORMAT.DATE_HORIZONTAL);
 		Date result = parse(tmp, FORMAT.YEAR_MONTH);
 		result = addMonth(result, 1);
@@ -607,50 +611,58 @@ public class DateUtil {
 	}
 
 	public static Date asDate(LocalDate localDate) {
-		if (localDate == null)
+		if (localDate == null) {
 			return null;
+		}
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
 	public static Date asSqlDate(LocalDate localDate) {
-		if (localDate == null)
+		if (localDate == null) {
 			return null;
+		}
 		return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 	}
 
 	public static Date asDate(LocalTime localTime) {
-		if (localTime == null)
+		if (localTime == null) {
 			return null;
+		}
 		return DateUtil.parseString(localTime.toString());
 	}
 
 	public static Time asTime(LocalTime localTime) {
-		if (localTime == null)
+		if (localTime == null) {
 			return null;
+		}
 		return java.sql.Time.valueOf(localTime);
 	}
 
 	public static Date asDate(LocalDateTime localDateTime) {
-		if (localDateTime == null)
+		if (localDateTime == null) {
 			return null;
+		}
 		return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 	}
 
 	public static LocalDate asLocalDate(Date date) {
-		if (date == null)
+		if (date == null) {
 			return null;
+		}
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 
 	public static LocalTime asLocalTime(Date date) {
-		if (date == null)
+		if (date == null) {
 			return null;
+		}
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalTime();
 	}
 
 	public static LocalDateTime asLocalDateTime(Date date) {
-		if (date == null)
+		if (date == null) {
 			return null;
+		}
 		return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 

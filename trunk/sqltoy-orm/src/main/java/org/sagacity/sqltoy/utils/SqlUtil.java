@@ -121,8 +121,9 @@ public class SqlUtil {
 		StringBuilder conditons = new StringBuilder(64);
 		String flag = "";
 		// 是否是字符类型
-		if (isChar)
+		if (isChar) {
 			flag = "'";
+		}
 		// 判断数据集合维度
 		int dimen = CollectionUtil.judgeObjectDimen(conditions);
 		switch (dimen) {
@@ -412,7 +413,7 @@ public class SqlUtil {
 		Object fieldValue;
 		boolean allNull = true;
 		Method method;
-		//已经小写
+		// 已经小写
 		String typeName;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
 			method = setMethods[i];
@@ -516,8 +517,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String clearMark(String sql) {
-		if (StringUtil.isBlank(sql))
+		if (StringUtil.isBlank(sql)) {
 			return sql;
+		}
 		int endMarkIndex;
 		// 剔除<!-- -->形式的多行注释
 		int markIndex = sql.indexOf("<!--");
@@ -657,8 +659,9 @@ public class SqlUtil {
 				rowCallbackHandler.processRow(rs, index);
 				index++;
 				// 超出预警阀值
-				if (index == warnThresholds)
+				if (index == warnThresholds) {
 					warnLimit = true;
+				}
 				// 提取数据超过上限(-1表示不限制)
 				if (index == maxThresholds) {
 					maxLimit = true;
@@ -1140,8 +1143,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String clobToString(Clob clob) {
-		if (clob == null)
+		if (clob == null) {
 			return null;
+		}
 		StringBuffer sb = new StringBuffer(1024 * 8);// 8K
 		Reader clobStream = null;
 		try {
@@ -1209,29 +1213,40 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static Object convertIdValueType(Object idValue, String idType) {
-		if (idValue == null)
+		if (idValue == null) {
 			return null;
-		if (StringUtil.isBlank(idType))
+		}
+		if (StringUtil.isBlank(idType)) {
 			return idValue;
+		}
 		// 按照优先顺序对比
-		if (idType.equals("java.lang.string"))
+		if (idType.equals("java.lang.string")) {
 			return idValue.toString();
-		if (idType.equals("java.lang.integer"))
+		}
+		if (idType.equals("java.lang.integer")) {
 			return Integer.valueOf(idValue.toString());
-		if (idType.equals("java.lang.long"))
+		}
+		if (idType.equals("java.lang.long")) {
 			return Long.valueOf(idValue.toString());
-		if (idType.equals("java.math.biginteger"))
+		}
+		if (idType.equals("java.math.biginteger")) {
 			return new BigInteger(idValue.toString());
-		if (idType.equals("java.math.bigdecimal"))
+		}
+		if (idType.equals("java.math.bigdecimal")) {
 			return new BigDecimal(idValue.toString());
-		if (idType.equals("long"))
+		}
+		if (idType.equals("long")) {
 			return Long.valueOf(idValue.toString()).longValue();
-		if (idType.equals("int"))
+		}
+		if (idType.equals("int")) {
 			return Integer.valueOf(idValue.toString()).intValue();
-		if (idType.equals("java.lang.short"))
+		}
+		if (idType.equals("java.lang.short")) {
 			return Short.valueOf(idValue.toString());
-		if (idType.equals("short"))
+		}
+		if (idType.equals("short")) {
 			return Short.valueOf(idValue.toString()).shortValue();
+		}
 		return idValue;
 	}
 
@@ -1288,8 +1303,9 @@ public class SqlUtil {
 				break;
 			}
 		}
-		if (StringUtil.matches(lastSql.toString(), UNION_PATTERN))
+		if (StringUtil.matches(lastSql.toString(), UNION_PATTERN)) {
 			return true;
+		}
 		return false;
 	}
 
@@ -1380,14 +1396,17 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String completionSql(SqlToyContext sqlToyContext, Class entityClass, String sql) {
-		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql))
+		if (null == entityClass || SqlConfigParseUtils.isNamedQuery(sql)) {
 			return sql;
+		}
 		String sqlLow = sql.toLowerCase().trim();
 		// 包含了select 或with as模式开头直接返回
-		if (sqlLow.startsWith("select") || sqlLow.startsWith("with"))
+		if (sqlLow.startsWith("select") || sqlLow.startsWith("with")) {
 			return sql;
-		if (!sqlToyContext.isEntity(entityClass))
+		}
+		if (!sqlToyContext.isEntity(entityClass)) {
 			return sql;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select col1,col2,...
 		if (sqlLow.startsWith("from")) {

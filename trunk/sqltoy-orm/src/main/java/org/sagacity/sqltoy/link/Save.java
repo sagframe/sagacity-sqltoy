@@ -115,8 +115,9 @@ public class Save extends BaseLink {
 	 * @return
 	 */
 	public Object one(final Serializable entity) {
-		if (entity == null)
+		if (entity == null) {
 			throw new IllegalArgumentException("save entity is null!");
+		}
 		if (saveMode == SaveMode.APPEND) {
 			return dialectFactory.save(sqlToyContext, entity, dataSource);
 		}
@@ -134,8 +135,9 @@ public class Save extends BaseLink {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long many(final List<T> entities) {
-		if (entities == null || entities.isEmpty())
+		if (entities == null || entities.isEmpty()) {
 			throw new IllegalArgumentException("saveAll entities is null or empty!");
+		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
 			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,

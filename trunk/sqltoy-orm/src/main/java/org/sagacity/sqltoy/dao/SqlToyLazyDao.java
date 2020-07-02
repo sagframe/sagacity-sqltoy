@@ -97,7 +97,7 @@ public interface SqlToyLazyDao {
 			Class resultType);
 
 	/**
-	 * @todo 保存对象
+	 * @todo 保存对象,并返回主键值
 	 * @param serializableVO
 	 * @return
 	 */
@@ -120,7 +120,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
 	/**
-	 * @todo 批量保存数据
+	 * @todo 批量保存数据,返回数据库记录变更数量
 	 * @param dataSet
 	 * @param reflectPropertyHandler
 	 */
@@ -133,7 +133,7 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable serializableVO);
 
 	/**
-	 * @todo 修改数据
+	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet
 	 * @param forceUpdateProps 强制修改的字段属性
 	 */
@@ -154,7 +154,7 @@ public interface SqlToyLazyDao {
 	public Long updateDeeply(Serializable serializableVO);
 
 	/**
-	 * @todo 修改数据
+	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param serializableVO
 	 * @param forceUpdateProps
 	 * @param emptyUpdateClass
@@ -168,7 +168,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps);
 
 	/**
-	 * @todo 批量修改对象
+	 * @todo 批量修改对象并返回数据库记录变更数量
 	 * @param entitys
 	 * @param forceUpdateProps       强制修改的属性
 	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
@@ -182,7 +182,7 @@ public interface SqlToyLazyDao {
 	public Long saveOrUpdate(Serializable serializableVO);
 
 	/**
-	 * @todo 保存或修改数据
+	 * @todo 保存或修改数据并返回数据库记录变更数量
 	 * @param serializableVO
 	 * @param forceUpdateProps
 	 */
@@ -193,7 +193,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps);
 
 	/**
-	 * @todo 批量修改或保存数据
+	 * @todo 批量修改或保存数据并返回数据库记录变更数量
 	 * @param entities
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
@@ -202,13 +202,13 @@ public interface SqlToyLazyDao {
 			ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 删除单条对象
+	 * @todo 删除单条对象并返回数据库记录影响的数量
 	 * @param entity
 	 */
 	public Long delete(final Serializable entity);
 
 	/**
-	 * @todo 批量删除对象
+	 * @todo 批量删除对象并返回数据库记录影响的数量
 	 * @param entities
 	 */
 	public <T extends Serializable> Long deleteAll(final List<T> entities);

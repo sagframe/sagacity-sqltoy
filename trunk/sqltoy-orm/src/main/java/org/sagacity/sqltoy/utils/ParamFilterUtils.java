@@ -508,10 +508,12 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object dateFormat(Object paramValue, String format) {
-		if (paramValue == null)
+		if (paramValue == null) {
 			return null;
-		if (format == null)
+		}
+		if (format == null) {
 			return paramValue;
+		}
 		Object result;
 		if (paramValue.getClass().isArray()) {
 			Object[] arrays = CollectionUtil.convertArray(paramValue);
@@ -539,8 +541,9 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object[] splitToArray(Object paramValue, String splitSign, String dataType) {
-		if (paramValue == null)
+		if (paramValue == null) {
 			return null;
+		}
 		Object[] result = null;
 		// 原本就是数组
 		if (paramValue.getClass().isArray() || paramValue instanceof Collection) {
@@ -587,11 +590,13 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	private static Object[] toArray(Object paramValue, String dataType) {
-		if (paramValue == null)
+		if (paramValue == null) {
 			return null;
+		}
 		Object[] result = CollectionUtil.convertArray(paramValue);
-		if (dataType == null)
+		if (dataType == null) {
 			return result;
+		}
 		String value;
 		for (int i = 0, n = result.length; i < n; i++) {
 			if (result[i] != null) {

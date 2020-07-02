@@ -22,8 +22,9 @@ public class ReservedWordsUtil {
 	 * @param words
 	 */
 	public static void put(String words) {
-		if (StringUtil.isBlank(words))
+		if (StringUtil.isBlank(words)) {
 			return;
+		}
 		String[] strs = words.split("\\,");
 		String regex;
 		String fullRegex = "";
@@ -49,8 +50,9 @@ public class ReservedWordsUtil {
 	 * @return
 	 */
 	public static String convertSimpleSql(String sql, Integer dbType) {
-		if (reservedWords.isEmpty())
+		if (reservedWords.isEmpty()) {
 			return sql;
+		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
@@ -74,10 +76,12 @@ public class ReservedWordsUtil {
 	 */
 	public static String convertWord(String column, Integer dbType) {
 		// 非保留字
-		if (reservedWords.isEmpty())
+		if (reservedWords.isEmpty()) {
 			return column;
-		if (!reservedWords.contains(column.toLowerCase()))
+		}
+		if (!reservedWords.contains(column.toLowerCase())) {
 			return column;
+		}
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return "[".concat(column).concat("]");
@@ -99,11 +103,13 @@ public class ReservedWordsUtil {
 	 * @return
 	 */
 	public static String convertSql(String sql, Integer dbType) {
-		if (reservedWords.isEmpty())
+		if (reservedWords.isEmpty()) {
 			return sql;
+		}
 
-		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE)
+		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE) {
 			return sql;
+		}
 		StringBuilder sqlBuff = new StringBuilder();
 		Matcher matcher;
 		int start = 0;
@@ -143,6 +149,5 @@ public class ReservedWordsUtil {
 			return sqlBuff.toString();
 		}
 		return sql;
-
 	}
 }

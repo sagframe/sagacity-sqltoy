@@ -119,15 +119,17 @@ public class EntityManager {
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
 		String className = entityClass.getName();
-		if (unEntityMap.contains(className))
+		if (unEntityMap.contains(className)) {
 			return false;
+		}
 		if (entitysMetaMap.contains(className)) {
 			return true;
 		}
 
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
-		if (entityMeta != null)
+		if (entityMeta != null) {
 			return true;
+		}
 		unEntityMap.put(className, "1");
 		return false;
 	}
@@ -139,8 +141,9 @@ public class EntityManager {
 	 * @return
 	 */
 	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
-		if (entityClass == null)
+		if (entityClass == null) {
 			return null;
+		}
 		String className = entityClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27
@@ -163,10 +166,11 @@ public class EntityManager {
 	public void initialize(SqlToyContext sqlToyContext) throws Exception {
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
 		// 扫描并获取包以及包下层包中的sqltoy entity对象
-		if (packagesToScan != null && packagesToScan.length > 0)
+		if (packagesToScan != null && packagesToScan.length > 0) {
 			for (String pkg : this.packagesToScan) {
 				entities.addAll(ScanEntityAndSqlResource.getPackageEntities(pkg, recursive, "UTF-8"));
 			}
+		}
 		// 加载直接指定的sqltoy entity对象
 		if (annotatedClasses != null && annotatedClasses.length > 0) {
 			Class entityClass;
@@ -195,8 +199,9 @@ public class EntityManager {
 	 * @return
 	 */
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
-		if (entityClass == null)
+		if (entityClass == null) {
 			return null;
+		}
 		String className = entityClass.getName();
 		// 避免重复解析
 		if (entitysMetaMap.containsKey(className)) {
@@ -354,56 +359,58 @@ public class EntityManager {
 	 * @param entityClass
 	 */
 	private void parseSharding(EntityMeta entityMeta, Class entityClass) {
+		// 不存在分库策略
+		if (!entityClass.isAnnotationPresent(Sharding.class)) {
+			return;
+		}
 		// 分库策略
-		if (entityClass.isAnnotationPresent(Sharding.class)) {
-			ShardingConfig shardingConfig = new ShardingConfig();
-			Sharding sharding = (Sharding) entityClass.getAnnotation(Sharding.class);
-			// 最大并行数量
-			shardingConfig.setMaxConcurrents(sharding.maxConcurrents());
-			// 最大执行时长(秒)
-			shardingConfig.setMaxWaitSeconds(sharding.maxWaitSeconds());
-			// 异常处理策略(是否全局回滚)
-			shardingConfig.setGlobalRollback(sharding.is_global_rollback());
-			Strategy shardingDB = sharding.db();
-			String strategy = shardingDB.name();
-			// 分库策略
-			if (StringUtil.isNotBlank(strategy)) {
-				ShardingStrategyConfig config = new ShardingStrategyConfig();
-				config.setFields(shardingDB.fields());
-				// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
-				String[] aliasNames = new String[shardingDB.fields().length];
-				System.arraycopy(shardingDB.fields(), 0, aliasNames, 0, aliasNames.length);
-				if (shardingDB.aliasNames() != null) {
-					System.arraycopy(shardingDB.aliasNames(), 0, aliasNames, 0, shardingDB.aliasNames().length);
-				}
+		ShardingConfig shardingConfig = new ShardingConfig();
+		Sharding sharding = (Sharding) entityClass.getAnnotation(Sharding.class);
+		// 最大并行数量
+		shardingConfig.setMaxConcurrents(sharding.maxConcurrents());
+		// 最大执行时长(秒)
+		shardingConfig.setMaxWaitSeconds(sharding.maxWaitSeconds());
+		// 异常处理策略(是否全局回滚)
+		shardingConfig.setGlobalRollback(sharding.is_global_rollback());
+		Strategy shardingDB = sharding.db();
+		String strategy = shardingDB.name();
+		// 分库策略
+		if (StringUtil.isNotBlank(strategy)) {
+			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			config.setFields(shardingDB.fields());
+			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
+			String[] aliasNames = new String[shardingDB.fields().length];
+			System.arraycopy(shardingDB.fields(), 0, aliasNames, 0, aliasNames.length);
+			if (shardingDB.aliasNames() != null) {
+				System.arraycopy(shardingDB.aliasNames(), 0, aliasNames, 0, shardingDB.aliasNames().length);
+			}
 
-				config.setAliasNames(aliasNames);
-				config.setDecisionType(shardingDB.decisionType());
-				config.setName(strategy);
-				shardingConfig.setShardingDBStrategy(config);
+			config.setAliasNames(aliasNames);
+			config.setDecisionType(shardingDB.decisionType());
+			config.setName(strategy);
+			shardingConfig.setShardingDBStrategy(config);
+		}
+		// 分表策略
+		Strategy shardingTable = sharding.table();
+		strategy = shardingTable.name();
+		if (StringUtil.isNotBlank(strategy)) {
+			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			config.setFields(shardingTable.fields());
+			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
+			String[] aliasNames = new String[shardingTable.fields().length];
+			System.arraycopy(shardingTable.fields(), 0, aliasNames, 0, aliasNames.length);
+			if (shardingTable.aliasNames() != null) {
+				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-			// 分表策略
-			Strategy shardingTable = sharding.table();
-			strategy = shardingTable.name();
-			if (StringUtil.isNotBlank(strategy)) {
-				ShardingStrategyConfig config = new ShardingStrategyConfig();
-				config.setFields(shardingTable.fields());
-				// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
-				String[] aliasNames = new String[shardingTable.fields().length];
-				System.arraycopy(shardingTable.fields(), 0, aliasNames, 0, aliasNames.length);
-				if (shardingTable.aliasNames() != null) {
-					System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
-				}
 
-				config.setAliasNames(aliasNames);
-				config.setDecisionType(shardingDB.decisionType());
-				config.setName(strategy);
-				shardingConfig.setShardingTableStrategy(config);
-			}
-			// 必须有一个策略是存在的
-			if (shardingConfig.getShardingDBStrategy() != null || shardingConfig.getShardingTableStrategy() != null) {
-				entityMeta.setShardingConfig(shardingConfig);
-			}
+			config.setAliasNames(aliasNames);
+			config.setDecisionType(shardingDB.decisionType());
+			config.setName(strategy);
+			shardingConfig.setShardingTableStrategy(config);
+		}
+		// 必须有一个策略是存在的
+		if (shardingConfig.getShardingDBStrategy() != null || shardingConfig.getShardingTableStrategy() != null) {
+			entityMeta.setShardingConfig(shardingConfig);
 		}
 	}
 
@@ -472,8 +479,9 @@ public class EntityManager {
 			List<String> rejectIdFieldList, List<String> allFieldAry, StringBuilder loadNamedWhereSql,
 			StringBuilder loadArgWhereSql) throws Exception {
 		Column column = field.getAnnotation(Column.class);
-		if (column == null)
+		if (column == null) {
 			return;
+		}
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
 				StringUtil.isNotBlank(column.defaultValue()) ? column.defaultValue() : null, column.type(),
@@ -546,31 +554,33 @@ public class EntityManager {
 	 */
 	private void processIdGenerator(SqlToyContext sqlToyContext, EntityMeta entityMeta, String idGenerator)
 			throws Exception {
-		if (!idGenerators.containsKey(idGenerator)) {
-			// 自定义springbean 模式
-			if (idGenerator.toLowerCase().startsWith("@bean(")) {
-				String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
-						.replaceAll("\"|\'", "").trim();
-				idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
+		// 已经存在跳过处理
+		if (idGenerators.containsKey(idGenerator)) {
+			return;
+		}
+		// 自定义springbean 模式
+		if (idGenerator.toLowerCase().startsWith("@bean(")) {
+			String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
+					.replaceAll("\"|\'", "").trim();
+			idGenerators.put(idGenerator, (IdGenerator) sqlToyContext.getBean(beanName));
+		} else {
+			String generator = IdGenerators.get(idGenerator.toLowerCase());
+			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
+			// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
+			if (generator.startsWith("org.sagacity.sqltoy")) {
+				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
+			}
+			// redis 情况特殊,依赖redisTemplate,小心修改
+			if (generator.endsWith("RedisIdGenerator")) {
+				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
+				if (redis == null || !redis.hasRedisTemplate()) {
+					logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
+							entityMeta.getEntityClass().getName());
+				}
+				idGenerators.put(idGenerator, redis);
 			} else {
-				String generator = IdGenerators.get(idGenerator.toLowerCase());
-				generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-				// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
-				if (generator.startsWith("org.sagacity.sqltoy")) {
-					generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
-				}
-				// redis 情况特殊,依赖redisTemplate,小心修改
-				if (generator.endsWith("RedisIdGenerator")) {
-					RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-					if (redis == null || !redis.hasRedisTemplate()) {
-						logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-								entityMeta.getEntityClass().getName());
-					}
-					idGenerators.put(idGenerator, redis);
-				} else {
-					idGenerators.put(idGenerator,
-							(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
-				}
+				idGenerators.put(idGenerator,
+						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 			}
 		}
 	}
@@ -587,8 +597,9 @@ public class EntityManager {
 			List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-		if (oneToMany == null)
+		if (oneToMany == null) {
 			return;
+		}
 		// 主键字段数量
 		int idSize = idList.size();
 		if (idSize != oneToMany.mappedColumns().length) {

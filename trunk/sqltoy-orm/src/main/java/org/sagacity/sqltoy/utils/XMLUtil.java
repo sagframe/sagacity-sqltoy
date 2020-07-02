@@ -166,8 +166,9 @@ public class XMLUtil {
 	 */
 	public static Object readXML(Object xmlFile, String charset, boolean isValidator, XMLCallbackHandler handler)
 			throws Exception {
-		if (StringUtil.isBlank(xmlFile))
+		if (StringUtil.isBlank(xmlFile)) {
 			return null;
+		}
 		InputStream fileIS = null;
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -195,8 +196,9 @@ public class XMLUtil {
 
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
-		if (keyValues == null)
+		if (keyValues == null) {
 			return result;
+		}
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {
 			result.put(keyValues[i], keyValues[i + 1]);
 		}
@@ -210,8 +212,9 @@ public class XMLUtil {
 	 * @param aliasProps 属性映射,长度必须是偶数,如:a对应到a1,{a,a1,b,b1}
 	 */
 	public static void setAttributes(Element elt, Serializable entity, String... aliasProps) throws Exception {
-		if (elt == null)
+		if (elt == null) {
 			return;
+		}
 		IgnoreKeyCaseMap<String, String> realMap = asMap(aliasProps);
 		NamedNodeMap attrs = elt.getAttributes();
 		String name;

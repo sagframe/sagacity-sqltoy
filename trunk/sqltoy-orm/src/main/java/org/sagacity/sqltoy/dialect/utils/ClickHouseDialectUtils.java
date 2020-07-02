@@ -250,8 +250,9 @@ public class ClickHouseDialectUtils {
 	 */
 	public static Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String tableName) throws Exception {
-		if (entity == null)
+		if (entity == null) {
 			return 0L;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete table:" + entityMeta.getSchemaTable(tableName)
@@ -295,8 +296,9 @@ public class ClickHouseDialectUtils {
 	 */
 	public static Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
-		if (null == entities || entities.isEmpty())
+		if (null == entities || entities.isEmpty()) {
 			return 0L;
+		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {

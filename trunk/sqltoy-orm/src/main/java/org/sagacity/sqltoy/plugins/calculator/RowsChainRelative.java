@@ -30,8 +30,9 @@ public class RowsChainRelative {
 	 */
 	public static void process(RowsChainRelativeModel rowsRelative, HashMap<String, Integer> labelIndexMap,
 			List result) {
-		if (result == null || result.size() < 2)
+		if (result == null || result.size() < 2) {
 			return;
+		}
 		int dataSize = result.size();
 		// 5,3-2+0+1
 		boolean isAppend = rowsRelative.isInsert();
@@ -46,8 +47,8 @@ public class RowsChainRelative {
 			end = dataSize - 1;
 		}
 		int groupSize = 1;
-		//通过分组列来提取分组对比的数据长度(如不同品类不同月份的对比,品类数量即为groupSize)
-		//如单品类则groupSize为1
+		// 通过分组列来提取分组对比的数据长度(如不同品类不同月份的对比,品类数量即为groupSize)
+		// 如单品类则groupSize为1
 		if (StringUtil.isNotBlank(rowsRelative.getGroupColumn())) {
 			int groupColIndex;
 			if (NumberUtil.isInteger(rowsRelative.getGroupColumn())) {

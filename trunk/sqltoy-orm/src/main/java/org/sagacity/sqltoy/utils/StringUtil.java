@@ -72,8 +72,9 @@ public class StringUtil {
 	}
 
 	public static boolean isBlank(Object str) {
-		if (null == str)
+		if (null == str) {
 			return true;
+		}
 		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
 			return true;
 		}
@@ -96,8 +97,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String clearMistyChars(String source, String target) {
-		if (source == null)
+		if (source == null) {
 			return null;
+		}
 		return source.replaceAll("\r|\t|\n", target);
 	}
 
@@ -107,10 +109,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperCase(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1));
 	}
 
@@ -120,10 +124,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToLowerCase(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toLowerCase().concat(sourceStr.substring(1));
 	}
 
@@ -133,10 +139,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperOtherToLower(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1).toLowerCase());
 	}
 
@@ -147,14 +155,16 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int indexOfIgnoreCase(String source, String pattern) {
-		if (source == null || pattern == null)
+		if (source == null || pattern == null) {
 			return -1;
+		}
 		return source.toLowerCase().indexOf(pattern.toLowerCase());
 	}
 
 	public static int indexOfIgnoreCase(String source, String pattern, int start) {
-		if (source == null || pattern == null)
+		if (source == null || pattern == null) {
 			return -1;
+		}
 		return source.toLowerCase().indexOf(pattern.toLowerCase(), start);
 	}
 
@@ -186,8 +196,9 @@ public class StringUtil {
 	 * @return
 	 */
 	private static String addSign2Len(String source, int length, int flag, int leftOrRight) {
-		if (source == null || source.length() >= length)
+		if (source == null || source.length() >= length) {
 			return source;
+		}
 		int addSize = length - source.length();
 		StringBuilder addStr = new StringBuilder();
 		// 右边
@@ -214,10 +225,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String loopAppendWithSign(String source, String sign, int loopSize) {
-		if (loopSize == 0)
+		if (loopSize == 0) {
 			return "";
-		if (loopSize == 1)
+		}
+		if (loopSize == 1) {
 			return source;
+		}
 		StringBuilder result = new StringBuilder(source);
 		for (int i = 1; i < loopSize; i++) {
 			result.append(sign).append(source);
@@ -705,9 +718,10 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase) {
-		if (isBlank(source))
+		if (isBlank(source)) {
 			return source;
-		// update 2018-3-22 将-复活统一成_
+		}
+		// update 2018-3-22 将-符号统一成_
 		String[] humpAry = source.trim().replace("-", "_").split("\\_");
 		String cell;
 		StringBuilder result = new StringBuilder();
@@ -736,11 +750,13 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String secureMask(Object value, int preLength, int tailLength, String maskStr) {
-		if (value == null)
+		if (value == null) {
 			return null;
+		}
 		String tmp = value.toString();
-		if (tmp.length() <= preLength + tailLength)
+		if (tmp.length() <= preLength + tailLength) {
 			return tmp;
+		}
 		return tmp.substring(0, preLength).concat(maskStr == null ? "***" : maskStr)
 				.concat(tmp.substring(tmp.length() - tailLength));
 	}
@@ -793,8 +809,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String[] humpFieldNames(String[] labelNames) {
-		if (labelNames == null)
+		if (labelNames == null) {
 			return null;
+		}
 		String[] result = new String[labelNames.length];
 		int aliasIndex = 0;
 		for (int i = 0, n = labelNames.length; i < n; i++) {
@@ -815,8 +832,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String fillArgs(String template, Object... args) {
-		if (template == null || (args == null || args.length == 0))
+		if (template == null || (args == null || args.length == 0)) {
 			return template;
+		}
 		for (Object arg : args) {
 			template = template.replaceFirst("\\$?\\{\\s*\\}", arg == null ? "null" : arg.toString());
 		}
@@ -878,8 +896,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String toDBC(String SBCStr) {
-		if (isBlank(SBCStr))
+		if (isBlank(SBCStr)) {
 			return SBCStr;
+		}
 		// 常用符号进行全角转半角
 		return SBCStr.replaceAll("\\；", ";").replaceAll("\\？", "?").replaceAll("\\．", ".").replaceAll("\\：", ":")
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")

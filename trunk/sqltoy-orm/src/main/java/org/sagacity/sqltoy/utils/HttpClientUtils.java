@@ -204,8 +204,9 @@ public class HttpClientUtils {
 				logger.debug("result={}", result);
 			}
 		}
-		if (StringUtil.isBlank(result))
+		if (StringUtil.isBlank(result)) {
 			return null;
+		}
 		// 将结果转换为JSON对象
 		JSONObject json = JSON.parseObject(result);
 		// 存在错误

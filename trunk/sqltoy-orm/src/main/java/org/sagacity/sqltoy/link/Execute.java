@@ -104,8 +104,9 @@ public class Execute extends BaseLink {
 	 * @return
 	 */
 	public Long submit() {
-		if (sql == null)
+		if (sql == null) {
 			throw new IllegalArgumentException("execute operate sql is null!");
+		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update);
 		// 根据sql中的变量从entity对象中提取参数值
 		Object[] values = paramsValue;

@@ -193,8 +193,9 @@ public class SqlToyConstants {
 		if (result == null) {
 			result = System.getProperty(key);
 		}
-		if (StringUtil.isNotBlank(result))
+		if (StringUtil.isNotBlank(result)) {
 			return result;
+		}
 		return defaultValue;
 	}
 
@@ -281,8 +282,9 @@ public class SqlToyConstants {
 	 */
 	public static boolean randomWithDialect(Integer dbType) {
 		// 目前是不支持的
-		if (dbType == DataSourceUtils.DBType.SYBASE_IQ)
+		if (dbType == DataSourceUtils.DBType.SYBASE_IQ) {
 			return false;
+		}
 		return Boolean.parseBoolean(getKeyValue("sqltoy.random.with.dialect", "true"));
 	}
 
@@ -300,15 +302,18 @@ public class SqlToyConstants {
 	 */
 	private static void loadPropertyFile(String propertiesFile) {
 		// 加载指定的额外参数，或提供开发者修改默认参数
-		if (StringUtil.isBlank(propertiesFile))
+		if (StringUtil.isBlank(propertiesFile)) {
 			return;
+		}
 		InputStream fis = null;
 		try {
 			Properties props = new Properties();
 			fis = FileUtil.getFileInputStream(propertiesFile);
-			props.load(fis);
-			sqlToyProps.putAll((Map) props);
-			fis.close();
+			if (fis != null) {
+				props.load(fis);
+				sqlToyProps.putAll((Map) props);
+				fis.close();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -368,8 +373,9 @@ public class SqlToyConstants {
 	 * @return
 	 */
 	public static String replaceParams(String template) {
-		if (StringUtil.isBlank(template))
+		if (StringUtil.isBlank(template)) {
 			return template;
+		}
 		LinkedHashMap<String, String> paramsMap = parseParams(template);
 		String result = template;
 		if (paramsMap.size() > 0) {
