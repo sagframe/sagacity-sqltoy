@@ -62,7 +62,7 @@ import org.w3c.dom.NodeList;
  * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
  * @modify Date:2020-3-27 {增加rows-chain-relative 和 cols-chain-relative
  *         环比计算功能,并优化unpivot解析改用XMLUtil类}
- * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}       
+ * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
@@ -77,6 +77,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern ES_AGGS_PATTERN = Pattern
 			.compile("(?i)\\W(\"|\')(aggregations|aggs)(\"|\')\\s*\\:\\s*\\{");
 
+	// 判断mongo是否存在聚合
 	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\$group\\s*\\:");
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
@@ -332,10 +333,8 @@ public class SqlXMLConfigParse {
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);
 		}
-		/**
-		 * 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 select 1
-		 * from,减少不必要的执行运算，提升效率)
-		 */
+		// 是否是单纯的union all分页(在取count记录数时,将union all 每部分的查询from前面的全部替换成 
+		// select 1 from,减少不必要的执行运算，提升效率)
 		if (sqlElt.hasAttribute("union-all-count")) {
 			sqlToyConfig.setUnionAllCount(Boolean.parseBoolean(sqlElt.getAttribute("union-all-count")));
 		}
@@ -381,13 +380,13 @@ public class SqlXMLConfigParse {
 		// 解析link
 		parseLink(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("link")), local);
 		// 解析对结果的运算
-		parseCalculator(sqlToyConfig, sqlElt);
+		parseCalculator(sqlToyConfig, sqlElt, local);
 
 		// 解析安全脱敏配置
 		parseSecureMask(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("secure-mask")));
 		// mongo/elastic查询语法
 		if (isNoSql) {
-			parseNoSql(sqlToyConfig, sqlElt);
+			parseNoSql(sqlToyConfig, sqlElt, local);
 		}
 		return sqlToyConfig;
 	}
@@ -396,8 +395,9 @@ public class SqlXMLConfigParse {
 	 * @todo 解析nosql的相关配置
 	 * @param sqlToyConfig
 	 * @param sqlElt
+	 * @param local
 	 */
-	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt) {
+	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt, String local) {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
 		NodeList nodeList;
 
@@ -445,7 +445,7 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setFields(splitFields(sqlElt.getAttribute("fields")));
 			}
 		} else {
-			nodeList = sqlElt.getElementsByTagName("fields");
+			nodeList = sqlElt.getElementsByTagName(local.concat("fields"));
 			if (nodeList.getLength() > 0) {
 				noSqlConfig.setFields(splitFields(nodeList.item(0).getTextContent()));
 			}
@@ -728,6 +728,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param filterModel
 	 * @param filter
+	 * @param local
 	 */
 	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter,
 			String local) {
@@ -1015,7 +1016,8 @@ public class SqlXMLConfigParse {
 	/**
 	 * @todo 解析Link 查询
 	 * @param sqlToyConfig
-	 * @param link
+	 * @param linkNode
+	 * @param local
 	 */
 	private static void parseLink(SqlToyConfig sqlToyConfig, NodeList linkNode, String local) {
 		if (linkNode == null || linkNode.getLength() == 0) {
@@ -1106,8 +1108,10 @@ public class SqlXMLConfigParse {
 	 * @todo 解析对sqltoy查询结果的计算处理逻辑定义(包含:旋转、汇总等)
 	 * @param sqlToyConfig
 	 * @param sqlElt
+	 * @param local
+	 * @throws Exception
 	 */
-	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt) throws Exception {
+	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt, String local) throws Exception {
 		NodeList elements = sqlElt.getChildNodes();
 		Element elt;
 		String eltName;
@@ -1186,7 +1190,7 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("link-sign")) {
 						summaryModel.setLinkSign(elt.getAttribute("link-sign"));
 					}
-					NodeList nodeList = elt.getElementsByTagName("global");
+					NodeList nodeList = elt.getElementsByTagName(local.concat("global"));
 					// 全局汇总
 					if (nodeList.getLength() > 0) {
 						Element globalSummary = (Element) nodeList.item(0);
@@ -1209,7 +1213,7 @@ public class SqlXMLConfigParse {
 						}
 					}
 					// 分组汇总
-					nodeList = elt.getElementsByTagName("group");
+					nodeList = elt.getElementsByTagName(local.concat("group"));
 					if (nodeList.getLength() > 0) {
 						GroupMeta[] groupMetas = new GroupMeta[nodeList.getLength()];
 						Element groupElt;
