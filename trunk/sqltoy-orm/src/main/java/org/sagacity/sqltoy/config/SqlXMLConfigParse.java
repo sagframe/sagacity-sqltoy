@@ -62,7 +62,7 @@ import org.w3c.dom.NodeList;
  * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
  * @modify Date:2020-3-27 {增加rows-chain-relative 和 cols-chain-relative
  *         环比计算功能,并优化unpivot解析改用XMLUtil类}
- * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}       
+ * @modify Date:2020-7-2 {支持外部集成命名空间前缀适配解析,如报表集成定义了前缀s:filters等}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlXMLConfigParse {
@@ -77,6 +77,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern ES_AGGS_PATTERN = Pattern
 			.compile("(?i)\\W(\"|\')(aggregations|aggs)(\"|\')\\s*\\:\\s*\\{");
 
+	// 判断mongo是否存在聚合
 	private final static Pattern MONGO_AGGS_PATTERN = Pattern.compile("(?i)\\$group\\s*\\:");
 
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
@@ -381,13 +382,13 @@ public class SqlXMLConfigParse {
 		// 解析link
 		parseLink(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("link")), local);
 		// 解析对结果的运算
-		parseCalculator(sqlToyConfig, sqlElt);
+		parseCalculator(sqlToyConfig, sqlElt, local);
 
 		// 解析安全脱敏配置
 		parseSecureMask(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("secure-mask")));
 		// mongo/elastic查询语法
 		if (isNoSql) {
-			parseNoSql(sqlToyConfig, sqlElt);
+			parseNoSql(sqlToyConfig, sqlElt, local);
 		}
 		return sqlToyConfig;
 	}
@@ -397,7 +398,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 */
-	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt) {
+	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt, String local) {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
 		NodeList nodeList;
 
@@ -445,7 +446,7 @@ public class SqlXMLConfigParse {
 				noSqlConfig.setFields(splitFields(sqlElt.getAttribute("fields")));
 			}
 		} else {
-			nodeList = sqlElt.getElementsByTagName("fields");
+			nodeList = sqlElt.getElementsByTagName(local.concat("fields"));
 			if (nodeList.getLength() > 0) {
 				noSqlConfig.setFields(splitFields(nodeList.item(0).getTextContent()));
 			}
@@ -1107,7 +1108,7 @@ public class SqlXMLConfigParse {
 	 * @param sqlToyConfig
 	 * @param sqlElt
 	 */
-	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt) throws Exception {
+	private static void parseCalculator(SqlToyConfig sqlToyConfig, Element sqlElt, String local) throws Exception {
 		NodeList elements = sqlElt.getChildNodes();
 		Element elt;
 		String eltName;
@@ -1186,7 +1187,7 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("link-sign")) {
 						summaryModel.setLinkSign(elt.getAttribute("link-sign"));
 					}
-					NodeList nodeList = elt.getElementsByTagName("global");
+					NodeList nodeList = elt.getElementsByTagName(local.concat("global"));
 					// 全局汇总
 					if (nodeList.getLength() > 0) {
 						Element globalSummary = (Element) nodeList.item(0);
@@ -1209,7 +1210,7 @@ public class SqlXMLConfigParse {
 						}
 					}
 					// 分组汇总
-					nodeList = elt.getElementsByTagName("group");
+					nodeList = elt.getElementsByTagName(local.concat("group"));
 					if (nodeList.getLength() > 0) {
 						GroupMeta[] groupMetas = new GroupMeta[nodeList.getLength()];
 						Element groupElt;
