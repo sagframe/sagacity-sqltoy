@@ -136,23 +136,24 @@ public class QuickVOConstants implements Serializable {
 			{ "UInt32", "Long", "" }, { "UInt64", "BigInteger", "java.math.BigInteger" }, { "SERIAL", "Integer", "" },
 			{ "FLOAT", "Float", "" }, { "FLOAT4", "Float", "" }, { "FLOAT8", "Float", "" }, { "FLOAT32", "Float", "" },
 			{ "FLOAT64", "Double", "" }, { "DOUBLE", "Double", "" }, { "NUMBER", "BigDecimal", "java.math.BigDecimal" },
-			{ "NUMERIC", "BigDecimal", "java.math.BigDecimal" }, { "DECIMAL", "BigDecimal", "java.math.BigDecimal" },
-			{ "TIMESTAMP", "Timestamp", "java.sql.Timestamp" }, { "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
+			{ "MONEY", "BigDecimal", "java.math.BigDecimal" }, { "NUMERIC", "BigDecimal", "java.math.BigDecimal" },
+			{ "DECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "TIMESTAMP", "Timestamp", "java.sql.Timestamp" },
+			{ "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "LocalDate", "java.time.LocalDate" },
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
 			{ "YEAR", "LocalDate", "java.time.LocalDate" }, { "VARCHAR", "String", "" }, { "MEDIUMTEXT", "String", "" },
 			{ "VARCHAR2", "String", "" }, { "LONG VARCHAR", "String", "" }, { "LONGVARCHAR", "String", "" },
-			{ "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" }, { "JSON", "String", "" },
-			{ "STRING", "String", "" }, { "FixedSTRING", "String", "" }, { "CHAR", "String", "" },
-			{ "BPCHAR", "String", "" }, { "CHARACTER", "String", "" }, { "BIT", "Boolean", "" },
-			{ "BOOLEAN", "Boolean", "" }, { "BOOL", "Boolean", "" }, { "Clob", "String", "java.sql.Clob" },
-			{ "NCLOB", "String", "java.sql.Clob" }, { "CLOB", "String", "oracle.sql.CLOB", "oracle" },
-			{ "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" }, { "Blob", "byte[]", "java.sql.Blob" },
-			{ "LONGBLOB", "byte[]", "java.sql.Blob" }, { "MEDIUMBLOB", "byte[]", "java.sql.Blob" },
-			{ "TEXT", "String", "" }, { "LONGTEXT", "String", "" }, { "TINYTEXT", "String" },
-			{ "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" },
-			{ "VARBINARY", "byte[]", "" }, { "BINARY", "byte[]", "" }, { "BYTEA", "byte[]", "" },
-			{ "LONGVARBINARY", "byte[]", "" } };
+			{ "NVARCHAR", "String", "" }, { "LONGNVARCHAR", "String", "" }, { "NCHAR", "String", "" },
+			{ "JSON", "String", "" }, { "STRING", "String", "" }, { "FixedSTRING", "String", "" },
+			{ "CHAR", "String", "" }, { "BPCHAR", "String", "" }, { "CHARACTER", "String", "" },
+			{ "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" }, { "BOOL", "Boolean", "" },
+			{ "Clob", "String", "java.sql.Clob" }, { "NCLOB", "String", "java.sql.Clob" },
+			{ "CLOB", "String", "oracle.sql.CLOB", "oracle" }, { "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" },
+			{ "Blob", "byte[]", "java.sql.Blob" }, { "LONGBLOB", "byte[]", "java.sql.Blob" },
+			{ "MEDIUMBLOB", "byte[]", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
+			{ "TINYTEXT", "String" }, { "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" },
+			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "byte[]", "" }, { "BINARY", "byte[]", "" },
+			{ "BYTEA", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
 
 	/**
 	 * 原始类型
@@ -173,9 +174,10 @@ public class QuickVOConstants implements Serializable {
 			{ "LONGVARBINARY", "BINARY" }, { "BYTEA", "BINARY" }, { "LONGBLOB", "BLOB" }, { "BOOLEAN", "BOOLEAN" },
 			{ "BOOL", "BOOLEAN" }, { "MEDIUMBLOB", "BLOB" }, { "LONGTEXT", "VARCHAR" }, { "MEDIUMTEXT", "VARCHAR" },
 			{ "TEXT", "VARCHAR" }, { "JSON", "VARCHAR" }, { "TINYTEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" },
-			{ "BPCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" }, { "INT", "INTEGER" },
-			{ "INTEGER", "INTEGER" }, { "BIGINT", "BIGINT" }, { "BIT", "BIT" }, { "NUMBER", "DECIMAL" },
-			{ "DECIMAL", "DECIMAL" }, { "NUMERIC", "DECIMAL" }, { "IMAGE", "LONGVARBINARY" } };
+			{ "NVARCHAR", "VARCHAR" }, { "BPCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" },
+			{ "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "BIGINT", "BIGINT" }, { "BIT", "BIT" },
+			{ "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" }, { "MONEY", "DECIMAL" }, { "NUMERIC", "DECIMAL" },
+			{ "IMAGE", "LONGVARBINARY" } };
 
 	/**
 	 * 全局常量map
