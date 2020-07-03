@@ -136,9 +136,9 @@ public class QuickVOConstants implements Serializable {
 			{ "UInt32", "Long", "" }, { "UInt64", "BigInteger", "java.math.BigInteger" }, { "SERIAL", "Integer", "" },
 			{ "FLOAT", "Float", "" }, { "FLOAT4", "Float", "" }, { "FLOAT8", "Float", "" }, { "FLOAT32", "Float", "" },
 			{ "FLOAT64", "Double", "" }, { "DOUBLE", "Double", "" }, { "NUMBER", "BigDecimal", "java.math.BigDecimal" },
-			{ "MONEY", "BigDecimal", "java.math.BigDecimal" }, { "NUMERIC", "BigDecimal", "java.math.BigDecimal" },
-			{ "DECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "TIMESTAMP", "Timestamp", "java.sql.Timestamp" },
-			{ "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
+			{ "MONEY", "BigDecimal", "java.math.BigDecimal" }, { "SMALLMONEY", "BigDecimal", "java.math.BigDecimal" },
+			{ "NUMERIC", "BigDecimal", "java.math.BigDecimal" }, { "DECIMAL", "BigDecimal", "java.math.BigDecimal" },
+			{ "TIMESTAMP", "Timestamp", "java.sql.Timestamp" }, { "TIMESTAMP(6)", "Timestamp", "java.sql.Timestamp" },
 			{ "BIGDECIMAL", "BigDecimal", "java.math.BigDecimal" }, { "DATE", "LocalDate", "java.time.LocalDate" },
 			{ "DATETIME", "LocalDateTime", "java.time.LocalDateTime" }, { "TIME", "LocalTime", "java.time.LocalTime" },
 			{ "YEAR", "LocalDate", "java.time.LocalDate" }, { "VARCHAR", "String", "" }, { "MEDIUMTEXT", "String", "" },
@@ -176,8 +176,8 @@ public class QuickVOConstants implements Serializable {
 			{ "TEXT", "VARCHAR" }, { "JSON", "VARCHAR" }, { "TINYTEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" },
 			{ "NVARCHAR", "VARCHAR" }, { "BPCHAR", "VARCHAR" }, { "VARCHAR2", "VARCHAR" }, { "TINYINT", "TINYINT" },
 			{ "INT", "INTEGER" }, { "INTEGER", "INTEGER" }, { "BIGINT", "BIGINT" }, { "BIT", "BIT" },
-			{ "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" }, { "MONEY", "DECIMAL" }, { "NUMERIC", "DECIMAL" },
-			{ "IMAGE", "LONGVARBINARY" } };
+			{ "NUMBER", "DECIMAL" }, { "DECIMAL", "DECIMAL" }, { "MONEY", "DECIMAL" }, { "SMALLMONEY", "DECIMAL" },
+			{ "NUMERIC", "DECIMAL" }, { "IMAGE", "LONGVARBINARY" } };
 
 	/**
 	 * 全局常量map
