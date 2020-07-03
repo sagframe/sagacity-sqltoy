@@ -60,7 +60,17 @@
 												<xsd:attribute name="package"
 													type="xsd:string" use="required" />
 												<xsd:attribute name="substr" type="xsd:string"
-													use="required" />
+													use="required">
+													<xsd:annotation>
+														<xsd:documentation><![CDATA[表名转vo时剔除前缀部分,如T_STAFF_INFO 转为StaffInfoVO,剔除掉T_,默认为空白]]></xsd:documentation>
+													</xsd:annotation>
+												</xsd:attribute>
+												<xsd:attribute name="column-substr"
+													type="xsd:string">
+													<xsd:annotation>
+														<xsd:documentation><![CDATA[针对表中的字段约定了固定开始字符，如:F_CODE_ID,剔除F_]]></xsd:documentation>
+													</xsd:annotation>
+												</xsd:attribute>
 												<xsd:attribute name="name" type="xsd:string"
 													use="required" />
 											</xsd:complexType>
@@ -129,7 +139,8 @@
 									<xsd:attribute name="column" use="required"
 										type="xsd:string" />
 									<xsd:attribute name="length" type="xsd:int" />
-									<xsd:attribute name="sequence-size" type="xsd:int" />
+									<xsd:attribute name="sequence-size"
+										type="xsd:int" />
 									<xsd:attribute name="signature" type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>

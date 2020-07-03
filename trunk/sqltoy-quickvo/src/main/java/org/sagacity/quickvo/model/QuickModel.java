@@ -20,6 +20,11 @@ public class QuickModel implements Serializable {
 	private String entityPackage;
 	private String voPackage;
 	private String voSubstr;
+
+	/**
+	 * 字段剔除前缀
+	 */
+	private String columnPrefix;
 	private String voName;
 	private boolean voActive;
 	private String voTemplate;
@@ -176,6 +181,14 @@ public class QuickModel implements Serializable {
 	 */
 	public void setSwaggerApi(boolean swaggerApi) {
 		this.swaggerApi = swaggerApi;
+	}
+
+	public String getColumnPrefix() {
+		return columnPrefix;
+	}
+
+	public void setColumnPrefix(String columnPrefix) {
+		this.columnPrefix = columnPrefix;
 	}
 
 }

@@ -143,6 +143,11 @@ public class XMLConfigLoader {
 					if (vo.hasAttribute("substr")) {
 						quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
 					}
+
+					// 列剔除的前缀
+					if (vo.hasAttribute("column-substr")) {
+						quickModel.setColumnPrefix(QuickVOConstants.replaceConstants(vo.getAttribute("column-substr")));
+					}
 					quickModel.setVoName(QuickVOConstants.replaceConstants(vo.getAttribute("name")));
 					quickModels.add(quickModel);
 				}
