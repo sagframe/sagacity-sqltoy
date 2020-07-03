@@ -908,8 +908,14 @@ public class TaskController {
 		return buffer.toString();
 	}
 
+	/**
+	 * @TODO 剔除字段前缀
+	 * @param columnName
+	 * @param prefix
+	 * @return
+	 */
 	private static String subColumn(String columnName, String prefix) {
-		if (prefix == null) {
+		if (prefix == null || columnName == null) {
 			return columnName;
 		}
 		if (columnName.toLowerCase().startsWith(prefix)) {
@@ -917,5 +923,4 @@ public class TaskController {
 		}
 		return columnName;
 	}
-
 }
