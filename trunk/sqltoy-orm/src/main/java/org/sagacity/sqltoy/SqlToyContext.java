@@ -280,8 +280,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public Object getServiceData(String beanName, String method, Object[] args) {
-		if (StringUtil.isBlank(beanName) || StringUtil.isBlank(method))
+		if (StringUtil.isBlank(beanName) || StringUtil.isBlank(method)) {
 			return null;
+		}
 		try {
 			Object beanDefine = null;
 			if (applicationContext.containsBean(beanName)) {
@@ -326,8 +327,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public DataSource getDataSource(String dataSourceName) {
-		if (StringUtil.isBlank(dataSourceName))
+		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
+		}
 		if (dataSourcesMap.containsKey(dataSourceName)) {
 			return dataSourcesMap.get(dataSourceName);
 		}
@@ -511,38 +513,39 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param dialect the dialect to set
 	 */
 	public void setDialect(String dialect) {
-		if (StringUtil.isNotBlank(dialect)) {
-			// 规范数据库方言命名(避免方言和版本一起定义)
-			String tmp = dialect.toLowerCase();
-			if (tmp.startsWith(Dialect.MYSQL)) {
-				this.dialect = Dialect.MYSQL;
-			} else if (tmp.startsWith(Dialect.ORACLE)) {
-				this.dialect = Dialect.ORACLE;
-			} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
-				this.dialect = Dialect.POSTGRESQL;
-			} else if (tmp.startsWith(Dialect.DB2)) {
-				this.dialect = Dialect.DB2;
-			} else if (tmp.startsWith(Dialect.SQLSERVER)) {
-				this.dialect = Dialect.SQLSERVER;
-			} else if (tmp.startsWith(Dialect.SQLITE)) {
-				this.dialect = Dialect.SQLITE;
-			} else if (tmp.startsWith(Dialect.GAUSSDB)) {
-				this.dialect = Dialect.GAUSSDB;
-			} else if (tmp.startsWith(Dialect.MARIADB)) {
-				this.dialect = Dialect.MARIADB;
-			} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
-				this.dialect = Dialect.CLICKHOUSE;
-			} else if (tmp.startsWith(Dialect.OCEANBASE)) {
-				this.dialect = Dialect.OCEANBASE;
-			} else if (tmp.startsWith(Dialect.DM)) {
-				this.dialect = Dialect.DM;
-			} else if (tmp.startsWith(Dialect.TIDB)) {
-				this.dialect = Dialect.TIDB;
-			} else {
-				this.dialect = dialect;
-			}
-			scriptLoader.setDialect(this.dialect);
+		if (StringUtil.isBlank(dialect)) {
+			return;
 		}
+		// 规范数据库方言命名(避免方言和版本一起定义)
+		String tmp = dialect.toLowerCase();
+		if (tmp.startsWith(Dialect.MYSQL)) {
+			this.dialect = Dialect.MYSQL;
+		} else if (tmp.startsWith(Dialect.ORACLE)) {
+			this.dialect = Dialect.ORACLE;
+		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
+			this.dialect = Dialect.POSTGRESQL;
+		} else if (tmp.startsWith(Dialect.DB2)) {
+			this.dialect = Dialect.DB2;
+		} else if (tmp.startsWith(Dialect.SQLSERVER)) {
+			this.dialect = Dialect.SQLSERVER;
+		} else if (tmp.startsWith(Dialect.SQLITE)) {
+			this.dialect = Dialect.SQLITE;
+		} else if (tmp.startsWith(Dialect.GAUSSDB)) {
+			this.dialect = Dialect.GAUSSDB;
+		} else if (tmp.startsWith(Dialect.MARIADB)) {
+			this.dialect = Dialect.MARIADB;
+		} else if (tmp.startsWith(Dialect.CLICKHOUSE)) {
+			this.dialect = Dialect.CLICKHOUSE;
+		} else if (tmp.startsWith(Dialect.OCEANBASE)) {
+			this.dialect = Dialect.OCEANBASE;
+		} else if (tmp.startsWith(Dialect.DM)) {
+			this.dialect = Dialect.DM;
+		} else if (tmp.startsWith(Dialect.TIDB)) {
+			this.dialect = Dialect.TIDB;
+		} else {
+			this.dialect = dialect;
+		}
+		scriptLoader.setDialect(this.dialect);
 	}
 
 	/**
@@ -598,8 +601,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param dialectProperties the dialectProperties to set
 	 */
 	public void setDialectProperties(Object dialectProperties) {
-		if (dialectProperties == null)
+		if (dialectProperties == null) {
 			return;
+		}
 		if (dialectProperties instanceof String) {
 			this.dialectProperties = dialectProperties.toString();
 		} else if (dialectProperties instanceof Map) {
@@ -623,8 +627,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(Object functionConverts) {
-		if (functionConverts == null)
+		if (functionConverts == null) {
 			return;
+		}
 		if (functionConverts instanceof List) {
 			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
 		} else if (functionConverts instanceof String) {
@@ -680,21 +685,22 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param elasticConfigs the elasticConfigs to set
 	 */
 	public void setElasticEndpoints(List<ElasticEndpoint> elasticEndpointList) {
-		if (elasticEndpointList != null && !elasticEndpointList.isEmpty()) {
-			// 第一个作为默认值
-			if (StringUtil.isBlank(defaultElastic)) {
-				defaultElastic = elasticEndpointList.get(0).getId();
+		if (elasticEndpointList == null || elasticEndpointList.isEmpty()) {
+			return;
+		}
+		// 第一个作为默认值
+		if (StringUtil.isBlank(defaultElastic)) {
+			defaultElastic = elasticEndpointList.get(0).getId();
+		}
+		boolean nativeSql = Boolean
+				.parseBoolean(SqlToyConstants.getKeyValue("sqltoy.elasticsearch.native.sql", "false"));
+		for (ElasticEndpoint config : elasticEndpointList) {
+			// 初始化restClient
+			config.initRestClient();
+			if (!config.isNativeSql()) {
+				config.setNativeSql(nativeSql);
 			}
-			boolean nativeSql = Boolean
-					.parseBoolean(SqlToyConstants.getKeyValue("sqltoy.elasticsearch.native.sql", "false"));
-			for (ElasticEndpoint config : elasticEndpointList) {
-				// 初始化restClient
-				config.initRestClient();
-				if (!config.isNativeSql()) {
-					config.setNativeSql(nativeSql);
-				}
-				elasticEndpoints.put(config.getId().toLowerCase(), config);
-			}
+			elasticEndpoints.put(config.getId().toLowerCase(), config);
 		}
 	}
 
