@@ -1073,7 +1073,11 @@ public class DialectFactory {
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll", null);
 			// 一般in的最大数量是1000
-			int batchSize = 1000;
+			int batchSize = SqlToyConstants.getLoadAllBatchSize();
+			// 最大控制在1000内
+			if (batchSize > 1000 || batchSize < 1) {
+				batchSize = 1000;
+			}
 			int totalSize = entities.size();
 			int batch = (totalSize + batchSize - 1) / batchSize;
 			List result = new ArrayList();

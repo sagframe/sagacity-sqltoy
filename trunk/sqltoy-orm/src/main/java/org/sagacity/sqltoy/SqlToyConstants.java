@@ -392,4 +392,12 @@ public class SqlToyConstants {
 		return result;
 	}
 
+	/**
+	 * @todo 获取记录提取的警告阀值
+	 * @return
+	 */
+	public static int getLoadAllBatchSize() {
+		// 默认值为100
+		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
+	}
 }
