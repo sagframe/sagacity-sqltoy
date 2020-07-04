@@ -189,12 +189,14 @@ public class CrudCaseServiceTest {
 	public void loadAll() {
 		// 组织批量数据
 		List<StaffInfoVO> staffs = new ArrayList<StaffInfoVO>();
-		String[] ids = { "S190715001", "S190715002" };
+		String[] ids = { "S0001", "S0002", "S0003", "S0004", "S0005", "S0006" };
 		for (String id : ids) {
 			staffs.add(new StaffInfoVO(id));
 		}
-		staffs=sqlToyCRUDService.loadAll(staffs);
-		System.err.println(JSON.toJSONString(staffs));
+		staffs = sqlToyCRUDService.loadAll(staffs);
+		for (StaffInfoVO s : staffs) {
+			System.err.println(JSON.toJSONString(s));
+		}
 	}
 
 	@Test

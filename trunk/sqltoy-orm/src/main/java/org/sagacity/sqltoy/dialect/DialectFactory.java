@@ -1072,22 +1072,36 @@ public class DialectFactory {
 		}
 		try {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll", null);
-			// 分库分表并行执行,并返回结果
-			return ParallelUtils.execute(sqlToyContext, entities, false, dataSource, new ParallelCallbackHandler() {
-				public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel) throws Exception {
-					final ShardingModel shardingModel = batchModel.getShardingModel();
-					return (List) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
-							new DataSourceCallbackHandler() {
-								public void doConnection(Connection conn, Integer dbType, String dialect)
-										throws Exception {
-									this.setResult(getDialectSqlWrapper(dbType).loadAll(sqlToyContext,
-											batchModel.getEntities(),
-											(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes),
-											lockMode, conn, dbType, dialect, shardingModel.getTableName()));
-								}
-							});
-				}
-			});
+			// 一般in的最大数量是1000
+			int batchSize = 1000;
+			int totalSize = entities.size();
+			int batch = (totalSize + batchSize - 1) / batchSize;
+			List result = new ArrayList();
+			List batchEntities;
+			for (int i = 0; i < batch; i++) {
+				// 切取单个批次的记录
+				batchEntities = entities.subList(i * batchSize, (i == batch - 1) ? totalSize : (i + 1) * batchSize);
+				// 分库分表并行执行,并返回结果
+				result.addAll(ParallelUtils.execute(sqlToyContext, batchEntities, false, dataSource,
+						new ParallelCallbackHandler() {
+							public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
+									throws Exception {
+								final ShardingModel shardingModel = batchModel.getShardingModel();
+								return (List) DataSourceUtils.processDataSource(sqlToyContext,
+										shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+											public void doConnection(Connection conn, Integer dbType, String dialect)
+													throws Exception {
+												this.setResult(getDialectSqlWrapper(dbType).loadAll(sqlToyContext,
+														batchModel.getEntities(),
+														(cascadeTypes == null) ? null
+																: CollectionUtil.arrayToList(cascadeTypes),
+														lockMode, conn, dbType, dialect, shardingModel.getTableName()));
+											}
+										});
+							}
+						}));
+			}
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);

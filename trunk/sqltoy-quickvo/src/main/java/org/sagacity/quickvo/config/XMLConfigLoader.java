@@ -91,8 +91,9 @@ public class XMLConfigLoader {
 		}
 
 		NodeList quickVOs = tasks.getElementsByTagName("task");
-		if (quickVOs == null || quickVOs.getLength() == 0)
+		if (quickVOs == null || quickVOs.getLength() == 0) {
 			return null;
+		}
 		// 解析task 任务配置信息
 		List quickModels = new ArrayList();
 		Element quickvo;
@@ -142,11 +143,6 @@ public class XMLConfigLoader {
 					quickModel.setVoPackage(QuickVOConstants.replaceConstants(vo.getAttribute("package")));
 					if (vo.hasAttribute("substr")) {
 						quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
-					}
-
-					// 列剔除的前缀
-					if (vo.hasAttribute("column-substr")) {
-						quickModel.setColumnPrefix(QuickVOConstants.replaceConstants(vo.getAttribute("column-substr")));
 					}
 					quickModel.setVoName(QuickVOConstants.replaceConstants(vo.getAttribute("name")));
 					quickModels.add(quickModel);
