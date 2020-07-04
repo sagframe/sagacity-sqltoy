@@ -144,7 +144,7 @@ public class XMLConfigLoader {
 						quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
 					}
 
-					// 列剔除的前缀
+					// 列剔除的前缀(废弃,这种模式会导致后续查询映射到VO时属性不匹配的问题)
 					if (vo.hasAttribute("column-substr")) {
 						quickModel.setColumnPrefix(QuickVOConstants.replaceConstants(vo.getAttribute("column-substr")));
 					}
