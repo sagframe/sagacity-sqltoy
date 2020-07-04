@@ -392,4 +392,12 @@ public class SqlToyConstants {
 		return result;
 	}
 
+	/**
+	 * @todo 获取loadAll单个批次最大的记录数量,主要是防止sql in ()参数超过1000导致错误
+	 * @return
+	 */
+	public static int getLoadAllBatchSize() {
+		// 默认值为100
+		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
+	}
 }
