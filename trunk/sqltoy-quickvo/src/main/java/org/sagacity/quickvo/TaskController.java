@@ -142,7 +142,6 @@ public class TaskController {
 		}
 		int dbType = DBHelper.getDBType();
 		String dialect = DBHelper.getDBDialect();
-		String subColumn = (quickModel.getColumnPrefix() == null) ? null : quickModel.getColumnPrefix().toLowerCase();
 		// (?i)忽略大小写
 		List tables = DBHelper.getTableAndView(includes, quickModel.getExcludeTables() == null ? null
 				: new String[] { "(?i)".concat(quickModel.getExcludeTables()) });
@@ -226,10 +225,10 @@ public class TaskController {
 			// vo中需要import的数据类型
 			List impList = new ArrayList();
 			List colList = processTableCols(configModel, DBHelper.getTableColumnMeta(tableName),
-					isTable ? DBHelper.getTableImpForeignKeys(tableName) : null, impList, dbType, dialect, subColumn);
+					isTable ? DBHelper.getTableImpForeignKeys(tableName) : null, impList, dbType, dialect);
 			List exportKeys = DBHelper.getTableExportKeys(tableName);
 			// 处理主键被其它表作为外键关联
-			processExportTables(quickVO, exportKeys, quickModel, subColumn);
+			processExportTables(quickVO, exportKeys, quickModel);
 			// 判断表字段是否全部为非空约束
 			int notNullCnt = judgeFullNotNull(colList);
 			// 默认设置为运行部分列为空
@@ -420,7 +419,7 @@ public class TaskController {
 	 * @throws Exception
 	 */
 	private static List processTableCols(ConfigModel configModel, List cols, List fks, List impList, int dbType,
-			String dialect, String subColumn) throws Exception {
+			String dialect) throws Exception {
 		List quickColMetas = new ArrayList();
 		TableColumnMeta colMeta;
 		String sqlType = "";
@@ -454,7 +453,7 @@ public class TaskController {
 			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
-			quickColMeta.setColJavaName(StringUtil.toHumpStr(subColumn(colMeta.getColName(), subColumn), true));
+			quickColMeta.setColJavaName(StringUtil.toHumpStr(colMeta.getColName(), true));
 
 			quickColMeta.setJdbcType(jdbcType);
 			quickColMeta.setPrecision(colMeta.getPrecision());
@@ -563,8 +562,8 @@ public class TaskController {
 					if (colMeta.getColName().equalsIgnoreCase(constractModel.getFkColName())) {
 						quickColMeta
 								.setFkRefJavaTableName(StringUtil.toHumpStr(constractModel.getFkRefTableName(), true));
-						quickColMeta.setFkRefTableColJavaName(
-								StringUtil.toHumpStr(subColumn(constractModel.getPkColName(), subColumn), true));
+						quickColMeta
+								.setFkRefTableColJavaName(StringUtil.toHumpStr(constractModel.getPkColName(), true));
 						break;
 					}
 				}
@@ -650,7 +649,7 @@ public class TaskController {
 	 * @param quickModel
 	 */
 	private static void processExportTables(QuickVO quickVO, List<TableConstractModel> exportKeys,
-			QuickModel quickModel, String subColumn) {
+			QuickModel quickModel) {
 		// 设置被关联的表
 		if (exportKeys != null && !exportKeys.isEmpty()) {
 			List<CascadeModel> cascadeModels;
@@ -663,8 +662,8 @@ public class TaskController {
 			for (TableConstractModel exportKey : exportKeys) {
 				refTable = exportKey.getPkRefTableName();
 				refJavaTable = StringUtil.toHumpStr(refTable, true);
-				pkColJavaName = StringUtil.toHumpStr(subColumn(exportKey.getPkColName(), subColumn), false);
-				pkRefColJavaName = StringUtil.toHumpStr(subColumn(exportKey.getPkRefColName(), subColumn), false);
+				pkColJavaName = StringUtil.toHumpStr(exportKey.getPkColName(), false);
+				pkRefColJavaName = StringUtil.toHumpStr(exportKey.getPkRefColName(), false);
 				if (subTablesMap.containsKey(refTable)) {
 					subTable = subTablesMap.get(refTable);
 					subTable.setPkColName(subTable.getPkColName() + ",\"" + exportKey.getPkColName() + "\"");
@@ -906,21 +905,5 @@ public class TaskController {
 			FileUtil.closeQuietly(in);
 		}
 		return buffer.toString();
-	}
-
-	/**
-	 * @TODO 剔除字段前缀
-	 * @param columnName
-	 * @param prefix
-	 * @return
-	 */
-	private static String subColumn(String columnName, String prefix) {
-		if (prefix == null || columnName == null) {
-			return columnName;
-		}
-		if (columnName.toLowerCase().startsWith(prefix)) {
-			return columnName.substring(prefix.length());
-		}
-		return columnName;
 	}
 }
