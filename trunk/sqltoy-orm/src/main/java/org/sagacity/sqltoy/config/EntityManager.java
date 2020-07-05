@@ -579,6 +579,7 @@ public class EntityManager {
 				}
 				idGenerators.put(idGenerator, redis);
 			} else {
+				//自定义(不依赖spring模式)
 				idGenerators.put(idGenerator,
 						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 			}
