@@ -558,7 +558,7 @@ public class EntityManager {
 		if (idGenerators.containsKey(idGenerator)) {
 			return;
 		}
-		// 自定义springbean 模式
+		// 自定义springbean 模式，用法在quickvo中配置@bean(beanName)
 		if (idGenerator.toLowerCase().startsWith("@bean(")) {
 			String beanName = idGenerator.substring(idGenerator.indexOf("(") + 1, idGenerator.indexOf(")"))
 					.replaceAll("\"|\'", "").trim();
@@ -579,7 +579,7 @@ public class EntityManager {
 				}
 				idGenerators.put(idGenerator, redis);
 			} else {
-				//自定义(不依赖spring模式)
+				//自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
 				idGenerators.put(idGenerator,
 						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 			}

@@ -440,24 +440,30 @@ public class DialectFactory {
 				}
 				// nodeLevel
 				columnName = entityMeta.getColumnName(treeModel.getNodeLevelField());
-				if (columnName != null)
+				if (columnName != null) {
 					treeModel.nodeLevelField(columnName);
+				}
 				// nodeRoute
 				columnName = entityMeta.getColumnName(treeModel.getNodeRouteField());
-				if (columnName != null)
+				if (columnName != null) {
 					treeModel.nodeRouteField(columnName);
-
+				}
 				HashMap<String, String> columnMap = new HashMap<String, String>();
-				for (FieldMeta column : entityMeta.getFieldsMeta().values())
+				for (FieldMeta column : entityMeta.getFieldsMeta().values()) {
 					columnMap.put(column.getColumnName().toUpperCase(), "");
-				if (!columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase()))
+				}
+				if (!columnMap.containsKey(treeModel.getNodeRouteField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:节点路径字段名称:" + treeModel.getNodeRouteField() + "不正确,请检查!");
-				if (!columnMap.containsKey(treeModel.getLeafField().toUpperCase()))
+				}
+				if (!columnMap.containsKey(treeModel.getLeafField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:是否叶子节点字段名称:" + treeModel.getLeafField() + "不正确,请检查!");
-				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase()))
+				}
+				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:节点等级字段名称:" + treeModel.getNodeLevelField() + "不正确,请检查!");
-				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1)
+				}
+				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1) {
 					throw new IllegalArgumentException("树形表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
+				}
 
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 主键
@@ -468,10 +474,12 @@ public class DialectFactory {
 					Object rootValue = BeanUtil.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
 					Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 							StringUtil.toHumpStr(treeModel.getPidField(), false));
-					if (null == treeModel.getRootId())
+					if (null == treeModel.getRootId()) {
 						treeModel.rootId(pidValue);
-					if (null == treeModel.getIdValue())
+					}
+					if (null == treeModel.getIdValue()) {
 						treeModel.setIdValue(rootValue);
+					}
 				}
 				// 类型,默认值为false
 				if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
@@ -1507,8 +1515,9 @@ public class DialectFactory {
 							// sql中问号数量
 							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN);
 							// 处理参数注入
-							if (paramCnt != inCount + outCount)
+							if (paramCnt != inCount + outCount) {
 								throw new IllegalArgumentException("存储过程语句中的输入和输出参数跟实际调用传递的数量不等!");
+							}
 
 							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
