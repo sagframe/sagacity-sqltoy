@@ -359,9 +359,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		return scriptLoader.getSqlConfig(sqlKey, type);
 	}
 
-	/**
-	 * 设置workerId和dataCenterId,当没有通过配置文件指定workerId时通过IP来自动分配
-	 */
+	// 设置workerId和dataCenterId,当没有通过配置文件指定workerId时通过IP来自动分配
+	// 当一个IP节点上部署多个实例时需要手工指定
 	private void setWorkerAndDataCenterId() {
 		try {
 			String keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.workerId");
