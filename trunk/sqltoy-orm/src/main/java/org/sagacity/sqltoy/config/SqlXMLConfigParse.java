@@ -989,7 +989,7 @@ public class SqlXMLConfigParse {
 					translateModel.setCache(cacheName);
 					translateModel.setColumn(columns[i]);
 					translateModel.setAlias(aliasNames == null ? columns[i] : aliasNames[i]);
-					translateModel.setDictType(cacheType);
+					translateModel.setCacheType(cacheType);
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {

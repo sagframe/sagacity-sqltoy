@@ -141,17 +141,17 @@ public class TranslateManager {
 			translate = entry.getValue();
 			if (translateMap.containsKey(translate.getCache())) {
 				cacheModel = translateMap.get(translate.getCache());
-				cache = getCacheData(sqlToyContext, cacheModel, translate.getDictType());
+				cache = getCacheData(sqlToyContext, cacheModel, translate.getCacheType());
 				if (cache != null) {
 					result.put(translate.getColumn(), cache);
 				} else {
 					result.put(translate.getColumn(), new HashMap<String, Object[]>());
 					if (logger.isWarnEnabled()) {
 						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
-								cacheModel.getCache(), translate.getDictType(), translate.getColumn());
+								cacheModel.getCache(), translate.getCacheType(), translate.getColumn());
 					} else {
 						System.err.println("sqltoy translate:cacheName=" + cacheModel.getCache() + ",cache-type="
-								+ translate.getDictType() + ",column=" + translate.getColumn()
+								+ translate.getCacheType() + ",column=" + translate.getColumn()
 								+ " 配置不正确,未获取对应cache数据!");
 					}
 				}
