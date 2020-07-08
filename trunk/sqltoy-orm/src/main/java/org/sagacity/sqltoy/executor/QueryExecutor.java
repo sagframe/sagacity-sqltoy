@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.executor;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -15,6 +16,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,6 +103,11 @@ public class QueryExecutor implements Serializable {
 	 * 是否已经提取过value值
 	 */
 	private boolean extracted = false;
+
+	/**
+	 * 动态增加缓存翻译配置
+	 */
+	private LinkedHashMap<String, SqlTranslate> translates = new LinkedHashMap<String, SqlTranslate>();
 
 	public QueryExecutor(String sql) {
 		this.sql = sql;

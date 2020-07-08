@@ -27,9 +27,9 @@ public class SqlTranslate implements Serializable {
 	private String column;
 
 	/**
-	 * 字典类别
+	 * 缓存类型(一般为字典类别)
 	 */
-	private String dictType;
+	private String cacheType;
 
 	/**
 	 * 对应的缓存名称
@@ -76,19 +76,19 @@ public class SqlTranslate implements Serializable {
 		this.column = column;
 	}
 
+	
 	/**
-	 * @return the dictType
+	 * @return the cacheType
 	 */
-	public String getDictType() {
-		return dictType;
+	public String getCacheType() {
+		return cacheType;
 	}
 
 	/**
-	 * @param dictType
-	 *            the dictType to set
+	 * @param cacheType the cacheType to set
 	 */
-	public void setDictType(String dictType) {
-		this.dictType = dictType;
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
 	}
 
 	/**

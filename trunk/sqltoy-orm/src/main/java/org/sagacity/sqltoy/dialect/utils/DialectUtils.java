@@ -261,7 +261,7 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 通用的查询记录总数
+	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from () 还是直接剔除from之前的语句补充select count)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql

@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10 下午10:27:57
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
+ * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -362,7 +363,6 @@ public class BeanUtil {
 			}
 			return DateUtil.asLocalDate(DateUtil.convertDateObject(paramValue));
 		}
-		// 为什么先转Double?因为部分场景下valueStr是0.00这种形态(数据库默认值),导致转换失败
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
 			return new Integer(convertBoolean(valueStr).split("\\.")[0]);
@@ -396,6 +396,7 @@ public class BeanUtil {
 			return DateUtil.parseString(valueStr);
 		}
 		if (typeName.equals("java.lang.long")) {
+			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错
 			return new Long(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("int")) {
