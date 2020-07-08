@@ -54,14 +54,16 @@
 
 
 # 2. 快速特点说明
-## 2.1 极致朴素的sql编写方式(基于本质性规律发现)
+## 2.1 极致朴素的sql编写方式(本质规律的发现和抽象)
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
 * sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
 * 支持多层嵌套:如 #[and t.order_id=:orderId #[and t.order_type=:orderType]] 
 * 条件判断保留#[@if(:param>=xx ||:param<=xx1) sql语句] 这种@if()高度灵活模式,为特殊复杂场景下提供万能钥匙
 
-```
+```xml
+//1、 条件值处理跟具体sql分离
+//2、 将条件值前置加工规整
 <sql id="show_case">
 <filters>
    <!-- 参数statusAry只要包含-1(代表全部)则将statusAry设置为null不参与条件检索 -->
