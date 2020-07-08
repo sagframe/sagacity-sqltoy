@@ -80,7 +80,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(对比sqltoy你不觉得放在你的代码里面会污染了项目吗?需要多大的勇气面对sqltoy简洁的写法,根本就无法示人)!
+* mybatis同样的功能的写法(对比sqltoy你如何能让我接受mybatis的写法,这是我坚持发展sqltoy的根本)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
