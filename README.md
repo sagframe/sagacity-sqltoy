@@ -7,10 +7,8 @@
 # QQ交流群:531812227 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.13.1 发版日期: 2020-07-04
-* 增强诸如报表等外部框架集成sqltoy时xml解析兼容性，兼容namespace前缀
-* 优化loadAll大批量加载按1000一个批次进行内部分批，避免sql中in 参数不能超过1000的错误
-* 优化quickvo增加nvarchar、money等默认类型匹配
+# 最新版本号: 4.13.2 发版日期: 2020-07-08
+* 修复BeanUtil 将16位数字字符串转Long类型精度问题，场景主要是主键使用雪花算法且类型是数字并转java成Long类型时出现。
 
 # 使用单位或项目: 
 * 宁波农行  
