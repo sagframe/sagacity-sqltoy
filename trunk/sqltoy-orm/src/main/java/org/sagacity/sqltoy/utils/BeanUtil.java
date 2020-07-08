@@ -1160,8 +1160,4 @@ public class BeanUtil {
 		}
 		return method.invoke(bean);
 	}
-
-	public static void main(String[] args) {
-		System.err.println(Long.decode("0.00"));
-	}
 }
