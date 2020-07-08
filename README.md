@@ -63,7 +63,7 @@
 
 ```xml
 //1、 条件值处理跟具体sql分离
-//2、 将条件值前置加工规整
+//2、 将条件值前置通过filters 定义的通用方法加工规整(大多数是不需要额外处理的)
 <sql id="show_case">
 <filters>
    <!-- 参数statusAry只要包含-1(代表全部)则将statusAry设置为null不参与条件检索 -->
