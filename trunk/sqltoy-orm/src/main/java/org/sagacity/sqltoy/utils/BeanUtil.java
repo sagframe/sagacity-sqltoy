@@ -365,7 +365,7 @@ public class BeanUtil {
 		// 为什么先转Double?因为部分场景下valueStr是0.00这种形态(数据库默认值),导致转换失败
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
-			return Integer.valueOf(Double.valueOf(convertBoolean(valueStr)).intValue());
+			return new Integer(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		// 第六
 		if (typeName.equals("java.sql.timestamp") || typeName.equals("timestamp")) {
@@ -396,12 +396,12 @@ public class BeanUtil {
 			return DateUtil.parseString(valueStr);
 		}
 		if (typeName.equals("java.lang.long")) {
-			return Long.valueOf(Double.valueOf(convertBoolean(valueStr)).longValue());
+			return new Long(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("int")) {
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
-		//clob 类型比较特殊,对外转类型全部转为字符串
+		// clob 类型比较特殊,对外转类型全部转为字符串
 		if (typeName.equals("java.sql.clob") || typeName.equals("clob")) {
 			// update 2020-6-23 增加兼容性判断
 			if (paramValue instanceof String) {
