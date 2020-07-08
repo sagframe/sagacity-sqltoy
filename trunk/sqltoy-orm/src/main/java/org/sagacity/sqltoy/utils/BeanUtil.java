@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10 下午10:27:57
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
+ * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
