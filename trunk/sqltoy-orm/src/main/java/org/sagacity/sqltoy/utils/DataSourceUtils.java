@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DataSourceUtils.java,Revision:v1.0,Date:2015年3月3日
  * @modify data:2020-06-10
- *         剔除sqlserver2012,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ *         剔除sqlserver2008,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  */
 public class DataSourceUtils {
 	/**
