@@ -98,10 +98,21 @@ public class SqlToyDaoSupport {
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
 
+	/**
+	 * 是否需要自动诸如
+	 */
+	private boolean autoDataSource = true;
+
+	public void setAutoDataSource(boolean autoDataSource) {
+		this.autoDataSource = autoDataSource;
+	}
+
 	@Autowired(required = false)
-	@Qualifier(value = "dataSource")
+	//@Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
+		if (autoDataSource) {
+			this.dataSource = dataSource;
+		}
 	}
 
 	/**
@@ -140,6 +151,10 @@ public class SqlToyDaoSupport {
 		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
 			result = sqlToyContext.getDefaultDataSource();
+		}
+		// 第五、默认取dataSource名称的数据源
+		if (null == result) {
+			result = sqlToyContext.getDataSource("dataSource");
 		}
 		return result;
 	}
