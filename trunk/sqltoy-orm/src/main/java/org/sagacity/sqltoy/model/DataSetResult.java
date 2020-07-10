@@ -47,8 +47,7 @@ public class DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param labelNames
-	 *            the labelNames to set
+	 * @param labelNames the labelNames to set
 	 */
 	public void setLabelNames(String[] labelNames) {
 		this.labelNames = labelNames;
@@ -62,8 +61,7 @@ public class DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param labelTypes
-	 *            the labelTypes to set
+	 * @param labelTypes the labelTypes to set
 	 */
 	public void setLabelTypes(String[] labelTypes) {
 		this.labelTypes = labelTypes;
@@ -79,8 +77,7 @@ public class DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param rows
-	 *            the rows to set
+	 * @param rows the rows to set
 	 */
 	public void setRows(List rows) {
 		this.rows = rows;
@@ -104,14 +101,14 @@ public class DataSetResult implements Serializable {
 	 * @return the totalCount
 	 */
 	public Long getTotalCount() {
-		if (totalCount == null)
-			return new Long(getRows().size());
+		if (totalCount == null) {
+			return Long.valueOf(getRows().size());
+		}
 		return totalCount;
 	}
 
 	/**
-	 * @param totalCount
-	 *            the totalCount to set
+	 * @param totalCount the totalCount to set
 	 */
 	public void setTotalCount(Long totalCount) {
 		this.totalCount = totalCount;
