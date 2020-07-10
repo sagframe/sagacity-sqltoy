@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +108,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	private HashMap<String, Translate> translates = new HashMap<String, Translate>();
+	private HashMap<String, Translate> extendsTranslates = new HashMap<String, Translate>();
 
 	public QueryExecutor(String sql) {
 		this.sql = sql;
@@ -180,10 +181,20 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-	public QueryExecutor translate(Translate translate) {
+	/**
+	 * @TODO 对sql语句指定缓存翻译
+	 * @param translates
+	 * @return
+	 */
+	public QueryExecutor translates(Translate... translates) {
 		// 确保column是小写,便于后面进行比较
-		//translate.setColumn(translate.getColumn().toLowerCase());
-		translates.put(translate.getColumn(), translate);
+		// translate.setColumn(translate.getColumn().toLowerCase());
+		for (Translate trans : translates) {
+			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
+				throw new IllegalArgumentException("给查询增加的缓存翻译未定义具体的cacheName 或 column!");
+			}
+			extendsTranslates.put(trans.getColumn(), trans);
+		}
 		return this;
 	}
 
@@ -427,6 +438,6 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public HashMap<String, Translate> getTranslates() {
-		return this.translates;
+		return this.extendsTranslates;
 	}
 }

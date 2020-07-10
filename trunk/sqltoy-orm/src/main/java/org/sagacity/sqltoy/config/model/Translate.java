@@ -81,6 +81,7 @@ public class Translate implements Serializable {
 	 * @param column the column to set
 	 */
 	public Translate setColumn(String column) {
+		//转小写,便于后续过程比较
 		this.column = column.toLowerCase();
 		return this;
 	}
