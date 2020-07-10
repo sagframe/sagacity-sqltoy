@@ -1280,10 +1280,11 @@ public class SqlToyDaoSupport {
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
 			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0]).resultType(entityClass)
-					.dataSource(getDataSource(entityQuery.getDataSource()));
+					.dataSource(getDataSource(entityQuery.getDataSource())).setTranslates(entityQuery.getTranslates());
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
-					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
+					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()))
+					.setTranslates(entityQuery.getTranslates());
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略

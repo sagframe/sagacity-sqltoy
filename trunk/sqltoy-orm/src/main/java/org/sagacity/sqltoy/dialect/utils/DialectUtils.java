@@ -406,13 +406,21 @@ public class DialectUtils {
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
 			result = sqlToyConfig.clone();
-			result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			if (result.getTranslateMap() != null) {
+				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			} else {
+				result.setTranslateMap(queryExecutor.getTranslates());
+			}
 			return result;
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
 		if (queryExecutor.getTranslates() == null && queryExecutor.getTranslates().isEmpty()) {
-			result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			if (result.getTranslateMap() != null) {
+				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			} else {
+				result.setTranslateMap(queryExecutor.getTranslates());
+			}
 		}
 		if (!isNamed && wrapNamed) {
 			UnifySqlParams sqlParams;

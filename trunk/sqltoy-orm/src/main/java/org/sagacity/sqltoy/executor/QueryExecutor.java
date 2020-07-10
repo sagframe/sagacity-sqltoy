@@ -433,6 +433,18 @@ public class QueryExecutor implements Serializable {
 
 	/**
 	 * @TODO 获取自定义的缓存翻译配置
+	 * @param translateMap
+	 * @return
+	 */
+	public QueryExecutor setTranslates(HashMap<String, Translate> translateMap) {
+		if (translateMap != null && !translateMap.isEmpty()) {
+			this.extendsTranslates.putAll(translateMap);
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 获取自定义的缓存翻译配置
 	 * @return
 	 */
 	public HashMap<String, Translate> getTranslates() {
