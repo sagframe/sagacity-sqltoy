@@ -713,6 +713,10 @@ public class ResultUtils {
 		String fieldStr = fieldValue.toString();
 		// 单值翻译
 		if (translate.getSplitRegex() == null) {
+			if (translate.getKeyTemplate() != null) {
+				//keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
+				fieldStr = translate.getKeyTemplate().replace("{}", fieldStr);
+			}
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			if (cacheValues == null || cacheValues.length == 0) {
 				if (translate.getUncached() != null) {

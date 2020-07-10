@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -63,7 +64,7 @@ public class Translate implements Serializable {
 	/**
 	 * ${key}_ZH_CN 用于组合匹配缓存
 	 */
-	private String keyTemplate;
+	private String keyTemplate = null;
 
 	/**
 	 * 未被缓存的模板
@@ -81,7 +82,7 @@ public class Translate implements Serializable {
 	 * @param column the column to set
 	 */
 	public Translate setColumn(String column) {
-		//转小写,便于后续过程比较
+		// 转小写,便于后续过程比较
 		this.column = column.toLowerCase();
 		return this;
 	}
@@ -202,8 +203,10 @@ public class Translate implements Serializable {
 	 * @param keyTemplate the keyTemplate to set
 	 */
 	public Translate setKeyTemplate(String keyTemplate) {
-		this.keyTemplate = keyTemplate;
+		if (StringUtil.isNotBlank(keyTemplate)) {
+			// 规范模板
+			this.keyTemplate = keyTemplate.replaceFirst("(?i)\\$?\\{\\s*(key|0|cacheKey)?\\s*\\}", "{}");
+		}
 		return this;
 	}
-
 }
