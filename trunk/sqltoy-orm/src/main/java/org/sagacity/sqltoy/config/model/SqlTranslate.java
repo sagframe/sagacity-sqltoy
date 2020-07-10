@@ -55,7 +55,7 @@ public class SqlTranslate implements Serializable {
 	 * 重新连接的字符
 	 */
 	private String linkSign = ",";
-	
+
 	/**
 	 * ${key}_ZH_CN 用于组合匹配缓存
 	 */
@@ -74,14 +74,13 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param column
-	 *            the column to set
+	 * @param column the column to set
 	 */
-	public void setColumn(String column) {
+	public SqlTranslate setColumn(String column) {
 		this.column = column;
+		return this;
 	}
 
-	
 	/**
 	 * @return the cacheType
 	 */
@@ -92,8 +91,9 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param cacheType the cacheType to set
 	 */
-	public void setCacheType(String cacheType) {
+	public SqlTranslate setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+		return this;
 	}
 
 	/**
@@ -104,11 +104,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param cache
-	 *            the cache to set
+	 * @param cache the cache to set
 	 */
-	public void setCache(String cache) {
+	public SqlTranslate setCache(String cache) {
 		this.cache = cache;
+		return this;
 	}
 
 	/**
@@ -119,11 +119,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param index
-	 *            the index to set
+	 * @param index the index to set
 	 */
-	public void setIndex(int index) {
+	public SqlTranslate setIndex(int index) {
 		this.index = index;
+		return this;
 	}
 
 	/**
@@ -134,11 +134,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param alias
-	 *            the alias to set
+	 * @param alias the alias to set
 	 */
-	public void setAlias(String alias) {
+	public SqlTranslate setAlias(String alias) {
 		this.alias = alias;
+		return this;
 	}
 
 	/**
@@ -149,11 +149,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param uncached
-	 *            the uncached to set
+	 * @param uncached the uncached to set
 	 */
-	public void setUncached(String uncached) {
+	public SqlTranslate setUncached(String uncached) {
 		this.uncached = uncached;
+		return this;
 	}
 
 	/**
@@ -164,11 +164,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param splitRegex
-	 *            the splitRegex to set
+	 * @param splitRegex the splitRegex to set
 	 */
-	public void setSplitRegex(String splitRegex) {
+	public SqlTranslate setSplitRegex(String splitRegex) {
 		this.splitRegex = splitRegex;
+		return this;
 	}
 
 	/**
@@ -179,11 +179,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param linkSign
-	 *            the linkSign to set
+	 * @param linkSign the linkSign to set
 	 */
-	public void setLinkSign(String linkSign) {
+	public SqlTranslate setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
+		return this;
 	}
 
 	/**
@@ -196,8 +196,9 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param keyTemplate the keyTemplate to set
 	 */
-	public void setKeyTemplate(String keyTemplate) {
+	public SqlTranslate setKeyTemplate(String keyTemplate) {
 		this.keyTemplate = keyTemplate;
+		return this;
 	}
 
 }
