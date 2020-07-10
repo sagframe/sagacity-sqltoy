@@ -55,6 +55,11 @@ public class SqlTranslate implements Serializable {
 	 * 重新连接的字符
 	 */
 	private String linkSign = ",";
+	
+	/**
+	 * ${key}_ZH_CN 用于组合匹配缓存
+	 */
+	private String keyTemplate;
 
 	/**
 	 * 未被缓存的模板
@@ -179,6 +184,20 @@ public class SqlTranslate implements Serializable {
 	 */
 	public void setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
+	}
+
+	/**
+	 * @return the keyTemplate
+	 */
+	public String getKeyTemplate() {
+		return keyTemplate;
+	}
+
+	/**
+	 * @param keyTemplate the keyTemplate to set
+	 */
+	public void setKeyTemplate(String keyTemplate) {
+		this.keyTemplate = keyTemplate;
 	}
 
 }
