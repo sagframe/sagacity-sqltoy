@@ -98,21 +98,10 @@ public class SqlToyDaoSupport {
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
 
-	/**
-	 * 是否需要自动诸如
-	 */
-	private boolean autoDataSource = true;
-
-	public void setAutoDataSource(boolean autoDataSource) {
-		this.autoDataSource = autoDataSource;
-	}
-
 	@Autowired(required = false)
-	//@Qualifier(value = "dataSource")
+	// @Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
-		if (autoDataSource) {
-			this.dataSource = dataSource;
-		}
+		this.dataSource = dataSource;
 	}
 
 	/**
