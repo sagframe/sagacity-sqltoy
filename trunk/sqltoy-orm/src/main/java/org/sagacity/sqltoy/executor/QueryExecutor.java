@@ -187,8 +187,6 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor translates(Translate... translates) {
-		// 确保column是小写,便于后面进行比较
-		// translate.setColumn(translate.getColumn().toLowerCase());
 		for (Translate trans : translates) {
 			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
 				throw new IllegalArgumentException("给查询增加的缓存翻译未定义具体的cacheName 或 column!");
