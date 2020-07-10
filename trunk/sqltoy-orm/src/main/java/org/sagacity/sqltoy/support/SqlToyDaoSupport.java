@@ -98,7 +98,7 @@ public class SqlToyDaoSupport {
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
 
-	@Autowired(required = false)
+	// @Autowired(required = false)
 	// @Qualifier(value = "dataSource")
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;

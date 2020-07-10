@@ -62,7 +62,7 @@ public class LinkDaoSupport {
 	/**
 	 * @param dataSource the dataSource to set
 	 */
-	@Autowired(required = false)
+	//@Autowired(required = false)
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
