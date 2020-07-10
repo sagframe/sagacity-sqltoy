@@ -414,4 +414,12 @@ public class QueryExecutor implements Serializable {
 			this.shardingParamsValue = realValues;
 		}
 	}
+
+	/**
+	 * @TODO 获取自定义的缓存翻译配置
+	 * @return
+	 */
+	public LinkedHashMap<String, SqlTranslate> getTranslates() {
+		return this.translates;
+	}
 }

@@ -261,7 +261,8 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from () 还是直接剔除from之前的语句补充select count)
+	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
+	 *       还是直接剔除from之前的语句补充select count)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -398,7 +399,12 @@ public class DialectUtils {
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
-			return sqlToyConfig;
+			//没有自定义缓存翻译直接返回
+			if (queryExecutor.getTranslates() == null) {
+				return sqlToyConfig;
+			}
+			//存在自定义缓存翻译则需要clone便于后面修改
+			return sqlToyConfig.clone();
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		SqlToyConfig result = sqlToyConfig.clone();
