@@ -396,6 +396,7 @@ public class DialectUtils {
 		// 本身就是:named参数形式或sql中没有任何参数
 		boolean isNamed = (sqlToyConfig.isNamedParam()
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
+		SqlToyConfig result;
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
@@ -404,10 +405,15 @@ public class DialectUtils {
 				return sqlToyConfig;
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
-			return sqlToyConfig.clone();
+			result = sqlToyConfig.clone();
+			result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			return result;
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
-		SqlToyConfig result = sqlToyConfig.clone();
+		result = sqlToyConfig.clone();
+		if (queryExecutor.getTranslates() == null && queryExecutor.getTranslates().isEmpty()) {
+			result.getTranslateMap().putAll(queryExecutor.getTranslates());
+		}
 		if (!isNamed && wrapNamed) {
 			UnifySqlParams sqlParams;
 			// 将?形式的参数替换成:named形式参数

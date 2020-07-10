@@ -30,9 +30,9 @@ import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -286,7 +286,7 @@ public class ResultUtils {
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null) ? false : true;
-		HashMap<String, SqlTranslate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
+		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
@@ -329,7 +329,7 @@ public class ResultUtils {
 					: false;
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
-			SqlTranslate translateModel = null;
+			Translate translateModel = null;
 			if (translateLink) {
 				translateModel = translateMap.get(linkModel.getColumn().toLowerCase());
 				linkTranslateIndex = translateModel.getIndex();
@@ -665,12 +665,12 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List processResultRowWithTranslate(HashMap<String, SqlTranslate> translateMap,
+	private static List processResultRowWithTranslate(HashMap<String, Translate> translateMap,
 			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
-		SqlTranslate translate;
+		Translate translate;
 		String label;
 		String keyIndex;
 		boolean allNull = true;
@@ -708,7 +708,7 @@ public class ResultUtils {
 	 * @param fieldValue
 	 * @return
 	 */
-	private static Object translateKey(SqlTranslate translate, HashMap<String, Object[]> translateKeyMap,
+	private static Object translateKey(Translate translate, HashMap<String, Object[]> translateKeyMap,
 			Object fieldValue) {
 		String fieldStr = fieldValue.toString();
 		// 单值翻译

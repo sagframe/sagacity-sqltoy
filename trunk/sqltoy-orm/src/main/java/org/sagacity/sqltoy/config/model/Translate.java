@@ -14,12 +14,16 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @version Revision:v1.0,Date:2013-4-8
  * @Modification Date:2013-4-8 {填写修改说明}
  */
-public class SqlTranslate implements Serializable {
+public class Translate implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6616462798500953675L;
+
+	public Translate(String cacheName) {
+		this.cache = cacheName;
+	}
 
 	/**
 	 * 字段列
@@ -76,8 +80,8 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param column the column to set
 	 */
-	public SqlTranslate setColumn(String column) {
-		this.column = column;
+	public Translate setColumn(String column) {
+		this.column = column.toLowerCase();
 		return this;
 	}
 
@@ -91,7 +95,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param cacheType the cacheType to set
 	 */
-	public SqlTranslate setCacheType(String cacheType) {
+	public Translate setCacheType(String cacheType) {
 		this.cacheType = cacheType;
 		return this;
 	}
@@ -106,7 +110,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param cache the cache to set
 	 */
-	public SqlTranslate setCache(String cache) {
+	public Translate setCache(String cache) {
 		this.cache = cache;
 		return this;
 	}
@@ -121,7 +125,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param index the index to set
 	 */
-	public SqlTranslate setIndex(int index) {
+	public Translate setIndex(int index) {
 		this.index = index;
 		return this;
 	}
@@ -136,7 +140,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param alias the alias to set
 	 */
-	public SqlTranslate setAlias(String alias) {
+	public Translate setAlias(String alias) {
 		this.alias = alias;
 		return this;
 	}
@@ -151,7 +155,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param uncached the uncached to set
 	 */
-	public SqlTranslate setUncached(String uncached) {
+	public Translate setUncached(String uncached) {
 		this.uncached = uncached;
 		return this;
 	}
@@ -166,7 +170,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param splitRegex the splitRegex to set
 	 */
-	public SqlTranslate setSplitRegex(String splitRegex) {
+	public Translate setSplitRegex(String splitRegex) {
 		this.splitRegex = splitRegex;
 		return this;
 	}
@@ -181,7 +185,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param linkSign the linkSign to set
 	 */
-	public SqlTranslate setLinkSign(String linkSign) {
+	public Translate setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
 		return this;
 	}
@@ -196,7 +200,7 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param keyTemplate the keyTemplate to set
 	 */
-	public SqlTranslate setKeyTemplate(String keyTemplate) {
+	public Translate setKeyTemplate(String keyTemplate) {
 		this.keyTemplate = keyTemplate;
 		return this;
 	}

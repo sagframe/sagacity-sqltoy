@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.sagacity.sqltoy.config.model.Translate;
 
 /**
  * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
@@ -48,7 +48,7 @@ public class EntityQuery implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	private LinkedHashMap<String, SqlTranslate> translates = new LinkedHashMap<String, SqlTranslate>();
+	private LinkedHashMap<String, Translate> translates = new LinkedHashMap<String, Translate>();
 
 	private LinkedHashMap<String, String> orderBy = new LinkedHashMap<String, String>();
 
