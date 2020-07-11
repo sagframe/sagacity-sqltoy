@@ -86,7 +86,7 @@ public class ShardingUtils {
 					entityMeta.getSchemaTable(), strategyConfig.getDecisionType(), valueMap);
 			shardingModel.setDataSourceName(dbModel.getDataSourceName());
 			if (dbModel.getDataSource() == null) {
-				shardingModel.setDataSource(sqlToyContext.getDataSource(dbModel.getDataSourceName()));
+				shardingModel.setDataSource(sqlToyContext.getDataSourceBean(dbModel.getDataSourceName()));
 			} else {
 				shardingModel.setDataSource(dbModel.getDataSource());
 			}
@@ -207,7 +207,8 @@ public class ShardingUtils {
 				if (hasDB) {
 					shardingModel.setDataSourceName(dataSourceName);
 					if (shardingDBModel.getDataSource() == null) {
-						shardingModel.setDataSource(sqlToyContext.getDataSource(shardingDBModel.getDataSourceName()));
+						shardingModel
+								.setDataSource(sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName()));
 					} else {
 						shardingModel.setDataSource(shardingDBModel.getDataSource());
 					}
@@ -285,7 +286,7 @@ public class ShardingUtils {
 		if (shardingDBModel.getDataSource() != null) {
 			return shardingDBModel.getDataSource();
 		}
-		return sqlToyContext.getDataSource(shardingDBModel.getDataSourceName());
+		return sqlToyContext.getDataSourceBean(shardingDBModel.getDataSourceName());
 	}
 
 	/**

@@ -333,7 +333,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param dataSourceName
 	 * @return
 	 */
-	public DataSource getDataSource(String dataSourceName) {
+	public DataSource getDataSourceBean(String dataSourceName) {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
@@ -677,13 +677,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @return the defaultDataSource
-	 */
-	public DataSource getDefaultDataSource() {
-		return defaultDataSource;
-	}
-
-	/**
 	 * @param defaultDataSource the defaultDataSource to set
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
@@ -692,6 +685,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
 		this.obtainDataSource = obtainDataSource;
+	}
+
+	public DataSource obtainDataSource() {
+		if (obtainDataSource == null) {
+			return defaultDataSource;
+		}
+		return obtainDataSource.getDataSource(applicationContext, defaultDataSource);
 	}
 
 	/**

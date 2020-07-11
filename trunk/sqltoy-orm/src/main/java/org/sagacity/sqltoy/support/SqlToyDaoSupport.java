@@ -38,7 +38,6 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -116,7 +115,7 @@ public class SqlToyDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}
@@ -132,7 +131,7 @@ public class SqlToyDaoSupport {
 		DataSource result = dataSource;
 		// 第二、sql指定的数据源
 		if (null == result && null != sqltoyConfig.getDataSource()) {
-			result = sqlToyContext.getDataSource(sqltoyConfig.getDataSource());
+			result = sqlToyContext.getDataSourceBean(sqltoyConfig.getDataSource());
 		}
 		// 第三、自动注入的数据源
 		if (null == result) {
@@ -140,11 +139,7 @@ public class SqlToyDaoSupport {
 		}
 		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
-		}
-		// 第五、默认取dataSource名称的数据源
-		if (null == result) {
-			result = sqlToyContext.getDataSource("dataSource");
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}

@@ -14,5 +14,5 @@ import org.springframework.context.ApplicationContext;
  * @version id:AbstractGetDataSource.java,Revision:v1.0,Date:2020年7月11日
  */
 public interface ObtainDataSource {
-	public DataSource getDataSource(ApplicationContext applicationContext, String defaultDataSource);
+	public DataSource getDataSource(ApplicationContext applicationContext, DataSource defaultDataSource);
 }

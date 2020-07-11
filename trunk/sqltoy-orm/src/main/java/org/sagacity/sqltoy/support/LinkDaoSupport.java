@@ -62,7 +62,7 @@ public class LinkDaoSupport {
 	/**
 	 * @param dataSource the dataSource to set
 	 */
-	//@Autowired(required = false)
+	// @Autowired(required = false)
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
@@ -213,10 +213,7 @@ public class LinkDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
-		}
-		if (null == result) {
-			result = sqlToyContext.getDataSource("dataSource");
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}
