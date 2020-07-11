@@ -109,6 +109,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String reservedWords;
 
 	/**
+	 * 自定义获取DataSource的策略类
+	 */
+	private String obtainDataSource;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -304,4 +309,11 @@ public class SqlToyContextProperties implements Serializable {
 		this.reservedWords = reservedWords;
 	}
 
+	public String getObtainDataSource() {
+		return obtainDataSource;
+	}
+
+	public void setObtainDataSource(String obtainDataSource) {
+		this.obtainDataSource = obtainDataSource;
+	}
 }
