@@ -132,11 +132,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String defaultElastic = "default";
 
 	/**
-	 * 登记sqltoy所需要访问的DataSource
-	 */
-	private HashMap<String, DataSource> dataSourcesMap = new HashMap<String, DataSource>();
-
-	/**
 	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
 	 */
 	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
@@ -337,13 +332,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		if (dataSourcesMap.containsKey(dataSourceName)) {
-			return dataSourcesMap.get(dataSourceName);
-		}
-		if (applicationContext.containsBean(dataSourceName)) {
-			return (DataSource) applicationContext.getBean(dataSourceName);
-		}
-		return null;
+		return (DataSource) applicationContext.getBean(dataSourceName);
 	}
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey) {
@@ -495,20 +484,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public synchronized void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		scriptLoader.putSqlToyConfig(sqlToyConfig);
-	}
-
-	/**
-	 * @return the dataSourcesMap
-	 */
-	public HashMap<String, DataSource> getDataSourcesMap() {
-		return dataSourcesMap;
-	}
-
-	/**
-	 * @param dataSourcesMap the dataSourcesMap to set
-	 */
-	public void setDataSourcesMap(HashMap<String, DataSource> dataSourcesMap) {
-		this.dataSourcesMap = dataSourcesMap;
 	}
 
 	/**
@@ -687,6 +662,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.obtainDataSource = obtainDataSource;
 	}
 
+	/**
+	 * 提供给SqlToyDaoSupport等获取数据源
+	 * 
+	 * @return
+	 */
 	public DataSource obtainDataSource() {
 		if (obtainDataSource == null) {
 			return defaultDataSource;

@@ -27,7 +27,6 @@ import org.sagacity.sqltoy.link.Elastic;
 import org.sagacity.sqltoy.link.Execute;
 import org.sagacity.sqltoy.link.Load;
 import org.sagacity.sqltoy.link.Mongo;
-import org.sagacity.sqltoy.link.Page;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
@@ -345,8 +344,8 @@ public interface SqlToyLazyDao {
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrSqlId
 	 * @param paramsNamed
-	 * @param paramsValue   对应Named参数的值
-	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param paramsValue 对应Named参数的值
+	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
@@ -499,13 +498,6 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Delete delete();
-
-	/**
-	 * 分页操作集合
-	 * 
-	 * @return
-	 */
-	public Page page();
 
 	/**
 	 * 修改操作集合

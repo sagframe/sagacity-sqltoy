@@ -9,7 +9,6 @@ import org.sagacity.sqltoy.link.Elastic;
 import org.sagacity.sqltoy.link.Execute;
 import org.sagacity.sqltoy.link.Load;
 import org.sagacity.sqltoy.link.Mongo;
-import org.sagacity.sqltoy.link.Page;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
@@ -69,15 +68,6 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 */
 	protected Query query() {
 		return new Query(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * @todo 分页操作集合
-	 * @return
-	 */
-	@Deprecated
-	protected Page page() {
-		return new Page(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
