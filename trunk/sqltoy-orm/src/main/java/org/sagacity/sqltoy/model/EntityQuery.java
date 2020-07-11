@@ -92,8 +92,10 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery translates(Translate... translates) {
 		for (Translate trans : translates) {
-			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
-				throw new IllegalArgumentException("给查询增加的缓存翻译未定义具体的cacheName 或 column!");
+			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getKeyColumn())
+					|| StringUtil.isBlank(trans.getColumn())) {
+				throw new IllegalArgumentException(
+						"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
 			}
 			extendsTranslates.put(trans.getColumn(), trans);
 		}

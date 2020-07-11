@@ -1251,7 +1251,23 @@ public class SqlToyDaoSupport {
 		} else {
 			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
 		}
-		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+
+		String translateFields = "";
+		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
+		if (!entityQuery.getTranslates().isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+			Translate translate;
+			String keyColumn;
+			while (iter.hasNext()) {
+				translate = iter.next();
+				//将java模式的字段名称转化为数据库字段名称
+				keyColumn = entityMeta.getColumnName(translate.getKeyColumn());
+				translateFields.concat(",").concat((keyColumn == null) ? translate.getKeyColumn() : keyColumn)
+						.concat(" as ").concat(translate.getColumn());
+			}
+		}
+
+		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// 处理order by 排序
 		if (!entityQuery.getOrderBy().isEmpty()) {

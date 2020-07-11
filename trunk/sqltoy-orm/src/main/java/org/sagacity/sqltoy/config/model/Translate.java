@@ -47,6 +47,11 @@ public class Translate implements Serializable {
 	private int index = 1;
 
 	/**
+	 * 用于entityQuery场景下指定具体作为key的列
+	 */
+	private String keyColumn;
+
+	/**
 	 * 别名(预留使用)
 	 */
 	private String alias;
@@ -145,6 +150,15 @@ public class Translate implements Serializable {
 	public Translate setAlias(String alias) {
 		this.alias = alias;
 		return this;
+	}
+
+	public Translate setKeyColumn(String keyColumn) {
+		this.keyColumn = keyColumn;
+		return this;
+	}
+
+	public String getKeyColumn() {
+		return keyColumn;
 	}
 
 	/**
