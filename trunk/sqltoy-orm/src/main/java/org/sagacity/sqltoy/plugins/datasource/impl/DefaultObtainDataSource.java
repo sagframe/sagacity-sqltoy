@@ -4,14 +4,16 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.plugins.datasource.AbstractGetDataSource;
+import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.context.ApplicationContext;
 
-public class DefaultGetDataSource extends AbstractGetDataSource {
+public class DefaultObtainDataSource implements ObtainDataSource {
+	private DataSource dataSource;
 
 	@Override
 	public DataSource getDataSource(ApplicationContext applicationContext, String defaultDataSource) {
+		// 避免每次去查找
 		if (this.dataSource != null) {
 			return this.dataSource;
 		}

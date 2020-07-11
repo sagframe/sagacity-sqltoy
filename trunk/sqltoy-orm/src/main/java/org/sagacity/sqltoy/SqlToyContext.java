@@ -18,6 +18,8 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -133,6 +135,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 登记sqltoy所需要访问的DataSource
 	 */
 	private HashMap<String, DataSource> dataSourcesMap = new HashMap<String, DataSource>();
+
+	/**
+	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
+	 */
+	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
 
 	/**
 	 * @return the translateManager
@@ -681,6 +688,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
+	}
+
+	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
+		this.obtainDataSource = obtainDataSource;
 	}
 
 	/**

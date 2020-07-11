@@ -13,15 +13,6 @@ import org.springframework.context.ApplicationContext;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:AbstractGetDataSource.java,Revision:v1.0,Date:2020年7月11日
  */
-public abstract class AbstractGetDataSource {
-	/**
-	 * 提供默认设置
-	 */
-	protected DataSource dataSource;
-
-	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
-	}
-
-	public abstract DataSource getDataSource(ApplicationContext applicationContext, String defaultDataSource);
+public interface ObtainDataSource {
+	public DataSource getDataSource(ApplicationContext applicationContext, String defaultDataSource);
 }
