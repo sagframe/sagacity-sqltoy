@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
@@ -1280,11 +1281,17 @@ public class SqlToyDaoSupport {
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
 			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0]).resultType(entityClass)
-					.dataSource(getDataSource(entityQuery.getDataSource())).setTranslates(entityQuery.getTranslates());
+					.dataSource(getDataSource(entityQuery.getDataSource()));
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
-					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()))
-					.setTranslates(entityQuery.getTranslates());
+					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
+		}
+		// 设置额外的缓存翻译
+		if (!entityQuery.getTranslates().isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+			while (iter.hasNext()) {
+				queryExecutor.translates(iter.next());
+			}
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略

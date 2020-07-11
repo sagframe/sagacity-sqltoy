@@ -189,7 +189,7 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor translates(Translate... translates) {
 		for (Translate trans : translates) {
 			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
-				throw new IllegalArgumentException("给查询增加的缓存翻译未定义具体的cacheName 或 column!");
+				throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
 			}
 			extendsTranslates.put(trans.getColumn(), trans);
 		}
@@ -429,18 +429,6 @@ public class QueryExecutor implements Serializable {
 			this.paramsValue = realValues;
 			this.shardingParamsValue = realValues;
 		}
-	}
-
-	/**
-	 * @TODO 获取自定义的缓存翻译配置
-	 * @param translateMap
-	 * @return
-	 */
-	public QueryExecutor setTranslates(HashMap<String, Translate> translateMap) {
-		if (translateMap != null && !translateMap.isEmpty()) {
-			this.extendsTranslates.putAll(translateMap);
-		}
-		return this;
 	}
 
 	/**
