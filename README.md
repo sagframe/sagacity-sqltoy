@@ -8,7 +8,7 @@
 ## 交流群中常见疑问
 * sqltoy目前是依托spring生态的
 * sqltoy不会成为mybatis的插件,sqltoy不会可以做这类努力，sqltoy也不会兼容mybatis
-* sqltoy是可以将查询功能 和 对象增删改功能分离使用的，你的项目里面可以只用sqltoy的查询,sqltoy的发展起初也是作为hibernate的查询补充。
+* sqltoy是可以跟现有项目中的ORM混合使用的,可以只用其查询功能
 * sqltoy性能优势是建立在缓存翻译、快速分页、分页优化、分库分表、多种技术融合应用基础上的，所以需先初步了解这些特性!
 * sqltoy优点在于为贴切项目，提供实践性功能:树结构处理、update(entity,String...forceUpdateProps)、updateFetch、取随机记录、取top记录、行列转换、同比环比等算法减少复杂sql
 * sqltoy专注于ORM层解决方案，至于其他领域如快速服务开发、报表等,目前是由其他体系来支撑的，sqltoy提供了集成机制!
