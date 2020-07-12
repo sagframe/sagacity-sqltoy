@@ -6,6 +6,7 @@
 
 # QQ 交流群:531812227 
 ## 交流群中常见疑问
+* sqltoy是从2008年开始已经发展了十几年,是项目实践产物,我用一个框架将大家的智慧固化而已!
 * sqltoy目前是依托spring生态的
 * sqltoy不会成为mybatis的插件,sqltoy不会可以做这类努力，sqltoy也不会兼容mybatis
 * sqltoy是可以跟现有项目中的ORM混合使用的,可以只用其查询功能
