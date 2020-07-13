@@ -261,7 +261,8 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from () 还是直接剔除from之前的语句补充select count)
+	 * @todo 通用的查询记录总数(包含剔除order by和智能判断是直接select count from ()
+	 *       还是直接剔除from之前的语句补充select count)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param sql
@@ -395,13 +396,32 @@ public class DialectUtils {
 		// 本身就是:named参数形式或sql中没有任何参数
 		boolean isNamed = (sqlToyConfig.isNamedParam()
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
+		SqlToyConfig result;
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
-			return sqlToyConfig;
+			// 没有自定义缓存翻译直接返回
+			if (queryExecutor.getTranslates() == null && queryExecutor.getTranslates().isEmpty()) {
+				return sqlToyConfig;
+			}
+			// 存在自定义缓存翻译则需要clone便于后面修改
+			result = sqlToyConfig.clone();
+			if (result.getTranslateMap() != null) {
+				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			} else {
+				result.setTranslateMap(queryExecutor.getTranslates());
+			}
+			return result;
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
-		SqlToyConfig result = sqlToyConfig.clone();
+		result = sqlToyConfig.clone();
+		if (queryExecutor.getTranslates() == null && queryExecutor.getTranslates().isEmpty()) {
+			if (result.getTranslateMap() != null) {
+				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+			} else {
+				result.setTranslateMap(queryExecutor.getTranslates());
+			}
+		}
 		if (!isNamed && wrapNamed) {
 			UnifySqlParams sqlParams;
 			// 将?形式的参数替换成:named形式参数

@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -157,6 +158,18 @@ public class SqltoyAutoConfiguration {
 			if (applicationContext.containsBean(properties.getDefaultDataSource())) {
 				sqlToyContext.setDefaultDataSource(
 						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
+			}
+		}
+
+		// 自定义获取数据源的策略配置
+		String obtainDataSource = properties.getObtainDataSource();
+		if (StringUtil.isNotBlank(obtainDataSource)) {
+			if (applicationContext.containsBean(obtainDataSource)) {
+				sqlToyContext.setObtainDataSource((ObtainDataSource) applicationContext.getBean(obtainDataSource));
+			} // 包名和类名称
+			else if (obtainDataSource.contains(".")) {
+				sqlToyContext.setObtainDataSource(
+						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

@@ -1,11 +1,13 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
@@ -48,7 +50,7 @@ public class EntityQuery implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	private LinkedHashMap<String, SqlTranslate> translates = new LinkedHashMap<String, SqlTranslate>();
+	private HashMap<String, Translate> extendsTranslates = new HashMap<String, Translate>();
 
 	private LinkedHashMap<String, String> orderBy = new LinkedHashMap<String, String>();
 
@@ -80,6 +82,23 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery lock(LockMode lockMode) {
 		this.lockMode = lockMode;
+		return this;
+	}
+
+	/**
+	 * @TODO 对sql语句指定缓存翻译
+	 * @param translates
+	 * @return
+	 */
+	public EntityQuery translates(Translate... translates) {
+		for (Translate trans : translates) {
+			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getKeyColumn())
+					|| StringUtil.isBlank(trans.getColumn())) {
+				throw new IllegalArgumentException(
+						"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
+			}
+			extendsTranslates.put(trans.getColumn(), trans);
+		}
 		return this;
 	}
 
@@ -124,4 +143,11 @@ public class EntityQuery implements Serializable {
 		return orderBy;
 	}
 
+	/**
+	 * @TODO 获取自定义的缓存翻译配置
+	 * @return
+	 */
+	public HashMap<String, Translate> getTranslates() {
+		return this.extendsTranslates;
+	}
 }

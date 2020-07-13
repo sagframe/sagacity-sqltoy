@@ -69,8 +69,9 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	public List<T> getRows() {
-		if (this.rows == null)
+		if (this.rows == null) {
 			return new ArrayList<T>();
+		}
 		return this.rows;
 	}
 
@@ -79,8 +80,9 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	public Integer getPageSize() {
-		if (pageSize == null || pageSize < 1)
+		if (pageSize == null || pageSize < 1) {
 			return 10;
+		}
 		return pageSize;
 	}
 
@@ -106,8 +108,9 @@ public class PaginationModel<T> implements Serializable {
 		if (this.pageNo == -1) {
 			return this.pageNo;
 		}
-		if (this.pageNo < 1)
+		if (this.pageNo < 1) {
 			return 1;
+		}
 		return this.pageNo;
 	}
 
@@ -122,22 +125,25 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	public long getStartIndex() {
-		if (startIndex == 0 && pageNo > 1)
+		if (startIndex == 0 && pageNo > 1) {
 			return (pageNo - 1) * pageSize;
+		}
 		return startIndex;
 	}
 
 	public long getNextIndex() {
 		long nextIndex = getStartIndex() + pageSize;
-		if (nextIndex >= recordCount)
+		if (nextIndex >= recordCount) {
 			return getStartIndex();
+		}
 		return nextIndex;
 	}
 
 	public long getPreviousIndex() {
 		long previousIndex = getStartIndex() - pageSize;
-		if (previousIndex < 0)
+		if (previousIndex < 0) {
 			return 0;
+		}
 		return previousIndex;
 	}
 

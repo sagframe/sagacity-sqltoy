@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.executor;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -16,8 +16,9 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +108,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 动态增加缓存翻译配置
 	 */
-	private LinkedHashMap<String, SqlTranslate> translates = new LinkedHashMap<String, SqlTranslate>();
+	private HashMap<String, Translate> extendsTranslates = new HashMap<String, Translate>();
 
 	public QueryExecutor(String sql) {
 		this.sql = sql;
@@ -177,6 +178,21 @@ public class QueryExecutor implements Serializable {
 
 	public QueryExecutor humpMapLabel(boolean humpMapLabel) {
 		this.humpMapLabel = humpMapLabel;
+		return this;
+	}
+
+	/**
+	 * @TODO 对sql语句指定缓存翻译
+	 * @param translates
+	 * @return
+	 */
+	public QueryExecutor translates(Translate... translates) {
+		for (Translate trans : translates) {
+			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
+				throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
+			}
+			extendsTranslates.put(trans.getColumn(), trans);
+		}
 		return this;
 	}
 
@@ -413,5 +429,13 @@ public class QueryExecutor implements Serializable {
 			this.paramsValue = realValues;
 			this.shardingParamsValue = realValues;
 		}
+	}
+
+	/**
+	 * @TODO 获取自定义的缓存翻译配置
+	 * @return
+	 */
+	public HashMap<String, Translate> getTranslates() {
+		return this.extendsTranslates;
 	}
 }

@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -14,12 +15,16 @@ import org.sagacity.sqltoy.SqlToyConstants;
  * @version Revision:v1.0,Date:2013-4-8
  * @Modification Date:2013-4-8 {填写修改说明}
  */
-public class SqlTranslate implements Serializable {
+public class Translate implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6616462798500953675L;
+
+	public Translate(String cacheName) {
+		this.cache = cacheName;
+	}
 
 	/**
 	 * 字段列
@@ -42,6 +47,11 @@ public class SqlTranslate implements Serializable {
 	private int index = 1;
 
 	/**
+	 * 用于entityQuery场景下指定具体作为key的列
+	 */
+	private String keyColumn;
+
+	/**
 	 * 别名(预留使用)
 	 */
 	private String alias;
@@ -57,6 +67,11 @@ public class SqlTranslate implements Serializable {
 	private String linkSign = ",";
 
 	/**
+	 * ${key}_ZH_CN 用于组合匹配缓存
+	 */
+	private String keyTemplate = null;
+
+	/**
 	 * 未被缓存的模板
 	 */
 	private String uncached = SqlToyConstants.UNCACHED_KEY_RESULT;
@@ -69,14 +84,14 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param column
-	 *            the column to set
+	 * @param column the column to set
 	 */
-	public void setColumn(String column) {
-		this.column = column;
+	public Translate setColumn(String column) {
+		// 转小写,便于后续过程比较
+		this.column = column.toLowerCase();
+		return this;
 	}
 
-	
 	/**
 	 * @return the cacheType
 	 */
@@ -87,8 +102,9 @@ public class SqlTranslate implements Serializable {
 	/**
 	 * @param cacheType the cacheType to set
 	 */
-	public void setCacheType(String cacheType) {
+	public Translate setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+		return this;
 	}
 
 	/**
@@ -99,11 +115,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param cache
-	 *            the cache to set
+	 * @param cache the cache to set
 	 */
-	public void setCache(String cache) {
+	public Translate setCache(String cache) {
 		this.cache = cache;
+		return this;
 	}
 
 	/**
@@ -114,11 +130,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param index
-	 *            the index to set
+	 * @param index the index to set
 	 */
-	public void setIndex(int index) {
+	public Translate setIndex(int index) {
 		this.index = index;
+		return this;
 	}
 
 	/**
@@ -129,11 +145,20 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param alias
-	 *            the alias to set
+	 * @param alias the alias to set
 	 */
-	public void setAlias(String alias) {
+	public Translate setAlias(String alias) {
 		this.alias = alias;
+		return this;
+	}
+
+	public Translate setKeyColumn(String keyColumn) {
+		this.keyColumn = keyColumn;
+		return this;
+	}
+
+	public String getKeyColumn() {
+		return keyColumn;
 	}
 
 	/**
@@ -144,11 +169,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param uncached
-	 *            the uncached to set
+	 * @param uncached the uncached to set
 	 */
-	public void setUncached(String uncached) {
+	public Translate setUncached(String uncached) {
 		this.uncached = uncached;
+		return this;
 	}
 
 	/**
@@ -159,11 +184,11 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param splitRegex
-	 *            the splitRegex to set
+	 * @param splitRegex the splitRegex to set
 	 */
-	public void setSplitRegex(String splitRegex) {
+	public Translate setSplitRegex(String splitRegex) {
 		this.splitRegex = splitRegex;
+		return this;
 	}
 
 	/**
@@ -174,11 +199,28 @@ public class SqlTranslate implements Serializable {
 	}
 
 	/**
-	 * @param linkSign
-	 *            the linkSign to set
+	 * @param linkSign the linkSign to set
 	 */
-	public void setLinkSign(String linkSign) {
+	public Translate setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
+		return this;
 	}
 
+	/**
+	 * @return the keyTemplate
+	 */
+	public String getKeyTemplate() {
+		return keyTemplate;
+	}
+
+	/**
+	 * @param keyTemplate the keyTemplate to set
+	 */
+	public Translate setKeyTemplate(String keyTemplate) {
+		if (StringUtil.isNotBlank(keyTemplate)) {
+			// 规范模板
+			this.keyTemplate = keyTemplate.replaceFirst("(?i)\\$?\\{\\s*(key|0|cacheKey)?\\s*\\}", "{}");
+		}
+		return this;
+	}
 }

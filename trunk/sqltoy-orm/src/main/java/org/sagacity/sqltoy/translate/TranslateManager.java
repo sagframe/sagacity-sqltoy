@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -132,12 +132,12 @@ public class TranslateManager {
 	 * @throws Exception
 	 */
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(SqlToyContext sqlToyContext, Connection conn,
-			HashMap<String, SqlTranslate> translates) {
+			HashMap<String, Translate> translates) {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
-		SqlTranslate translate;
+		Translate translate;
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
-		for (Map.Entry<String, SqlTranslate> entry : translates.entrySet()) {
+		for (Map.Entry<String, Translate> entry : translates.entrySet()) {
 			translate = entry.getValue();
 			if (translateMap.containsKey(translate.getCache())) {
 				cacheModel = translateMap.get(translate.getCache());

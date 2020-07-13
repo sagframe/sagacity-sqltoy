@@ -15,7 +15,6 @@ import org.sagacity.sqltoy.link.Elastic;
 import org.sagacity.sqltoy.link.Execute;
 import org.sagacity.sqltoy.link.Load;
 import org.sagacity.sqltoy.link.Mongo;
-import org.sagacity.sqltoy.link.Page;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
@@ -62,8 +61,8 @@ public class LinkDaoSupport {
 	/**
 	 * @param dataSource the dataSource to set
 	 */
-	@Autowired(required = false)
-	@Qualifier(value = "dataSource")
+	// @Autowired(required = false)
+	// update 2020-07-11 剔除Autowired采用新的ObtainDataSource策略便于在多数据库场景下可以自由适配
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
@@ -106,15 +105,6 @@ public class LinkDaoSupport {
 	 */
 	protected Query query() {
 		return new Query(sqlToyContext, getDataSource(dataSource));
-	}
-
-	/**
-	 * @todo 分页操作集合
-	 * @return
-	 */
-	@Deprecated
-	protected Page page() {
-		return new Page(sqlToyContext, getDataSource(dataSource));
 	}
 
 	/**
@@ -197,8 +187,9 @@ public class LinkDaoSupport {
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, getDataSource(dataSource), new DataSourceCallbackHandler() {
 			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-				if (!conn.isClosed())
+				if (!conn.isClosed()) {
 					conn.commit();
+				}
 			}
 		});
 	}
@@ -210,10 +201,12 @@ public class LinkDaoSupport {
 	 */
 	public DataSource getDataSource(DataSource dataSource) {
 		DataSource result = dataSource;
-		if (null == result)
+		if (null == result) {
 			result = this.dataSource;
-		if (null == result)
-			result = sqlToyContext.getDefaultDataSource();
+		}
+		if (null == result) {
+			result = sqlToyContext.obtainDataSource();
+		}
 		return result;
 	}
 }

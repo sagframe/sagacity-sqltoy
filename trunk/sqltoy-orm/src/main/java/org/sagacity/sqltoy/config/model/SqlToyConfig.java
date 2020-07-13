@@ -41,7 +41,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 翻译器
 	 */
-	private HashMap<String, SqlTranslate> translateMap = null;
+	private HashMap<String, Translate> translateMap = null;
 
 	/**
 	 * 安全脱敏配置
@@ -326,14 +326,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @return the translateMap
 	 */
-	public HashMap<String, SqlTranslate> getTranslateMap() {
+	public HashMap<String, Translate> getTranslateMap() {
 		return translateMap;
 	}
 
 	/**
 	 * @param translateMap the translateMap to set
 	 */
-	public void setTranslateMap(HashMap<String, SqlTranslate> translateMap) {
+	public void setTranslateMap(HashMap<String, Translate> translateMap) {
 		this.translateMap = translateMap;
 	}
 
@@ -743,10 +743,12 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	private String getDialectSql(String type, String sqlContent, String dialect) {
-		if (StringUtil.isBlank(sqlContent))
+		if (StringUtil.isBlank(sqlContent)) {
 			return sqlContent;
-		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect))
+		}
+		if (dialect == null || dialect.equals(Dialect.UNDEFINE) || dialect.equals(this.dialect)) {
 			return sqlContent;
+		}
 		String key = dialect.concat(".").concat(type);
 		if (!dialectSqlMap.contains(key)) {
 			String dialectSql = FunctionUtils.getDialectSql(sqlContent, dialect);
@@ -762,8 +764,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	public String getIdOrSql() {
-		if (StringUtil.isBlank(this.id))
+		if (StringUtil.isBlank(this.id)) {
 			return this.sql;
+		}
 		return this.id;
 	}
 

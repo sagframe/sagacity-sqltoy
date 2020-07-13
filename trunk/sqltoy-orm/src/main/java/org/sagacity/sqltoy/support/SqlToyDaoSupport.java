@@ -28,6 +28,7 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
@@ -98,8 +99,9 @@ public class SqlToyDaoSupport {
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
 
-	@Autowired(required = false)
-	@Qualifier(value = "dataSource")
+	// @Autowired(required = false)
+	// @Qualifier(value = "dataSource")
+	// update 2020-07-11 剔除Autowired采用新的ObtainDataSource策略便于在多数据库场景下可以自由适配
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
@@ -115,7 +117,7 @@ public class SqlToyDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}
@@ -131,7 +133,7 @@ public class SqlToyDaoSupport {
 		DataSource result = dataSource;
 		// 第二、sql指定的数据源
 		if (null == result && null != sqltoyConfig.getDataSource()) {
-			result = sqlToyContext.getDataSource(sqltoyConfig.getDataSource());
+			result = sqlToyContext.getDataSourceBean(sqltoyConfig.getDataSource());
 		}
 		// 第三、自动注入的数据源
 		if (null == result) {
@@ -139,7 +141,7 @@ public class SqlToyDaoSupport {
 		}
 		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}
@@ -1250,7 +1252,23 @@ public class SqlToyDaoSupport {
 		} else {
 			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
 		}
-		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+
+		String translateFields = "";
+		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
+		if (!entityQuery.getTranslates().isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+			Translate translate;
+			String keyColumn;
+			while (iter.hasNext()) {
+				translate = iter.next();
+				// 将java模式的字段名称转化为数据库字段名称
+				keyColumn = entityMeta.getColumnName(translate.getKeyColumn());
+				translateFields.concat(",").concat((keyColumn == null) ? translate.getKeyColumn() : keyColumn)
+						.concat(" as ").concat(translate.getColumn());
+			}
+		}
+
+		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// 处理order by 排序
 		if (!entityQuery.getOrderBy().isEmpty()) {
@@ -1284,6 +1302,13 @@ public class SqlToyDaoSupport {
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
 					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
+		}
+		// 设置额外的缓存翻译
+		if (!entityQuery.getTranslates().isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+			while (iter.hasNext()) {
+				queryExecutor.translates(iter.next());
+			}
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略

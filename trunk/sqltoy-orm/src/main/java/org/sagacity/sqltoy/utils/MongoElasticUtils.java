@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.SqlTranslate;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -410,7 +410,7 @@ public class MongoElasticUtils {
 		boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null || sqlToyConfig.getTranslateMap().isEmpty())
 				? false
 				: true;
-		HashMap<String, SqlTranslate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
+		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		// 存在缓存翻译,利用sqltoy的缓存管理
 		if (hasTranslate) {
@@ -436,7 +436,7 @@ public class MongoElasticUtils {
 	 * @param fields
 	 */
 	private static void translate(HashMap<String, HashMap<String, Object[]>> translateCache,
-			HashMap<String, SqlTranslate> translateMap, List<List> dataSet, Map dataMap, String[] fields) {
+			HashMap<String, Translate> translateMap, List<List> dataSet, Map dataMap, String[] fields) {
 		if (translateMap == null || translateMap.isEmpty()) {
 			return;
 		}
@@ -448,7 +448,7 @@ public class MongoElasticUtils {
 		String[] lables = new String[translateMap.size()];
 		String field;
 		int index = 0;
-		SqlTranslate translateModel;
+		Translate translateModel;
 		HashMap<String, Integer> map = new HashMap<String, Integer>();
 		for (int i = 0; i < fields.length; i++) {
 			map.put(fields[i].toLowerCase(), i);

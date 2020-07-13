@@ -33,9 +33,9 @@ import org.sagacity.sqltoy.config.model.ReverseModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlTranslate;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -902,7 +902,7 @@ public class SqlXMLConfigParse {
 			return;
 		}
 		// 翻译器
-		HashMap<String, SqlTranslate> translateMap = new HashMap<String, SqlTranslate>();
+		HashMap<String, Translate> translateMap = new HashMap<String, Translate>();
 		String cacheType;
 		String cacheName;
 		String[] columns;
@@ -985,8 +985,8 @@ public class SqlXMLConfigParse {
 			}
 			if (cacheIndexs == null || cacheIndexs.length == columns.length) {
 				for (int i = 0; i < columns.length; i++) {
-					SqlTranslate translateModel = new SqlTranslate();
-					translateModel.setCache(cacheName);
+					Translate translateModel = new Translate(cacheName);
+					// 小写
 					translateModel.setColumn(columns[i]);
 					translateModel.setAlias(aliasNames == null ? columns[i] : aliasNames[i]);
 					translateModel.setCacheType(cacheType);
@@ -1006,6 +1006,7 @@ public class SqlXMLConfigParse {
 							translateModel.setIndex(cacheIndexs[cacheIndexs.length - 1]);
 						}
 					}
+					// column 小写
 					translateMap.put(translateModel.getColumn(), translateModel);
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {

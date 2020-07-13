@@ -18,6 +18,8 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -130,9 +132,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String defaultElastic = "default";
 
 	/**
-	 * 登记sqltoy所需要访问的DataSource
+	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
 	 */
-	private HashMap<String, DataSource> dataSourcesMap = new HashMap<String, DataSource>();
+	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
 
 	/**
 	 * @return the translateManager
@@ -326,12 +328,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @param dataSourceName
 	 * @return
 	 */
-	public DataSource getDataSource(String dataSourceName) {
+	public DataSource getDataSourceBean(String dataSourceName) {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
-		}
-		if (dataSourcesMap.containsKey(dataSourceName)) {
-			return dataSourcesMap.get(dataSourceName);
 		}
 		return (DataSource) applicationContext.getBean(dataSourceName);
 	}
@@ -485,20 +484,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public synchronized void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		scriptLoader.putSqlToyConfig(sqlToyConfig);
-	}
-
-	/**
-	 * @return the dataSourcesMap
-	 */
-	public HashMap<String, DataSource> getDataSourcesMap() {
-		return dataSourcesMap;
-	}
-
-	/**
-	 * @param dataSourcesMap the dataSourcesMap to set
-	 */
-	public void setDataSourcesMap(HashMap<String, DataSource> dataSourcesMap) {
-		this.dataSourcesMap = dataSourcesMap;
 	}
 
 	/**
@@ -667,17 +652,26 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @return the defaultDataSource
-	 */
-	public DataSource getDefaultDataSource() {
-		return defaultDataSource;
-	}
-
-	/**
 	 * @param defaultDataSource the defaultDataSource to set
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
+	}
+
+	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
+		this.obtainDataSource = obtainDataSource;
+	}
+
+	/**
+	 * 提供给SqlToyDaoSupport等获取数据源
+	 * 
+	 * @return
+	 */
+	public DataSource obtainDataSource() {
+		if (obtainDataSource == null) {
+			return defaultDataSource;
+		}
+		return obtainDataSource.getDataSource(applicationContext, defaultDataSource);
 	}
 
 	/**

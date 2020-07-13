@@ -26,7 +26,6 @@ import org.sagacity.sqltoy.link.Elastic;
 import org.sagacity.sqltoy.link.Execute;
 import org.sagacity.sqltoy.link.Load;
 import org.sagacity.sqltoy.link.Mongo;
-import org.sagacity.sqltoy.link.Page;
 import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.link.Save;
 import org.sagacity.sqltoy.link.Store;
@@ -719,16 +718,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public Delete delete() {
 		return super.delete();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.support.BaseDaoSupport#page()
-	 */
-	@Override
-	public Page page() {
-		return super.page();
 	}
 
 	/*

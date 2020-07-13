@@ -52,10 +52,10 @@ public abstract class BaseLink implements Serializable {
 		DataSource result = dataSource;
 		// 数据源为空或非强制指定了数据源，则使用sql中指定的数据源
 		if ((null == result || defaultDataSource == false) && null != sqlToyConfig.getDataSource()) {
-			result = sqlToyContext.getDataSource(sqlToyConfig.getDataSource());
+			result = sqlToyContext.getDataSourceBean(sqlToyConfig.getDataSource());
 		}
 		if (null == result) {
-			result = sqlToyContext.getDefaultDataSource();
+			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
 	}

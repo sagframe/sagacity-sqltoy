@@ -365,7 +365,7 @@ public class BeanUtil {
 		}
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
-			return new Integer(convertBoolean(valueStr).split("\\.")[0]);
+			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		// 第六
 		if (typeName.equals("java.sql.timestamp") || typeName.equals("timestamp")) {
@@ -397,7 +397,7 @@ public class BeanUtil {
 		}
 		if (typeName.equals("java.lang.long")) {
 			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错
-			return new Long(convertBoolean(valueStr).split("\\.")[0]);
+			return Long.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("int")) {
 			return Double.valueOf(convertBoolean(valueStr)).intValue();

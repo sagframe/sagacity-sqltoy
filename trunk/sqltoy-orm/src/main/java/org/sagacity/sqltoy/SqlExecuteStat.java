@@ -50,6 +50,7 @@ public class SqlExecuteStat {
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
 
+	// 通过ThreadLocal 来保存进程数据
 	private static ThreadLocal<SqlExecuteTrace> threadLocal = new ThreadLocal<SqlExecuteTrace>();
 
 	/**
@@ -245,7 +246,7 @@ public class SqlExecuteStat {
 				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
 				return sql;
 			}
-			//正则匹配最后是\\W,所以要-1
+			// 正则匹配最后是\\W,所以要-1
 			start = matcher.end() - 1;
 			index++;
 		}

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DataSourceUtils.java,Revision:v1.0,Date:2015年3月3日
  * @modify data:2020-06-10
- *         剔除sqlserver2012,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ *         剔除sqlserver2008,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  */
 public class DataSourceUtils {
 	/**
@@ -160,38 +160,54 @@ public class DataSourceUtils {
 	 */
 	public static String getDialect(Integer dbType) {
 		switch (dbType) {
-		case DBType.MYSQL:
+		case DBType.MYSQL: {
 			return Dialect.MYSQL;
-		case DBType.MYSQL57:
+		}
+		case DBType.MYSQL57: {
 			return Dialect.MYSQL57;
-		case DBType.ORACLE:
+		}
+		case DBType.ORACLE: {
 			return Dialect.ORACLE;
-		case DBType.POSTGRESQL:
+		}
+		case DBType.POSTGRESQL: {
 			return Dialect.POSTGRESQL;
-		case DBType.SQLSERVER:
+		}
+		case DBType.SQLSERVER: {
 			return Dialect.SQLSERVER;
-		case DBType.DB2:
+		}
+		case DBType.DB2: {
 			return Dialect.DB2;
-		case DBType.OCEANBASE:
+		}
+		case DBType.OCEANBASE: {
 			return Dialect.OCEANBASE;
-		case DBType.GAUSSDB:
+		}
+		case DBType.GAUSSDB: {
 			return Dialect.GAUSSDB;
-		case DBType.CLICKHOUSE:
+		}
+		case DBType.CLICKHOUSE: {
 			return Dialect.CLICKHOUSE;
-		case DBType.SQLITE:
+		}
+		case DBType.SQLITE: {
 			return Dialect.SQLITE;
-		case DBType.TIDB:
+		}
+		case DBType.TIDB: {
 			return Dialect.TIDB;
-		case DBType.DM:
+		}
+		case DBType.DM: {
 			return Dialect.DM;
-		case DBType.ORACLE11:
+		}
+		case DBType.ORACLE11: {
 			return Dialect.ORACLE11;
-		case DBType.ES:
+		}
+		case DBType.ES: {
 			return Dialect.ES;
-		case DBType.MONGO:
+		}
+		case DBType.MONGO: {
 			return Dialect.MONGO;
-		case DBType.SYBASE_IQ:
+		}
+		case DBType.SYBASE_IQ: {
 			return Dialect.SYBASE_IQ;
+		}
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -434,8 +450,9 @@ public class DataSourceUtils {
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
 			if (SqlToyConstants.showDatasourceInfo()) {
-				logger.debug("db.dialect={};conn.url={};schema={};catalog={}", dialect, conn.getMetaData().getURL(),
-						conn.getSchema(), conn.getCatalog());
+				logger.debug("db.dialect={};conn.url={};schema={};catalog={};username={}", dialect,
+						conn.getMetaData().getURL(), conn.getSchema(), conn.getCatalog(),
+						conn.getMetaData().getUserName());
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
 			handler.doConnection(conn, dbType, dialect);
