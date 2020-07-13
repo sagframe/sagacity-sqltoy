@@ -6,9 +6,10 @@
 
 # QQ 交流群:531812227 
 ## 交流群中常见疑问
-* sqltoy是从2008年开始已经发展了十几年,是项目实践产物,我用一个框架将大家的智慧固化而已!
+* sqltoy是从2008年开始已经发展了十几年,并非突然出现!
 * sqltoy目前是依托spring生态的
-* sqltoy不会成为mybatis的插件,sqltoy不会可以做这类努力，sqltoy也不会兼容mybatis
+* sqltoy没有计划成为mybatis的插件
+* sqltoy并不是所有功能都是要在xml中写sql,sqltoy包含jpa式基于POJO操作完成数据库crud,只是针对多表查询等复杂场景基于xml提供sql模式
 * sqltoy是可以跟现有项目中的ORM混合使用的,可以只用其查询功能
 * sqltoy性能优势是建立在缓存翻译、快速分页、分页优化、分库分表、多种技术融合应用基础上的，所以需先初步了解这些特性!
 * sqltoy优点在于为贴切项目，提供实践性功能:树结构处理、update(entity,String...forceUpdateProps)、updateFetch、取随机记录、取top记录、行列转换、同比环比等算法减少复杂sql
