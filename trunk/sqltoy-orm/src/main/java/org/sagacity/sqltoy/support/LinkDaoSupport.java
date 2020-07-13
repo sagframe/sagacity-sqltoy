@@ -62,6 +62,7 @@ public class LinkDaoSupport {
 	 * @param dataSource the dataSource to set
 	 */
 	// @Autowired(required = false)
+	// update 2020-07-11 采用新的ObtainDataSource策略便于在多数据库场景下可以自由适配
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
