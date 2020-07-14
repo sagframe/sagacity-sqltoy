@@ -275,14 +275,13 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(dialect),
 									paramsNamed, paramsValue);
-							String executeSql = queryParam.getSql();
 							// 替换sharding table
-							executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, executeSql, sqlToyConfig,
-									paramsNamed, paramsValue);
+							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
+									sqlToyConfig, paramsNamed, paramsValue);
 							// debug 显示sql
 							SqlExecuteStat.showSql(executeSql, queryParam.getParamsValue());
-							this.setResult(DialectUtils.executeSql(sqlToyContext, executeSql,
-									queryParam.getParamsValue(), null, conn, dbType, autoCommit));
+							this.setResult(SqlUtil.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
+									dbType, autoCommit));
 						}
 					});
 		} catch (Exception e) {

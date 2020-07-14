@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -127,11 +128,7 @@ public class ClickHouseDialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-
-		if (sqlToyContext.isDebug()) {
-			logger.debug(insertSql);
-		}
-
+		SqlExecuteStat.showSql("insertSql=" + insertSql, null);
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
@@ -153,7 +150,6 @@ public class ClickHouseDialectUtils {
 		if (needUpdatePk) {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
-
 		return result;
 	}
 
@@ -177,7 +173,7 @@ public class ClickHouseDialectUtils {
 		String[] reflectColumns = entityMeta.getFieldsArray();
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -231,11 +227,10 @@ public class ClickHouseDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("batch insert sql:{}", insertSql);
-		}
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
-				autoCommit, conn, dbType);
+		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
+				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
+				dbType);
 	}
 
 	/**
@@ -276,10 +271,8 @@ public class ClickHouseDialectUtils {
 
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
-		if (sqlToyContext.isDebug()) {
-			logger.debug(deleteSql);
-		}
-		return DialectUtils.executeSql(sqlToyContext, deleteSql, idValues, parameterTypes, conn, dbType, null);
+		SqlExecuteStat.showSql("deleteSql=" + deleteSql, null);
+		return SqlUtil.executeSql(deleteSql, idValues, parameterTypes, conn, dbType, null);
 	}
 
 	/**
@@ -356,11 +349,7 @@ public class ClickHouseDialectUtils {
 			deleteSql.append(entityMeta.getColumnName(field));
 			deleteSql.append(" in (:").append(field).append(") ");
 		}
-
-		if (sqlToyContext.isDebug()) {
-			logger.debug("根据主键批量删除数据 sql:{}", deleteSql);
-		}
-
+		SqlExecuteStat.showSql("deleteAll Sql=" + deleteSql, null);
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
 				idValues);
 		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,

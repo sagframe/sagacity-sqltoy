@@ -8,13 +8,11 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,53 +30,6 @@ public class SqlUtilsExt {
 	private final static Logger logger = LoggerFactory.getLogger(SqlUtilsExt.class);
 
 	/**
-	 * @todo 通过jdbc方式批量插入数据
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param batchSize
-	 * @param updateTypes
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
-		if (dbType == DBType.SQLSERVER) {
-			return batchUpdateBySqlServer(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn,
-					dbType);
-		}
-		return batchUpdateByJdbc(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn, dbType);
-	}
-
-	/**
-	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
-	 * @param updateSql
-	 * @param rowDatas
-	 * @param batchSize
-	 * @param entityMeta
-	 * @param autoCommit
-	 * @param conn
-	 * @param dbType
-	 * @return
-	 * @throws Exception
-	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final EntityMeta entityMeta, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
-		if (dbType == DBType.SQLSERVER) {
-			return batchUpdateBySqlServer(updateSql, rowDatas, entityMeta.getFieldsTypeArray(),
-					entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
-					dbType);
-		}
-		return batchUpdateByJdbc(updateSql, rowDatas, entityMeta.getFieldsTypeArray(),
-				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
-				dbType);
-	}
-
-	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
 	 * @param updateSql
 	 * @param rowDatas
@@ -92,7 +43,7 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
+	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
 			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
@@ -187,7 +138,7 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Long batchUpdateBySqlServer(final String updateSql, final List<Object[]> rowDatas,
+	public static Long batchUpdateBySqlServer(final String updateSql, final List<Object[]> rowDatas,
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
 			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
@@ -222,8 +173,8 @@ public class SqlUtilsExt {
 				fieldType = -1;
 				if (rowData != null) {
 					// sqlserver 针对timestamp类型不能进行赋值
-					index = 0;
 					if (hasFieldType) {
+						index = 0;
 						for (int j = 0, n = rowData.length; j < n; j++) {
 							fieldType = fieldsType[j];
 							// 非timestamp类型
@@ -246,11 +197,7 @@ public class SqlUtilsExt {
 							} else {
 								cellValue = rowData[j];
 							}
-							// 非timestamp类型
-							if (!(rowData[j] instanceof Timestamp)) {
-								SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, index + 1);
-								index++;
-							}
+							SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, j + 1);
 						}
 					}
 					meter++;
