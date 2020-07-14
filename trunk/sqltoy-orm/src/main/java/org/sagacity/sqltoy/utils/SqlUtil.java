@@ -201,19 +201,50 @@ public class SqlUtil {
 		if (null != params && params.length > 0) {
 			int n = params.length;
 			int startIndex = fromIndex + 1;
+			if (null == paramsType || paramsType.length == 0) {
+				// paramsType=-1 表示按照参数值来判断类型
+				for (int i = 0; i < n; i++) {
+					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
+				}
+			} else {
+				for (int i = 0; i < n; i++) {
+					setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + i);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @TODO 针对sqlserver提供特殊处理
+	 * @param conn
+	 * @param dbType
+	 * @param pst
+	 * @param params
+	 * @param paramsType
+	 * @param fromIndex
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	private static void setSqlServerParamsValue(Connection conn, final Integer dbType, PreparedStatement pst,
+			Object[] params, Integer[] paramsType, int fromIndex) throws SQLException, IOException {
+		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
+		// 一般情况fromIndex 都是0
+		if (null != params && params.length > 0) {
+			int n = params.length;
+			int startIndex = fromIndex + 1;
 			int meter = 0;
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
 					// sqlserver 不支持timestamp类型的赋值
-					if (dbType != DBType.SQLSERVER || !(params[i] instanceof Timestamp)) {
+					if (!(params[i] instanceof Timestamp)) {
 						setParamValue(conn, dbType, pst, params[i], -1, startIndex + meter);
 						meter++;
 					}
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					if (dbType != DBType.SQLSERVER || !(paramsType[i] == java.sql.Types.TIMESTAMP)) {
+					if (!(paramsType[i] == java.sql.Types.TIMESTAMP)) {
 						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
 						meter++;
 					}
@@ -1199,8 +1230,11 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-
-				setParamsValue(conn, dbType, pst, params, paramsType, 0);
+				if (dbType == DBType.SQLSERVER) {
+					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
+				} else {
+					setParamsValue(conn, dbType, pst, params, paramsType, 0);
+				}
 				pst.executeUpdate();
 				// 返回update的记录数量
 				this.setResult(Long.valueOf(pst.getUpdateCount()));

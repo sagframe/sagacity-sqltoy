@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,17 +108,36 @@ public class SqlUtilsExt {
 			Object[] rowData;
 			// 批处理计数器
 			int meter = 0;
+			int index = 0;
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
 				if (rowData != null) {
-					// 使用对象properties方式传值
-					for (int j = 0, n = rowData.length; j < n; j++) {
-						if (supportDefaultValue) {
-							setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
-									fieldsDefaultValue[j], j + 1);
-						} else {
-							SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
-									fieldsType == null ? -1 : fieldsType[j], j + 1);
+					// sqlserver 针对timestamp类型不能进行赋值
+					if (dbType == DBType.SQLSERVER) {
+						index = 0;
+						for (int j = 0, n = rowData.length; j < n; j++) {
+							if (fieldsType[j] == null || fieldsType[j] != java.sql.Types.TIMESTAMP) {
+								if (supportDefaultValue) {
+									setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
+											fieldsDefaultValue[j], index + 1);
+
+								} else {
+									SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
+											fieldsType == null ? -1 : fieldsType[j], index + 1);
+								}
+								index++;
+							}
+						}
+					} else {
+						// 使用对象properties方式传值
+						for (int j = 0, n = rowData.length; j < n; j++) {
+							if (supportDefaultValue) {
+								setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
+										fieldsDefaultValue[j], j + 1);
+							} else {
+								SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
+										fieldsType == null ? -1 : fieldsType[j], j + 1);
+							}
 						}
 					}
 					meter++;
@@ -142,7 +162,9 @@ public class SqlUtilsExt {
 			if (hasSetAutoCommit) {
 				conn.setAutoCommit(!autoCommit);
 			}
-		} catch (Exception e) {
+		} catch (
+
+		Exception e) {
 			logger.error(e.getMessage(), e);
 			throw e;
 		} finally {
@@ -218,5 +240,10 @@ public class SqlUtilsExt {
 			}
 		}
 		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
+	}
+
+	public static void main(String[] args) {
+		Integer[] tmp = { new Integer(2), null };
+		System.err.println(3 != tmp[1]);
 	}
 }
