@@ -1720,7 +1720,7 @@ public class DialectUtils {
 		}
 		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
 		if (dbType == DBType.SQLSERVER) {
-			SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(),
+			return SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(),
 					null, null, batchSize, autoCommit, conn, dbType);
 		}
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(), null,
