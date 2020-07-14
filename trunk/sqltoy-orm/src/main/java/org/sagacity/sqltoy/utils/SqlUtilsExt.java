@@ -120,14 +120,14 @@ public class SqlUtilsExt {
 			int meter = 0;
 			Object cellValue;
 			int fieldType;
+			boolean hasFieldType = (fieldsType != null);
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
-				fieldType = -1;
 				if (rowData != null) {
 					// 使用对象properties方式传值
 					for (int j = 0, n = rowData.length; j < n; j++) {
+						fieldType = (hasFieldType) ? fieldsType[j] : -1;
 						if (supportDefaultValue) {
-							fieldType = fieldsType[j];
 							cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
 									fieldsNullable[j]);
 						} else {
@@ -216,13 +216,14 @@ public class SqlUtilsExt {
 			int index = 0;
 			Object cellValue;
 			int fieldType;
+			boolean hasFieldType = (fieldsType != null);
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
 				fieldType = -1;
 				if (rowData != null) {
 					// sqlserver 针对timestamp类型不能进行赋值
 					index = 0;
-					if (fieldsType != null) {
+					if (hasFieldType) {
 						for (int j = 0, n = rowData.length; j < n; j++) {
 							fieldType = fieldsType[j];
 							// 非timestamp类型
