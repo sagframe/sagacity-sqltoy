@@ -278,8 +278,6 @@ public class DialectFactory {
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
 									sqlToyConfig, paramsNamed, paramsValue);
-							// debug 显示sql
-							SqlExecuteStat.showSql(executeSql, queryParam.getParamsValue());
 							this.setResult(SqlUtil.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
 									dbType, autoCommit));
 						}
