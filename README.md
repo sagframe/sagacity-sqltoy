@@ -17,8 +17,10 @@
 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.13.2 发版日期: 2020-07-08
-* 修复BeanUtil 将16位数字字符串转Long类型精度问题，场景主要是主键使用雪花算法且类型是数字并转java成Long类型时出现。
+# 最新版本号: 4.13.5 发版日期: 2020-07-14
+* 修复sqlserver saveOrUpdate操作时内部采用merge into 处理存在的bug
+* 优化默认dataSource配置策略，提供了ObtainDataSource接口扩展便于在多数据源场景下自定义策略
+* 提供在代码调用时动态设置缓存翻译，为特殊场景下提供灵活性
 
 # 使用单位或项目: 
 * 宁波农行  
