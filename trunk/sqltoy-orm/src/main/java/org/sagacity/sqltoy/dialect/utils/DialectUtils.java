@@ -767,8 +767,9 @@ public class DialectUtils {
 		sql.append("merge into ");
 		sql.append(entityMeta.getSchemaTable());
 		sql.append(" ta ");
-		//update 2020-07-14
-		sql.append(" using (select distinct ");
+		//update 2020-07-14 增加distinct
+		//sql.append(" using (select distinct ");
+		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
