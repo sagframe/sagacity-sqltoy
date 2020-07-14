@@ -160,7 +160,7 @@ public class SqlServerDialectUtils {
 		sql.append(realTable);
 		sql.append(" ta ");
 		//update 2020-07-14 增加distinct 参数
-		sql.append(" using (select distinct ");
+		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
 			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
@@ -170,7 +170,8 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		sql.append(" from ").append(realTable);
+		//sqlserver 不需要填具体表名,oracle 对应dual
+		//sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
