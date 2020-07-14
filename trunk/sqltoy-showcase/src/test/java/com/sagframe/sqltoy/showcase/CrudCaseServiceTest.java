@@ -96,7 +96,7 @@ public class CrudCaseServiceTest {
 		StaffInfoVO staffInfo = new StaffInfoVO();
 		staffInfo.setStaffId("S190715003");
 		staffInfo.setStaffCode("S190715003");
-		staffInfo.setStaffName("测试员工3");
+		staffInfo.setStaffName("测试员工4");
 		staffInfo.setSexType("M");
 		staffInfo.setEmail("test3@aliyun.com");
 		staffInfo.setEntryDate(LocalDate.now());

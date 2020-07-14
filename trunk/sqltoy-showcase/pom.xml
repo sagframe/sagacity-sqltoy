@@ -382,6 +382,7 @@
 					<include>**/*.xml</include>
 					<include>**/*.properties</include>
 					<include>**/*.yml</include>
+					<include>**/*.jpg</include>
 				</includes>
 			</resource>
 		</resources>
