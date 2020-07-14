@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
@@ -232,17 +233,13 @@ public class SqlUtil {
 		if (null != params && params.length > 0) {
 			int n = params.length;
 			int startIndex = fromIndex + 1;
-			int meter = 0;
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					// sqlserver 不支持timestamp类型的赋值
-					if (!(params[i] instanceof Timestamp)) {
-						setParamValue(conn, dbType, pst, params[i], -1, startIndex + meter);
-						meter++;
-					}
+					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
 				}
 			} else {
+				int meter = 0;
 				for (int i = 0; i < n; i++) {
 					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
 						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
@@ -1218,7 +1215,7 @@ public class SqlUtil {
 	 */
 	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
 			final Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
-		logger.debug("executeJdbcSql={}", executeSql);
+		SqlExecuteStat.showSql("execute sql=" + executeSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
 		if (autoCommit != null) {
@@ -1230,8 +1227,8 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				// sqlserver 存在timestamp不能赋值问题
-				if (dbType == DBType.SQLSERVER) {
+				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
+				if (dbType == DBType.SQLSERVER && paramsType != null) {
 					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
 				} else {
 					setParamsValue(conn, dbType, pst, params, paramsType, 0);

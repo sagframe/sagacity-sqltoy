@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -114,9 +115,7 @@ public class SapIQDialectUtils {
 		if (isIdentity) {
 			insertSql = insertSql + " select @@IDENTITY ";
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug(insertSql);
-		}
+		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -195,9 +194,7 @@ public class SapIQDialectUtils {
 			insertSql = "DECLARE @mySeqVariable decimal(20) select @mySeqVariable=" + entityMeta.getSequence()
 					+ ".NEXTVAL " + insertSql;
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("batch insert sql:{}", insertSql);
-		}
+		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType);
 	}
@@ -281,13 +278,8 @@ public class SapIQDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("batch insert sql:{}", insertSql);
-		}
-		if (entityMeta.isHasDefaultValue()) {
-			return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta, null, conn, dbType);
-		}
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(), null,
-				conn, dbType);
+		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
+				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, null, conn, dbType);
 	}
 }

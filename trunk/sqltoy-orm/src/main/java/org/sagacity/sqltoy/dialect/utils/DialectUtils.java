@@ -3,8 +3,6 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import static java.lang.System.out;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -51,7 +49,6 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
-import org.sagacity.sqltoy.utils.DebugUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -1524,8 +1521,15 @@ public class DialectUtils {
 		}
 
 		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, batchSize, entityMeta.getFieldsTypeArray(),
-				autoCommit, conn, dbType);
+		// sqlserver需要特殊化处理(针对timestamp问题)
+		if (dbType == DBType.SQLSERVER) {
+			return SqlUtilsExt.batchUpdateBySqlServer(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
+					entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
+					dbType);
+		}
+		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
+				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
+				dbType);
 	}
 
 	/**
@@ -1565,7 +1569,7 @@ public class DialectUtils {
 		}
 
 		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
-		return executeSql(sqlToyContext, updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
+		return SqlUtil.executeSql(updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
 	}
 
 	/**
@@ -1622,8 +1626,7 @@ public class DialectUtils {
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 						mappedFields, IdValues);
-				executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType,
-						null);
+				SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
@@ -1716,8 +1719,12 @@ public class DialectUtils {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, batchSize,
-				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
+		if (dbType == DBType.SQLSERVER) {
+			SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(),
+					null, null, batchSize, autoCommit, conn, dbType);
+		}
+		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(), null,
+				null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -1760,17 +1767,14 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					if (sqlToyContext.isDebug()) {
-						logger.debug("cascade delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
-					}
-					executeSql(sqlToyContext, oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, dbType,
-							null);
+					SqlExecuteStat.showSql("cascade delete sub table sql=" + oneToMany.getDeleteSubTableSql(), null);
+					SqlUtil.executeSql(oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, dbType, null);
 				}
 			}
 		}
 		SqlExecuteStat.showSql("delete sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
-		return executeSql(sqlToyContext, entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn,
-				dbType, null);
+		return SqlUtil.executeSql(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, dbType,
+				null);
 	}
 
 	/**
@@ -1817,18 +1821,16 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					if (sqlToyContext.isDebug()) {
-						logger.debug("cascade batch delete sub table sql:{}", oneToMany.getDeleteSubTableSql());
-					}
-					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues,
-							sqlToyContext.getBatchSize(), parameterTypes, null, conn, dbType);
+					SqlExecuteStat.showSql("cascade batch delete sub table sql=" + oneToMany.getDeleteSubTableSql(),
+							null);
+					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, null,
+							null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
 		}
-
 		SqlExecuteStat.showSql("delete all sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
-		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, batchSize,
-				parameterTypes, autoCommit, conn, dbType);
+		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, null,
+				null, batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -2048,18 +2050,6 @@ public class DialectUtils {
 			}
 		}
 		return lastSql.toString();
-	}
-
-	public static Long executeSql(final SqlToyContext sqlToyContext, final String executeSql, final Object[] params,
-			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit)
-			throws Exception {
-		if (sqlToyContext.isDebug()) {
-			out.println("=================executeSql执行的语句====================");
-			out.println(" execute sql:" + executeSql);
-			DebugUtil.printAry(params, ";", false);
-			out.println("======================================================");
-		}
-		return SqlUtil.executeSql(executeSql, params, paramsType, conn, dbType, autoCommit);
 	}
 
 	/**

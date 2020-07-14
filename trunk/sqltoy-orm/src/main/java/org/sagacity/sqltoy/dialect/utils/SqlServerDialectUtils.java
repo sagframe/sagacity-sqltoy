@@ -331,7 +331,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		//sql.append(" from ").append(realTable);
+		// sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -599,7 +599,7 @@ public class SqlServerDialectUtils {
 				if (null != paramValues && paramValues.length > 0) {
 					int index = 0;
 					for (int i = 0, n = paramValues.length; i < n; i++) {
-						//sqlserver timestamp类型的字段无需赋值
+						// sqlserver timestamp类型的字段无需赋值
 						if (!paramsType[i].equals(java.sql.Types.TIMESTAMP)) {
 							SqlUtil.setParamValue(conn, dbType, pst, paramValues[i], paramsType[i], index + 1);
 							index++;
@@ -895,8 +895,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					DialectUtils.executeSql(sqlToyContext, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null,
-							conn, dbType, null);
+					SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
