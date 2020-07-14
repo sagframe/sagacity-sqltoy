@@ -53,7 +53,7 @@ public class Oracle11gDialect implements Dialect {
 
 	public static final String NEXTVAL = ".nextval";
 
-	public static final String DUAL = "dual";
+	public static final String VIRTUAL_TABLE = "dual";
 
 	/*
 	 * (non-Javadoc)
@@ -232,8 +232,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields, DUAL,
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
+								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -260,8 +260,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, DUAL, NVL_FUNCTION,
-								sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE,
+								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -381,8 +381,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields, DUAL,
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
+								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

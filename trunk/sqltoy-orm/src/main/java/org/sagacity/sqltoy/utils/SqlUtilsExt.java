@@ -8,11 +8,13 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,10 @@ public class SqlUtilsExt {
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
 			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
+		if (dbType == DBType.SQLSERVER) {
+			return batchUpdateBySqlServer(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn,
+					dbType);
+		}
 		return batchUpdateByJdbc(updateSql, rowDatas, updateTypes, null, null, batchSize, autoCommit, conn, dbType);
 	}
 
@@ -62,6 +68,11 @@ public class SqlUtilsExt {
 	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
 			final EntityMeta entityMeta, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
+		if (dbType == DBType.SQLSERVER) {
+			return batchUpdateBySqlServer(updateSql, rowDatas, entityMeta.getFieldsTypeArray(),
+					entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
+					dbType);
+		}
 		return batchUpdateByJdbc(updateSql, rowDatas, entityMeta.getFieldsTypeArray(),
 				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
 				dbType);
@@ -107,17 +118,139 @@ public class SqlUtilsExt {
 			Object[] rowData;
 			// 批处理计数器
 			int meter = 0;
+			Object cellValue;
+			int fieldType;
+			boolean hasFieldType = (fieldsType != null);
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
 				if (rowData != null) {
 					// 使用对象properties方式传值
 					for (int j = 0, n = rowData.length; j < n; j++) {
+						fieldType = (hasFieldType) ? fieldsType[j] : -1;
 						if (supportDefaultValue) {
-							setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
-									fieldsDefaultValue[j], j + 1);
+							cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
+									fieldsNullable[j]);
 						} else {
-							SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
-									fieldsType == null ? -1 : fieldsType[j], j + 1);
+							cellValue = rowData[j];
+						}
+						SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, j + 1);
+					}
+					meter++;
+					// 批量
+					if (useBatch) {
+						pst.addBatch();
+						// 判断是否是最后一条记录或到达批次量,执行批处理
+						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
+							int[] updateRows = pst.executeBatch();
+							for (int t : updateRows) {
+								updateCount = updateCount + ((t > 0) ? t : 0);
+							}
+							pst.clearBatch();
+						}
+					} else {
+						pst.execute();
+						updateCount = updateCount + ((pst.getUpdateCount() > 0) ? pst.getUpdateCount() : 0);
+					}
+				}
+			}
+			// 恢复conn原始autoCommit默认值
+			if (hasSetAutoCommit) {
+				conn.setAutoCommit(!autoCommit);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw e;
+		} finally {
+			try {
+				if (pst != null) {
+					pst.close();
+					pst = null;
+				}
+			} catch (SQLException se) {
+				logger.error(se.getMessage(), se);
+			}
+		}
+		return updateCount;
+	}
+
+	/**
+	 * @TODO 针对sqlserver进行特殊化处理(主要针对Timestamp类型的兼容)
+	 * @param updateSql
+	 * @param rowDatas
+	 * @param fieldsType
+	 * @param fieldsDefaultValue
+	 * @param fieldsNullable
+	 * @param batchSize
+	 * @param autoCommit
+	 * @param conn
+	 * @param dbType
+	 * @return
+	 * @throws Exception
+	 */
+	private static Long batchUpdateBySqlServer(final String updateSql, final List<Object[]> rowDatas,
+			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
+			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
+			throws Exception {
+		if (rowDatas == null || rowDatas.isEmpty()) {
+			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
+			return 0L;
+		}
+		long updateCount = 0;
+		PreparedStatement pst = null;
+		// 判断是否通过default转换方式插入
+		boolean supportDefaultValue = (fieldsDefaultValue != null && fieldsNullable != null) ? true : false;
+		try {
+			boolean hasSetAutoCommit = false;
+			// 是否自动提交
+			if (autoCommit != null && autoCommit.booleanValue() != conn.getAutoCommit()) {
+				conn.setAutoCommit(autoCommit.booleanValue());
+				hasSetAutoCommit = true;
+			}
+			pst = conn.prepareStatement(updateSql);
+			int totalRows = rowDatas.size();
+			// 只有一条记录不采用批量
+			boolean useBatch = (totalRows > 1) ? true : false;
+			Object[] rowData;
+			// 批处理计数器
+			int meter = 0;
+			int index = 0;
+			Object cellValue;
+			int fieldType;
+			boolean hasFieldType = (fieldsType != null);
+			for (int i = 0; i < totalRows; i++) {
+				rowData = rowDatas.get(i);
+				fieldType = -1;
+				if (rowData != null) {
+					// sqlserver 针对timestamp类型不能进行赋值
+					index = 0;
+					if (hasFieldType) {
+						for (int j = 0, n = rowData.length; j < n; j++) {
+							fieldType = fieldsType[j];
+							// 非timestamp类型
+							if (fieldType != java.sql.Types.TIMESTAMP) {
+								if (supportDefaultValue) {
+									cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], fieldType,
+											fieldsNullable[j]);
+								} else {
+									cellValue = rowData[j];
+
+								}
+								SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, index + 1);
+								index++;
+							}
+						}
+					} else {
+						for (int j = 0, n = rowData.length; j < n; j++) {
+							if (supportDefaultValue) {
+								cellValue = getDefaultValue(rowData[j], fieldsDefaultValue[j], -1, fieldsNullable[j]);
+							} else {
+								cellValue = rowData[j];
+							}
+							// 非timestamp类型
+							if (!(rowData[j] instanceof Timestamp)) {
+								SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, index + 1);
+								index++;
+							}
 						}
 					}
 					meter++;
@@ -171,28 +304,26 @@ public class SqlUtilsExt {
 	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
+			Object cellValue;
+			int fieldType;
 			for (int i = 0, n = params.length; i < n; i++) {
-				setParamValue(conn, dbType, pst, params[i], entityMeta.getFieldsTypeArray()[i],
-						entityMeta.getFieldsNullable()[i], entityMeta.getFieldsDefaultValue()[i], 1 + i);
+				fieldType = entityMeta.getFieldsTypeArray()[i];
+				cellValue = getDefaultValue(params[i], entityMeta.getFieldsDefaultValue()[i], fieldType,
+						entityMeta.getFieldsNullable()[i]);
+				SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, 1 + i);
 			}
 		}
 	}
 
 	/**
-	 * @todo 提供针对默认值的转化
-	 * @param conn
-	 * @param dbType
-	 * @param pst
+	 * @TODO 针对默认值进行处理
 	 * @param paramValue
+	 * @param defaultValue
 	 * @param jdbcType
 	 * @param isNullable
-	 * @param defaultValue
-	 * @param paramIndex
-	 * @throws SQLException
-	 * @throws IOException
+	 * @return
 	 */
-	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
-			int jdbcType, boolean isNullable, String defaultValue, int paramIndex) throws SQLException, IOException {
+	private static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean isNullable) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
@@ -217,6 +348,6 @@ public class SqlUtilsExt {
 				realValue = defaultValue;
 			}
 		}
-		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
+		return realValue;
 	}
 }

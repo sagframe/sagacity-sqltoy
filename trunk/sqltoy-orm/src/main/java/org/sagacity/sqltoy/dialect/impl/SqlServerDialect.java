@@ -220,6 +220,7 @@ public class SqlServerDialect implements Dialect {
 			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
+		// 为什么不共用oracle等merge方法,因为sqlserver不支持timestamp类型的数据进行插入赋值
 		return SqlServerDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
 				forceUpdateFields, conn, dbType, autoCommit, tableName);
 	}

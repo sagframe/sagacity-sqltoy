@@ -215,6 +215,45 @@ public class SqlUtil {
 	}
 
 	/**
+	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
+	 * @param conn
+	 * @param dbType
+	 * @param pst
+	 * @param params
+	 * @param paramsType
+	 * @param fromIndex
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	private static void setSqlServerParamsValue(Connection conn, final Integer dbType, PreparedStatement pst,
+			Object[] params, Integer[] paramsType, int fromIndex) throws SQLException, IOException {
+		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
+		// 一般情况fromIndex 都是0
+		if (null != params && params.length > 0) {
+			int n = params.length;
+			int startIndex = fromIndex + 1;
+			int meter = 0;
+			if (null == paramsType || paramsType.length == 0) {
+				// paramsType=-1 表示按照参数值来判断类型
+				for (int i = 0; i < n; i++) {
+					// sqlserver 不支持timestamp类型的赋值
+					if (!(params[i] instanceof Timestamp)) {
+						setParamValue(conn, dbType, pst, params[i], -1, startIndex + meter);
+						meter++;
+					}
+				}
+			} else {
+				for (int i = 0; i < n; i++) {
+					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
+						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
+						meter++;
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
 	 * clob bug的支持(druid 1.1.10 已经修复) update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
 	 * 
@@ -1191,7 +1230,12 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				setParamsValue(conn, dbType, pst, params, paramsType, 0);
+				// sqlserver 存在timestamp不能赋值问题
+				if (dbType == DBType.SQLSERVER) {
+					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
+				} else {
+					setParamsValue(conn, dbType, pst, params, paramsType, 0);
+				}
 				pst.executeUpdate();
 				// 返回update的记录数量
 				this.setResult(Long.valueOf(pst.getUpdateCount()));
@@ -1428,5 +1472,4 @@ public class SqlUtil {
 		}
 		return sql;
 	}
-
 }
