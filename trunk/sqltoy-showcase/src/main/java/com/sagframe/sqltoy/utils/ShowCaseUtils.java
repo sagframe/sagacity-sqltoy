@@ -81,9 +81,14 @@ public class ShowCaseUtils {
 	public static byte[] getBytes(InputStream is) {
 		byte[] data = null;
 		try {
-			// 避免空流
-			if (is.available() == 0)
+			if (is == null) {
+				System.err.println("流文件为null,请检查classes下面是否存在对应文件!");
 				return new byte[] {};
+			}
+			// 避免空流
+			if (is.available() == 0) {
+				return new byte[] {};
+			}
 			Collection chunks = new ArrayList();
 			byte[] buffer = new byte[1024 * 1000];
 			int read = -1;
