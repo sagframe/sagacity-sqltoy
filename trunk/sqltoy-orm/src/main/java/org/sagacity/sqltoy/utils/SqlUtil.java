@@ -215,7 +215,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * @TODO 针对sqlserver提供特殊处理
+	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
 	 * @param conn
 	 * @param dbType
 	 * @param pst
@@ -1230,6 +1230,7 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+				// sqlserver 存在timestamp不能赋值问题
 				if (dbType == DBType.SQLSERVER) {
 					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
 				} else {
