@@ -380,6 +380,7 @@ public class OracleDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
+						// virtual_table为dual
 						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
 								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
