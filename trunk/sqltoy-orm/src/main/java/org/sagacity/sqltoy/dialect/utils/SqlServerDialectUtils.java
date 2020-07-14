@@ -331,7 +331,7 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		sql.append(" from ").append(realTable);
+		//sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
