@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -169,8 +170,8 @@ public class SqlServerDialectUtils {
 			sql.append("? as ");
 			sql.append(columnName);
 		}
-		//sqlserver 不需要填具体表名,oracle 对应dual
-		//sql.append(" from ").append(realTable);
+		// sqlserver 不需要填具体表名,oracle 对应dual
+		// sql.append(" from ").append(realTable);
 		sql.append(") tv on (");
 		StringBuilder idColumns = new StringBuilder();
 		// 组织on部分的主键条件判断
@@ -204,25 +205,27 @@ public class SqlServerDialectUtils {
 			FieldMeta fieldMeta;
 			// update 只针对非主键字段进行修改
 			boolean isStart = true;
+			int meter = 0;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = fieldMeta.getColumnName();
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				if (i > 0) {
-					sql.append(",");
-				}
-				sql.append(" ta.").append(columnName).append("=");
-				// 强制修改
-				if (fupc.contains(columnName)) {
-					sql.append("tv.").append(columnName);
-				} else {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName);
-					sql.append(",ta.").append(columnName);
-					sql.append(")");
-				}
-				// sqlserver不支持timestamp类型的数据进行插入赋值
+				// sqlserver不支持timestamp类型的数据进行插入赋值和变更
 				if (fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
+					columnName = fieldMeta.getColumnName();
+					columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+					if (meter > 0) {
+						sql.append(",");
+					}
+					sql.append(" ta.").append(columnName).append("=");
+					// 强制修改
+					if (fupc.contains(columnName)) {
+						sql.append("tv.").append(columnName);
+					} else {
+						sql.append(isNullFunction);
+						sql.append("(tv.").append(columnName);
+						sql.append(",ta.").append(columnName);
+						sql.append(")");
+					}
+
 					if (!isStart) {
 						insertRejIdCols.append(",");
 						insertRejIdColValues.append(",");
@@ -240,6 +243,7 @@ public class SqlServerDialectUtils {
 					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
 					}
+					meter++;
 				}
 			}
 		}
@@ -582,10 +586,7 @@ public class SqlServerDialectUtils {
 
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-
-		if (sqlToyContext.isDebug()) {
-			logger.debug(insertSql);
-		}
+		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -598,6 +599,7 @@ public class SqlServerDialectUtils {
 				if (null != paramValues && paramValues.length > 0) {
 					int index = 0;
 					for (int i = 0, n = paramValues.length; i < n; i++) {
+						//sqlserver timestamp类型的字段无需赋值
 						if (!paramsType[i].equals(java.sql.Types.TIMESTAMP)) {
 							SqlUtil.setParamValue(conn, dbType, pst, paramValues[i], paramsType[i], index + 1);
 							index++;
@@ -758,9 +760,7 @@ public class SqlServerDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			logger.debug("batch insert sql:{}", insertSql);
-		}
+		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
 		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}

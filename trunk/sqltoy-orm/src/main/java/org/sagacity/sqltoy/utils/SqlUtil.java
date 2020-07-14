@@ -201,14 +201,22 @@ public class SqlUtil {
 		if (null != params && params.length > 0) {
 			int n = params.length;
 			int startIndex = fromIndex + 1;
+			int meter = 0;
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
+					// sqlserver 不支持timestamp类型的赋值
+					if (dbType != DBType.SQLSERVER || !(params[i] instanceof Timestamp)) {
+						setParamValue(conn, dbType, pst, params[i], -1, startIndex + meter);
+						meter++;
+					}
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + i);
+					if (dbType != DBType.SQLSERVER || !(paramsType[i] == java.sql.Types.TIMESTAMP)) {
+						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
+						meter++;
+					}
 				}
 			}
 		}
@@ -1191,6 +1199,7 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+
 				setParamsValue(conn, dbType, pst, params, paramsType, 0);
 				pst.executeUpdate();
 				// 返回update的记录数量
@@ -1428,5 +1437,4 @@ public class SqlUtil {
 		}
 		return sql;
 	}
-
 }
