@@ -159,7 +159,6 @@ public class SqlServerDialectUtils {
 		sql.append("merge into ");
 		sql.append(realTable);
 		sql.append(" ta ");
-		//update 2020-07-14 增加distinct 参数
 		sql.append(" using (select ");
 		for (int i = 0; i < columnSize; i++) {
 			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
