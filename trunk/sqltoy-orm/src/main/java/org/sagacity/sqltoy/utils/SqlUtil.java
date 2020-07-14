@@ -244,7 +244,7 @@ public class SqlUtil {
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					if (!(paramsType[i] == java.sql.Types.TIMESTAMP)) {
+					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
 						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
 						meter++;
 					}

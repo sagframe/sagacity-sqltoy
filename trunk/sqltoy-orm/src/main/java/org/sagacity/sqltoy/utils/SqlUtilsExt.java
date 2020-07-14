@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
@@ -109,35 +110,53 @@ public class SqlUtilsExt {
 			// 批处理计数器
 			int meter = 0;
 			int index = 0;
+			Object cellValue;
+			int fieldType;
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
+				fieldType = -1;
 				if (rowData != null) {
 					// sqlserver 针对timestamp类型不能进行赋值
 					if (dbType == DBType.SQLSERVER) {
 						index = 0;
-						for (int j = 0, n = rowData.length; j < n; j++) {
-							if (fieldsType[j] == null || fieldsType[j] != java.sql.Types.TIMESTAMP) {
-								if (supportDefaultValue) {
-									setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
-											fieldsDefaultValue[j], index + 1);
+						if (fieldsType != null) {
+							for (int j = 0, n = rowData.length; j < n; j++) {
+								fieldType = fieldsType[j];
+								if (fieldType != java.sql.Types.TIMESTAMP) {
+									if (supportDefaultValue) {
+										cellValue = getValue(rowData[j], fieldsDefaultValue[j], fieldType,
+												fieldsNullable[j]);
+									} else {
+										cellValue = rowData[j];
 
-								} else {
-									SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
-											fieldsType == null ? -1 : fieldsType[j], index + 1);
+									}
+									SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, index + 1);
+									index++;
 								}
-								index++;
+							}
+						} else {
+							for (int j = 0, n = rowData.length; j < n; j++) {
+								if (supportDefaultValue) {
+									cellValue = getValue(rowData[j], fieldsDefaultValue[j], -1, fieldsNullable[j]);
+								} else {
+									cellValue = rowData[j];
+								}
+								if (!(rowData[j] instanceof Timestamp)) {
+									SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, index + 1);
+									index++;
+								}
 							}
 						}
 					} else {
 						// 使用对象properties方式传值
 						for (int j = 0, n = rowData.length; j < n; j++) {
 							if (supportDefaultValue) {
-								setParamValue(conn, dbType, pst, rowData[j], fieldsType[j], fieldsNullable[j],
-										fieldsDefaultValue[j], j + 1);
+								fieldType = fieldsType[j];
+								cellValue = getValue(rowData[j], fieldsDefaultValue[j], fieldType, fieldsNullable[j]);
 							} else {
-								SqlUtil.setParamValue(conn, dbType, pst, rowData[j],
-										fieldsType == null ? -1 : fieldsType[j], j + 1);
+								cellValue = rowData[j];
 							}
+							SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, j + 1);
 						}
 					}
 					meter++;
@@ -193,9 +212,15 @@ public class SqlUtilsExt {
 	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
 			final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
+			Object cellValue;
+			int fieldType;
 			for (int i = 0, n = params.length; i < n; i++) {
-				setParamValue(conn, dbType, pst, params[i], entityMeta.getFieldsTypeArray()[i],
-						entityMeta.getFieldsNullable()[i], entityMeta.getFieldsDefaultValue()[i], 1 + i);
+				fieldType = entityMeta.getFieldsTypeArray()[i];
+				cellValue = getValue(params[i], entityMeta.getFieldsDefaultValue()[i], fieldType,
+						entityMeta.getFieldsNullable()[i]);
+				SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, 1 + i);
+//				setParamValue(conn, dbType, pst, params[i], entityMeta.getFieldsTypeArray()[i],
+//						entityMeta.getFieldsNullable()[i], entityMeta.getFieldsDefaultValue()[i], 1 + i);
 			}
 		}
 	}
@@ -213,8 +238,36 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
-			int jdbcType, boolean isNullable, String defaultValue, int paramIndex) throws SQLException, IOException {
+//	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
+//			int jdbcType, boolean isNullable, String defaultValue, int paramIndex) throws SQLException, IOException {
+//		Object realValue = paramValue;
+//		// 当前值为null且默认值不为null、且字段不允许为null
+//		if (realValue == null && defaultValue != null && !isNullable) {
+//			if (jdbcType == java.sql.Types.DATE) {
+//				realValue = new Date();
+//			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
+//				realValue = DateUtil.getTimestamp(null);
+//			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.BIGINT
+//					|| jdbcType == java.sql.Types.TINYINT) {
+//				realValue = Integer.valueOf(defaultValue);
+//			} else if (jdbcType == java.sql.Types.DECIMAL || jdbcType == java.sql.Types.NUMERIC) {
+//				realValue = new BigDecimal(defaultValue);
+//			} else if (jdbcType == java.sql.Types.DOUBLE) {
+//				realValue = Double.valueOf(defaultValue);
+//			} else if (jdbcType == java.sql.Types.BOOLEAN) {
+//				realValue = Boolean.parseBoolean(defaultValue);
+//			} else if (jdbcType == java.sql.Types.FLOAT || jdbcType == java.sql.Types.REAL) {
+//				realValue = Float.valueOf(defaultValue);
+//			} else if (jdbcType == java.sql.Types.TIME) {
+//				realValue = java.sql.Time.valueOf(LocalTime.now());
+//			} else {
+//				realValue = defaultValue;
+//			}
+//		}
+//		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
+//	}
+
+	public static Object getValue(Object paramValue, String defaultValue, int jdbcType, boolean isNullable) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
@@ -239,7 +292,7 @@ public class SqlUtilsExt {
 				realValue = defaultValue;
 			}
 		}
-		SqlUtil.setParamValue(conn, dbType, pst, realValue, jdbcType, paramIndex);
+		return realValue;
 	}
 
 	public static void main(String[] args) {
