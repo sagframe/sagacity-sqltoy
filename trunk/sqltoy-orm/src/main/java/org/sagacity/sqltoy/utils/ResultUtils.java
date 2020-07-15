@@ -295,7 +295,7 @@ public class ResultUtils {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
-				logger.debug("请正确配置TranslateManager!");
+				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
 
