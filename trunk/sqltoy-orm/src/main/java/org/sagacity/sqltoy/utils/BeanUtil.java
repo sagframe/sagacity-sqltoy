@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static java.lang.System.err;
 
 /**
  * @project sagacity-sqltoy4.0
@@ -633,7 +634,11 @@ public class BeanUtil {
 						resultList.add(dataList);
 					}
 				} else {
-					logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null!", i);
+					if (logger.isDebugEnabled()) {
+						logger.debug("BeanUtil.reflectBeansToList 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", i);
+					} else {
+						err.println("BeanUtil.reflectBeansToList 方法,第:{" + i + "}行数据为null,如果是sql查询请检查写法是否正确!");
+					}
 					resultList.add(null);
 				}
 			}
@@ -741,7 +746,11 @@ public class BeanUtil {
 						resultList.add(dataAry);
 					}
 				} else {
-					logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null!", i);
+					if (logger.isDebugEnabled()) {
+						logger.debug("BeanUtil.reflectBeansToInnerAry 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", i);
+					} else {
+						err.println("BeanUtil.reflectBeansToInnerAry 方法,第:{" + i + "}行数据为null,如果是sql查询请检查写法是否正确!");
+					}
 					resultList.add(null);
 				}
 			}
@@ -863,7 +872,11 @@ public class BeanUtil {
 					resultList.add(bean);
 					meter++;
 				} else {
-					logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
+					if (logger.isDebugEnabled()) {
+						logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
+					} else {
+						err.println("BeanUtil.reflectListToBean 方法,第:{" + index + "}行数据为null,如果是sql查询请检查写法是否正确!");
+					}
 					resultList.add(null);
 				}
 				index++;
