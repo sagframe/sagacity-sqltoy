@@ -285,7 +285,10 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
-		Boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null) ? false : true;
+		Boolean hasTranslate = false;
+		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
+			hasTranslate = true;
+		}
 		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
@@ -714,7 +717,7 @@ public class ResultUtils {
 		// 单值翻译
 		if (translate.getSplitRegex() == null) {
 			if (translate.getKeyTemplate() != null) {
-				//keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
+				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
 				fieldStr = translate.getKeyTemplate().replace("{}", fieldStr);
 			}
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
