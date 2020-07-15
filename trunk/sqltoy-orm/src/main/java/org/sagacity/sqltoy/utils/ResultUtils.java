@@ -480,8 +480,9 @@ public class ResultUtils {
 	 */
 	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
 			List pivotCategorySet) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return result;
+		}
 		// 行列转换
 		if (pivotModel.getGroupCols() == null || pivotModel.getCategoryCols().length == 0) {
 			return CollectionUtil.convertColToRow(result, null);
