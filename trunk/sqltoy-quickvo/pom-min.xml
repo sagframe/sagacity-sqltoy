@@ -62,6 +62,7 @@
 					<artifactId>jackson-databind</artifactId>
 				</exclusion>
 			</exclusions>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.freemarker</groupId>
@@ -76,7 +77,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>sqltoy-quickvo-${version}</finalName>
+		<finalName>sqltoy-quickvo-min-${version}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/java</directory>
