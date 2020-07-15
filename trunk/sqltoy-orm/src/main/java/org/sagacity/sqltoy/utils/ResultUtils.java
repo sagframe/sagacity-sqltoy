@@ -285,14 +285,17 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
-		Boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null) ? false : true;
+		Boolean hasTranslate = false;
+		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
+			hasTranslate = true;
+		}
 		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
-				logger.debug("请正确配置TranslateManager!");
+				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
 
@@ -477,8 +480,9 @@ public class ResultUtils {
 	 */
 	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
 			List pivotCategorySet) {
-		if (result == null || result.isEmpty())
+		if (result == null || result.isEmpty()) {
 			return result;
+		}
 		// 行列转换
 		if (pivotModel.getGroupCols() == null || pivotModel.getCategoryCols().length == 0) {
 			return CollectionUtil.convertColToRow(result, null);
@@ -714,7 +718,7 @@ public class ResultUtils {
 		// 单值翻译
 		if (translate.getSplitRegex() == null) {
 			if (translate.getKeyTemplate() != null) {
-				//keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
+				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
 				fieldStr = translate.getKeyTemplate().replace("{}", fieldStr);
 			}
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
