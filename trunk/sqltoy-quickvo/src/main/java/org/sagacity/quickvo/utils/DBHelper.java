@@ -430,7 +430,7 @@ public class DBHelper {
 						colMeta.setColRemark(rs.getString("REMARKS"));
 					} else {
 						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
-						if (colMeta.getColDefault() == null) {
+						if (colMeta!=null && colMeta.getColDefault() == null) {
 							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 						}
 					}
