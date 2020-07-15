@@ -31,6 +31,7 @@ public class DefaultObtainDataSource implements ObtainDataSource {
 		if (this.dataSource == null) {
 			this.dataSource = defaultDataSource;
 		}
+		// 理论上应该先获取primary的数据源,目前不知道如何获取
 		// 多数据源情况下没有指定默认dataSource则返回名称为dataSource的数据源
 		if (this.dataSource == null && applicationContext.containsBean("dataSource")) {
 			this.dataSource = (DataSource) applicationContext.getBean("dataSource");
