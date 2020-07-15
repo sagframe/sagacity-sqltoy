@@ -27,10 +27,11 @@ public class DefaultObtainDataSource implements ObtainDataSource {
 		if (result.size() == 1) {
 			this.dataSource = result.values().iterator().next();
 		}
-		// 通过sqltoyContext中定义的默认dataSource来获取
+		// 非单一数据源,通过sqltoyContext中定义的默认dataSource来获取
 		if (this.dataSource == null) {
 			this.dataSource = defaultDataSource;
 		}
+		// 多数据源情况下没有指定默认dataSource则返回名称为dataSource的数据源
 		if (this.dataSource == null && applicationContext.containsBean("dataSource")) {
 			this.dataSource = (DataSource) applicationContext.getBean("dataSource");
 		}
