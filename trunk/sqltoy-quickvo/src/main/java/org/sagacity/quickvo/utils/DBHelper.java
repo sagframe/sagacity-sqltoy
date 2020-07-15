@@ -422,50 +422,50 @@ public class DBHelper {
 				List result = new ArrayList();
 				String isAutoIncrement;
 				while (rs.next()) {
-					TableColumnMeta colMeta;
-					if (metaMap == null) {
+					TableColumnMeta colMeta = null;
+					// update 2020-7-15
+					// 调整了处理策略,将metaMap(通过不同数据库sql特定sql)作为辅助作用,获取不到时直接以jdbc自身的api提取表字段信息
+					if (metaMap != null) {
+						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
+					}
+					if (colMeta == null) {
 						colMeta = new TableColumnMeta();
 						colMeta.setColName(rs.getString("COLUMN_NAME"));
 						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 						colMeta.setColRemark(rs.getString("REMARKS"));
-					} else {
-						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
-						if (colMeta.getColDefault() == null) {
-							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
-						}
+					} else if (colMeta.getColDefault() == null) {
+						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 					}
-					if (colMeta != null) {
-						colMeta.setDataType(rs.getInt("DATA_TYPE"));
-						colMeta.setTypeName(rs.getString("TYPE_NAME"));
-						colMeta.setLength(rs.getInt("COLUMN_SIZE"));
-						colMeta.setPrecision(colMeta.getLength());
-						colMeta.setScale(rs.getInt("DECIMAL_DIGITS"));
-						colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
-						try {
-							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
-									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
-									|| isAutoIncrement.equals("1"))) {
-								colMeta.setAutoIncrement(true);
-							} else {
-								colMeta.setAutoIncrement(false);
-							}
-						} catch (Exception e) {
-						}
-						if (dbType == DbType.ORACLE12) {
-							if (colMeta.getColDefault() != null
-									&& colMeta.getColDefault().toLowerCase().endsWith(".nextval")) {
-								colMeta.setAutoIncrement(true);
-								colMeta.setColDefault(colMeta.getColDefault().replaceAll("\"", "\\\\\""));
-							}
-						}
-						if (rs.getInt("NULLABLE") == 1) {
-							colMeta.setNullable(true);
+					colMeta.setDataType(rs.getInt("DATA_TYPE"));
+					colMeta.setTypeName(rs.getString("TYPE_NAME"));
+					colMeta.setLength(rs.getInt("COLUMN_SIZE"));
+					colMeta.setPrecision(colMeta.getLength());
+					colMeta.setScale(rs.getInt("DECIMAL_DIGITS"));
+					colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
+					try {
+						isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+						if (isAutoIncrement != null
+								&& (isAutoIncrement.equalsIgnoreCase("true") || isAutoIncrement.equalsIgnoreCase("YES")
+										|| isAutoIncrement.equalsIgnoreCase("Y") || isAutoIncrement.equals("1"))) {
+							colMeta.setAutoIncrement(true);
 						} else {
-							colMeta.setNullable(false);
+							colMeta.setAutoIncrement(false);
 						}
-						result.add(colMeta);
+					} catch (Exception e) {
 					}
+					if (dbType == DbType.ORACLE12) {
+						if (colMeta.getColDefault() != null
+								&& colMeta.getColDefault().toLowerCase().endsWith(".nextval")) {
+							colMeta.setAutoIncrement(true);
+							colMeta.setColDefault(colMeta.getColDefault().replaceAll("\"", "\\\\\""));
+						}
+					}
+					if (rs.getInt("NULLABLE") == 1) {
+						colMeta.setNullable(true);
+					} else {
+						colMeta.setNullable(false);
+					}
+					result.add(colMeta);
 				}
 				this.setResult(result);
 			}
