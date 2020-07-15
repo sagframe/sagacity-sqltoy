@@ -863,7 +863,7 @@ public class BeanUtil {
 					resultList.add(bean);
 					meter++;
 				} else {
-					logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null!", index);
+					logger.debug("BeanUtil.reflectListToBean 方法,第:{}行数据为null,如果是sql查询请检查写法是否正确!", index);
 					resultList.add(null);
 				}
 				index++;
