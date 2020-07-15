@@ -104,6 +104,7 @@ public class DB2DialectUtils {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			// 处理保留字
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			// 这里是db2跟oracle、sqlserver不同的地方
 			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
@@ -259,6 +260,7 @@ public class DB2DialectUtils {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			// 增加处理保留字
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			// 这里是db2跟oracle、sqlserver不同的地方
 			wrapSelectFields(sql, i, columnName, fieldMeta.getType(), fieldMeta.getLength());
 		}
 		if (StringUtil.isNotBlank(fromTable)) {
