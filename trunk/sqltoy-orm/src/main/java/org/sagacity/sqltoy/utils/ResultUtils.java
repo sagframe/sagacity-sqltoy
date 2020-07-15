@@ -871,8 +871,6 @@ public class ResultUtils {
 				realLabelName = fields[i].toLowerCase();
 				index = realLabelName.indexOf(":");
 				if (index != -1) {
-					// realLabelName = realLabelName.substring(0,
-					// realLabelName.indexOf(":")).trim();
 					realLabelName = realLabelName.substring(index + 1).trim();
 				}
 				labelIndexMap.put(realLabelName, i);
