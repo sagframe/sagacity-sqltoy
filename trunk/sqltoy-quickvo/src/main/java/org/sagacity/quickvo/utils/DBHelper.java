@@ -303,14 +303,15 @@ public class DBHelper {
 					List result = new ArrayList();
 					String isAutoIncrement;
 					while (rs.next()) {
-						TableColumnMeta colMeta;
+						TableColumnMeta colMeta = null;
 						if (dbType == DbType.SQLSERVER) {
-							if (metaMap == null) {
+							if (metaMap != null) {
+								colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
+							}
+							if (colMeta == null) {
 								colMeta = new TableColumnMeta();
 								colMeta.setColName(rs.getString("COLUMN_NAME"));
 								colMeta.setColRemark(rs.getString("REMARKS"));
-							} else {
-								colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
 							}
 						} else {
 							colMeta = new TableColumnMeta();
