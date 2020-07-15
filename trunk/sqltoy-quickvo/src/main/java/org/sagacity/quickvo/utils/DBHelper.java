@@ -423,6 +423,8 @@ public class DBHelper {
 				String isAutoIncrement;
 				while (rs.next()) {
 					TableColumnMeta colMeta = null;
+					// update 2020-7-15
+					// 调整了处理策略,将metaMap(通过不同数据库sql特定sql)作为辅助作用,获取不到时直接以jdbc自身的api提取表字段信息
 					if (metaMap != null) {
 						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
 					}
