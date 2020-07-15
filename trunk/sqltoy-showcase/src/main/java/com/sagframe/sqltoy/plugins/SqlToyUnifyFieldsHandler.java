@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * @project sqltoy-showcase
- * @description 统一字段赋值范例
+ * @description 统一字段赋值范例(一般用于表中最后修改时间的自动赋值,记录的最后修改时间极为重要,在数据分析平台上可以作为增量更新的依据,其他可以没有最后修改时间极为重要)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月18日
  */
@@ -29,11 +29,11 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	@Override
 	public Map<String, Object> createUnifyFields() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
-		LocalDateTime nowDate=DateUtil.getDateTime();
+		LocalDateTime nowDate = DateUtil.getDateTime();
 		Timestamp nowTime = DateUtil.getTimestamp(null);
 		// 获取用户信息
 		String userId = getUserId();
-		//不存在的字段名称会自动忽略掉(因此下述属性未必是每个表中必须存在的)
+		// 不存在的字段名称会自动忽略掉(因此下述属性未必是每个表中必须存在的)
 		map.put("createBy", userId);
 		map.put("createDate", nowDate);
 		map.put("createTime", nowTime);
@@ -68,12 +68,12 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	 */
 	@Override
 	public IgnoreCaseSet forceUpdateFields() {
-		IgnoreCaseSet forceUpdateFields=new IgnoreCaseSet();
+		IgnoreCaseSet forceUpdateFields = new IgnoreCaseSet();
 		forceUpdateFields.add("updateTime");
 		forceUpdateFields.add("systemTime");
 		return forceUpdateFields;
 	}
-	
+
 	/**
 	 * @todo 获取当前用户Id信息
 	 * @return
@@ -93,8 +93,7 @@ public class SqlToyUnifyFieldsHandler implements IUnifyFieldsHandler {
 	}
 
 	/**
-	 * @param defaultUserName
-	 *            the defaultUserName to set
+	 * @param defaultUserName the defaultUserName to set
 	 */
 	public void setDefaultUserName(String defaultUserName) {
 		this.defaultUserName = defaultUserName;
