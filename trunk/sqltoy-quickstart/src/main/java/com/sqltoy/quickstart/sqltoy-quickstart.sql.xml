@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
+
+
+	<!-- 演示树形表递归查询 -->
+	<sql id="sqltoy_showcase">
+		<value>
+			<![CDATA[
+			SELECT STAFF_ID,`SEX_TYPE`,[STATUS] FROM SQLTOY_STAFF_INFO ssi WHERE ssi.`STATUS` IN (:status)
+				]]>
+		</value>
+	</sql>
+
+</sqltoy>
