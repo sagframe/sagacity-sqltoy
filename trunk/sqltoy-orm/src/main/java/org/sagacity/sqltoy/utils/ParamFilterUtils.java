@@ -481,6 +481,8 @@ public class ParamFilterUtils {
 					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
 				}
 			}
+		} else {
+			logger.warn("sql中filters定义的filterType={} 目前没有对应的实现!", filterType);
 		}
 		return result;
 	}
