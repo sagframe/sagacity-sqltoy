@@ -227,7 +227,7 @@ public class DBHelper {
 		final int dbType = DBUtil.getDbType(conn);
 		PreparedStatement pst = null;
 		ResultSet rs;
-		// sybase or sqlserver
+		// sqlserver
 		String tableComment = null;
 		if (dbType == DbType.SQLSERVER) {
 			StringBuilder queryStr = new StringBuilder();
@@ -513,8 +513,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的外键信息</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:12
 	 * @param tableName
 	 * @return
 	 * @throws SQLException
@@ -566,8 +564,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的主键信息</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:01
 	 * @param tableName
 	 * @return
 	 * @throws SQLException
@@ -597,8 +593,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的主键约束名称</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:01
 	 * @param tableName
 	 * @return
 	 * @throws SQLException

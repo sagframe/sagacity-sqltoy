@@ -10,6 +10,12 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
+/**
+ * @project sagacity-quickvo
+ * @description 提供基于YAML配置文件的解析
+ * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
+ * @version $id:YamlUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM $
+ */
 public class YamlUtil {
 
 	/**
