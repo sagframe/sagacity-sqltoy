@@ -77,11 +77,9 @@ public class QuickVOStart {
 			baseDir = System.getProperty("user.dir");
 		}
 		QuickVOConstants.BASE_LOCATE = baseDir;
-		// 测试使用(真实场景不起作用)
+		// 代码调试时使用(真实场景不起作用,注意pom中要增加对应数据库驱动才可以运行)
 		if (args == null || args.length == 0) {
 			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sqltoy/sqltoy-postgresql/tools/quickvo";
-			// QuickVOConstants.BASE_LOCATE =
-			// "D:/workspace/personal/sagacity-sqltoy/tools/quickvo";
 			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
 		}
 		// 做配置文件解析、数据库检测
