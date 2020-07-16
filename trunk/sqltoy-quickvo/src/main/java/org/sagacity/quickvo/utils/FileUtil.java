@@ -26,7 +26,6 @@ import java.util.List;
  * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
  * @version $id:FileUtil.java,Revision:v1.0,Date:2008-11-7 下午01:53:21 $
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class FileUtil {
 
 	/**
@@ -99,8 +98,6 @@ public class FileUtil {
 
 	/**
 	 * @todo <b>将字符串存为文件</b>
-	 * @author zhongxuchen
-	 * @date 2011-3-10 上午10:44:05
 	 * @param content
 	 * @param fileName
 	 * @param charset
