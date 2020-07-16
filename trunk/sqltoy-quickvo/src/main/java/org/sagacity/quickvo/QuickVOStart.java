@@ -13,7 +13,7 @@ import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.FreemarkerUtil;
 
 /**
- * @project sagacity-tools
+ * @project sagacity-quickvo
  * @description 快速从数据库生成VO以及VO<-->PO 映射的mapping工具
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
  * @version $id:QuickVOStart.java,Revision:v2.0,Date:Apr 15, 2009 4:10:13 PM $
@@ -81,7 +81,7 @@ public class QuickVOStart {
 		if (args == null || args.length == 0) {
 			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sqltoy/sqltoy-postgresql/tools/quickvo";
 			// QuickVOConstants.BASE_LOCATE =
-			// "D:/workspace/personal/sagacity2.0/sqltoy-orm/tools/quickvo";
+			// "D:/workspace/personal/sagacity-sqltoy/tools/quickvo";
 			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
 		}
 		// 做配置文件解析、数据库检测

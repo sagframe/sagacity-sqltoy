@@ -493,8 +493,9 @@ public class DBHelper {
 	 * @return
 	 */
 	private static String clearDefaultValue(String defaultValue) {
-		if (defaultValue == null)
+		if (defaultValue == null) {
 			return null;
+		}
 		// 针对postgresql
 		if (defaultValue.indexOf("(") != -1 && defaultValue.indexOf(")") != -1 && defaultValue.indexOf("::") != -1) {
 			return defaultValue.substring(defaultValue.indexOf("(") + 1, defaultValue.indexOf("::"));
