@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.quickvo.engine.template;
+package org.sagacity.quickvo.utils;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -12,9 +12,6 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import org.sagacity.quickvo.utils.LoggerUtil;
-import org.sagacity.quickvo.utils.StringUtil;
 
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
@@ -27,18 +24,18 @@ import freemarker.template.Template;
  * @version id:TemplateGenerator.java,Revision:v1.0,Date:2008-11-24
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class TemplateGenerator {
+public class FreemarkerUtil {
 	/**
 	 * 定义全局日志
 	 */
 	private static Logger logger = LoggerUtil.getLogger();
 	private static Configuration cfg = null;
 
-	public static TemplateGenerator me;
+	public static FreemarkerUtil me;
 
-	public static TemplateGenerator getInstance() {
+	public static FreemarkerUtil getInstance() {
 		if (me == null)
-			me = new TemplateGenerator();
+			me = new FreemarkerUtil();
 		return me;
 	}
 

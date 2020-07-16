@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.BusinessIdConfig;
 import org.sagacity.quickvo.model.CascadeModel;
 import org.sagacity.quickvo.model.ColumnTypeMapping;
@@ -35,6 +34,7 @@ import org.sagacity.quickvo.utils.DBHelper;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.StringUtil;
+import org.sagacity.quickvo.utils.FreemarkerUtil;
 
 /**
  * @project sagacity-quickvo
@@ -103,7 +103,7 @@ public class TaskController {
 		init();
 		// 设置编码格式
 		if (StringUtil.isBlank(configModel.getEncoding())) {
-			TemplateGenerator.getInstance().setEncoding(configModel.getEncoding());
+			FreemarkerUtil.getInstance().setEncoding(configModel.getEncoding());
 		}
 		// 循环执行任务
 		QuickModel quickModel;
@@ -728,7 +728,7 @@ public class TaskController {
 		// 文件存在判断是否相等，不相等则生成
 		if (generateFile.exists()) {
 			String oldFileContent = FileUtil.readAsString(generateFile, charset);
-			String newFileContent = TemplateGenerator.getInstance().create(new String[] { "quickVO" },
+			String newFileContent = FreemarkerUtil.getInstance().create(new String[] { "quickVO" },
 					new Object[] { quickVO }, template);
 			// 剔除所有回车换行和空白
 			oldFileContent = StringUtil.clearMistyChars(oldFileContent, "");
@@ -745,7 +745,7 @@ public class TaskController {
 		// 需要产生
 		if (needGen) {
 			logger.info("正在生成文件:" + file);
-			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
 					file);
 		}
 	}
@@ -764,7 +764,7 @@ public class TaskController {
 		File voFile = new File(file);
 		// 文件不存在
 		if (!voFile.exists()) {
-			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate,
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate,
 					file);
 			return;
 		}
@@ -775,7 +775,7 @@ public class TaskController {
 		String fileStr = FileUtil.readAsString(voFile, charset);
 
 		// 文件存在，修改构造函数
-		String constructor = TemplateGenerator.getInstance().create(new String[] { "quickVO" },
+		String constructor = FreemarkerUtil.getInstance().create(new String[] { "quickVO" },
 				new Object[] { quickVO }, constructorTemplate);
 
 		String cleanConstructor = StringUtil.clearMistyChars(constructor, "").replaceAll("\\s+", "");
