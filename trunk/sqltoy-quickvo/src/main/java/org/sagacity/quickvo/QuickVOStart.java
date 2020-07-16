@@ -19,24 +19,7 @@ import org.sagacity.quickvo.utils.FreemarkerUtil;
  * @version $id:QuickVOStart.java,Revision:v2.0,Date:Apr 15, 2009 4:10:13 PM $
  */
 public class QuickVOStart {
-	private static Logger logger;
-
-	private ConfigModel configModel;
-
-	/**
-	 * 初始化，解析配置文件
-	 */
-	public void init() {
-		try {
-			logger = LoggerUtil.getLogger();
-			out.println("=========     welcome use sagacity-quickvo-4.13.1     ==========");
-			out.println("======      使用java -cp jarPath mainClass args模式启动                =======");
-			configModel = XMLConfigLoader.parse();
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.info("加载系统参数或解析任务xml文件出错!" + e.getMessage());
-		}
-	}
+	private static Logger logger = LoggerUtil.getLogger();
 
 	/**
 	 * 开始生成文件
@@ -44,10 +27,10 @@ public class QuickVOStart {
 	 * @throws Exception
 	 */
 	public void doStart() {
-		if (configModel == null) {
-			return;
-		}
 		try {
+			out.println("=========     welcome use sagacity-quickvo-4.13.1     ==========");
+			out.println("======      使用java -cp jarPath mainClass args模式启动                =======");
+			ConfigModel configModel = XMLConfigLoader.parse();
 			TaskController.setConfigModel(configModel);
 			// 创建vo和vof
 			TaskController.create();
@@ -82,9 +65,6 @@ public class QuickVOStart {
 			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sqltoy/sqltoy-postgresql/tools/quickvo";
 			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
 		}
-		// 做配置文件解析、数据库检测
-		quickStart.init();
-
 		// 开始根据数据库产生VO文件
 		quickStart.doStart();
 	}
