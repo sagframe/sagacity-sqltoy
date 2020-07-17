@@ -18,8 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sqltoy.quickstart.service.InitDBService;
 
 /**
- * @author zhong
- *
+ * @project sqltoy-quickstart
+ * @description 请在此说明类的功能
+ * @author zhongxuchen
+ * @version v1.0, Date:2020年7月17日
+ * @modify 2020年7月17日,修改说明
  */
 @Service("initDBService")
 public class InitDBServiceImpl implements InitDBService {
