@@ -44,7 +44,7 @@
 						</xsd:attribute>
 						<xsd:attribute name="schema" type="xsd:string">
 							<xsd:annotation>
-								<xsd:documentation><![CDATA[oracle,mysql,postgresql等支持]]></xsd:documentation>
+								<xsd:documentation><![CDATA[oracle 对应用户名,mysql 对应数据库名称,postgresql 对应]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
 					</xsd:complexType>
