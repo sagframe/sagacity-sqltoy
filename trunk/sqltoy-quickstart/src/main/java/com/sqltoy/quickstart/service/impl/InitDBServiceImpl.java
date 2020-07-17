@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sqltoy.quickstart.service.InitDBService;
 
@@ -25,9 +26,8 @@ public class InitDBServiceImpl implements InitDBService {
 	@Autowired
 	private SqlToyLazyDao sqlToyLazyDao;
 
-	@Override
+	@Transactional
 	public void initDatabase(String dataSqlFile) {
-		// TODO Auto-generated method stub
 		// 加载初始化数据脚本(最好手工执行数据初始化,便于演示缓存翻译功能)
 		final String sqlContent = FileUtil.readFileAsString(dataSqlFile, "UTF-8");
 		if (StringUtil.isBlank(sqlContent)) {

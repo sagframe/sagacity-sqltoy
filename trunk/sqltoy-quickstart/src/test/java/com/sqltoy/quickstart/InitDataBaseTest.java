@@ -24,6 +24,7 @@ public class InitDataBaseTest {
 	@Test
 	public void testInitDB() {
 		String dbSqlFile = "classpath:mock/quickstart_init.sql";
+		System.err.println("开始执行数据库初始化!");
 		initDBService.initDatabase(dbSqlFile);
 	}
 }
