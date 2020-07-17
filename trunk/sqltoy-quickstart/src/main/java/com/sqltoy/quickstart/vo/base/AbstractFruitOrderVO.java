@@ -15,7 +15,6 @@ import java.math.BigDecimal;
  * @version 1.0.0
  * Table: sqltoy_fruit_order,Remark:查询汇总演示-水果订单表  
  */
-// pkConstraint for postgresql,设置quickvo.xml <property name="skip.primary.constraint" value="true"/> 切换回主键约束
 @Entity(tableName="sqltoy_fruit_order",pk_constraint="PRIMARY")
 public abstract class AbstractFruitOrderVO implements Serializable,
 	java.lang.Cloneable {

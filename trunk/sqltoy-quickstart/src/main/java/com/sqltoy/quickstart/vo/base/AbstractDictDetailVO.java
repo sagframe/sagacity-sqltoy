@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  * Table: sqltoy_dict_detail,Remark:字典明细表  
  */
-// pkConstraint for postgresql,设置quickvo.xml <property name="skip.primary.constraint" value="true"/> 切换回主键约束
 @Entity(tableName="sqltoy_dict_detail",pk_constraint="PRIMARY")
 public abstract class AbstractDictDetailVO implements Serializable,
 	java.lang.Cloneable {

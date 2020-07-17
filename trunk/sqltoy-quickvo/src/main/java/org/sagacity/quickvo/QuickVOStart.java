@@ -28,7 +28,7 @@ public class QuickVOStart {
 	 */
 	public void doStart() {
 		try {
-			out.println("=========     welcome use sagacity-quickvo-4.13.1     ==========");
+			out.println("=========     welcome use sagacity-quickvo-4.13.6     ==========");
 			out.println("======      使用java -cp jarPath mainClass args模式启动                =======");
 			// 解析配置文件
 			ConfigModel configModel = XMLConfigLoader.parse();

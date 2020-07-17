@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  * Table: sqltoy_organ_info,Remark:机构信息表  
  */
-// pkConstraint for postgresql,设置quickvo.xml <property name="skip.primary.constraint" value="true"/> 切换回主键约束
 @Entity(tableName="sqltoy_organ_info",pk_constraint="PRIMARY")
 public abstract class AbstractOrganInfoVO implements Serializable,
 	java.lang.Cloneable {

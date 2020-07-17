@@ -17,7 +17,6 @@ import java.time.LocalDate;
  * @version 1.0.0
  * Table: sqltoy_trans_info_his,Remark:支付交易流水表  
  */
-// pkConstraint for postgresql,设置quickvo.xml <property name="skip.primary.constraint" value="true"/> 切换回主键约束
 @Entity(tableName="sqltoy_trans_info_his",pk_constraint="PRIMARY")
 public abstract class AbstractTransInfoHisVO implements Serializable,
 	java.lang.Cloneable {
