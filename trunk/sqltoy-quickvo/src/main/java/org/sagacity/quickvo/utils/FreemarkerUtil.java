@@ -20,8 +20,8 @@ import freemarker.template.Template;
 /**
  * @project sagacity-quickvo
  * @description 基于freemarker的模版工具引擎，提供日常项目中模版和数据对象的结合处理
- * @author zhongxuchen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version id:TemplateGenerator.java,Revision:v1.0,Date:2008-11-24
+ * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:FreemarkerUtil.java,Revision:v1.0,Date:2008-11-24
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class FreemarkerUtil {
@@ -33,9 +33,12 @@ public class FreemarkerUtil {
 
 	public static FreemarkerUtil me;
 
+	private static final String FMT_KEY = "sqltoy_quickvo_tmp_key";
+
 	public static FreemarkerUtil getInstance() {
-		if (me == null)
+		if (me == null) {
 			me = new FreemarkerUtil();
+		}
 		return me;
 	}
 
@@ -62,20 +65,22 @@ public class FreemarkerUtil {
 	 * @return
 	 */
 	public String create(String[] keys, Object[] templateData, String templateStr) {
-		if (keys == null || templateData == null)
+		if (keys == null || templateData == null) {
 			return null;
+		}
 		String result = null;
 		StringWriter writer = null;
 		try {
 			init();
 			StringTemplateLoader templateLoader = new StringTemplateLoader();
-			templateLoader.putTemplate("string_template", templateStr);
+			templateLoader.putTemplate(FMT_KEY, templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotBlank(this.encoding))
-				template = cfg.getTemplate("string_template", this.encoding);
-			else
-				template = cfg.getTemplate("string_template");
+			if (StringUtil.isNotBlank(this.encoding)) {
+				template = cfg.getTemplate(FMT_KEY, this.encoding);
+			} else {
+				template = cfg.getTemplate(FMT_KEY);
+			}
 
 			Map root = new HashMap();
 			for (int i = 0; i < keys.length; i++) {
@@ -108,20 +113,22 @@ public class FreemarkerUtil {
 	 * @param distFile
 	 */
 	public void create(String[] keys, Object[] templateData, String templateStr, String distFile) {
-		if (keys == null || templateData == null)
+		if (keys == null || templateData == null) {
 			return;
+		}
 		Writer writer = null;
 		FileOutputStream out = null;
 		try {
 			init();
 			StringTemplateLoader templateLoader = new StringTemplateLoader();
-			templateLoader.putTemplate("template", templateStr);
+			templateLoader.putTemplate(FMT_KEY, templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotBlank(this.encoding))
-				template = cfg.getTemplate("template", this.encoding);
-			else
-				template = cfg.getTemplate("template");
+			if (StringUtil.isNotBlank(this.encoding)) {
+				template = cfg.getTemplate(FMT_KEY, this.encoding);
+			} else {
+				template = cfg.getTemplate(FMT_KEY);
+			}
 			Map root = new HashMap();
 			for (int i = 0; i < keys.length; i++) {
 				root.put(keys[i], templateData[i]);
@@ -129,10 +136,11 @@ public class FreemarkerUtil {
 
 			out = new FileOutputStream(distFile);
 
-			if (StringUtil.isNotBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding)) {
 				writer = new BufferedWriter(new OutputStreamWriter(out, this.encoding));
-			else
+			} else {
 				writer = new BufferedWriter(new OutputStreamWriter(out));
+			}
 			logger.info("generate file " + distFile);
 			template.process(root, writer);
 			writer.flush();
@@ -167,8 +175,9 @@ public class FreemarkerUtil {
 	public void init() {
 		if (cfg == null) {
 			cfg = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-			if (StringUtil.isNotBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding)) {
 				cfg.setDefaultEncoding(this.encoding);
+			}
 		}
 	}
 }

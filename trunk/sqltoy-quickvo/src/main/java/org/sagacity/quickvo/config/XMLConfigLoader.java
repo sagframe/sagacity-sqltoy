@@ -29,8 +29,8 @@ import org.w3c.dom.NodeList;
 /**
  * @project sagacity-quickvo
  * @description 解析xml配置文件
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:XMLConfigLoader.java,Revision:v1.0,Date:2010-7-21 下午02:08:26 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:XMLConfigLoader.java,Revision:v1.0,Date:2010-7-21
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class XMLConfigLoader {

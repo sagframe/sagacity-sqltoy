@@ -28,8 +28,8 @@ import static java.lang.System.err;
 /**
  * @project sagacity-quickvo
  * @description quickvo数据库解析
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:DBHelper.java,Revision:v1.0,Date:2010-7-12 下午03:19:16 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:DBHelper.java,Revision:v1.0,Date:2010-7-12
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DBHelper {

@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-quickvo
  * @description 主键生成策略模型
- * @author renfei.chen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:PrimaryKeyStrage.java,Revision:v1.0,Date:2012-6-7 下午2:43:26 $
+ * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:PrimaryKeyStrage.java,Revision:v1.0,Date:2012-6-7
  */
 public class PrimaryKeyStrategy implements Serializable {
 	/**
@@ -68,8 +68,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param name
-	 *            the name to set
+	 * @param name the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -83,8 +82,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param strategy
-	 *            the strategy to set
+	 * @param strategy the strategy to set
 	 */
 	public void setStrategy(String strategy) {
 		this.strategy = strategy;
@@ -98,8 +96,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param sequence
-	 *            the sequence to set
+	 * @param sequence the sequence to set
 	 */
 	public void setSequence(String sequence) {
 		this.sequence = sequence;
@@ -113,8 +110,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param generator
-	 *            the generator to set
+	 * @param generator the generator to set
 	 */
 	public void setGenerator(String generator) {
 		this.generator = generator;
@@ -128,8 +124,7 @@ public class PrimaryKeyStrategy implements Serializable {
 	}
 
 	/**
-	 * @param force
-	 *            the force to set
+	 * @param force the force to set
 	 */
 	public void setForce(boolean force) {
 		this.force = force;

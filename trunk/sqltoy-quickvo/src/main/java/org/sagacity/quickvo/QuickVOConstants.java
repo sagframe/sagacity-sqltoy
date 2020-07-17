@@ -26,7 +26,7 @@ import org.w3c.dom.NodeList;
  * @project sagacity-quickvo
  * @description quickVO涉及的常量定义
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:QuickVOConstants.java,Revision:v1.0,Date:Apr 18, 2009 4:54:22 PM
+ * @version id:QuickVOConstants.java,Revision:v1.0,Date:2009-04-18
  */
 @SuppressWarnings({ "rawtypes" })
 public class QuickVOConstants implements Serializable {

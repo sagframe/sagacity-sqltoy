@@ -39,8 +39,8 @@ import org.sagacity.quickvo.utils.FreemarkerUtil;
 /**
  * @project sagacity-quickvo
  * @description 获取数据库表或视图信息,生成VO、AbstractVO、VOFactory文件
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:TaskController.java,Revision:v1.0,Date:2010-7-21 下午02:14:03 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:TaskController.java,Revision:v1.0,Date:2010-7-21
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TaskController {
@@ -600,8 +600,9 @@ public class TaskController {
 	 * @param columns
 	 */
 	private static void deleteUselessTypes(List impTypes, List columns) {
-		if (impTypes == null || impTypes.isEmpty())
+		if (impTypes == null || impTypes.isEmpty()) {
 			return;
+		}
 		QuickColMeta quickColMeta;
 		boolean isMatched = false;
 		String dataType;
@@ -745,8 +746,7 @@ public class TaskController {
 		// 需要产生
 		if (needGen) {
 			logger.info("正在生成文件:" + file);
-			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
-					file);
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template, file);
 		}
 	}
 
@@ -764,8 +764,7 @@ public class TaskController {
 		File voFile = new File(file);
 		// 文件不存在
 		if (!voFile.exists()) {
-			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate,
-					file);
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate, file);
 			return;
 		}
 		// 如果是视图则直接返回
@@ -775,8 +774,8 @@ public class TaskController {
 		String fileStr = FileUtil.readAsString(voFile, charset);
 
 		// 文件存在，修改构造函数
-		String constructor = FreemarkerUtil.getInstance().create(new String[] { "quickVO" },
-				new Object[] { quickVO }, constructorTemplate);
+		String constructor = FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO },
+				constructorTemplate);
 
 		String cleanConstructor = StringUtil.clearMistyChars(constructor, "").replaceAll("\\s+", "");
 		int constructorBeginIndex = fileStr.indexOf(QuickVOConstants.constructorBegin);

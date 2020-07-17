@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 /**
  * @project sagacity-quickvo
  * @description 字符串处理常用功能
- * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
- * @version $id:StringUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM $
+ * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:StringUtil.java,Revision:v1.0,Date:2007-10-19
  */
 public class StringUtil {
 	/**
@@ -206,18 +206,9 @@ public class StringUtil {
 			}
 		}
 		// 首字母变大写
-		if (firstIsUpperCase)
+		if (firstIsUpperCase) {
 			return firstToUpperCase(result.toString());
+		}
 		return firstToLowerCase(result.toString());
-	}
-
-	public static String[] trimArray(String[] source) {
-		if (source == null) {
-			return source;
-		}
-		for (int i = 0; i < source.length; i++) {
-			source[i] = source[i].trim();
-		}
-		return source;
 	}
 }

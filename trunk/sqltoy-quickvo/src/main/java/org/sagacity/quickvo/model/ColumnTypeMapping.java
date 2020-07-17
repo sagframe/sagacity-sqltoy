@@ -7,11 +7,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * @project  sagacity-quickvo
+ * @project sagacity-quickvo
  * @description 数据库字段对应字段数据类型映射模型
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:ColumnTypeMapping.java,Revision:v1.0,Date:Apr 19, 2009 9:46:49
- *          AM $
+ * @version id:ColumnTypeMapping.java,Revision:v1.0,2009-04-16
  */
 public class ColumnTypeMapping implements Serializable {
 	/**
@@ -61,8 +60,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param jdbcType
-	 *            the jdbcType to set
+	 * @param jdbcType the jdbcType to set
 	 */
 	public void setJdbcType(String jdbcType) {
 		this.jdbcType = jdbcType;
@@ -76,8 +74,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param precisionMin
-	 *            the precisionMin to set
+	 * @param precisionMin the precisionMin to set
 	 */
 	public void setPrecisionMin(int precisionMin) {
 		this.precisionMin = precisionMin;
@@ -91,8 +88,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param precisionMax
-	 *            the precisionMax to set
+	 * @param precisionMax the precisionMax to set
 	 */
 	public void setPrecisionMax(int precisionMax) {
 		this.precisionMax = precisionMax;
@@ -106,8 +102,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param scaleMin
-	 *            the scaleMin to set
+	 * @param scaleMin the scaleMin to set
 	 */
 	public void setScaleMin(int scaleMin) {
 		this.scaleMin = scaleMin;
@@ -121,8 +116,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param scaleMax
-	 *            the scaleMax to set
+	 * @param scaleMax the scaleMax to set
 	 */
 	public void setScaleMax(int scaleMax) {
 		this.scaleMax = scaleMax;
@@ -136,8 +130,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param resultType
-	 *            the resultType to set
+	 * @param resultType the resultType to set
 	 */
 	public void setResultType(String resultType) {
 		this.resultType = resultType;
@@ -151,8 +144,7 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	/**
-	 * @param javaType
-	 *            the javaType to set
+	 * @param javaType the javaType to set
 	 */
 	public void setJavaType(String javaType) {
 		this.javaType = javaType;
@@ -163,8 +155,9 @@ public class ColumnTypeMapping implements Serializable {
 	}
 
 	public void putNativeTypes(String[] nativeTypes) {
-		for (String nativeType : nativeTypes)
+		for (String nativeType : nativeTypes) {
 			this.nativeTypes.put(nativeType.trim().toLowerCase(), "1");
+		}
 	}
 
 }

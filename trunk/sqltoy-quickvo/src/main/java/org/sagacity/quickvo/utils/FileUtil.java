@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * @project sagacity-quickvo
  * @description 文件处理工具类
- * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
- * @version $id:FileUtil.java,Revision:v1.0,Date:2008-11-7 下午01:53:21 $
+ * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:FileUtil.java,Revision:v1.0,Date:2008-11-7
  */
 public class FileUtil {
 
