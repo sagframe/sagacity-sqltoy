@@ -11,16 +11,14 @@
 	<!-- set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return 
 		this;} -->
 	<property name="field.support.linked.set" value="true" />
-	<!-- oracle支持schema,mysql\DB2:catalog -->
-	<datasource name="sqltoy" url="${jdbc.connection.url}"
-		driver="${jdbc.connection.driver_class}"
-		catalog="${jdbc.connection.catalog}"
-		username="${jdbc.connection.username}"
-		password="${jdbc.connection.password}" />
+	<!-- schema 对照关系   -->
+	<!--mysql 对应  db 名称; oracle 对应 用户名称; postgresql 对应   -->
+	<datasource name="quickstart" url="${db.url}"
+		driver="${db.driver_class}" schema="${db.schema}"
+		username="${db.username}" password="${db.password}" />
 	<tasks dist="../../src/main/java" encoding="UTF-8">
-		<!-- 4.0.6之后增加datasource属性适应多数据库配置,swagger-model:对象是否支持swagger注解 -->
 		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+"
-			datasource="sqltoy" swagger-model="false">
+			datasource="quickstart" swagger-model="false">
 			<vo package="${project.package}.showcase.vo" substr="Sqltoy"
 				name="#{subName}VO" />
 		</task>

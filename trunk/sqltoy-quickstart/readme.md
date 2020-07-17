@@ -93,3 +93,42 @@ spring:
         sqlResourcesDir: classpath:com/sqltoy/quickstart
 ```
 
+## 4. 参见src/test/java 下面的InitDataBaseTest,生成数据库表结构和初始化数据
+
+```java
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = SqlToyApplication.class)
+public class InitDataBaseTest {
+
+	@Autowired
+	private InitDBService initDBService;
+
+	@Test
+	public void testInitDB() {
+		String dbSqlFile = "classpath:mock/quickstart_init.sql";
+		System.err.println("开始执行数据库初始化!");
+		initDBService.initDatabase(dbSqlFile);
+	}
+}
+```
+
+## 5. 通过quickvo连数据库自动生成POJO
+* 将数据库驱动类放于tools/quickvo/libs下面
+* 配置tools/quickvo/db.properties 文件
+
+```properties
+#############  db config ####################
+jdbc.driver_class=com.mysql.cj.jdbc.Driver
+# url characterEncoding=utf-8 param is need
+jdbc.url=jdbc:mysql://192.168.56.109:3306/quickstart?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&useSSL=false
+# mysql schema=dbname,oracle schema=username
+jdbc.schema=quickstart
+jdbc.username=quickstart
+jdbc.password=quickstart
+```
+
+* 配置tools/quickvo/quickvo.xml 中的任务
+
+
+
+
