@@ -85,6 +85,6 @@
 			check-frequency="15"/> -->
 
 		<!-- 基于rest 形式的缓存更新检测 -->
-		<!-- <rest-checker url="http://xxxx/common/getChangeCache" check-frequency="15"/> -->
+		<!-- <rest-checker url="http://xxxx/common/getChangeCache" check-frequency="15" username="" password=""/>  -->
 	</cache-update-checkers>
 </sagacity>

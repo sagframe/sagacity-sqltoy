@@ -6,8 +6,8 @@
 				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
 		</Console>
 		<RollingFile name="RollingFile"
-			filename="./sqltoy-showcase.log"
-			filepattern="./sqltoy-showcase_%d{yyyyMMdd}.log">
+			filename="./sqltoy-quickstart.log"
+			filepattern="./sqltoy-quickstart_%d{yyyyMMdd}.log">
 			<PatternLayout
 				pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %msg%n" />
 			<Policies>
