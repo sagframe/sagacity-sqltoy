@@ -4,7 +4,9 @@
 * 1. 配置pom引入sqltoy的依赖
 * 2. 配置正确pom build避免sql文件无法编译到classes下面
 * 3. 配置application.yml 关于sqltoy的配置
-* 4. 
+* 4. 编写springboot 主程序
+* 5. 初始化数据库
+* 6. 利用quickvo生产VO(或POJO)
 
 ## 1. 请参见pom.xml 引入sqltoy,注意版本号使用最新版本
 
@@ -91,6 +93,36 @@ spring:
    sqltoy:
         # 多个路径用逗号分隔(注意这里填路径、路径!会自动相信寻找)
         sqlResourcesDir: classpath:com/sqltoy/quickstart
+```
+
+## 4. 编写项目主程序,参见:src/main/java 下面的SqlToyApplication
+```java
+package com.sqltoy.quickstart;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+/**
+ * 
+ * @project sqltoy-quickstart
+ * @description quickstart 主程序入口
+ * @author zhongxuchen 
+ * @version v1.0, Date:2020年7月17日
+ * @modify 2020年7月17日,修改说明
+ */
+@SpringBootApplication
+@ComponentScan(basePackages = { "com.sqltoy.quickstart" })
+@EnableTransactionManagement
+public class SqlToyApplication {
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		SpringApplication.run(SqlToyApplication.class, args);
+	}
+}
+
 ```
 
 ## 4. 参见src/test/java 下面的InitDataBaseTest,生成数据库表结构和初始化数据
