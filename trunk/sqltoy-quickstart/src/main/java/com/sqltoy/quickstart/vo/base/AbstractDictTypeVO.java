@@ -22,13 +22,7 @@ import com.sqltoy.quickstart.vo.DictDetailVO;
 @Entity(tableName="sqltoy_dict_type",pk_constraint="PRIMARY")
 public abstract class AbstractDictTypeVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //dictType,dictTypeName,comments,showIndex,createBy,createTime,updateBy,updateTime,status
-	 
-	 //not null properties
-	 //dictType,dictTypeName,showIndex,createBy,createTime,updateBy,updateTime,status
-
+	
 	/**
 	 * 
 	 */

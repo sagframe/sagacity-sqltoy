@@ -20,13 +20,7 @@ import java.time.LocalDate;
 @Entity(tableName="sqltoy_trans_info_15d",pk_constraint="PRIMARY")
 public abstract class AbstractTransInfo15dVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //transId,transCode,transChannel,transAmt,status,resultCode,transTime,transDate,userId,cardNo
-	 
-	 //not null properties
-	 //transId,transCode,transChannel,transAmt,status,resultCode,transTime,transDate,userId
-
+	
 	/**
 	 * 
 	 */

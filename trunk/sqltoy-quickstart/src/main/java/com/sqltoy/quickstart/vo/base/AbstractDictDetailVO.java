@@ -18,13 +18,7 @@ import java.time.LocalDateTime;
 @Entity(tableName="sqltoy_dict_detail",pk_constraint="PRIMARY")
 public abstract class AbstractDictDetailVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //dictKey,dictType,dictName,showIndex,updateBy,updateTime,status
-	 
-	 //not null properties
-	 //dictKey,dictType,dictName,showIndex,updateBy,updateTime,status
-
+	
 	/**
 	 * 
 	 */

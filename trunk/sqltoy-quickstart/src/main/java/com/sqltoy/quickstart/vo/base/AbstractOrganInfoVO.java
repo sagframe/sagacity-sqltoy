@@ -18,13 +18,7 @@ import java.time.LocalDateTime;
 @Entity(tableName="sqltoy_organ_info",pk_constraint="PRIMARY")
 public abstract class AbstractOrganInfoVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //organId,organName,organCode,costNo,organPid,nodeRoute,nodeLevel,isLeaf,showIndex,createBy,createTime,updateBy,updateTime,status
-	 
-	 //not null properties
-	 //organId,organName,organCode,organPid,showIndex,createBy,createTime,updateBy,updateTime,status
-
+	
 	/**
 	 * 
 	 */

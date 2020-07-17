@@ -20,13 +20,7 @@ import java.time.LocalDateTime;
 @Entity(tableName="sqltoy_device_order",pk_constraint="PRIMARY")
 public abstract class AbstractDeviceOrderVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //orderId,deviceType,psType,totalCnt,totalAmt,buyer,saler,transDate,deliveryTerm,staffId,organId,status,createBy,createTime,updateBy,updateTime
-	 
-	 //not null properties
-	 //orderId,deviceType,psType,transDate,status,createBy,createTime,updateBy,updateTime
-
+	
 	/**
 	 * 
 	 */

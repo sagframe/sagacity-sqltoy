@@ -18,13 +18,7 @@ import java.math.BigDecimal;
 @Entity(tableName="sqltoy_fruit_order",pk_constraint="PRIMARY")
 public abstract class AbstractFruitOrderVO implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties 
-	 //fruitName,orderMonth,saleCount,salePrice,totalAmt
-	 
-	 //not null properties
-	 //fruitName,orderMonth,saleCount,salePrice,totalAmt
-
+	
 	/**
 	 * 
 	 */
