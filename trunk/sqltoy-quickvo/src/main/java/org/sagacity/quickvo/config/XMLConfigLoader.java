@@ -50,8 +50,7 @@ public class XMLConfigLoader {
 		if (!xmlFile.exists()) {
 			xmlFile = new File(Constants.QUICK_CONFIG_FILE);
 			if (!xmlFile.exists()) {
-				logger.info("相对路径:" + Constants.BASE_LOCATE + ",配置文件:[" + Constants.QUICK_CONFIG_FILE
-						+ "]不存在,请正确配置!");
+				logger.info("相对路径:" + Constants.BASE_LOCATE + ",配置文件:[" + Constants.QUICK_CONFIG_FILE + "]不存在,请正确配置!");
 				throw new Exception("配置文件:" + xmlFile.getAbsolutePath() + " 不存在,请正确配置!");
 			}
 		}
@@ -126,8 +125,7 @@ public class XMLConfigLoader {
 					if (quickvo.hasAttribute("include")) {
 						// *表示全部,等同于没有include配置
 						if (!quickvo.getAttribute("include").equals("*")) {
-							quickModel.setIncludeTables(
-									Constants.replaceConstants(quickvo.getAttribute("include")));
+							quickModel.setIncludeTables(Constants.replaceConstants(quickvo.getAttribute("include")));
 						}
 					}
 					// 排除的表
@@ -243,8 +241,23 @@ public class XMLConfigLoader {
 							}
 						}
 					}
-					// 对应的java类型
+					// 对应的java类型(对常规类型进行容错性处理)
 					javaType = type.getAttribute("java-type");
+					if (javaType.equalsIgnoreCase("BigDecimal")) {
+						javaType = "java.math.BigDecimal";
+					} else if (javaType.equalsIgnoreCase("BigInteger")) {
+						javaType = "java.math.BigInteger";
+					} else if (javaType.equalsIgnoreCase("LocalDate")) {
+						javaType = "java.time.LocalDate";
+					} else if (javaType.equalsIgnoreCase("LocalDateTime")) {
+						javaType = "java.time.LocalDateTime";
+					} else if (javaType.equalsIgnoreCase("LocalTime")) {
+						javaType = "java.time.LocalTime";
+					} else if (javaType.equalsIgnoreCase("Timestamp")) {
+						javaType = "java.sql.Timestamp";
+					} else if (javaType.equalsIgnoreCase("Date")) {
+						javaType = "java.util.Date";
+					}
 					colTypeMapping.setJavaType(javaType);
 					if (javaType.indexOf(".") != -1) {
 						colTypeMapping.setResultType(javaType.substring(javaType.lastIndexOf(".") + 1));
