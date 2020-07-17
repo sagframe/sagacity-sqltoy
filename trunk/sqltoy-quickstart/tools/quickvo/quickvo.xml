@@ -5,7 +5,7 @@
 	<!-- db配置文件 -->
 	<property file="db.properties" />
 	<property name="project.version" value="1.0.0" />
-	<property name="project.name" value="sqltoy-showcase" />
+	<property name="project.name" value="sqltoy-quickstart" />
 	<property name="project.package" value="com.sqltoy" />
 	<property name="include.schema" value="false" />
 	<!-- set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return 
