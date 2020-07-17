@@ -81,8 +81,7 @@ public class TaskController {
 	 * @param configModel
 	 */
 	private static void init() {
-		voTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.voTempate),
-				configModel.getEncoding());
+		voTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.voTempate), configModel.getEncoding());
 		abstractVoTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.voAbstractTempate),
 				configModel.getEncoding());
 
@@ -168,6 +167,7 @@ public class TaskController {
 		// 表或视图的标志
 		boolean isTable;
 		BusinessIdConfig businessIdConfig;
+		boolean includeSchema = Constants.includeSchema();
 		for (int i = 0; i < tables.size(); i++) {
 			tableMeta = (TableMeta) tables.get(i);
 			tableName = tableMeta.getTableName();
@@ -193,10 +193,8 @@ public class TaskController {
 			quickVO.setDateTime(formatDate(getNowTime(), "yyyy-MM-dd HH:mm:ss"));
 			quickVO.setTableName(tableName);
 			quickVO.setType(tableMeta.getTableType());
-			quickVO.setSchema(tableMeta.getSchema());
-			if (Constants.getKeyValue("include.schema") == null
-					|| !Constants.getKeyValue("include.schema").equalsIgnoreCase("true")) {
-				quickVO.setSchema(null);
+			if (includeSchema) {
+				quickVO.setSchema(tableMeta.getSchema());
 			}
 			// 针对sqlserver
 			if (StringUtil.isBlank(tableMeta.getTableRemark())) {
@@ -325,8 +323,7 @@ public class TaskController {
 												}
 												// 纳秒
 												else if (generator.equalsIgnoreCase("nanotime")) {
-													quickColMeta
-															.setGenerator(Constants.PK_NANOTIME_ID_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_NANOTIME_ID_GENERATOR);
 												}
 												// 基于redis的主键策略
 												else if (generator.equalsIgnoreCase("redis")) {
@@ -364,6 +361,7 @@ public class TaskController {
 											|| "number".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "NUMERIC".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "BIGINT".equalsIgnoreCase(quickColMeta.getDataType())
+											|| "BIGINTEGER".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "BIGDECIMAL".equalsIgnoreCase(quickColMeta.getDataType())) {
 										if (quickColMeta.getPrecision() >= 16) {
 											quickColMeta.setStrategy("generator");

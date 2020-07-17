@@ -325,6 +325,18 @@ public class Constants implements Serializable {
 		return value;
 	}
 
+	/**
+	 * @TODO 是否包含schema(用于对象查询时,表名会自动包含schema,默认不包含)
+	 * @return
+	 */
+	public static boolean includeSchema() {
+		String result = getKeyValue("include.schema");
+		if (StringUtil.isBlank(result)) {
+			return false;
+		}
+		return Boolean.parseBoolean(result);
+	}
+
 	public static String getJdbcType(String jdbcType, int dbType) {
 		if (dbType == DBUtil.DbType.CLICKHOUSE && jdbcType.equalsIgnoreCase("datetime")) {
 			return "TIMESTAMP";

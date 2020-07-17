@@ -187,12 +187,7 @@ public class ConfigModel implements Serializable {
 	 * @return the cascadeConfig
 	 */
 	public List<CascadeModel> getCascadeConfig(String mainTable) {
-		List<CascadeModel> result = cascadeConfig.get(mainTable.toLowerCase());
-		// 兼容老的cascade不按照主表进行配置模式
-		if (result == null) {
-			result = cascadeConfig.get("quickvo_temp_maintable0");
-		}
-		return result;
+		return cascadeConfig.get(mainTable.toLowerCase());
 	}
 
 	public void addCascadeConfig(String mainTable, List<CascadeModel> cascadeModels) {
