@@ -6,7 +6,7 @@
 	<property file="db.properties" />
 	<property name="project.version" value="1.0.0" />
 	<property name="project.name" value="sqltoy-showcase" />
-	<property name="project.package" value="com.sagframe.sqltoy" />
+	<property name="project.package" value="com.sqltoy" />
 	<property name="include.schema" value="false" />
 	<!-- set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return 
 		this;} -->
@@ -19,7 +19,7 @@
 	<tasks dist="../../src/main/java" encoding="UTF-8">
 		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+"
 			datasource="quickstart" swagger-model="false">
-			<vo package="${project.package}.showcase.vo" substr="Sqltoy"
+			<vo package="${project.package}.quickstart.vo" substr="Sqltoy"
 				name="#{subName}VO" />
 		</task>
 	</tasks>
