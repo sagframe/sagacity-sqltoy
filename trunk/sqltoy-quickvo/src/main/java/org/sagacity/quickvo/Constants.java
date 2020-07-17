@@ -29,7 +29,7 @@ import org.w3c.dom.NodeList;
  * @version id:QuickVOConstants.java,Revision:v1.0,Date:2009-04-18
  */
 @SuppressWarnings({ "rawtypes" })
-public class QuickVOConstants implements Serializable {
+public class Constants implements Serializable {
 	/**
 	 * 
 	 */
@@ -268,7 +268,7 @@ public class QuickVOConstants implements Serializable {
 			if (FileUtil.isRootPath(propertyFile)) {
 				propFile = new File(propertyFile);
 			} else {
-				propFile = new File(FileUtil.skipPath(QuickVOConstants.BASE_LOCATE, propertyFile));
+				propFile = new File(FileUtil.skipPath(Constants.BASE_LOCATE, propertyFile));
 			}
 			if (!propFile.exists()) {
 				throw new Exception("参数文件:" + propertyFile + "不存在,请确认!");

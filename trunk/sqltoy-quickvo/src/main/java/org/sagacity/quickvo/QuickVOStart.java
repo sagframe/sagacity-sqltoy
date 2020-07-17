@@ -52,7 +52,7 @@ public class QuickVOStart {
 	public static void main(String[] args) {
 		QuickVOStart quickStart = new QuickVOStart();
 		if (args != null && args.length > 0) {
-			QuickVOConstants.QUICK_CONFIG_FILE = args[0];
+			Constants.QUICK_CONFIG_FILE = args[0];
 		}
 		String baseDir;
 		if (args != null && args.length > 1) {
@@ -60,11 +60,11 @@ public class QuickVOStart {
 		} else {
 			baseDir = System.getProperty("user.dir");
 		}
-		QuickVOConstants.BASE_LOCATE = baseDir;
+		Constants.BASE_LOCATE = baseDir;
 		// 代码调试时使用(真实场景不起作用,注意pom中要增加对应数据库驱动才可以运行)
 		if (args == null || args.length == 0) {
-			QuickVOConstants.BASE_LOCATE = "D:/workspace/personal/sqltoy/sqltoy-postgresql/tools/quickvo";
-			QuickVOConstants.QUICK_CONFIG_FILE = "quickvo.xml";
+			Constants.BASE_LOCATE = "D:/workspace/personal/sqltoy/sqltoy-postgresql/tools/quickvo";
+			Constants.QUICK_CONFIG_FILE = "quickvo.xml";
 		}
 		// 开始根据数据库产生VO文件
 		quickStart.doStart();

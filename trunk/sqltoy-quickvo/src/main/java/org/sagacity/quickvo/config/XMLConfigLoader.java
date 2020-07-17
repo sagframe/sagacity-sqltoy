@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.sagacity.quickvo.QuickVOConstants;
+import org.sagacity.quickvo.Constants;
 import org.sagacity.quickvo.model.BusinessIdConfig;
 import org.sagacity.quickvo.model.CascadeModel;
 import org.sagacity.quickvo.model.ColumnTypeMapping;
@@ -45,12 +45,12 @@ public class XMLConfigLoader {
 	 * @throws Exception
 	 */
 	public static ConfigModel parse() throws Exception {
-		File xmlFile = new File(FileUtil.linkPath(QuickVOConstants.BASE_LOCATE, QuickVOConstants.QUICK_CONFIG_FILE));
+		File xmlFile = new File(FileUtil.linkPath(Constants.BASE_LOCATE, Constants.QUICK_CONFIG_FILE));
 		// 文件不存在则忽视相对路径进行重试
 		if (!xmlFile.exists()) {
-			xmlFile = new File(QuickVOConstants.QUICK_CONFIG_FILE);
+			xmlFile = new File(Constants.QUICK_CONFIG_FILE);
 			if (!xmlFile.exists()) {
-				logger.info("相对路径:" + QuickVOConstants.BASE_LOCATE + ",配置文件:[" + QuickVOConstants.QUICK_CONFIG_FILE
+				logger.info("相对路径:" + Constants.BASE_LOCATE + ",配置文件:[" + Constants.QUICK_CONFIG_FILE
 						+ "]不存在,请正确配置!");
 				throw new Exception("配置文件:" + xmlFile.getAbsolutePath() + " 不存在,请正确配置!");
 			}
@@ -64,30 +64,30 @@ public class XMLConfigLoader {
 		Document doc = domBuilder.parse(xmlFile);
 		Element root = doc.getDocumentElement();
 		// 加载常量信息
-		QuickVOConstants.loadProperties(root.getElementsByTagName("property"));
+		Constants.loadProperties(root.getElementsByTagName("property"));
 
 		// 任务设置
 		Element tasks = (Element) root.getElementsByTagName("tasks").item(0);
 
 		// 输出路径
 		if (tasks.hasAttribute("dist")) {
-			configModel.setTargetDir(QuickVOConstants.replaceConstants(tasks.getAttribute("dist")));
+			configModel.setTargetDir(Constants.replaceConstants(tasks.getAttribute("dist")));
 		} else {
-			configModel.setTargetDir(QuickVOConstants.BASE_LOCATE);
+			configModel.setTargetDir(Constants.BASE_LOCATE);
 		}
 		// 判断指定的目标路径是否是根路径
 		if (!FileUtil.isRootPath(configModel.getTargetDir())) {
-			configModel.setTargetDir(FileUtil.skipPath(QuickVOConstants.BASE_LOCATE, configModel.getTargetDir()));
+			configModel.setTargetDir(FileUtil.skipPath(Constants.BASE_LOCATE, configModel.getTargetDir()));
 		}
 
 		// 设置抽象类路径
 		if (tasks.hasAttribute("abstractPath")) {
-			configModel.setAbstractPath(QuickVOConstants.replaceConstants(tasks.getAttribute("abstractPath")));
+			configModel.setAbstractPath(Constants.replaceConstants(tasks.getAttribute("abstractPath")));
 		}
 
 		// 设置编码格式
 		if (tasks.hasAttribute("encoding")) {
-			configModel.setEncoding(QuickVOConstants.replaceConstants(tasks.getAttribute("encoding")));
+			configModel.setEncoding(Constants.replaceConstants(tasks.getAttribute("encoding")));
 		}
 
 		NodeList quickVOs = tasks.getElementsByTagName("task");
@@ -127,24 +127,24 @@ public class XMLConfigLoader {
 						// *表示全部,等同于没有include配置
 						if (!quickvo.getAttribute("include").equals("*")) {
 							quickModel.setIncludeTables(
-									QuickVOConstants.replaceConstants(quickvo.getAttribute("include")));
+									Constants.replaceConstants(quickvo.getAttribute("include")));
 						}
 					}
 					// 排除的表
 					if (quickvo.hasAttribute("exclude")) {
-						quickModel.setExcludeTables(QuickVOConstants.replaceConstants(quickvo.getAttribute("exclude")));
+						quickModel.setExcludeTables(Constants.replaceConstants(quickvo.getAttribute("exclude")));
 					}
 					// 实体对象包可以统一用参数定义
 					if (quickvo.hasAttribute("package")) {
-						quickModel.setEntityPackage(QuickVOConstants.getPropertyValue("entity.package"));
+						quickModel.setEntityPackage(Constants.getPropertyValue("entity.package"));
 					} else {
-						quickModel.setEntityPackage(QuickVOConstants.replaceConstants(quickvo.getAttribute("package")));
+						quickModel.setEntityPackage(Constants.replaceConstants(quickvo.getAttribute("package")));
 					}
-					quickModel.setVoPackage(QuickVOConstants.replaceConstants(vo.getAttribute("package")));
+					quickModel.setVoPackage(Constants.replaceConstants(vo.getAttribute("package")));
 					if (vo.hasAttribute("substr")) {
-						quickModel.setVoSubstr(QuickVOConstants.replaceConstants(vo.getAttribute("substr")));
+						quickModel.setVoSubstr(Constants.replaceConstants(vo.getAttribute("substr")));
 					}
-					quickModel.setVoName(QuickVOConstants.replaceConstants(vo.getAttribute("name")));
+					quickModel.setVoName(Constants.replaceConstants(vo.getAttribute("name")));
 					quickModels.add(quickModel);
 				}
 			}
@@ -184,7 +184,7 @@ public class XMLConfigLoader {
 					strategy = "generator";
 					sequence = null;
 					if (generator.equalsIgnoreCase("default")) {
-						generator = QuickVOConstants.PK_DEFAULT_GENERATOR;
+						generator = Constants.PK_DEFAULT_GENERATOR;
 					}
 				}
 
@@ -198,7 +198,7 @@ public class XMLConfigLoader {
 		}
 		// 自定义数据匹配类型
 		List<ColumnTypeMapping> typeMapping = new ArrayList<ColumnTypeMapping>();
-		QuickVOConstants.addDefaultTypeMapping(typeMapping);
+		Constants.addDefaultTypeMapping(typeMapping);
 		nodeList = root.getElementsByTagName("type-mapping");
 		if (nodeList.getLength() > 0) {
 			NodeList jdbcTypes = ((Element) nodeList.item(0)).getElementsByTagName("sql-type");
@@ -305,7 +305,7 @@ public class XMLConfigLoader {
 				bizIdConfig.setColumn(tableElt.getAttribute("column"));
 				bizIdConfig.setGenerator(tableElt.getAttribute("generator"));
 				if (bizIdConfig.getGenerator() != null && bizIdConfig.getGenerator().equalsIgnoreCase("redis")) {
-					bizIdConfig.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
+					bizIdConfig.setGenerator(Constants.PK_REDIS_ID_GENERATOR);
 				}
 				if (tableElt.hasAttribute("related-column")) {
 					String relatedColumn = tableElt.getAttribute("related-column");

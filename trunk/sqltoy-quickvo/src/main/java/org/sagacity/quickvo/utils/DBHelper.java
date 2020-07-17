@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.sagacity.quickvo.QuickVOConstants;
+import org.sagacity.quickvo.Constants;
 import org.sagacity.quickvo.model.DataSourceModel;
 import org.sagacity.quickvo.model.TableColumnMeta;
 import org.sagacity.quickvo.model.TableConstractModel;
@@ -66,15 +66,15 @@ public class DBHelper {
 				name = datasouceElt.getAttribute("name");
 			}
 			if (datasouceElt.hasAttribute("catalog")) {
-				dbModel.setCatalog(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("catalog")));
+				dbModel.setCatalog(Constants.replaceConstants(datasouceElt.getAttribute("catalog")));
 			}
 			if (datasouceElt.hasAttribute("schema")) {
-				dbModel.setSchema(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("schema")));
+				dbModel.setSchema(Constants.replaceConstants(datasouceElt.getAttribute("schema")));
 			}
-			dbModel.setUrl(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("url")));
-			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("driver")));
-			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("username")));
-			dbModel.setPassword(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("password")));
+			dbModel.setUrl(Constants.replaceConstants(datasouceElt.getAttribute("url")));
+			dbModel.setDriver(Constants.replaceConstants(datasouceElt.getAttribute("driver")));
+			dbModel.setUsername(Constants.replaceConstants(datasouceElt.getAttribute("username")));
+			dbModel.setPassword(Constants.replaceConstants(datasouceElt.getAttribute("password")));
 			dbMaps.put(StringUtil.isBlank(name) ? ("" + m) : name, dbModel);
 		}
 	}
