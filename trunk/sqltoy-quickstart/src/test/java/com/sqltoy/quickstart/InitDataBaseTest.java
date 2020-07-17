@@ -2,8 +2,11 @@ package com.sqltoy.quickstart;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.sqltoy.quickstart.service.InitDBService;
 
 /**
  * @project sqltoy-quickstart
@@ -15,8 +18,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(classes = SqlToyApplication.class)
 public class InitDataBaseTest {
 
+	@Autowired
+	private InitDBService initDBService;
+
 	@Test
 	public void testInitDB() {
-
+		String dbSqlFile = "classpath:mock/quickstart_init.sql";
+		initDBService.initDatabase(dbSqlFile);
 	}
 }

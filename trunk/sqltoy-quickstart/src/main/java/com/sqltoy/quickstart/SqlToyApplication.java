@@ -6,7 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.sqltoy" })
+@ComponentScan(basePackages = { "com.sqltoy.quickstart" })
 @EnableTransactionManagement
 public class SqlToyApplication {
 	/**

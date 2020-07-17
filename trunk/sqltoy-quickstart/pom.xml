@@ -158,6 +158,7 @@
 					<include>**/*.xml</include>
 					<include>**/*.properties</include>
 					<include>**/*.yml</include>
+					<include>**/*.sql</include>
 				</includes>
 			</resource>
 		</resources>
@@ -174,6 +175,7 @@
 					<include>**/*.xml</include>
 					<include>**/*.properties</include>
 					<include>**/*.yml</include>
+					<include>**/*.sql</include>
 				</includes>
 			</testResource>
 		</testResources>
