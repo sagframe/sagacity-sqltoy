@@ -127,7 +127,38 @@ jdbc.username=quickstart
 jdbc.password=quickstart
 ```
 
-* 配置tools/quickvo/quickvo.xml 中的任务
+* 配置tools/quickvo/quickvo.xml 中的任务,关键部分如下
+
+```xml
+<!-- db配置文件 -->
+<property file="db.properties" />
+<property name="project.version" value="1.0.0" />
+<property name="project.name" value="sqltoy-quickstart" />
+<property name="project.package" value="com.sqltoy" />
+<property name="include.schema" value="false" />
+<!--set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return this;} -->
+<property name="field.support.linked.set" value="true" />
+<!-- schema 对照关系:mysql 对应  db 名称; oracle 对应 用户名称;   -->
+<datasource name="quickstart" url="${db.url}"	driver="${db.driver_class}" schema="${db.schema}"
+<tasks dist="../../src/main/java" encoding="UTF-8">
+	<!-- include 是正则表达式匹配 -->
+	<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="quickstart" swagger-model="false">
+		<!-- substr 表示截取表名的前缀部分(一般表会按模块增加前缀),如不截取则substr="" name="#{subName}VO" subName是约定词,VO这两个字符可以随意改变  -->
+		<vo package="${project.package}.quickvo.vo" substr="Sqltoy" name="#{subName}VO" />
+	</task>
+</tasks>
+```
+
+* 点击quickvo.bat 即可生产VO了,linux 或 mac 则执行quickvo.sh 
+```
+# windows
+java -cp ./libs/* org.sagacity.quickvo.QuickVOStart quickvo.xml
+
+# mac
+java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
+```
+
+
 
 
 
