@@ -18,6 +18,7 @@
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 		<junit-platform.version>1.6.2</junit-platform.version>
 		<spring.version>5.2.7.RELEASE</spring.version>
+		<aspectjweaver.version>1.9.5</aspectjweaver.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -25,12 +26,24 @@
 			<artifactId>spring-boot-starter</artifactId>
 			<exclusions>
 				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-to-slf4j</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-classic</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -40,10 +53,19 @@
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>org.junit.vintage</groupId>
 					<artifactId>junit-vintage-engine</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>${aspectjweaver.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
@@ -159,6 +181,7 @@
 					<include>**/*.properties</include>
 					<include>**/*.yml</include>
 					<include>**/*.sql</include>
+					<include>**/*.jpg</include>
 				</includes>
 			</resource>
 		</resources>
@@ -168,6 +191,9 @@
 				<excludes>
 					<exclude>**/*.java</exclude>
 				</excludes>
+				<includes>
+					<include>**/*.xml</include>
+				</includes>
 			</testResource>
 			<testResource>
 				<directory>src/test/resources</directory>
