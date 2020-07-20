@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.alibaba.fastjson.JSON;
+import com.sagframe.sqltoy.utils.ShowCaseUtils;
 import com.sqltoy.quickstart.service.StaffInfoService;
 import com.sqltoy.quickstart.vo.StaffInfoVO;
 
@@ -30,7 +31,18 @@ public class StaffInfoServiceTest {
 
 	@Test
 	public void testSave() {
-
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S190715009");
+		staffInfo.setStaffCode("S190715009");
+		staffInfo.setStaffName("测试员工9");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test3@aliyun.com");
+		staffInfo.setEntryDate(LocalDate.now());
+		staffInfo.setStatus(1);
+		staffInfo.setOrganId("C0001");
+		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setCountry("86");
+		sqlToyCRUDService.save(staffInfo);
 	}
 
 	@Test
@@ -38,6 +50,11 @@ public class StaffInfoServiceTest {
 
 	}
 
+	@Test
+	public void testDelete() {
+
+	}
+	
 	@Test
 	public void testSaveOrUpdate() {
 

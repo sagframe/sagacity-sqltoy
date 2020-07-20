@@ -147,7 +147,7 @@ public class FileUtil {
 	 * @throws IOException
 	 */
 	public static String readAsString(File file, String charset) throws IOException {
-		byte[] fileBytes = readAsByteArray(file);
+		byte[] fileBytes = readAsBytes(file);
 		if (StringUtil.isBlank(charset)) {
 			return new String(fileBytes);
 		}
@@ -160,7 +160,7 @@ public class FileUtil {
 	 * @param charset
 	 * @return
 	 */
-	public static String readFileAsString(Object file, String charset) {
+	public static String readFileAsStr(Object file, String charset) {
 		return inputStreamToStr(getFileInputStream(file), charset);
 	}
 
@@ -224,7 +224,7 @@ public class FileUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] readAsByteArray(File file) {
+	public static byte[] readAsBytes(File file) {
 		FileInputStream in = null;
 		byte[] ret = null;
 		try {
@@ -240,8 +240,6 @@ public class FileUtil {
 
 	/**
 	 * @todo <b>将字符串存为文件</b>
-	 * @author zhongxuchen
-	 * @date 2011-3-10 上午10:44:05
 	 * @param content
 	 * @param fileName
 	 * @param charset

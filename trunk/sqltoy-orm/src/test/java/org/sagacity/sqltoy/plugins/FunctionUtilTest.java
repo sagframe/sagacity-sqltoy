@@ -25,7 +25,7 @@ public class FunctionUtilTest {
 	@Test
 	public void testInstr() {
 		FunctionUtils.setFunctionConverts(Arrays.asList(functions));
-		String sql = FileUtil.readFileAsString("classpath:/scripts/instr_function.txt", "UTF-8");
+		String sql = FileUtil.readFileAsStr("classpath:/scripts/instr_function.txt", "UTF-8");
 		String dialectSql = FunctionUtils.getDialectSql(sql, "oracle");
 		System.err.println(dialectSql);
 	}
