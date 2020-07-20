@@ -266,7 +266,12 @@ public class FileUtil {
 		}
 		return null;
 	}
-	
+
+//	@Deprecated
+//	public static byte[] readAsByteArray(File file) {
+//		return readAsBytes(file);
+//	}
+
 	/**
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
@@ -277,10 +282,10 @@ public class FileUtil {
 		if (file == null) {
 			return null;
 		}
-		InputStream in=null;
+		InputStream in = null;
 		byte[] ret = null;
 		try {
-			in=getFileInputStream(file);
+			in = getFileInputStream(file);
 			ret = IOUtil.getBytes(in);
 		} catch (Exception e) {
 			e.printStackTrace();

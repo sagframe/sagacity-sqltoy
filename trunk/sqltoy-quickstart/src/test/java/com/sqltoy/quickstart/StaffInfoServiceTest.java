@@ -1,6 +1,8 @@
 package com.sqltoy.quickstart;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,13 +31,12 @@ public class StaffInfoServiceTest {
 
 	@Autowired
 	StaffInfoService staffInfoService;
-	
+
 	@Autowired
 	SqlToyCRUDService sqlToyCRUDService;
 
-	/**
-	 * 
-	 */
+	// 常规情况下基于对象的操作也无需写service,统一使用SqlToyCRUDService即可
+	// 因为常规对象操作即使自己写Service也是简单的转调
 	@Test
 	public void testSave() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
@@ -52,27 +53,66 @@ public class StaffInfoServiceTest {
 		sqlToyCRUDService.save(staffInfo);
 	}
 
+	// sqltoy的update操作比较具有特色,字段值为null的不会参与变更,一次性交互精准变更，适合高并发场景避免先做load
+	// 如需要对具体字段进行强制变更,则需通过forceUpdateProps来定义
 	@Test
 	public void testUpdate() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S2007");
+		staffInfo.setEmail("test07@139.com");
+		// 这里对照片进行强制修改
+		sqlToyCRUDService.update(staffInfo, new String[] { "photo" });
+	}
 
+	// 既然update 不同于hibernate模式，那要实现hibernate模式的怎么做?
+	// updateDeeply 就是深度修改的意思
+	@Test
+	public void testUpdateDeeply() {
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S2007");
+		staffInfo.setEmail("test07@139.com");
+		// 这里对照片进行强制修改
+		sqlToyCRUDService.updateDeeply(staffInfo);
+	}
+
+	@Test
+	public void testSaveOrUpdate() {
+		List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
+		StaffInfoVO staffInfo = new StaffInfoVO();
+		staffInfo.setStaffId("S2007");
+		staffInfo.setStaffCode("S2007");
+		staffInfo.setStaffName("测试员工7");
+		staffInfo.setSexType("M");
+		staffInfo.setEmail("test8@139.com");
+
+		StaffInfoVO staffInfo1 = new StaffInfoVO();
+		staffInfo1.setStaffId("S2008");
+		staffInfo1.setStaffCode("S2008");
+		staffInfo1.setStaffName("测试员工8");
+		staffInfo1.setSexType("M");
+		staffInfo1.setEmail("test8@aliyun.com");
+		staffInfo1.setEntryDate(LocalDate.now());
+		staffInfo1.setStatus(1);
+		staffInfo1.setOrganId("100007");
+		staffInfo1.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
+		staffInfo1.setCountry("86");
+
+		staffList.add(staffInfo);
+		staffList.add(staffInfo1);
+		sqlToyCRUDService.saveOrUpdateAll(staffList);
 	}
 
 	@Test
 	public void testDelete() {
-
-	}
-	
-	@Test
-	public void testSaveOrUpdate() {
-
+		sqlToyCRUDService.delete(new StaffInfoVO("S2007"));
 	}
 
 	@Test
 	public void testQueryStaff() {
 		PaginationModel pageModel = new PaginationModel();
-		//正常需设置pageNo和pageSize,默认值分别为1和10 
-		//pageModel.setPageNo(1);
-		//pageModel.setPageSize(10);
+		// 正常需设置pageNo和pageSize,默认值分别为1和10
+		// pageModel.setPageNo(1);
+		// pageModel.setPageSize(10);
 		StaffInfoVO staffInfo = new StaffInfoVO();
 		staffInfo.setBeginDate(LocalDate.parse("2019-01-01"));
 		staffInfo.setEndDate(LocalDate.now());

@@ -1263,8 +1263,9 @@ public class SqlToyDaoSupport {
 				translate = iter.next();
 				// 将java模式的字段名称转化为数据库字段名称
 				keyColumn = entityMeta.getColumnName(translate.getKeyColumn());
-				translateFields.concat(",").concat((keyColumn == null) ? translate.getKeyColumn() : keyColumn)
-						.concat(" as ").concat(translate.getColumn());
+				translateFields = translateFields.concat(",")
+						.concat((keyColumn == null) ? translate.getKeyColumn() : keyColumn).concat(" as ")
+						.concat(translate.getColumn());
 			}
 		}
 
