@@ -46,6 +46,9 @@ public class StaffInfoServiceTest {
 	@Test
 	public void testQueryStaff() {
 		PaginationModel pageModel = new PaginationModel();
+		//正常需设置pageNo和pageSize,默认值分别为1和10 
+		//pageModel.setPageNo(1);
+		//pageModel.setPageSize(10);
 		StaffInfoVO staffInfo = new StaffInfoVO();
 		staffInfo.setBeginDate(LocalDate.parse("2019-01-01"));
 		staffInfo.setEndDate(LocalDate.now());
