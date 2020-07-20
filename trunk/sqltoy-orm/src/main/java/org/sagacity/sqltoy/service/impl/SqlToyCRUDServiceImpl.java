@@ -101,15 +101,15 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * 
 	 * @see
 	 * org.sagacity.sqltoy.service.SqlToyCRUDService#update(java.io.Serializable ,
-	 * boolean)
+	 * java.lang.String[])
 	 */
 	@Override
 	@Transactional
-	public Long update(Serializable entity) {
+	public Long update(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
 			throw new IllegalArgumentException("update 数据对象为null!");
 		}
-		return sqlToyLazyDao.update(entity);
+		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
 	/*
@@ -131,41 +131,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.sagacity.sqltoy.service.SqlToyCRUDService#update(java.io.Serializable ,
-	 * java.lang.String[])
-	 */
-	@Override
-	@Transactional
-	public Long update(Serializable entity, String[] forceUpdateProps) {
-		if (null == entity) {
-			throw new IllegalArgumentException("update 数据对象为null!");
-		}
-		return sqlToyLazyDao.update(entity, forceUpdateProps);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util .List,
 	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) {
-		return sqlToyLazyDao.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util.List)
-	 */
-	@Override
-	@Transactional
-	public <T extends Serializable> Long updateAll(List<T> entities) {
-		return sqlToyLazyDao.updateAll(entities);
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+			String... forceUpdateProps) {
+		return sqlToyLazyDao.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*
@@ -176,7 +149,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps) {
+	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps) {
 		return sqlToyLazyDao.updateAll(entities, forceUpdateProps);
 	}
 
@@ -196,27 +169,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
-	 * .Serializable)
-	 */
-	@Override
-	@Transactional
-	public Long saveOrUpdate(Serializable entity) {
-		if (null == entity) {
-			throw new IllegalArgumentException("saveOrUpdate 数据对象为null!");
-		}
-		return sqlToyLazyDao.saveOrUpdate(entity);
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdate(java.io
 	 * .Serializable, java.lang.String[])
 	 */
 	@Override
 	@Transactional
-	public Long saveOrUpdate(Serializable entity, String[] forceUpdateProps) {
+	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
 			throw new IllegalArgumentException("saveOrUpdate  数据对象为null!");
 		}
@@ -227,23 +184,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
-	 * .io.Serializable)
-	 */
-	@Override
-	@Transactional
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities) {
-		return sqlToyLazyDao.saveOrUpdateAll(entities);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
 	 * .io.Serializable, java.lang.String[])
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps) {
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
 	}
 
@@ -256,9 +201,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler) {
-		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateProps) {
+		return sqlToyLazyDao.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*
