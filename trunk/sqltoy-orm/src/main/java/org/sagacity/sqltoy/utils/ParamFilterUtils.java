@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * @description sql查询参数过滤
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:ParamFilterUtils.java,Revision:v1.0,Date:2013-3-23
+ * @modify Date:2020-7-15 {增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ParamFilterUtils {
@@ -438,6 +439,10 @@ public class ParamFilterUtils {
 			}
 		} else if (filterType.equals("to-array")) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
+		} else if (filterType.equals("l-like")) {
+			result = like(paramValue, true);
+		} else if (filterType.equals("r-like")) {
+			result = like(paramValue, false);
 		} // 增加将数组条件组合成in () 查询条件参数'x1','x2'的形式 ，add 2019-1-4
 		else if (filterType.equals("to-in-arg")) {
 			if (paramValue instanceof CharSequence) {
@@ -476,8 +481,26 @@ public class ParamFilterUtils {
 					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
 				}
 			}
+		} else {
+			logger.warn("sql中filters定义的filterType={} 目前没有对应的实现!", filterType);
 		}
 		return result;
+	}
+
+	/**
+	 * @todo 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
+	 * @param paramValue
+	 * @param isLeft
+	 * @return
+	 */
+	private static String like(Object paramValue, boolean isLeft) {
+		if (StringUtil.isBlank(paramValue)) {
+			return null;
+		}
+		if (isLeft) {
+			return "%".concat(paramValue.toString());
+		}
+		return paramValue.toString().concat("%");
 	}
 
 	/**

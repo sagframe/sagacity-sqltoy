@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import org.sagacity.quickvo.QuickVOConstants;
+import org.sagacity.quickvo.Constants;
 
 /**
  * 提供基于jdk自带的日志框架,大幅减小quickvo最终打包的jar大小
@@ -22,7 +22,7 @@ public class LoggerUtil {
 			logger = Logger.getLogger("sagacity.quickvo");
 			logger.setLevel(Level.ALL);
 			try {
-				Handler handler = new FileHandler(FileUtil.linkPath(QuickVOConstants.BASE_LOCATE, "quickvo.log"));
+				Handler handler = new FileHandler(FileUtil.linkPath(Constants.BASE_LOCATE, "quickvo.log"));
 				handler.setFormatter(new SimpleFormatter());
 				logger.addHandler(handler);
 			} catch (Exception e) {

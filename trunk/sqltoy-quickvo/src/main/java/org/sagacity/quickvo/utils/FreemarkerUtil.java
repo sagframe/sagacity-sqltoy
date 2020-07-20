@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.quickvo.engine.template;
+package org.sagacity.quickvo.utils;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -13,9 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.sagacity.quickvo.utils.LoggerUtil;
-import org.sagacity.quickvo.utils.StringUtil;
-
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -23,22 +20,25 @@ import freemarker.template.Template;
 /**
  * @project sagacity-quickvo
  * @description 基于freemarker的模版工具引擎，提供日常项目中模版和数据对象的结合处理
- * @author zhongxuchen $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version id:TemplateGenerator.java,Revision:v1.0,Date:2008-11-24
+ * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:FreemarkerUtil.java,Revision:v1.0,Date:2008-11-24
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class TemplateGenerator {
+public class FreemarkerUtil {
 	/**
 	 * 定义全局日志
 	 */
 	private static Logger logger = LoggerUtil.getLogger();
 	private static Configuration cfg = null;
 
-	public static TemplateGenerator me;
+	public static FreemarkerUtil me;
 
-	public static TemplateGenerator getInstance() {
-		if (me == null)
-			me = new TemplateGenerator();
+	private static final String FMT_KEY = "sqltoy_quickvo_tmp_key";
+
+	public static FreemarkerUtil getInstance() {
+		if (me == null) {
+			me = new FreemarkerUtil();
+		}
 		return me;
 	}
 
@@ -65,20 +65,22 @@ public class TemplateGenerator {
 	 * @return
 	 */
 	public String create(String[] keys, Object[] templateData, String templateStr) {
-		if (keys == null || templateData == null)
+		if (keys == null || templateData == null) {
 			return null;
+		}
 		String result = null;
 		StringWriter writer = null;
 		try {
 			init();
 			StringTemplateLoader templateLoader = new StringTemplateLoader();
-			templateLoader.putTemplate("string_template", templateStr);
+			templateLoader.putTemplate(FMT_KEY, templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotBlank(this.encoding))
-				template = cfg.getTemplate("string_template", this.encoding);
-			else
-				template = cfg.getTemplate("string_template");
+			if (StringUtil.isNotBlank(this.encoding)) {
+				template = cfg.getTemplate(FMT_KEY, this.encoding);
+			} else {
+				template = cfg.getTemplate(FMT_KEY);
+			}
 
 			Map root = new HashMap();
 			for (int i = 0; i < keys.length; i++) {
@@ -111,20 +113,22 @@ public class TemplateGenerator {
 	 * @param distFile
 	 */
 	public void create(String[] keys, Object[] templateData, String templateStr, String distFile) {
-		if (keys == null || templateData == null)
+		if (keys == null || templateData == null) {
 			return;
+		}
 		Writer writer = null;
 		FileOutputStream out = null;
 		try {
 			init();
 			StringTemplateLoader templateLoader = new StringTemplateLoader();
-			templateLoader.putTemplate("template", templateStr);
+			templateLoader.putTemplate(FMT_KEY, templateStr);
 			cfg.setTemplateLoader(templateLoader);
 			Template template = null;
-			if (StringUtil.isNotBlank(this.encoding))
-				template = cfg.getTemplate("template", this.encoding);
-			else
-				template = cfg.getTemplate("template");
+			if (StringUtil.isNotBlank(this.encoding)) {
+				template = cfg.getTemplate(FMT_KEY, this.encoding);
+			} else {
+				template = cfg.getTemplate(FMT_KEY);
+			}
 			Map root = new HashMap();
 			for (int i = 0; i < keys.length; i++) {
 				root.put(keys[i], templateData[i]);
@@ -132,10 +136,11 @@ public class TemplateGenerator {
 
 			out = new FileOutputStream(distFile);
 
-			if (StringUtil.isNotBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding)) {
 				writer = new BufferedWriter(new OutputStreamWriter(out, this.encoding));
-			else
+			} else {
 				writer = new BufferedWriter(new OutputStreamWriter(out));
+			}
 			logger.info("generate file " + distFile);
 			template.process(root, writer);
 			writer.flush();
@@ -170,8 +175,9 @@ public class TemplateGenerator {
 	public void init() {
 		if (cfg == null) {
 			cfg = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-			if (StringUtil.isNotBlank(this.encoding))
+			if (StringUtil.isNotBlank(this.encoding)) {
 				cfg.setDefaultEncoding(this.encoding);
+			}
 		}
 	}
 }

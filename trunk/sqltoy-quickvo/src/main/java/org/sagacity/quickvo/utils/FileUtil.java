@@ -23,10 +23,9 @@ import java.util.List;
 /**
  * @project sagacity-quickvo
  * @description 文件处理工具类
- * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
- * @version $id:FileUtil.java,Revision:v1.0,Date:2008-11-7 下午01:53:21 $
+ * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:FileUtil.java,Revision:v1.0,Date:2008-11-7
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class FileUtil {
 
 	/**
@@ -38,8 +37,9 @@ public class FileUtil {
 	 */
 	public static String readAsString(File file, String charset) throws IOException {
 		byte[] fileBytes = readAsByteArray(file);
-		if (StringUtil.isBlank(charset))
+		if (StringUtil.isBlank(charset)) {
 			return new String(fileBytes);
+		}
 		return new String(fileBytes, charset);
 	}
 
@@ -65,8 +65,9 @@ public class FileUtil {
 	public static byte[] getBytes(InputStream is) throws Exception {
 		byte[] data = null;
 		// 避免空流
-		if (is.available() == 0)
+		if (is == null || is.available() == 0) {
 			return new byte[] {};
+		}
 		Collection chunks = new ArrayList();
 		byte[] buffer = new byte[1024 * 1000];
 		int read = -1;
@@ -97,8 +98,6 @@ public class FileUtil {
 
 	/**
 	 * @todo <b>将字符串存为文件</b>
-	 * @author zhongxuchen
-	 * @date 2011-3-10 上午10:44:05
 	 * @param content
 	 * @param fileName
 	 * @param charset
@@ -136,8 +135,9 @@ public class FileUtil {
 	 */
 	public static void getPathFiles(File parentFile, List fileList, String[] filters) {
 		// 文件为空或不存在退出处理
-		if (parentFile == null || !parentFile.exists())
+		if (parentFile == null || !parentFile.exists()) {
 			return;
+		}
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
 			for (int loop = 0; loop < files.length; loop++) {
@@ -159,8 +159,9 @@ public class FileUtil {
 	 * @return
 	 */
 	public static List getPathFiles(Object baseDir, String[] filters) {
-		if (baseDir == null)
+		if (baseDir == null) {
 			return null;
+		}
 		List fileList = new ArrayList();
 		File file;
 		if (baseDir instanceof String) {
@@ -198,9 +199,9 @@ public class FileUtil {
 	 * @param filters
 	 */
 	private static void matchFilters(List fileList, File file, String[] filters) {
-		if (filters == null || filters.length == 0)
+		if (filters == null || filters.length == 0) {
 			fileList.add(file);
-		else {
+		} else {
 			for (int i = 0; i < filters.length; i++) {
 				if (StringUtil.matches(file.getName(), filters[i])) {
 					fileList.add(file);
@@ -212,8 +213,7 @@ public class FileUtil {
 
 	/**
 	 * @todo 新建目录
-	 * @param folderPath
-	 *            目录
+	 * @param folderPath 目录
 	 * @return 返回目录创建后的路径
 	 */
 	public static void createFolder(String folderPath) {
@@ -235,16 +235,20 @@ public class FileUtil {
 	 * @return
 	 */
 	public static String linkPath(String topPath, String lowPath) {
-		if (lowPath != null && isRootPath(lowPath))
+		if (lowPath != null && isRootPath(lowPath)) {
 			return lowPath;
+		}
 		String firstPath = "";
 		String secondPath = "";
-		if (StringUtil.isNotBlank(topPath))
+		if (StringUtil.isNotBlank(topPath)) {
 			firstPath = topPath;
-		if (StringUtil.isNotBlank(lowPath))
+		}
+		if (StringUtil.isNotBlank(lowPath)) {
 			secondPath = lowPath;
-		if (firstPath.concat(secondPath).trim().equals(""))
+		}
+		if (firstPath.concat(secondPath).trim().equals("")) {
 			return "";
+		}
 		String separator = File.separator;
 
 		if (!firstPath.equals("")) {
@@ -282,8 +286,9 @@ public class FileUtil {
 	 * @return
 	 */
 	public static File getFile(String fileName) {
-		if (fileName == null)
+		if (fileName == null) {
 			return null;
+		}
 		File result = null;
 		if (fileName.trim().toLowerCase().startsWith("classpath:")) {
 			String realPath = fileName.trim().substring(10).trim();
@@ -360,8 +365,7 @@ public class FileUtil {
 	/**
 	 * 关闭一个或多个流对象
 	 * 
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
 	public static void close(Closeable... closeables) throws IOException {
@@ -377,8 +381,7 @@ public class FileUtil {
 	/**
 	 * 关闭一个或多个流对象
 	 * 
-	 * @param closeables
-	 *            可关闭的流对象列表
+	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {
 		try {

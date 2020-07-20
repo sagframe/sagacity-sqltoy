@@ -408,6 +408,8 @@ public class DB2Dialect implements Dialect {
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
+						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
@@ -433,6 +435,8 @@ public class DB2Dialect implements Dialect {
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
+						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);

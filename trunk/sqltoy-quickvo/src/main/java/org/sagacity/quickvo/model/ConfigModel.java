@@ -11,8 +11,8 @@ import java.util.List;
 /**
  * @project sagacity-quickvo
  * @description 任务配置数据模型
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:ConfigModel.java,Revision:v1.0,Date:2010-7-21 下午02:19:13 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:ConfigModel.java,Revision:v1.0,Date:2010-7-21
  */
 @SuppressWarnings("rawtypes")
 public class ConfigModel implements Serializable {
@@ -79,8 +79,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param targetDir
-	 *            the targetDir to set
+	 * @param targetDir the targetDir to set
 	 */
 	public void setTargetDir(String targetDir) {
 		this.targetDir = targetDir;
@@ -94,8 +93,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param encoding
-	 *            the encoding to set
+	 * @param encoding the encoding to set
 	 */
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
@@ -109,8 +107,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param typeMapping
-	 *            the typeMapping to set
+	 * @param typeMapping the typeMapping to set
 	 */
 	public void setTypeMapping(List typeMapping) {
 		this.typeMapping = typeMapping;
@@ -124,8 +121,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param tasks
-	 *            the tasks to set
+	 * @param tasks the tasks to set
 	 */
 	public void setTasks(List tasks) {
 		this.tasks = tasks;
@@ -139,8 +135,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param tableIncludes
-	 *            the tableIncludes to set
+	 * @param tableIncludes the tableIncludes to set
 	 */
 	public void setTableIncludes(String[] tableIncludes) {
 		this.tableIncludes = tableIncludes;
@@ -154,8 +149,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param tableExcludes
-	 *            the tableExcludes to set
+	 * @param tableExcludes the tableExcludes to set
 	 */
 	public void setTableExcludes(String[] tableExcludes) {
 		this.tableExcludes = tableExcludes;
@@ -169,8 +163,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param abstractPath
-	 *            the abstractPath to set
+	 * @param abstractPath the abstractPath to set
 	 */
 	public void setAbstractPath(String abstractPath) {
 		this.abstractPath = abstractPath;
@@ -184,8 +177,7 @@ public class ConfigModel implements Serializable {
 	}
 
 	/**
-	 * @param pkGeneratorStrategyMap
-	 *            the pkGeneratorStrategyMap to set
+	 * @param pkGeneratorStrategyMap the pkGeneratorStrategyMap to set
 	 */
 	public void addPkGeneratorStrategy(PrimaryKeyStrategy primaryKeyStrategy) {
 		this.pkGeneratorStrategyList.add(primaryKeyStrategy);
@@ -195,11 +187,7 @@ public class ConfigModel implements Serializable {
 	 * @return the cascadeConfig
 	 */
 	public List<CascadeModel> getCascadeConfig(String mainTable) {
-		List<CascadeModel> result = cascadeConfig.get(mainTable.toLowerCase());
-		// 兼容老的cascade不按照主表进行配置模式
-		if (result == null)
-			result = cascadeConfig.get("quickvo_temp_maintable0");
-		return result;
+		return cascadeConfig.get(mainTable.toLowerCase());
 	}
 
 	public void addCascadeConfig(String mainTable, List<CascadeModel> cascadeModels) {

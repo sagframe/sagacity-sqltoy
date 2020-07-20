@@ -39,19 +39,10 @@ import ${quickVO.voPackage}.${exportTable.pkRefTableJavaName?cap_first};
 <#if (quickVO.swaggerModel)>
 @ApiModel(value="${quickVO.voName}"<#if (quickVO.tableRemark?exists && quickVO.tableRemark!='')>,description="${quickVO.tableRemark}"</#if>)
 </#if>
-<#if (quickVO.pkConstraint?exists)>
-// pkConstraint for postgresql,设置quickvo.xml <property name="skip.primary.constraint" value="true"/> 切换回主键约束
-</#if>
 @Entity(tableName="${quickVO.tableName}"<#if (quickVO.pkConstraint?exists)>,pk_constraint="${quickVO.pkConstraint}"</#if><#if (quickVO.schema?exists && quickVO.schema!='')>,schema="${quickVO.schema}"</#if>)
 public abstract class Abstract${quickVO.voName} implements Serializable,
 	java.lang.Cloneable {
-	 /*--------------- properties string,handier to copy ---------------------*/
-	 //full properties <#assign paramCnt="0"/>
-	 //<#list quickVO.columns as column><#if (paramCnt=='1')>,</#if><#assign paramCnt='1'/>${column.colJavaName?uncap_first}</#list>
-	 
-	 //not null properties<#assign paramCnt="0"/>
-	 //<#list quickVO.columns as column><#if (column.nullable=='0')><#if (paramCnt=='1')>,</#if><#assign paramCnt='1'/>${column.colJavaName?uncap_first}</#if></#list>
-
+	
 	/**
 	 * 
 	 */

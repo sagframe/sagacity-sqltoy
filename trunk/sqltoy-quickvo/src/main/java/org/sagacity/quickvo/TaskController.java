@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.sagacity.quickvo.engine.template.TemplateGenerator;
 import org.sagacity.quickvo.model.BusinessIdConfig;
 import org.sagacity.quickvo.model.CascadeModel;
 import org.sagacity.quickvo.model.ColumnTypeMapping;
@@ -35,12 +34,13 @@ import org.sagacity.quickvo.utils.DBHelper;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.LoggerUtil;
 import org.sagacity.quickvo.utils.StringUtil;
+import org.sagacity.quickvo.utils.FreemarkerUtil;
 
 /**
  * @project sagacity-quickvo
  * @description 获取数据库表或视图信息,生成VO、AbstractVO、VOFactory文件
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:TaskController.java,Revision:v1.0,Date:2010-7-21 下午02:14:03 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:TaskController.java,Revision:v1.0,Date:2010-7-21
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TaskController {
@@ -81,12 +81,11 @@ public class TaskController {
 	 * @param configModel
 	 */
 	private static void init() {
-		voTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.voTempate),
-				configModel.getEncoding());
-		abstractVoTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.voAbstractTempate),
+		voTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.voTempate), configModel.getEncoding());
+		abstractVoTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.voAbstractTempate),
 				configModel.getEncoding());
 
-		constructorTemplate = inputStream2String(FileUtil.getResourceAsStream(QuickVOConstants.constructor),
+		constructorTemplate = inputStream2String(FileUtil.getResourceAsStream(Constants.constructor),
 				configModel.getEncoding());
 	}
 
@@ -103,11 +102,11 @@ public class TaskController {
 		init();
 		// 设置编码格式
 		if (StringUtil.isBlank(configModel.getEncoding())) {
-			TemplateGenerator.getInstance().setEncoding(configModel.getEncoding());
+			FreemarkerUtil.getInstance().setEncoding(configModel.getEncoding());
 		}
 		// 循环执行任务
 		QuickModel quickModel;
-		String supportLinkedSet = QuickVOConstants.getKeyValue("field.support.linked.set");
+		String supportLinkedSet = Constants.getKeyValue("field.support.linked.set");
 		boolean isSupport = false;
 		if (StringUtil.isNotBlank(supportLinkedSet)) {
 			isSupport = Boolean.parseBoolean(supportLinkedSet);
@@ -136,7 +135,7 @@ public class TaskController {
 	 */
 	public static void createTask(QuickModel quickModel, boolean supportLinkSet) throws Exception {
 		String[] includes = null;
-		boolean skipPkConstraint = QuickVOConstants.getSkipPkConstraint();
+		boolean skipPkConstraint = Constants.getSkipPkConstraint();
 		if (quickModel.getIncludeTables() != null) {
 			includes = new String[] { "(?i)".concat(quickModel.getIncludeTables()) };
 		}
@@ -168,6 +167,7 @@ public class TaskController {
 		// 表或视图的标志
 		boolean isTable;
 		BusinessIdConfig businessIdConfig;
+		boolean includeSchema = Constants.includeSchema();
 		for (int i = 0; i < tables.size(); i++) {
 			tableMeta = (TableMeta) tables.get(i);
 			tableName = tableMeta.getTableName();
@@ -187,16 +187,14 @@ public class TaskController {
 			quickVO.setSwaggerModel(quickModel.isSwaggerApi());
 			quickVO.setReturnSelf(supportLinkSet);
 			quickVO.setAbstractPath(configModel.getAbstractPath());
-			quickVO.setVersion(QuickVOConstants.getPropertyValue("project.version"));
-			quickVO.setProjectName(QuickVOConstants.getPropertyValue("project.name"));
+			quickVO.setVersion(Constants.getPropertyValue("project.version"));
+			quickVO.setProjectName(Constants.getPropertyValue("project.name"));
 			quickVO.setAuthor(quickModel.getAuthor());
 			quickVO.setDateTime(formatDate(getNowTime(), "yyyy-MM-dd HH:mm:ss"));
 			quickVO.setTableName(tableName);
 			quickVO.setType(tableMeta.getTableType());
-			quickVO.setSchema(tableMeta.getSchema());
-			if (QuickVOConstants.getKeyValue("include.schema") == null
-					|| !QuickVOConstants.getKeyValue("include.schema").equalsIgnoreCase("true")) {
-				quickVO.setSchema(null);
+			if (includeSchema) {
+				quickVO.setSchema(tableMeta.getSchema());
 			}
 			// 针对sqlserver
 			if (StringUtil.isBlank(tableMeta.getTableRemark())) {
@@ -313,24 +311,23 @@ public class TaskController {
 												// 设置default generator
 												if (StringUtil.isBlank(generator)
 														|| generator.equalsIgnoreCase("default")) {
-													quickColMeta.setGenerator(QuickVOConstants.PK_DEFAULT_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_DEFAULT_GENERATOR);
 												}
 												// uuid
 												else if (generator.equalsIgnoreCase("UUID")) {
-													quickColMeta.setGenerator(QuickVOConstants.PK_UUID_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_UUID_GENERATOR);
 												}
 												// 雪花算法
 												else if (generator.equalsIgnoreCase("snowflake")) {
-													quickColMeta.setGenerator(QuickVOConstants.PK_SNOWFLAKE_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_SNOWFLAKE_GENERATOR);
 												}
 												// 纳秒
 												else if (generator.equalsIgnoreCase("nanotime")) {
-													quickColMeta
-															.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_NANOTIME_ID_GENERATOR);
 												}
 												// 基于redis的主键策略
 												else if (generator.equalsIgnoreCase("redis")) {
-													quickColMeta.setGenerator(QuickVOConstants.PK_REDIS_ID_GENERATOR);
+													quickColMeta.setGenerator(Constants.PK_REDIS_ID_GENERATOR);
 												}
 											}
 										} else {
@@ -346,17 +343,17 @@ public class TaskController {
 										// 16位默认为雪花算法
 										if (quickColMeta.getPrecision() >= 16) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_SNOWFLAKE_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_SNOWFLAKE_GENERATOR);
 										}
 										// 22位纳秒算法
 										if (quickColMeta.getPrecision() >= 22) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_DEFAULT_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_DEFAULT_GENERATOR);
 										}
 										// 26位纳秒算法
 										if (quickColMeta.getPrecision() >= 26) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_NANOTIME_ID_GENERATOR);
 										}
 									} else if ("long".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "integer".equalsIgnoreCase(quickColMeta.getDataType())
@@ -364,18 +361,19 @@ public class TaskController {
 											|| "number".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "NUMERIC".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "BIGINT".equalsIgnoreCase(quickColMeta.getDataType())
+											|| "BIGINTEGER".equalsIgnoreCase(quickColMeta.getDataType())
 											|| "BIGDECIMAL".equalsIgnoreCase(quickColMeta.getDataType())) {
 										if (quickColMeta.getPrecision() >= 16) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_SNOWFLAKE_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_SNOWFLAKE_GENERATOR);
 										}
 										if (quickColMeta.getPrecision() >= 22) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_DEFAULT_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_DEFAULT_GENERATOR);
 										}
 										if (quickColMeta.getPrecision() >= 26) {
 											quickColMeta.setStrategy("generator");
-											quickColMeta.setGenerator(QuickVOConstants.PK_NANOTIME_ID_GENERATOR);
+											quickColMeta.setGenerator(Constants.PK_NANOTIME_ID_GENERATOR);
 										}
 									}
 								}
@@ -428,7 +426,7 @@ public class TaskController {
 		String importType;
 		int precision;
 		int scale;
-		int maxScale = QuickVOConstants.getMaxScale();
+		int maxScale = Constants.getMaxScale();
 		int typeMappSize = 0;
 
 		if (configModel.getTypeMapping() != null && !configModel.getTypeMapping().isEmpty()) {
@@ -449,7 +447,7 @@ public class TaskController {
 			quickColMeta.setColType(jdbcType);
 			// 提取原始类型
 			sqlType = jdbcType.toLowerCase();
-			jdbcType = QuickVOConstants.getJdbcType(jdbcType, dbType);
+			jdbcType = Constants.getJdbcType(jdbcType, dbType);
 			quickColMeta.setDataType(jdbcType);
 			quickColMeta.setColName(colMeta.getColName());
 			quickColMeta.setAutoIncrement(Boolean.toString(colMeta.isAutoIncrement()));
@@ -472,8 +470,8 @@ public class TaskController {
 
 			// 默认数据类型进行匹配
 			String[] jdbcTypeMap;
-			for (int k = 0; k < QuickVOConstants.jdbcTypMapping.length; k++) {
-				jdbcTypeMap = QuickVOConstants.jdbcTypMapping[k];
+			for (int k = 0; k < Constants.jdbcTypMapping.length; k++) {
+				jdbcTypeMap = Constants.jdbcTypMapping[k];
 				if (sqlType.equalsIgnoreCase(jdbcTypeMap[0])) {
 					// 针对一些数据库要求提供数据库类型和数据类型双重判断
 					if ((jdbcTypeMap.length == 4 && dialect.equals(jdbcTypeMap[3])) || jdbcTypeMap.length == 3) {
@@ -577,10 +575,10 @@ public class TaskController {
 				logger.info(
 						"请在quickvo.xml 正确配置<sql-type native-types=\"" + colMeta.getTypeName() + "\" java-type=\"\" />");
 			} else {
-				for (int m = 0; m < QuickVOConstants.prototype.length; m++) {
+				for (int m = 0; m < Constants.prototype.length; m++) {
 					// 是否原始类型
-					if (quickColMeta.getResultType().equals(QuickVOConstants.prototype[m][0])) {
-						quickColMeta.setColTypeFlag(QuickVOConstants.prototype[m][1]);
+					if (quickColMeta.getResultType().equals(Constants.prototype[m][0])) {
+						quickColMeta.setColTypeFlag(Constants.prototype[m][1]);
 						break;
 					}
 				}
@@ -600,8 +598,9 @@ public class TaskController {
 	 * @param columns
 	 */
 	private static void deleteUselessTypes(List impTypes, List columns) {
-		if (impTypes == null || impTypes.isEmpty())
+		if (impTypes == null || impTypes.isEmpty()) {
 			return;
+		}
 		QuickColMeta quickColMeta;
 		boolean isMatched = false;
 		String dataType;
@@ -728,7 +727,7 @@ public class TaskController {
 		// 文件存在判断是否相等，不相等则生成
 		if (generateFile.exists()) {
 			String oldFileContent = FileUtil.readAsString(generateFile, charset);
-			String newFileContent = TemplateGenerator.getInstance().create(new String[] { "quickVO" },
+			String newFileContent = FreemarkerUtil.getInstance().create(new String[] { "quickVO" },
 					new Object[] { quickVO }, template);
 			// 剔除所有回车换行和空白
 			oldFileContent = StringUtil.clearMistyChars(oldFileContent, "");
@@ -745,8 +744,7 @@ public class TaskController {
 		// 需要产生
 		if (needGen) {
 			logger.info("正在生成文件:" + file);
-			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template,
-					file);
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, template, file);
 		}
 	}
 
@@ -764,8 +762,7 @@ public class TaskController {
 		File voFile = new File(file);
 		// 文件不存在
 		if (!voFile.exists()) {
-			TemplateGenerator.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate,
-					file);
+			FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO }, voTemplate, file);
 			return;
 		}
 		// 如果是视图则直接返回
@@ -775,17 +772,17 @@ public class TaskController {
 		String fileStr = FileUtil.readAsString(voFile, charset);
 
 		// 文件存在，修改构造函数
-		String constructor = TemplateGenerator.getInstance().create(new String[] { "quickVO" },
-				new Object[] { quickVO }, constructorTemplate);
+		String constructor = FreemarkerUtil.getInstance().create(new String[] { "quickVO" }, new Object[] { quickVO },
+				constructorTemplate);
 
 		String cleanConstructor = StringUtil.clearMistyChars(constructor, "").replaceAll("\\s+", "");
-		int constructorBeginIndex = fileStr.indexOf(QuickVOConstants.constructorBegin);
-		int constructorEndIndex = fileStr.indexOf(QuickVOConstants.constructorEnd);
+		int constructorBeginIndex = fileStr.indexOf(Constants.constructorBegin);
+		int constructorEndIndex = fileStr.indexOf(Constants.constructorEnd);
 		if (constructorBeginIndex != -1 && constructorEndIndex != -1) {
 			String before = fileStr.substring(0, constructorBeginIndex);
-			String after = fileStr.substring(constructorEndIndex + QuickVOConstants.constructorEnd.length());
+			String after = fileStr.substring(constructorEndIndex + Constants.constructorEnd.length());
 			String compareConstructor = fileStr.substring(constructorBeginIndex,
-					constructorEndIndex + QuickVOConstants.constructorEnd.length());
+					constructorEndIndex + Constants.constructorEnd.length());
 			compareConstructor = StringUtil.clearMistyChars(compareConstructor, "").replaceAll("\\s+", "");
 			// 表修改过
 			if (!cleanConstructor.equals(compareConstructor)) {

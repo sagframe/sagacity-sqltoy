@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.sagacity.quickvo.QuickVOConstants;
+import org.sagacity.quickvo.Constants;
 import org.sagacity.quickvo.model.DataSourceModel;
 import org.sagacity.quickvo.model.TableColumnMeta;
 import org.sagacity.quickvo.model.TableConstractModel;
@@ -23,12 +23,13 @@ import org.sagacity.quickvo.utils.DBUtil.DbType;
 import org.sagacity.quickvo.utils.callback.PreparedStatementResultHandler;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import static java.lang.System.err;
 
 /**
  * @project sagacity-quickvo
  * @description quickvo数据库解析
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:DBHelper.java,Revision:v1.0,Date:2010-7-12 下午03:19:16 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:DBHelper.java,Revision:v1.0,Date:2010-7-12
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DBHelper {
@@ -65,15 +66,15 @@ public class DBHelper {
 				name = datasouceElt.getAttribute("name");
 			}
 			if (datasouceElt.hasAttribute("catalog")) {
-				dbModel.setCatalog(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("catalog")));
+				dbModel.setCatalog(Constants.replaceConstants(datasouceElt.getAttribute("catalog")));
 			}
 			if (datasouceElt.hasAttribute("schema")) {
-				dbModel.setSchema(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("schema")));
+				dbModel.setSchema(Constants.replaceConstants(datasouceElt.getAttribute("schema")));
 			}
-			dbModel.setUrl(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("url")));
-			dbModel.setDriver(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("driver")));
-			dbModel.setUsername(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("username")));
-			dbModel.setPassword(QuickVOConstants.replaceConstants(datasouceElt.getAttribute("password")));
+			dbModel.setUrl(Constants.replaceConstants(datasouceElt.getAttribute("url")));
+			dbModel.setDriver(Constants.replaceConstants(datasouceElt.getAttribute("driver")));
+			dbModel.setUsername(Constants.replaceConstants(datasouceElt.getAttribute("username")));
+			dbModel.setPassword(Constants.replaceConstants(datasouceElt.getAttribute("password")));
 			dbMaps.put(StringUtil.isBlank(name) ? ("" + m) : name, dbModel);
 		}
 	}
@@ -226,7 +227,7 @@ public class DBHelper {
 		final int dbType = DBUtil.getDbType(conn);
 		PreparedStatement pst = null;
 		ResultSet rs;
-		// sybase or sqlserver
+		// sqlserver
 		String tableComment = null;
 		if (dbType == DbType.SQLSERVER) {
 			StringBuilder queryStr = new StringBuilder();
@@ -256,7 +257,7 @@ public class DBHelper {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List getTableColumnMeta(String tableName) throws Exception {
+	public static List getTableColumnMeta(final String tableName) throws Exception {
 		final int dbType = DBUtil.getDbType(conn);
 		PreparedStatement pst = null;
 		ResultSet rs;
@@ -298,57 +299,66 @@ public class DBHelper {
 			rs = pst.executeQuery();
 			final HashMap metaMap = filedsComments;
 			return (List) DBUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
-
 				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 					List result = new ArrayList();
 					String isAutoIncrement;
+					String colName;
 					while (rs.next()) {
 						TableColumnMeta colMeta;
+						colName = rs.getString("COLUMN_NAME");
+						if (colName == null) {
+							colName = rs.getString("column_name");
+						}
 						if (dbType == DbType.SQLSERVER) {
 							if (metaMap == null) {
 								colMeta = new TableColumnMeta();
-								colMeta.setColName(rs.getString("COLUMN_NAME"));
+								colMeta.setColName(colName);
 								colMeta.setColRemark(rs.getString("REMARKS"));
 							} else {
-								colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
+								colMeta = (TableColumnMeta) metaMap.get(colName);
 							}
 						} else {
 							colMeta = new TableColumnMeta();
 						}
-						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("column_def"))));
-						colMeta.setDataType(rs.getInt("data_type"));
-						colMeta.setTypeName(rs.getString("type_name"));
-						if (rs.getInt("char_octet_length") != 0) {
-							colMeta.setLength(rs.getInt("char_octet_length"));
-						} else {
-							colMeta.setLength(rs.getInt("precision"));
-						}
-						colMeta.setPrecision(colMeta.getLength());
-						// 字段名称
-						colMeta.setColName(rs.getString("column_name"));
-						colMeta.setScale(rs.getInt("scale"));
-						colMeta.setNumPrecRadix(rs.getInt("radix"));
-						try {
-							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
-									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
-									|| isAutoIncrement.equals("1"))) {
-								colMeta.setAutoIncrement(true);
+						if (colMeta != null) {
+							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("column_def"))));
+							colMeta.setDataType(rs.getInt("data_type"));
+							colMeta.setTypeName(rs.getString("type_name"));
+							if (rs.getInt("char_octet_length") != 0) {
+								colMeta.setLength(rs.getInt("char_octet_length"));
 							} else {
-								colMeta.setAutoIncrement(false);
+								colMeta.setLength(rs.getInt("precision"));
 							}
-						} catch (Exception e) {
-						}
-						if (colMeta.getTypeName().toLowerCase().indexOf("identity") != -1) {
-							colMeta.setAutoIncrement(true);
-						}
-						// 是否可以为空
-						if (rs.getInt("nullable") == 1) {
-							colMeta.setNullable(true);
+							colMeta.setPrecision(colMeta.getLength());
+							// 字段名称
+							colMeta.setColName(colName);
+							colMeta.setScale(rs.getInt("scale"));
+							colMeta.setNumPrecRadix(rs.getInt("radix"));
+							try {
+								isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+								if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
+										|| isAutoIncrement.equalsIgnoreCase("YES")
+										|| isAutoIncrement.equalsIgnoreCase("Y") || isAutoIncrement.equals("1"))) {
+									colMeta.setAutoIncrement(true);
+								} else {
+									colMeta.setAutoIncrement(false);
+								}
+							} catch (Exception e) {
+							}
+							if (colMeta.getTypeName().toLowerCase().indexOf("identity") != -1) {
+								colMeta.setAutoIncrement(true);
+							}
+							// 是否可以为空
+							if (rs.getInt("nullable") == 1) {
+								colMeta.setNullable(true);
+							} else {
+								colMeta.setNullable(false);
+							}
+							result.add(colMeta);
 						} else {
-							colMeta.setNullable(false);
+							err.println("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
+							logger.info("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
 						}
-						result.add(colMeta);
 					}
 					this.setResult(result);
 				}
@@ -417,24 +427,23 @@ public class DBHelper {
 			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, null);
 		}
 		return (List) DBUtil.preparedStatementProcess(metaMap, null, rs, new PreparedStatementResultHandler() {
-
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 				List result = new ArrayList();
 				String isAutoIncrement;
+				String colName;
 				while (rs.next()) {
-					TableColumnMeta colMeta = null;
-					// update 2020-7-15
-					// 调整了处理策略,将metaMap(通过不同数据库sql特定sql)作为辅助作用,获取不到时直接以jdbc自身的api提取表字段信息
-					if (metaMap != null) {
-						colMeta = (TableColumnMeta) metaMap.get(rs.getString("COLUMN_NAME"));
-					}
-					if (colMeta == null) {
+					TableColumnMeta colMeta;
+					colName = rs.getString("COLUMN_NAME");
+					if (metaMap == null) {
 						colMeta = new TableColumnMeta();
-						colMeta.setColName(rs.getString("COLUMN_NAME"));
+						colMeta.setColName(colName);
 						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 						colMeta.setColRemark(rs.getString("REMARKS"));
-					} else if (colMeta.getColDefault() == null) {
-						colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
+					} else {
+						colMeta = (TableColumnMeta) metaMap.get(colName);
+						if (colMeta != null && colMeta.getColDefault() == null) {
+							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
+						}
 					}
 					colMeta.setDataType(rs.getInt("DATA_TYPE"));
 					colMeta.setTypeName(rs.getString("TYPE_NAME"));
@@ -451,19 +460,10 @@ public class DBHelper {
 						} else {
 							colMeta.setAutoIncrement(false);
 						}
-					} catch (Exception e) {
-					}
-					if (dbType == DbType.ORACLE12) {
-						if (colMeta.getColDefault() != null
-								&& colMeta.getColDefault().toLowerCase().endsWith(".nextval")) {
-							colMeta.setAutoIncrement(true);
-							colMeta.setColDefault(colMeta.getColDefault().replaceAll("\"", "\\\\\""));
-						}
-					}
-					if (rs.getInt("NULLABLE") == 1) {
-						colMeta.setNullable(true);
+						result.add(colMeta);
 					} else {
-						colMeta.setNullable(false);
+						err.println("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
+						logger.info("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
 					}
 					result.add(colMeta);
 				}
@@ -479,8 +479,9 @@ public class DBHelper {
 	 * @return
 	 */
 	private static String clearDefaultValue(String defaultValue) {
-		if (defaultValue == null)
+		if (defaultValue == null) {
 			return null;
+		}
 		// 针对postgresql
 		if (defaultValue.indexOf("(") != -1 && defaultValue.indexOf(")") != -1 && defaultValue.indexOf("::") != -1) {
 			return defaultValue.substring(defaultValue.indexOf("(") + 1, defaultValue.indexOf("::"));
@@ -499,8 +500,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的外键信息</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:12
 	 * @param tableName
 	 * @return
 	 * @throws SQLException
@@ -552,8 +551,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的主键信息</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:01
 	 * @param tableName
 	 * @return
 	 * @throws SQLException
@@ -583,8 +580,6 @@ public class DBHelper {
 
 	/**
 	 * @todo <b>获取表的主键约束名称</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-15 下午10:48:01
 	 * @param tableName
 	 * @return
 	 * @throws SQLException
@@ -592,8 +587,9 @@ public class DBHelper {
 	public static String getTablePKConstraint(String tableName) throws Exception {
 		String pkName = null;
 		int dbType = DBUtil.getDbType(conn);
-		if (dbType == DbType.CLICKHOUSE)
+		if (dbType == DbType.CLICKHOUSE) {
 			return pkName;
+		}
 		try {
 			ResultSet rs = conn.getMetaData().getPrimaryKeys(dbConfig.getCatalog(), dbConfig.getSchema(), tableName);
 			pkName = (String) DBUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {

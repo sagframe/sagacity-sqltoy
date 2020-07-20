@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sagacity
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
+	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
+	<cache-translates>
+		<!-- 可以用spring bean方式来实现缓存:针对数据字典方法可以有一个字典分类的参数 -->
+		<!-- <service-translate cache="dictKeyNameCache" service="dictService" 
+			method="getDictByType" keep-alive="30" /> -->
+		<!-- 可以用rest 方式来实现缓存 -->
+		<!-- <rest-translate cache="dictKeyNameCache" url="http://xxxx/common/getDictByType"/> -->
+
+		<!-- 基于sql直接查询的方式获取缓存 -->
+		<sql-translate cache="dictKeyName"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select t.DICT_KEY,t.DICT_NAME,t.STATUS
+				from SQLTOY_DICT_DETAIL t
+		        where t.DICT_TYPE=:dictType
+		        order by t.SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+
+		<!-- 员工ID和姓名的缓存 -->
+		<sql-translate cache="staffIdName"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select STAFF_ID,STAFF_NAME,STATUS
+				from SQLTOY_STAFF_INFO
+			]]>
+			</sql>
+		</sql-translate>
+		<!-- 机构号和机构名称的缓存 -->
+		<sql-translate cache="organIdName"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select ORGAN_ID,ORGAN_NAME from SQLTOY_ORGAN_INFO order by SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
+	</cache-translates>
+
+	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
+	<cache-update-checkers>
+		<!-- 基于sql的缓存更新检测 -->
+		<sql-increment-checker cache="organIdName"
+			check-frequency="60" datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select ORGAN_ID,ORGAN_NAME 
+			from SQLTOY_ORGAN_INFO
+			where UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-increment-checker>
+
+		<!-- 增量更新，检测到变化直接更新缓存 -->
+		<sql-increment-checker cache="staffIdName"
+			check-frequency="30" datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select STAFF_ID,STAFF_NAME,STATUS
+			from SQLTOY_STAFF_INFO
+	        where UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-increment-checker>
+
+		<!-- 增量更新，带有内部分类的查询结果第一列是分类 -->
+		<sql-increment-checker cache="dictKeyName"
+			check-frequency="15" has-inside-group="true" datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
+			from SQLTOY_DICT_DETAIL t
+	        where t.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-increment-checker>
+		<!-- 缓存更新检测返回的数据格式List<{cacheName,cacheType}> cacheType 只在类似数据字典表需要体现具体哪个字典分类，其他缓存为null即可 -->
+		<!-- 基于service 形式的缓存更新检测 -->
+		<!-- <service-checker service="cacheChangeCheckService" method="getChangeCache" 
+			check-frequency="15"/> -->
+
+		<!-- 基于rest 形式的缓存更新检测 -->
+		<!-- <rest-checker url="http://xxxx/common/getChangeCache" check-frequency="15" username="" password=""/>  -->
+	</cache-update-checkers>
+</sagacity>

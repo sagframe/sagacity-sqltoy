@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * @project sagacity-quickvo
  * @description quickvo 数据模型
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:QuickVO.java,Revision:v1.0,Date:Apr 19, 2009 1:12:20 AM $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:QuickVO.java,Revision:v1.0,Date:2009-04-09
  */
 public class QuickVO implements Serializable {
 

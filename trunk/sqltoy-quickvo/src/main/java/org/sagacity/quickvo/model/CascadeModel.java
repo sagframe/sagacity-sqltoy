@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @project sagacity-quickvo
- * @description <p>级联关系模型</p>
+ * @description 级联关系模型
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:CascadeModel.java,Revision:v1.0,Date:2016年12月1日
  */
@@ -36,7 +36,7 @@ public class CascadeModel implements Serializable {
 	 * 主表加载，子表是否自动加载
 	 */
 	private String load;
-	
+
 	/**
 	 * 修改主表时对于字表级联保存时是否先做删除操作
 	 */
@@ -84,8 +84,6 @@ public class CascadeModel implements Serializable {
 		this.save = save;
 	}
 
-	
-
 	/**
 	 * @return the load
 	 */
@@ -113,6 +111,5 @@ public class CascadeModel implements Serializable {
 	public void setUpdateSql(String updateSql) {
 		this.updateSql = updateSql;
 	}
-
 
 }

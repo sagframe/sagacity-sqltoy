@@ -6,9 +6,7 @@ package org.sagacity.quickvo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.nio.charset.Charset;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,21 +18,18 @@ import org.sagacity.quickvo.model.ColumnTypeMapping;
 import org.sagacity.quickvo.utils.DBUtil;
 import org.sagacity.quickvo.utils.FileUtil;
 import org.sagacity.quickvo.utils.StringUtil;
+import org.sagacity.quickvo.utils.YamlUtil;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
 /**
  * @project sagacity-quickvo
  * @description quickVO涉及的常量定义
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:QuickVOConstants.java,Revision:v1.0,Date:Apr 18, 2009 4:54:22 PM
+ * @version id:QuickVOConstants.java,Revision:v1.0,Date:2009-04-18
  */
 @SuppressWarnings({ "rawtypes" })
-public class QuickVOConstants implements Serializable {
+public class Constants implements Serializable {
 	/**
 	 * 
 	 */
@@ -186,8 +181,9 @@ public class QuickVOConstants implements Serializable {
 
 	public static int getMaxScale() {
 		String maxScale = getKeyValue("max.scale.length");
-		if (maxScale == null)
+		if (maxScale == null) {
 			return -1;
+		}
 		return Integer.parseInt(maxScale);
 	}
 
@@ -198,8 +194,9 @@ public class QuickVOConstants implements Serializable {
 	 */
 	public static void loadProperties(NodeList paramElts) throws Exception {
 		String guid = System.getProperty(GLOBA_IDENTITY_NAME);
-		if (guid == null)
+		if (guid == null) {
 			guid = "";
+		}
 		// 加载任务配置文件中的参数
 		if (paramElts != null && paramElts.getLength() > 0) {
 			Element elt;
@@ -227,8 +224,9 @@ public class QuickVOConstants implements Serializable {
 	 * @return
 	 */
 	public static String replaceConstants(String target) {
-		if (constantMap == null || constantMap.size() < 1 || target == null)
+		if (constantMap == null || constantMap.size() < 1 || target == null) {
 			return target;
+		}
 		String result = target;
 		// 简化匹配规则
 		if (StringUtil.matches(result, "\\$\\{") && StringUtil.matches(result, "\\}")) {
@@ -270,14 +268,14 @@ public class QuickVOConstants implements Serializable {
 			if (FileUtil.isRootPath(propertyFile)) {
 				propFile = new File(propertyFile);
 			} else {
-				propFile = new File(FileUtil.skipPath(QuickVOConstants.BASE_LOCATE, propertyFile));
+				propFile = new File(FileUtil.skipPath(Constants.BASE_LOCATE, propertyFile));
 			}
 			if (!propFile.exists()) {
 				throw new Exception("参数文件:" + propertyFile + "不存在,请确认!");
 			}
 			// yml格式
 			if (propertyFile.toLowerCase().endsWith("yml")) {
-				yml2Properties(propFile);
+				YamlUtil.loadYml(constantMap, propFile);
 			} else {
 				Properties props = new Properties();
 				props.load(new FileInputStream(propFile));
@@ -297,14 +295,17 @@ public class QuickVOConstants implements Serializable {
 	 * @return
 	 */
 	public static String getPropertyValue(String key) {
-		if (StringUtil.isBlank(key))
+		if (StringUtil.isBlank(key)) {
 			return key;
+		}
 		String realKey = key.trim();
 		// 简化匹配规则
-		if (realKey.startsWith("${") && realKey.endsWith("}"))
+		if (realKey.startsWith("${") && realKey.endsWith("}")) {
 			return (String) getKeyValue(realKey.substring(2, realKey.length() - 1));
-		if (getKeyValue(key) != null)
+		}
+		if (getKeyValue(key) != null) {
 			return getKeyValue(key);
+		}
 		return key;
 	}
 
@@ -314,8 +315,9 @@ public class QuickVOConstants implements Serializable {
 	 * @return
 	 */
 	public static String getKeyValue(String key) {
-		if (StringUtil.isBlank(key))
+		if (StringUtil.isBlank(key)) {
 			return key;
+		}
 		String value = (String) constantMap.get(key);
 		if (null == value) {
 			value = System.getProperty(key);
@@ -323,9 +325,22 @@ public class QuickVOConstants implements Serializable {
 		return value;
 	}
 
+	/**
+	 * @TODO 是否包含schema(用于对象查询时,表名会自动包含schema,默认不包含)
+	 * @return
+	 */
+	public static boolean includeSchema() {
+		String result = getKeyValue("include.schema");
+		if (StringUtil.isBlank(result)) {
+			return false;
+		}
+		return Boolean.parseBoolean(result);
+	}
+
 	public static String getJdbcType(String jdbcType, int dbType) {
-		if (dbType == DBUtil.DbType.CLICKHOUSE && jdbcType.equalsIgnoreCase("datetime"))
+		if (dbType == DBUtil.DbType.CLICKHOUSE && jdbcType.equalsIgnoreCase("datetime")) {
 			return "TIMESTAMP";
+		}
 		for (String[] types : jdbcAry) {
 			if (jdbcType.equalsIgnoreCase(types[0])) {
 				return types[1];
@@ -359,51 +374,6 @@ public class QuickVOConstants implements Serializable {
 		typeMapping2.setScaleMax(0);
 		typeMapping2.setResultType("Long");
 		typeMapping.add(typeMapping2);
-	}
-
-	public static void yml2Properties(File path) {
-		final String DOT = ".";
-		try {
-			YAMLFactory yamlFactory = new YAMLFactory();
-			YAMLParser parser = yamlFactory
-					.createParser(new InputStreamReader(new FileInputStream(path), Charset.forName("UTF-8")));
-			String key = "";
-			String value = null;
-			JsonToken token = parser.nextToken();
-			while (token != null) {
-				if (JsonToken.START_OBJECT.equals(token)) {
-					// do nothing
-				} else if (JsonToken.FIELD_NAME.equals(token)) {
-					if (key.length() > 0) {
-						key = key + DOT;
-					}
-					key = key + parser.getCurrentName();
-
-					token = parser.nextToken();
-					if (JsonToken.START_OBJECT.equals(token)) {
-						continue;
-					}
-					value = parser.getText();
-					constantMap.put(key.trim(), value.trim());
-					int dotOffset = key.lastIndexOf(DOT);
-					if (dotOffset > 0) {
-						key = key.substring(0, dotOffset);
-					}
-					value = null;
-				} else if (JsonToken.END_OBJECT.equals(token)) {
-					int dotOffset = key.lastIndexOf(DOT);
-					if (dotOffset > 0) {
-						key = key.substring(0, dotOffset);
-					} else {
-						key = "";
-					}
-				}
-				token = parser.nextToken();
-			}
-			parser.close();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 }

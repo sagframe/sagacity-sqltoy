@@ -8,9 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-quickvo
  * @description 表关联的数据模型
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:TableConstractModel.java,Revision:v1.0,Date:Apr 19, 2009 1:46:52
- *          AM $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:TableConstractModel.java,Revision:v1.0,2009-04-19
  */
 public class TableConstractModel implements Serializable {
 	/**
@@ -46,7 +45,7 @@ public class TableConstractModel implements Serializable {
 	private String fkColName;
 
 	private String fkColJavaName;
-	
+
 	/**
 	 * 主表的主键值跟子表的外键值对比字符串
 	 */
@@ -67,32 +66,32 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * 主键修改对外键的影响 importedKeyNoAction (3)importedKeyCascade
-	 * (0)importedKeySetNull (2) importedKeySetDefault (4)importedKeyRestrict(1)
+	 * 主键修改对外键的影响 importedKeyNoAction (3)importedKeyCascade (0)importedKeySetNull
+	 * (2) importedKeySetDefault (4)importedKeyRestrict(1)
 	 */
 	private int updateRule;
 
 	/**
-	 * 主键记录删除对外键的影响 importedKeyNoAction (3)importedKeyCascade (0)
-	 * importedKeySetNull (2)importedKeySetDefault (4)importedKeyRestrict (1)
+	 * 主键记录删除对外键的影响 importedKeyNoAction (3)importedKeyCascade (0) importedKeySetNull
+	 * (2)importedKeySetDefault (4)importedKeyRestrict (1)
 	 */
 	private int deleteRule;
-	
+
 	/**
 	 * 级联删除
 	 */
-	private int cascade=0;
-	
+	private int cascade = 0;
+
 	/**
 	 * 自动加载
 	 */
 	private String load;
-	
+
 	/**
 	 * 自动保存
 	 */
-	private int autoSave=1;
-	
+	private int autoSave = 1;
+
 	/**
 	 * 修改自动先删除子表
 	 */
@@ -106,8 +105,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param pkColJavaName
-	 *            the pkColJavaName to set
+	 * @param pkColJavaName the pkColJavaName to set
 	 */
 	public void setPkColJavaName(String pkColJavaName) {
 		this.pkColJavaName = pkColJavaName;
@@ -121,8 +119,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param fkColJavaName
-	 *            the fkColJavaName to set
+	 * @param fkColJavaName the fkColJavaName to set
 	 */
 	public void setFkColJavaName(String fkColJavaName) {
 		this.fkColJavaName = fkColJavaName;
@@ -136,8 +133,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param fkRefTableName
-	 *            the fkRefTableName to set
+	 * @param fkRefTableName the fkRefTableName to set
 	 */
 	public void setFkRefTableName(String fkRefTableName) {
 		this.fkRefTableName = fkRefTableName;
@@ -151,8 +147,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param pkColName
-	 *            the pkColName to set
+	 * @param pkColName the pkColName to set
 	 */
 	public void setPkColName(String pkColName) {
 		this.pkColName = pkColName;
@@ -166,8 +161,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param fkColName
-	 *            the fkColName to set
+	 * @param fkColName the fkColName to set
 	 */
 	public void setFkColName(String fkColName) {
 		this.fkColName = fkColName;
@@ -181,8 +175,7 @@ public class TableConstractModel implements Serializable {
 	}
 
 	/**
-	 * @param fkRefJavaTableName
-	 *            the fkRefJavaTableName to set
+	 * @param fkRefJavaTableName the fkRefJavaTableName to set
 	 */
 	public void setFkRefJavaTableName(String fkRefJavaTableName) {
 		this.fkRefJavaTableName = fkRefJavaTableName;
@@ -272,7 +265,6 @@ public class TableConstractModel implements Serializable {
 		this.pkRefColJavaName = pkRefColJavaName;
 	}
 
-
 	/**
 	 * @return the load
 	 */
@@ -327,5 +319,5 @@ public class TableConstractModel implements Serializable {
 	 */
 	public void setUpdateSql(String updateSql) {
 		this.updateSql = updateSql;
-	}	
+	}
 }

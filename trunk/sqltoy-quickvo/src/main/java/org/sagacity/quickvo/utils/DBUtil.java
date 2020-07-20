@@ -15,8 +15,8 @@ import org.sagacity.quickvo.utils.callback.PreparedStatementResultHandler;
 /**
  * @project sagacity-quickvo
  * @description 数据库连接工具类
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:DBUtil.java,Revision:v1.0,Date:Dec 24, 2008 3:52:05 PM $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:DBUtil.java,Revision:v1.0,Date:2008-11-24
  */
 public class DBUtil {
 	/**

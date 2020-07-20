@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 /**
  * @project sagacity-quickvo
  * @description 字符串处理常用功能
- * @author zhongxuchen $<a href="mailto:zhongxuchen@gmail.com">联系作者</a>$
- * @version $id:StringUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM $
+ * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:StringUtil.java,Revision:v1.0,Date:2007-10-19
  */
 public class StringUtil {
 	/**
@@ -35,8 +35,9 @@ public class StringUtil {
 	}
 
 	public static String trim(String str) {
-		if (str == null)
+		if (str == null) {
 			return null;
+		}
 		return str.trim();
 	}
 
@@ -56,10 +57,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperCase(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1));
 	}
 
@@ -69,10 +72,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToLowerCase(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toLowerCase().concat(sourceStr.substring(1));
 	}
 
@@ -82,10 +87,12 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String firstToUpperOtherToLower(String sourceStr) {
-		if (isBlank(sourceStr))
+		if (isBlank(sourceStr)) {
 			return sourceStr;
-		if (sourceStr.length() == 1)
+		}
+		if (sourceStr.length() == 1) {
 			return sourceStr.toUpperCase();
+		}
 		return sourceStr.substring(0, 1).toUpperCase().concat(sourceStr.substring(1).toLowerCase());
 	}
 
@@ -96,8 +103,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int indexOfIgnoreCase(String source, String pattern) {
-		if (source == null || pattern == null)
+		if (source == null || pattern == null) {
 			return -1;
+		}
 		return source.toLowerCase().indexOf(pattern.toLowerCase());
 	}
 
@@ -113,12 +121,15 @@ public class StringUtil {
 	}
 
 	public static String replaceStr(String source, String template, String target, int fromIndex) {
-		if (source == null)
+		if (source == null) {
 			return null;
-		if (template == null)
+		}
+		if (template == null) {
 			return source;
-		if (fromIndex >= source.length() - 1)
+		}
+		if (fromIndex >= source.length() - 1) {
 			return source;
+		}
 		int index = source.indexOf(template, fromIndex);
 		if (index != -1) {
 			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
@@ -138,8 +149,9 @@ public class StringUtil {
 	}
 
 	public static String replaceAllStr(String source, String template, String target, int fromIndex) {
-		if (source == null || template.equals(target))
+		if (source == null || template.equals(target)) {
 			return source;
+		}
 		int index = source.indexOf(template, fromIndex);
 		int subLength = target.length() - template.length();
 		int begin = index - 1;
@@ -178,8 +190,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static String toHumpStr(String source, boolean firstIsUpperCase) {
-		if (StringUtil.isBlank(source))
+		if (StringUtil.isBlank(source)) {
 			return source;
+		}
 		String[] humpAry = source.split("\\_");
 		String cell;
 		StringBuilder result = new StringBuilder();
@@ -193,17 +206,9 @@ public class StringUtil {
 			}
 		}
 		// 首字母变大写
-		if (firstIsUpperCase)
+		if (firstIsUpperCase) {
 			return firstToUpperCase(result.toString());
-		return firstToLowerCase(result.toString());
-	}
-
-	public static String[] trimArray(String[] source) {
-		if (source == null)
-			return source;
-		for (int i = 0; i < source.length; i++) {
-			source[i] = source[i].trim();
 		}
-		return source;
+		return firstToLowerCase(result.toString());
 	}
 }
