@@ -54,10 +54,11 @@ public class ShowCaseUtils {
 		StringBuilder buffer = new StringBuilder();
 		BufferedReader in = null;
 		try {
-			if (StringUtil.isNotBlank(encoding))
+			if (StringUtil.isNotBlank(encoding)) {
 				in = new BufferedReader(new InputStreamReader(is, encoding));
-			else
+			} else {
 				in = new BufferedReader(new InputStreamReader(is));
+			}
 			String line = "";
 			while ((line = in.readLine()) != null) {
 				buffer.append(line);
@@ -158,19 +159,15 @@ public class ShowCaseUtils {
 		try {
 			if (file instanceof File)
 				return new FileInputStream((File) file);
-			else {
-				// 文件路径
-				if (new File((String) file).exists())
-					return new FileInputStream((String) file);
-				else {
-					String realFile = (String) file;
-					if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
-						realFile = realFile.trim().substring(10).trim();
-					if (realFile.charAt(0) == '/')
-						realFile = realFile.substring(1);
-					return Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
-				}
-			}
+			// 文件路径
+			if (new File((String) file).exists())
+				return new FileInputStream((String) file);
+			String realFile = (String) file;
+			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0)
+				realFile = realFile.trim().substring(10).trim();
+			if (realFile.charAt(0) == '/')
+				realFile = realFile.substring(1);
+			return Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
 		} catch (FileNotFoundException fn) {
 			fn.printStackTrace();
 		}
