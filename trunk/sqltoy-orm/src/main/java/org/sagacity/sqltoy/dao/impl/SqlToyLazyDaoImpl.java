@@ -391,7 +391,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
 			String... forceUpdateProps) {
-		return super.updateAll(entities, forceUpdateProps, reflectPropertyHandler);
+		return super.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*
@@ -437,7 +437,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
-		return super.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler);
+		return super.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*

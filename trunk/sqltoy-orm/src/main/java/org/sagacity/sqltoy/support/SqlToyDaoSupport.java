@@ -765,20 +765,20 @@ public class SqlToyDaoSupport {
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
 
-	/**
-	 * @todo 简单的对象修改操作(属性值为null的不被修改)
-	 * @param entity
-	 */
-	protected Long update(final Serializable entity) {
-		return this.update(entity, null, null);
-	}
+//	/**
+//	 * @todo 简单的对象修改操作(属性值为null的不被修改)
+//	 * @param entity
+//	 */
+//	protected Long update(final Serializable entity) {
+//		return this.update(entity, null, null);
+//	}
 
 	/**
 	 * @todo update对象(值为null的属性不修改,通过forceUpdateProps指定要进行强制修改属性)
 	 * @param entity
 	 * @param forceUpdateProps
 	 */
-	protected Long update(final Serializable entity, final String[] forceUpdateProps) {
+	protected Long update(final Serializable entity, final String... forceUpdateProps) {
 		return this.update(entity, forceUpdateProps, null);
 	}
 
@@ -824,26 +824,26 @@ public class SqlToyDaoSupport {
 				this.getDataSource(dataSource));
 	}
 
-	/**
-	 * @todo 批量根据主键值修改对象(具体更新哪些属性以第一条记录为准，如10个属性，第一条记录 中只有5个属性有值，则只更新这5个属性的值)
-	 * @param entities
-	 */
-	protected <T extends Serializable> Long updateAll(final List<T> entities) {
-		return this.updateAll(entities, null, null, null);
-	}
+//	/**
+//	 * @todo 批量根据主键值修改对象(具体更新哪些属性以第一条记录为准，如10个属性，第一条记录 中只有5个属性有值，则只更新这5个属性的值)
+//	 * @param entities
+//	 */
+//	protected <T extends Serializable> Long updateAll(final List<T> entities) {
+//		return this.updateAll(entities, null, null, null);
+//	}
 
 	/**
 	 * @todo 批量根据主键更新每条记录,通过forceUpdateProps设置强制要修改的属性
 	 * @param entities
 	 * @param forceUpdateProps
 	 */
-	protected <T extends Serializable> Long updateAll(final List<T> entities, final String[] forceUpdateProps) {
-		return this.updateAll(entities, forceUpdateProps, null, null);
+	protected <T extends Serializable> Long updateAll(final List<T> entities, final String... forceUpdateProps) {
+		return this.updateAll(entities, null, forceUpdateProps, null);
 	}
 
-	protected <T extends Serializable> Long updateAll(final List<T> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler) {
-		return this.updateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
+	protected <T extends Serializable> Long updateAll(final List<T> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final String... forceUpdateProps) {
+		return this.updateAll(entities, reflectPropertyHandler, forceUpdateProps, null);
 	}
 
 	/**
@@ -853,8 +853,9 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected <T extends Serializable> Long updateAll(final List<T> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
+	protected <T extends Serializable> Long updateAll(final List<T> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateProps,
+			final DataSource dataSource) {
 		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
@@ -880,19 +881,11 @@ public class SqlToyDaoSupport {
 		if (entities == null || entities.isEmpty()) {
 			return 0L;
 		}
-		return updateAll(entities, this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(),
-				reflectPropertyHandler, null);
+		return updateAll(entities, reflectPropertyHandler,
+				this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(), null);
 	}
 
-	/**
-	 * @todo 对象修改或保存,sqltoy自动根据主键判断数据是否已经存在，存在则修改， 不存在则保存
-	 * @param entity
-	 */
-	protected Long saveOrUpdate(final Serializable entity) {
-		return this.saveOrUpdate(entity, null, null);
-	}
-
-	protected Long saveOrUpdate(final Serializable entity, final String[] forceUpdateProps) {
+	protected Long saveOrUpdate(final Serializable entity, final String... forceUpdateProps) {
 		return this.saveOrUpdate(entity, forceUpdateProps, null);
 	}
 
@@ -907,17 +900,13 @@ public class SqlToyDaoSupport {
 		return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, this.getDataSource(dataSource));
 	}
 
-	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities) {
-		return this.saveOrUpdateAll(entities, null, null, null);
-	}
-
 	/**
 	 * @todo 批量保存或修改，并指定强迫修改的字段属性
 	 * @param entities
 	 * @param forceUpdateProps
 	 */
-	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String[] forceUpdateProps) {
-		return this.saveOrUpdateAll(entities, forceUpdateProps, null, null);
+	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String... forceUpdateProps) {
+		return this.saveOrUpdateAll(entities, null, forceUpdateProps, null);
 	}
 
 	/**
@@ -927,9 +916,9 @@ public class SqlToyDaoSupport {
 	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
 	 */
-	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler) {
-		return this.saveOrUpdateAll(entities, forceUpdateProps, reflectPropertyHandler, null);
+	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final String... forceUpdateProps) {
+		return this.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps, null);
 	}
 
 	/**
@@ -939,8 +928,9 @@ public class SqlToyDaoSupport {
 	 * @param reflectPropertyHandler
 	 * @param dataSource
 	 */
-	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities, final String[] forceUpdateProps,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
+	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
+			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateProps,
+			final DataSource dataSource) {
 		return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
