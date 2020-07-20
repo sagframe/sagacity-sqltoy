@@ -82,7 +82,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 将流保存为文??
+	 * @todo 将流保存为文件
 	 * @param is
 	 * @param fileName
 	 */
@@ -165,8 +165,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * 转换InputStream为String
-	 *
+	 * @TODO 转换InputStream为String
 	 * @param is
 	 * @param encoding
 	 * @return
@@ -269,7 +268,7 @@ public class FileUtil {
 	}
 	
 	/**
-	 * @todo 读取文件到二进制数组中
+	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return
 	 * @throws IOException
@@ -292,7 +291,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo <b>将字符串存为文件</b>
+	 * @TODO <b>将字符串存为文件</b>
 	 * @param content
 	 * @param fileName
 	 * @param charset
@@ -323,7 +322,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
+	 * @TODO 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
 	 * @param parentFile
 	 * @param fileList
 	 * @param filter
@@ -348,7 +347,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 获取指定路径下符合条件的文件
+	 * @TODO 获取指定路径下符合条件的文件
 	 * @param baseDir
 	 * @param filters
 	 * @return
@@ -369,7 +368,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 判断是否跟路径
+	 * @TODO 判断是否跟路径
 	 * @param path
 	 * @return
 	 */
@@ -429,7 +428,6 @@ public class FileUtil {
 	 * @param fileContent     文本文件内容
 	 * @return
 	 */
-
 	public static void createFile(String filePathAndName, String fileContent) {
 		FileWriter resultFile = null;
 		PrintWriter myFile = null;
@@ -533,7 +531,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo <b>删除指定路径下，文件名称正则匹配的文件</b>
+	 * @TODO <b>删除指定路径下，文件名称正则匹配的文件</b>
 	 * @param path
 	 * @param regex
 	 * @return
