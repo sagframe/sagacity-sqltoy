@@ -126,12 +126,6 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 基于对象对单条记录进行变更，后台数据库是一次交互,且字段值为null的自动忽视掉
-	 * @param serializableVO
-	 */
-	/// public Long update(Serializable serializableVO);
-
-	/**
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet
 	 * @param forceUpdateProps 强制修改的字段属性

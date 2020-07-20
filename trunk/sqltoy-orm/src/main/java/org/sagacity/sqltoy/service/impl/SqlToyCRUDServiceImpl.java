@@ -202,7 +202,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateProps) {
+			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
