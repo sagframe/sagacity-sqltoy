@@ -124,7 +124,7 @@ public class FileUtil {
 	 * @param bytes
 	 * @param fileName
 	 */
-	public static void putByteArrayToFile(byte[] bytes, String fileName) {
+	public static void putBytesToFile(byte[] bytes, String fileName) {
 		FileOutputStream fos = null;
 		try {
 			File writeFile = new File(fileName);
