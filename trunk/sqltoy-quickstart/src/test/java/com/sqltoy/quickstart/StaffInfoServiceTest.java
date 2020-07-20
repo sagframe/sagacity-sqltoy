@@ -33,6 +33,9 @@ public class StaffInfoServiceTest {
 	@Autowired
 	SqlToyCRUDService sqlToyCRUDService;
 
+	/**
+	 * 
+	 */
 	@Test
 	public void testSave() {
 		StaffInfoVO staffInfo = new StaffInfoVO();
