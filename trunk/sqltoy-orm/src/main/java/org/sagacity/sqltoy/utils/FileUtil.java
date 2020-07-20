@@ -146,7 +146,7 @@ public class FileUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String readAsString(File file, String charset) throws IOException {
+	public static String readFileAsStr(File file, String charset) throws IOException {
 		byte[] fileBytes = readAsBytes(file);
 		if (StringUtil.isBlank(charset)) {
 			return new String(fileBytes);
@@ -219,16 +219,69 @@ public class FileUtil {
 	}
 
 	/**
+	 * @todo 获得指定路径的文件
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
+	 * @return
+	 */
+	public static InputStream getFileInputStream(Object file) {
+		if (file == null) {
+			return null;
+		}
+		try {
+			if (file instanceof InputStream) {
+				return (InputStream) file;
+			}
+			if (file instanceof File) {
+				return new FileInputStream((File) file);
+			}
+			// 文件路径
+			if (new File((String) file).exists()) {
+				return new FileInputStream((String) file);
+			}
+			String realFile = (String) file;
+			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
+				realFile = realFile.trim().substring(10).trim();
+			}
+			if (realFile.charAt(0) == '/') {
+				realFile = realFile.substring(1);
+			}
+			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+			if (result == null) {
+				try {
+					Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
+					URL url;
+					while (urls.hasMoreElements()) {
+						url = urls.nextElement();
+						result = new FileInputStream(url.getFile());
+						if (result != null) {
+							break;
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return result;
+		} catch (FileNotFoundException fn) {
+			fn.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
 	 * @todo 读取文件到二进制数组中
 	 * @param file
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] readAsBytes(File file) {
-		FileInputStream in = null;
+	public static byte[] readAsBytes(Object file) {
+		if (file == null) {
+			return null;
+		}
+		InputStream in=null;
 		byte[] ret = null;
 		try {
-			in = new FileInputStream(file);
+			in=getFileInputStream(file);
 			ret = IOUtil.getBytes(in);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -245,7 +298,7 @@ public class FileUtil {
 	 * @param charset
 	 * @throws Exception
 	 */
-	public static void putStringToFile(String content, String fileName, String charset) throws Exception {
+	public static void putStrToFile(String content, String fileName, String charset) throws Exception {
 		FileOutputStream fos = null;
 		OutputStreamWriter osw = null;
 		BufferedWriter writer = null;
@@ -772,60 +825,6 @@ public class FileUtil {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * @todo 获得指定路径的文件
-	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
-	 * @return
-	 */
-	public static InputStream getFileInputStream(Object file) {
-		if (file == null) {
-			return null;
-		}
-		try {
-			if (file instanceof InputStream) {
-				return (InputStream) file;
-			}
-			if (file instanceof File) {
-				return new FileInputStream((File) file);
-			}
-
-			String realFile = (String) file;
-			if (StringUtil.isBlank(realFile)) {
-				return null;
-			}
-			// 文件路径
-			if (new File(realFile).exists()) {
-				return new FileInputStream(realFile);
-			}
-			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
-				realFile = realFile.trim().substring(10).trim();
-			}
-			if (realFile.charAt(0) == '/') {
-				realFile = realFile.substring(1);
-			}
-			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
-			if (result == null) {
-				try {
-					Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
-					URL url;
-					while (urls.hasMoreElements()) {
-						url = urls.nextElement();
-						result = new FileInputStream(url.getFile());
-						if (result != null) {
-							break;
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			return result;
-		} catch (FileNotFoundException fn) {
-			fn.printStackTrace();
-		}
-		return null;
 	}
 
 	/**
