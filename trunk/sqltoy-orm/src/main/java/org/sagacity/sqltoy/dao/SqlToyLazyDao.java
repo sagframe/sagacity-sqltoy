@@ -126,17 +126,11 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 基于对象对单条记录进行变更，后台数据库是一次交互,且字段值为null的自动忽视掉
-	 * @param serializableVO
-	 */
-	public Long update(Serializable serializableVO);
-
-	/**
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet
 	 * @param forceUpdateProps 强制修改的字段属性
 	 */
-	public Long update(Serializable serializableVO, String[] forceUpdateProps);
+	public Long update(Serializable serializableVO, String... forceUpdateProps);
 
 	/**
 	 * @基于对象单表对象查询进行数据更新
@@ -162,43 +156,39 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
-	public <T extends Serializable> Long updateAll(List<T> entities);
-
-	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps);
+	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
 	 * @todo 批量修改对象并返回数据库记录变更数量
 	 * @param entitys
-	 * @param forceUpdateProps       强制修改的属性
 	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
+	 * @param forceUpdateProps       强制修改的属性
 	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+			String... forceUpdateProps);
 
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler);
-
-	public Long saveOrUpdate(Serializable serializableVO);
 
 	/**
 	 * @todo 保存或修改数据并返回数据库记录变更数量
 	 * @param serializableVO
 	 * @param forceUpdateProps
 	 */
-	public Long saveOrUpdate(Serializable serializableVO, String[] forceUpdateProps);
+	public Long saveOrUpdate(Serializable serializableVO, String... forceUpdateProps);
 
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities);
-
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
 	 * @todo 批量修改或保存数据并返回数据库记录变更数量
+	 * @param <T>
 	 * @param entities
-	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
+	 * @param forceUpdateProps
+	 * @return
 	 */
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String[] forceUpdateProps,
-			ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
+			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
 
 	/**
 	 * @todo 删除单条对象并返回数据库记录影响的数量
@@ -243,21 +233,13 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> T load(final T entity, final LockMode lockMode);
 
 	/**
-	 * @todo 默认加载所有子表信息
-	 * @param entity
-	 * @param lockMode
-	 * @return
-	 */
-	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode);
-
-	/**
 	 * @todo 指定加载子类的单记录查询
 	 * @param entity
-	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param cascadeTypes
 	 * @return
 	 */
-	public <T extends Serializable> T loadCascade(final T entity, final Class[] cascadeTypes, final LockMode lockMode);
+	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息
@@ -280,19 +262,15 @@ public interface SqlToyLazyDao {
 			EntityQuery entityQuery);
 
 	/**
-	 * @todo 级联加载子表数据
-	 * @param entities
-	 * @return
-	 */
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities);
-
-	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
 	 * @param cascadeTypes
 	 * @return
 	 */
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class[] cascadeTypes);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
+
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final LockMode lockMode,
+			final Class... cascadeTypes);
 
 	public Object loadByQuery(final QueryExecutor query);
 
