@@ -303,28 +303,21 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 级联加载(通过名称来区别，目的是防止没有必要的级联加载影响性能)
-	 * @param entity
-	 * @param lockMode
-	 * @return
-	 */
-	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
-		if (entity == null) {
-			return null;
-		}
-		return dialectFactory.load(sqlToyContext, entity,
-				sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes(), lockMode, this.getDataSource(null));
-	}
-
-	/**
 	 * @todo 指定需要级联加载的类型，通过主对象加载自身和相应的子对象集合
 	 * @param entity
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @return
 	 */
-	protected <T extends Serializable> T loadCascade(T entity, Class[] cascadeTypes, LockMode lockMode) {
-		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, this.getDataSource(null));
+	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
+		if (entity == null) {
+			return null;
+		}
+		Class[] cascade = cascadeTypes;
+		if (cascade == null) {
+			cascade = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
+		}
+		return dialectFactory.load(sqlToyContext, entity, cascade, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -337,25 +330,23 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
-	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode) {
-		if (entities == null || entities.isEmpty()) {
-			return entities;
-		}
-		return dialectFactory.loadAll(sqlToyContext, entities,
-				sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes(), lockMode,
-				this.getDataSource(null));
-	}
-
 	/**
 	 * @todo 批量对象级联加载,指定级联加载的子表
 	 * @param entities
-	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param cascadeTypes
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final Class[] cascadeTypes,
-			final LockMode lockMode) {
-		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, this.getDataSource(null));
+	protected <T extends Serializable> List<T> loadAllCascade(final List<T> entities, final LockMode lockMode,
+			final Class... cascadeTypes) {
+		if (entities == null || entities.isEmpty()) {
+			return entities;
+		}
+		Class[] cascade = cascadeTypes;
+		if (cascade == null) {
+			cascade = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
+		}
+		return dialectFactory.loadAll(sqlToyContext, entities, cascade, lockMode, this.getDataSource(null));
 	}
 
 	/**

@@ -494,17 +494,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadCascade(java.io.Serializable,
-	 * org.sagacity.sqltoy.LockMode)
-	 */
-	@Override
-	public <T extends Serializable> T loadCascade(T entity, LockMode lockMode) {
-		return super.loadCascade(entity, lockMode);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAll(java.util.List)
 	 */
 	@Override
@@ -515,11 +504,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAllCascade(java.util.List)
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadAllCascade(java.util.List,
+	 * java.lang.Class[])
 	 */
 	@Override
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities) {
-		return super.loadAllCascade(entities, null);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, Class... cascadeTypes) {
+		return super.loadAllCascade(entities, null, cascadeTypes);
 	}
 
 	/*
@@ -529,8 +519,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[])
 	 */
 	@Override
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, Class[] cascadeTypes) {
-		return super.loadAllCascade(entities, cascadeTypes, null);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, LockMode lockMode, Class... cascadeTypes) {
+		return super.loadAllCascade(entities, lockMode, cascadeTypes);
 	}
 
 	/*
@@ -540,8 +530,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * java.lang.Class[], org.sagacity.sqltoy.LockMode)
 	 */
 	@Override
-	public <T extends Serializable> T loadCascade(T entity, Class[] cascadeTypes, LockMode lockMode) {
-		return super.loadCascade(entity, cascadeTypes, lockMode);
+	public <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
+		return super.loadCascade(entity, lockMode, cascadeTypes);
 	}
 
 	/*

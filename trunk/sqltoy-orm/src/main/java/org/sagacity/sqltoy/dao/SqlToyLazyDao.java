@@ -162,8 +162,6 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
-	// public <T extends Serializable> Long updateAll(List<T> entities);
-
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
@@ -241,21 +239,13 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> T load(final T entity, final LockMode lockMode);
 
 	/**
-	 * @todo 默认加载所有子表信息
-	 * @param entity
-	 * @param lockMode
-	 * @return
-	 */
-	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode);
-
-	/**
 	 * @todo 指定加载子类的单记录查询
 	 * @param entity
-	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param cascadeTypes
 	 * @return
 	 */
-	public <T extends Serializable> T loadCascade(final T entity, final Class[] cascadeTypes, final LockMode lockMode);
+	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息
@@ -278,19 +268,15 @@ public interface SqlToyLazyDao {
 			EntityQuery entityQuery);
 
 	/**
-	 * @todo 级联加载子表数据
-	 * @param entities
-	 * @return
-	 */
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities);
-
-	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
 	 * @param cascadeTypes
 	 * @return
 	 */
-	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class[] cascadeTypes);
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
+
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final LockMode lockMode,
+			final Class... cascadeTypes);
 
 	public Object loadByQuery(final QueryExecutor query);
 
