@@ -24,10 +24,11 @@ public class StaffInfoDao extends SqlToyDaoSupport {
 		// 单表entity查询场景下sql字段可以写成java类的属性名称
 		// 单表查询一般适用于接口内部查询,面向页面很少存在单表查询(除非做ETL归集)
 		String sql = "#[staffName like :staffName]#[and createTime>=:beginDate]#[and createTime<=:endDate]";
-		return findEntity(StaffInfoVO.class, pageModel,
-				EntityQuery.create().where(sql).values(staffInfoVO)
-						.translates(new Translate("dictKeyName").setColumn("sexTypeName").setCacheType("SEX_TYPE")
-								.setKeyColumn("sexType"))
-						.translates(new Translate("organIdName").setColumn("organName").setKeyColumn("organId")));
+		return findEntity(StaffInfoVO.class, pageModel, EntityQuery.create().where(sql).values(staffInfoVO)
+				// 字典缓存必须要设置cacheType
+				// 需设置keyColumn构成select keyColumn as column模式
+				.translates(new Translate("dictKeyName").setColumn("sexTypeName").setCacheType("SEX_TYPE")
+						.setKeyColumn("sexType"))
+				.translates(new Translate("organIdName").setColumn("organName").setKeyColumn("organId")));
 	}
 }
