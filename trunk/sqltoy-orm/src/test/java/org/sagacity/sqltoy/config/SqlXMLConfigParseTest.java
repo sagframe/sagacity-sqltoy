@@ -19,7 +19,7 @@ public class SqlXMLConfigParseTest {
 	 */
 	@Test
 	public void testParseSegmentXML() {
-		String sql = FileUtil.readFileAsString("classpath:scripts/report.xml", "UTF-8");
+		String sql = FileUtil.readFileAsStr("classpath:scripts/report.xml", "UTF-8");
 		try {
 			SqlToyConfig result = SqlXMLConfigParse.parseSagment(sql, "utf-8", "mysql");
 			System.err.println(JSON.toJSONString(result));
@@ -34,7 +34,7 @@ public class SqlXMLConfigParseTest {
 	 */
 	@Test
 	public void testParseSqlXML() {
-		String sql = FileUtil.readFileAsString("classpath:scripts/sql.xml", "UTF-8");
+		String sql = FileUtil.readFileAsStr("classpath:scripts/sql.xml", "UTF-8");
 		try {
 			SqlToyConfig result = SqlXMLConfigParse.parseSagment(sql, "utf-8", "mysql");
 			System.err.println(JSON.toJSONString(result));

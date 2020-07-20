@@ -82,7 +82,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 将流保存为文??
+	 * @todo 将流保存为文件
 	 * @param is
 	 * @param fileName
 	 */
@@ -146,8 +146,8 @@ public class FileUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String readAsString(File file, String charset) throws IOException {
-		byte[] fileBytes = readAsByteArray(file);
+	public static String readFileAsStr(File file, String charset) throws IOException {
+		byte[] fileBytes = readAsBytes(file);
 		if (StringUtil.isBlank(charset)) {
 			return new String(fileBytes);
 		}
@@ -160,13 +160,12 @@ public class FileUtil {
 	 * @param charset
 	 * @return
 	 */
-	public static String readFileAsString(Object file, String charset) {
+	public static String readFileAsStr(Object file, String charset) {
 		return inputStreamToStr(getFileInputStream(file), charset);
 	}
 
 	/**
-	 * 转换InputStream为String
-	 *
+	 * @TODO 转换InputStream为String
 	 * @param is
 	 * @param encoding
 	 * @return
@@ -197,7 +196,7 @@ public class FileUtil {
 		return buffer.toString();
 	}
 
-	public static String readLineAsString(File file, String charset) {
+	public static String readLineAsStr(File file, String charset) {
 		BufferedReader reader = null;
 		StringBuilder result = new StringBuilder();
 		try {
@@ -219,16 +218,69 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 读取文件到二进制数组中
+	 * @todo 获得指定路径的文件
+	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
+	 * @return
+	 */
+	public static InputStream getFileInputStream(Object file) {
+		if (file == null) {
+			return null;
+		}
+		try {
+			if (file instanceof InputStream) {
+				return (InputStream) file;
+			}
+			if (file instanceof File) {
+				return new FileInputStream((File) file);
+			}
+			// 文件路径
+			if (new File((String) file).exists()) {
+				return new FileInputStream((String) file);
+			}
+			String realFile = (String) file;
+			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
+				realFile = realFile.trim().substring(10).trim();
+			}
+			if (realFile.charAt(0) == '/') {
+				realFile = realFile.substring(1);
+			}
+			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
+			if (result == null) {
+				try {
+					Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
+					URL url;
+					while (urls.hasMoreElements()) {
+						url = urls.nextElement();
+						result = new FileInputStream(url.getFile());
+						if (result != null) {
+							break;
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return result;
+		} catch (FileNotFoundException fn) {
+			fn.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] readAsByteArray(File file) {
-		FileInputStream in = null;
+	public static byte[] readAsBytes(Object file) {
+		if (file == null) {
+			return null;
+		}
+		InputStream in=null;
 		byte[] ret = null;
 		try {
-			in = new FileInputStream(file);
+			in=getFileInputStream(file);
 			ret = IOUtil.getBytes(in);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -239,15 +291,13 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo <b>将字符串存为文件</b>
-	 * @author zhongxuchen
-	 * @date 2011-3-10 上午10:44:05
+	 * @TODO <b>将字符串存为文件</b>
 	 * @param content
 	 * @param fileName
 	 * @param charset
 	 * @throws Exception
 	 */
-	public static void putStringToFile(String content, String fileName, String charset) throws Exception {
+	public static void putStrToFile(String content, String fileName, String charset) throws Exception {
 		FileOutputStream fos = null;
 		OutputStreamWriter osw = null;
 		BufferedWriter writer = null;
@@ -272,7 +322,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
+	 * @TODO 递归将指定文件夹下面的文件（直到最底层文件夹）放入数组中
 	 * @param parentFile
 	 * @param fileList
 	 * @param filter
@@ -297,7 +347,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 获取指定路径下符合条件的文件
+	 * @TODO 获取指定路径下符合条件的文件
 	 * @param baseDir
 	 * @param filters
 	 * @return
@@ -318,7 +368,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo 判断是否跟路径
+	 * @TODO 判断是否跟路径
 	 * @param path
 	 * @return
 	 */
@@ -378,7 +428,6 @@ public class FileUtil {
 	 * @param fileContent     文本文件内容
 	 * @return
 	 */
-
 	public static void createFile(String filePathAndName, String fileContent) {
 		FileWriter resultFile = null;
 		PrintWriter myFile = null;
@@ -482,7 +531,7 @@ public class FileUtil {
 	}
 
 	/**
-	 * @todo <b>删除指定路径下，文件名称正则匹配的文件</b>
+	 * @TODO <b>删除指定路径下，文件名称正则匹配的文件</b>
 	 * @param path
 	 * @param regex
 	 * @return
@@ -774,60 +823,6 @@ public class FileUtil {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * @todo 获得指定路径的文件
-	 * @param file 文件路径like:classpath:xxx.xml或xxx.xml
-	 * @return
-	 */
-	public static InputStream getFileInputStream(Object file) {
-		if (file == null) {
-			return null;
-		}
-		try {
-			if (file instanceof InputStream) {
-				return (InputStream) file;
-			}
-			if (file instanceof File) {
-				return new FileInputStream((File) file);
-			}
-
-			String realFile = (String) file;
-			if (StringUtil.isBlank(realFile)) {
-				return null;
-			}
-			// 文件路径
-			if (new File(realFile).exists()) {
-				return new FileInputStream(realFile);
-			}
-			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
-				realFile = realFile.trim().substring(10).trim();
-			}
-			if (realFile.charAt(0) == '/') {
-				realFile = realFile.substring(1);
-			}
-			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
-			if (result == null) {
-				try {
-					Enumeration<URL> urls = Thread.currentThread().getContextClassLoader().getResources(realFile);
-					URL url;
-					while (urls.hasMoreElements()) {
-						url = urls.nextElement();
-						result = new FileInputStream(url.getFile());
-						if (result != null) {
-							break;
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			return result;
-		} catch (FileNotFoundException fn) {
-			fn.printStackTrace();
-		}
-		return null;
 	}
 
 	/**

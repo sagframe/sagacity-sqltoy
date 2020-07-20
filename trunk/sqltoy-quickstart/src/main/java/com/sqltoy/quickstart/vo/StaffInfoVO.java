@@ -3,10 +3,11 @@
  */
 package com.sqltoy.quickstart.vo;
 
-import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import java.time.LocalDate;
-import java.sql.Blob;
 import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+
 import com.sqltoy.quickstart.vo.base.AbstractStaffInfoVO;
 
 /**
@@ -76,6 +77,21 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
+	
+	private LocalDate beginDate;
+	
+	private LocalDate endDate;
+	
+	/**
+	 * 机构名称
+	 */
+	private String organName;
+	
+	/**
+	 * 性别名称
+	 */
+	private String sexTypeName;
+	
 	/**
      *@todo vo columns to String
      */
@@ -97,6 +113,30 @@ public class StaffInfoVO extends AbstractStaffInfoVO {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	public String getOrganName() {
+		return organName;
+	}
+	public void setOrganName(String organName) {
+		this.organName = organName;
+	}
+	public String getSexTypeName() {
+		return sexTypeName;
+	}
+	public void setSexTypeName(String sexTypeName) {
+		this.sexTypeName = sexTypeName;
+	}
+	public LocalDate getBeginDate() {
+		return beginDate;
+	}
+	public void setBeginDate(LocalDate beginDate) {
+		this.beginDate = beginDate;
+	}
+	public LocalDate getEndDate() {
+		return endDate;
+	}
+	public void setEndDate(LocalDate endDate) {
+		this.endDate = endDate;
 	}
 	
 }

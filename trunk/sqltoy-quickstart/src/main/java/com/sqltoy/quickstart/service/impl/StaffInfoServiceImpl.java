@@ -26,6 +26,6 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 	private StaffInfoDao staffInfoDao;
 
 	public PaginationModel<StaffInfoVO> queryStaff(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
-		return null;
+		return staffInfoDao.findStaff(pageModel, staffInfoVO);
 	}
 }
