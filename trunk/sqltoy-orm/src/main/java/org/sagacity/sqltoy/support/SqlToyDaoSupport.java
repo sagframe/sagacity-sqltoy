@@ -305,19 +305,19 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 指定需要级联加载的类型，通过主对象加载自身和相应的子对象集合
 	 * @param entity
-	 * @param cascadeTypes
 	 * @param lockMode
+	 * @param cascadeTypes
 	 * @return
 	 */
 	protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
 		if (entity == null) {
 			return null;
 		}
-		Class[] cascade = cascadeTypes;
-		if (cascade == null) {
-			cascade = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
+		Class[] cascades = cascadeTypes;
+		if (cascades == null) {
+			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
-		return dialectFactory.load(sqlToyContext, entity, cascade, lockMode, this.getDataSource(null));
+		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -342,11 +342,11 @@ public class SqlToyDaoSupport {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
-		Class[] cascade = cascadeTypes;
-		if (cascade == null) {
-			cascade = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
+		Class[] cascades = cascadeTypes;
+		if (cascades == null) {
+			cascades = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, cascade, lockMode, this.getDataSource(null));
+		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
 	/**
@@ -724,11 +724,6 @@ public class SqlToyDaoSupport {
 		return this.saveAllIgnoreExist(entities, null, null);
 	}
 
-	@Deprecated
-	protected <T extends Serializable> Long saveAllNotExist(final List<T> entities) {
-		return this.saveAllIgnoreExist(entities, null, null);
-	}
-
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
 	 * @param entity
@@ -736,11 +731,6 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities, final DataSource dataSource) {
-		return this.saveAllIgnoreExist(entities, null, dataSource);
-	}
-
-	@Deprecated
-	protected <T extends Serializable> Long saveAllNotExist(final List<T> entities, final DataSource dataSource) {
 		return this.saveAllIgnoreExist(entities, null, dataSource);
 	}
 
@@ -755,14 +745,6 @@ public class SqlToyDaoSupport {
 		return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				reflectPropertyHandler, this.getDataSource(dataSource), null);
 	}
-
-//	/**
-//	 * @todo 简单的对象修改操作(属性值为null的不被修改)
-//	 * @param entity
-//	 */
-//	protected Long update(final Serializable entity) {
-//		return this.update(entity, null, null);
-//	}
 
 	/**
 	 * @todo update对象(值为null的属性不修改,通过forceUpdateProps指定要进行强制修改属性)
@@ -814,14 +796,6 @@ public class SqlToyDaoSupport {
 		return this.update(entity, sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray(),
 				this.getDataSource(dataSource));
 	}
-
-//	/**
-//	 * @todo 批量根据主键值修改对象(具体更新哪些属性以第一条记录为准，如10个属性，第一条记录 中只有5个属性有值，则只更新这5个属性的值)
-//	 * @param entities
-//	 */
-//	protected <T extends Serializable> Long updateAll(final List<T> entities) {
-//		return this.updateAll(entities, null, null, null);
-//	}
 
 	/**
 	 * @todo 批量根据主键更新每条记录,通过forceUpdateProps设置强制要修改的属性
@@ -904,8 +878,8 @@ public class SqlToyDaoSupport {
 	 * @todo 批量保存或修改,自动根据主键来判断是修改还是保存，没有主键的直接插入记录，
 	 *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
 	 * @param entities
-	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
+	 * @param forceUpdateProps
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
 			final ReflectPropertyHandler reflectPropertyHandler, final String... forceUpdateProps) {
@@ -915,8 +889,8 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo <b>批量保存或修改</b>
 	 * @param entities
-	 * @param forceUpdateProps
 	 * @param reflectPropertyHandler
+	 * @param forceUpdateProps
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
