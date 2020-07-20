@@ -4,7 +4,6 @@
 package com.sagframe.sqltoy.showcase;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +31,7 @@ import com.sagframe.sqltoy.showcase.vo.DictDetailVO;
 import com.sagframe.sqltoy.showcase.vo.OrderInfoVO;
 import com.sagframe.sqltoy.showcase.vo.OrganInfoVO;
 import com.sagframe.sqltoy.showcase.vo.StaffInfoVO;
-import com.sagframe.sqltoy.showcase.vo.TestVO;
 import com.sagframe.sqltoy.utils.ShowCaseUtils;
-
 
 /**
  * @project sqltoy-boot-showcase
@@ -319,41 +316,5 @@ public class QueryCaseTest {
 		for (int i = 0; i < result.size(); i++) {
 			System.err.println(JSON.toJSONString(result.get(i)));
 		}
-	}
-
-	@Test
-	public void testNamedParam() throws InterruptedException {
-		String sql = "with d as (\r\n" + "                      select\r\n"
-				+ "                          DATE_FORMAT(d.UPDATE_TIME,'%Y-%m-%d %H:%i:%s') CREATE_TIME,\r\n"
-				+ "                          d.DICT_TYPE,\r\n" + "                          d.DICT_KEY,\r\n"
-				+ "                          d.DICT_NAME,\r\n" + "                          d.SHOW_INDEX\r\n"
-				+ "                      from sqltoy_dict_detail d\r\n"
-				+ "                      where d.`STATUS`=1 \r\n" + "                    )\r\n"
-				+ "                    select *\r\n" + "                    from d\r\n"
-				+ "                    where 1=1 \r\n" + "                        #[and d.DICT_TYPE=:dictType]";
-		PaginationModel result = sqlToyLazyDao.findPageBySql(new PaginationModel(), sql, new String[] { "dictType" },
-				new Object[] { "TRANS_CODE" }, null);
-		for (int i = 0; i < result.getRows().size(); i++) {
-			System.err.println(JSON.toJSONString(result.getRows().get(i)));
-		}
-	}
-
-	@Test
-	public void testSearchBitType() throws InterruptedException {
-		String sql = "select * from sqltoy_test";
-		List<TestVO> result = sqlToyLazyDao.findBySql(sql, new TestVO());
-		for (int i = 0; i < result.size(); i++) {
-			System.err.println(JSON.toJSONString(result.get(i)));
-		}
-	}
-
-	@Test
-	public void testSaveBitType() throws InterruptedException {
-		TestVO testVO = new TestVO();
-		testVO.setId(true);
-		testVO.setName("hello");
-		testVO.setSallary(new BigInteger("2000"));
-		sqlToyCRUDService.save(testVO);
-
 	}
 }
