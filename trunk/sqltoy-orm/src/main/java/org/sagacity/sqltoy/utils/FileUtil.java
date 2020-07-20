@@ -197,7 +197,7 @@ public class FileUtil {
 		return buffer.toString();
 	}
 
-	public static String readLineAsString(File file, String charset) {
+	public static String readLineAsStr(File file, String charset) {
 		BufferedReader reader = null;
 		StringBuilder result = new StringBuilder();
 		try {
