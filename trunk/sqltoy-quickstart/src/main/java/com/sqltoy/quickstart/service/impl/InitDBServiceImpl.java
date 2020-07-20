@@ -32,7 +32,7 @@ public class InitDBServiceImpl implements InitDBService {
 	@Transactional
 	public void initDatabase(String dataSqlFile) {
 		// 加载初始化数据脚本(最好手工执行数据初始化,便于演示缓存翻译功能)
-		final String sqlContent = FileUtil.readFileAsString(dataSqlFile, "UTF-8");
+		final String sqlContent = FileUtil.readFileAsStr(dataSqlFile, "UTF-8");
 		if (StringUtil.isBlank(sqlContent)) {
 			return;
 		}
