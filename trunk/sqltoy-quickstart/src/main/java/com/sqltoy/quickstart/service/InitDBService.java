@@ -10,5 +10,11 @@ package com.sqltoy.quickstart.service;
  * @version id:InitDataService.java,Revision:v1.0,Date:2019年8月6日
  */
 public interface InitDBService {
+	/**
+	 * @TODO 初始化数据库
+	 * @param dataSqlFile
+	 */
 	public void initDatabase(String dataSqlFile);
+
+	public Long initOrderData();
 }
