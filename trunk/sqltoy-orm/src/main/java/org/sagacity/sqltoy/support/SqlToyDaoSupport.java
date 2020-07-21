@@ -55,19 +55,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description 通过sqlToy提供强大的数据操作支持,从2.0版本后接口将保持稳定
- *              sqltoy比hibernate和myBatis如何?用一用我相信你一定会深深的爱上sqlToy(太贴切项目实践了,
- *              一看就是经历无数项目苦难的人总结出的实用货)! 3.0版本开始对代码结构进行彻底整理,分离各种数据库的处理策略，使代码更加清晰,
- *              并在3.2版本开始对外开源
+ * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @publish Copyright@2009 版权归陈仁飞,反对任何不尊重版权的抄袭，如引用请注明出处。
- * @version id:SqlToyDaoSupport.java,Revision:v2.0,Date:2012-6-1 下午3:15:13
+ * @version id:SqlToyDaoSupport.java,Revision:v4.0,Date:2012-6-1
  * @modified Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
  * @modified Date:2012-8-23 {新增loadAll(List entities) 方法，可以批量通过主键取回详细信息}
  * @modified Date:2014-12-17 {1、增加sharding功能,改进saveOrUpdate功能，2、采用merge
  *           into策略;3、优化查询 条件和查询结果，变为一个对象，返回结果支持json输出}
- * @modified Date:2016-3-07 {优化存储过程调用,提供常用的执行方式,剔除过往复杂的实现逻辑和不必要的兼容性,让调用过程更加可读
- *           ,存储过程调用过程优化后将全部代码开始对外开放 }
+ * @modified Date:2016-3-07 {优化存储过程调用,提供常用的执行方式,剔除过往复杂的实现逻辑和不必要的兼容性,让调用过程更加可读 }
  * @modified Date:2016-11-25
  *           {增加了分页优化功能,缓存相同查询条件的总记录数,在一定周期情况下无需再查询总记录数,从而提升分页查询的整体效率 }
  * @modified Date:2017-7-13 {增加saveAllNotExist功能,批量保存数据时忽视已经存在的,避免重复性数据主键冲突}
@@ -75,8 +71,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modified Date:2019-3-1 {增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索}
  * @modified Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
  * @modified Date:2020-4-5
- *           {提供分页查询可以设置跳过查总记录数的机制,PaginationModel中设置skipQueryCount=true,默认为false}
+ *           {分页可设置跳过查总记录数PaginationModel中设置skipQueryCount=true,默认为false}
  */
+//新的模式不鼓励自己继承DaoSupport,一般情况下使用SqlToyLazyDao即可
 @SuppressWarnings("rawtypes")
 public class SqlToyDaoSupport {
 	/**
