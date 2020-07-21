@@ -130,7 +130,7 @@
 					UPDATE_TIME,
 					STATUS,
 					STATUS statusName -- 状态名称
-			from sqltoy_device_order_info t 
+			from sqltoy_device_order t 
 			where #[t.ORDER_ID=:orderId]
 			      -- 当前用户能够访问的授权组织机构，控制数据访问权限(一般登录后直接放于用户session中)
 				  #[and t.ORGAN_ID in (:authedOrganIds)]
