@@ -58,7 +58,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @publish Copyright@2009 版权归陈仁飞,反对任何不尊重版权的抄袭，如引用请注明出处。
- * @version id:SqlToyDaoSupport.java,Revision:v2.0,Date:2012-6-1 下午3:15:13
+ * @version id:SqlToyDaoSupport.java,Revision:v4.0,Date:2012-6-1
  * @modified Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
  * @modified Date:2012-8-23 {新增loadAll(List entities) 方法，可以批量通过主键取回详细信息}
  * @modified Date:2014-12-17 {1、增加sharding功能,改进saveOrUpdate功能，2、采用merge
