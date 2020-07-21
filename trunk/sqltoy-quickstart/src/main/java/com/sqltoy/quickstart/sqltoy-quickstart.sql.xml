@@ -145,12 +145,12 @@
 	<sql id="qstart_group_summary_case">
 		<value>
 			<![CDATA[
-			select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+			select t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt 
 			from sqltoy_fruit_order t
 			order by t.fruit_name ,t.order_month
 			]]>
 		</value>
-		<summary columns="sale_count,sale_amt,total_amt"
+		<summary columns="sale_count,sale_price,total_amt"
 			reverse="true">
 			<!-- 层级顺序保持从高到低 -->
 			<global sum-label="总计" label-column="fruit_name" />
@@ -163,7 +163,7 @@
 	<sql id="qstart_cols_relative_case">
 		<value>
 			<![CDATA[
-			select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+			select t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt 
 			from sqltoy_fruit_order t
 			order by t.fruit_name ,t.order_month
 			]]>
@@ -179,7 +179,7 @@
 	<sql id="qstart_rows_relative_case">
 		<value>
 			<![CDATA[
-				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt 
 				from sqltoy_fruit_order t
 				order by t.order_month desc,t.fruit_name
 			]]>
@@ -192,7 +192,7 @@
 	<sql id="qstart_pivot_case">
 		<value>
 			<![CDATA[
-				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt 
 				from sqltoy_fruit_order t
 				order by t.fruit_name ,t.order_month
 			]]>
@@ -205,13 +205,13 @@
 	<sql id="qstart_unpivot_case">
 		<value>
 			<![CDATA[
-				select t.fruit_name,t.order_month,t.sale_count,t.sale_amt,t.total_amt 
+				select t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt 
 				from sqltoy_fruit_order t
 				order by t.order_month desc,t.fruit_name
 			]]>
 		</value>
 		<unpivot
-			columns-to-rows="sale_count:销售量,sale_amt:销售金额,total_amt:总销售额"
+			columns-to-rows="sale_count:销售量,sale_price:销售金额,total_amt:总销售额"
 			new-columns-labels="indexName,indexValue" />
 	</sql>
 </sqltoy>
