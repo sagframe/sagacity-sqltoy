@@ -123,7 +123,11 @@ public class StaffInfoServiceTest {
 		}
 	}
 
-	// 演示updateFetch用法，同时也穿插了一个QueryExecutor中动态设置缓存翻译的示例(不建议)
+	// 演示updateFetch用法，同时也穿插了一个QueryExecutor中动态设置缓存翻译的示例
+	// 1、查询取数据并锁定
+	// 2、提取出来做逻辑判断
+	// 3、对记录进行更新
+	// 4、将更新后的结果返回
 	@Test
 	public void testUpdateFetch() {
 		List<StaffInfoVO> result = staffInfoService.updateFetch();
