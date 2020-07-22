@@ -451,27 +451,41 @@ public class DBHelper {
 							colMeta.setColDefault(clearDefaultValue(StringUtil.trim(rs.getString("COLUMN_DEF"))));
 						}
 					}
-					colMeta.setDataType(rs.getInt("DATA_TYPE"));
-					colMeta.setTypeName(rs.getString("TYPE_NAME"));
-					colMeta.setLength(rs.getInt("COLUMN_SIZE"));
-					colMeta.setPrecision(colMeta.getLength());
-					colMeta.setScale(rs.getInt("DECIMAL_DIGITS"));
-					colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
-					try {
-						isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-						if (isAutoIncrement != null
-								&& (isAutoIncrement.equalsIgnoreCase("true") || isAutoIncrement.equalsIgnoreCase("YES")
-										|| isAutoIncrement.equalsIgnoreCase("Y") || isAutoIncrement.equals("1"))) {
-							colMeta.setAutoIncrement(true);
+					if (colMeta != null) {
+						colMeta.setDataType(rs.getInt("DATA_TYPE"));
+						colMeta.setTypeName(rs.getString("TYPE_NAME"));
+						colMeta.setLength(rs.getInt("COLUMN_SIZE"));
+						colMeta.setPrecision(colMeta.getLength());
+						colMeta.setScale(rs.getInt("DECIMAL_DIGITS"));
+						colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
+						try {
+							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
+									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
+									|| isAutoIncrement.equals("1"))) {
+								colMeta.setAutoIncrement(true);
+							} else {
+								colMeta.setAutoIncrement(false);
+							}
+						} catch (Exception e) {
+						}
+						if (dbType == DbType.ORACLE12) {
+							if (colMeta.getColDefault() != null
+									&& colMeta.getColDefault().toLowerCase().endsWith(".nextval")) {
+								colMeta.setAutoIncrement(true);
+								colMeta.setColDefault(colMeta.getColDefault().replaceAll("\"", "\\\\\""));
+							}
+						}
+						if (rs.getInt("NULLABLE") == 1) {
+							colMeta.setNullable(true);
 						} else {
-							colMeta.setAutoIncrement(false);
+							colMeta.setNullable(false);
 						}
 						result.add(colMeta);
 					} else {
 						err.println("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
 						logger.info("表:" + tableName + " 对应的列:" + colName + "不在当前用户表字段内,请检查schema或catalog配置是否正确!");
 					}
-					result.add(colMeta);
 				}
 				this.setResult(result);
 			}
