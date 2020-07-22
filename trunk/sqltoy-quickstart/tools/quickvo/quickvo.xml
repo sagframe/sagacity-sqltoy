@@ -8,11 +8,13 @@
 	<property name="project.name" value="sqltoy-quickstart" />
 	<property name="project.package" value="com.sqltoy" />
 	<property name="include.schema" value="false" />
-	<!-- set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return 
-		this;} -->
+	<!-- set method 是否支持返回对象自身(默认是true),即: public VO setName(String name){this.name=name;return this;} -->
 	<property name="field.support.linked.set" value="true" />
-	<!-- schema 对照关系:mysql 对应 db 名称; oracle 对应 用户名称; postgresql 对应 -->
-	<datasource name="quickstart" url="${db.url}" driver="${db.driver_class}" schema="${db.schema}"	username="${db.username}" password="${db.password}" />
+	
+	<!-- schema 对照关系:mysql 对应 db 名称; oracle 对应 用户名称 -->
+	<datasource name="quickstart" url="${db.url}" driver="${db.driver_class}" 
+		schema="${db.schema}" username="${db.username}" password="${db.password}" />
+	
 	<tasks dist="../../src/main/java" encoding="UTF-8">
 		<task active="true" author="zhongxuchen" include="^SQLTOY_\w+" datasource="quickstart" swagger-model="false">
 			<vo package="${project.package}.quickstart.vo" substr="Sqltoy" name="#{subName}VO" />
@@ -35,8 +37,7 @@
 		<!-- 业务主键可以充当实际的主键，如果字段是主键会覆盖原来的主键策略 -->
 		<!-- 包含的三个宏: @substr(${field},startIndex,length) @case(value,case1,value1,case2,value2,other) 
 			@df(yyMMdd) 日期格式化,如果不需要加入日期可以用@df('') -->
-		<table name="SQLTOY_DEVICE_ORDER" column="ORDER_ID"	generator="redis"
-			signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
+		<table name="SQLTOY_DEVICE_ORDER" column="ORDER_ID"	generator="redis" signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
 			related-columns="psType,deviceType" length="12" />
 	</business-primary-key>
 
