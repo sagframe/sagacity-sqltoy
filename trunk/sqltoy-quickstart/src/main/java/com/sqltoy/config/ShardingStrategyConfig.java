@@ -25,8 +25,8 @@ public class ShardingStrategyConfig {
 	 * @TODO 演示实时表和历史表分表效果
 	 * @return
 	 */
-	@Bean("hisTableStrategy")
-	public ShardingStrategy hisTableStrategy() {
+	@Bean("realHisTable")
+	public ShardingStrategy realHisTable() {
 		DefaultShardingStrategy strategy = new DefaultShardingStrategy();
 		// 分14天表和历史表,也可以1,15,90 表示多个间隔
 		strategy.setDays("14");
