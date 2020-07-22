@@ -25,7 +25,7 @@ public class ShardingStrategyConfig {
 	 * @TODO 演示实时表和历史表分表效果
 	 * @return
 	 */
-	@Bean("realHisTable")
+	@Bean(name = "realHisTable", initMethod = "initialize")
 	public ShardingStrategy realHisTable() {
 		DefaultShardingStrategy strategy = new DefaultShardingStrategy();
 		// 分14天表和历史表,也可以1,15,90 表示多个间隔
@@ -43,7 +43,7 @@ public class ShardingStrategyConfig {
 	 * @TODO 按权重进行分库
 	 * @return
 	 */
-	@Bean("weightDataSource")
+	@Bean(name = "weightDataSource", initMethod = "initialize")
 	public ShardingStrategy weightDataSource() {
 		DefaultShardingStrategy strategy = new DefaultShardingStrategy();
 
@@ -54,7 +54,7 @@ public class ShardingStrategyConfig {
 	 * @TODO 通过hash取模方式分库
 	 * @return
 	 */
-	@Bean("hashDataSource")
+	@Bean(name = "hashDataSource", initMethod = "initialize")
 	public ShardingStrategy hashDataSource() {
 		HashShardingStrategy strategy = new HashShardingStrategy();
 
