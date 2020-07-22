@@ -32,7 +32,7 @@ import org.springframework.context.ApplicationContextAware;
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultShardingStrategy.class);
 
-	private HashMap<String, String> tableNamesMap = new HashMap<String, String>();
+	private Map<String, String> tableNamesMap = new HashMap<String, String>();
 
 	/**
 	 * 默认为180天，180天前查询历史表
@@ -50,7 +50,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/**
 	 * 不同dataSource对应的使用权重
 	 */
-	private HashMap<String, Integer> dataSourceWeight;
+	private Map<String, Integer> dataSourceWeight;
 
 	// 格式 {dataSource,weight}
 	private Object[][] dataSourceWeightConfig;
@@ -186,7 +186,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/**
 	 * @param dataSourceWeight the dataSourceWeight to set
 	 */
-	public void setDataSourceWeight(HashMap<String, Integer> dataSourceWeight) {
+	public void setDataSourceWeight(Map<String, Integer> dataSourceWeight) {
 		this.dataSourceWeight = dataSourceWeight;
 	}
 
@@ -200,7 +200,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/**
 	 * @param tableNamesMap the tableNamesMap to set
 	 */
-	public void setTableNamesMap(HashMap<String, String> tableMap) {
+	public void setTableNamesMap(Map<String, String> tableMap) {
 		Iterator<Map.Entry<String, String>> iter = tableMap.entrySet().iterator();
 		Map.Entry<String, String> entry;
 		while (iter.hasNext()) {
