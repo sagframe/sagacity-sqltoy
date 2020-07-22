@@ -125,8 +125,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 				break;
 			}
 		}
-		if (bizDate == null)
+		if (bizDate == null) {
 			return null;
+		}
 		// 间隔多少天
 		int intervalDays = Math.abs(DateUtil.getIntervalDays(DateUtil.getNowTime(), bizDate));
 		int index = -1;
