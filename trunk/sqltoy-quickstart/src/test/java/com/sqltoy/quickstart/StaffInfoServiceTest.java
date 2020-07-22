@@ -122,4 +122,13 @@ public class StaffInfoServiceTest {
 			System.err.println(JSON.toJSONString(row));
 		}
 	}
+
+	// 演示updateFetch用法，同时也穿插了一个QueryExecutor中动态设置缓存翻译的示例(不建议)
+	@Test
+	public void testUpdateFetch() {
+		List<StaffInfoVO> result = staffInfoService.updateFetch();
+		for (StaffInfoVO row : result) {
+			System.err.println(JSON.toJSONString(row));
+		}
+	}
 }
