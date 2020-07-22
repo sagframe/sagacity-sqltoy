@@ -4,14 +4,15 @@
 package com.sqltoy.quickstart.vo.base;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.Column;
-import java.time.LocalDateTime;
-
 import org.sagacity.sqltoy.config.annotation.OneToMany;
-import java.util.List;
-import java.util.ArrayList;
+
 import com.sqltoy.quickstart.vo.DictDetailVO;
 
 /**

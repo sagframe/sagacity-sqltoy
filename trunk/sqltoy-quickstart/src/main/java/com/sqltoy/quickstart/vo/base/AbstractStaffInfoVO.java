@@ -4,12 +4,12 @@
 package com.sqltoy.quickstart.vo.base;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.Column;
-import java.time.LocalDate;
-import java.sql.Blob;
-import java.time.LocalDateTime;
 
 
 /**

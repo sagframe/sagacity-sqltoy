@@ -18,5 +18,5 @@ public interface OrganInfoService {
 	 * @param organInfoVO
 	 * @return
 	 */
-	public Long saveOrganInfo(OrganInfoVO organInfoVO);
+	public void saveOrganInfo(OrganInfoVO organInfoVO);
 }

@@ -19,7 +19,7 @@
 	</sql>
 
 	<!-- 演示分表 -->
-	<sql id="qstart_15d_table_sharding_case">
+	<sql id="qstart_sharding_table_case">
 		<sharding-table tables="sqltoy_trans_info_15d"
 			strategy="realHisTable" params="beginDate" />
 		<value>
