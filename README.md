@@ -2,7 +2,7 @@
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.12使用手册.doc
+## 请见:docs/睿智平台SqlToy4.13使用手册.doc
 
 # QQ 交流群:531812227 
 ## 交流群中常见疑问
