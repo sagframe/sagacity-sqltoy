@@ -39,6 +39,7 @@ public class ShardingStrategyConfig {
 		return strategy;
 	}
 
+	// 请根据实际情况进行配置,这里不做重点介绍
 	/**
 	 * @TODO 按权重进行分库
 	 * @return
@@ -49,7 +50,7 @@ public class ShardingStrategyConfig {
 		HashMap<String, Integer> dataSourceWeight = new HashMap<String, Integer>();
 		// 设置不同数据库的访问权重
 		dataSourceWeight.put("dataSource", 70);
-		dataSourceWeight.put("slave1", 30);
+		// dataSourceWeight.put("slave1", 30);
 		strategy.setDataSourceWeight(dataSourceWeight);
 		// 数据库有效性检测时间间隔秒数,小于等于0表示不自动检测数据库
 		strategy.setCheckSeconds(180);
@@ -66,8 +67,9 @@ public class ShardingStrategyConfig {
 		HashMap<String, String> dataSourceMap = new HashMap<String, String>();
 		// 根据hash取模分库
 		dataSourceMap.put("0", "dataSource");
-		dataSourceMap.put("1", "slave1");
-		dataSourceMap.put("2", "slave2");
+		// 暂时用同一个数据库来模拟多个库
+		// dataSourceMap.put("1", "slave1");
+		// dataSourceMap.put("2", "slave2");
 		strategy.setDataSourceMap(dataSourceMap);
 		return strategy;
 	}
