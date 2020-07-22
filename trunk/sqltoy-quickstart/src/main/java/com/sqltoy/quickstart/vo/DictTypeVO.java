@@ -3,9 +3,11 @@
  */
 package com.sqltoy.quickstart.vo;
 
-import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+
 import com.sqltoy.quickstart.vo.base.AbstractDictTypeVO;
 
 /**

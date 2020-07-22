@@ -12,6 +12,7 @@ import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -101,7 +102,7 @@ public class Batch extends BaseLink {
 	}
 
 	public Long submit() {
-		if (sql == null) {
+		if (StringUtil.isBlank(sql)) {
 			throw new IllegalArgumentException("batch execute sql is null!");
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();

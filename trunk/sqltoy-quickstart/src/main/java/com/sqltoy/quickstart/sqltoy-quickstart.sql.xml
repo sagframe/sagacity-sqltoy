@@ -2,11 +2,11 @@
 <sqltoy xmlns="http://www.sagframe.com/schema/sqltoy"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy http://www.sagframe.com/schema/sqltoy/sqltoy.xsd">
-	<!--  -->
+	<!-- -->
 	<!-- 演示分库 -->
 	<sql id="qstart_db_sharding_case">
-		<sharding-datasource
-			strategy="hashBalanceDBSharding" params="userId" />
+		<sharding-datasource strategy="hashDataSource"
+			params="userId" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_user_log t 
@@ -19,9 +19,9 @@
 	</sql>
 
 	<!-- 演示分表 -->
-	<sql id="qstart_15d_table_sharding_case">
+	<sql id="qstart_sharding_table_case">
 		<sharding-table tables="sqltoy_trans_info_15d"
-			strategy="historyTableStrategy" params="beginDate" />
+			strategy="realHisTable" params="beginDate" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_trans_info_15d t 
@@ -139,7 +139,7 @@
 				  #[and t.TRANS_DATE<:endDate]
 				]]>
 		</value>
-	</sql>	
+	</sql>
 
 	<!-- 演示分组汇总 -->
 	<sql id="qstart_group_summary_case">
@@ -172,8 +172,9 @@
 		<pivot start-column="sale_count" end-column="total_amt"
 			group-columns="fruit_name" category-columns="order_month" />
 		<!-- 列与列之间进行环比计算 -->
-		<cols-chain-relative group-size="3" reduce-one="true"
-			relative-indexs="1,2" start-column="1" format="#.00%" />
+		<cols-chain-relative group-size="3"
+			reduce-one="true" relative-indexs="1,2" start-column="1"
+			format="#.00%" />
 	</sql>
 	<!-- 行与行高级环比演示 -->
 	<sql id="qstart_rows_relative_case">

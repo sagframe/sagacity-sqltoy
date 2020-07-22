@@ -167,6 +167,7 @@ public class DBHelper {
 			rs = pst.executeQuery();
 			commentName = "TABLE_COMMENT";
 		} else {
+			// 获取当前数据库的全部表名信息
 			rs = conn.getMetaData().getTables(catalog, schema, null, types);
 		}
 		return (List) DBUtil.preparedStatementProcess(commentName, pst, rs, new PreparedStatementResultHandler() {
@@ -421,11 +422,16 @@ public class DBHelper {
 					});
 		}
 		final HashMap metaMap = filedsComments;
+		
+		String catalog = dbConfig.getCatalog();
+		String schema = dbConfig.getSchema();
+		// 获取具体表对应的列字段信息
 		if (dbType == DbType.MYSQL) {
-			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, "%");
+			rs = conn.getMetaData().getColumns(catalog, schema, tableName, "%");
 		} else {
-			rs = conn.getMetaData().getColumns(dbConfig.getCatalog(), dbConfig.getSchema(), tableName, null);
+			rs = conn.getMetaData().getColumns(catalog, schema, tableName, null);
 		}
+		
 		return (List) DBUtil.preparedStatementProcess(metaMap, null, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
 				List result = new ArrayList();

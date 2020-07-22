@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
  * @description 统一字段赋值处理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:IUnifyFieldsHandler.java,Revision:v1.0,Date:2018年1月17日
- * @Modification {Date:2019-09-15,增加了forceUpdateFields方法}
+ * @modify {Date:2019-09-15,增加了forceUpdateFields方法}
  */
 public interface IUnifyFieldsHandler {
 	/**
@@ -28,7 +28,7 @@ public interface IUnifyFieldsHandler {
 	public Map<String, Object> updateUnifyFields();
 
 	/**
-	 * @TODO 強制修改的字段
+	 * @TODO 強制修改的字段(一般针对update属性)
 	 * @return
 	 */
 	public IgnoreCaseSet forceUpdateFields();

@@ -158,7 +158,7 @@ create table SQLTOY_TRANS_INFO_HIS
    TRANS_ID             varchar(32) not null  comment '交易ID',
    TRANS_CODE           varchar(20) not null  comment '交易代码',
    TRANS_CHANNEL        varchar(20) not null  comment '交易渠道',
-   AMT                  decimal(14,2) not null  comment '交易金额',
+   TRANS_AMT            decimal(14,2) not null  comment '交易金额',
    STATUS               decimal(1) not null  comment '交易状态',
    RESULT_CODE          varchar(20) not null  comment '交易返回码',
    TRANS_TIME           datetime not null  comment '交易时间',

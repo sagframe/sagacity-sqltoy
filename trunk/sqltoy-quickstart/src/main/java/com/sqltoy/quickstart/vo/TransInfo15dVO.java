@@ -3,74 +3,78 @@
  */
 package com.sqltoy.quickstart.vo;
 
-import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.sagacity.sqltoy.config.annotation.Sharding;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.config.annotation.Strategy;
+
 import com.sqltoy.quickstart.vo.base.AbstractTransInfo15dVO;
 
 /**
  * @project sqltoy-showcase
  * @author zhongxuchen
- * @version 1.0.0
- * Table: sqltoy_trans_info_15d,Remark:支付交易流水表(15天表) 	
+ * @version 1.0.0 Table: sqltoy_trans_info_15d,Remark:支付交易流水表(15天表)
  */
 @SqlToyEntity
-public class TransInfo15dVO extends AbstractTransInfo15dVO {	
+@Sharding(table = @Strategy(name = "realHisTable", fields = "transDate"))
+public class TransInfo15dVO extends AbstractTransInfo15dVO {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3025156483258790277L;
-	
+
 	/** default constructor */
 	public TransInfo15dVO() {
 		super();
 	}
+
 	/*---begin-constructor-area---don't-update-this-area--*/
 	/** pk constructor */
-	public TransInfo15dVO(String transId)
-	{
-		this.transId=transId;
+	public TransInfo15dVO(String transId) {
+		this.transId = transId;
 	}
 
 	/** minimal constructor */
-	public TransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
-	{
-		this.transId=transId;
-		this.transCode=transCode;
-		this.transChannel=transChannel;
-		this.transAmt=transAmt;
-		this.status=status;
-		this.resultCode=resultCode;
-		this.transTime=transTime;
-		this.transDate=transDate;
-		this.userId=userId;
+	public TransInfo15dVO(String transId, String transCode, String transChannel, BigDecimal transAmt, Integer status,
+			String resultCode, LocalDateTime transTime, LocalDate transDate, String userId) {
+		this.transId = transId;
+		this.transCode = transCode;
+		this.transChannel = transChannel;
+		this.transAmt = transAmt;
+		this.status = status;
+		this.resultCode = resultCode;
+		this.transTime = transTime;
+		this.transDate = transDate;
+		this.userId = userId;
 	}
 
 	/** full constructor */
-	public TransInfo15dVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
-	{
-		this.transId=transId;
-		this.transCode=transCode;
-		this.transChannel=transChannel;
-		this.transAmt=transAmt;
-		this.status=status;
-		this.resultCode=resultCode;
-		this.transTime=transTime;
-		this.transDate=transDate;
-		this.userId=userId;
-		this.cardNo=cardNo;
+	public TransInfo15dVO(String transId, String transCode, String transChannel, BigDecimal transAmt, Integer status,
+			String resultCode, LocalDateTime transTime, LocalDate transDate, String userId, String cardNo) {
+		this.transId = transId;
+		this.transCode = transCode;
+		this.transChannel = transChannel;
+		this.transAmt = transAmt;
+		this.status = status;
+		this.resultCode = resultCode;
+		this.transTime = transTime;
+		this.transDate = transDate;
+		this.userId = userId;
+		this.cardNo = cardNo;
 	}
 
 	/*---end-constructor-area---don't-update-this-area--*/
 	/**
-     *@todo vo columns to String
-     */
-    @Override
+	 * @todo vo columns to String
+	 */
+	@Override
 	public String toString() {
 		return super.toString();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -85,5 +89,5 @@ public class TransInfo15dVO extends AbstractTransInfo15dVO {
 		}
 		return null;
 	}
-	
+
 }
