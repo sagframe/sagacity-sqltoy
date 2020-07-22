@@ -37,4 +37,17 @@ public class StaffInfoDao extends SqlToyDaoSupport {
 						.setKeyColumn("sexType"))
 				.translates(new Translate("organIdName").setColumn("organName").setKeyColumn("organId")));
 	}
+
+//	/**
+//	 * @TODO 提供一个分页并动态设置缓存翻译的演示
+//	 * @param pageModel
+//	 * @param staffInfoVO
+//	 * @return
+//	 */
+//	public PaginationModel<StaffInfoVO> findStaff1(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
+//		//直接传sql或sqlId的时使用QueryExecutor
+//		QueryExecutor query = new QueryExecutor("qstart_findStaff");
+//		return super.findPageByQuery(pageModel, query.values(staffInfoVO).resultType(StaffInfoVO.class)
+//				.translates(new Translate("organIdName").setColumn("organName").setIndex(2))).getPageResult();
+//	}
 }
