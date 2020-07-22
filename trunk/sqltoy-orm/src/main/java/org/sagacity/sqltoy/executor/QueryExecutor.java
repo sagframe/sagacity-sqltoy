@@ -115,7 +115,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * update 2018-4-10 针对开发者将entity传入Class类别产生的bug进行类型检测,
+	 * update 2018-4-10 针对开发者将entity传入Class类别产生的bug进行提示
 	 * 
 	 * @param sql
 	 * @param entity
@@ -201,7 +201,9 @@ public class QueryExecutor implements Serializable {
 		this.rowCallbackHandler = rowCallbackHandler;
 		return this;
 	}
-
+	
+	//jdk8 stream之后意义已经不大
+	@Deprecated
 	public QueryExecutor reflectPropertyHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		this.reflectPropertyHandler = reflectPropertyHandler;
 		return this;

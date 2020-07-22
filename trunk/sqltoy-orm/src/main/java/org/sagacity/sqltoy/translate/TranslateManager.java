@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
  * @description sqltoy 缓存翻译器(通过缓存存储常用数据，如数据字典、机构、员工等，从而在数据库查询时可以避免 关联查询)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:TranslateManager.java,Revision:v1.0,Date:2013年4月8日
- * @Modification {Date:2017-12-8,提取缓存时增加分库策略判断,如果存在分库策略dataSource则按照分库逻辑提取}
- * @Modification {Date:2018-1-5,增加redis缓存翻译的管理和支持}
+ * @modify {Date:2017-12-8,提取缓存时增加分库策略判断,如果存在分库策略dataSource则按照分库逻辑提取}
+ * @modify {Date:2018-1-5,增加redis缓存翻译的管理和支持}
  */
 public class TranslateManager {
 	/**

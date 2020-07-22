@@ -12,6 +12,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -104,7 +105,7 @@ public class Execute extends BaseLink {
 	 * @return
 	 */
 	public Long submit() {
-		if (sql == null) {
+		if (StringUtil.isBlank(sql)) {
 			throw new IllegalArgumentException("execute operate sql is null!");
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update);
