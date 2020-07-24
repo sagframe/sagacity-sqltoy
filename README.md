@@ -23,7 +23,7 @@
 * 对update(Entity) 和update(Entity,String[] forceUpdateProps) 等类似方法用update(Entity,String...forceUpdateProps)进行了合并,减少部分代码冗余
 
 # 下阶段展望
-* 开始重新构建一个quickstart演示项目接替之前带有测试验证的showcase，便于大家学习上手
+* 开始重新构建一个quickstart演示项目接替之前带有测试验证的showcase，便于大家学习上手（已经可以参照了）
 
 # 使用单位或项目: 
 * 宁波农行  
