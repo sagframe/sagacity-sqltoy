@@ -37,7 +37,7 @@ public class ShardingSearchTest {
 
 	@Autowired
 	SqlToyCRUDService sqlToyCRUDService;
-
+	// Sharding 策略配置参见:com.sqltoy.ShardingStrategyConfig
 	// 第一步先初始化模拟表数据
 	@Test
 	public void initRealHisData() {

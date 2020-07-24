@@ -29,7 +29,7 @@ import com.sqltoy.quickstart.vo.StaffInfoVO;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SqlToyApplication.class)
-public class AdvenceQueryTest {
+public class AdvanceQueryTest {
 	@Autowired
 	SqlToyLazyDao sqlToyLazyDao;
 

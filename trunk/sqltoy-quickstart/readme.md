@@ -190,6 +190,14 @@ java -cp ./libs/* org.sagacity.quickvo.QuickVOStart quickvo.xml
 java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
 ```
 
+# 源码导航
+*  阅读的入口 src/test/java com.sqltoy.quickstart
+* InitDataBaseTest 数据库初始化测试调用
+* StaffInfoServiceTest 演示常规的CRUD
+* TreeTableTest 演示树形表结构的构建和查询
+* ShardingSearchTest 演示分表记录保存和查询(Sharding策略请参见src/main/java com.sqltoy.config.ShardingStrategyConfig )
+* AdvanceQueryTest 查询相关的演示 
+
 
 
 
