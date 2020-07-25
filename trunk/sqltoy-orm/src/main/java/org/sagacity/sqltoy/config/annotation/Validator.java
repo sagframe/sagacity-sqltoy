@@ -13,10 +13,11 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 /**
  * @project sagacity-sqltoy4.0
- * @description 数据验证
+ * @description 数据验证(目前不启用)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:Validator.java,Revision:v1.0,Date:2018年1月15日
  */
+@Deprecated
 public @interface Validator {
-	
+
 }

@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -296,5 +297,19 @@ public class SqlUtilsExt {
 			}
 		}
 		return realValue;
+	}
+
+	/**
+	 * @TODO 对sql增加签名,便于通过db来追溯sql(目前通过将sql id以注释形式放入sql)
+	 * @param sql
+	 * @param DBType
+	 * @param sqltoyConfig
+	 * @return
+	 */
+	public static String signSql(String sql, Integer DBType, SqlToyConfig sqltoyConfig) {
+		if (sqltoyConfig != null && sqltoyConfig.getId() != null) {
+			return "/* id=".concat(sqltoyConfig.getId()).concat(" */ ").concat(sql);
+		}
+		return sql;
 	}
 }
