@@ -10,9 +10,9 @@
 	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.2.7.RELEASE</spring-framework.version>
-		<spring-data-redis.version>2.3.1.RELEASE</spring-data-redis.version>
-		<spring-data-mongo.version>3.0.1.RELEASE</spring-data-mongo.version>
+		<spring-framework.version>5.2.8.RELEASE</spring-framework.version>
+		<spring-data-redis.version>2.3.2.RELEASE</spring-data-redis.version>
+		<spring-data-mongo.version>3.0.2.RELEASE</spring-data-mongo.version>
 		<ojdbc.version>19.7.0.0</ojdbc.version>
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.12</httpclient.version>
