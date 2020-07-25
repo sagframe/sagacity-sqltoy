@@ -88,7 +88,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private LinkModel linkModel = null;
 
 	/**
-	 * sqlId
+	 * sqlId,对应xml定义的sql唯一标志
 	 */
 	private String id;
 

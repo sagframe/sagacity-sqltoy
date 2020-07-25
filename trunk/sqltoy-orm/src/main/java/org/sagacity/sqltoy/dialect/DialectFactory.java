@@ -60,6 +60,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ParallelUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -240,6 +241,8 @@ public class DialectFactory {
 								sqlParamsModel.getParamsName());
 						realSql = sqlParamsModel.getSql();
 					}
+					// 做sql签名
+					realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
 					SqlExecuteStat.showSql(realSql, null);
 					this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler, fieldTypes,
 							autoCommit, conn, dbType));
@@ -278,6 +281,8 @@ public class DialectFactory {
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
 									sqlToyConfig, paramsNamed, paramsValue);
+							// 做sql签名
+							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
 							this.setResult(SqlUtil.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
 									dbType, autoCommit));
 						}

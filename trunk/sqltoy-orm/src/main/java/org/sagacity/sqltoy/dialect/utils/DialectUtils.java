@@ -202,9 +202,11 @@ public class DialectUtils {
 			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
 			final Connection conn, final Integer dbType, final int startIndex, final int fetchSize, final int maxRows)
 			throws Exception {
+		// 做sql签名
+		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
-		SqlExecuteStat.showSql(sql, paramsValue);
-		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		SqlExecuteStat.showSql(lastSql, paramsValue);
+		PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		if (fetchSize > 0) {
 			pst.setFetchSize(fetchSize);
 		}
@@ -238,13 +240,15 @@ public class DialectUtils {
 	public static QueryResult updateFetchBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final UpdateRowHandler updateRowHandler,
 			final Connection conn, final Integer dbType, final int startIndex) throws Exception {
+		// 做sql签名
+		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
-		SqlExecuteStat.showSql(sql, paramsValue);
+		SqlExecuteStat.showSql(lastSql, paramsValue);
 		PreparedStatement pst = null;
 		if (updateRowHandler == null) {
-			pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		} else {
-			pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -359,6 +363,8 @@ public class DialectUtils {
 							paramsValue.length - paramCntFin - withParamCntFin);
 		}
 		final Object[] realParams = realParamsTemp;
+		// 做sql签名
+		lastCountSql = SqlUtilsExt.signSql(lastCountSql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql(lastCountSql, realParams);
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
@@ -412,7 +418,7 @@ public class DialectUtils {
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
-		//存在自定义缓存翻译
+		// 存在自定义缓存翻译
 		if (queryExecutor.getTranslates() != null && !queryExecutor.getTranslates().isEmpty()) {
 			if (result.getTranslateMap() != null) {
 				result.getTranslateMap().putAll(queryExecutor.getTranslates());
@@ -1721,8 +1727,8 @@ public class DialectUtils {
 		}
 		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
 		if (dbType == DBType.SQLSERVER) {
-			return SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(),
-					null, null, batchSize, autoCommit, conn, dbType);
+			return SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues,
+					entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
 		}
 		return SqlUtilsExt.batchUpdateByJdbc(updateSql.toString(), paramsValues, entityMeta.getFieldsTypeArray(), null,
 				null, batchSize, autoCommit, conn, dbType);

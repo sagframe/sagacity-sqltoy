@@ -400,4 +400,12 @@ public class SqlToyConstants {
 		// 默认值为100
 		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
 	}
+
+	/**
+	 * @TODO 是否打开sql签名
+	 * @return
+	 */
+	public static boolean openSqlSign() {
+		return Boolean.parseBoolean(getKeyValue("sqltoy.open.sqlsign", "true"));
+	}
 }
