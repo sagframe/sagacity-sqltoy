@@ -118,11 +118,16 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		Object bizDate = null;
 		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split(",");
-		for (int i = 0; i < dateParams.length; i++) {
-			// 业务时间条件值
-			bizDate = paramsMap.get(dateParams[i]);
-			if (bizDate != null) {
-				break;
+		// 单一参数，表示直接传递参数值
+		if (paramsMap.size() == 1) {
+			bizDate = paramsMap.values().iterator().next();
+		} else {
+			for (int i = 0; i < dateParams.length; i++) {
+				// 业务时间条件值
+				bizDate = paramsMap.get(dateParams[i]);
+				if (bizDate != null) {
+					break;
+				}
 			}
 		}
 		if (bizDate == null) {
