@@ -43,9 +43,9 @@ public class SqlExecuteStat {
 	private static boolean debug = false;
 
 	/**
-	 * 打印慢sql(单位毫秒,默认超过30秒)
+	 * 打印慢sql(单位毫秒,默认超过15秒)
 	 */
-	private static int printSqlTimeoutMillis = 30000;
+	private static int printSqlTimeoutMillis = 15000;
 
 	// 用于拟合sql中的条件值表达式(前后都以非字符和数字为依据目的是最大幅度的避免参数值里面存在问号,实际执行过程中这个问题已经被规避,但调试打印参数带入无法规避)
 	private final static Pattern ARG_PATTERN = Pattern.compile("\\W\\?\\W");
@@ -159,7 +159,7 @@ public class SqlExecuteStat {
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("SqlToy超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
+				logger.warn("slowSql:超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
 						overTime + printSqlTimeoutMillis, printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError()) {
