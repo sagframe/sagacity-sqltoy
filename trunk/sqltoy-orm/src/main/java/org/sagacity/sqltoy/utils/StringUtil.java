@@ -78,6 +78,7 @@ public class StringUtil {
 		if ((str instanceof CharSequence) && str.toString().trim().equals("")) {
 			return true;
 		}
+		// 下面做了一些冗余性校验
 		if ((str instanceof Collection) && ((Collection) str).isEmpty()) {
 			return true;
 		}

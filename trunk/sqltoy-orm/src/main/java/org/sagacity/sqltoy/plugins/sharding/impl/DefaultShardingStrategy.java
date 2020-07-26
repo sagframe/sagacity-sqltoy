@@ -118,11 +118,16 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		Object bizDate = null;
 		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split(",");
-		for (int i = 0; i < dateParams.length; i++) {
-			// 业务时间条件值
-			bizDate = paramsMap.get(dateParams[i]);
-			if (bizDate != null) {
-				break;
+		// 单一参数，表示直接传递参数值
+		if (paramsMap.size() == 1) {
+			bizDate = paramsMap.values().iterator().next();
+		} else {
+			for (int i = 0; i < dateParams.length; i++) {
+				// 业务时间条件值
+				bizDate = paramsMap.get(dateParams[i]);
+				if (bizDate != null) {
+					break;
+				}
 			}
 		}
 		if (bizDate == null) {
@@ -177,7 +182,11 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			index = NumberUtil.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
-		logger.debug("本次sharding选择中的数据库为:{}", chooseDataSource);
+		if (logger.isDebugEnabled()) {
+			logger.debug("本次sharding使用的数据库为:{},index={}", chooseDataSource, index);
+		} else {
+			System.out.println("本次sharding使用的数据库为:" + chooseDataSource + ",index=" + index);
+		}
 		ShardingDBModel shardingModel = new ShardingDBModel();
 		shardingModel.setDataSourceName(chooseDataSource);
 		shardingModel.setDataSource((DataSource) applicationContext.getBean(chooseDataSource));

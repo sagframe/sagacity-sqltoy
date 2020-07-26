@@ -329,14 +329,11 @@ public class SqlToyConstants {
 
 	/**
 	 * @todo 加载数据库方言的参数
-	 * @param propertyFile
 	 * @param keyValues
 	 */
-	public static void loadProperties(String propertyFile, Map<String, String> keyValues) {
+	public static void loadProperties(Map<String, String> keyValues) {
 		// 加载默认参数
 		loadPropertyFile(DEFAULT_CONFIG);
-		// 加载额外的配置文件
-		loadPropertyFile(propertyFile);
 		if (keyValues != null && !keyValues.isEmpty()) {
 			sqlToyProps.putAll(keyValues);
 		}
@@ -399,5 +396,13 @@ public class SqlToyConstants {
 	public static int getLoadAllBatchSize() {
 		// 默认值为100
 		return Integer.parseInt(getKeyValue("sqltoy.loadAll.batchsize", "1000"));
+	}
+
+	/**
+	 * @TODO 是否打开sql签名
+	 * @return
+	 */
+	public static boolean openSqlSign() {
+		return Boolean.parseBoolean(getKeyValue("sqltoy.open.sqlsign", "true"));
 	}
 }

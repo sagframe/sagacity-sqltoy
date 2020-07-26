@@ -60,6 +60,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ParallelUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +71,7 @@ import org.slf4j.LoggerFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
  * @modify data:2020-06-05 增加dm(达梦)数据库支持
- * @modify data:2020-06-10
- *         增加tidb、guassdb、oceanbase支持,规整sqlserver提出2012版本(默认仅支持2012+)
+ * @modify data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -240,6 +240,8 @@ public class DialectFactory {
 								sqlParamsModel.getParamsName());
 						realSql = sqlParamsModel.getSql();
 					}
+					// 做sql签名
+					realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
 					SqlExecuteStat.showSql(realSql, null);
 					this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler, fieldTypes,
 							autoCommit, conn, dbType));
@@ -278,6 +280,8 @@ public class DialectFactory {
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
 									sqlToyConfig, paramsNamed, paramsValue);
+							// 做sql签名
+							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
 							this.setResult(SqlUtil.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
 									dbType, autoCommit));
 						}

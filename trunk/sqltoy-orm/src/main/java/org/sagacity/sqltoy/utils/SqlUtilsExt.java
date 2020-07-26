@@ -12,7 +12,9 @@ import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -296,5 +298,24 @@ public class SqlUtilsExt {
 			}
 		}
 		return realValue;
+	}
+
+	/**
+	 * @TODO 对sql增加签名,便于通过db来追溯sql(目前通过将sql id以注释形式放入sql)
+	 * @param sql
+	 * @param dbType       传递过来具体数据库类型,便于对不支持的数据库做区别处理
+	 * @param sqlToyConfig
+	 * @return
+	 */
+	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
+		// 判断是否打开sql签名,提供开发者通过SqlToyContext dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
+		if (!SqlToyConstants.openSqlSign()) {
+			return sql;
+		}
+		// 目前几乎所有数据库都支持/* xxx */ 形式的注释
+		if (sqlToyConfig != null && StringUtil.isNotBlank(sqlToyConfig.getId())) {
+			return "/* id=".concat(sqlToyConfig.getId()).concat(" */ ").concat(sql);
+		}
+		return sql;
 	}
 }
