@@ -421,7 +421,7 @@ public class DataSourceUtils {
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
-		// mysql、tidb、sqlserver等
+		// mysql、tidb、sqlserver、sqlite等
 		default:
 			return "select 1";
 		}
