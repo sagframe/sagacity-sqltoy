@@ -71,8 +71,7 @@ import org.slf4j.LoggerFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
  * @modify data:2020-06-05 增加dm(达梦)数据库支持
- * @modify data:2020-06-10
- *         增加tidb、guassdb、oceanbase支持,规整sqlserver提出2012版本(默认仅支持2012+)
+ * @modify data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
