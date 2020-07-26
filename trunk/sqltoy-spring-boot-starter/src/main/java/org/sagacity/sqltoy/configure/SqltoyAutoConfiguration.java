@@ -114,7 +114,8 @@ public class SqltoyAutoConfiguration {
 		}
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
-		sqlToyContext.setDialectProperties(properties.getDialectProperties());
+		// sqltoy内置参数默认值修改
+		sqlToyContext.setDialectConfig(properties.getDialectConfig());
 
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();

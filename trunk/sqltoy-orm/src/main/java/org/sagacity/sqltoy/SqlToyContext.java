@@ -112,11 +112,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * 数据库方言参数
-	 */
-	private String dialectProperties;
-
-	/**
 	 * sharding策略
 	 */
 	private HashMap<String, ShardingStrategy> shardingStrategys = new HashMap<String, ShardingStrategy>();
@@ -218,9 +213,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private ApplicationContext applicationContext;
 
 	/**
-	 * 自行定义的属性
+	 * 对sqltoy-default.properties 值的修改
 	 */
-	private Map<String, String> keyValues;
+	private Map<String, String> dialectConfig;
 
 	/**
 	 * 数据库保留字,用逗号分隔
@@ -235,7 +230,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
-		SqlToyConstants.loadProperties(dialectProperties, keyValues);
+		SqlToyConstants.loadProperties(dialectConfig);
 
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
@@ -581,18 +576,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		entityManager.setAnnotatedClasses(annotatedClasses);
 	}
 
-	/**
-	 * @param dialectProperties the dialectProperties to set
-	 */
-	public void setDialectProperties(Object dialectProperties) {
-		if (dialectProperties == null) {
-			return;
-		}
-		if (dialectProperties instanceof String) {
-			this.dialectProperties = dialectProperties.toString();
-		} else if (dialectProperties instanceof Map) {
-			this.keyValues = (Map) dialectProperties;
-		}
+	public void setDialectConfig(Map<String, String> dialectConfig) {
+		this.dialectConfig = dialectConfig;
 	}
 
 	public void setSqlResourcesDir(String sqlResourcesDir) {

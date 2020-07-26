@@ -96,7 +96,7 @@ public class SqlToyContextProperties implements Serializable {
 	/**
 	 * 数据库方言参数配置
 	 */
-	private Map<String, String> dialectProperties;
+	private Map<String, String> dialectConfig;
 
 	/**
 	 * sqltoy默认数据库
@@ -215,12 +215,12 @@ public class SqlToyContextProperties implements Serializable {
 		this.dialect = dialect;
 	}
 
-	public Map<String, String> getDialectProperties() {
-		return dialectProperties;
+	public Map<String, String> getDialectConfig() {
+		return dialectConfig;
 	}
 
-	public void setDialectProperties(Map<String, String> dialectProperties) {
-		this.dialectProperties = dialectProperties;
+	public void setDialectConfig(Map<String, String> dialectConfig) {
+		this.dialectConfig = dialectConfig;
 	}
 
 	public Integer getPageFetchSizeLimit() {
