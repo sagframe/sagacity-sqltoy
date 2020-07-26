@@ -61,7 +61,7 @@ public class StaffInfoServiceTest {
 		staffInfo.setStaffId("S2007");
 		staffInfo.setEmail("test07@139.com");
 		// 这里对照片进行强制修改
-		sqlToyCRUDService.update(staffInfo, new String[] { "photo" });
+		sqlToyCRUDService.update(staffInfo, "photo");
 	}
 
 	// 既然update 不同于hibernate模式，那要实现hibernate模式的怎么做?
