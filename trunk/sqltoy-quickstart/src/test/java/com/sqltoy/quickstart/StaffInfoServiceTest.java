@@ -18,7 +18,6 @@ import com.sqltoy.quickstart.service.StaffInfoService;
 import com.sqltoy.quickstart.vo.StaffInfoVO;
 
 /**
- * 
  * @project sqltoy-quickstart
  * @description 通过员工信息表来演示常规的crud
  * @author zhongxuchen
