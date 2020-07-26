@@ -17,10 +17,9 @@
 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.13.7 发版日期: 2020-07-21
-* 修复代码中动态设置缓存翻译的bug，使用范例参见sqltoy-quickstart中的StaffInfoDao
-* 规范了FileUtil工具类，为单元测试等外部调用提供一些必要的辅助工具
-* 对update(Entity) 和update(Entity,String[] forceUpdateProps) 等类似方法用update(Entity,String...forceUpdateProps)进行了合并,减少部分代码冗余
+# 最新版本号: 4.13.8 发版日期: 2020-07-26
+* 为sql查询增加id签名,便于数据库通过日志来快速定位sql的来源和归属，比如mysql来定位慢查询
+* 升级sqltoy依赖的spring版本为5.2.8，演示依赖spring-boot版本为2.3.2
 
 # 下阶段展望
 * 开始重新构建一个quickstart演示项目接替之前带有测试验证的showcase，便于大家学习上手（已经可以参照了）
