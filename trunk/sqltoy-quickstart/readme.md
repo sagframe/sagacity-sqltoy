@@ -95,7 +95,21 @@ spring:
         sqlResourcesDir: classpath:com/sqltoy/quickstart
 ```
 
-## 4. 编写项目主程序,参见:src/main/java 下面的SqlToyApplication
+## 4. application.properties 模式配置
+* 注意:要以spring.sqltoy.前缀开头
+
+```
+# sqltoy config
+spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
+spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
+spring.sqltoy.debug=true
+#spring.sqltoy.reservedWords=status,sex_type
+#obtainDataSource: org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSourc
+#spring.sqltoy.defaultDataSource=dataSource
+spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
+#spring.sqltoy.printSqlTimeoutMillis=200000
+```
+## 5. 编写项目主程序,参见:src/main/java 下面的SqlToyApplication
 ```java
 package com.sqltoy.quickstart;
 
@@ -112,7 +126,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @modify 2020年7月17日,修改说明
  */
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.sqltoy.quickstart" })
+@ComponentScan(basePackages = { "com.sqltoy.config", "com.sqltoy.quickstart" })
 @EnableTransactionManagement
 public class SqlToyApplication {
 	/**
@@ -125,7 +139,7 @@ public class SqlToyApplication {
 
 ```
 
-## 4. 参见src/test/java 下面的InitDataBaseTest,生成数据库表结构和初始化数据
+## 6. 参见src/test/java 下面的InitDataBaseTest,生成数据库表结构和初始化数据
 
 ```java
 @ExtendWith(SpringExtension.class)
@@ -144,7 +158,7 @@ public class InitDataBaseTest {
 }
 ```
 
-## 5. 通过quickvo连数据库自动生成POJO
+## 7. 通过quickvo连数据库自动生成POJO
 * 将数据库驱动类放于tools/quickvo/libs下面
 * 配置tools/quickvo/db.properties 文件
 
