@@ -5,24 +5,11 @@
 ## 请见:docs/睿智平台SqlToy4.13使用手册.doc
 
 # QQ 交流群:531812227 
-## 交流群中常见疑问
-* sqltoy是从2008年开始已经发展了十几年,并非突然出现!
-* sqltoy目前是依托spring生态的
-* sqltoy没有计划成为mybatis的插件
-* sqltoy并不是所有功能都是要在xml中写sql,sqltoy包含jpa式基于POJO操作完成数据库crud,只是针对多表查询等复杂场景基于xml提供sql模式
-* sqltoy是可以跟现有项目中的ORM混合使用的,可以只用其查询功能
-* sqltoy性能优势是建立在缓存翻译、快速分页、分页优化、分库分表、多种技术融合应用基础上的，所以需先初步了解这些特性!
-* sqltoy优点在于为贴切项目，提供实践性功能:树结构处理、update(entity,String...forceUpdateProps)、updateFetch、取随机记录、取top记录、行列转换、同比环比等算法减少复杂sql
-* sqltoy专注于ORM层解决方案，至于其他领域如快速服务开发、报表等,目前是由其他体系来支撑的，sqltoy提供了集成机制!
-
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.13.8 发版日期: 2020-07-26
 * 为sql查询增加id签名,便于数据库通过日志来快速定位sql的来源和归属，比如mysql来定位慢查询
 * 升级sqltoy依赖的spring版本为5.2.8，演示依赖spring-boot版本为2.3.2
-
-# 下阶段展望
-* 开始重新构建一个quickstart演示项目接替之前带有测试验证的showcase，便于大家学习上手（已经可以参照了）
 
 # 使用单位或项目: 
 * 宁波农行  
