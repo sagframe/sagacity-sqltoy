@@ -96,7 +96,7 @@ spring:
 ```
 
 ## 4. application.properties 模式配置
-* 注意:要以spring.sqltoy.前缀开头
+* 注意:要以spring.sqltoy.前缀开头,具体配置可以参照:docs/application.properties
 
 ```
 # sqltoy config
