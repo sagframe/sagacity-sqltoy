@@ -3,10 +3,10 @@
 # 学习步骤
 * 1. 配置pom引入sqltoy的依赖
 * 2. 配置正确pom build避免sql文件无法编译到classes下面
-* 3. 配置application.yml 关于sqltoy的配置
-* 4. 编写springboot 主程序
+* 3. 配置application.yml,注意改用application.properties的配置说明
+* 4. 编写springboot 主程序,注意@ComponentScan配置
 * 5. 初始化数据库
-* 6. 利用quickvo生产VO(或POJO)
+* 6. 利用quickvo生产VO(或POJO),在出问题时关注schema配置,其他问题请参见quickvo.xml中的注释
 
 ## 1. 请参见pom.xml 引入sqltoy,注意版本号使用最新版本
 
