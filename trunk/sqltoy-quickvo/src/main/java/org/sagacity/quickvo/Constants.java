@@ -142,13 +142,14 @@ public class Constants implements Serializable {
 			{ "JSON", "String", "" }, { "STRING", "String", "" }, { "FixedSTRING", "String", "" },
 			{ "CHAR", "String", "" }, { "BPCHAR", "String", "" }, { "CHARACTER", "String", "" },
 			{ "BIT", "Boolean", "" }, { "BOOLEAN", "Boolean", "" }, { "BOOL", "Boolean", "" },
-			{ "Clob", "String", "java.sql.Clob" }, { "NCLOB", "String", "java.sql.Clob" },
-			{ "CLOB", "String", "oracle.sql.CLOB", "oracle" }, { "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" },
-			{ "Blob", "byte[]", "java.sql.Blob" }, { "LONGBLOB", "byte[]", "java.sql.Blob" },
-			{ "MEDIUMBLOB", "byte[]", "java.sql.Blob" }, { "TEXT", "String", "" }, { "LONGTEXT", "String", "" },
-			{ "TINYTEXT", "String" }, { "LONG VARGRAPHIC", "String", "" }, { "LONG VARCHAR", "String", "" },
-			{ "IMAGE", "byte[]", "" }, { "VARBINARY", "byte[]", "" }, { "BINARY", "byte[]", "" },
-			{ "BYTEA", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
+			{ "Clob", "String", "java.sql.Clob" }, { "DBCLOB", "String", "java.sql.Clob" },
+			{ "NCLOB", "String", "java.sql.Clob" }, { "CLOB", "String", "oracle.sql.CLOB", "oracle" },
+			{ "BLOB", "byte[]", "oracle.sql.BLOB", "oracle" }, { "Blob", "byte[]", "java.sql.Blob" },
+			{ "LONGBLOB", "byte[]", "java.sql.Blob" }, { "MEDIUMBLOB", "byte[]", "java.sql.Blob" },
+			{ "TEXT", "String", "" }, { "LONGTEXT", "String", "" }, { "TINYTEXT", "String" },
+			{ "LONG VARGRAPHIC", "String", "" }, { "VARGRAPHIC", "String", "" }, { "GRAPHIC", "String", "" },
+			{ "LONG VARCHAR", "String", "" }, { "IMAGE", "byte[]", "" }, { "VARBINARY", "byte[]", "" },
+			{ "BINARY", "byte[]", "" }, { "BYTEA", "byte[]", "" }, { "LONGVARBINARY", "byte[]", "" } };
 
 	/**
 	 * 原始类型
@@ -163,9 +164,10 @@ public class Constants implements Serializable {
 			{ "Enum16", "INTEGER" }, { "UInt8", "INTEGER" }, { "UInt16", "INTEGER" }, { "UInt32", "INTEGER" },
 			{ "UInt64", "BIGINT" }, { "FLOAT4", "FLOAT" }, { "FLOAT8", "FLOAT" }, { "FLOAT32", "FLOAT" },
 			{ "FLOAT64", "DOUBLE" }, { "STRING", "VARCHAR" }, { "FixedSTRING", "VARCHAR" },
-			{ "LONG VARGRAPHIC", "CLOB" }, { "LONG VARCHAR", "VARCHAR" }, { "DATE", "DATE" }, { "DATETIME", "DATE" },
-			{ "TIMESTAMP", "TIMESTAMP" }, { "TIMESTAMP(6)", "TIMESTAMP" }, { "TIME", "TIME" }, { "CHAR", "CHAR" },
-			{ "CLOB", "CLOB" }, { "BLOB", "BLOB" }, { "BINARY", "BINARY" }, { "VARBINARY", "BINARY" },
+			{ "LONG VARGRAPHIC", "CLOB" }, { "VARGRAPHIC", "VARCHAR" }, { "GRAPHIC", "VARCHAR" },
+			{ "LONG VARCHAR", "VARCHAR" }, { "DATE", "DATE" }, { "DATETIME", "DATE" }, { "TIMESTAMP", "TIMESTAMP" },
+			{ "TIMESTAMP(6)", "TIMESTAMP" }, { "TIME", "TIME" }, { "CHAR", "CHAR" }, { "CLOB", "CLOB" },
+			{ "DBCLOB", "CLOB" }, { "BLOB", "BLOB" }, { "BINARY", "BINARY" }, { "VARBINARY", "BINARY" },
 			{ "LONGVARBINARY", "BINARY" }, { "BYTEA", "BINARY" }, { "LONGBLOB", "BLOB" }, { "BOOLEAN", "BOOLEAN" },
 			{ "BOOL", "BOOLEAN" }, { "MEDIUMBLOB", "BLOB" }, { "LONGTEXT", "VARCHAR" }, { "MEDIUMTEXT", "VARCHAR" },
 			{ "TEXT", "VARCHAR" }, { "JSON", "VARCHAR" }, { "TINYTEXT", "VARCHAR" }, { "VARCHAR", "VARCHAR" },
