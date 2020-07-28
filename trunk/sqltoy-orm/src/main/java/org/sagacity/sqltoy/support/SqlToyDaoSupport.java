@@ -1115,11 +1115,11 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
-	 * @param dataSet
-	 * @param cacheName
-	 * @param cacheType
-	 * @param cacheNameIndex
-	 * @param handler
+	 * @param dataSet 要翻译的数据集合
+	 * @param cacheName 缓存名称
+	 * @param cacheType 缓存分类(如字典分类),非分类型的填null
+	 * @param cacheNameIndex 缓存名称对应的列，默认为1(null也表示1)
+	 * @param handler 2个方法:getKey(Object row),setName(Object row,String name)
 	 */
 	protected void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) {
