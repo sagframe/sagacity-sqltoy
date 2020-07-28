@@ -4,6 +4,9 @@
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy4.13使用手册.doc
 
+# 如何快速上手
+## 请参见trunk/sqltoy-quickstart,参照readme.md学习 
+
 # QQ 交流群:531812227 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
