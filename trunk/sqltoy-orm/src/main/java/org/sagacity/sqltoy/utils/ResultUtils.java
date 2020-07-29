@@ -888,6 +888,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
+		//类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
@@ -924,6 +925,7 @@ public class ResultUtils {
 			}
 			return result;
 		}
+		//封装成VO对象形式
 		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
 	}
 
