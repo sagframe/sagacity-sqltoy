@@ -60,7 +60,7 @@ public class SqlFileModifyWatcher extends Thread {
 
 	@Override
 	public void run() {
-		// 延时
+		// 延时(避免应用刚启动就检测,尽量启动完后开始检测)
 		try {
 			if (delayCheckSeconds >= 1) {
 				Thread.sleep(1000 * delayCheckSeconds);
@@ -73,7 +73,7 @@ public class SqlFileModifyWatcher extends Thread {
 				SqlXMLConfigParse.parseXML(realSqlList, filesLastModifyMap, sqlCache, encoding, dialect);
 			} catch (Exception e) {
 				e.printStackTrace();
-				logger.error("debug 模式下重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
+				logger.error("重新解析SQL对应的xml文件错误!{}", e.getMessage(), e);
 			}
 			try {
 				// 隔几秒进行一次检测,默认开发模式为1秒钟

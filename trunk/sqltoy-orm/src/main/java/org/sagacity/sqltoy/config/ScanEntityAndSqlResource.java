@@ -235,7 +235,8 @@ public class ScanEntityAndSqlResource {
 								if (sqlFile.startsWith(realRes)
 										&& sqlFile.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)
 										&& !entry.isDirectory()) {
-									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
+									//update 2020-03-13 调整sql加载策略
+									// jar中的sql顺序放在前面,从而便于classes里面的sql可以在后面加载可以覆盖前面的，便于项目做增量更新
 									result.add(0, sqlFile);
 								}
 							}
