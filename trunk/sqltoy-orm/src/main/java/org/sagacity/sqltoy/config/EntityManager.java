@@ -621,7 +621,7 @@ public class EntityManager {
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (var.equalsIgnoreCase(idFieldName)) {
-					mappedFields[j] = var;
+					mappedFields[j] = oneToMany.mappedFields()[i];
 					mappedColumns[j] = oneToMany.mappedColumns()[i];
 					break;
 				}
