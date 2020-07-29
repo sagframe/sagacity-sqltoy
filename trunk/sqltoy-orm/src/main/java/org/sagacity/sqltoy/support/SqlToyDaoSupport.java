@@ -400,7 +400,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql) {
-		return executeSql(sqlOrNamedSql, null, null, false, this.getDataSource(null));
+		return executeSql(sqlOrNamedSql, null, null, false, null);
 	}
 
 	/**
@@ -416,8 +416,7 @@ public class SqlToyDaoSupport {
 		// 根据sql中的变量从entity对象中提取参数值
 		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
 				reflectPropertyHandler);
-		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false,
-				this.getDataSource(null, sqlToyConfig));
+		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
 	}
 
 	/**
@@ -427,7 +426,7 @@ public class SqlToyDaoSupport {
 	 * @param paramsValue
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, false, this.getDataSource(null));
+		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, false, null);
 	}
 
 	/**
@@ -457,7 +456,7 @@ public class SqlToyDaoSupport {
 		// 例如sql 为:merge into table update set xxx=:param
 		// dataSet可以是VO List,可以根据属性自动映射到:param
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
-				autoCommit, this.getDataSource(null));
+				autoCommit, null);
 	}
 
 	/**
@@ -472,7 +471,7 @@ public class SqlToyDaoSupport {
 			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
 			final Boolean autoCommit) {
 		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler,
-				insertCallhandler, autoCommit, this.getDataSource(null));
+				insertCallhandler, autoCommit, null);
 	}
 
 	/**
