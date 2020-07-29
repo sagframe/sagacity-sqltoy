@@ -37,8 +37,8 @@
 		<!-- 业务主键可以充当实际的主键，如果字段是主键会覆盖原来的主键策略 -->
 		<!-- 包含的三个宏: @substr(${field},startIndex,length) @case(value,case1,value1,case2,value2,other) 
 			@df(yyMMdd) 日期格式化,如果不需要加入日期可以用@df('') -->
-		<table name="SQLTOY_DEVICE_ORDER" column="ORDER_ID"	generator="redis" signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
-			related-columns="psType,deviceType" length="12" />
+		<!--<table name="SQLTOY_DEVICE_ORDER" column="ORDER_ID"	generator="redis" signature="${psType}@case(${deviceType},PC,PC,NET,NT,OFFICE,OF,SOFTWARE,SF,OT)@day(yyMMdd)"
+			related-columns="psType,deviceType" length="12" />-->
 	</business-primary-key>
 
 	<!-- 主子表的级联关系 update-cascade:delete 表示对存量数据进行删除操作,也可以写成:ENABLED=0(sql片段,置状态为无效) -->
