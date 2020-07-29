@@ -129,7 +129,7 @@ public class SqlToyDaoSupport {
 		// 第一、接口调用时直接指定的数据源
 		DataSource result = dataSource;
 		// 第二、sql指定的数据源
-		if (null == result && null != sqltoyConfig.getDataSource()) {
+		if (null == result && (null != sqltoyConfig && null != sqltoyConfig.getDataSource())) {
 			result = sqlToyContext.getDataSourceBean(sqltoyConfig.getDataSource());
 		}
 		// 第三、自动注入的数据源
@@ -416,7 +416,8 @@ public class SqlToyDaoSupport {
 		// 根据sql中的变量从entity对象中提取参数值
 		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
 				reflectPropertyHandler);
-		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, this.getDataSource(null));
+		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false,
+				this.getDataSource(null, sqlToyConfig));
 	}
 
 	/**
@@ -1115,11 +1116,11 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
-	 * @param dataSet 要翻译的数据集合
-	 * @param cacheName 缓存名称
-	 * @param cacheType 缓存分类(如字典分类),非分类型的填null
+	 * @param dataSet        要翻译的数据集合
+	 * @param cacheName      缓存名称
+	 * @param cacheType      缓存分类(如字典分类),非分类型的填null
 	 * @param cacheNameIndex 缓存名称对应的列，默认为1(null也表示1)
-	 * @param handler 2个方法:getKey(Object row),setName(Object row,String name)
+	 * @param handler        2个方法:getKey(Object row),setName(Object row,String name)
 	 */
 	protected void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler) {
