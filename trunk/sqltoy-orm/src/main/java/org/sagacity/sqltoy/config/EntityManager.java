@@ -579,7 +579,7 @@ public class EntityManager {
 				}
 				idGenerators.put(idGenerator, redis);
 			} else {
-				//自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
+				// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
 				idGenerators.put(idGenerator,
 						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
 			}
@@ -617,7 +617,7 @@ public class EntityManager {
 		String idFieldName;
 		String var;
 		for (int i = 0; i < idSize; i++) {
-			var = oneToMany.mappedFields()[i];
+			var = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (var.equalsIgnoreCase(idFieldName)) {

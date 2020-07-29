@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface OneToMany {
 	/**
-	 * 列名(one column)
+	 * 主表列名(many column)
 	 * 
 	 * @return
 	 */
