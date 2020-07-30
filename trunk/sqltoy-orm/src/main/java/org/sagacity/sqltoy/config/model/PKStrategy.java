@@ -8,7 +8,7 @@ package org.sagacity.sqltoy.config.model;
  * @description 通过枚举方式定义数据库主键实现的四种机制
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-6-10
- * @Modification Date:2013-6-10 {填写修改说明}
+ * @modify Date:2013-6-10 {填写修改说明}
  */
 public enum PKStrategy {
 	// 手工赋值
