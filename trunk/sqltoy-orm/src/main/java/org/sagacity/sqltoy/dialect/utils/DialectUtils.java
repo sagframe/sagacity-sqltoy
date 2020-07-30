@@ -1657,6 +1657,16 @@ public class DialectUtils {
 		return updateCnt;
 	}
 
+	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
+	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
+	private static void mysqlSaveOrUpdateAll() {
+
+	}
+
+	private static void postgreSaveOrUpdateAll() {
+
+	}
+
 	/**
 	 * @todo 批量对象修改
 	 * @param sqlToyContext
