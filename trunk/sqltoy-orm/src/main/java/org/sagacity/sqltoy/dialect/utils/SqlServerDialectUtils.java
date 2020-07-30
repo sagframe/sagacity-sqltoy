@@ -237,7 +237,7 @@ public class SqlServerDialectUtils {
 					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
 					} else {
@@ -372,7 +372,7 @@ public class SqlServerDialectUtils {
 					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
-						DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 								fieldMeta.getDefaultValue());
 						insertRejIdColValues.append(")");
 					} else {
@@ -501,7 +501,8 @@ public class SqlServerDialectUtils {
 				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
 					values.append("(?,");
-					DialectUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
 					values.append("?");
