@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -16,9 +15,10 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
-import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -115,7 +115,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 动态设置filters
 	 */
-	private LinkedHashMap<String, ParamFilterModel> filters = new LinkedHashMap<String, ParamFilterModel>();
+	private List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
 	public QueryExecutor(String sql) {
 		this.sql = sql;
@@ -140,6 +140,18 @@ public class QueryExecutor implements Serializable {
 		} else {
 			logger.warn("请关注:查询语句sql={} 指定的查询条件参数entity=null,将以ArrayList作为默认类型返回!", sql);
 		}
+	}
+
+	public QueryExecutor filters(ParamsFilter... filters) {
+		if (filters != null && filters.length > 0) {
+			for (ParamsFilter filter : filters) {
+				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
+					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
+				}
+				paramFilters.add(filter);
+			}
+		}
+		return this;
 	}
 
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
@@ -446,5 +458,12 @@ public class QueryExecutor implements Serializable {
 	 */
 	public HashMap<String, Translate> getTranslates() {
 		return this.extendsTranslates;
+	}
+
+	/**
+	 * @return the paramFilters
+	 */
+	public List<ParamsFilter> getParamFilters() {
+		return paramFilters;
 	}
 }

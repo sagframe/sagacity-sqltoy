@@ -615,4 +615,23 @@ public interface SqlToyLazyDao {
 	 */
 	public Set<String> getCacheNames();
 
+	/**
+	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
+	 * @param cacheName
+	 * @param matchRegex
+	 * @param matchIndexes
+	 * @return
+	 */
+	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes);
+
+	/**
+	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
+	 * @param cacheName
+	 * @param cacheType
+	 * @param matchRegex
+	 * @param matchIndexes
+	 * @return
+	 */
+	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
+
 }

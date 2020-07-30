@@ -1112,6 +1112,51 @@ public class SqlToyDaoSupport {
 		return this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext, cacheName, cacheType);
 	}
 
+	protected String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
+		return cacheMatchKeys(cacheName, null, matchRegex, matchIndexes);
+	}
+
+	/**
+	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
+	 * @param cacheName
+	 * @param cacheType
+	 * @param matchName
+	 * @param matchIndexes
+	 * @return
+	 */
+	protected String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
+		if (StringUtil.isBlank(cacheName) || StringUtil.isBlank(matchRegex)) {
+			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchName值!");
+		}
+		int[] nameIndexes = { 1 };
+		if (matchIndexes != null && matchIndexes.length > 0) {
+			nameIndexes = matchIndexes;
+		}
+		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext,
+				cacheName, cacheType);
+		Collection<Object[]> values = cacheDatas.values();
+		List<String> keySet = new ArrayList<String>();
+		String lowName = matchRegex.toLowerCase();
+		int meter = 0;
+		for (Object[] row : values) {
+			for (int index : nameIndexes) {
+				// 字符包含
+				if (row[index] != null && row[index].toString().toLowerCase().contains(lowName)) {
+					meter++;
+					keySet.add(row[0].toString());
+					break;
+				}
+			}
+			// 不超过1000个(作为in条件值有限制)
+			if (meter == 1000) {
+				break;
+			}
+		}
+		String[] result = new String[keySet.size()];
+		keySet.toArray(result);
+		return result;
+	}
+
 	/**
 	 * @todo 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
 	 * @param dataSet        要翻译的数据集合

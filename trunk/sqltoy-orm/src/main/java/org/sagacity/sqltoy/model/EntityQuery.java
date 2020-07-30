@@ -1,12 +1,13 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -61,7 +62,7 @@ public class EntityQuery implements Serializable {
 	/**
 	 * 动态设置filters
 	 */
-	private LinkedHashMap<String, ParamFilterModel> filters = new LinkedHashMap<String, ParamFilterModel>();
+	private List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
 	public EntityQuery where(String where) {
 		this.where = where;
@@ -91,6 +92,18 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery lock(LockMode lockMode) {
 		this.lockMode = lockMode;
+		return this;
+	}
+
+	public EntityQuery filters(ParamsFilter... filters) {
+		if (filters != null && filters.length > 0) {
+			for (ParamsFilter filter : filters) {
+				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
+					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置参数名称和过滤的类型!");
+				}
+				paramFilters.add(filter);
+			}
+		}
 		return this;
 	}
 
@@ -158,5 +171,12 @@ public class EntityQuery implements Serializable {
 	 */
 	public HashMap<String, Translate> getTranslates() {
 		return this.extendsTranslates;
+	}
+
+	/**
+	 * @return the paramFilters
+	 */
+	public List<ParamsFilter> getParamFilters() {
+		return paramFilters;
 	}
 }
