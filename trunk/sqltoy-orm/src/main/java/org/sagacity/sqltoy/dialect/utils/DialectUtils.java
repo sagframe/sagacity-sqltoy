@@ -1651,7 +1651,8 @@ public class DialectUtils {
 				} else if (dbType == DBType.POSTGRESQL) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.DM) {
+				} // 达梦数据库
+				else if (dbType == DBType.DM) {
 					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} // db2/oracle/mssql 通过merge 方式
