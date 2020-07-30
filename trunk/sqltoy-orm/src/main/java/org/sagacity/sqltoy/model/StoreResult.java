@@ -6,7 +6,7 @@ import java.io.Serializable;
  * @project sagacity-sqltoy4.0
  * @description 存储过程返回结果集
  * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:StoreResult.java,Revision:v1.0,Date:2009-12-25 下午03:10:40
+ * @version id:StoreResult.java,Revision:v1.0,Date:2009-12-25
  */
 public class StoreResult extends DataSetResult implements Serializable {
 
@@ -33,8 +33,7 @@ public class StoreResult extends DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param updateCount
-	 *            the updateCount to set
+	 * @param updateCount the updateCount to set
 	 */
 	public void setUpdateCount(Long updateCount) {
 		this.updateCount = updateCount;
@@ -48,8 +47,7 @@ public class StoreResult extends DataSetResult implements Serializable {
 	}
 
 	/**
-	 * @param outResult
-	 *            the outResult to set
+	 * @param outResult the outResult to set
 	 */
 	public void setOutResult(Object[] outResult) {
 		this.outResult = outResult;

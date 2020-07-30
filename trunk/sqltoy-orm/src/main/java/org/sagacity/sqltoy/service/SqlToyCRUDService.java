@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  *              简单的操作自行编写service实现，减少了代码开发量
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyCRUDService.java,Revision:v1.0,Date:2012-7-16
- * @Modification Date:2020-4-23 {对分页查询增加泛型支持}
+ * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings("rawtypes")
 public interface SqlToyCRUDService {

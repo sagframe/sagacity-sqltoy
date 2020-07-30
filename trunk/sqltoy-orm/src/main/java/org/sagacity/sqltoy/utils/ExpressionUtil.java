@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 科学表达式运算（来源于网络）
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ExpressionUtil.java,Revision:v1.0,Date:2009-5-20 上午11:32:47
+ * @version id:ExpressionUtil.java,Revision:v1.0,Date:2009-5-20
  */
 @SuppressWarnings("rawtypes")
 public class ExpressionUtil {

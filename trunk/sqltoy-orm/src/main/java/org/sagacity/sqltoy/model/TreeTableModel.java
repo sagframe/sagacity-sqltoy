@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @project sagacity-sqltoy4.0
  * @description 树形表结构模型
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:TreeTableModel.java,Revision:v1.0,Date:2010-9-27 下午06:27:20
+ * @version id:TreeTableModel.java,Revision:v1.0,Date:2010-9-27
  */
 public class TreeTableModel implements Serializable {
 	/**
@@ -230,8 +230,7 @@ public class TreeTableModel implements Serializable {
 	}
 
 	/**
-	 * @param conditions
-	 *            the conditions to set
+	 * @param conditions the conditions to set
 	 */
 	public void setConditions(String conditions) {
 		this.conditions = conditions;
@@ -259,8 +258,7 @@ public class TreeTableModel implements Serializable {
 	}
 
 	/**
-	 * @param idValue
-	 *            the idValue to set
+	 * @param idValue the idValue to set
 	 */
 	public void setIdValue(Object idValue) {
 		this.idValue = idValue;
@@ -274,8 +272,7 @@ public class TreeTableModel implements Serializable {
 	}
 
 	/**
-	 * @param appendZero
-	 *            the appendZero to set
+	 * @param appendZero the appendZero to set
 	 */
 	public void setAppendZero(boolean appendZero) {
 		this.appendZero = appendZero;
@@ -289,8 +286,7 @@ public class TreeTableModel implements Serializable {
 	}
 
 	/**
-	 * @param splitSign
-	 *            the splitSign to set
+	 * @param splitSign the splitSign to set
 	 */
 	public void setSplitSign(String splitSign) {
 		this.splitSign = splitSign;
