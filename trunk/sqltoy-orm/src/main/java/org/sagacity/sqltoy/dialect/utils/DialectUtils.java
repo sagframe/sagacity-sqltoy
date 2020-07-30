@@ -1625,9 +1625,8 @@ public class DialectUtils {
 			subTableData = (List) BeanUtil.invokeMethod(entity,
 					"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
 			final String[] mappedFields = oneToMany.getMappedFields();
-			/**
-			 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-			 */
+
+			// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 			if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 					|| typeMap.containsKey(oneToMany.getMappedType()))) {
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
@@ -1637,6 +1636,12 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				// 这里需要进行修改,mysql\postgresql\ 等存在缺陷(字段值不为null时会报错)
+//				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
+//						|| dbType == DBType.DM) {
+//
+//				}
+
 				saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 						forceUpdateProps, generateSqlHandler,
 						// 设置关联外键字段的属性值(来自主表的主键)
