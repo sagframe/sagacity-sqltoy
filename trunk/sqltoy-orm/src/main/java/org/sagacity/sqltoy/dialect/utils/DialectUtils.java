@@ -1643,13 +1643,16 @@ public class DialectUtils {
 						}
 					}
 				};
-				// update 2020-07-30,针对mysql和postgresql常用数据库做针对性处理
-				// 这里需要进行修改,mysql\postgresql\ 等存在缺陷(字段值不为null时会报错)
+				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
+				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.POSTGRESQL) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.SQLITE) {
+					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} // 达梦数据库
 				else if (dbType == DBType.DM) {
@@ -1670,11 +1673,11 @@ public class DialectUtils {
 	// update 2020-07-30
 	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
 	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
-	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
+	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
-		String tableName = entityMeta.getSchemaTable();
+		final String tableName = entityMeta.getSchemaTable();
 		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
 				"ifnull", conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
@@ -1694,11 +1697,11 @@ public class DialectUtils {
 	}
 
 	// 针对postgresql 数据库
-	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
-			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
-			final Integer dbType) throws Exception {
+	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
-		String tableName = entityMeta.getSchemaTable();
+		final String tableName = entityMeta.getSchemaTable();
 		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
 				"COALESCE", conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
@@ -1721,12 +1724,33 @@ public class DialectUtils {
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
+	// 针对sqlite 数据库
+	private static void sqliteSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"ifnull", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
 	// 针对达梦数据库
-	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
+	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
 			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
-		String tableName = entityMeta.getSchemaTable();
+		final String tableName = entityMeta.getSchemaTable();
 		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
 				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
