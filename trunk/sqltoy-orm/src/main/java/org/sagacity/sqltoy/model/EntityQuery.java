@@ -95,6 +95,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * @param filters
+	 * @return
+	 */
 	public EntityQuery filters(ParamsFilter... filters) {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
