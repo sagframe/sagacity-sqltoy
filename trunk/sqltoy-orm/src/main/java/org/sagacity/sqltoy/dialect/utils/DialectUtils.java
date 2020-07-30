@@ -1625,9 +1625,8 @@ public class DialectUtils {
 			subTableData = (List) BeanUtil.invokeMethod(entity,
 					"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
 			final String[] mappedFields = oneToMany.getMappedFields();
-			/**
-			 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-			 */
+
+			// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 			if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 					|| typeMap.containsKey(oneToMany.getMappedType()))) {
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql

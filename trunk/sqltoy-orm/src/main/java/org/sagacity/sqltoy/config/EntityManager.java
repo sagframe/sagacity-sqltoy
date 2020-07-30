@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-1-22,增加业务主键配置策略}
  * @modify {Date:2018-9-6,优化增强业务主键配置策略}
  * @modify {Date:2019-8-10,优化字段的解析,避免在子类中定义属性覆盖了父类导致数据库字段失效现象,同时优化部分代码}
+ * @modify {Date:2020-07-29,修复OneToMany解析时编写错误,由智客软件反馈 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class EntityManager {
@@ -617,6 +618,7 @@ public class EntityManager {
 		String idFieldName;
 		String var;
 		for (int i = 0; i < idSize; i++) {
+			//update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
 			var = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
