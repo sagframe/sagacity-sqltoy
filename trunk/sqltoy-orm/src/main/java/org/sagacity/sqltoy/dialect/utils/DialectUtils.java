@@ -1637,6 +1637,12 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				// 这里需要进行修改,mysql\postgresql\ 等存在缺陷(字段值不为null时会报错)
+//				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
+//						|| dbType == DBType.DM) {
+//
+//				}
+
 				saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 						forceUpdateProps, generateSqlHandler,
 						// 设置关联外键字段的属性值(来自主表的主键)
