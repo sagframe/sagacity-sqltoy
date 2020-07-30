@@ -1636,35 +1636,116 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
+					public void process() {
+						for (int i = 0; i < mappedFields.length; i++) {
+							this.setValue(mappedFields[i], IdValues[i]);
+						}
+					}
+				};
+				// update 2020-07-30,针对mysql和postgresql常用数据库做针对性处理
 				// 这里需要进行修改,mysql\postgresql\ 等存在缺陷(字段值不为null时会报错)
-//				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
-//						|| dbType == DBType.DM) {
-//
-//				}
-
-				saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
-						forceUpdateProps, generateSqlHandler,
-						// 设置关联外键字段的属性值(来自主表的主键)
-						new ReflectPropertyHandler() {
-							public void process() {
-								for (int i = 0; i < mappedFields.length; i++) {
-									this.setValue(mappedFields[i], IdValues[i]);
-								}
-							}
-						}, conn, dbType, null);
+				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.POSTGRESQL) {
+					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.DM) {
+					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} // db2/oracle/mssql 通过merge 方式
+				else {
+					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
+							forceUpdateProps, generateSqlHandler,
+							// 设置关联外键字段的属性值(来自主表的主键)
+							reflectPropsHandler, conn, dbType, null);
+				}
 			}
 		}
 		return updateCnt;
 	}
 
+	// update 2020-07-30
 	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
 	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
-	private static void mysqlSaveOrUpdateAll() {
+	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"ifnull", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
 
+		// mysql只支持identity,sequence 值忽略
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName).replaceFirst("(?i)insert ",
+						"insert ignore ");
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
-	private static void postgreSaveOrUpdateAll() {
+	// 针对postgresql 数据库
+	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"COALESCE", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				PKStrategy pkStrategy = entityMeta.getIdStrategy();
+				String sequence = "nextval('" + entityMeta.getSequence() + "')";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					// 伪造成sequence模式
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = "DEFAULT";
+				}
+				return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence, tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
 
+	// 针对达梦数据库
+	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, List<?> entities,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
+				conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				PKStrategy pkStrategy = entityMeta.getIdStrategy();
+				String sequence = entityMeta.getSequence() + ".nextval";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+				}
+				return getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	/**
