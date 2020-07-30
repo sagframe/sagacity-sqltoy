@@ -1636,6 +1636,7 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				// 将外键值通过反调赋到相关属性上
 				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
 					public void process() {
 						for (int i = 0; i < mappedFields.length; i++) {
