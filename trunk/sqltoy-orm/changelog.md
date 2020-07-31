@@ -32,7 +32,7 @@ protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Cl
 }
 ```
 
-* 3、全部修复update级联时，在mysql、postgresql、sqlite 子表采用原生sql进行saveOrUpdateAll的bug(此bug是数据库自身的缺陷导致)，分解为:先update后saveIgnoreExist模式
+* 3、全部修复update级联时，在mysql、postgresql子表采用原生sql进行saveOrUpdateAll的bug，分解为:先update后saveIgnoreExist模式
 * 4、提供代码中动态查询增加filters,便于今后文本块应用sql直接写于代码中情况下可以动态调用缓存翻译、filters等功能
 
 ```java
