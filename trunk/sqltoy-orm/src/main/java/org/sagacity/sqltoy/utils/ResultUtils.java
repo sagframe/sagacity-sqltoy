@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
@@ -137,8 +138,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig,
-			HashMap<String, Integer> labelIndexMap) {
+	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig, LabelIndexModel labelIndexMap) {
 		List<List> rows = result.getRows();
 		SecureMask[] masks = sqlToyConfig.getSecureMasks();
 		Integer index;
@@ -163,8 +163,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig,
-			HashMap<String, Integer> labelIndexMap) {
+	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig, LabelIndexModel labelIndexMap) {
 		List<List> rows = result.getRows();
 		FormatModel[] formats = sqlToyConfig.getFormatModels();
 		Integer index;
@@ -478,7 +477,7 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
+	private static List pivotResult(PivotModel pivotModel, LabelIndexModel labelIndexMap, List result,
 			List pivotCategorySet) {
 		if (result == null || result.isEmpty()) {
 			return result;
@@ -506,7 +505,7 @@ public class ResultUtils {
 	 * @param labelIndexMap
 	 * @return
 	 */
-	private static Integer[] mappingLabelIndex(String[] columnLabels, HashMap<String, Integer> labelIndexMap) {
+	private static Integer[] mappingLabelIndex(String[] columnLabels, LabelIndexModel labelIndexMap) {
 		Integer[] result = new Integer[columnLabels.length];
 		for (int i = 0; i < result.length; i++) {
 			if (NumberUtil.isInteger(columnLabels[i])) {
@@ -810,10 +809,12 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet) {
-		HashMap<String, Integer> labelIndexMap = null;
+		LabelIndexModel labelIndexMap = null;
+		// HashMap<String, Integer> wrapLabelNoUnderlineIndexMap
 		// 字段脱敏
 		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
 			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			// wrapLabelNoUnderlineIndexMap(dataSetResult.getLabelNames());
 			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
 		}
 
@@ -863,8 +864,8 @@ public class ResultUtils {
 	 * @param fields
 	 * @return
 	 */
-	private static HashMap<String, Integer> wrapLabelIndexMap(String[] fields) {
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+	private static LabelIndexModel wrapLabelIndexMap(String[] fields) {
+		LabelIndexModel result = new LabelIndexModel();
 		if (fields != null && fields.length > 0) {
 			String realLabelName;
 			int index;
@@ -874,10 +875,10 @@ public class ResultUtils {
 				if (index != -1) {
 					realLabelName = realLabelName.substring(index + 1).trim();
 				}
-				labelIndexMap.put(realLabelName, i);
+				result.put(realLabelName, i);
 			}
 		}
-		return labelIndexMap;
+		return result;
 	}
 
 	/**

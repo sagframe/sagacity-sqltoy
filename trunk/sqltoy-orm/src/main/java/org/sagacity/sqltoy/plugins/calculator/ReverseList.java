@@ -1,9 +1,9 @@
 package org.sagacity.sqltoy.plugins.calculator;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.ReverseModel;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 
 /**
  * @project sqltoy-orm
@@ -18,7 +18,7 @@ public class ReverseList {
 	 * @param labelIndexMap
 	 * @param result
 	 */
-	public static void process(ReverseModel reverseModel, HashMap<String, Integer> labelIndexMap, List result) {
+	public static void process(ReverseModel reverseModel, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.size() < 2) {
 			return;
 		}

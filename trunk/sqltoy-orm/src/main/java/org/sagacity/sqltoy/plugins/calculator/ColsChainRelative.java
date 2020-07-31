@@ -2,10 +2,10 @@ package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 
@@ -16,8 +16,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @version id:ColsChainRelative.java,Revision:v1.0,Date:2020-3-25
  */
 public class ColsChainRelative {
-	public static void process(ColsChainRelativeModel relativeModel, HashMap<String, Integer> labelIndexMap,
-			List result) {
+	public static void process(ColsChainRelativeModel relativeModel, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.isEmpty()) {
 			return;
 		}
