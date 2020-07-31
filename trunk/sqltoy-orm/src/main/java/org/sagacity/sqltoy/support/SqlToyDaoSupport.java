@@ -311,8 +311,8 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
-		//当没有指定级联子类默认全部级联加载
-		if (cascades == null) {
+		// 当没有指定级联子类默认全部级联加载
+		if (cascades == null || cascades.length == 0) {
 			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
 		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
