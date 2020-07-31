@@ -618,11 +618,12 @@ public class EntityManager {
 		String idFieldName;
 		String var;
 		for (int i = 0; i < idSize; i++) {
-			//update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
+			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
 			var = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (var.equalsIgnoreCase(idFieldName)) {
+					// mappedFields[j] = var;
 					mappedFields[j] = oneToMany.mappedFields()[i];
 					mappedColumns[j] = oneToMany.mappedColumns()[i];
 					break;
