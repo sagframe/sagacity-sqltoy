@@ -36,7 +36,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 查询参数条件过滤器
 	 */
-	private ParamFilterModel[] filters = null;
+	private List<ParamFilterModel> filters = new ArrayList<ParamFilterModel>();
 
 	/**
 	 * 翻译器
@@ -315,11 +315,19 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @param filterMap the filterMap to set
 	 */
-	public void setFilters(ParamFilterModel[] filters) {
-		this.filters = filters;
+	public void addFilters(List<ParamFilterModel> paramFilters) {
+		if (paramFilters != null && !paramFilters.isEmpty()) {
+			this.filters.addAll(filters);
+		}
 	}
 
-	public ParamFilterModel[] getFilters() {
+	public void addFilter(ParamFilterModel paramFilter) {
+		if (paramFilter != null) {
+			this.filters.add(paramFilter);
+		}
+	}
+
+	public List<ParamFilterModel> getFilters() {
 		return this.filters;
 	}
 

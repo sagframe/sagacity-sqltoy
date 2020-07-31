@@ -20,6 +20,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +50,8 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
-			ParamFilterModel[] filters) {
-		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0) {
+			List<ParamFilterModel> filters) {
+		if (paramsName == null || paramsName.length == 0 || filters == null || filters.size() == 0) {
 			return values;
 		}
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
@@ -1045,4 +1046,13 @@ public class ParamFilterUtils {
 		return param;
 	}
 
+	/**
+	 * @TODO 整合sql中定义的filter和代码中自定义的filters
+	 * @param filters
+	 * @param extFilters
+	 * @return
+	 */
+	public static List<ParamFilterModel> combineFilters(List<ParamFilterModel> filters, List<ParamsFilter> extFilters) {
+		return filters;
+	}
 }

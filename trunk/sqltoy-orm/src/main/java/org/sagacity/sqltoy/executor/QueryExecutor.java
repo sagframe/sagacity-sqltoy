@@ -15,9 +15,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -332,8 +332,9 @@ public class QueryExecutor implements Serializable {
 		}
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
-					sqlToyConfig.getFilters());
+			List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(),
+					this.paramFilters);
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues, filters);
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null
 			String[] names = getParamsName(sqlToyConfig);

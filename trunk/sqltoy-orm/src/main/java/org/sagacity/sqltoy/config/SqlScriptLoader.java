@@ -199,9 +199,7 @@ public class SqlScriptLoader {
 		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
 			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), type);
 			// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
-			ParamFilterModel[] filters = new ParamFilterModel[1];
-			filters[0] = new ParamFilterModel("blank", new String[] { "*" });
-			result.setFilters(filters);
+			result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 			// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
 			if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
 				codeSqlCache.put(sqlKey, result);

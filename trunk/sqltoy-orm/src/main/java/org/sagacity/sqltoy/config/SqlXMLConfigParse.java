@@ -720,9 +720,7 @@ public class SqlXMLConfigParse {
 		if (filterModels.isEmpty()) {
 			return;
 		}
-		ParamFilterModel[] result = new ParamFilterModel[filterModels.size()];
-		filterModels.toArray(result);
-		sqlToyConfig.setFilters(result);
+		sqlToyConfig.addFilters(filterModels);
 	}
 
 	/**
