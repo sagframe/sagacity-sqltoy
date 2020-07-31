@@ -37,9 +37,11 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.model.QueryExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.model.UpdateExtend;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -917,28 +919,28 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getExtend().where)
-				|| StringUtil.isBlank(entityQuery.getExtend().values)) {
+		QueryExtend innerModel = entityQuery.getInnerModel();
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(innerModel.where)
+				|| StringUtil.isBlank(innerModel.values)) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
 		}
 		// 做一个必要提示
-		if (!entityQuery.getExtend().paramFilters.isEmpty()) {
+		if (!innerModel.paramFilters.isEmpty()) {
 			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
-		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getExtend().where);
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getExtend().names)) {
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
 			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-					(Serializable) entityQuery.getExtend().values[0], null);
+					(Serializable) innerModel.values[0], null);
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
-					getDataSource(entityQuery.getExtend().dataSource));
+					getDataSource(innerModel.dataSource));
 		}
-		return executeSql(sql, entityQuery.getExtend().names, entityQuery.getExtend().values, false,
-				getDataSource(entityQuery.getExtend().dataSource));
+		return executeSql(sql, innerModel.names, innerModel.values, false, getDataSource(innerModel.dataSource));
 	}
 
 	protected <T extends Serializable> Long deleteAll(final List<T> entities) {
@@ -1221,7 +1223,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getExtend().values)) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
 			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
 		}
 		return (List<T>) findEntityUtil(entityClass, null, entityQuery);
@@ -1239,7 +1241,7 @@ public class SqlToyDaoSupport {
 	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
 		if (null == entityClass || null == paginationModel || null == entityQuery
-				|| StringUtil.isBlank(entityQuery.getExtend().values)) {
+				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
 			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、value 值不能为空!");
 		}
 		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery);
@@ -1248,17 +1250,18 @@ public class SqlToyDaoSupport {
 	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery) {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
+		QueryExtend innerModel = entityQuery.getInnerModel();
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
-		if (StringUtil.isBlank(entityQuery.getExtend().where)) {
+		if (StringUtil.isBlank(innerModel.where)) {
 			where = SqlUtil.wrapWhere(entityMeta);
 		} else {
-			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getExtend().where);
+			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		}
 
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
-		if (!entityQuery.getExtend().translates.isEmpty()) {
-			Iterator<Translate> iter = entityQuery.getExtend().translates.values().iterator();
+		if (!innerModel.translates.isEmpty()) {
+			Iterator<Translate> iter = innerModel.translates.values().iterator();
 			Translate translate;
 			String keyColumn;
 			while (iter.hasNext()) {
@@ -1274,9 +1277,9 @@ public class SqlToyDaoSupport {
 		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// 处理order by 排序
-		if (!entityQuery.getExtend().orderBy.isEmpty()) {
+		if (!innerModel.orderBy.isEmpty()) {
 			sql = sql.concat(" order by ");
-			Iterator<Entry<String, String>> iter = entityQuery.getExtend().orderBy.entrySet().iterator();
+			Iterator<Entry<String, String>> iter = innerModel.orderBy.entrySet().iterator();
 			Entry<String, String> entry;
 			String columnName;
 			int index = 0;
@@ -1299,24 +1302,23 @@ public class SqlToyDaoSupport {
 		}
 		QueryExecutor queryExecutor;
 		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getExtend().names)) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getExtend().values[0])
-					.resultType(entityClass).dataSource(getDataSource(entityQuery.getExtend().dataSource));
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
+			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(entityClass)
+					.dataSource(getDataSource(innerModel.dataSource));
 		} else {
-			queryExecutor = new QueryExecutor(sql).names(entityQuery.getExtend().names)
-					.values(entityQuery.getExtend().values).resultType(entityClass)
-					.dataSource(getDataSource(entityQuery.getExtend().dataSource));
+			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
+					.resultType(entityClass).dataSource(getDataSource(innerModel.dataSource));
 		}
 		// 设置额外的缓存翻译
-		if (!entityQuery.getExtend().translates.isEmpty()) {
-			Iterator<Translate> iter = entityQuery.getExtend().translates.values().iterator();
+		if (!innerModel.translates.isEmpty()) {
+			Iterator<Translate> iter = innerModel.translates.values().iterator();
 			while (iter.hasNext()) {
 				queryExecutor.translates(iter.next());
 			}
 		}
 		// 设置额外的参数条件过滤
-		if (!entityQuery.getExtend().paramFilters.isEmpty()) {
-			for (ParamsFilter filter : entityQuery.getExtend().paramFilters) {
+		if (!innerModel.paramFilters.isEmpty()) {
+			for (ParamsFilter filter : innerModel.paramFilters) {
 				queryExecutor.filters(filter);
 			}
 		}
@@ -1346,9 +1348,8 @@ public class SqlToyDaoSupport {
 		}
 		// 非分页
 		if (paginationModel == null) {
-			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
-					entityQuery.getExtend().lockMode, this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
-					.getRows();
+			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode,
+					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
 		}
 		// 跳过总记录数形式的分页
 		if (paginationModel.getSkipQueryCount()) {
@@ -1370,13 +1371,15 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
-		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getWhere())
-				|| StringUtil.isBlank(entityUpdate.getValues()) || entityUpdate.getUpdateValues().isEmpty()) {
+		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getInnerModel().where)
+				|| StringUtil.isBlank(entityUpdate.getInnerModel().values)
+				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
 			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
 		}
-		boolean isName = SqlConfigParseUtils.hasNamedParam(entityUpdate.getWhere());
-		Object[] values = entityUpdate.getValues();
-		String where = entityUpdate.getWhere();
+		UpdateExtend innerModel = entityUpdate.getInnerModel();
+		boolean isName = SqlConfigParseUtils.hasNamedParam(innerModel.where);
+		Object[] values = innerModel.values;
+		String where = innerModel.where;
 		// 重新通过对象反射获取参数条件的值
 		if (isName) {
 			if (values.length > 1) {
@@ -1397,11 +1400,11 @@ public class SqlToyDaoSupport {
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
-		Iterator<Entry<String, Object>> iter = entityUpdate.getUpdateValues().entrySet().iterator();
+		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		Entry<String, Object> entry;
 		String columnName;
-		Object[] realValues = new Object[entityUpdate.getUpdateValues().size() + values.length];
-		System.arraycopy(values, 0, realValues, entityUpdate.getUpdateValues().size(), values.length);
+		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
+		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
@@ -1421,7 +1424,7 @@ public class SqlToyDaoSupport {
 			index++;
 		}
 		sql.append(" where ").append(where);
-		return executeSql(sql.toString(), null, realValues, false, getDataSource(entityUpdate.getDataSource()));
+		return executeSql(sql.toString(), null, realValues, false, getDataSource(innerModel.dataSource));
 	}
 
 }

@@ -24,73 +24,39 @@ public class EntityQuery implements Serializable {
 		return new EntityQuery();
 	}
 
-	private QueryExtend extend = new QueryExtend();
-
-//	/**
-//	 * 条件语句
-//	 */
-//	private String where;
-//
-//	/**
-//	 * 参数名称
-//	 */
-//	private String[] names;
-//
-//	/**
-//	 * 参数值
-//	 */
-//	private Object[] values;
-//
-//	private DataSource dataSource;
-//
-//	/**
-//	 * 锁类型
-//	 */
-//	private LockMode lockMode;
-//
-//	/**
-//	 * 动态增加缓存翻译配置
-//	 */
-//	private HashMap<String, Translate> extendsTranslates = new HashMap<String, Translate>();
-//
-//	/**
-//	 * 动态组织的order by 排序
-//	 */
-//	private LinkedHashMap<String, String> orderBy = new LinkedHashMap<String, String>();
-//
-//	/**
-//	 * 动态设置filters
-//	 */
-//	private List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
+	/**
+	 * 通过扩展对象减少EntityQuery里面的大量get方法，减少对开发过程的影响
+	 */
+	private QueryExtend innerModel = new QueryExtend();
 
 	public EntityQuery where(String where) {
-		extend.where = where;
+		innerModel.where = where;
 		return this;
 	}
 
 	public EntityQuery names(String... names) {
-		extend.names = names;
+		innerModel.names = names;
 		return this;
 	}
 
 	public EntityQuery values(Object... values) {
-		extend.values = values;
+		innerModel.values = values;
 		return this;
 	}
 
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
-		extend.orderBy.put(field, " ");
+		innerModel.orderBy.put(field, " ");
 		return this;
 	}
 
 	public EntityQuery orderByDesc(String field) {
-		extend.orderBy.put(field, " desc ");
+		innerModel.orderBy.put(field, " desc ");
 		return this;
 	}
 
 	public EntityQuery lock(LockMode lockMode) {
-		extend.lockMode = lockMode;
+		innerModel.lockMode = lockMode;
 		return this;
 	}
 
@@ -110,7 +76,7 @@ public class EntityQuery implements Serializable {
 						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
 				}
-				extend.paramFilters.add(filter);
+				innerModel.paramFilters.add(filter);
 			}
 		}
 		return this;
@@ -128,17 +94,17 @@ public class EntityQuery implements Serializable {
 				throw new IllegalArgumentException(
 						"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
 			}
-			extend.translates.put(trans.getColumn(), trans);
+			innerModel.translates.put(trans.getColumn(), trans);
 		}
 		return this;
 	}
 
 	public EntityQuery dataSource(DataSource dataSource) {
-		extend.dataSource = dataSource;
+		innerModel.dataSource = dataSource;
 		return this;
 	}
 
-	public QueryExtend getExtend() {
-		return extend;
+	public QueryExtend getInnerModel() {
+		return innerModel;
 	}
 }
