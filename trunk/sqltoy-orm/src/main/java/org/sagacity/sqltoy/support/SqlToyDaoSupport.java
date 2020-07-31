@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -1307,6 +1308,12 @@ public class SqlToyDaoSupport {
 				queryExecutor.translates(iter.next());
 			}
 		}
+		// 设置额外的参数条件过滤
+		if (!entityQuery.getParamFilters().isEmpty()) {
+			for (ParamsFilter filter : entityQuery.getParamFilters()) {
+				queryExecutor.filters(filter);
+			}
+		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
@@ -1350,7 +1357,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 针对单表对象查询进行更新操作
+	 * @TODO 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
 	 * @param entityClass
 	 * @param entityUpdate
 	 * @return

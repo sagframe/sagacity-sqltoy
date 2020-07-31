@@ -332,6 +332,7 @@ public class QueryExecutor implements Serializable {
 		}
 		// 过滤加工参数值
 		if (realValues != null) {
+			// 整合sql中定义的filters和代码中扩展的filters
 			List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(),
 					this.paramFilters);
 			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues, filters);
