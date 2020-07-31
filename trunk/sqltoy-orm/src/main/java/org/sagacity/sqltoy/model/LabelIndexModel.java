@@ -3,6 +3,12 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 import java.util.HashMap;
 
+/**
+ * 构造一个综合数据库表XX_AA 模式字段和java对象属性剔除下划线骆驼命名法
+ * 
+ * @author zhong
+ *
+ */
 public class LabelIndexModel implements Serializable {
 
 	/**

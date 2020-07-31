@@ -11,7 +11,6 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 
