@@ -4,7 +4,8 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @project sqltoy-orm
@@ -45,7 +46,7 @@ public class ParamFilterModel implements Serializable {
 	/**
 	 * 参数值
 	 */
-	private String[] values;
+	private Object[] values;
 
 	/**
 	 * 过滤加工的类型:blank、equals、any、moreThan、moreEquals、lessThan、lessEquals、between、
@@ -131,7 +132,7 @@ public class ParamFilterModel implements Serializable {
 	/**
 	 * 排除的参数
 	 */
-	private HashMap<String, String> excludesMap;
+	private Set<String> excludes = new HashSet<String>();
 
 	/**
 	 * 增加的天数
@@ -166,11 +167,11 @@ public class ParamFilterModel implements Serializable {
 		this.filterType = filterType;
 	}
 
-	public String[] getValues() {
+	public Object[] getValues() {
 		return values;
 	}
 
-	public void setValues(String[] values) {
+	public void setValues(Object[] values) {
 		this.values = values;
 	}
 
@@ -182,8 +183,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param params
-	 *            the params to set
+	 * @param params the params to set
 	 */
 	public void setParams(String[] params) {
 		this.params = params;
@@ -197,26 +197,24 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param numberType
-	 *            the numberType to set
+	 * @param numberType the numberType to set
 	 */
 	public void setNumberType(String numberType) {
 		this.numberType = numberType;
 	}
 
 	/**
-	 * @return the excludesMap
+	 * @return the excludes
 	 */
-	public HashMap<String, String> getExcludesMap() {
-		return excludesMap;
+	public Set<String> getExcludes() {
+		return excludes;
 	}
 
 	/**
-	 * @param excludesMap
-	 *            the excludesMap to set
+	 * @param excludesMap the excludesMap to set
 	 */
-	public void setExcludesMap(HashMap<String, String> excludesMap) {
-		this.excludesMap = excludesMap;
+	public void addExclude(String excludeParam) {
+		this.excludes.add(excludeParam.toLowerCase());
 	}
 
 	/**
@@ -227,8 +225,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param incrementDays
-	 *            the incrementDays to set
+	 * @param incrementDays the incrementDays to set
 	 */
 	public void setIncrementDays(Double incrementDays) {
 		this.incrementDays = incrementDays;
@@ -242,8 +239,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param dataType
-	 *            the dataType to set
+	 * @param dataType the dataType to set
 	 */
 	public void setDataType(String dataType) {
 		this.dataType = dataType;
@@ -257,8 +253,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param format
-	 *            the format to set
+	 * @param format the format to set
 	 */
 	public void setFormat(String format) {
 		this.format = format;
@@ -272,8 +267,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param split
-	 *            the split to set
+	 * @param split the split to set
 	 */
 	public void setSplit(String split) {
 		this.split = split;
@@ -287,8 +281,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param regex
-	 *            the regex to set
+	 * @param regex the regex to set
 	 */
 	public void setRegex(String regex) {
 		this.regex = regex;
@@ -302,8 +295,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param isFirst
-	 *            the isFirst to set
+	 * @param isFirst the isFirst to set
 	 */
 	public void setFirst(boolean isFirst) {
 		this.isFirst = isFirst;
@@ -317,8 +309,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param param
-	 *            the param to set
+	 * @param param the param to set
 	 */
 	public void setParam(String param) {
 		this.param = param;
@@ -332,8 +323,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param updateParams
-	 *            the updateParams to set
+	 * @param updateParams the updateParams to set
 	 */
 	public void setUpdateParams(String[] updateParams) {
 		this.updateParams = updateParams;
@@ -347,8 +337,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param updateValue
-	 *            the updateValue to set
+	 * @param updateValue the updateValue to set
 	 */
 	public void setUpdateValue(String updateValue) {
 		this.updateValue = updateValue;
@@ -362,8 +351,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareType
-	 *            the compareType to set
+	 * @param compareType the compareType to set
 	 */
 	public void setCompareType(String compareType) {
 		this.compareType = compareType;
@@ -377,8 +365,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param compareValues
-	 *            the compareValues to set
+	 * @param compareValues the compareValues to set
 	 */
 	public void setCompareValues(String[] compareValues) {
 		this.compareValues = compareValues;
@@ -392,8 +379,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheName
-	 *            the cacheName to set
+	 * @param cacheName the cacheName to set
 	 */
 	public void setCacheName(String cacheName) {
 		this.cacheName = cacheName;
@@ -407,8 +393,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheType
-	 *            the cacheType to set
+	 * @param cacheType the cacheType to set
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
@@ -422,8 +407,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param aliasName
-	 *            the aliasName to set
+	 * @param aliasName the aliasName to set
 	 */
 	public void setAliasName(String aliasName) {
 		this.aliasName = aliasName;
@@ -437,8 +421,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheMappingIndexes
-	 *            the cacheMappingIndexes to set
+	 * @param cacheMappingIndexes the cacheMappingIndexes to set
 	 */
 	public void setCacheMappingIndexes(int[] cacheMappingIndexes) {
 		this.cacheMappingIndexes = cacheMappingIndexes;
@@ -452,8 +435,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheMappingMax
-	 *            the cacheMappingMax to set
+	 * @param cacheMappingMax the cacheMappingMax to set
 	 */
 	public void setCacheMappingMax(int cacheMappingMax) {
 		this.cacheMappingMax = cacheMappingMax;
@@ -467,8 +449,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheFilters
-	 *            the cacheFilters to set
+	 * @param cacheFilters the cacheFilters to set
 	 */
 	public void setCacheFilters(CacheFilterModel[] cacheFilters) {
 		this.cacheFilters = cacheFilters;
@@ -482,8 +463,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param singleQuote
-	 *            the singleQuote to set
+	 * @param singleQuote the singleQuote to set
 	 */
 	public void setSingleQuote(boolean singleQuote) {
 		this.singleQuote = singleQuote;
@@ -497,8 +477,7 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @param cacheNotMatchedValue
-	 *            the cacheNotMatchedValue to set
+	 * @param cacheNotMatchedValue the cacheNotMatchedValue to set
 	 */
 	public void setCacheNotMatchedValue(String cacheNotMatchedValue) {
 		this.cacheNotMatchedValue = cacheNotMatchedValue;

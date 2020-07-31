@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import static java.lang.System.err;
+
 import java.io.BufferedReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
@@ -24,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.lang.System.err;
 
 /**
  * @project sagacity-sqltoy4.0

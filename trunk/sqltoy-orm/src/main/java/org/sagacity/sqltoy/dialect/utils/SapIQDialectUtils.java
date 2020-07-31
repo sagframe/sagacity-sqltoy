@@ -58,7 +58,7 @@ public class SapIQDialectUtils {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY);
 		final boolean isSequence = entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE);
-		String insertSql = DialectUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
+		String insertSql = DialectExtUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 				null, "@mySeqVariable", false, tableName);
 		if (isSequence) {
 			insertSql = "set nocount on DECLARE @mySeqVariable decimal(20) select @mySeqVariable="
@@ -188,7 +188,7 @@ public class SapIQDialectUtils {
 			ReflectPropertyHandler reflectPropertyHandler, boolean openIdentity, Connection conn, final Integer dbType,
 			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		String insertSql = DialectUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
+		String insertSql = DialectExtUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
 				null, "@mySeqVariable", false, tableName);
 		if (entityMeta.getIdStrategy() != null && entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 			insertSql = "DECLARE @mySeqVariable decimal(20) select @mySeqVariable=" + entityMeta.getSequence()

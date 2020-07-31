@@ -15,10 +15,11 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -152,6 +153,11 @@ public class QueryExecutor implements Serializable {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
 					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
+				}
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte")) {
+					if (StringUtil.isBlank(filter.getValue())) {
+						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
+					}
 				}
 				paramFilters.add(filter);
 			}
@@ -332,8 +338,10 @@ public class QueryExecutor implements Serializable {
 		}
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
-					sqlToyConfig.getFilters());
+			// 整合sql中定义的filters和代码中扩展的filters
+			List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(),
+					this.paramFilters);
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues, filters);
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null
 			String[] names = getParamsName(sqlToyConfig);

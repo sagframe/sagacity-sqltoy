@@ -41,7 +41,7 @@ public class ParamsFilter implements Serializable {
 	/**
 	 * 转日期时的加减
 	 */
-	private int reduce = 0;
+	private int increase = 0;
 
 	/**
 	 * 日期格式
@@ -75,6 +75,54 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
+	 * 大于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter gt(Object values) {
+		this.type = "gt";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 大于等于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter gte(Object values) {
+		this.type = "gte";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 小于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter lt(Object values) {
+		this.type = "lt";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 小于等于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter lte(Object values) {
+		this.type = "lte";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
 	 * left like
 	 * 
 	 * @return
@@ -99,10 +147,10 @@ public class ParamsFilter implements Serializable {
 	 * 
 	 * @return
 	 */
-	public ParamsFilter toDate(DateType dateType, int reduce) {
+	public ParamsFilter toDate(DateType dateType, int increase) {
 		this.type = "to-date";
 		this.dateType = dateType.getValue();
-		this.reduce = reduce;
+		this.increase = increase;
 		return this;
 	}
 
@@ -143,8 +191,8 @@ public class ParamsFilter implements Serializable {
 	/**
 	 * @return the reduce
 	 */
-	public int getReduce() {
-		return reduce;
+	public int getIncrease() {
+		return increase;
 	}
 
 	/**

@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -310,6 +311,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
+		// 当没有指定级联子类默认全部级联加载
 		if (cascades == null || cascades.length == 0) {
 			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
@@ -909,7 +911,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供单表简易查询进行删除操作
+	 * @TODO 提供单表简易查询进行删除操作(删除操作filters过滤无效)
 	 * @param entityClass
 	 * @param entityQuery
 	 * @return
@@ -918,6 +920,10 @@ public class SqlToyDaoSupport {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
 				|| StringUtil.isBlank(entityQuery.getValues())) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+		}
+		// 做一个必要提示
+		if (!entityQuery.getParamFilters().isEmpty()) {
+			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
@@ -1307,6 +1313,12 @@ public class SqlToyDaoSupport {
 				queryExecutor.translates(iter.next());
 			}
 		}
+		// 设置额外的参数条件过滤
+		if (!entityQuery.getParamFilters().isEmpty()) {
+			for (ParamsFilter filter : entityQuery.getParamFilters()) {
+				queryExecutor.filters(filter);
+			}
+		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
@@ -1350,7 +1362,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 针对单表对象查询进行更新操作
+	 * @TODO 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
 	 * @param entityClass
 	 * @param entityUpdate
 	 * @return

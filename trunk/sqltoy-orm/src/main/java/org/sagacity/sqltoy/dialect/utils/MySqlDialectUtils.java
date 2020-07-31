@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 
 /**
  * @project sqltoy-orm
@@ -26,8 +27,8 @@ public class MySqlDialectUtils {
 			String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
-					realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
+					false, realTable);
 		}
 
 		StringBuilder sql;
@@ -82,5 +83,19 @@ public class MySqlDialectUtils {
 			}
 		}
 		return sql.toString();
+	}
+
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		// 目前不支持sequence模式
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return false;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return true;
+		}
+		return true;
 	}
 }

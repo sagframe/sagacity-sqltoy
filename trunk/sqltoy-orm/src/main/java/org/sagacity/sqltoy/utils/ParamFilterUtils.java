@@ -20,6 +20,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +50,8 @@ public class ParamFilterUtils {
 	 * @return
 	 */
 	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
-			ParamFilterModel[] filters) {
-		if (paramsName == null || paramsName.length == 0 || filters == null || filters.length == 0) {
+			List<ParamFilterModel> filters) {
+		if (paramsName == null || paramsName.length == 0 || filters == null || filters.size() == 0) {
 			return values;
 		}
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
@@ -62,7 +63,6 @@ public class ParamFilterUtils {
 		}
 		String[] filterParams;
 		int index;
-		HashMap<String, String> retainMap;
 		String filterParam;
 		boolean hasPrimary = false;
 		for (ParamFilterModel paramFilterModel : filters) {
@@ -80,14 +80,13 @@ public class ParamFilterUtils {
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
 			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
-				retainMap = paramFilterModel.getExcludesMap();
 				index = (paramIndexMap.get(paramFilterModel.getParam().toLowerCase()) == null) ? -1
 						: paramIndexMap.get(paramFilterModel.getParam().toLowerCase());
 				// 决定性参数值不为null
 				if (index != -1 && paramValues[index] != null) {
 					for (int j = 0; j < paramSize; j++) {
 						// 排除自身
-						if (j != index && (retainMap == null || !retainMap.containsKey(paramsName[j].toLowerCase()))) {
+						if (j != index && !paramFilterModel.getExcludes().contains(paramsName[j].toLowerCase())) {
 							paramValues[j] = null;
 						}
 					}
@@ -98,8 +97,7 @@ public class ParamFilterUtils {
 					filterParam = filterParams[i].toLowerCase();
 					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 					if (index != -1 && paramValues[index] != null) {
-						if (paramFilterModel.getExcludesMap() == null
-								|| !paramFilterModel.getExcludesMap().containsKey(filterParam)) {
+						if (!paramFilterModel.getExcludes().contains(filterParam)) {
 							paramValues[index] = filterSingleParam(paramValues[index], paramFilterModel);
 						}
 					}
@@ -511,10 +509,11 @@ public class ParamFilterUtils {
 	 * @param isFirst
 	 * @return
 	 */
-	private static Object replace(Object paramValue, String regex, String value, boolean isFirst) {
-		if (paramValue == null || regex == null || value == null) {
+	private static Object replace(Object paramValue, String regex, Object valueVar, boolean isFirst) {
+		if (paramValue == null || regex == null || valueVar == null) {
 			return null;
 		}
+		String value = valueVar.toString();
 		if (paramValue instanceof String) {
 			if (isFirst) {
 				return paramValue.toString().replaceFirst(regex, value);
@@ -697,27 +696,26 @@ public class ParamFilterUtils {
 				}
 			}
 		}
-		// 代码有冗余,暂不需优化
 		// 取当前月份的第一天
-		if (fmtStyle.equals("first_day") || fmtStyle.equals("first_month_day")) {
+		if (fmtStyle.equals("first_of_month")) {
 			result = DateUtil.firstDayOfMonth(paramValue);
 		} // 年的第一天
-		else if (fmtStyle.equals("first_year_day")) {
+		else if (fmtStyle.equals("first_of_year")) {
 			result = DateUtil.getYear(paramValue) + "-01-01";
 		} // 取当前月份的最后一天
-		else if (fmtStyle.equals("last_day") || fmtStyle.equals("last_month_day")) {
+		else if (fmtStyle.equals("last_of_month")) {
 			result = DateUtil.lastDayOfMonth(paramValue);
 		} // 年的最后一天
-		else if (fmtStyle.equals("last_year_day")) {
+		else if (fmtStyle.equals("last_of_year")) {
 			result = DateUtil.getYear(paramValue) + "-12-31";
 		} // 取指定日期的星期一的日期
-		else if (fmtStyle.equals("first_week_day")) {
+		else if (fmtStyle.equals("first_of_week")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 2);
 			result = ca.getTime();
 		} // 取指定日期的星期天的日期
-		else if (fmtStyle.equals("last_week_day")) {
+		else if (fmtStyle.equals("last_of_week")) {
 			Calendar ca = Calendar.getInstance();
 			ca.setTime(DateUtil.parse(paramValue, DAY_FORMAT));
 			ca.add(Calendar.DAY_OF_WEEK, -ca.get(Calendar.DAY_OF_WEEK) + 8);
@@ -761,7 +759,7 @@ public class ParamFilterUtils {
 	 * @param contrasts
 	 * @return
 	 */
-	private static Object filterEquals(Object param, String[] contrasts) {
+	private static Object filterEquals(Object param, Object[] contrasts) {
 		if (null == param || contrasts == null || contrasts.length == 0) {
 			return null;
 		}
@@ -769,7 +767,7 @@ public class ParamFilterUtils {
 		// 这个属于极端少量的场景
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
-			String contrast = contrasts[0];
+			String contrast = contrasts[0].toString();
 			for (Object var : ary) {
 				if (var != null && var.toString().equals(contrast)) {
 					return null;
@@ -786,10 +784,12 @@ public class ParamFilterUtils {
 		}
 
 		// 只要有一个对比值相等表示成立，返回null
-		for (String contrast : contrasts) {
+		String contrast;
+		for (Object tmp : contrasts) {
+			contrast = tmp.toString();
 			if (type == 1) {
 				if (param instanceof LocalTime) {
-					if (contrast != null && ((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
+					if (((LocalTime) param).compareTo(LocalTime.parse(contrast)) == 0) {
 						return null;
 					}
 				} else {
@@ -818,7 +818,7 @@ public class ParamFilterUtils {
 	 * @param contrasts
 	 * @return
 	 */
-	private static Object filterNotEquals(Object param, String[] contrasts) {
+	private static Object filterNotEquals(Object param, Object[] contrasts) {
 		if (null == param) {
 			return null;
 		}
@@ -829,7 +829,7 @@ public class ParamFilterUtils {
 		// 这个属于极端少量的场景
 		if (param.getClass().isArray() && contrasts.length == 1) {
 			Object[] ary = CollectionUtil.convertArray(param);
-			String contrast = contrasts[0];
+			String contrast = (contrasts[0] == null) ? null : contrasts[0].toString();
 			for (Object var : ary) {
 				// 相等则表示存在，not equals则不成立
 				if (var != null && var.toString().equals(contrast)) {
@@ -846,7 +846,9 @@ public class ParamFilterUtils {
 			type = 2;
 		}
 		// 只要有一个对比值相等表示不成立，返回参数本身的值
-		for (String contrast : contrasts) {
+		String contrast;
+		for (Object tmp : contrasts) {
+			contrast = (tmp == null) ? null : tmp.toString();
 			if (StringUtil.isBlank(contrast)) {
 				return param;
 			}
@@ -879,13 +881,14 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤参数值小于指定值，并返回null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
-	private static Object filterLess(Object param, String contrast) {
+	private static Object filterLess(Object param, Object contrastParam) {
 		if (null == param) {
 			return null;
 		}
+		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.toLowerCase().equals("sysdate")) {
@@ -913,13 +916,14 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤参数值小于等于指定值，并返回null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
-	private static Object filterLessEquals(Object param, String contrast) {
+	private static Object filterLessEquals(Object param, Object contrastParam) {
 		if (null == param) {
 			return null;
 		}
+		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.toLowerCase().equals("sysdate")) {
@@ -950,10 +954,11 @@ public class ParamFilterUtils {
 	 * @param contrast
 	 * @return
 	 */
-	private static Object filterMore(Object param, String contrast) {
+	private static Object filterMore(Object param, Object contrastParam) {
 		if (null == param) {
 			return null;
 		}
+		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.toLowerCase().equals("sysdate")) {
@@ -984,10 +989,11 @@ public class ParamFilterUtils {
 	 * @param contrast
 	 * @return
 	 */
-	private static Object filterMoreEquals(Object param, String contrast) {
+	private static Object filterMoreEquals(Object param, Object contrastParam) {
 		if (null == param) {
 			return null;
 		}
+		String contrast = contrastParam.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date compareDate;
 			if (contrast.toLowerCase().equals("sysdate")) {
@@ -1015,14 +1021,16 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 参数大于等于并小于等于给定的数据范围时表示条件无效，自动置参数值为null
 	 * @param param
-	 * @param beginContrast
-	 * @param endContrast
+	 * @param beginValue
+	 * @param endValue
 	 * @return
 	 */
-	private static Object filterBetween(Object param, String beginContrast, String endContrast) {
+	private static Object filterBetween(Object param, Object beginValue, Object endValue) {
 		if (null == param) {
 			return null;
 		}
+		String beginContrast = beginValue.toString();
+		String endContrast = endValue.toString();
 		if (param instanceof Date || param instanceof LocalDate || param instanceof LocalDateTime) {
 			Date var = DateUtil.convertDateObject(param);
 			if (var.compareTo(DateUtil.convertDateObject(beginContrast)) >= 0
@@ -1045,4 +1053,38 @@ public class ParamFilterUtils {
 		return param;
 	}
 
+	/**
+	 * @TODO 整合sql中定义的filter和代码中自定义的filters
+	 * @param filters
+	 * @param extFilters
+	 * @return
+	 */
+	public static List<ParamFilterModel> combineFilters(List<ParamFilterModel> filters, List<ParamsFilter> extFilters) {
+		if (extFilters == null || extFilters.isEmpty()) {
+			return filters;
+		}
+		List<ParamFilterModel> result = new ArrayList<ParamFilterModel>();
+		if (filters != null && !filters.isEmpty()) {
+			result.addAll(filters);
+		}
+		for (ParamsFilter filter : extFilters) {
+			ParamFilterModel paramFilter = new ParamFilterModel();
+			paramFilter.setFilterType(filter.getType());
+			paramFilter.setParams(filter.getParams());
+			if (filter.getParams().length == 1) {
+				paramFilter.setParam(filter.getParams()[0]);
+			}
+			if (filter.getExcludes() != null) {
+				for (String s : filter.getExcludes()) {
+					paramFilter.addExclude(s);
+				}
+			}
+			paramFilter.setFormat(filter.getDateType());
+			paramFilter.setValues(filter.getValue());
+			// 加减天数
+			paramFilter.setIncrementDays(Double.valueOf(filter.getIncrease()));
+			result.add(paramFilter);
+		}
+		return result;
+	}
 }

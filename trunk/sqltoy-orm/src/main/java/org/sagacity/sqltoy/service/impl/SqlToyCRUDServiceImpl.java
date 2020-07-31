@@ -112,6 +112,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
+	@Transactional
+	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		}
+		return sqlToyLazyDao.updateCascade(entity, forceUpdateProps, null, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

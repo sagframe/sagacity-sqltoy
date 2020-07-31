@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqliteDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -323,12 +324,12 @@ public class SqliteDialect implements Dialect {
 		// sqlite 只提供autoincrement 机制，即identity模式，所以sequence可以忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk,
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
@@ -353,7 +354,7 @@ public class SqliteDialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
 				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk, insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);

@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DB2DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
@@ -162,15 +163,15 @@ public class DB2Dialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		// db2 identity 和sequence 都支持手工赋值
-		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
 				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.PREPARD_ID
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
 				isAssignPKValue(entityMeta.getIdStrategy()), returnPkType, insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
@@ -195,8 +196,8 @@ public class DB2Dialect implements Dialect {
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
-				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
 				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}

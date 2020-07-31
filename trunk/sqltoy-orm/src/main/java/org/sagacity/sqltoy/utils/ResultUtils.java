@@ -474,7 +474,6 @@ public class ResultUtils {
 	 * @param labelIndexMap
 	 * @param result
 	 * @param pivotCategorySet
-	 * @param debug
 	 * @return
 	 * @throws Exception
 	 */
