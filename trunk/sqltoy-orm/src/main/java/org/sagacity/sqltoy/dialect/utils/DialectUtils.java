@@ -92,11 +92,6 @@ public class DialectUtils {
 	public static final Pattern DISTINCT_PATTERN = Pattern.compile("(?i)^select\\s+distinct\\s+");
 
 	/**
-	 * 判断日期格式
-	 */
-	public static final Pattern DATE_PATTERN = Pattern.compile("(\\:|\\-|\\.|\\/|\\s+)?\\d+");
-
-	/**
 	 * 统计正则表达式
 	 */
 	public static final Pattern STAT_PATTERN = Pattern
@@ -651,99 +646,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 产生对象对应的insert sql语句
-	 * @param dbType
-	 * @param entityMeta
-	 * @param pkStrategy
-	 * @param isNullFunction
-	 * @param sequence
-	 * @param isAssignPK
-	 * @param tableName
-	 * @return
-	 */
-	public static String generateInsertSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
-		int columnSize = entityMeta.getFieldsArray().length;
-		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
-		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
-		sql.append("insert into ");
-		sql.append(entityMeta.getSchemaTable(tableName));
-		sql.append(" (");
-		FieldMeta fieldMeta;
-		String field;
-		boolean isStart = true;
-		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
-		String columnName;
-		for (int i = 0; i < columnSize; i++) {
-			field = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(field);
-			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (fieldMeta.isPK()) {
-				// identity主键策略，且支持主键手工赋值
-				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-					// 目前只有mysql支持
-					if (isAssignPK) {
-						if (!isStart) {
-							sql.append(",");
-							values.append(",");
-						}
-						sql.append(columnName);
-						values.append("?");
-						isStart = false;
-					}
-				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-					if (!isStart) {
-						sql.append(",");
-						values.append(",");
-					}
-					sql.append(columnName);
-					if (isAssignPK && isSupportNULL) {
-						values.append(isNullFunction);
-						values.append("(?,").append(sequence).append(")");
-					} else {
-						values.append(sequence);
-					}
-					isStart = false;
-				} else {
-					if (!isStart) {
-						sql.append(",");
-						values.append(",");
-					}
-					sql.append(columnName);
-					values.append("?");
-					isStart = false;
-				}
-			} else {
-				if (!isStart) {
-					sql.append(",");
-					values.append(",");
-				}
-				sql.append(columnName);
-				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
-					values.append(isNullFunction);
-					values.append("(?,");
-					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-					values.append(")");
-				} else {
-					values.append("?");
-				}
-				isStart = false;
-			}
-		}
-		// OVERRIDING SYSTEM VALUE
-		sql.append(") ");
-		/*
-		 * if ((dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) && isAssignPK)
-		 * { sql.append(" OVERRIDING SYSTEM VALUE "); }
-		 */
-		sql.append(" values (");
-		sql.append(values);
-		sql.append(")");
-		return sql.toString();
-	}
-
-	/**
 	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveOrUpdateSql
 	 * @param dbType
 	 * @param entityMeta
@@ -762,7 +664,8 @@ public class DialectUtils {
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
+					isAssignPK, realTable);
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -839,7 +742,8 @@ public class DialectUtils {
 				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
@@ -913,7 +817,8 @@ public class DialectUtils {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
 		if (entityMeta.getIdArray() == null) {
-			return generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK, realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
+					isAssignPK, realTable);
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -970,7 +875,8 @@ public class DialectUtils {
 				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
@@ -1025,45 +931,6 @@ public class DialectUtils {
 		}
 		sql.append(")");
 		return sql.toString();
-	}
-
-	/**
-	 * @todo 统一对表字段默认值进行处理
-	 * @param sql
-	 * @param dbType
-	 * @param fieldType
-	 * @param defaultValue
-	 */
-	public static void processDefaultValue(StringBuilder sql, int dbType, int fieldType, String defaultValue) {
-		if (fieldType == java.sql.Types.CHAR || fieldType == java.sql.Types.CLOB || fieldType == java.sql.Types.VARCHAR
-				|| fieldType == java.sql.Types.NCHAR || fieldType == java.sql.Types.NVARCHAR
-				|| fieldType == java.sql.Types.LONGVARCHAR || fieldType == java.sql.Types.LONGNVARCHAR
-				|| fieldType == java.sql.Types.NCLOB) {
-			if (!defaultValue.startsWith("'")) {
-				sql.append("'");
-			}
-			sql.append(defaultValue);
-			if (!defaultValue.endsWith("'")) {
-				sql.append("'");
-			}
-		} else {
-			String tmpValue = SqlToyConstants.getDefaultValue(dbType, defaultValue);
-			if (tmpValue.startsWith("'") && tmpValue.endsWith("'")) {
-				sql.append(tmpValue);
-			}
-			// 时间格式,避免默认日期没有单引号问题
-			else if (fieldType == java.sql.Types.TIME || fieldType == java.sql.Types.DATE
-					|| fieldType == java.sql.Types.TIME_WITH_TIMEZONE || fieldType == java.sql.Types.TIMESTAMP
-					|| fieldType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
-				if (StringUtil.matches(tmpValue, DATE_PATTERN)) {
-					sql.append("'").append(tmpValue).append("'");
-				} else {
-					sql.append(tmpValue);
-				}
-			} else {
-				sql.append(tmpValue);
-			}
-		}
 	}
 
 	/**
@@ -1636,25 +1503,143 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
-				// 这里需要进行修改,mysql\postgresql\ 等存在缺陷(字段值不为null时会报错)
-//				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.POSTGRESQL
-//						|| dbType == DBType.DM) {
-//
-//				}
-
-				saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
-						forceUpdateProps, generateSqlHandler,
-						// 设置关联外键字段的属性值(来自主表的主键)
-						new ReflectPropertyHandler() {
-							public void process() {
-								for (int i = 0; i < mappedFields.length; i++) {
-									this.setValue(mappedFields[i], IdValues[i]);
-								}
-							}
-						}, conn, dbType, null);
+				// 将外键值通过反调赋到相关属性上
+				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
+					public void process() {
+						for (int i = 0; i < mappedFields.length; i++) {
+							this.setValue(mappedFields[i], IdValues[i]);
+						}
+					}
+				};
+				// update 2020-07-30,针对mysql和postgresql、sqlite常用数据库做针对性处理
+				// 这里需要进行修改,mysql\postgresql\sqlite 等存在缺陷(字段值不为null时会报错)
+				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
+					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
+					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.SQLITE) {
+					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} // 达梦数据库
+				else if (dbType == DBType.DM) {
+					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				} // db2/oracle/mssql 通过merge 方式
+				else {
+					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
+							forceUpdateProps, generateSqlHandler,
+							// 设置关联外键字段的属性值(来自主表的主键)
+							reflectPropsHandler, conn, dbType, null);
+				}
 			}
 		}
 		return updateCnt;
+	}
+
+	// update 2020-07-30
+	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
+	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
+	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"ifnull", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+
+		// mysql只支持identity,sequence 值忽略
+		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert ignore ");
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
+	// 针对postgresql 数据库
+	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"COALESCE", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				PKStrategy pkStrategy = entityMeta.getIdStrategy();
+				String sequence = "nextval('" + entityMeta.getSequence() + "')";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					// 伪造成sequence模式
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = "DEFAULT";
+				}
+				return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence, tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
+	// 针对sqlite 数据库
+	private static void sqliteSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"ifnull", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
+	// 针对达梦数据库
+	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
+			ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
+				conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				PKStrategy pkStrategy = entityMeta.getIdStrategy();
+				String sequence = entityMeta.getSequence() + ".nextval";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+				}
+				return getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	/**

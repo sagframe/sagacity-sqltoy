@@ -89,8 +89,8 @@ public class DB2DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK,
-					realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
+					isAssignPK, realTable);
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		FieldMeta fieldMeta;
@@ -168,7 +168,7 @@ public class DB2DialectUtils {
 				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 							fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
 				} else {
@@ -245,8 +245,8 @@ public class DB2DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence, isAssignPK,
-					realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
+					isAssignPK, realTable);
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		FieldMeta fieldMeta;
@@ -302,7 +302,7 @@ public class DB2DialectUtils {
 				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
+					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
 							fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
 				} else {

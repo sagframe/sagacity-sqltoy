@@ -18,15 +18,14 @@ import java.util.Iterator;
 /**
  * @project sagacity-core
  * @description 输入输出IO工具类
- * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:IOUtil.java,Revision:v1.0,Date:2008-12-14 下午07:53:54 $
+ * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @version id:IOUtil.java,Revision:v1.0,Date:2008-12-14
  */
 @SuppressWarnings("rawtypes")
 public class IOUtil {
 
 	/**
-	 * 转换String为InputStream
-	 * 
+	 * @TODO 转换String为InputStream
 	 * @param str
 	 * @param charset
 	 * @return
@@ -109,7 +108,6 @@ public class IOUtil {
 	}
 
 	/**
-	 *
 	 * @todo 将inputStream转换成byte数组
 	 * @param is
 	 * @return
@@ -173,8 +171,7 @@ public class IOUtil {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 *
+	 * @TODO 关闭一个或多个流对象
 	 * @param closeables 可关闭的流对象列表
 	 * @throws IOException
 	 */
@@ -189,8 +186,7 @@ public class IOUtil {
 	}
 
 	/**
-	 * 关闭一个或多个流对象
-	 *
+	 * @TODO 关闭一个或多个流对象
 	 * @param closeables 可关闭的流对象列表
 	 */
 	public static void closeQuietly(Closeable... closeables) {

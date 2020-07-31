@@ -112,6 +112,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
+	@Transactional
+	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
+		if (null == entity) {
+			throw new IllegalArgumentException("update 数据对象为null!");
+		}
+		return sqlToyLazyDao.updateCascade(entity, forceUpdateProps, null, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -474,4 +482,15 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public Set<String> getCacheNames() {
 		return sqlToyLazyDao.getCacheNames();
 	}
+
+	@Override
+	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
+		return sqlToyLazyDao.cacheMatchKeys(cacheName, matchRegex, matchIndexes);
+	}
+
+	@Override
+	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
+		return sqlToyLazyDao.cacheMatchKeys(cacheName, cacheType, matchRegex, matchIndexes);
+	}
+
 }

@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  *              简单的操作自行编写service实现，减少了代码开发量
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyCRUDService.java,Revision:v1.0,Date:2012-7-16
- * @Modification Date:2020-4-23 {对分页查询增加泛型支持}
+ * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings("rawtypes")
 public interface SqlToyCRUDService {
@@ -54,6 +54,14 @@ public interface SqlToyCRUDService {
 	 * @param forceUpdateProps
 	 */
 	public Long update(Serializable entity, String... forceUpdateProps);
+
+	/**
+	 * @TODO 提供级联修改
+	 * @param serializableVO
+	 * @param forceUpdateProps
+	 * @return
+	 */
+	public Long updateCascade(Serializable serializableVO, String... forceUpdateProps);
 
 	/**
 	 * @todo 对属性进行强制修改,属性值为null则强制更新数据库字段值
@@ -248,4 +256,23 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public Set<String> getCacheNames();
+
+	/**
+	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
+	 * @param cacheName
+	 * @param matchRegex
+	 * @param matchIndexes
+	 * @return
+	 */
+	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes);
+
+	/**
+	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
+	 * @param cacheName
+	 * @param cacheType
+	 * @param matchRegex
+	 * @param matchIndexes
+	 * @return
+	 */
+	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
 }

@@ -3,6 +3,8 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import static java.lang.System.err;
+
 import java.io.BufferedReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
@@ -24,13 +26,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.lang.System.err;
 
 /**
  * @project sagacity-sqltoy4.0
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10 下午10:27:57
+ * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题

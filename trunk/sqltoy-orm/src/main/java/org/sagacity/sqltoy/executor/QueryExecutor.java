@@ -15,8 +15,11 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -113,7 +116,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * 动态设置filters
 	 */
-	//private LinkedHashMap<String, ParamFilterModel> filters = new LinkedHashMap<String, ParamFilterModel>();
+	private List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
 	public QueryExecutor(String sql) {
 		this.sql = sql;
@@ -138,6 +141,28 @@ public class QueryExecutor implements Serializable {
 		} else {
 			logger.warn("请关注:查询语句sql={} 指定的查询条件参数entity=null,将以ArrayList作为默认类型返回!", sql);
 		}
+	}
+
+	/**
+	 * @TODO 动态增加参数过滤,对参数进行转null或其他的加工处理
+	 * @param filters
+	 * @return
+	 */
+	public QueryExecutor filters(ParamsFilter... filters) {
+		if (filters != null && filters.length > 0) {
+			for (ParamsFilter filter : filters) {
+				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
+					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
+				}
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte")) {
+					if (StringUtil.isBlank(filter.getValue())) {
+						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
+					}
+				}
+				paramFilters.add(filter);
+			}
+		}
+		return this;
 	}
 
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
@@ -313,8 +338,10 @@ public class QueryExecutor implements Serializable {
 		}
 		// 过滤加工参数值
 		if (realValues != null) {
-			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues,
-					sqlToyConfig.getFilters());
+			// 整合sql中定义的filters和代码中扩展的filters
+			List<ParamFilterModel> filters = ParamFilterUtils.combineFilters(sqlToyConfig.getFilters(),
+					this.paramFilters);
+			realValues = ParamFilterUtils.filterValue(sqlToyContext, getParamsName(sqlToyConfig), realValues, filters);
 		} else {
 			// update 2017-4-11,默认参数值跟参数数组长度保持一致,并置为null
 			String[] names = getParamsName(sqlToyConfig);
@@ -444,5 +471,12 @@ public class QueryExecutor implements Serializable {
 	 */
 	public HashMap<String, Translate> getTranslates() {
 		return this.extendsTranslates;
+	}
+
+	/**
+	 * @return the paramFilters
+	 */
+	public List<ParamsFilter> getParamFilters() {
+		return paramFilters;
 	}
 }

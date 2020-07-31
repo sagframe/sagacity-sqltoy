@@ -327,7 +327,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		return (DataSource) applicationContext.getBean(dataSourceName);
+		if (applicationContext.containsBean(dataSourceName)) {
+			return (DataSource) applicationContext.getBean(dataSourceName);
+		}
+		return null;
 	}
 
 	public SqlToyConfig getSqlToyConfig(String sqlKey) {

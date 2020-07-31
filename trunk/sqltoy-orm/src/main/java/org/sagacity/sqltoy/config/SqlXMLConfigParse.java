@@ -720,9 +720,7 @@ public class SqlXMLConfigParse {
 		if (filterModels.isEmpty()) {
 			return;
 		}
-		ParamFilterModel[] result = new ParamFilterModel[filterModels.size()];
-		filterModels.toArray(result);
-		sqlToyConfig.setFilters(result);
+		sqlToyConfig.addFilters(filterModels);
 	}
 
 	/**
@@ -753,7 +751,23 @@ public class SqlXMLConfigParse {
 		}
 		// to-date filter
 		if (filter.hasAttribute("format")) {
-			filterModel.setFormat(filter.getAttribute("format"));
+			String fmt = filter.getAttribute("format");
+			// 规整toDate的格式
+			if (fmt.equalsIgnoreCase("first_day") || fmt.equalsIgnoreCase("first_month_day")) {
+				filterModel.setFormat("FIRST_OF_MONTH");
+			} else if (fmt.equalsIgnoreCase("last_day") || fmt.equalsIgnoreCase("last_month_day")) {
+				filterModel.setFormat("LAST_OF_MONTH");
+			} else if (fmt.equalsIgnoreCase("first_year_day")) {
+				filterModel.setFormat("FIRST_OF_YEAR");
+			} else if (fmt.equalsIgnoreCase("last_year_day")) {
+				filterModel.setFormat("LAST_OF_YEAR");
+			} else if (fmt.equalsIgnoreCase("first_week_day")) {
+				filterModel.setFormat("FIRST_OF_WEEK");
+			} else if (fmt.equalsIgnoreCase("last_week_day")) {
+				filterModel.setFormat("LAST_OF_WEEK");
+			} else {
+				filterModel.setFormat(fmt);
+			}
 		}
 		// to-date 中设置type类型
 		if (filter.hasAttribute("type")) {
@@ -780,11 +794,9 @@ public class SqlXMLConfigParse {
 		// 互斥型和决定性(primary)filter的参数
 		if (filter.hasAttribute("excludes")) {
 			String[] excludeParams = filter.getAttribute("excludes").toLowerCase().split("\\,");
-			HashMap<String, String> excludeMaps = new HashMap<String, String>();
 			for (String excludeParam : excludeParams) {
-				excludeMaps.put(excludeParam.trim(), "1");
+				filterModel.addExclude(excludeParam.trim());
 			}
-			filterModel.setExcludesMap(excludeMaps);
 		}
 
 		// exclusive 和primary filter、cache-arg 专用参数

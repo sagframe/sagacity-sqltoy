@@ -633,12 +633,12 @@
 					<xsd:attribute name="format" default="yyyy-MM-dd">
 						<xsd:simpleType>
 							<xsd:restriction base="xsd:string">
-								<xsd:enumeration value="first_day">
+								<xsd:enumeration value="FIRST_OF_MONTH">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期月份的第一天,如日期值为2020-06-17,处理后的值为:2020-06-01]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:enumeration>
-								<xsd:enumeration value="last_day">
+								<xsd:enumeration value="LAST_OF_MONTH">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期月份的最后一天,如日期值为2020-06-17,处理后的值为:2020-06-30]]></xsd:documentation>
 									</xsd:annotation>
@@ -647,22 +647,22 @@
 								<xsd:enumeration value="yyyyMMdd" />
 								<xsd:enumeration value="yyyyMMddHHmmss" />
 								<xsd:enumeration value="yyyy-MM-dd HH:mm:ss" />
-								<xsd:enumeration value="first_year_day">
+								<xsd:enumeration value="FIRST_OF_YEAR">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期年份的第一天,如日期值为2020-06-17,处理后的值为:2020-01-01]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:enumeration>
-								<xsd:enumeration value="last_year_day">
+								<xsd:enumeration value="LAST_OF_YEAR">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期年份的最后一天,如日期值为2020-06-17,处理后的值为:2020-12-31]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:enumeration>
-								<xsd:enumeration value="first_week_day">
+								<xsd:enumeration value="FIRST_OF_WEEK">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期所在周的第一天即周一,如日期值为2020-06-17,处理后的值为:2020-06-15]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:enumeration>
-								<xsd:enumeration value="last_week_day">
+								<xsd:enumeration value="LAST_OF_WEEK">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[当前日期所在周的最后一天即周日,如日期值为2020-06-17,处理后的值为:2020-06-21]]></xsd:documentation>
 									</xsd:annotation>

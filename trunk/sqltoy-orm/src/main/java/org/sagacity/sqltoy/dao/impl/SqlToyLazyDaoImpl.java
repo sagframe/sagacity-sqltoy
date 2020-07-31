@@ -861,4 +861,14 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateByQuery(entityClass, entityUpdate);
 	}
 
+	@Override
+	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
+		return super.cacheMatchKeys(cacheName, null, matchRegex, matchIndexes);
+	}
+
+	@Override
+	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchName, int... matchIndexes) {
+		return super.cacheMatchKeys(cacheName, cacheType, matchName, matchIndexes);
+	}
+
 }

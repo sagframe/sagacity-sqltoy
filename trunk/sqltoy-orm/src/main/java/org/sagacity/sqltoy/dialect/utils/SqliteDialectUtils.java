@@ -28,8 +28,8 @@ public class SqliteDialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 无主键表全部采用insert机制
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
-					realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
+					false, realTable);
 		}
 		StringBuilder sql;
 		// 是否全部是ID
@@ -103,8 +103,8 @@ public class SqliteDialectUtils {
 		// 无主键表全部采用insert机制
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null, false,
-					realTable);
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
+					false, realTable);
 		}
 		StringBuilder sql = new StringBuilder("insert or ignore into ");
 		StringBuilder values = new StringBuilder();

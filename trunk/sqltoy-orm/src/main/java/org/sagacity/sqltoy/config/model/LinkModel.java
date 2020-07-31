@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @description 根据分组字段，将其它字段值进行连接的配置模型
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-4-8
- * @Modification Date:2013-4-8 {填写修改说明}
+ * @modify Date:2013-4-8 {填写修改说明}
  */
 public class LinkModel implements Serializable {
 

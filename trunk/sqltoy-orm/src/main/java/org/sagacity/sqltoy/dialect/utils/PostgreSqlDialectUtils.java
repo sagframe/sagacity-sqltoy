@@ -180,7 +180,7 @@ public class PostgreSqlDialectUtils {
 		}
 
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
+		String insertSql = DialectExtUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
 				sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, ReturnPkType.GENERATED_KEYS,
 				insertSql, entity, new GenerateSqlHandler() {
@@ -192,8 +192,8 @@ public class PostgreSqlDialectUtils {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
-								sequence, isAssignPKValue(pkStrategy), null);
+						return DialectExtUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy,
+								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					public SavePKStrategy generate(EntityMeta entityMeta) {
@@ -229,7 +229,7 @@ public class PostgreSqlDialectUtils {
 			sequence = "DEFAULT";
 		}
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
-		String insertSql = DialectUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
+		String insertSql = DialectExtUtils.generateInsertSql(DBType.POSTGRESQL, entityMeta, pkStrategy, NVL_FUNCTION,
 				sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType, autoCommit);
@@ -249,7 +249,7 @@ public class PostgreSqlDialectUtils {
 			String sequence, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
 		}
 		// 是否全部是ID
@@ -331,7 +331,7 @@ public class PostgreSqlDialectUtils {
 			String sequence, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
-			return DialectUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
+			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
 		}
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况

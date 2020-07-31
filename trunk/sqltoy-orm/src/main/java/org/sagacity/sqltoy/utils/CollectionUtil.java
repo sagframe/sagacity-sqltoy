@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.0
  * @description 数组集合的公用方法
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:CollectionUtil.java,Revision:v1.0,Date:2008-10-22 上午10:57:00
+ * @version id:CollectionUtil.java,Revision:v1.0,Date:2008-10-22
  * @modify Date:2011-8-11 {修复了pivotList设置旋转数据的初始值错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -1177,18 +1177,18 @@ public class CollectionUtil {
 		return result;
 	}
 
-	public static boolean any(Object value, Object[] compareAry) {
-		return any(value, compareAry, false);
+	public static boolean any(Object value, Object... compareAry) {
+		return any(value, false, compareAry);
 	}
 
 	/**
 	 * @todo 判断字符串或对象数据是否在给定的数组中
 	 * @param compareStr
-	 * @param compareAry
 	 * @param ignoreCase
+	 * @param compareAry
 	 * @return
 	 */
-	public static boolean any(Object value, Object[] compareAry, boolean ignoreCase) {
+	public static boolean any(Object value, boolean ignoreCase, Object... compareAry) {
 		if (value == null || (compareAry == null || compareAry.length == 0)) {
 			return false;
 		}

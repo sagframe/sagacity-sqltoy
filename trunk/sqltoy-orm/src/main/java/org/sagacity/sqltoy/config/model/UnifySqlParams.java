@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.config.model;
 
 /**
- * 
  * @project sqltoy-orm
  * @description 提供一个统一的sql表达形式，即都以:named形式作为参数，便于统一处理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
