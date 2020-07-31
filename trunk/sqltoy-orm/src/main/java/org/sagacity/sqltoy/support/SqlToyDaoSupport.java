@@ -341,7 +341,7 @@ public class SqlToyDaoSupport {
 			return entities;
 		}
 		Class[] cascades = cascadeTypes;
-		if (cascades == null) {
+		if (cascades == null || cascades.length == 0) {
 			cascades = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
