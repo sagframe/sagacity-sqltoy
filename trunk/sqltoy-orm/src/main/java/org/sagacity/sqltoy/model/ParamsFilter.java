@@ -75,6 +75,54 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
+	 * 大于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter gt(Object values) {
+		this.type = "gt";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 大于等于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter gte(Object values) {
+		this.type = "gte";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 小于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter lt(Object values) {
+		this.type = "lt";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
+	 * 小于等于
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public ParamsFilter lte(Object values) {
+		this.type = "lte";
+		this.value = new Object[] { values };
+		return this;
+	}
+
+	/**
 	 * left like
 	 * 
 	 * @return

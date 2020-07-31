@@ -9,6 +9,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -106,9 +107,9 @@ public class EntityQuery implements Serializable {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
 					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置参数名称和过滤的类型!");
 				}
-				if (filter.getType().equals("eq") || filter.getType().equals("neq")) {
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte")) {
 					if (StringUtil.isBlank(filter.getValue())) {
-						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq和neq类型必须要设置values值!");
+						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
 				}
 				paramFilters.add(filter);
