@@ -311,7 +311,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
-		// 当没有指定级联子类默认全部级联加载
+		// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
 		if (cascades == null || cascades.length == 0) {
 			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}

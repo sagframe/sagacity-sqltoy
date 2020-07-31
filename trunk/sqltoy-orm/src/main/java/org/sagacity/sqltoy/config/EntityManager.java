@@ -616,13 +616,15 @@ public class EntityManager {
 		// 原则上可以:oneToManyModel.setMappedColumns(oneToMany.mappedColumns())
 		// 直接复制,考虑主键顺序可能会被人为调整
 		String idFieldName;
-		String var;
+		//主表字段名称
+		String masterField;
 		for (int i = 0; i < idSize; i++) {
-			//update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
-			var = oneToMany.fields()[i];
+			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
+			masterField = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
-				if (var.equalsIgnoreCase(idFieldName)) {
+				if (masterField.equalsIgnoreCase(idFieldName)) {
+					// mappedFields[j] = var;
 					mappedFields[j] = oneToMany.mappedFields()[i];
 					mappedColumns[j] = oneToMany.mappedColumns()[i];
 					break;
