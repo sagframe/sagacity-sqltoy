@@ -41,7 +41,7 @@ public class ParamsFilter implements Serializable {
 	/**
 	 * 转日期时的加减
 	 */
-	private int reduce = 0;
+	private int increase = 0;
 
 	/**
 	 * 日期格式
@@ -99,10 +99,10 @@ public class ParamsFilter implements Serializable {
 	 * 
 	 * @return
 	 */
-	public ParamsFilter toDate(DateType dateType, int reduce) {
+	public ParamsFilter toDate(DateType dateType, int increase) {
 		this.type = "to-date";
 		this.dateType = dateType.getValue();
-		this.reduce = reduce;
+		this.increase = increase;
 		return this;
 	}
 
@@ -143,8 +143,8 @@ public class ParamsFilter implements Serializable {
 	/**
 	 * @return the reduce
 	 */
-	public int getReduce() {
-		return reduce;
+	public int getIncrease() {
+		return increase;
 	}
 
 	/**

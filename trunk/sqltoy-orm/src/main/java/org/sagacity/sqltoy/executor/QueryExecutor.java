@@ -153,6 +153,11 @@ public class QueryExecutor implements Serializable {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
 					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
 				}
+				if (filter.getType().equals("eq") || filter.getType().equals("neq")) {
+					if (StringUtil.isBlank(filter.getValue())) {
+						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq和neq类型必须要设置values值!");
+					}
+				}
 				paramFilters.add(filter);
 			}
 		}
