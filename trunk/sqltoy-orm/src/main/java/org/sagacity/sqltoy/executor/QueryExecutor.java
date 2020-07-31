@@ -5,12 +5,15 @@ package org.sagacity.sqltoy.executor;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.math.RoundingMode;
 
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -158,6 +161,34 @@ public class QueryExecutor implements Serializable {
 	@Deprecated
 	public QueryExecutor reflectPropertyHandler(ReflectPropertyHandler reflectPropertyHandler) {
 		innerModel.reflectPropertyHandler = reflectPropertyHandler;
+		return this;
+	}
+
+	/**
+	 * @TODO 结果日期格式化
+	 * @param format
+	 * @param params
+	 * @return
+	 */
+	public QueryExecutor dateFmt(String format, String... params) {
+		// innerModel.lockMode = lockMode;
+		return this;
+	}
+
+	/**
+	 * @TODO 对结果的数字进行格式化
+	 * @param format
+	 * @param roundingMode
+	 * @param params
+	 * @return
+	 */
+	public QueryExecutor numFmt(String format, RoundingMode roundingMode, String... params) {
+		// innerModel.lockMode = lockMode;
+		return this;
+	}
+
+	public QueryExecutor secureMask(MaskType maskType, RoundingMode roundingMode, String... params) {
+		// innerModel.lockMode = lockMode;
 		return this;
 	}
 

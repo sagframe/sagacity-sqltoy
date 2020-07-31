@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.math.RoundingMode;
 
 import javax.sql.DataSource;
 
@@ -29,6 +30,11 @@ public class EntityQuery implements Serializable {
 	 */
 	private QueryExtend innerModel = new QueryExtend();
 
+	/**
+	 * @TODO where 条件
+	 * @param where
+	 * @return
+	 */
 	public EntityQuery where(String where) {
 		innerModel.where = where;
 		return this;
@@ -44,6 +50,7 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	// 排序
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
 		innerModel.orderBy.put(field, " ");
@@ -55,8 +62,25 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 锁记录
+	 * @param lockMode
+	 * @return
+	 */
 	public EntityQuery lock(LockMode lockMode) {
 		innerModel.lockMode = lockMode;
+		return this;
+	}
+
+	/**
+	 * @TODO 对结果字段进行安全脱敏
+	 * @param maskType
+	 * @param roundingMode
+	 * @param params
+	 * @return
+	 */
+	public EntityQuery secureMask(MaskType maskType, RoundingMode roundingMode, String... params) {
+		// innerModel.lockMode = lockMode;
 		return this;
 	}
 

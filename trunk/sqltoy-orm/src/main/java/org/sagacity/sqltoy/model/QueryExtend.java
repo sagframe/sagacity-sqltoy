@@ -11,6 +11,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 
 /**
@@ -60,5 +62,15 @@ public class QueryExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
+
+	/**
+	 * 对字段进行安全脱敏
+	 */
+	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
+
+	/**
+	 * 对字段进行格式化
+	 */
+	public LinkedHashMap<String, FormatModel> colFormats = new LinkedHashMap<String, FormatModel>();
 
 }
