@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +55,14 @@ public interface SqlToyCRUDService {
 	 * @param forceUpdateProps
 	 */
 	public Long update(Serializable entity, String... forceUpdateProps);
+
+	/**
+	 * @TODO 提供级联修改
+	 * @param serializableVO
+	 * @param forceUpdateProps
+	 * @return
+	 */
+	public Long updateCascade(Serializable serializableVO, String... forceUpdateProps);
 
 	/**
 	 * @todo 对属性进行强制修改,属性值为null则强制更新数据库字段值
