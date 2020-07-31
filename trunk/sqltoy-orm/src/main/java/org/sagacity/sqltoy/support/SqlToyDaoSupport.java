@@ -311,6 +311,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
+		//当没有指定级联子类默认全部级联加载
 		if (cascades == null) {
 			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
@@ -910,7 +911,7 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 提供单表简易查询进行删除操作
+	 * @TODO 提供单表简易查询进行删除操作(删除操作filters过滤无效)
 	 * @param entityClass
 	 * @param entityQuery
 	 * @return
@@ -919,6 +920,10 @@ public class SqlToyDaoSupport {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
 				|| StringUtil.isBlank(entityQuery.getValues())) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
+		}
+		// 做一个必要提示
+		if (!entityQuery.getParamFilters().isEmpty()) {
+			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
