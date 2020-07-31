@@ -1,5 +1,21 @@
 ﻿# v4.13.11 2020-7-31
-* 1、修复OneToMany解析bug(4.13.10 版本已经调整)。
+* 1、修复EntityManager中对OneToMany解析bug(4.13.10 版本已经调整)。
+
+```java
+for (int i = 0; i < idSize; i++) {
+			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
+			var = oneToMany.fields()[i];
+			for (int j = 0; j < idSize; j++) {
+				idFieldName = idList.get(j);
+				if (var.equalsIgnoreCase(idFieldName)) {
+					// 原mappedFields[j] = var;
+					mappedFields[j] = oneToMany.mappedFields()[i];
+					mappedColumns[j] = oneToMany.mappedColumns()[i];
+					break;
+				}
+			}
+}
+```
 * 2、修复loadCascade时Class... cascadeTypes 模式传参判空处理错误，导致无法实际进行加载(4.13.7 版本修改导致)
 
 ```java
@@ -17,7 +33,19 @@ protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Cl
 ```
 
 * 3、全部修复update级联时，在mysql、postgresql、sqlite 子表采用原生sql进行saveOrUpdateAll的bug(此bug是数据库自身的缺陷导致)，分解为:先update后saveIgnoreExist模式
-* 4、提供代码中动态查询增加filters
+* 4、提供代码中动态查询增加filters,便于今后文本块应用sql直接写于代码中情况下可以动态调用缓存翻译、filters等功能
+
+```java
+@Test
+public void findEntityByVO() {
+	List<StaffInfoVO> staffVOs = sqlToyLazyDao.findEntity(StaffInfoVO.class,
+			EntityQuery.create().where("#[staffId=:staffId]#[and staffName like :staffName] #[ and status=:status]")
+					.values(new StaffInfoVO().setStatus(-1).setStaffName("陈").setStaffId("S0005"))
+					.filters(new ParamsFilter("status").eq(-1)).filters(new ParamsFilter("staffName").rlike())
+					.filters(new ParamsFilter("staffId").primary()));
+	System.err.println(JSON.toJSONString(staffVOs));
+}
+```
 
 # v4.8.2 2019-10-12
 * 1、修复#[@if(:param==null) and t.name=:name] 其中:param为null则剔除整个#[] 之间sql的不合理规则
