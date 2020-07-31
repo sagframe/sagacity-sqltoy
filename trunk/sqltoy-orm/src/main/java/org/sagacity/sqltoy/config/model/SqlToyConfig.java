@@ -317,7 +317,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 */
 	public void addFilters(List<ParamFilterModel> paramFilters) {
 		if (paramFilters != null && !paramFilters.isEmpty()) {
-			this.filters.addAll(filters);
+			this.filters.addAll(paramFilters);
 		}
 	}
 
