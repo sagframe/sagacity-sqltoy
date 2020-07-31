@@ -12,7 +12,6 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
