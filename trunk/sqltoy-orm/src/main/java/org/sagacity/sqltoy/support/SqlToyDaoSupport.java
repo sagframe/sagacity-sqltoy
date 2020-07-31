@@ -917,28 +917,28 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getWhere())
-				|| StringUtil.isBlank(entityQuery.getValues())) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getExtend().where)
+				|| StringUtil.isBlank(entityQuery.getExtend().values)) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
 		}
 		// 做一个必要提示
-		if (!entityQuery.getParamFilters().isEmpty()) {
+		if (!entityQuery.getExtend().paramFilters.isEmpty()) {
 			logger.warn("删除操作设置动态条件过滤是无效的,数据删除查询条件必须是精准的!");
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
-		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+		String where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getExtend().where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getExtend().names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
 			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-					(Serializable) entityQuery.getValues()[0], null);
+					(Serializable) entityQuery.getExtend().values[0], null);
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
-					getDataSource(entityQuery.getDataSource()));
+					getDataSource(entityQuery.getExtend().dataSource));
 		}
-		return executeSql(sql, entityQuery.getNames(), entityQuery.getValues(), false,
-				getDataSource(entityQuery.getDataSource()));
+		return executeSql(sql, entityQuery.getExtend().names, entityQuery.getExtend().values, false,
+				getDataSource(entityQuery.getExtend().dataSource));
 	}
 
 	protected <T extends Serializable> Long deleteAll(final List<T> entities) {
@@ -1221,7 +1221,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getValues())) {
+		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getExtend().values)) {
 			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
 		}
 		return (List<T>) findEntityUtil(entityClass, null, entityQuery);
@@ -1239,7 +1239,7 @@ public class SqlToyDaoSupport {
 	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
 		if (null == entityClass || null == paginationModel || null == entityQuery
-				|| StringUtil.isBlank(entityQuery.getValues())) {
+				|| StringUtil.isBlank(entityQuery.getExtend().values)) {
 			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、value 值不能为空!");
 		}
 		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery);
@@ -1249,16 +1249,16 @@ public class SqlToyDaoSupport {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
-		if (StringUtil.isBlank(entityQuery.getWhere())) {
+		if (StringUtil.isBlank(entityQuery.getExtend().where)) {
 			where = SqlUtil.wrapWhere(entityMeta);
 		} else {
-			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getWhere());
+			where = SqlUtil.convertFieldsToColumns(entityMeta, entityQuery.getExtend().where);
 		}
 
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
-		if (!entityQuery.getTranslates().isEmpty()) {
-			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+		if (!entityQuery.getExtend().translates.isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getExtend().translates.values().iterator();
 			Translate translate;
 			String keyColumn;
 			while (iter.hasNext()) {
@@ -1274,9 +1274,9 @@ public class SqlToyDaoSupport {
 		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// 处理order by 排序
-		if (!entityQuery.getOrderBy().isEmpty()) {
+		if (!entityQuery.getExtend().orderBy.isEmpty()) {
 			sql = sql.concat(" order by ");
-			Iterator<Entry<String, String>> iter = entityQuery.getOrderBy().entrySet().iterator();
+			Iterator<Entry<String, String>> iter = entityQuery.getExtend().orderBy.entrySet().iterator();
 			Entry<String, String> entry;
 			String columnName;
 			int index = 0;
@@ -1299,23 +1299,24 @@ public class SqlToyDaoSupport {
 		}
 		QueryExecutor queryExecutor;
 		// :named 模式
-		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getNames())) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getValues()[0]).resultType(entityClass)
-					.dataSource(getDataSource(entityQuery.getDataSource()));
+		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(entityQuery.getExtend().names)) {
+			queryExecutor = new QueryExecutor(sql, (Serializable) entityQuery.getExtend().values[0])
+					.resultType(entityClass).dataSource(getDataSource(entityQuery.getExtend().dataSource));
 		} else {
-			queryExecutor = new QueryExecutor(sql).names(entityQuery.getNames()).values(entityQuery.getValues())
-					.resultType(entityClass).dataSource(getDataSource(entityQuery.getDataSource()));
+			queryExecutor = new QueryExecutor(sql).names(entityQuery.getExtend().names)
+					.values(entityQuery.getExtend().values).resultType(entityClass)
+					.dataSource(getDataSource(entityQuery.getExtend().dataSource));
 		}
 		// 设置额外的缓存翻译
-		if (!entityQuery.getTranslates().isEmpty()) {
-			Iterator<Translate> iter = entityQuery.getTranslates().values().iterator();
+		if (!entityQuery.getExtend().translates.isEmpty()) {
+			Iterator<Translate> iter = entityQuery.getExtend().translates.values().iterator();
 			while (iter.hasNext()) {
 				queryExecutor.translates(iter.next());
 			}
 		}
 		// 设置额外的参数条件过滤
-		if (!entityQuery.getParamFilters().isEmpty()) {
-			for (ParamsFilter filter : entityQuery.getParamFilters()) {
+		if (!entityQuery.getExtend().paramFilters.isEmpty()) {
+			for (ParamsFilter filter : entityQuery.getExtend().paramFilters) {
 				queryExecutor.filters(filter);
 			}
 		}
@@ -1345,8 +1346,9 @@ public class SqlToyDaoSupport {
 		}
 		// 非分页
 		if (paginationModel == null) {
-			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, entityQuery.getLockMode(),
-					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+					entityQuery.getExtend().lockMode, this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
+					.getRows();
 		}
 		// 跳过总记录数形式的分页
 		if (paginationModel.getSkipQueryCount()) {
