@@ -68,9 +68,4 @@ public class QueryExtend implements Serializable {
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
 
-	/**
-	 * 对字段进行格式化
-	 */
-	public LinkedHashMap<String, FormatModel> colFormats = new LinkedHashMap<String, FormatModel>();
-
 }

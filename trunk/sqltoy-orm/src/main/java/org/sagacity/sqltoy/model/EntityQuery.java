@@ -1,10 +1,10 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.math.RoundingMode;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -75,12 +75,18 @@ public class EntityQuery implements Serializable {
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
-	 * @param roundingMode
 	 * @param params
 	 * @return
 	 */
-	public EntityQuery secureMask(MaskType maskType, RoundingMode roundingMode, String... params) {
-		// innerModel.lockMode = lockMode;
+	public EntityQuery secureMask(MaskType maskType, String... params) {
+		if (maskType != null && params != null && params.length > 0) {
+			for (String param : params) {
+				SecureMask mask = new SecureMask();
+				mask.setColumn(param);
+				mask.setType(maskType.getValue());
+				innerModel.secureMask.put(param, mask);
+			}
+		}
 		return this;
 	}
 
