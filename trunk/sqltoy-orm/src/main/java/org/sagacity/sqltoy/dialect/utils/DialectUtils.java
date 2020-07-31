@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -122,8 +123,9 @@ public class DialectUtils {
 	 */
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
-		String[] paramsNamed = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
+		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		if (startIndex == null && endIndex == null) {
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
 		}
@@ -396,29 +398,30 @@ public class DialectUtils {
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		SqlToyConfig result;
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
 			// 没有自定义缓存翻译直接返回
-			if (queryExecutor.getTranslates() == null || queryExecutor.getTranslates().isEmpty()) {
+			if (extend.translates == null || extend.translates.isEmpty()) {
 				return sqlToyConfig;
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
 			result = sqlToyConfig.clone();
 			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+				result.getTranslateMap().putAll(extend.translates);
 			} else {
-				result.setTranslateMap(queryExecutor.getTranslates());
+				result.setTranslateMap(extend.translates);
 			}
 			return result;
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
-		if (queryExecutor.getTranslates() != null && !queryExecutor.getTranslates().isEmpty()) {
+		if (extend.translates != null && !extend.translates.isEmpty()) {
 			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(queryExecutor.getTranslates());
+				result.getTranslateMap().putAll(extend.translates);
 			} else {
-				result.setTranslateMap(queryExecutor.getTranslates());
+				result.setTranslateMap(extend.translates);
 			}
 		}
 		if (!isNamed && wrapNamed) {
@@ -450,11 +453,9 @@ public class DialectUtils {
 			result.setCountSql(sqlParams.getSql());
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
-
 		// 替换sharding table
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, dialect,
-				queryExecutor.getTableShardingParamsName(sqlToyConfig),
-				queryExecutor.getTableShardingParamsValue(sqlToyConfig));
+				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
 		return result;
 	}
 

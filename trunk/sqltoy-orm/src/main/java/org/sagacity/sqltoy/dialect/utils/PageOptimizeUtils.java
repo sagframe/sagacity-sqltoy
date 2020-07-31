@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
@@ -43,9 +44,9 @@ public class PageOptimizeUtils {
 		if (!sqlToyConfig.isPageOptimize() || null == sqlToyConfig.getId()) {
 			return null;
 		}
-
-		String[] paramNames = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramValues = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String[] paramNames = extend.getParamsName(sqlToyConfig);
+		Object[] paramValues = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
 		if (paramValues == null || paramValues.length == 0) {
 			return sqlToyConfig.getId();

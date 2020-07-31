@@ -47,6 +47,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
 import org.sagacity.sqltoy.model.ShardingModel;
@@ -336,11 +337,12 @@ public class DialectFactory {
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final Double randomCount, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		}
 		try {
-			queryExecutor.optimizeArgs(sqlToyConfig);
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -388,10 +390,10 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}
@@ -518,7 +520,8 @@ public class DialectFactory {
 	 */
 	public QueryResult findSkipTotalCountPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("findSkipTotalCountPage operate sql is null!");
 		}
 		int limitSize = sqlToyContext.getPageFetchSizeLimit();
@@ -528,7 +531,7 @@ public class DialectFactory {
 					+ "}>= limit:{" + limitSize + "}!");
 		}
 		try {
-			queryExecutor.optimizeArgs(sqlToyConfig);
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -546,10 +549,10 @@ public class DialectFactory {
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							queryResult.setSkipQueryCount(true);
 							this.setResult(queryResult);
@@ -575,11 +578,12 @@ public class DialectFactory {
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
 		try {
-			queryExecutor.optimizeArgs(sqlToyConfig);
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -627,13 +631,12 @@ public class DialectFactory {
 								if (pageNo == -1) {
 									// 通过参数处理最终的sql和参数值
 									SqlToyResult queryParam = SqlConfigParseUtils.processSql(
-											realSqlToyConfig.getSql(dialect),
-											queryExecutor.getParamsName(realSqlToyConfig),
-											queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
+											realSqlToyConfig.getSql(dialect), extend.getParamsName(realSqlToyConfig),
+											extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 									queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 											realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-											queryExecutor.getRowCallbackHandler(), conn, null, dbType, dialect,
-											queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+											extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize,
+											extend.maxRows);
 									long totalRecord = (queryResult.getRows() == null) ? 0
 											: queryResult.getRows().size();
 									queryResult.setPageNo(1L);
@@ -654,10 +657,10 @@ public class DialectFactory {
 										queryExecutor, conn, dbType, dialect);
 								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 								// 结果映射成对象
-								if (queryExecutor.getResultType() != null) {
+								if (queryExecutor.getInnerModel().resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 											ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-											(Class) queryExecutor.getResultType()));
+											(Class) queryExecutor.getInnerModel().resultType));
 								}
 							}
 							this.setResult(queryResult);
@@ -682,11 +685,12 @@ public class DialectFactory {
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
 		try {
-			queryExecutor.optimizeArgs(sqlToyConfig);
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -718,10 +722,10 @@ public class DialectFactory {
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}
@@ -745,11 +749,12 @@ public class DialectFactory {
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
 		try {
-			queryExecutor.optimizeArgs(sqlToyConfig);
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -760,21 +765,21 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									queryExecutor.getRowCallbackHandler(), conn, lockMode, dbType, dialect,
-									queryExecutor.getFetchSize(), queryExecutor.getMaxRows());
+									extend.rowCallbackHandler, conn, lockMode, dbType, dialect, extend.fetchSize,
+									extend.maxRows);
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
 							// 结果映射成对象
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}
@@ -797,10 +802,11 @@ public class DialectFactory {
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
-		if (queryExecutor.getSql() == null) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (extend.sql == null) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
-		queryExecutor.optimizeArgs(sqlToyConfig);
+		extend.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
 			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
@@ -883,9 +889,10 @@ public class DialectFactory {
 				sql = countSql.toString();
 			}
 		}
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 通过参数处理最终的sql和参数值
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig));
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}
@@ -1384,7 +1391,8 @@ public class DialectFactory {
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
-		queryExecutor.optimizeArgs(sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		extend.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1395,16 +1403,16 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect);
 
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}
@@ -1421,7 +1429,8 @@ public class DialectFactory {
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final Integer topSize, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
-		queryExecutor.optimizeArgs(sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		extend.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1433,16 +1442,16 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchTop(sqlToyContext,
 									sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), topSize,
 									updateRowHandler, conn, dbType, dialect);
 
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}
@@ -1459,7 +1468,8 @@ public class DialectFactory {
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final Integer random, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
-		queryExecutor.optimizeArgs(sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		extend.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1470,16 +1480,16 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									queryExecutor.getParamsName(realSqlToyConfig),
-									queryExecutor.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsName(realSqlToyConfig),
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchRandom(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
 									updateRowHandler, conn, dbType, dialect);
-							if (queryExecutor.getResultType() != null) {
+							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getResultType()));
+										(Class) queryExecutor.getInnerModel().resultType));
 							}
 							this.setResult(queryResult);
 						}

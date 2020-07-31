@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
@@ -776,6 +777,7 @@ public class ResultUtils {
 		if (sqlToyConfig.getResultProcessor() != null && !sqlToyConfig.getResultProcessor().isEmpty()) {
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
 				// 数据旋转只能存在一个
@@ -786,8 +788,8 @@ public class ResultUtils {
 								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search),
 								queryExecutor, dialect, false);
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-								queryExecutor.getParamsName(pivotSqlConfig),
-								queryExecutor.getParamsValue(sqlToyContext, pivotSqlConfig));
+								extend.getParamsName(pivotSqlConfig),
+								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
 								pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
 								sqlToyConfig.isIgnoreEmpty());
@@ -887,7 +889,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
-		//类型为null就默认返回二维List
+		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
@@ -924,7 +926,7 @@ public class ResultUtils {
 			}
 			return result;
 		}
-		//封装成VO对象形式
+		// 封装成VO对象形式
 		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
 	}
 
@@ -951,10 +953,10 @@ public class ResultUtils {
 	 * @return
 	 */
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
-		Type resultType = queryExecutor.getResultType();
+		Type resultType = queryExecutor.getInnerModel().resultType;
 		boolean hump = true;
 		if (null != resultType && (resultType.equals(HashMap.class) || resultType.equals(Map.class)
-				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.isHumpMapLabel()) {
+				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.getInnerModel().humpMapLabel) {
 			hump = false;
 		}
 		if (hump) {

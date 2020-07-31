@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -209,9 +210,10 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search);
 		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				this.getDataSource(extend.dataSource, sqlToyConfig));
 	}
 
 	protected StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues,
@@ -387,9 +389,10 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				this.getDataSource(extend.dataSource, sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0) {
 			return rows.get(0);
@@ -553,7 +556,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -568,10 +571,11 @@ public class SqlToyDaoSupport {
 		if (paginationModel.getSkipQueryCount() != null && paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
 					paginationModel.getPageNo(), paginationModel.getPageSize(),
-					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
 		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-				paginationModel.getPageSize(), this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				paginationModel.getPageSize(),
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -623,7 +627,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -636,7 +640,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig));
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
@@ -964,9 +968,9 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
 
 	/**
@@ -979,9 +983,9 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
 			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
 		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
 
 	/**
@@ -994,9 +998,9 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
 			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getSql(), SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
 		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, sqlToyConfig, random, updateRowHandler,
-				this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
 
 	/**
@@ -1349,18 +1353,16 @@ public class SqlToyDaoSupport {
 		// 非分页
 		if (paginationModel == null) {
 			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode,
-					this.getDataSource(queryExecutor.getDataSource(), sqlToyConfig)).getRows();
+					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 		}
 		// 跳过总记录数形式的分页
 		if (paginationModel.getSkipQueryCount()) {
-			return dialectFactory
-					.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-							paginationModel.getPageSize(), getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
-					.getPageResult();
+			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
+					paginationModel.getPageNo(), paginationModel.getPageSize(),
+					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getPageResult();
 		}
-		return dialectFactory
-				.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-						paginationModel.getPageSize(), getDataSource(queryExecutor.getDataSource(), sqlToyConfig))
+		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
+				paginationModel.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig))
 				.getPageResult();
 	}
 

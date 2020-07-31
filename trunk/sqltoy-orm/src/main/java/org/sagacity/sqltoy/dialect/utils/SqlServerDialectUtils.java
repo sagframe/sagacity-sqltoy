@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -92,11 +93,11 @@ public class SqlServerDialectUtils {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
-				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
-				queryExecutor.getMaxRows());
+				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
 	}
 
 	/**

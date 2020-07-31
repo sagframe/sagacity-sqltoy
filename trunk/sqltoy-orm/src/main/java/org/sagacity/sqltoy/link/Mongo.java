@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -145,14 +146,17 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) queryExecutor.getResultType());
+				return aggregate(getMongoTemplate(), sqlToyConfig, realMql,
+						(Class) queryExecutor.getInnerModel().resultType);
 			}
-			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql,
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -172,10 +176,12 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) queryExecutor.getResultType());
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql,
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -195,11 +201,12 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql,
-					(Class) queryExecutor.getResultType());
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);

@@ -10,6 +10,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,9 @@ public class ElasticSqlPlugin {
 	 */
 	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		realSql = realSql + " limit " + (pageModel.getPageNo() - 1) * pageModel.getPageSize() + ","
 				+ pageModel.getPageSize();
@@ -53,7 +55,7 @@ public class ElasticSqlPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) queryExecutor.getResultType());
+				(Class) queryExecutor.getInnerModel().resultType);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -70,8 +72,9 @@ public class ElasticSqlPlugin {
 	 */
 	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
-		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-				queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		if (topSize != null) {
 			realSql = realSql + " limit 0," + topSize;
@@ -84,7 +87,7 @@ public class ElasticSqlPlugin {
 			}
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) queryExecutor.getResultType());
+				(Class) queryExecutor.getInnerModel().resultType);
 		return result.getRows();
 	}
 
