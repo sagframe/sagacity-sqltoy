@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -1315,16 +1316,16 @@ public class SqlToyDaoSupport {
 		}
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
-			Iterator<Translate> iter = innerModel.translates.values().iterator();
-			while (iter.hasNext()) {
-				queryExecutor.translates(iter.next());
-			}
+			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);
 		}
 		// 设置额外的参数条件过滤
 		if (!innerModel.paramFilters.isEmpty()) {
-			for (ParamsFilter filter : innerModel.paramFilters) {
-				queryExecutor.filters(filter);
-			}
+			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
+		}
+
+		// 设置安全脱敏
+		if (!innerModel.secureMask.isEmpty()) {
+			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略
