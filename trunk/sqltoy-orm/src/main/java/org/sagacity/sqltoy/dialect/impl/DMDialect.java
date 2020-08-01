@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *              into里面使用nvl报错;目前采取了先更新后saveIgnore的操作模式 2、updateFetch操作报游标错误
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2020-06-05
- * @Modification Date:2020-06-05 初始创建达梦数据库支持
+ * @modify Date:2020-06-05 初始创建达梦数据库支持
  */
 public class DMDialect implements Dialect {
 	/**

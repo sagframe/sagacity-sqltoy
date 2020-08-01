@@ -192,7 +192,7 @@ public class ElasticSearchPlugin {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null);
+		ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
 				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));

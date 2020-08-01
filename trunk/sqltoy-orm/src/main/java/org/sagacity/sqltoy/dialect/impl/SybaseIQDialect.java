@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  *              public.ENABLE_LOB_VARIABLES='ON') url上需要指定参数：&textsize=204801024
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version Revision:v1.0,Date:2013-8-29
- * @Modification Date:2013-8-29 {填写修改说明}
+ * @modify Date:2013-8-29 {填写修改说明}
  */
 @SuppressWarnings({ "rawtypes" })
 public class SybaseIQDialect implements Dialect {

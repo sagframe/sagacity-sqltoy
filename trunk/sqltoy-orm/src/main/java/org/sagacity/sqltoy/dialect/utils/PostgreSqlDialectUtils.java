@@ -30,7 +30,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialectUtils.java,Revision:v1.0,Date:2015年3月5日
- * @Modification Date:2020-06-12 修复10+版本对identity主键生成的策略
+ * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 public class PostgreSqlDialectUtils {
 	/**

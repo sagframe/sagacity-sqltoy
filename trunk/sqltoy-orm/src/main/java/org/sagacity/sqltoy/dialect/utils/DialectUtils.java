@@ -63,11 +63,11 @@ import org.slf4j.LoggerFactory;
  * @description 提供一些不同数据库都通用的逻辑处理,避免在各个数据库工具类中写重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectUtils.java,Revision:v1.0,Date:2014年12月26日
- * @Modification {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
- * @Modification {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
- * @Modification {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
- * @Modification {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
- * @Modification {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
+ * @modify {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
+ * @modify {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
+ * @modify {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
+ * @modify {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
+ * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
  *               count(1) from错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -806,9 +806,10 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet
-	 * @throws Exception
+	 * @param extend
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet) {
+	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
+			QueryExecutorExtend extend) {
 		LabelIndexModel labelIndexMap = null;
 		// HashMap<String, Integer> wrapLabelNoUnderlineIndexMap
 		// 字段脱敏

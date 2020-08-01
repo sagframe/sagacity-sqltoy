@@ -119,7 +119,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 列格式模型
 	 */
 	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
-
+	
 	/**
 	 * @param sqlToyConfig
 	 * @return

@@ -337,7 +337,7 @@ public class DialectFactory {
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final Double randomCount, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		}
@@ -389,7 +389,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
 							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -520,7 +520,7 @@ public class DialectFactory {
 	 */
 	public QueryResult findSkipTotalCountPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("findSkipTotalCountPage operate sql is null!");
 		}
@@ -547,7 +547,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
 							// 结果映射成对象
 							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -578,7 +578,7 @@ public class DialectFactory {
 	 */
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
@@ -655,7 +655,7 @@ public class DialectFactory {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
-								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
+								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象
 								if (queryExecutor.getInnerModel().resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -685,7 +685,7 @@ public class DialectFactory {
 	 */
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
@@ -720,7 +720,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
 							// 结果映射成对象
 							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -749,7 +749,7 @@ public class DialectFactory {
 	 */
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
@@ -774,7 +774,7 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet);
+							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
 							// 结果映射成对象
 							if (queryExecutor.getInnerModel().resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
@@ -1549,7 +1549,7 @@ public class DialectFactory {
 									inParamsValue);
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet);
+							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet, null);
 							// }
 							// 映射成对象
 							if (resultType != null) {
