@@ -75,16 +75,16 @@ public class EntityQuery implements Serializable {
 	/**
 	 * @TODO 对结果字段进行安全脱敏
 	 * @param maskType
-	 * @param params
+	 * @param columns
 	 * @return
 	 */
-	public EntityQuery secureMask(MaskType maskType, String... params) {
-		if (maskType != null && params != null && params.length > 0) {
-			for (String param : params) {
+	public EntityQuery secureMask(MaskType maskType, String... columns) {
+		if (maskType != null && columns != null && columns.length > 0) {
+			for (String column : columns) {
 				SecureMask mask = new SecureMask();
-				mask.setColumn(param);
+				mask.setColumn(column);
 				mask.setType(maskType.getValue());
-				innerModel.secureMask.put(param, mask);
+				innerModel.secureMask.put(column, mask);
 			}
 		}
 		return this;

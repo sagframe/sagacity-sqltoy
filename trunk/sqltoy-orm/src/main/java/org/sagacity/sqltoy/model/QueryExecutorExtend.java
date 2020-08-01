@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -15,7 +16,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
@@ -108,6 +111,16 @@ public class QueryExecutorExtend implements Serializable {
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
 	/**
+	 * 对字段进行安全脱敏
+	 */
+	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
+
+	/**
+	 * 列格式模型
+	 */
+	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
+
+	/**
 	 * @param sqlToyConfig
 	 * @return
 	 */
@@ -148,20 +161,6 @@ public class QueryExecutorExtend implements Serializable {
 		}
 		return sqlToyConfig.getDataSourceShardingParams();
 	}
-
-//	/**
-//	 * @return the paramsValue
-//	 */
-//	public Object[] getParamsValue() {
-//		return paramsValue;
-//	}
-//
-//	/**
-//	 * @return the fetchSize
-//	 */
-//	public int getFetchSize() {
-//		return fetchSize;
-//	}
 
 	/**
 	 * @todo 获取sql中参数对应的值

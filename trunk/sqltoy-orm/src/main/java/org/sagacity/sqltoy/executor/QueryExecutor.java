@@ -11,6 +11,8 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.ParamsFilter;
@@ -169,8 +171,16 @@ public class QueryExecutor implements Serializable {
 	 * @param params
 	 * @return
 	 */
-	public QueryExecutor dateFmt(String format, String... params) {
-		// innerModel.lockMode = lockMode;
+	public QueryExecutor dateFmt(String format, String... columns) {
+		if (StringUtil.isNotBlank(format) && columns != null && columns.length > 0) {
+			for (String column : columns) {
+				FormatModel fmt = new FormatModel();
+				fmt.setType(1);
+				fmt.setColumn(column);
+				fmt.setFormat(format);
+				innerModel.colsFormat.put(column, fmt);
+			}
+		}
 		return this;
 	}
 
@@ -181,13 +191,35 @@ public class QueryExecutor implements Serializable {
 	 * @param params
 	 * @return
 	 */
-	public QueryExecutor numFmt(String format, RoundingMode roundingMode, String... params) {
-		// innerModel.lockMode = lockMode;
+	public QueryExecutor numFmt(String format, RoundingMode roundingMode, String... columns) {
+		if (StringUtil.isNotBlank(format) && columns != null && columns.length > 0) {
+			for (String column : columns) {
+				FormatModel fmt = new FormatModel();
+				fmt.setType(2);
+				fmt.setColumn(column);
+				fmt.setFormat(format);
+				fmt.setRoundingMode(roundingMode);
+				innerModel.colsFormat.put(column, fmt);
+			}
+		}
 		return this;
 	}
 
-	public QueryExecutor secureMask(MaskType maskType, RoundingMode roundingMode, String... params) {
-		// innerModel.lockMode = lockMode;
+	/**
+	 * @TODO 对结果字段进行安全脱敏
+	 * @param maskType
+	 * @param params
+	 * @return
+	 */
+	public QueryExecutor secureMask(MaskType maskType, String... columns) {
+		if (maskType != null && columns != null && columns.length > 0) {
+			for (String column : columns) {
+				SecureMask mask = new SecureMask();
+				mask.setColumn(column);
+				mask.setType(maskType.getValue());
+				innerModel.secureMask.put(column, mask);
+			}
+		}
 		return this;
 	}
 
