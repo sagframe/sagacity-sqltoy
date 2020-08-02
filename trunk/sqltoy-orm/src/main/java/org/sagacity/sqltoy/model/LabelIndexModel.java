@@ -21,9 +21,10 @@ public class LabelIndexModel implements Serializable {
 	private HashMap<String, Integer> noUnlinelabelIndexMap = new HashMap<String, Integer>();
 
 	public void put(String key, Integer index) {
+		// 统一转小写
 		labelIndexMap.put(key.toLowerCase(), index);
 		if (key.contains("_") || key.contains("-")) {
-			labelIndexMap.put(key.toLowerCase().replaceAll("\\_|\\-", ""), index);
+			noUnlinelabelIndexMap.put(key.toLowerCase().replaceAll("\\_|\\-", ""), index);
 		}
 	}
 
@@ -38,8 +39,7 @@ public class LabelIndexModel implements Serializable {
 
 	public boolean containsKey(String key) {
 		String realKey = key.toLowerCase();
-		boolean has = labelIndexMap.containsKey(realKey);
-		if (has) {
+		if (labelIndexMap.containsKey(realKey)) {
 			return true;
 		}
 		return noUnlinelabelIndexMap.containsKey(realKey);

@@ -811,46 +811,37 @@ public class ResultUtils {
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
+		// 数据为空直接跳出处理
 		if (dataSetResult.getRows() == null || dataSetResult.getRows().isEmpty()) {
 			return;
 		}
+		// 整理列名称跟index的对照map
 		LabelIndexModel labelIndexMap = null;
 		if (!sqlToyConfig.getSecureMasks().isEmpty() || !sqlToyConfig.getFormatModels().isEmpty()
 				|| (extend != null && (!extend.secureMask.isEmpty() || !extend.colsFormat.isEmpty()))
-				|| sqlToyConfig.getResultProcessor() != null) {
+				|| !sqlToyConfig.getResultProcessor().isEmpty()) {
 			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 		}
 		// 字段脱敏
 		if (!sqlToyConfig.getSecureMasks().isEmpty()) {
-			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 			secureMask(dataSetResult, sqlToyConfig.getSecureMasks().iterator(), labelIndexMap);
 		}
 
 		// 自动格式化
 		if (!sqlToyConfig.getFormatModels().isEmpty()) {
-			if (labelIndexMap == null) {
-				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			}
 			formatColumn(dataSetResult, sqlToyConfig.getFormatModels().iterator(), labelIndexMap);
 		}
 		// 扩展脱敏和格式化处理
 		if (extend != null) {
-			if (labelIndexMap == null) {
-				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			}
 			if (!extend.secureMask.isEmpty()) {
 				secureMask(dataSetResult, extend.secureMask.values().iterator(), labelIndexMap);
 			}
-
 			if (!extend.colsFormat.isEmpty()) {
 				formatColumn(dataSetResult, extend.colsFormat.values().iterator(), labelIndexMap);
 			}
 		}
 		// 计算
-		if (sqlToyConfig.getResultProcessor() != null) {
-			if (labelIndexMap == null) {
-				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			}
+		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
 			List items = dataSetResult.getRows();
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
