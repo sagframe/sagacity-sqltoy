@@ -37,7 +37,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
-import org.sagacity.sqltoy.model.QueryExtend;
+import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -922,7 +922,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
-		QueryExtend innerModel = entityQuery.getInnerModel();
+		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(innerModel.where)
 				|| StringUtil.isBlank(innerModel.values)) {
 			throw new IllegalArgumentException("deleteByQuery entityClass、where、value 值不能为空!");
@@ -1253,7 +1253,7 @@ public class SqlToyDaoSupport {
 	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery) {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
-		QueryExtend innerModel = entityQuery.getInnerModel();
+		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
 			where = SqlUtil.wrapWhere(entityMeta);

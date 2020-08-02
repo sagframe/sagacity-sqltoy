@@ -24,8 +24,10 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**
- * @author zhong
- *
+ * @project sqltoy-orm
+ * @description 针对QueryExecutor构造一个存放参数的内部类，避免QueryExecutor使用时带出大量的get方法
+ * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:QueryExecutorExtend.java,Revision:v1.0,Date:2020-8-1
  */
 public class QueryExecutorExtend implements Serializable {
 
@@ -119,7 +121,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 列格式模型
 	 */
 	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
-	
+
 	/**
 	 * @param sqlToyConfig
 	 * @return

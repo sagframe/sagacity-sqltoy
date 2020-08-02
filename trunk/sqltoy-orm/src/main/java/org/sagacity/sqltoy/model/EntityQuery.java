@@ -28,7 +28,7 @@ public class EntityQuery implements Serializable {
 	/**
 	 * 通过扩展对象减少EntityQuery里面的大量get方法，减少对开发过程的影响
 	 */
-	private QueryExtend innerModel = new QueryExtend();
+	private EntityQueryExtend innerModel = new EntityQueryExtend();
 
 	/**
 	 * @TODO where 条件
@@ -134,7 +134,7 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	public QueryExtend getInnerModel() {
+	public EntityQueryExtend getInnerModel() {
 		return innerModel;
 	}
 }
