@@ -398,7 +398,6 @@ public class DialectUtils {
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		SqlToyConfig result;
 		// 判断是否xml文件中定义的sql
-		boolean hasId = StringUtil.isNotBlank(sqlToyConfig.getId());
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
@@ -408,21 +407,12 @@ public class DialectUtils {
 				return sqlToyConfig;
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
-			if (hasId) {
-				result = sqlToyConfig.clone();
-			} else {
-				result = sqlToyConfig;
-			}
+			result = sqlToyConfig.clone();
 			result.getTranslateMap().putAll(extend.translates);
 			return result;
 		}
-		// xml中定义的需要clone避免对原生配置的修改
 		// clone一个,然后替换sql中的?并进行必要的参数加工
-		if (hasId) {
-			result = sqlToyConfig.clone();
-		} else {
-			result = sqlToyConfig;
-		}
+		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
 		if (!extend.translates.isEmpty()) {
 			result.getTranslateMap().putAll(extend.translates);

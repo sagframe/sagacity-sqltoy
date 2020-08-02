@@ -42,6 +42,9 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public Object[] values;
 
+	/**
+	 * 数据源
+	 */
 	public DataSource dataSource;
 
 	/**
