@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * 构造一个综合数据库表XX_AA 模式字段和java对象属性剔除下划线骆驼命名法
- * 
- * @author zhong
- *
+ * @project sqltoy-orm
+ * @description 构造一个综合数据库表XX_AA 模式字段和java对象属性剔除下划线骆驼命名法
+ * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:LabelIndexModel.java,Revision:v1.0,Date:2020-8-1
  */
 public class LabelIndexModel implements Serializable {
 
