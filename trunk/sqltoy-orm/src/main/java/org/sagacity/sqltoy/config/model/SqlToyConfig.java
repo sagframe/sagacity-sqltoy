@@ -41,17 +41,17 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 翻译器
 	 */
-	private HashMap<String, Translate> translateMap = null;
+	private HashMap<String, Translate> translateMap = new HashMap<String, Translate>();
 
 	/**
 	 * 安全脱敏配置
 	 */
-	private SecureMask[] secureMasks = null;
+	private List<SecureMask> secureMasks = new ArrayList<SecureMask>();
 
 	/**
 	 * 格式化定义
 	 */
-	private FormatModel[] formatModels = null;
+	private List<FormatModel> formatModels = new ArrayList<FormatModel>();
 
 	/**
 	 * sql特定使用的dataSource(一般在项目跨多个数据库且是查询语句时使用)
@@ -224,7 +224,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 查询结果处理器
 	 */
-	private List resultProcessor;
+	private List resultProcessor = new ArrayList();
 
 	private NoSqlConfigModel noSqlConfigModel;
 
@@ -650,14 +650,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @return the secureMasks
 	 */
-	public SecureMask[] getSecureMasks() {
+	public List<SecureMask> getSecureMasks() {
 		return secureMasks;
 	}
 
 	/**
 	 * @param secureMasks the secureMasks to set
 	 */
-	public void setSecureMasks(SecureMask[] secureMasks) {
+	public void setSecureMasks(List<SecureMask> secureMasks) {
 		this.secureMasks = secureMasks;
 	}
 
@@ -692,14 +692,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @return the formatModels
 	 */
-	public FormatModel[] getFormatModels() {
+	public List<FormatModel> getFormatModels() {
 		return formatModels;
 	}
 
 	/**
 	 * @param formatModels the formatModels to set
 	 */
-	public void setFormatModels(FormatModel[] formatModels) {
+	public void setFormatModels(List<FormatModel> formatModels) {
 		this.formatModels = formatModels;
 	}
 

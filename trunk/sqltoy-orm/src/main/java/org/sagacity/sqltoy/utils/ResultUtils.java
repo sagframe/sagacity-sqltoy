@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,15 +136,16 @@ public class ResultUtils {
 	/**
 	 * @todo 对字段进行安全脱敏
 	 * @param result
-	 * @param sqlToyConfig
+	 * @param masks
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig, LabelIndexModel labelIndexMap) {
+	private static void secureMask(DataSetResult result, Iterator<SecureMask> masks, LabelIndexModel labelIndexMap) {
 		List<List> rows = result.getRows();
-		SecureMask[] masks = sqlToyConfig.getSecureMasks();
 		Integer index;
 		Object value;
-		for (SecureMask mask : masks) {
+		SecureMask mask;
+		while (masks.hasNext()) {
+			mask = masks.next();
 			index = labelIndexMap.get(mask.getColumn());
 			if (index != null) {
 				int column = index.intValue();
@@ -160,15 +162,17 @@ public class ResultUtils {
 	/**
 	 * @todo 对字段进行格式化
 	 * @param result
-	 * @param sqlToyConfig
+	 * @param formats
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig, LabelIndexModel labelIndexMap) {
+	private static void formatColumn(DataSetResult result, Iterator<FormatModel> formats,
+			LabelIndexModel labelIndexMap) {
 		List<List> rows = result.getRows();
-		FormatModel[] formats = sqlToyConfig.getFormatModels();
 		Integer index;
 		Object value;
-		for (FormatModel fmt : formats) {
+		FormatModel fmt;
+		while (formats.hasNext()) {
+			fmt = formats.next();
 			index = labelIndexMap.get(fmt.getColumn());
 			if (index != null) {
 				int column = index.intValue();
@@ -285,11 +289,8 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
-		Boolean hasTranslate = false;
-		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
-			hasTranslate = true;
-		}
-		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
+		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
@@ -810,23 +811,41 @@ public class ResultUtils {
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
+		if (dataSetResult.getRows() == null || dataSetResult.getRows().isEmpty()) {
+			return;
+		}
 		LabelIndexModel labelIndexMap = null;
-		// HashMap<String, Integer> wrapLabelNoUnderlineIndexMap
-		// 字段脱敏
-		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
+		if (!sqlToyConfig.getSecureMasks().isEmpty() || !sqlToyConfig.getFormatModels().isEmpty()
+				|| (extend != null && (!extend.secureMask.isEmpty() || !extend.colsFormat.isEmpty()))
+				|| sqlToyConfig.getResultProcessor() != null) {
 			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			// wrapLabelNoUnderlineIndexMap(dataSetResult.getLabelNames());
-			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
+		}
+		// 字段脱敏
+		if (!sqlToyConfig.getSecureMasks().isEmpty()) {
+			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			secureMask(dataSetResult, sqlToyConfig.getSecureMasks().iterator(), labelIndexMap);
 		}
 
 		// 自动格式化
-		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
+		if (!sqlToyConfig.getFormatModels().isEmpty()) {
 			if (labelIndexMap == null) {
 				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 			}
-			formatColumn(dataSetResult, sqlToyConfig, labelIndexMap);
+			formatColumn(dataSetResult, sqlToyConfig.getFormatModels().iterator(), labelIndexMap);
 		}
+		// 扩展脱敏和格式化处理
+		if (extend != null) {
+			if (labelIndexMap == null) {
+				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+			}
+			if (!extend.secureMask.isEmpty()) {
+				secureMask(dataSetResult, extend.secureMask.values().iterator(), labelIndexMap);
+			}
 
+			if (!extend.colsFormat.isEmpty()) {
+				formatColumn(dataSetResult, extend.colsFormat.values().iterator(), labelIndexMap);
+			}
+		}
 		// 计算
 		if (sqlToyConfig.getResultProcessor() != null) {
 			if (labelIndexMap == null) {

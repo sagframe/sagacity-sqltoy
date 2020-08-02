@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
  * @modify {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
  * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
- *               count(1) from错误}
+ *         count(1) from错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -402,27 +402,19 @@ public class DialectUtils {
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
 			// 没有自定义缓存翻译直接返回
-			if (extend.translates == null || extend.translates.isEmpty()) {
+			if (extend.translates.isEmpty()) {
 				return sqlToyConfig;
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
 			result = sqlToyConfig.clone();
-			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(extend.translates);
-			} else {
-				result.setTranslateMap(extend.translates);
-			}
+			result.getTranslateMap().putAll(extend.translates);
 			return result;
 		}
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
-		if (extend.translates != null && !extend.translates.isEmpty()) {
-			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(extend.translates);
-			} else {
-				result.setTranslateMap(extend.translates);
-			}
+		if (!extend.translates.isEmpty()) {
+			result.getTranslateMap().putAll(extend.translates);
 		}
 		if (!isNamed && wrapNamed) {
 			UnifySqlParams sqlParams;
