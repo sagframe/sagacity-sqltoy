@@ -139,8 +139,7 @@ public class ResultUtils {
 	 * @param masks
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(DataSetResult result, Iterator<SecureMask> masks, LabelIndexModel labelIndexMap) {
-		List<List> rows = result.getRows();
+	private static void secureMask(List<List> rows, Iterator<SecureMask> masks, LabelIndexModel labelIndexMap) {
 		Integer index;
 		Object value;
 		SecureMask mask;
@@ -165,9 +164,7 @@ public class ResultUtils {
 	 * @param formats
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(DataSetResult result, Iterator<FormatModel> formats,
-			LabelIndexModel labelIndexMap) {
-		List<List> rows = result.getRows();
+	private static void formatColumn(List<List> rows, Iterator<FormatModel> formats, LabelIndexModel labelIndexMap) {
 		Integer index;
 		Object value;
 		FormatModel fmt;
@@ -811,39 +808,42 @@ public class ResultUtils {
 	 */
 	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
+		List items = dataSetResult.getRows();
 		// 数据为空直接跳出处理
-		if (dataSetResult.getRows() == null || dataSetResult.getRows().isEmpty()) {
+		if (items == null || items.isEmpty()) {
 			return;
 		}
+
+		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
+		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
+		List resultProcessors = sqlToyConfig.getResultProcessor();
 		// 整理列名称跟index的对照map
 		LabelIndexModel labelIndexMap = null;
-		if (!sqlToyConfig.getSecureMasks().isEmpty() || !sqlToyConfig.getFormatModels().isEmpty()
+		if (!secureMasks.isEmpty() || !formatModels.isEmpty()
 				|| (extend != null && (!extend.secureMask.isEmpty() || !extend.colsFormat.isEmpty()))
-				|| !sqlToyConfig.getResultProcessor().isEmpty()) {
+				|| !resultProcessors.isEmpty()) {
 			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
 		}
 		// 字段脱敏
-		if (!sqlToyConfig.getSecureMasks().isEmpty()) {
-			secureMask(dataSetResult, sqlToyConfig.getSecureMasks().iterator(), labelIndexMap);
+		if (!secureMasks.isEmpty()) {
+			secureMask(items, secureMasks.iterator(), labelIndexMap);
 		}
 
 		// 自动格式化
-		if (!sqlToyConfig.getFormatModels().isEmpty()) {
-			formatColumn(dataSetResult, sqlToyConfig.getFormatModels().iterator(), labelIndexMap);
+		if (!formatModels.isEmpty()) {
+			formatColumn(items, formatModels.iterator(), labelIndexMap);
 		}
 		// 扩展脱敏和格式化处理
 		if (extend != null) {
 			if (!extend.secureMask.isEmpty()) {
-				secureMask(dataSetResult, extend.secureMask.values().iterator(), labelIndexMap);
+				secureMask(items, extend.secureMask.values().iterator(), labelIndexMap);
 			}
 			if (!extend.colsFormat.isEmpty()) {
-				formatColumn(dataSetResult, extend.colsFormat.values().iterator(), labelIndexMap);
+				formatColumn(items, extend.colsFormat.values().iterator(), labelIndexMap);
 			}
 		}
 		// 计算
-		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
-			List items = dataSetResult.getRows();
-			List resultProcessors = sqlToyConfig.getResultProcessor();
+		if (!resultProcessors.isEmpty()) {
 			Object processor;
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
