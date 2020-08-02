@@ -338,7 +338,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 获取sql对应的配置模型
+	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
 	 * @param sqlKey
 	 * @param type
 	 * @return
