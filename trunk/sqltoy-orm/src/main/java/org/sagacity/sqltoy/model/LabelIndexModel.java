@@ -18,6 +18,7 @@ public class LabelIndexModel implements Serializable {
 
 	private HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
 
+	// 无下划线
 	private HashMap<String, Integer> noUnlinelabelIndexMap = new HashMap<String, Integer>();
 
 	public void put(String key, Integer index) {
