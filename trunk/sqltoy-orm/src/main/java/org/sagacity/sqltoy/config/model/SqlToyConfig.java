@@ -20,6 +20,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description 单个sql被解析后的模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyConfig.java,Revision:v1.0,Date:2014年12月9日
+ * @modify Date:2020-8-2
+ *         修改secureMasks、formatModels类型为List并实例化空集合,translateMap也实例化,便于后续处理
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlToyConfig implements Serializable, java.lang.Cloneable {
