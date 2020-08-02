@@ -10,8 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @author zhongxuchen
- *
+ * @project sqltoy-orm
+ * @description 不区分大小写的字符串Set类型扩展
+ * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @version id:IgnoreCaseSet.java,Revision:v1.0,Date:2018-8-1
  */
 public class IgnoreCaseSet extends HashSet<String> {
 	/**
