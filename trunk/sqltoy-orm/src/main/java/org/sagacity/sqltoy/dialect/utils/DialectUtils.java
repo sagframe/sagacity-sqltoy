@@ -411,6 +411,7 @@ public class DialectUtils {
 			result.getTranslateMap().putAll(extend.translates);
 			return result;
 		}
+		// 代码中的sql对应的sqlToyConfig也是内存存放的，所以都需要clone
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
