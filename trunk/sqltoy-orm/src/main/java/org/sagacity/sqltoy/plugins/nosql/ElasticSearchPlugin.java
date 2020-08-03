@@ -58,8 +58,8 @@ public class ElasticSearchPlugin {
 			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
 		String realMql = "";
 		JSONObject jsonQuery = null;
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
-			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
@@ -77,8 +77,7 @@ public class ElasticSearchPlugin {
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(Class) queryExecutor.getInnerModel().resultType);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
