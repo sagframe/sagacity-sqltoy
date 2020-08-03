@@ -152,8 +152,7 @@ public class Mongo extends BaseLink {
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(getMongoTemplate(), sqlToyConfig, realMql,
-						(Class) queryExecutor.getInnerModel().resultType);
+				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) extend.resultType);
 			}
 			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql,
 					(Class) queryExecutor.getInnerModel().resultType);
@@ -205,8 +204,7 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql,
-					(Class) queryExecutor.getInnerModel().resultType);
+			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql, (Class) extend.resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
