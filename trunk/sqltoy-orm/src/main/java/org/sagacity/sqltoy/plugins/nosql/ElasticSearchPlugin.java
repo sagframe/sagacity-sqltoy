@@ -97,8 +97,8 @@ public class ElasticSearchPlugin {
 			Integer topSize) throws Exception {
 		String realMql = "";
 		JSONObject jsonQuery = null;
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
-			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
@@ -114,8 +114,7 @@ public class ElasticSearchPlugin {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(Class) queryExecutor.getInnerModel().resultType);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType);
 		return result.getRows();
 	}
 
