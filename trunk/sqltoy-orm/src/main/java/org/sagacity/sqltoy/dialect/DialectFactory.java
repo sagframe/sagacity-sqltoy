@@ -802,7 +802,7 @@ public class DialectFactory {
 	 */
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		if (extend.sql == null) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
