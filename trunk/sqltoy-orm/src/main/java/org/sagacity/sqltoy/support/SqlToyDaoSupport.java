@@ -41,7 +41,7 @@ import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
-import org.sagacity.sqltoy.model.UpdateExtend;
+import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -1377,7 +1377,7 @@ public class SqlToyDaoSupport {
 				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
 			throw new IllegalArgumentException("updateByQuery: entityClass、where条件、条件值value、变更值setValues不能为空!");
 		}
-		UpdateExtend innerModel = entityUpdate.getInnerModel();
+		EntityUpdateExtend innerModel = entityUpdate.getInnerModel();
 		boolean isName = SqlConfigParseUtils.hasNamedParam(innerModel.where);
 		Object[] values = innerModel.values;
 		String where = innerModel.where;

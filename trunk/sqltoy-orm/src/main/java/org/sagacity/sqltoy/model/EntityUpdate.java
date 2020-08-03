@@ -26,7 +26,7 @@ public class EntityUpdate implements Serializable {
 	/**
 	 * 内部参数对象模型,减少开发时大量的get对开发的影响
 	 */
-	private UpdateExtend innerModel = new UpdateExtend();
+	private EntityUpdateExtend innerModel = new EntityUpdateExtend();
 
 	public EntityUpdate set(String param, Object value) {
 		innerModel.updateValues.put(param, value);
@@ -48,7 +48,7 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
-	public UpdateExtend getInnerModel() {
+	public EntityUpdateExtend getInnerModel() {
 		return innerModel;
 	}
 

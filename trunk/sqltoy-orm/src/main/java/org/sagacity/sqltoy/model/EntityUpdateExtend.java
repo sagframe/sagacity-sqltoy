@@ -12,7 +12,7 @@ import javax.sql.DataSource;
  * @author zhong
  *
  */
-public class UpdateExtend implements Serializable {
+public class EntityUpdateExtend implements Serializable {
 
 	/**
 	 * 
