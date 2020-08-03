@@ -223,6 +223,15 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	// 分库分表在xml中应用,代码中暂时不支持(感觉必要性不强)
+//	public QueryExecutor shardingDB(String strategory, String... columns) {
+//		return this;
+//	}
+//
+//	public QueryExecutor shardingTable(String strategory, String... columns) {
+//		return this;
+//	}
+
 	public QueryExecutorExtend getInnerModel() {
 		return innerModel;
 	}
