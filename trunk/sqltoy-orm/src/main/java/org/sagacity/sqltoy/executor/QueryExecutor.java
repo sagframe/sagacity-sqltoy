@@ -143,11 +143,13 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor translates(Translate... translates) {
-		for (Translate trans : translates) {
-			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
-				throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
+		if (translates != null && translates.length > 0) {
+			for (Translate trans : translates) {
+				if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
+					throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
+				}
+				innerModel.translates.put(trans.getColumn(), trans);
 			}
-			innerModel.translates.put(trans.getColumn(), trans);
 		}
 		return this;
 	}

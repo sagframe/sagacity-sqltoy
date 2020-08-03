@@ -53,12 +53,16 @@ public class EntityQuery implements Serializable {
 	// 排序
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
-		innerModel.orderBy.put(field, " ");
+		if (StringUtil.isNotBlank(field)) {
+			innerModel.orderBy.put(field, " ");
+		}
 		return this;
 	}
 
 	public EntityQuery orderByDesc(String field) {
-		innerModel.orderBy.put(field, " desc ");
+		if (StringUtil.isNotBlank(field)) {
+			innerModel.orderBy.put(field, " desc ");
+		}
 		return this;
 	}
 
@@ -118,13 +122,15 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery translates(Translate... translates) {
-		for (Translate trans : translates) {
-			if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getKeyColumn())
-					|| StringUtil.isBlank(trans.getColumn())) {
-				throw new IllegalArgumentException(
-						"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
+		if (translates != null && translates.length > 0) {
+			for (Translate trans : translates) {
+				if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getKeyColumn())
+						|| StringUtil.isBlank(trans.getColumn())) {
+					throw new IllegalArgumentException(
+							"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
+				}
+				innerModel.translates.put(trans.getColumn(), trans);
 			}
-			innerModel.translates.put(trans.getColumn(), trans);
 		}
 		return this;
 	}
