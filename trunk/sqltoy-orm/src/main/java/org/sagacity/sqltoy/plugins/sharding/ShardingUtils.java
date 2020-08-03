@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.ShardingGroupModel;
 import org.sagacity.sqltoy.model.ShardingModel;
@@ -244,8 +245,9 @@ public class ShardingUtils {
 		if (null == sqlToyConfig || null == sqlToyConfig.getDataSourceShardingStragety()) {
 			return shardingDataSource;
 		}
-		String[] paramNames = queryExecutor.getDataSourceShardingParamsName(sqlToyConfig);
-		Object[] paramValues = queryExecutor.getDataSourceShardingParamsValue(sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
+		Object[] paramValues = extend.getDataSourceShardingParamsValue(sqlToyConfig);
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
 		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, valueMap);
 		if (result != null) {

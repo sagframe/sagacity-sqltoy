@@ -3,12 +3,12 @@
  */
 package org.sagacity.sqltoy.plugins;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -35,7 +35,7 @@ public class ChainRelativeTest {
 		colsRelative.setRelativeIndexs(new Integer[] { 1, 2 });
 		colsRelative.setFormat("#.00%");
 		colsRelative.setStartColumn(1);
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		LabelIndexModel labelIndexMap = new LabelIndexModel();
 		ColsChainRelative.process(colsRelative, labelIndexMap, result);
 		System.out.println(JSON.toJSONString(result));
 	}
@@ -58,7 +58,7 @@ public class ChainRelativeTest {
 		rowsRelative.setRelativeColumns(new String[] { "2" });
 		rowsRelative.setFormat("#.00%");
 		rowsRelative.setReverse(true);
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		LabelIndexModel labelIndexMap = new LabelIndexModel();
 		RowsChainRelative.process(rowsRelative, labelIndexMap, result);
 		for (int i = 0; i < result.size(); i++) {
 			System.out.println(JSON.toJSONString(result.get(i)));

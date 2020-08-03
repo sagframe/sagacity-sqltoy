@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -29,7 +30,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
  * @description 提供postgresql数据库共用的逻辑实现，便于今后postgresql不同版本之间共享共性部分的实现
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialectUtils.java,Revision:v1.0,Date:2015年3月5日
- * @Modification Date:2020-06-12 修复10+版本对identity主键生成的策略
+ * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 public class PostgreSqlDialectUtils {
 	/**
@@ -77,9 +78,9 @@ public class PostgreSqlDialectUtils {
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
-				queryExecutor.getMaxRows());
+				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
 	}
 
 	/**
@@ -116,9 +117,9 @@ public class PostgreSqlDialectUtils {
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
-				queryExecutor.getMaxRows());
+				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
 	}
 
 	/**
@@ -151,9 +152,9 @@ public class PostgreSqlDialectUtils {
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
-				queryExecutor.getMaxRows());
+				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
 	}
 
 	/**

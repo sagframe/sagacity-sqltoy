@@ -1,13 +1,10 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -29,70 +26,67 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * 条件语句
+	 * 通过扩展对象减少EntityQuery里面的大量get方法，减少对开发过程的影响
 	 */
-	private String where;
+	private EntityQueryExtend innerModel = new EntityQueryExtend();
 
 	/**
-	 * 参数名称
+	 * @TODO where 条件
+	 * @param where
+	 * @return
 	 */
-	private String[] names;
-
-	/**
-	 * 参数值
-	 */
-	private Object[] values;
-
-	private DataSource dataSource;
-
-	/**
-	 * 锁类型
-	 */
-	private LockMode lockMode;
-
-	/**
-	 * 动态增加缓存翻译配置
-	 */
-	private HashMap<String, Translate> extendsTranslates = new HashMap<String, Translate>();
-
-	/**
-	 * 动态组织的order by 排序
-	 */
-	private LinkedHashMap<String, String> orderBy = new LinkedHashMap<String, String>();
-
-	/**
-	 * 动态设置filters
-	 */
-	private List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
-
 	public EntityQuery where(String where) {
-		this.where = where;
+		innerModel.where = where;
 		return this;
 	}
 
 	public EntityQuery names(String... names) {
-		this.names = names;
+		innerModel.names = names;
 		return this;
 	}
 
 	public EntityQuery values(Object... values) {
-		this.values = values;
+		innerModel.values = values;
 		return this;
 	}
 
+	// 排序
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
-		orderBy.put(field, " ");
+		innerModel.orderBy.put(field, " ");
 		return this;
 	}
 
 	public EntityQuery orderByDesc(String field) {
-		orderBy.put(field, " desc ");
+		innerModel.orderBy.put(field, " desc ");
 		return this;
 	}
 
+	/**
+	 * @TODO 锁记录
+	 * @param lockMode
+	 * @return
+	 */
 	public EntityQuery lock(LockMode lockMode) {
-		this.lockMode = lockMode;
+		innerModel.lockMode = lockMode;
+		return this;
+	}
+
+	/**
+	 * @TODO 对结果字段进行安全脱敏
+	 * @param maskType
+	 * @param columns
+	 * @return
+	 */
+	public EntityQuery secureMask(MaskType maskType, String... columns) {
+		if (maskType != null && columns != null && columns.length > 0) {
+			for (String column : columns) {
+				SecureMask mask = new SecureMask();
+				mask.setColumn(column);
+				mask.setType(maskType.getValue());
+				innerModel.secureMask.put(column, mask);
+			}
+		}
 		return this;
 	}
 
@@ -112,7 +106,7 @@ public class EntityQuery implements Serializable {
 						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
 				}
-				paramFilters.add(filter);
+				innerModel.paramFilters.add(filter);
 			}
 		}
 		return this;
@@ -130,64 +124,17 @@ public class EntityQuery implements Serializable {
 				throw new IllegalArgumentException(
 						"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
 			}
-			extendsTranslates.put(trans.getColumn(), trans);
+			innerModel.translates.put(trans.getColumn(), trans);
 		}
 		return this;
 	}
 
 	public EntityQuery dataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
+		innerModel.dataSource = dataSource;
 		return this;
 	}
 
-	/**
-	 * @return the where
-	 */
-	public String getWhere() {
-		return where;
-	}
-
-	/**
-	 * @return the names
-	 */
-	public String[] getNames() {
-		return names;
-	}
-
-	/**
-	 * @return the values
-	 */
-	public Object[] getValues() {
-		return values;
-	}
-
-	/**
-	 * @return the dataSource
-	 */
-	public DataSource getDataSource() {
-		return dataSource;
-	}
-
-	public LockMode getLockMode() {
-		return lockMode;
-	}
-
-	public LinkedHashMap<String, String> getOrderBy() {
-		return orderBy;
-	}
-
-	/**
-	 * @TODO 获取自定义的缓存翻译配置
-	 * @return
-	 */
-	public HashMap<String, Translate> getTranslates() {
-		return this.extendsTranslates;
-	}
-
-	/**
-	 * @return the paramFilters
-	 */
-	public List<ParamsFilter> getParamFilters() {
-		return paramFilters;
+	public EntityQueryExtend getInnerModel() {
+		return innerModel;
 	}
 }

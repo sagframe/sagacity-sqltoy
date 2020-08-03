@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
@@ -25,65 +24,32 @@ public class EntityUpdate implements Serializable {
 	}
 
 	/**
-	 * 条件语句
+	 * 内部参数对象模型,减少开发时大量的get对开发的影响
 	 */
-	private String where;
-
-	/**
-	 * 参数值
-	 */
-	private Object[] values;
-
-	private DataSource dataSource;
-
-	private LinkedHashMap<String, Object> updateValues = new LinkedHashMap<String, Object>();
+	private UpdateExtend innerModel = new UpdateExtend();
 
 	public EntityUpdate set(String param, Object value) {
-		updateValues.put(param, value);
+		innerModel.updateValues.put(param, value);
 		return this;
 	}
 
 	public EntityUpdate where(String where) {
-		this.where = where;
+		innerModel.where = where;
 		return this;
 	}
 
 	public EntityUpdate values(Object... values) {
-		this.values = values;
+		innerModel.values = values;
 		return this;
 	}
 
 	public EntityUpdate dataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
+		innerModel.dataSource = dataSource;
 		return this;
 	}
 
-	/**
-	 * @return the where
-	 */
-	public String getWhere() {
-		return where;
-	}
-
-	/**
-	 * @return the values
-	 */
-	public Object[] getValues() {
-		return values;
-	}
-
-	/**
-	 * @return the dataSource
-	 */
-	public DataSource getDataSource() {
-		return dataSource;
-	}
-
-	/**
-	 * @return the updateValues
-	 */
-	public LinkedHashMap<String, Object> getUpdateValues() {
-		return updateValues;
+	public UpdateExtend getInnerModel() {
+		return innerModel;
 	}
 
 }

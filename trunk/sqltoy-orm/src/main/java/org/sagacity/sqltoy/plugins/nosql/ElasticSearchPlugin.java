@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
@@ -58,8 +59,9 @@ public class ElasticSearchPlugin {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		try {
-			realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
 			jsonQuery.fluentRemove("from");
 			jsonQuery.fluentRemove("FROM");
@@ -76,7 +78,7 @@ public class ElasticSearchPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(Class) queryExecutor.getResultType());
+				(Class) queryExecutor.getInnerModel().resultType);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getTotalCount());
 		return page;
@@ -96,8 +98,9 @@ public class ElasticSearchPlugin {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		try {
-			realMql = MongoElasticUtils.wrapES(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
 			if (topSize != null) {
 				jsonQuery.fluentRemove("from");
@@ -112,7 +115,7 @@ public class ElasticSearchPlugin {
 			throw e;
 		}
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery,
-				(Class) queryExecutor.getResultType());
+				(Class) queryExecutor.getInnerModel().resultType);
 		return result.getRows();
 	}
 
@@ -189,7 +192,7 @@ public class ElasticSearchPlugin {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null);
+		ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
 				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));

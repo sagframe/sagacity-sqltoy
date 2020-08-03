@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,8 @@ import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
+import org.sagacity.sqltoy.model.LabelIndexModel;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
@@ -133,16 +136,15 @@ public class ResultUtils {
 	/**
 	 * @todo 对字段进行安全脱敏
 	 * @param result
-	 * @param sqlToyConfig
+	 * @param masks
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(DataSetResult result, SqlToyConfig sqlToyConfig,
-			HashMap<String, Integer> labelIndexMap) {
-		List<List> rows = result.getRows();
-		SecureMask[] masks = sqlToyConfig.getSecureMasks();
+	private static void secureMask(List<List> rows, Iterator<SecureMask> masks, LabelIndexModel labelIndexMap) {
 		Integer index;
 		Object value;
-		for (SecureMask mask : masks) {
+		SecureMask mask;
+		while (masks.hasNext()) {
+			mask = masks.next();
 			index = labelIndexMap.get(mask.getColumn());
 			if (index != null) {
 				int column = index.intValue();
@@ -159,16 +161,15 @@ public class ResultUtils {
 	/**
 	 * @todo 对字段进行格式化
 	 * @param result
-	 * @param sqlToyConfig
+	 * @param formats
 	 * @param labelIndexMap
 	 */
-	private static void formatColumn(DataSetResult result, SqlToyConfig sqlToyConfig,
-			HashMap<String, Integer> labelIndexMap) {
-		List<List> rows = result.getRows();
-		FormatModel[] formats = sqlToyConfig.getFormatModels();
+	private static void formatColumn(List<List> rows, Iterator<FormatModel> formats, LabelIndexModel labelIndexMap) {
 		Integer index;
 		Object value;
-		for (FormatModel fmt : formats) {
+		FormatModel fmt;
+		while (formats.hasNext()) {
+			fmt = formats.next();
 			index = labelIndexMap.get(fmt.getColumn());
 			if (index != null) {
 				int column = index.intValue();
@@ -285,11 +286,8 @@ public class ResultUtils {
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
-		Boolean hasTranslate = false;
-		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
-			hasTranslate = true;
-		}
-		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
+		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
@@ -477,7 +475,7 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List pivotResult(PivotModel pivotModel, HashMap<String, Integer> labelIndexMap, List result,
+	private static List pivotResult(PivotModel pivotModel, LabelIndexModel labelIndexMap, List result,
 			List pivotCategorySet) {
 		if (result == null || result.isEmpty()) {
 			return result;
@@ -505,7 +503,7 @@ public class ResultUtils {
 	 * @param labelIndexMap
 	 * @return
 	 */
-	private static Integer[] mappingLabelIndex(String[] columnLabels, HashMap<String, Integer> labelIndexMap) {
+	private static Integer[] mappingLabelIndex(String[] columnLabels, LabelIndexModel labelIndexMap) {
 		Integer[] result = new Integer[columnLabels.length];
 		for (int i = 0; i < result.length; i++) {
 			if (NumberUtil.isInteger(columnLabels[i])) {
@@ -776,6 +774,7 @@ public class ResultUtils {
 		if (sqlToyConfig.getResultProcessor() != null && !sqlToyConfig.getResultProcessor().isEmpty()) {
 			List resultProcessors = sqlToyConfig.getResultProcessor();
 			Object processor;
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
 				// 数据旋转只能存在一个
@@ -786,8 +785,8 @@ public class ResultUtils {
 								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search),
 								queryExecutor, dialect, false);
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-								queryExecutor.getParamsName(pivotSqlConfig),
-								queryExecutor.getParamsValue(sqlToyContext, pivotSqlConfig));
+								extend.getParamsName(pivotSqlConfig),
+								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
 								pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
 								sqlToyConfig.isIgnoreEmpty());
@@ -805,31 +804,46 @@ public class ResultUtils {
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet
-	 * @throws Exception
+	 * @param extend
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet) {
-		HashMap<String, Integer> labelIndexMap = null;
-		// 字段脱敏
-		if (sqlToyConfig.getSecureMasks() != null && dataSetResult.getRows() != null) {
+	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
+			QueryExecutorExtend extend) {
+		List items = dataSetResult.getRows();
+		// 数据为空直接跳出处理
+		if (items == null || items.isEmpty()) {
+			return;
+		}
+
+		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
+		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
+		List resultProcessors = sqlToyConfig.getResultProcessor();
+		// 整理列名称跟index的对照map
+		LabelIndexModel labelIndexMap = null;
+		if (!secureMasks.isEmpty() || !formatModels.isEmpty()
+				|| (extend != null && (!extend.secureMask.isEmpty() || !extend.colsFormat.isEmpty()))
+				|| !resultProcessors.isEmpty()) {
 			labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			secureMask(dataSetResult, sqlToyConfig, labelIndexMap);
+		}
+		// 字段脱敏
+		if (!secureMasks.isEmpty()) {
+			secureMask(items, secureMasks.iterator(), labelIndexMap);
 		}
 
 		// 自动格式化
-		if (sqlToyConfig.getFormatModels() != null && dataSetResult.getRows() != null) {
-			if (labelIndexMap == null) {
-				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
-			}
-			formatColumn(dataSetResult, sqlToyConfig, labelIndexMap);
+		if (!formatModels.isEmpty()) {
+			formatColumn(items, formatModels.iterator(), labelIndexMap);
 		}
-
-		// 计算
-		if (sqlToyConfig.getResultProcessor() != null) {
-			if (labelIndexMap == null) {
-				labelIndexMap = wrapLabelIndexMap(dataSetResult.getLabelNames());
+		// 扩展脱敏和格式化处理
+		if (extend != null) {
+			if (!extend.secureMask.isEmpty()) {
+				secureMask(items, extend.secureMask.values().iterator(), labelIndexMap);
 			}
-			List items = dataSetResult.getRows();
-			List resultProcessors = sqlToyConfig.getResultProcessor();
+			if (!extend.colsFormat.isEmpty()) {
+				formatColumn(items, extend.colsFormat.values().iterator(), labelIndexMap);
+			}
+		}
+		// 计算
+		if (!resultProcessors.isEmpty()) {
 			Object processor;
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
@@ -861,8 +875,8 @@ public class ResultUtils {
 	 * @param fields
 	 * @return
 	 */
-	private static HashMap<String, Integer> wrapLabelIndexMap(String[] fields) {
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+	private static LabelIndexModel wrapLabelIndexMap(String[] fields) {
+		LabelIndexModel result = new LabelIndexModel();
 		if (fields != null && fields.length > 0) {
 			String realLabelName;
 			int index;
@@ -872,10 +886,10 @@ public class ResultUtils {
 				if (index != -1) {
 					realLabelName = realLabelName.substring(index + 1).trim();
 				}
-				labelIndexMap.put(realLabelName, i);
+				result.put(realLabelName, i);
 			}
 		}
-		return labelIndexMap;
+		return result;
 	}
 
 	/**
@@ -887,7 +901,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
-		//类型为null就默认返回二维List
+		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
@@ -924,7 +938,7 @@ public class ResultUtils {
 			}
 			return result;
 		}
-		//封装成VO对象形式
+		// 封装成VO对象形式
 		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
 	}
 
@@ -951,10 +965,10 @@ public class ResultUtils {
 	 * @return
 	 */
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
-		Type resultType = queryExecutor.getResultType();
+		Type resultType = queryExecutor.getInnerModel().resultType;
 		boolean hump = true;
 		if (null != resultType && (resultType.equals(HashMap.class) || resultType.equals(Map.class)
-				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.isHumpMapLabel()) {
+				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.getInnerModel().humpMapLabel) {
 			hump = false;
 		}
 		if (hump) {

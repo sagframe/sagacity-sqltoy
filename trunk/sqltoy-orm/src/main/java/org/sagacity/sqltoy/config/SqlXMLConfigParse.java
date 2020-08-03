@@ -562,9 +562,7 @@ public class SqlXMLConfigParse {
 				secureMasks.add(secureMask);
 			}
 		}
-		SecureMask[] masks = new SecureMask[secureMasks.size()];
-		secureMasks.toArray(masks);
-		sqlToyConfig.setSecureMasks(masks);
+		sqlToyConfig.setSecureMasks(secureMasks);
 	}
 
 	private static String getAttrValue(Element elt, String attrName) {
@@ -1112,11 +1110,7 @@ public class SqlXMLConfigParse {
 				}
 			}
 		}
-		if (!formatModels.isEmpty()) {
-			FormatModel[] formats = new FormatModel[formatModels.size()];
-			formatModels.toArray(formats);
-			sqlToyConfig.setFormatModels(formats);
-		}
+		sqlToyConfig.setFormatModels(formatModels);
 	}
 
 	/**
@@ -1270,9 +1264,7 @@ public class SqlXMLConfigParse {
 		}
 
 		// 加入sqlToyConfig
-		if (!resultProcessor.isEmpty()) {
-			sqlToyConfig.setResultProcessor(resultProcessor);
-		}
+		sqlToyConfig.setResultProcessor(resultProcessor);
 	}
 
 	/**

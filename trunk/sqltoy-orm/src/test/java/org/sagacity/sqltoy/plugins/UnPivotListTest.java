@@ -3,12 +3,12 @@
  */
 package org.sagacity.sqltoy.plugins;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.DataSetResult;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
@@ -32,7 +32,7 @@ public class UnPivotListTest {
 		DataSetResult resultModel = new DataSetResult();
 		resultModel.setLabelNames(new String[] { "month", "fruitName", "quantity", "AMT" });
 		resultModel.setLabelTypes(new String[] { "string", "string", "decimal", "decimal" });
-		HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+		LabelIndexModel labelIndexMap = new LabelIndexModel();
 		labelIndexMap.put("month", 0);
 		labelIndexMap.put("fruitname", 1);
 		labelIndexMap.put("quantity", 2);

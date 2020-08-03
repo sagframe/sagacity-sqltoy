@@ -2,11 +2,11 @@ package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -28,8 +28,7 @@ public class RowsChainRelative {
 	/**
 	 * <rows-chain-relative group-size="3" relative-index="0,1,2"
 	 */
-	public static void process(RowsChainRelativeModel rowsRelative, HashMap<String, Integer> labelIndexMap,
-			List result) {
+	public static void process(RowsChainRelativeModel rowsRelative, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.size() < 2) {
 			return;
 		}

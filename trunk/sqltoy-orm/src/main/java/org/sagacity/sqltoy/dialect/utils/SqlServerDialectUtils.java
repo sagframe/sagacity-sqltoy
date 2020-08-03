@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -42,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供基于sqlserver这种广泛应用的数据库通用的逻辑处理,避免大量重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlServerDialectUtils.java,Revision:v1.0,Date:2014年12月26日
- * @Modification Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
+ * @modify Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })
 public class SqlServerDialectUtils {
@@ -92,11 +93,11 @@ public class SqlServerDialectUtils {
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
 		}
-		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(),
-				queryExecutor.getParamsName(sqlToyConfig), queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
+				extend.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				queryExecutor.getRowCallbackHandler(), conn, dbType, 0, queryExecutor.getFetchSize(),
-				queryExecutor.getMaxRows());
+				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
 	}
 
 	/**

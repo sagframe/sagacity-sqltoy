@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -38,7 +39,7 @@ import com.mongodb.client.AggregateIterable;
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:Mongo.java,Revision:v1.0,Date:2018年1月1日
- * @Modification {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
+ * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  */
 public class Mongo extends BaseLink {
 
@@ -145,14 +146,17 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) queryExecutor.getResultType());
+				return aggregate(getMongoTemplate(), sqlToyConfig, realMql,
+						(Class) queryExecutor.getInnerModel().resultType);
 			}
-			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql, (Class) queryExecutor.getResultType());
+			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql,
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -172,10 +176,12 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) queryExecutor.getResultType());
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql,
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -195,11 +201,12 @@ public class Mongo extends BaseLink {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
 		try {
+			QueryExecutorExtend extend = queryExecutor.getInnerModel();
 			// 最后的执行语句
-			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, queryExecutor.getParamsName(sqlToyConfig),
-					queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig));
+			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql,
-					(Class) queryExecutor.getResultType());
+					(Class) queryExecutor.getInnerModel().resultType);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -386,7 +393,7 @@ public class Mongo extends BaseLink {
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
-		ResultUtils.calculate(sqlToyConfig, dataSetResult, null);
+		ResultUtils.calculate(sqlToyConfig, dataSetResult, null, null);
 		return ResultUtils.wrapQueryResult(resultSet, StringUtil.humpFieldNames(translateFields), resultClass);
 	}
 

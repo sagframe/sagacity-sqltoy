@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -62,12 +63,12 @@ import org.slf4j.LoggerFactory;
  * @description 提供一些不同数据库都通用的逻辑处理,避免在各个数据库工具类中写重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:DialectUtils.java,Revision:v1.0,Date:2014年12月26日
- * @Modification {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
- * @Modification {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
- * @Modification {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
- * @Modification {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
- * @Modification {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
- *               count(1) from错误}
+ * @modify {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
+ * @modify {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}
+ * @modify {Date:2018-1-22,增加业务主键生成赋值,同时对saveAll等操作返回生成的主键值映射到VO集合中}
+ * @modify {Date:2018-5-3,修复getCountBySql关于剔除order by部分的逻辑错误}
+ * @modify {Date:2018-9-25,修复select和from对称判断问题,影响分页查询时剔除from之前语句构建select
+ *         count(1) from错误}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectUtils {
@@ -122,8 +123,9 @@ public class DialectUtils {
 	 */
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
-		String[] paramsNamed = queryExecutor.getParamsName(sqlToyConfig);
-		Object[] paramsValue = queryExecutor.getParamsValue(sqlToyContext, sqlToyConfig);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
+		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		if (startIndex == null && endIndex == null) {
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
 		}
@@ -395,31 +397,26 @@ public class DialectUtils {
 		boolean isNamed = (sqlToyConfig.isNamedParam()
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		SqlToyConfig result;
+		// 判断是否xml文件中定义的sql
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
 		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
 			// 没有自定义缓存翻译直接返回
-			if (queryExecutor.getTranslates() == null || queryExecutor.getTranslates().isEmpty()) {
+			if (extend.translates.isEmpty()) {
 				return sqlToyConfig;
 			}
 			// 存在自定义缓存翻译则需要clone便于后面修改
 			result = sqlToyConfig.clone();
-			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(queryExecutor.getTranslates());
-			} else {
-				result.setTranslateMap(queryExecutor.getTranslates());
-			}
+			result.getTranslateMap().putAll(extend.translates);
 			return result;
 		}
+		// 代码中的sql对应的sqlToyConfig也是内存存放的，所以都需要clone
 		// clone一个,然后替换sql中的?并进行必要的参数加工
 		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
-		if (queryExecutor.getTranslates() != null && !queryExecutor.getTranslates().isEmpty()) {
-			if (result.getTranslateMap() != null) {
-				result.getTranslateMap().putAll(queryExecutor.getTranslates());
-			} else {
-				result.setTranslateMap(queryExecutor.getTranslates());
-			}
+		if (!extend.translates.isEmpty()) {
+			result.getTranslateMap().putAll(extend.translates);
 		}
 		if (!isNamed && wrapNamed) {
 			UnifySqlParams sqlParams;
@@ -450,11 +447,9 @@ public class DialectUtils {
 			result.setCountSql(sqlParams.getSql());
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
-
 		// 替换sharding table
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, dialect,
-				queryExecutor.getTableShardingParamsName(sqlToyConfig),
-				queryExecutor.getTableShardingParamsValue(sqlToyConfig));
+				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
 		return result;
 	}
 

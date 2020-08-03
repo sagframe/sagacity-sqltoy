@@ -47,8 +47,8 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @description 提供一个便捷的dao实现,供开发过程中直接通过service调用,避免大量的自定义Dao中仅仅是一些简单的中转调用
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlToyLazyDao.java,Revision:v1.0,Date:2015年11月27日
- * @Modification Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
- * @Modification Date:2020-4-23 {对分页查询增加泛型支持}
+ * @modify Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
+ * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface SqlToyLazyDao {

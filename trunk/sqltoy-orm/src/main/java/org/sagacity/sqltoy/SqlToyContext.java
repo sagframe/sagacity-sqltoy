@@ -338,7 +338,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 获取sql对应的配置模型
+	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
 	 * @param sqlKey
 	 * @param type
 	 * @return
@@ -348,10 +348,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType type) {
-		String sqlKey = queryExecutor.getSql();
+		String sqlKey = queryExecutor.getInnerModel().sql;
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
-		if (SqlType.search.equals(type) && queryExecutor.getResultType() != null) {
-			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getResultType(), sqlKey);
+		if (SqlType.search.equals(type) && queryExecutor.getInnerModel().resultType != null) {
+			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
 		}
 		return scriptLoader.getSqlConfig(sqlKey, type);
 	}

@@ -407,23 +407,16 @@ public class MongoElasticUtils {
 	public static void processTranslate(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, List resultSet,
 			String[] fields) {
 		// 判断是否有缓存翻译器定义
-		boolean hasTranslate = (sqlToyConfig.getTranslateMap() == null || sqlToyConfig.getTranslateMap().isEmpty())
-				? false
-				: true;
-		HashMap<String, Translate> translateMap = hasTranslate ? sqlToyConfig.getTranslateMap() : null;
+		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
-		// 存在缓存翻译,利用sqltoy的缓存管理
-		if (hasTranslate) {
+		// 存在缓存翻译,获取缓存数据
+		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
 			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, null, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
-				logger.warn("mongo or elastic cache:{} has no data!{}", sqlToyConfig.getTranslateMap().keySet(),
-						sqlToyConfig.getSql());
-				hasTranslate = false;
+				logger.warn("mongo or elastic cache:{} has no data!{}", translateMap.keySet(), sqlToyConfig.getSql());
+			} else {
+				translate(translateCache, translateMap, resultSet, null, fields);
 			}
-		}
-		// 缓存翻译
-		if (hasTranslate) {
-			translate(translateCache, translateMap, resultSet, null, fields);
 		}
 	}
 

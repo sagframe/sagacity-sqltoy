@@ -2,11 +2,11 @@ package org.sagacity.sqltoy.plugins.calculator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
+import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.ExpressionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @version id:GroupSummary.java,Revision:v1.0,Date:2020-3-25
  */
 public class GroupSummary {
-	public static void process(SummaryModel summaryModel, HashMap<String, Integer> labelIndexMap, List result) {
+	public static void process(SummaryModel summaryModel, LabelIndexModel labelIndexMap, List result) {
 		if (result == null || result.size() < 2) {
 			return;
 		}
