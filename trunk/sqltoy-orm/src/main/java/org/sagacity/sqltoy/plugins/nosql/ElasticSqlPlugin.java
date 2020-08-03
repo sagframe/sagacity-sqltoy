@@ -87,7 +87,7 @@ public class ElasticSqlPlugin {
 			}
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) queryExecutor.getInnerModel().resultType);
+				(Class) extend.resultType);
 		return result.getRows();
 	}
 
