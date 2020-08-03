@@ -390,10 +390,10 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-							if (queryExecutor.getInnerModel().resultType != null) {
+							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) queryExecutor.getInnerModel().resultType));
+										(Class) extend.resultType));
 							}
 							this.setResult(queryResult);
 						}
