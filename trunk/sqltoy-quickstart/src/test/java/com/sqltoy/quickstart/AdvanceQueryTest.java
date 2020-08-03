@@ -78,7 +78,7 @@ public class AdvanceQueryTest {
 			System.err.println(JSON.toJSONString(staff));
 		}
 		// 第二次调用:条件一致，不执行count查询
-		result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+		result = sqlToyLazyDao.findPageBySql(pageModel, "qstart_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
 	}
 
