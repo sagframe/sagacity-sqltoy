@@ -226,28 +226,33 @@ public class DialectFactory {
 		}
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
-				public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-					String realSql = sqlToyConfig.getSql(dialect);
-					Integer[] fieldTypes = null;
-					List values = dataSet;
-					// sql中存在:named参数模式，通过sql提取参数名称
-					if (sqlToyConfig.getParamsName() != null) {
-						// 替换sql中:name为?并提取参数名称归集成数组
-						SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
-						values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-								reflectPropertyHandler, false, 0);
-						fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
-								sqlParamsModel.getParamsName());
-						realSql = sqlParamsModel.getSql();
-					}
-					// 做sql签名
-					realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
-					SqlExecuteStat.showSql(realSql, null);
-					this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler, fieldTypes,
-							autoCommit, conn, dbType));
-				}
-			});
+			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+					new DataSourceCallbackHandler() {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							String realSql = sqlToyConfig.getSql(dialect);
+							Integer[] fieldTypes = null;
+							List values = dataSet;
+							// sql中存在:named参数模式，通过sql提取参数名称
+							if (sqlToyConfig.getParamsName() != null) {
+								// 替换sql中:name为?并提取参数名称归集成数组
+								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
+								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
+										reflectPropertyHandler, false, 0);
+								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
+										sqlParamsModel.getParamsName());
+								realSql = sqlParamsModel.getSql();
+							}
+							// 做sql签名
+							realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
+							SqlExecuteStat.showSql(realSql, null);
+							this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler,
+									fieldTypes, autoCommit, conn, dbType));
+						}
+					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("batchUpdate update record count={}", updateTotalCnt);
+			}
+			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -271,7 +276,7 @@ public class DialectFactory {
 			final DataSource dataSource) {
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "update", sqlToyConfig.isShowSql());
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
+			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 							new QueryExecutor(sqlToyConfig.getSql(), paramsNamed, paramsValue), dataSource),
 					new DataSourceCallbackHandler() {
@@ -287,6 +292,10 @@ public class DialectFactory {
 									dbType, autoCommit));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("executeSql update record count={}", updateTotalCnt);
+			}
+			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -311,13 +320,17 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
 			SqlExecuteStat.start(uniqueExecutor.getEntity().getClass().getName(), "isUnique", null);
-			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
+			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(DialectUtils.isUnique(sqlToyContext, uniqueExecutor.getEntity(),
 									uniqueExecutor.getUniqueFields(), conn, dbType, shardingModel.getTableName()));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("isUnique result={}", isUnique);
+			}
+			return isUnique;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -394,6 +407,9 @@ public class DialectFactory {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
+							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("getRandomResult result count={}", queryResult.getTotalCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -555,6 +571,9 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							queryResult.setSkipQueryCount(true);
+							if (sqlToyContext.isDebug()) {
+								logger.debug("findSkipTotalCountPage result count={}", queryResult.getTotalCount());
+							}
 							this.setResult(queryResult);
 						}
 					});
@@ -663,6 +682,9 @@ public class DialectFactory {
 											(Class) extend.resultType));
 								}
 							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("findPage result count={}", queryResult.getTotalCount());
+							}
 							this.setResult(queryResult);
 						}
 					});
@@ -712,6 +734,9 @@ public class DialectFactory {
 							}
 							if (realTopSize == 0) {
 								this.setResult(new QueryResult());
+								if (sqlToyContext.isDebug()) {
+									logger.debug("findTop result count=0");
+								}
 								return;
 							}
 
@@ -726,6 +751,9 @@ public class DialectFactory {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
+							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("findTop result count={}", queryResult.getTotalCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -781,6 +809,9 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("findByQuery result count={}", queryResult.getTotalCount());
+							}
 							this.setResult(queryResult);
 						}
 					});
@@ -809,7 +840,7 @@ public class DialectFactory {
 		extend.optimizeArgs(sqlToyConfig);
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext,
+			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -820,6 +851,10 @@ public class DialectFactory {
 									dialect));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("getCountBySql result={}", count);
+			}
+			return count;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -914,13 +949,17 @@ public class DialectFactory {
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
+			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("saveAllIgnoreExist operate updateTotalCnt={}", updateTotalCnt);
+			}
+			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -974,6 +1013,9 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("saveOrUpdateAll operate updateTotalCnt={}", updateTotalCnt);
+			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1026,6 +1068,9 @@ public class DialectFactory {
 				for (Long cnt : result) {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
+			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("saveAllIgnoreExist operate updateTotalCnt={}", updateTotalCnt);
 			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
@@ -1121,6 +1166,9 @@ public class DialectFactory {
 							}
 						}));
 			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("loadAll record count={}", result.size());
+			}
 			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1145,13 +1193,17 @@ public class DialectFactory {
 		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
-			return (Serializable) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
-					new DataSourceCallbackHandler() {
+			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
+					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("save operate return primary value={}", result);
+			}
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1203,6 +1255,9 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("saveAll operate effect record count={}", updateTotalCnt);
+			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1231,7 +1286,7 @@ public class DialectFactory {
 		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
+			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).update(sqlToyContext, entity, forceUpdateFields,
@@ -1239,6 +1294,10 @@ public class DialectFactory {
 									shardingModel.getTableName()));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("updateAll operate effect record count={}", updateTotalCnt);
+			}
+			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1292,6 +1351,9 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("updateAll effect record count={}", updateTotalCnt);
+			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1315,13 +1377,17 @@ public class DialectFactory {
 		try {
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
-			return (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
+			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
 					});
+			if (sqlToyContext.isDebug()) {
+				logger.debug("delete operate effect record count={}", updateTotalCnt);
+			}
+			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1371,6 +1437,9 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
+			if (sqlToyContext.isDebug()) {
+				logger.debug("deleteAll operate effect record count={}", updateTotalCnt);
+			}
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1414,6 +1483,9 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("updateFetch result count={}", queryResult.getTotalCount());
+							}
 							this.setResult(queryResult);
 						}
 					});
@@ -1453,6 +1525,9 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("updateFetchTop result count={}", queryResult.getTotalCount());
+							}
 							this.setResult(queryResult);
 						}
 					});
@@ -1490,6 +1565,9 @@ public class DialectFactory {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
+							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("updateFetchRandom result count={}", queryResult.getTotalCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1556,6 +1634,9 @@ public class DialectFactory {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										resultType));
+							}
+							if (sqlToyContext.isDebug()) {
+								logger.debug("executeStore result count={}", queryResult.getTotalCount());
 							}
 							this.setResult(queryResult);
 						}

@@ -122,6 +122,9 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
 
+	// 分库分表策略配置
+	//public ShardingConfig shardingConfig = new ShardingConfig();
+
 	/**
 	 * @param sqlToyConfig
 	 * @return
