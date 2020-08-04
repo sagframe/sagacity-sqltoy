@@ -1922,8 +1922,9 @@ public class DialectUtils {
 				}
 			}
 			// 针对主键字段的唯一性验证,查询有记录则表示主键已经存在
-			if (allPK)
+			if (allPK) {
 				return false;
+			}
 			// 判断是否是本身
 			Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			List compareValues = (List) result.get(0);
