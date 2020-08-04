@@ -57,7 +57,7 @@ import org.w3c.dom.NodeList;
  * @project sagacity-sqltoy
  * @description 解析sql配置文件，不要纠结于xml解析的方式,后期已经部分使用xmlutil,但显式的解析更加清晰
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlXMLConfigParse.java,Revision:v1.0,Date:2009-12-14 上午12:07:03
+ * @version id:SqlXMLConfigParse.java,Revision:v1.0,Date:2009-12-14
  * @modify Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
  * @modify Date:2018-1-1 {增加对es和mongo的查询配置解析支持}
  * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
