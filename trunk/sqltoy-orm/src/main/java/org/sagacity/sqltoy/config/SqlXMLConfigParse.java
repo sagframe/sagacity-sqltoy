@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
@@ -366,15 +367,17 @@ public class SqlXMLConfigParse {
 		// <page-optimize alive-max="100" alive-seconds="90"/>
 		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
+			PageOptimize optimize = new PageOptimize();
 			Element pageOptimize = (Element) nodeList.item(0);
-			sqlToyConfig.setPageOptimize(true);
+			// sqlToyConfig.setPageOptimize(true);
 			if (pageOptimize.hasAttribute("alive-max")) {
-				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
+				optimize.aliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
 			}
 			// 不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.hasAttribute("alive-seconds")) {
-				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
+				optimize.aliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
 			}
+			sqlToyConfig.setPageOptimize(optimize);
 		}
 
 		// 解析翻译器

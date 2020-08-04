@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.MaskType;
@@ -225,6 +226,18 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 分页优化
+	 * @param pageOptimize
+	 * @return
+	 */
+	public QueryExecutor pageOptimize(PageOptimize pageOptimize) {
+		if (pageOptimize != null) {
+			innerModel.pageOptimize = pageOptimize;
+		}
+		return this;
+	}
+	
 	// 分库分表在xml中应用,代码中暂时不支持(必要性不强，不建议将sql写在代码中，更不推荐调试完sql再转成jooq对象查询模式)
 //	public QueryExecutor shardingDB(String strategory, String... columns) {
 //		return this;

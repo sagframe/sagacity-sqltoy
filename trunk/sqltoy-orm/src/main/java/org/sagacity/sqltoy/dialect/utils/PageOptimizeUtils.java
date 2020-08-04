@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
@@ -35,13 +36,14 @@ public class PageOptimizeUtils {
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
+	 * @param pageOptimize
 	 * @return
 	 * @throws Exception
 	 */
 	public static String generateOptimizeKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor) throws Exception {
+			final QueryExecutor queryExecutor, PageOptimize pageOptimize) throws Exception {
 		// 没有开放分页优化或sql id为null都不执行优化操作
-		if (!sqlToyConfig.isPageOptimize() || null == sqlToyConfig.getId()) {
+		if (pageOptimize == null) {
 			return null;
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
@@ -49,7 +51,7 @@ public class PageOptimizeUtils {
 		Object[] paramValues = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		// sql中所有参数都为null,返回sqlId作为key
 		if (paramValues == null || paramValues.length == 0) {
-			return sqlToyConfig.getId();
+			return sqlToyConfig.getIdOrSql();
 		}
 		StringBuilder cacheKey = new StringBuilder();
 		boolean isParamsNamed = true;
@@ -91,8 +93,9 @@ public class PageOptimizeUtils {
 	 * @see org.sagacity.sqltoy.cache.PageOptimizeCache#getPageTotalCount(java.lang.
 	 * String, java.lang.String)
 	 */
-	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, String conditionsKey) {
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getId());
+	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
+			String conditionsKey) {
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		// sql初次执行查询
 		if (null == map) {
 			return null;
@@ -117,7 +120,7 @@ public class PageOptimizeUtils {
 			return null;
 		}
 		// 重置过期时间
-		values[0] = nowTime + sqlToyConfig.getPageAliveSeconds() * 1000;
+		values[0] = nowTime + pageOptimize.getAliveSeconds() * 1000;
 		// 重新置于linkedHashMap的最后位置
 		map.put(conditionsKey, values);
 		return totalCount;
@@ -129,17 +132,19 @@ public class PageOptimizeUtils {
 	 * @see org.sagacity.sqltoy.cache.PageOptimizeCache#put(java.lang.String,
 	 * java.lang.String)
 	 */
-	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, String pageQueryKey, Long totalCount) {
+	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
+			String pageQueryKey, Long totalCount) {
 		long nowTime = System.currentTimeMillis();
 		// 当前时间
-		long expireTime = nowTime + sqlToyConfig.getPageAliveSeconds() * 1000;
+		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
 		// 同一个分页查询sql保留的不同查询条件记录数量
-		int aliveMax = sqlToyConfig.getPageAliveMax();
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getId());
+		int aliveMax = pageOptimize.getAliveMax();
+		String id = sqlToyConfig.getIdOrSql();
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(id);
 		if (null == map) {
-			map = new LinkedHashMap<String, Object[]>(sqlToyConfig.getPageAliveMax());
+			map = new LinkedHashMap<String, Object[]>(aliveMax);
 			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
-			pageOptimizeCache.put(sqlToyConfig.getId(), map);
+			pageOptimizeCache.put(id, map);
 		} else {
 			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
 			// 长度超阀值,移除最早进入的
