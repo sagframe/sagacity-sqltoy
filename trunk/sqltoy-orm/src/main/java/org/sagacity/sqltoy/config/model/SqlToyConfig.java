@@ -184,22 +184,10 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private int fastWithIndex = -1;
 	// <page-optimize alive-max="100" alive-seconds="90"/>
 	
+	/**
+	 * 分页优化器
+	 */
 	private PageOptimize pageOptimize;
-
-//	/**
-//	 * 是否分页优化
-//	 */
-//	private boolean pageOptimize = false;
-//
-//	/**
-//	 * 100个不同条件查询
-//	 */
-//	private int pageAliveMax = 100;
-//
-//	/**
-//	 * 1.5分钟
-//	 */
-//	private int pageAliveSeconds = 90;
 
 	/**
 	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
@@ -590,66 +578,6 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public void setDataSourceShardingStrategyValue(String dataSourceShardingStrategyValue) {
 		this.dataSourceShardingStrategyValue = dataSourceShardingStrategyValue;
 	}
-
-//	/**
-//	 * @return the pageOptimize
-//	 */
-//	public boolean isPageOptimize() {
-//		return pageOptimize;
-//	}
-//
-//	/**
-//	 * @param pageOptimize the pageOptimize to set
-//	 */
-//	public void setPageOptimize(boolean pageOptimize) {
-//		this.pageOptimize = pageOptimize;
-//	}
-//
-//	/**
-//	 * @return the pageAliveMax
-//	 */
-//	public int getPageAliveMax() {
-//		return pageAliveMax;
-//	}
-//
-//	/**
-//	 * @param pageAliveMax the pageAliveMax to set
-//	 */
-//	public void setPageAliveMax(int pageAliveMax) {
-//		// 最大不超过5000
-//		if (pageAliveMax > 5000) {
-//			this.pageAliveMax = 5000;
-//		}
-//		// 最小20
-//		else if (pageAliveMax < 20) {
-//			this.pageAliveMax = 20;
-//		} else {
-//			this.pageAliveMax = pageAliveMax;
-//		}
-//	}
-//
-//	/**
-//	 * @return the pageAliveSeconds
-//	 */
-//	public int getPageAliveSeconds() {
-//		return pageAliveSeconds;
-//	}
-//
-//	/**
-//	 * @param pageAliveSeconds the pageAliveSeconds to set
-//	 */
-//	public void setPageAliveSeconds(int pageAliveSeconds) {
-//		// 最小保持30秒
-//		if (pageAliveSeconds < 30) {
-//			this.pageAliveSeconds = 30;
-//		}
-//		// 不超过24小时
-//		else if (pageAliveSeconds > 3600 * 24) {
-//			this.pageAliveSeconds = 1800;
-//		} else {
-//			this.pageAliveSeconds = pageAliveSeconds;
-//		}
-//	}
 
 	/**
 	 * @return the secureMasks
