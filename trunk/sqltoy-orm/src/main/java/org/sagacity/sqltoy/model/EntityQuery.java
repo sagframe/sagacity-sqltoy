@@ -7,7 +7,6 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
