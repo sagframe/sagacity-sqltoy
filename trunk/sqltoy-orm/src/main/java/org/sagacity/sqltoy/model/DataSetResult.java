@@ -37,7 +37,7 @@ public class DataSetResult implements Serializable {
 	/**
 	 * 总记录数量
 	 */
-	private Long totalCount = 0L;
+	private Long recordCount = 0L;
 
 	/**
 	 * @return the labelNames
@@ -100,18 +100,18 @@ public class DataSetResult implements Serializable {
 	/**
 	 * @return the totalCount
 	 */
-	public Long getTotalCount() {
-		if (totalCount == null) {
+	public Long getRecordCount() {
+		if (recordCount == null) {
 			return Long.valueOf(getRows().size());
 		}
-		return totalCount;
+		return recordCount;
 	}
 
 	/**
 	 * @param totalCount the totalCount to set
 	 */
-	public void setTotalCount(Long totalCount) {
-		this.totalCount = totalCount;
+	public void setRecordCount(Long recordCount) {
+		this.recordCount = recordCount;
 	}
 
 }

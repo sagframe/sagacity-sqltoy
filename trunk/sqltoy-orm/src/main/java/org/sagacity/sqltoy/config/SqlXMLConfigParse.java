@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
@@ -56,7 +57,7 @@ import org.w3c.dom.NodeList;
  * @project sagacity-sqltoy
  * @description 解析sql配置文件，不要纠结于xml解析的方式,后期已经部分使用xmlutil,但显式的解析更加清晰
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlXMLConfigParse.java,Revision:v1.0,Date:2009-12-14 上午12:07:03
+ * @version id:SqlXMLConfigParse.java,Revision:v1.0,Date:2009-12-14
  * @modify Date:2011-8-30 {增加sql文件设置数据库类别功能，优化解决跨数据库sql文件的配置方式}
  * @modify Date:2018-1-1 {增加对es和mongo的查询配置解析支持}
  * @modify Date:2019-1-15 {增加cache-arg 和 to-in-arg 过滤器}
@@ -366,15 +367,17 @@ public class SqlXMLConfigParse {
 		// <page-optimize alive-max="100" alive-seconds="90"/>
 		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
+			PageOptimize optimize = new PageOptimize();
 			Element pageOptimize = (Element) nodeList.item(0);
-			sqlToyConfig.setPageOptimize(true);
+			// sqlToyConfig.setPageOptimize(true);
 			if (pageOptimize.hasAttribute("alive-max")) {
-				sqlToyConfig.setPageAliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
+				optimize.aliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
 			}
 			// 不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.hasAttribute("alive-seconds")) {
-				sqlToyConfig.setPageAliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
+				optimize.aliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
 			}
+			sqlToyConfig.setPageOptimize(optimize);
 		}
 
 		// 解析翻译器

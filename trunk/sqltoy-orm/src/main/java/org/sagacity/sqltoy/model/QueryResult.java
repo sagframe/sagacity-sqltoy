@@ -19,11 +19,6 @@ public class QueryResult extends DataSetResult implements Serializable {
 	private static final long serialVersionUID = 525226255944594283L;
 
 	/**
-	 * 总记录数
-	 */
-	private Long recordCount;
-
-	/**
 	 * 当前页
 	 */
 	private Long pageNo;
@@ -37,20 +32,6 @@ public class QueryResult extends DataSetResult implements Serializable {
 	 * 是否跳过查询总记录数
 	 */
 	private Boolean skipQueryCount = false;
-
-	/**
-	 * @return the recordCount
-	 */
-	public Long getRecordCount() {
-		return recordCount;
-	}
-
-	/**
-	 * @param recordCount the recordCount to set
-	 */
-	public void setRecordCount(Long recordCount) {
-		this.recordCount = recordCount;
-	}
 
 	/**
 	 * @return the pageNo

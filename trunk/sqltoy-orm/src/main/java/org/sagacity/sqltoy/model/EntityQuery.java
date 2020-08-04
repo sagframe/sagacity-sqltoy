@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -140,6 +141,18 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 分页优化
+	 * @param pageOptimize
+	 * @return
+	 */
+	public EntityQuery pageOptimize(PageOptimize pageOptimize) {
+		if (pageOptimize != null) {
+			innerModel.pageOptimize = pageOptimize;
+		}
+		return this;
+	}
+	
 	public EntityQueryExtend getInnerModel() {
 		return innerModel;
 	}

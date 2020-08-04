@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 
@@ -71,5 +72,10 @@ public class EntityQueryExtend implements Serializable {
 	 * 对字段进行安全脱敏
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
+	
+	/**
+	 * 分页优化模型
+	 */
+	public PageOptimize pageOptimize;
 
 }

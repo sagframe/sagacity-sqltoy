@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -409,7 +410,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("getRandomResult result count={}", queryResult.getTotalCount());
+								logger.debug("getRandomResult result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -572,7 +573,7 @@ public class DialectFactory {
 							}
 							queryResult.setSkipQueryCount(true);
 							if (sqlToyContext.isDebug()) {
-								logger.debug("findSkipTotalCountPage result count={}", queryResult.getTotalCount());
+								logger.debug("findSkipTotalCountPage result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -612,20 +613,26 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = null;
+							PageOptimize pageOptimize = extend.pageOptimize;
+							if (pageOptimize == null) {
+								pageOptimize = realSqlToyConfig.getPageOptimize();
+							}
 							Long recordCnt = null;
 							// 通过查询条件构造唯一的key
 							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
-									queryExecutor);
+									queryExecutor, pageOptimize);
 							// 需要进行分页查询优化
 							if (null != pageQueryKey) {
 								// 从缓存中提取总记录数
-								recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageQueryKey);
+								recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize,
+										pageQueryKey);
 								// 缓存中没有则重新查询
 								if (null == recordCnt) {
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
 									// 将总记录数登记到缓存
-									PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageQueryKey, recordCnt);
+									PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey,
+											recordCnt);
 								}
 							} else {
 								recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
@@ -683,7 +690,7 @@ public class DialectFactory {
 								}
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("findPage result count={}", queryResult.getTotalCount());
+								logger.debug("findPage result count={}", ((QueryResult) queryResult).getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -753,7 +760,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("findTop result count={}", queryResult.getTotalCount());
+								logger.debug("findTop result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -810,7 +817,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("findByQuery result count={}", queryResult.getTotalCount());
+								logger.debug("findByQuery result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1484,7 +1491,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("updateFetch result count={}", queryResult.getTotalCount());
+								logger.debug("updateFetch result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1526,7 +1533,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("updateFetchTop result count={}", queryResult.getTotalCount());
+								logger.debug("updateFetchTop result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1567,7 +1574,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("updateFetchRandom result count={}", queryResult.getTotalCount());
+								logger.debug("updateFetchRandom result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}
@@ -1636,7 +1643,7 @@ public class DialectFactory {
 										resultType));
 							}
 							if (sqlToyContext.isDebug()) {
-								logger.debug("executeStore result count={}", queryResult.getTotalCount());
+								logger.debug("executeStore result count={}", queryResult.getRecordCount());
 							}
 							this.setResult(queryResult);
 						}

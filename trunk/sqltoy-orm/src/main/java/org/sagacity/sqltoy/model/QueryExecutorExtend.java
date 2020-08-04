@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -122,8 +123,13 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
 
+	/**
+	 * 分页优化模型
+	 */
+	public PageOptimize pageOptimize;
+
 	// 分库分表策略配置
-	//public ShardingConfig shardingConfig = new ShardingConfig();
+	// public ShardingConfig shardingConfig = new ShardingConfig();
 
 	/**
 	 * @param sqlToyConfig

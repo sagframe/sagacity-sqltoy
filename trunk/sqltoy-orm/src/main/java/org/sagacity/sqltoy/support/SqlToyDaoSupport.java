@@ -1325,6 +1325,10 @@ public class SqlToyDaoSupport {
 		if (!innerModel.secureMask.isEmpty()) {
 			queryExecutor.getInnerModel().secureMask.putAll(innerModel.secureMask);
 		}
+
+		// 设置分页优化
+		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
+
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
