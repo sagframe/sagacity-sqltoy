@@ -538,7 +538,7 @@ public class DialectFactory {
 	public QueryResult findSkipTotalCountPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		if (extend.sql == null) {
+		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findSkipTotalCountPage operate sql is null!");
 		}
 		int limitSize = sqlToyContext.getPageFetchSizeLimit();
@@ -599,7 +599,7 @@ public class DialectFactory {
 	public QueryResult findPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final long pageNo, final Integer pageSize, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		if (extend.sql == null) {
+		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
 		try {
@@ -715,7 +715,7 @@ public class DialectFactory {
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		if (extend.sql == null) {
+		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
 		try {
@@ -785,7 +785,7 @@ public class DialectFactory {
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		if (extend.sql == null) {
+		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
 		try {
@@ -841,7 +841,7 @@ public class DialectFactory {
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		if (extend.sql == null) {
+		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
 		extend.optimizeArgs(sqlToyConfig);
