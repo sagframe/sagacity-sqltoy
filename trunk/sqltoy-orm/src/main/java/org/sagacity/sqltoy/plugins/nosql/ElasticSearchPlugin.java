@@ -79,7 +79,7 @@ public class ElasticSearchPlugin {
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType);
 		page.setRows(result.getRows());
-		page.setRecordCount(result.getTotalCount());
+		page.setRecordCount(result.getRecordCount());
 		return page;
 	}
 

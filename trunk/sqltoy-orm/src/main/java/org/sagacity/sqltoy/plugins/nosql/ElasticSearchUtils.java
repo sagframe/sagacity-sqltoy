@@ -153,9 +153,9 @@ public class ElasticSearchUtils {
 		if (hits != null && hits.containsKey("total")) {
 			Object total = hits.get("total");
 			if (total instanceof JSONObject) {
-				resultModel.setTotalCount(((JSONObject) total).getLong("value"));
+				resultModel.setRecordCount(((JSONObject) total).getLong("value"));
 			} else {
-				resultModel.setTotalCount(Long.parseLong(total.toString()));
+				resultModel.setRecordCount(Long.parseLong(total.toString()));
 			}
 		}
 		NoSqlConfigModel nosqlConfig = sqlToyConfig.getNoSqlConfigModel();
@@ -233,7 +233,7 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (result != null) {
-			resultModel.setTotalCount(Long.valueOf(result.size()));
+			resultModel.setRecordCount(Long.valueOf(result.size()));
 		}
 		resultModel.setRows(result);
 		resultModel.setLabelNames(fieldModel.getAliasLabels());
@@ -306,7 +306,7 @@ public class ElasticSearchUtils {
 			}
 		}
 		if (result != null) {
-			resultModel.setTotalCount(Long.valueOf(result.size()));
+			resultModel.setRecordCount(Long.valueOf(result.size()));
 		}
 		resultModel.setRows(result);
 		resultModel.setLabelNames(fieldModel.getAliasLabels());

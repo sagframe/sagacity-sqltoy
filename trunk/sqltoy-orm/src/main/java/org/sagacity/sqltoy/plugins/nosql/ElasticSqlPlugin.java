@@ -57,7 +57,7 @@ public class ElasticSqlPlugin {
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
 				(Class) extend.resultType);
 		page.setRows(result.getRows());
-		page.setRecordCount(result.getTotalCount());
+		page.setRecordCount(result.getRecordCount());
 		return page;
 	}
 
