@@ -20,7 +20,8 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @project sagacity-sqltoy4.0
  * @description 提供分页优化缓存实现，记录相同查询条件的总记录数,采用FIFO算法保留符合活跃时间和记录规模
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:PageOptimizeCache.java,Revision:v1.0,Date:2016年11月24日
+ * @version id:PageOptimizeUtils.java,Revision:v1.0,Date:2016年11月24日
+ * @modify 2020-8-4 修改原本只支持xml中必须有id的sql才能缓存的策略,便于今后直接从代码中实现分页优化功能
  */
 public class PageOptimizeUtils {
 	private static final int INITIAL_CAPACITY = 128;
@@ -87,11 +88,12 @@ public class PageOptimizeUtils {
 		return cacheKey.toString();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.cache.PageOptimizeCache#getPageTotalCount(java.lang.
-	 * String, java.lang.String)
+	/**
+	 * @TODO 从缓存中获取具体sql相应条件的查询总记录数值
+	 * @param sqlToyConfig
+	 * @param pageOptimize
+	 * @param conditionsKey
+	 * @return
 	 */
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
@@ -126,11 +128,12 @@ public class PageOptimizeUtils {
 		return totalCount;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.cache.PageOptimizeCache#put(java.lang.String,
-	 * java.lang.String)
+	/**
+	 * @TODO 将具体条件查询的记录数按照sql id放入缓存
+	 * @param sqlToyConfig
+	 * @param pageOptimize
+	 * @param pageQueryKey
+	 * @param totalCount
 	 */
 	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String pageQueryKey, Long totalCount) {
@@ -139,6 +142,7 @@ public class PageOptimizeUtils {
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
 		// 同一个分页查询sql保留的不同查询条件记录数量
 		int aliveMax = pageOptimize.getAliveMax();
+		// sql id
 		String id = sqlToyConfig.getIdOrSql();
 		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(id);
 		if (null == map) {
