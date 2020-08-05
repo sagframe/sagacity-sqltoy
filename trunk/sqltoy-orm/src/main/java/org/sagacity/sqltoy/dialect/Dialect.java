@@ -29,6 +29,20 @@ import org.sagacity.sqltoy.model.StoreResult;
  */
 @SuppressWarnings({ "rawtypes" })
 public interface Dialect {
+
+	/**
+	 * @TODO 判断唯一性
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param paramsNamed
+	 * @param conn
+	 * @param dbType
+	 * @param tableName
+	 * @return
+	 */
+	public boolean isUnique(final SqlToyContext sqlToyContext, final Serializable entity, final String[] paramsNamed,
+			Connection conn, final Integer dbType, final String tableName);
+
 	/**
 	 * @todo 获取随机记录
 	 * @param sqlToyContext

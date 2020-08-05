@@ -324,8 +324,9 @@ public class DialectFactory {
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							this.setResult(DialectUtils.isUnique(sqlToyContext, uniqueExecutor.getEntity(),
-									uniqueExecutor.getUniqueFields(), conn, dbType, shardingModel.getTableName()));
+							this.setResult(getDialectSqlWrapper(dbType).isUnique(sqlToyContext,
+									uniqueExecutor.getEntity(), uniqueExecutor.getUniqueFields(), conn, dbType,
+									shardingModel.getTableName()));
 						}
 					});
 			if (sqlToyContext.isDebug()) {

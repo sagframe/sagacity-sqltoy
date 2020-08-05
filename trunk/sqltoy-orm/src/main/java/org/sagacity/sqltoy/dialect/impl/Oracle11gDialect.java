@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -56,6 +57,24 @@ public class Oracle11gDialect implements Dialect {
 	public static final String NEXTVAL = ".nextval";
 
 	public static final String VIRTUAL_TABLE = "dual";
+
+	@Override
+	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
+			Integer dbType, String tableName) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+				new UniqueTopSqlHandler() {
+					@Override
+					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
+							Integer dbType, int topSize) {
+						StringBuilder sql = new StringBuilder();
+						sql.append("SELECT sag_uniqueTop.* FROM ( ");
+						sql.append(DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName));
+						sql.append(") sag_uniqueTop where ROWNUM <=");
+						sql.append(topSize);
+						return sql.toString();
+					}
+				});
+	}
 
 	/*
 	 * (non-Javadoc)
