@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
-import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
+import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -80,7 +80,7 @@ public class DB2Dialect implements Dialect {
 	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
 			Connection conn, final Integer dbType, final String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
-				new UniqueTopSqlHandler() {
+				new UniqueSqlHandler() {
 					@Override
 					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
 							Integer dbType, int topSize) {

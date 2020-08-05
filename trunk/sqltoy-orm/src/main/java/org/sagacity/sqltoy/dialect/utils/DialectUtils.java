@@ -27,7 +27,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
-import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
+import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -1839,7 +1839,7 @@ public class DialectUtils {
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
 			Connection conn, final Integer dbType, final String tableName,
-			final UniqueTopSqlHandler uniqueTopSqlHandler) {
+			final UniqueSqlHandler uniqueTopSqlHandler) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
