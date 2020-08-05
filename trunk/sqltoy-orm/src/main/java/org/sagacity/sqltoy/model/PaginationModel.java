@@ -75,9 +75,8 @@ public class PaginationModel<T> implements Serializable {
 		return this.rows;
 	}
 
-	public PaginationModel<T> setRows(List<T> rows) {
+	public void setRows(List<T> rows) {
 		this.rows = rows;
-		return this;
 	}
 
 	public Integer getPageSize() {
@@ -87,18 +86,16 @@ public class PaginationModel<T> implements Serializable {
 		return pageSize;
 	}
 
-	public PaginationModel<T> setPageSize(Integer pageSize) {
+	public void setPageSize(Integer pageSize) {
 		this.pageSize = pageSize;
-		return this;
 	}
 
 	public long getRecordCount() {
 		return recordCount;
 	}
 
-	public PaginationModel<T> setRecordCount(long recordCount) {
+	public void setRecordCount(long recordCount) {
 		this.recordCount = recordCount < 0 ? 0 : recordCount;
-		return this;
 	}
 
 	/**
@@ -123,9 +120,8 @@ public class PaginationModel<T> implements Serializable {
 	 * @param aPageNo the new value of the pageNo property where pageNo==-1 then
 	 *                show all page
 	 */
-	public PaginationModel<T> setPageNo(long pageNo) {
+	public void setPageNo(long pageNo) {
 		this.pageNo = pageNo;
-		return this;
 	}
 
 	public long getStartIndex() {
@@ -209,9 +205,8 @@ public class PaginationModel<T> implements Serializable {
 		return skipQueryCount;
 	}
 
-	public PaginationModel<T> setSkipQueryCount(Boolean skipQueryCount) {
+	public void setSkipQueryCount(Boolean skipQueryCount) {
 		this.skipQueryCount = skipQueryCount;
-		return this;
 	}
 
 }
