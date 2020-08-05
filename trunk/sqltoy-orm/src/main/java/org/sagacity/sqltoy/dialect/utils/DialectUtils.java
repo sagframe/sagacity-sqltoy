@@ -1873,7 +1873,7 @@ public class DialectUtils {
 				realParamNamed = paramsNamed;
 				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed, null, null);
 			}
-
+			// 取出符合条件的2条记录
 			String queryStr = uniqueTopSqlHandler.process(entityMeta, realParamNamed, tableName, dbType, 2);
 			SqlExecuteStat.showSql("isUnique sql=" + queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr, paramValues, null, null, conn, dbType, false);
