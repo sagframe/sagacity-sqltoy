@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
  * @version v1.0, Date:2020-8-5
  * @modify 2020-8-5,修改说明
  */
-public abstract class UniqueTopSqlHandler {
-	public abstract String process(EntityMeta entityMeta, String[] realParamNamed, String tableName, Integer dbType,
+public abstract class UniqueSqlHandler {
+	public abstract String process(EntityMeta entityMeta, String[] paramNames, String tableName, Integer dbType,
 			int topSize);
 }

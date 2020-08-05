@@ -27,7 +27,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
-import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
+import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -1834,12 +1834,12 @@ public class DialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
-	 * @param uniqueTopSqlHandler
+	 * @param uniqueSqlHandler
 	 * @return
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
 			Connection conn, final Integer dbType, final String tableName,
-			final UniqueTopSqlHandler uniqueTopSqlHandler) {
+			final UniqueSqlHandler uniqueSqlHandler) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
@@ -1874,7 +1874,7 @@ public class DialectUtils {
 				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed, null, null);
 			}
 			// 取出符合条件的2条记录
-			String queryStr = uniqueTopSqlHandler.process(entityMeta, realParamNamed, tableName, dbType, 2);
+			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, dbType, 2);
 			SqlExecuteStat.showSql("isUnique sql=" + queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr, paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
