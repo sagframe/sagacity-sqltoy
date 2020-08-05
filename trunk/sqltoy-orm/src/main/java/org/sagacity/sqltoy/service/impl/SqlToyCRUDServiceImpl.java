@@ -438,6 +438,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * int)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public long generateBizId(String signature, int increment) {
 		return sqlToyLazyDao.generateBizId(signature, increment);
 	}
@@ -449,8 +450,15 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public String generateBizId(Serializable entity) {
 		return sqlToyLazyDao.generateBizId(entity);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
+		sqlToyLazyDao.translate(dataSet, cacheName, null, 1, handler);
 	}
 
 	/*

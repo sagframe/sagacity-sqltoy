@@ -233,6 +233,8 @@ public interface SqlToyCRUDService {
 	 */
 	public String generateBizId(Serializable entity);
 
+	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
+
 	/**
 	 * @todo 对记录进行翻译
 	 * @param dataSet
