@@ -813,6 +813,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getTranslateCache(cacheName, elementId);
 	}
 
+	@Override
+	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
+		super.translate(dataSet, cacheName, null, 1, handler);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

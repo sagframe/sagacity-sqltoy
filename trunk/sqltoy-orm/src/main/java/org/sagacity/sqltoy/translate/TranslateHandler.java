@@ -11,14 +11,14 @@ package org.sagacity.sqltoy.translate;
  */
 public abstract class TranslateHandler {
 	/**
-	 * @todo 获取key
+	 * @todo 从行记录中获取key
 	 * @param row
 	 * @return
 	 */
 	public abstract Object getKey(Object row);
 
 	/**
-	 * @todo 设置显示名称
+	 * @todo 将翻译后的名称回写到行记录中
 	 * @param row
 	 * @param name
 	 */

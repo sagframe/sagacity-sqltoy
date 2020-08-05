@@ -272,8 +272,6 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final LockMode lockMode,
 			final Class... cascadeTypes);
 
-	public Object loadByQuery(final QueryExecutor query);
-
 	/**
 	 * @todo 通过sql获取单条记录
 	 * @param sqlOrNamedSql 直接代码中写的sql或者xml中定义的sql id
@@ -292,6 +290,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
+
+	public Object loadByQuery(final QueryExecutor query);
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
@@ -590,6 +590,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
+
+	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**
 	 * @todo 对记录进行翻译
