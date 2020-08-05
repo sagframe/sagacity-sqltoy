@@ -233,17 +233,23 @@ public interface SqlToyCRUDService {
 	 */
 	public String generateBizId(Serializable entity);
 
+	/**
+	 * @TODO 利用缓存通过反调模式对集合数据进行编码转名称翻译
+	 * @param dataSet
+	 * @param cacheName
+	 * @param handler 反调方法:取key 和回写名称
+	 */
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**
-	 * @todo 对记录进行翻译
+	 * @todo 对记录进行翻译(可以)
 	 * @param dataSet
 	 * @param cacheName
-	 * @param cacheType
-	 * @param cacheNameIndex
+	 * @param cacheType 针对类似数据字典性质的有分类的缓存
+	 * @param cacheNameIndex 手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2 默认cacheNameIndex为1)
 	 * @param handler
 	 */
-	public void translate(Collection dataSet, String cacheName, String dictType, Integer cacheNameIndex,
+	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler);
 
 	/**
