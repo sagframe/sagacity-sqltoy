@@ -11,6 +11,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -29,6 +30,20 @@ import org.sagacity.sqltoy.model.StoreResult;
  */
 @SuppressWarnings({ "rawtypes" })
 public interface Dialect {
+
+	/**
+	 * @TODO 判断唯一性
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param paramsNamed
+	 * @param conn
+	 * @param dbType
+	 * @param tableName
+	 * @return
+	 */
+	public boolean isUnique(final SqlToyContext sqlToyContext, final Serializable entity, final String[] paramsNamed,
+			Connection conn, final Integer dbType, final String tableName);
+
 	/**
 	 * @todo 获取随机记录
 	 * @param sqlToyContext

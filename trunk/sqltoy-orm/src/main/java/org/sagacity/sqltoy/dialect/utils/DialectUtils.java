@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -1833,10 +1834,12 @@ public class DialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
+	 * @param uniqueTopSqlHandler
 	 * @return
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
-			Connection conn, final Integer dbType, String tableName) {
+			Connection conn, final Integer dbType, final String tableName,
+			final UniqueTopSqlHandler uniqueTopSqlHandler) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
@@ -1870,36 +1873,10 @@ public class DialectUtils {
 				realParamNamed = paramsNamed;
 				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed, null, null);
 			}
-			// 构造查询语句
-			StringBuilder queryStr = new StringBuilder("select 1");
-			// 如果存在主键，则查询主键字段
-			if (null != entityMeta.getIdArray()) {
-				for (String idFieldName : entityMeta.getIdArray()) {
-					queryStr.append(",");
-					queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(idFieldName), dbType));
-				}
-			}
-			queryStr.append(" from ");
-			queryStr.append(entityMeta.getSchemaTable(tableName));
-			queryStr.append(" where  ");
-			for (int i = 0; i < realParamNamed.length; i++) {
-				if (i > 0) {
-					queryStr.append(" and ");
-				}
-				queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
-						.append("=? ");
-			}
 
-			// 防止数据量过大，先用count方式查询提升效率
-			long recordCnt = getCountBySql(sqlToyContext, null, queryStr.toString(), paramValues, true, conn, dbType);
-			if (recordCnt == 0) {
-				return true;
-			}
-			if (recordCnt > 1) {
-				return false;
-			}
-			SqlExecuteStat.showSql("isUnique sql=" + queryStr.toString(), paramValues);
-			List result = SqlUtil.findByJdbcQuery(queryStr.toString(), paramValues, null, null, conn, dbType, false);
+			String queryStr = uniqueTopSqlHandler.process(entityMeta, realParamNamed, tableName, dbType, 2);
+			SqlExecuteStat.showSql("isUnique sql=" + queryStr, paramValues);
+			List result = SqlUtil.findByJdbcQuery(queryStr, paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
 				return true;
 			}

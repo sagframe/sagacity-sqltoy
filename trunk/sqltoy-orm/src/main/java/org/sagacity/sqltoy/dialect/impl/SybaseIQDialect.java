@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -25,6 +26,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SapIQDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -59,6 +61,20 @@ public class SybaseIQDialect implements Dialect {
 	 * 判定为null的函数
 	 */
 	public static final String NVL_FUNCTION = "isnull";
+
+	@Override
+	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
+			Connection conn, Integer dbType, final String tableName) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+				new UniqueTopSqlHandler() {
+					@Override
+					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
+							Integer dbType, int topSize) {
+						String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName);
+						return queryStr.replaceFirst("(?i)select ", "select top " + topSize + " ");
+					}
+				});
+	}
 
 	/*
 	 * (non-Javadoc)

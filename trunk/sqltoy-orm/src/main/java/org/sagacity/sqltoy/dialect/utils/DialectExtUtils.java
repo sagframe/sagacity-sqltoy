@@ -156,4 +156,29 @@ public class DialectExtUtils {
 			}
 		}
 	}
+
+	public static String wrapUniqueSql(EntityMeta entityMeta, String[] realParamNamed, Integer dbType,
+			String tableName) {
+		// 构造查询语句
+		StringBuilder queryStr = new StringBuilder("select 1");
+		// 如果存在主键，则查询主键字段
+		if (null != entityMeta.getIdArray()) {
+			for (String idFieldName : entityMeta.getIdArray()) {
+				queryStr.append(",");
+				queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(idFieldName), dbType));
+			}
+		}
+		queryStr.append(" from ");
+		queryStr.append(entityMeta.getSchemaTable(tableName));
+		queryStr.append(" where  ");
+
+		for (int i = 0; i < realParamNamed.length; i++) {
+			if (i > 0) {
+				queryStr.append(" and ");
+			}
+			queryStr.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(realParamNamed[i]), dbType))
+					.append("=? ");
+		}
+		return queryStr.toString();
+	}
 }

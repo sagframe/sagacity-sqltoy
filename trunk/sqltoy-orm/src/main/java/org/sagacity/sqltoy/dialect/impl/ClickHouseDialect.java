@@ -9,6 +9,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.UniqueTopSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -16,6 +17,7 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
@@ -31,6 +33,20 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
  * @version id:ClickHouseDialect.java,Revision:v1.0,Date:2020年1月20日
  */
 public class ClickHouseDialect implements Dialect {
+
+	@Override
+	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
+			Integer dbType, final String tableName) {
+		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
+				new UniqueTopSqlHandler() {
+					@Override
+					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
+							Integer dbType, int topSize) {
+						String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName);
+						return queryStr + " limit " + topSize;
+					}
+				});
+	}
 
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
