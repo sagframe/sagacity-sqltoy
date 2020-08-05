@@ -264,6 +264,9 @@ public class DateUtil {
 							realDF = "yyyyMMddHHmmssSSS";
 						} else if (size == 14) {
 							realDF = "yyyyMMddHHmmss";
+						} // 无空白纯数字13位是System.currentTimeMillis()对应的值
+						else if (size == 13) {
+							return new java.util.Date(Long.valueOf(dateStr));
 						} else if (size == 12) {
 							realDF = "yyMMddHHmmss";
 						} else if (size == 10) {
