@@ -157,10 +157,18 @@ public class DialectExtUtils {
 		}
 	}
 
+	/**
+	 * @TODO 组织判断unique的sql(从DialectUtils中抽离避免循环调用)
+	 * @param entityMeta
+	 * @param realParamNamed
+	 * @param dbType
+	 * @param tableName
+	 * @return
+	 */
 	public static String wrapUniqueSql(EntityMeta entityMeta, String[] realParamNamed, Integer dbType,
 			String tableName) {
-		// 构造查询语句
-		StringBuilder queryStr = new StringBuilder("select 1");
+		// 构造查询语句(固定1避免无主键表导致select from 问题)
+		StringBuilder queryStr = new StringBuilder("select 1 ");
 		// 如果存在主键，则查询主键字段
 		if (null != entityMeta.getIdArray()) {
 			for (String idFieldName : entityMeta.getIdArray()) {
