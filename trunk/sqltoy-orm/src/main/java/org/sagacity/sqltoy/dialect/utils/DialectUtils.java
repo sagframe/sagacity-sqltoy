@@ -1834,7 +1834,7 @@ public class DialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
-	 * @param uniqueTopSqlHandler
+	 * @param uniqueSqlHandler
 	 * @return
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
