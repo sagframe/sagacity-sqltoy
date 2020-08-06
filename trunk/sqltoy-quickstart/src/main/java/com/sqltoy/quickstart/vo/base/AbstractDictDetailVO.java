@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_dict_detail,Remark:字典明细表  
  */

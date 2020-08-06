@@ -36,12 +36,12 @@ public class TransInfoHisVO extends AbstractTransInfoHisVO {
 	}
 
 	/** minimal constructor */
-	public TransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal amt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
+	public TransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
 		this.transChannel=transChannel;
-		this.amt=amt;
+		this.transAmt=transAmt;
 		this.status=status;
 		this.resultCode=resultCode;
 		this.transTime=transTime;
@@ -50,12 +50,12 @@ public class TransInfoHisVO extends AbstractTransInfoHisVO {
 	}
 
 	/** full constructor */
-	public TransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal amt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
+	public TransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
 		this.transChannel=transChannel;
-		this.amt=amt;
+		this.transAmt=transAmt;
 		this.status=status;
 		this.resultCode=resultCode;
 		this.transTime=transTime;

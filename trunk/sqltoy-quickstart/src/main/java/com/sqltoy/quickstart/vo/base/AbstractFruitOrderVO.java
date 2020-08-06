@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_fruit_order,Remark:查询汇总演示-水果订单表  
  */

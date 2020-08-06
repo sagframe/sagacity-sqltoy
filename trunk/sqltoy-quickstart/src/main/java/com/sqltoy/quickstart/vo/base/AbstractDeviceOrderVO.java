@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_device_order,Remark:硬件购销定单表(演示有规则单号)  
  */
