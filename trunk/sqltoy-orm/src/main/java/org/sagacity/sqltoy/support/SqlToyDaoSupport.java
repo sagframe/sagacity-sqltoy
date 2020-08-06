@@ -320,7 +320,7 @@ public class SqlToyDaoSupport {
 		}
 		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
 	}
-
+	
 	/**
 	 * @todo 批量根据实体对象的主键获取对象的详细信息
 	 * @param entities

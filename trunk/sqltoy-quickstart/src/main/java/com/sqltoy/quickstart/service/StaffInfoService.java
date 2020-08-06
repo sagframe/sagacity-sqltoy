@@ -16,5 +16,16 @@ import com.sqltoy.quickstart.vo.StaffInfoVO;
 public interface StaffInfoService {
 	public PaginationModel<StaffInfoVO> queryStaff(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO);
 
+	/**
+	 * @TODO 演示锁记录查询、修改并返回修改后的结果
+	 * @return
+	 */
 	public List<StaffInfoVO> updateFetch();
+
+	/**
+	 * @TODO 演示锁记录并修改
+	 * @param id
+	 * @param address
+	 */
+	public void updateLockStaff(String id, String address);
 }

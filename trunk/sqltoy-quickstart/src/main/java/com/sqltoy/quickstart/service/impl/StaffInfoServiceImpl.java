@@ -50,8 +50,7 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 	@Transactional
 	public List<StaffInfoVO> updateFetch() {
 		String sql = "select t.STAFF_ID,t.STAFF_NAME,t.ADDRESS,t.ENTRY_DATE,t.ORGAN_ID,t.ORGAN_ID ORGAN_NAME,t.UPDATE_TIME"
-				+ " from sqltoy_staff_info t "
-				+ " where #[t.CREATE_TIME >=?] #[and t.CREATE_TIME<=?]";
+				+ " from sqltoy_staff_info t " + " where #[t.CREATE_TIME >=?] #[and t.CREATE_TIME<=?]";
 		return sqlToyLazyDao
 				.updateFetch(
 						new QueryExecutor(sql).values(LocalDate.parse("2019-01-01"), null).resultType(StaffInfoVO.class)
@@ -60,7 +59,7 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 							@Override
 							public void updateRow(ResultSet rs, int index) throws Exception {
 								String staffName = rs.getString("STAFF_NAME");
-								//一般updateFetch会依托表中的现有值做一些逻辑处理,否则可以直接update
+								// 一般updateFetch会依托表中的现有值做一些逻辑处理,否则可以直接update
 								if (staffName.contains("陈")) {
 									rs.updateString("ADDRESS", rs.getString("ADDRESS") + "更新!");
 								}
@@ -68,4 +67,12 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 							}
 						});
 	}
+
+	@Override
+	public void updateLockStaff(String id, String address) {
+		StaffInfoVO staffInfo = sqlToyLazyDao.load(new StaffInfoVO(id));
+		staffInfo.setAddress(address);
+		sqlToyLazyDao.update(staffInfo);
+	}
+
 }
