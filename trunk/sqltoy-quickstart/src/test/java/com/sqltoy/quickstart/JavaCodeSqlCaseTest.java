@@ -41,7 +41,7 @@ public class JavaCodeSqlCaseTest {
 	public void findPageByTextBlock() {
 		// 暂时用字符串拼接来
 		String sql = "select t1.*,t2.ORGAN_NAME  from @fast(select t.* "
-				+ "	  from sqltoy_staff_info t 	 where t.STATUS=1 " + "		  #[and t.STAFF_NAME like :staffName] "
+				+ "	  from sqltoy_staff_info t 	 where t.STATUS=1 #[and t.STAFF_NAME like :staffName] "
 				+ "	  order by t.ENTRY_DATE desc) t1 left join sqltoy_organ_info t2 "
 				+ "   on  t1.organ_id=t2.ORGAN_ID";
 
@@ -72,7 +72,7 @@ public class JavaCodeSqlCaseTest {
 	@Test
 	public void findPageTranslate() {
 		// 初始化，实现缓存加载影响性能
-		String sql = "STATUS=1 #[and t.STAFF_NAME like :staffName]";
+		String sql = "STATUS=1 #[and STAFF_NAME like :staffName]";
 		ParamsFilter paramFilter = new ParamsFilter("staffName").rlike();
 		Translate translate = new Translate("organIdName").setKeyColumn("organId").setColumn("organName");
 		PaginationModel pageModel = new PaginationModel();
@@ -82,6 +82,8 @@ public class JavaCodeSqlCaseTest {
 		for (StaffInfoVO staff : result.getRows()) {
 			System.err.println(JSON.toJSONString(staff));
 		}
+		
+		
 		// 第一次查询
 		// 单表查询
 		DebugUtil.beginTime("firstPage");
@@ -89,9 +91,9 @@ public class JavaCodeSqlCaseTest {
 				EntityQuery.create().where(sql).orderByDesc("ENTRY_DATE").values(new StaffInfoVO().setStaffName("陈"))
 						.filters(paramFilter).translates(translate).pageOptimize(new PageOptimize().aliveSeconds(120)));
 		DebugUtil.endTime("firstPage");
-
-		DebugUtil.beginTime("secondPage");
+		
 		// 第二次查询，分页优化起作用，不会再执行count查询，提升了效率
+		DebugUtil.beginTime("secondPage");
 		result = sqlToyLazyDao.findEntity(StaffInfoVO.class, pageModel,
 				EntityQuery.create().where(sql).orderByDesc("ENTRY_DATE").values(new StaffInfoVO().setStaffName("陈"))
 						.filters(paramFilter).translates(translate).pageOptimize(new PageOptimize().aliveSeconds(120)));
