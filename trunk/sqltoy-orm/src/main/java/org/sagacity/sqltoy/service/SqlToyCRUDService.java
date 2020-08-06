@@ -286,12 +286,12 @@ public interface SqlToyCRUDService {
 	 */
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
 
-	/**
-	 * @TODO 提供一个自由定义操作的服务窗口
-	 * @param values
-	 * @param freedomHandler
-	 * @return
-	 */
-	@Deprecated
-	public Object freedomOpts(Object values, FreedomHandler freedomHandler);
+//	/**
+//	 * @TODO 提供一个自由定义操作的服务窗口
+//	 * @param values
+//	 * @param freedomHandler
+//	 * @return
+//	 */
+//	@Deprecated
+//	public Object freedomOpts(Object values, FreedomHandler freedomHandler);
 }

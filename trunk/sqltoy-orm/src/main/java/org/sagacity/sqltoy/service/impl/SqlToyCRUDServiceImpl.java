@@ -502,11 +502,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.cacheMatchKeys(cacheName, cacheType, matchRegex, matchIndexes);
 	}
 
-	@Override
-	@Deprecated
-	@Transactional
-	public Object freedomOpts(Object values, FreedomHandler freedomHandler) {
-		return freedomHandler.process(values);
-	}
+//	@Override
+//	@Deprecated
+//	@Transactional
+//	public Object freedomOpts(Object values, FreedomHandler freedomHandler) {
+//		return freedomHandler.process(values);
+//	}
 
 }
