@@ -24,7 +24,8 @@ import com.sqltoy.quickstart.vo.StaffInfoVO;
 public class UniqueCaseTest {
 	@Autowired
 	private SqlToyCRUDService sqlToyCRUDService;
-
+	
+	// 演示之前需要先执行InitDataBaseTest中的初始化数据库
 	// 如果是复核字段验证唯一性，用法举例即传多个属性名称
 	// sqlToyCRUDService.isUnique(staffInfo, "staffCode","sexType");
 
