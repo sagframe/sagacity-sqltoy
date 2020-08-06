@@ -3,6 +3,9 @@
  */
 package com.sqltoy.quickstart;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -10,6 +13,7 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.EntityQuery;
+import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.DebugUtil;
@@ -18,6 +22,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.alibaba.fastjson.JSON;
+import com.sqltoy.quickstart.service.InitDBService;
+import com.sqltoy.quickstart.vo.DeviceOrderVO;
 import com.sqltoy.quickstart.vo.StaffInfoVO;
 
 /**
@@ -32,6 +38,16 @@ import com.sqltoy.quickstart.vo.StaffInfoVO;
 public class JavaCodeSqlCaseTest {
 	@Autowired
 	SqlToyLazyDao sqlToyLazyDao;
+
+	@Autowired
+	InitDBService initDBService;
+
+	// 第一步，订单数据初始化
+	@Test
+	public void mockOrderData() {
+		Long saveCnt = initDBService.initOrderData();
+		System.err.println("创建模拟订单记录:" + saveCnt + " 条!");
+	}
 
 	// 很多人对sql写在xml极端鄙视，但说实话sql写在代码中真难看(起初大家都是写在代码中走过来的)!后期维护变更调试的时候无比痛苦!
 	// sqltoy一直是支持代码中写sql的，但并不推荐，从4.13.12
@@ -76,14 +92,14 @@ public class JavaCodeSqlCaseTest {
 		ParamsFilter paramFilter = new ParamsFilter("staffName").rlike();
 		Translate translate = new Translate("organIdName").setKeyColumn("organId").setColumn("organName");
 		PaginationModel pageModel = new PaginationModel();
+		// 演示了缓存翻译、电话号码脱敏
 		PaginationModel<StaffInfoVO> result = sqlToyLazyDao.findEntity(StaffInfoVO.class, pageModel,
 				EntityQuery.create().where(sql).orderByDesc("ENTRY_DATE").values(new StaffInfoVO().setStaffName("陈"))
-						.filters(paramFilter).translates(translate));
+						.filters(paramFilter).translates(translate).secureMask(MaskType.TEL, "telNo"));
 		for (StaffInfoVO staff : result.getRows()) {
 			System.err.println(JSON.toJSONString(staff));
 		}
-		
-		
+
 		// 第一次查询
 		// 单表查询
 		DebugUtil.beginTime("firstPage");
@@ -91,7 +107,7 @@ public class JavaCodeSqlCaseTest {
 				EntityQuery.create().where(sql).orderByDesc("ENTRY_DATE").values(new StaffInfoVO().setStaffName("陈"))
 						.filters(paramFilter).translates(translate).pageOptimize(new PageOptimize().aliveSeconds(120)));
 		DebugUtil.endTime("firstPage");
-		
+
 		// 第二次查询，分页优化起作用，不会再执行count查询，提升了效率
 		DebugUtil.beginTime("secondPage");
 		result = sqlToyLazyDao.findEntity(StaffInfoVO.class, pageModel,
@@ -99,5 +115,25 @@ public class JavaCodeSqlCaseTest {
 						.filters(paramFilter).translates(translate).pageOptimize(new PageOptimize().aliveSeconds(120)));
 		DebugUtil.endTime("secondPage");
 
+	}
+
+	// 演示了查询条件处理中的primary首要条件处理，当这个条件参数不为空，其他参数都为空
+	// 当指定orderId 对应的值时生效
+	@Test
+	public void findBySql() {
+		// 授权的机构
+		String[] authedOrgans = { "100004", "100007" };
+		List<DeviceOrderVO> result = (List<DeviceOrderVO>) sqlToyLazyDao
+				.findByQuery(new QueryExecutor("qstart_order_search")
+						.names("orderId", "authedOrganIds", "staffName", "beginDate", "endDate")
+						.values(null, authedOrgans, "陈", LocalDate.parse("2018-09-01"), null)
+						.resultType(DeviceOrderVO.class)
+						// orderId是首要参数，但排除authedOrganIds(授权机构参数)
+						.filters(new ParamsFilter("orderId").primary("authedOrganIds")))
+				.getRows();
+
+		for (DeviceOrderVO vo : result) {
+			System.err.println(JSON.toJSONString(vo));
+		}
 	}
 }
