@@ -72,7 +72,11 @@
 			<artifactId>druid-spring-boot-starter</artifactId>
 			<version>${druid.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.sagframe</groupId>
+			<artifactId>sagacity-sqltoy</artifactId>
+			<version>${sqltoy-starter.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.sagframe</groupId>
 			<artifactId>sagacity-sqltoy-starter</artifactId>
