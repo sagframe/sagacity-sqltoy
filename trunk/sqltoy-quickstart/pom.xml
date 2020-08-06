@@ -18,7 +18,7 @@
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 		<junit-platform.version>1.6.2</junit-platform.version>
 		<spring.version>5.2.8.RELEASE</spring.version>
-		<aspectjweaver.version>1.9.5</aspectjweaver.version>
+		<aspectjweaver.version>1.9.6</aspectjweaver.version>
 	</properties>
 	<dependencies>
 		<dependency>
