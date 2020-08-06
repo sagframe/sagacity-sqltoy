@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.config.annotation.OneToMany;
 import com.sqltoy.quickstart.vo.DictDetailVO;
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_dict_type,Remark:字典分类表  
  */

@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_staff_info,Remark:员工信息表  
  */

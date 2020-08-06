@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_trans_info_15d,Remark:支付交易流水表(15天表)  
  */

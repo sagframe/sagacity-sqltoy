@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.config.annotation.Id;
 
 
 /**
- * @project sqltoy-showcase
+ * @project sqltoy-quickstart
  * @version 1.0.0
  * Table: sqltoy_trans_info_his,Remark:支付交易流水表  
  */
@@ -53,8 +53,8 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	 * jdbcType:DECIMAL
 	 * 交易金额
 	 */
-	@Column(name="AMT",length=14L,type=java.sql.Types.DECIMAL,nullable=false)
-	protected BigDecimal amt;
+	@Column(name="TRANS_AMT",length=14L,type=java.sql.Types.DECIMAL,nullable=false)
+	protected BigDecimal transAmt;
 	
 	/**
 	 * jdbcType:DECIMAL
@@ -110,12 +110,12 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	}
 
 	/** minimal constructor */
-	public AbstractTransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal amt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
+	public AbstractTransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
 		this.transChannel=transChannel;
-		this.amt=amt;
+		this.transAmt=transAmt;
 		this.status=status;
 		this.resultCode=resultCode;
 		this.transTime=transTime;
@@ -124,12 +124,12 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	}
 
 	/** full constructor */
-	public AbstractTransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal amt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
+	public AbstractTransInfoHisVO(String transId,String transCode,String transChannel,BigDecimal transAmt,Integer status,String resultCode,LocalDateTime transTime,LocalDate transDate,String userId,String cardNo)
 	{
 		this.transId=transId;
 		this.transCode=transCode;
 		this.transChannel=transChannel;
-		this.amt=amt;
+		this.transAmt=transAmt;
 		this.status=status;
 		this.resultCode=resultCode;
 		this.transTime=transTime;
@@ -184,18 +184,18 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 	}
 	
 	/**
-	 *@param amt the amt to set
+	 *@param transAmt the transAmt to set
 	 */
-	public AbstractTransInfoHisVO setAmt(BigDecimal amt) {
-		this.amt=amt;
+	public AbstractTransInfoHisVO setTransAmt(BigDecimal transAmt) {
+		this.transAmt=transAmt;
 		return this;
 	}
 		
 	/**
-	 *@return the Amt
+	 *@return the TransAmt
 	 */
-	public BigDecimal getAmt() {
-	    return this.amt;
+	public BigDecimal getTransAmt() {
+	    return this.transAmt;
 	}
 	
 	/**
@@ -299,7 +299,7 @@ public abstract class AbstractTransInfoHisVO implements Serializable,
 		columnsBuffer.append("transId=").append(getTransId()).append("\n");
 		columnsBuffer.append("transCode=").append(getTransCode()).append("\n");
 		columnsBuffer.append("transChannel=").append(getTransChannel()).append("\n");
-		columnsBuffer.append("amt=").append(getAmt()).append("\n");
+		columnsBuffer.append("transAmt=").append(getTransAmt()).append("\n");
 		columnsBuffer.append("status=").append(getStatus()).append("\n");
 		columnsBuffer.append("resultCode=").append(getResultCode()).append("\n");
 		columnsBuffer.append("transTime=").append(getTransTime()).append("\n");
