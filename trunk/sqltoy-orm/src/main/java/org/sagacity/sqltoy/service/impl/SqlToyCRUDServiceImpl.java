@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.sagacity.sqltoy.callback.FreedomHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -499,6 +500,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
 		return sqlToyLazyDao.cacheMatchKeys(cacheName, cacheType, matchRegex, matchIndexes);
+	}
+
+	@Override
+	@Deprecated
+	@Transactional
+	public Object freedomOpts(Object values, FreedomHandler freedomHandler) {
+		return freedomHandler.process(values);
 	}
 
 }

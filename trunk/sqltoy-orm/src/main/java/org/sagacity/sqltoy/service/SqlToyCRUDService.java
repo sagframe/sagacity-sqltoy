@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.sagacity.sqltoy.callback.FreedomHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -237,7 +238,7 @@ public interface SqlToyCRUDService {
 	 * @TODO 利用缓存通过反调模式对集合数据进行编码转名称翻译
 	 * @param dataSet
 	 * @param cacheName
-	 * @param handler 反调方法:取key 和回写名称
+	 * @param handler   反调方法:取key 和回写名称
 	 */
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
@@ -245,8 +246,9 @@ public interface SqlToyCRUDService {
 	 * @todo 对记录进行翻译(可以)
 	 * @param dataSet
 	 * @param cacheName
-	 * @param cacheType 针对类似数据字典性质的有分类的缓存
-	 * @param cacheNameIndex 手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2 默认cacheNameIndex为1)
+	 * @param cacheType      针对类似数据字典性质的有分类的缓存
+	 * @param cacheNameIndex 手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2
+	 *                       默认cacheNameIndex为1)
 	 * @param handler
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
@@ -283,4 +285,13 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
+
+	/**
+	 * @TODO 提供一个自由定义操作的服务窗口
+	 * @param values
+	 * @param freedomHandler
+	 * @return
+	 */
+	@Deprecated
+	public Object freedomOpts(Object values, FreedomHandler freedomHandler);
 }
