@@ -23,8 +23,9 @@ public class GroupSummary {
 			return;
 		}
 		List<Integer> sumColList = new ArrayList<Integer>();
-		// 参照列，如按年份进行旋转(columns="1..result.width()-1")
+		// 计算的列，如按年份进行旋转(columns="1..result.width()-1")
 		int dataWidth = ((List) result.get(0)).size();
+		// 提供result.width() 和${dataWidth}两个变量表示数据的宽度
 		String cols = summaryModel.getSummaryCols().replaceAll("result\\.width\\(\\)", Integer.toString(dataWidth));
 		cols = cols.replaceAll("\\$\\{dataWidth\\}", Integer.toString(dataWidth));
 		String[] columns = cols.split(",");
