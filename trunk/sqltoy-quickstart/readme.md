@@ -107,6 +107,7 @@ spring:
 spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
 spring.sqltoy.debug=true
+#项目中用到的数据库保留字定义,这里是举例，正常情况下不用定义
 #spring.sqltoy.reservedWords=status,sex_type
 #obtainDataSource: org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSourc
 #spring.sqltoy.defaultDataSource=dataSource
