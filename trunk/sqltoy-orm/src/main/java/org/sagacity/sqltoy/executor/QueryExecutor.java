@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -145,11 +146,13 @@ public class QueryExecutor implements Serializable {
 	 */
 	public QueryExecutor translates(Translate... translates) {
 		if (translates != null && translates.length > 0) {
+			TranslateExtend extend;
 			for (Translate trans : translates) {
-				if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getColumn())) {
+				extend = trans.getExtend();
+				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
 					throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
 				}
-				innerModel.translates.put(trans.getColumn(), trans);
+				innerModel.translates.put(extend.column, trans);
 			}
 		}
 		return this;
@@ -237,7 +240,7 @@ public class QueryExecutor implements Serializable {
 		}
 		return this;
 	}
-	
+
 	// 分库分表在xml中应用,代码中暂时不支持(必要性不强，不建议将sql写在代码中，更不推荐调试完sql再转成jooq对象查询模式)
 //	public QueryExecutor shardingDB(String strategory, String... columns) {
 //		return this;

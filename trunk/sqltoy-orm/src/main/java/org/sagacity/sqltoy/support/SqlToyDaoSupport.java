@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
@@ -320,7 +321,7 @@ public class SqlToyDaoSupport {
 		}
 		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
 	}
-	
+
 	/**
 	 * @todo 批量根据实体对象的主键获取对象的详细信息
 	 * @param entities
@@ -1265,15 +1266,14 @@ public class SqlToyDaoSupport {
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
 			Iterator<Translate> iter = innerModel.translates.values().iterator();
-			Translate translate;
 			String keyColumn;
+			TranslateExtend extend;
 			while (iter.hasNext()) {
-				translate = iter.next();
+				extend = iter.next().getExtend();
 				// 将java模式的字段名称转化为数据库字段名称
-				keyColumn = entityMeta.getColumnName(translate.getKeyColumn());
-				translateFields = translateFields.concat(",")
-						.concat((keyColumn == null) ? translate.getKeyColumn() : keyColumn).concat(" as ")
-						.concat(translate.getColumn());
+				keyColumn = entityMeta.getColumnName(extend.keyColumn);
+				translateFields = translateFields.concat(",").concat((keyColumn == null) ? extend.keyColumn : keyColumn)
+						.concat(" as ").concat(extend.column);
 			}
 		}
 
