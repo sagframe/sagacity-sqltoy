@@ -460,7 +460,7 @@ application.properties sqltoy部分配置
 ```javascript
 ##  sqltoy 配置 
 # sql.xml 文件的路径,多个路径用;符合分割(原则上也是可选配置，如果只用对象操作的话,但不建议)
-spring.sqltoy.sqlResourcesDir=/com/sagframe/sqltoy/showcase
+spring.sqltoy.sqlResourcesDir=/com/sqltoy/quickstart
 # 缓存翻译的配置(可选配置)
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
 # 是否debug模式,debug 模式会打印执行的sql和参数信息(可选配置)
@@ -468,7 +468,7 @@ spring.sqltoy.debug=true
 # 设置默认使用的datasource(可选配置,不配置会自动注入)
 spring.sqltoy.defaultDataSource=dataSource
 # 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
-spring.sqltoy.unifyFieldsHandler=com.sagframe.sqltoy.plugins.SqlToyUnifyFieldsHandler
+spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 # sql执行超过多长时间则进行日志输出(可选配置:默认30秒)，用于监控哪些慢sql
 spring.sqltoy.printSqlTimeoutMillis=30000
 
@@ -554,7 +554,7 @@ public class CrudCaseServiceTest {
 		staffInfo.setEntryDate(LocalDate.now());
 		staffInfo.setStatus(1);
 		staffInfo.setOrganId("C0001");
-		staffInfo.setPhoto(ShowCaseUtils.getBytes(ShowCaseUtils.getFileInputStream("classpath:/mock/staff_photo.jpg")));
+		staffInfo.setPhoto(FileUtil.readAsBytes("classpath:/mock/staff_photo.jpg"));
 		staffInfo.setCountry("86");
 		sqlToyCRUDService.save(staffInfo);
 	}
