@@ -856,13 +856,13 @@ public class ResultUtils {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ColsChainRelativeModel) {
-					// 数据汇总合计
+					// 列数据环比
 					ColsChainRelative.process((ColsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof RowsChainRelativeModel) {
-					// 数据汇总合计
+					// 行数据环比
 					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ReverseModel) {
-					// 数据汇总合计
+					// 数据反顺
 					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
 				}
 			}
