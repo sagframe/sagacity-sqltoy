@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -134,29 +135,30 @@ public class TranslateManager {
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(SqlToyContext sqlToyContext, Connection conn,
 			HashMap<String, Translate> translates) {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
-		Translate translate;
+		// Translate translate;
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
+		TranslateExtend extend;
 		for (Map.Entry<String, Translate> entry : translates.entrySet()) {
-			translate = entry.getValue();
-			if (translateMap.containsKey(translate.getCache())) {
-				cacheModel = translateMap.get(translate.getCache());
-				cache = getCacheData(sqlToyContext, cacheModel, translate.getCacheType());
+			// translate = entry.getValue();
+			extend = entry.getValue().getExtend();
+			if (translateMap.containsKey(extend.cache)) {
+				cacheModel = translateMap.get(extend.cache);
+				cache = getCacheData(sqlToyContext, cacheModel, extend.cacheType);
 				if (cache != null) {
-					result.put(translate.getColumn(), cache);
+					result.put(extend.column, cache);
 				} else {
-					result.put(translate.getColumn(), new HashMap<String, Object[]>());
+					result.put(extend.column, new HashMap<String, Object[]>());
 					if (logger.isWarnEnabled()) {
 						logger.warn("sqltoy translate:cacheName={},cache-type={},column={}配置不正确,未获取对应cache数据!",
-								cacheModel.getCache(), translate.getCacheType(), translate.getColumn());
+								cacheModel.getCache(), extend.cacheType, extend.column);
 					} else {
 						System.err.println("sqltoy translate:cacheName=" + cacheModel.getCache() + ",cache-type="
-								+ translate.getCacheType() + ",column=" + translate.getColumn()
-								+ " 配置不正确,未获取对应cache数据!");
+								+ extend.cacheType + ",column=" + extend.column + " 配置不正确,未获取对应cache数据!");
 					}
 				}
 			} else {
-				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", translate.getCache());
+				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", extend.cache);
 			}
 		}
 		return result;

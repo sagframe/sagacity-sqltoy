@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -330,11 +331,12 @@ public class ResultUtils {
 					: false;
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
-			Translate translateModel = null;
+			// Translate translateModel = null;
+			TranslateExtend extend = null;
 			if (translateLink) {
-				translateModel = translateMap.get(linkModel.getColumn().toLowerCase());
-				linkTranslateIndex = translateModel.getIndex();
-				linkTranslateMap = translateCache.get(translateModel.getColumn());
+				extend = translateMap.get(linkModel.getColumn().toLowerCase()).getExtend();
+				linkTranslateIndex = extend.index;
+				linkTranslateMap = translateCache.get(extend.column);
 			}
 			Object[] cacheValues;
 			// 判断link拼接是否重新开始
@@ -350,8 +352,8 @@ public class ResultUtils {
 						if (cacheValues == null) {
 							linkStr = "";
 							if (isDebug) {
-								logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!",
-										translateModel.getCache(), translateModel.getCacheType(), linkValue);
+								logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+										extend.cacheType, linkValue);
 							}
 						} else {
 							linkStr = cacheValues[linkTranslateIndex];
@@ -671,7 +673,8 @@ public class ResultUtils {
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
-		Translate translate;
+		// Translate translate;
+		TranslateExtend extend;
 		String label;
 		String keyIndex;
 		boolean allNull = true;
@@ -686,11 +689,11 @@ public class ResultUtils {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
 				}
 				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
-					translate = translateMap.get(label);
-					if (translate == null) {
-						translate = translateMap.get(keyIndex);
+					extend = translateMap.get(label).getExtend();
+					if (extend == null) {
+						extend = translateMap.get(keyIndex).getExtend();
 					}
-					fieldValue = translateKey(translate, translateCaches.get(translate.getColumn()), fieldValue);
+					fieldValue = translateKey(extend, translateCaches.get(extend.column), fieldValue);
 				}
 			}
 			rowData.add(fieldValue);
@@ -709,32 +712,32 @@ public class ResultUtils {
 	 * @param fieldValue
 	 * @return
 	 */
-	private static Object translateKey(Translate translate, HashMap<String, Object[]> translateKeyMap,
+	private static Object translateKey(TranslateExtend extend, HashMap<String, Object[]> translateKeyMap,
 			Object fieldValue) {
 		String fieldStr = fieldValue.toString();
 		// 单值翻译
-		if (translate.getSplitRegex() == null) {
-			if (translate.getKeyTemplate() != null) {
+		if (extend.splitRegex == null) {
+			if (extend.keyTemplate != null) {
 				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
-				fieldStr = translate.getKeyTemplate().replace("{}", fieldStr);
+				fieldStr = extend.keyTemplate.replace("{}", fieldStr);
 			}
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			if (cacheValues == null || cacheValues.length == 0) {
-				if (translate.getUncached() != null) {
-					fieldValue = translate.getUncached().replace("${value}", fieldStr);
+				if (extend.uncached != null) {
+					fieldValue = extend.uncached.replace("${value}", fieldStr);
 				} else {
 					fieldValue = fieldValue.toString();
 				}
-				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
-						translate.getCacheType(), fieldValue);
+				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
+						fieldValue);
 			} else {
-				fieldValue = cacheValues[translate.getIndex()];
+				fieldValue = cacheValues[extend.index];
 			}
 			return fieldValue;
 		}
 		// 将字符串用分隔符切分开进行逐个翻译
-		String[] keys = fieldStr.split(translate.getSplitRegex());
-		String linkSign = translate.getLinkSign();
+		String[] keys = fieldStr.split(extend.splitRegex);
+		String linkSign = extend.linkSign;
 		StringBuilder result = new StringBuilder();
 		int index = 0;
 		for (String key : keys) {
@@ -743,15 +746,15 @@ public class ResultUtils {
 			}
 			Object[] cacheValues = translateKeyMap.get(key.trim());
 			if (cacheValues == null || cacheValues.length == 0) {
-				if (translate.getUncached() != null) {
-					result.append(translate.getUncached().replace("${value}", key));
+				if (extend.uncached != null) {
+					result.append(extend.uncached.replace("${value}", key));
 				} else {
 					result.append(key);
 				}
-				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", translate.getCache(),
-						translate.getCacheType(), key);
+				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
+						key);
 			} else {
-				result.append(cacheValues[translate.getIndex()]);
+				result.append(cacheValues[extend.index]);
 			}
 			index++;
 		}

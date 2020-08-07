@@ -295,7 +295,7 @@ public class DateUtil {
 		return null;
 	}
 
-	public static java.util.Date convertDateObject(Object dt) {
+	public static Date convertDateObject(Object dt) {
 		return convertDateObject(dt, null, null);
 	}
 
@@ -306,7 +306,7 @@ public class DateUtil {
 	 * @param local
 	 * @return
 	 */
-	public static java.util.Date convertDateObject(Object dt, String format, String local) {
+	public static Date convertDateObject(Object dt, String format, String local) {
 		if (dt == null) {
 			System.err.println("日期不能为空,请正确输入!");
 			return null;

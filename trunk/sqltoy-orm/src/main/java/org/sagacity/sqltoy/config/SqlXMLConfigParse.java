@@ -940,6 +940,7 @@ public class SqlXMLConfigParse {
 			} else {
 				cacheType = null;
 			}
+			// 已经小写
 			columns = trimParams(translate.getAttribute("columns").toLowerCase().split("\\,"));
 			aliasNames = null;
 			uncachedTemplate = null;
@@ -1019,8 +1020,8 @@ public class SqlXMLConfigParse {
 							translateModel.setIndex(cacheIndexs[cacheIndexs.length - 1]);
 						}
 					}
-					// column 小写
-					translateMap.put(translateModel.getColumn(), translateModel);
+					// column 已经小写
+					translateMap.put(translateModel.getExtend().column, translateModel);
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
 				logger.warn("sqlId:{} 对应的cache translate columns must mapped with cache-indexs!", sqlToyConfig.getId());

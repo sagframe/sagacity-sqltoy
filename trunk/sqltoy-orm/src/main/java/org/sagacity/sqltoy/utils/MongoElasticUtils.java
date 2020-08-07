@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.TranslateExtend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -441,7 +442,8 @@ public class MongoElasticUtils {
 		String[] lables = new String[translateMap.size()];
 		String field;
 		int index = 0;
-		Translate translateModel;
+		// Translate translateModel;
+		TranslateExtend extend;
 		HashMap<String, Integer> map = new HashMap<String, Integer>();
 		for (int i = 0; i < fields.length; i++) {
 			map.put(fields[i].toLowerCase(), i);
@@ -449,10 +451,10 @@ public class MongoElasticUtils {
 		for (int i = 0; i < fields.length; i++) {
 			field = fields[i].toLowerCase();
 			if (translateMap.containsKey(field)) {
-				translateModel = translateMap.get(field);
+				extend = translateMap.get(field).getExtend();
 				cacheMapIndex[index] = i;
 				// alias是对应有效列
-				realIndex[index] = map.get(translateModel.getAlias());
+				realIndex[index] = map.get(extend.alias);
 				// 实际对应的列
 				lables[index] = field;
 				index++;
@@ -468,8 +470,8 @@ public class MongoElasticUtils {
 			for (int i = 0; i < cacheMapIndex.length; i++) {
 				colIndex = cacheMapIndex[i];
 				keyValues = translateCache.get(lables[i]);
-				translateModel = translateMap.get(lables[i]);
-				cacheIndex = translateModel.getIndex();
+				extend = translateMap.get(lables[i]).getExtend();
+				cacheIndex = extend.index;
 				for (int j = 0; j < size; j++) {
 					value = dataSet.get(j).get(realIndex[i]);
 					if (value != null) {
@@ -483,10 +485,10 @@ public class MongoElasticUtils {
 		} else {
 			for (int i = 0; i < cacheMapIndex.length; i++) {
 				keyValues = translateCache.get(lables[i]);
-				translateModel = translateMap.get(lables[i]);
-				cacheIndex = translateModel.getIndex();
+				extend = translateMap.get(lables[i]).getExtend();
+				cacheIndex = extend.index;
 				// 实际列
-				value = dataMap.get(translateModel.getAlias());
+				value = dataMap.get(extend.alias);
 				if (value != null) {
 					translateAry = keyValues.get(value.toString());
 					if (null != translateAry) {

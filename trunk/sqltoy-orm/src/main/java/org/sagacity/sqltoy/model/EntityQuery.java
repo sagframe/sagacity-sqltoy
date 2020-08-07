@@ -124,13 +124,15 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery translates(Translate... translates) {
 		if (translates != null && translates.length > 0) {
+			TranslateExtend extend;
 			for (Translate trans : translates) {
-				if (StringUtil.isBlank(trans.getCache()) || StringUtil.isBlank(trans.getKeyColumn())
-						|| StringUtil.isBlank(trans.getColumn())) {
+				extend = trans.getExtend();
+				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.keyColumn)
+						|| StringUtil.isBlank(extend.column)) {
 					throw new IllegalArgumentException(
 							"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
 				}
-				innerModel.translates.put(trans.getColumn(), trans);
+				innerModel.translates.put(extend.column, trans);
 			}
 		}
 		return this;
@@ -152,7 +154,7 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-	
+
 	public EntityQueryExtend getInnerModel() {
 		return innerModel;
 	}
