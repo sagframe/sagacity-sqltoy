@@ -105,7 +105,9 @@ spring:
 ```
 # sqltoy config
 spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
+# 默认配置就是classpath:sqltoy-translate.xml,一致情况下无需配置
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
+# 是否开启debug模式,在开发阶段建议为true,会打印sql
 spring.sqltoy.debug=true
 #项目中用到的数据库保留字定义,这里是举例，正常情况下不用定义
 #spring.sqltoy.reservedWords=status,sex_type
