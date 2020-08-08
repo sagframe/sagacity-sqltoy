@@ -335,6 +335,10 @@ public class BeanUtil {
 			}
 			return null;
 		}
+		// value值的类型跟目标类型一致，直接返回
+		if (value.getClass().getName().toLowerCase().equals(typeName)) {
+			return value;
+		}
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
 		if (typeName.equals("string") || typeName.equals("java.lang.string")) {
@@ -821,12 +825,14 @@ public class BeanUtil {
 			List rowList;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
+			String[] methodTypesLow = new String[indexSize];
 			String[] methodTypes = new String[indexSize];
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+						methodTypesLow[i] = methodTypes[i].toLowerCase();
 					}
 				}
 			}
@@ -849,10 +855,15 @@ public class BeanUtil {
 						for (int i = 0; i < indexSize; i++) {
 							if (indexs[i] < size) {
 								cellData = rowArray[indexs[i]];
-								if (realMethods[i] != null) {
+								if (realMethods[i] != null && cellData != null) {
 									propertyName = realMethods[i].getName();
-									realMethods[i].invoke(bean,
-											autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+									// 类型相同
+									if (cellData.getClass().getName().equals(methodTypes[i])) {
+										realMethods[i].invoke(bean, cellData);
+									} else {
+										realMethods[i].invoke(bean,
+												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+									}
 								}
 							}
 						}
@@ -862,10 +873,14 @@ public class BeanUtil {
 						for (int i = 0; i < indexSize; i++) {
 							if (indexs[i] < size) {
 								cellData = rowList.get(indexs[i]);
-								if (realMethods[i] != null) {
+								if (realMethods[i] != null && cellData != null) {
 									propertyName = realMethods[i].getName();
-									realMethods[i].invoke(bean,
-											autoConvertType ? convertType(cellData, methodTypes[i]) : cellData);
+									if (cellData.getClass().getName().equals(methodTypes[i])) {
+										realMethods[i].invoke(bean, cellData);
+									} else {
+										realMethods[i].invoke(bean,
+												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+									}
 								}
 							}
 						}
@@ -1053,8 +1068,9 @@ public class BeanUtil {
 		String[] getProperties = new String[properties.length];
 		HashMap<String, Integer> matchIndex = new HashMap<String, Integer>();
 		if (targetProps != null && fromProps != null) {
-			for (int i = 0; i < targetProps.length; i++)
+			for (int i = 0; i < targetProps.length; i++) {
 				matchIndex.put(targetProps[i].toLowerCase(), i);
+			}
 			Integer index;
 			for (int i = 0; i < properties.length; i++) {
 				index = matchIndex.get(properties[i].toLowerCase());
