@@ -70,12 +70,37 @@ public class MapperUtils {
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
 			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
 		}
-		DTOEntityMapModel mapModel = getDTOEntityMap(sourceList.iterator().next().getClass(), resultType);
+		DTOEntityMapModel mapModel = getDTOEntityMap(sqlToyContext, sourceList.iterator().next().getClass(),
+				resultType);
 		return null;
 	}
 
-	private static DTOEntityMapModel getDTOEntityMap(Class sourceClass, Class resultType) {
-		String key = sourceClass.getName();
+	/**
+	 * @TODO 组织构造dto和pojo的映射模型
+	 * @param sqlToyContext
+	 * @param sourceClass
+	 * @param resultType
+	 * @return
+	 */
+	private static DTOEntityMapModel getDTOEntityMap(SqlToyContext sqlToyContext, Class sourceClass, Class resultType) {
+		String key1 = sourceClass.getName();
+		String key2 = resultType.getName();
+		String key;
+		Class dtoClass = null;
+		Class pojoClass = null;
+		if (sqlToyContext.isEntity(sourceClass)) {
+			dtoClass = resultType;
+			pojoClass = sourceClass;
+			key = "POJO=".concat(key1).concat(";DTO=").concat(key2);
+		} else {
+			key = "POJO=".concat(key2).concat(";DTO=").concat(key1);
+			dtoClass = sourceClass;
+			pojoClass = resultType;
+		}
+		if (!dtoEntityMappCache.containsKey(key)) {
+			DTOEntityMapModel result = new DTOEntityMapModel();
+			dtoEntityMappCache.put(key, result);
+		}
 		return dtoEntityMappCache.get(key);
 	}
 
