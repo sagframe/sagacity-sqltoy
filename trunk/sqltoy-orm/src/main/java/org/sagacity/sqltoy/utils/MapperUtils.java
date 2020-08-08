@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -41,8 +42,8 @@ public class MapperUtils {
 	 * @param resultType
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType) {
+	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext,
+			Collection<Serializable> sourceList, Class<T> resultType) {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			return null;
 		}
