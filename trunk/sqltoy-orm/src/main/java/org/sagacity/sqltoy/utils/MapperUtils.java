@@ -4,7 +4,10 @@
 package org.sagacity.sqltoy.utils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.sagacity.sqltoy.SqlToyContext;
 
 /**
  * @project sagacity-sqltoy
@@ -15,24 +18,34 @@ import java.util.List;
  */
 public class MapperUtils {
 	/**
-	 * @TODO POJO to DTO
 	 * @param <T>
 	 * @param entity
 	 * @param resultType
 	 * @return
 	 */
-	public static <T extends Serializable> T map(Serializable entity, Class<T> resultType) {
-		return null;
+	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source,
+			Class<T> resultType) {
+		if (source == null || resultType == null) {
+			return null;
+		}
+		// 转成List做统一处理
+		List<Serializable> sourceList = new ArrayList<Serializable>();
+		sourceList.add(source);
+		List<T> result = mapList(sqlToyContext, sourceList, resultType);
+		return result.get(0);
 	}
 
 	/**
-	 * @TODO POJO to DTO
 	 * @param <T>
 	 * @param entity
 	 * @param resultType
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> mapList(List<Serializable> entities, Class<T> resultType) {
+	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
+			Class<T> resultType) {
+		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
+			return null;
+		}
 		return null;
 	}
 
