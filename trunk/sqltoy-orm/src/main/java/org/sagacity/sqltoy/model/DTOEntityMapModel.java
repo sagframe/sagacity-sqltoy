@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 
 /**
  * @author zhong
@@ -16,16 +17,20 @@ public class DTOEntityMapModel implements Serializable {
 	 */
 	private static final long serialVersionUID = 8851171361533403505L;
 
+	public String dtoClassName;
+
+	public String pojoClassName;
+
 	public String[] dtoProps;
 
-	public int[] dtoSetMethodIndexs;
+	public Method[] dtoSetMethods;
 
-	public int[] dtoGetMethodIndexs;
+	public Method[] dtoGetMethods;
 
 	public String[] pojoProps;
 
-	public int[] pojoSetMethodIndexs;
+	public Method[] pojoSetMethods;
 
-	public int[] pojoGetMethodIndexs;
+	public Method[] pojoGetMethods;
 
 }

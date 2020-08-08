@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.DTOEntityMapModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +72,22 @@ public class MapperUtils {
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
 			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
 		}
+		if (propsMapping != null && propsMapping.length > 0 && (propsMapping.length % 2) != 0) {
+			throw new IllegalArgumentException("propsMapping 必须要sourceProp对应resultType的props 1对1,长度是偶数!");
+		}
 		DTOEntityMapModel mapModel = getDTOEntityMap(sqlToyContext, sourceList.iterator().next().getClass(),
 				resultType);
+
+		boolean asDTO = false;
+		if (mapModel.dtoClassName.equals(resultType.getName())) {
+			asDTO = true;
+		}
+
+		if (asDTO) {
+			String[] pojoPros = mapModel.pojoProps;
+			String[] dtoProps = mapModel.dtoProps;
+			
+		}
 		return null;
 	}
 
@@ -97,8 +113,31 @@ public class MapperUtils {
 			dtoClass = sourceClass;
 			pojoClass = resultType;
 		}
+		if (pojoClass == null) {
+			throw new IllegalArgumentException("请检查参数,sqltoy pojo 必须要有@SqlToyEntity标注!");
+		}
+
 		if (!dtoEntityMappCache.containsKey(key)) {
 			DTOEntityMapModel result = new DTOEntityMapModel();
+
+			// dto
+			Field[] dtoFields = dtoClass.getDeclaredFields();
+			String[] dtoProps = new String[dtoFields.length];
+			for (int i = 0; i < dtoFields.length; i++) {
+				dtoProps[i] = dtoFields[i].getName();
+			}
+			result.dtoClassName = dtoClass.getName();
+			result.dtoProps = dtoProps;
+			result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, dtoProps);
+			result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, dtoProps);
+
+			// pojo
+			EntityMeta entityMeta = sqlToyContext.getEntityMeta(pojoClass);
+			result.pojoClassName = pojoClass.getName();
+			result.pojoProps = entityMeta.getFieldsArray();
+			result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
+			result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
+
 			dtoEntityMappCache.put(key, result);
 		}
 		return dtoEntityMappCache.get(key);
