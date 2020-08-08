@@ -8,15 +8,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.DTOEntityMapModel;
-import org.slf4j.Logger;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -44,7 +44,7 @@ public class MapperUtils {
 	 * @return
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
-			String... propMap) {
+			IgnoreKeyCaseMap<String, String> propsMapping) {
 		if (source == null || resultType == null) {
 			return null;
 		}
@@ -54,7 +54,7 @@ public class MapperUtils {
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sqlToyContext, sourceList, resultType);
+		List<T> result = mapList(sqlToyContext, sourceList, resultType, propsMapping);
 		return result.get(0);
 	}
 
@@ -64,16 +64,13 @@ public class MapperUtils {
 	 * @param resultType
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext,
-			Collection<Serializable> sourceList, Class<T> resultType, String... propsMapping) {
+	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
+			Class<T> resultType, IgnoreKeyCaseMap<String, String> propsMapping) {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			return null;
 		}
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
 			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
-		}
-		if (propsMapping != null && propsMapping.length > 0 && (propsMapping.length % 2) != 0) {
-			throw new IllegalArgumentException("propsMapping 必须要sourceProp对应resultType的props 1对1,长度是偶数!");
 		}
 		DTOEntityMapModel mapModel = getDTOEntityMap(sqlToyContext, sourceList.iterator().next().getClass(),
 				resultType);
@@ -82,13 +79,85 @@ public class MapperUtils {
 		if (mapModel.dtoClassName.equals(resultType.getName())) {
 			asDTO = true;
 		}
-
+		IgnoreKeyCaseMap<String, String> propMap = (propsMapping == null) ? new IgnoreKeyCaseMap<String, String>()
+				: propsMapping;
+		String[] pojoProps = mapModel.pojoProps;
+		String[] dtoProps = mapModel.dtoProps;
+		List<String> pojoMapped = new ArrayList<String>();
+		List<String> dtoMapped = new ArrayList<String>();
+		Method[] getMethods;
+		Method[] setMethods;
+		String targetProp;
+		int i = 0;
+		int index;
 		if (asDTO) {
-			String[] pojoPros = mapModel.pojoProps;
-			String[] dtoProps = mapModel.dtoProps;
-			
+			for (String prop : pojoProps) {
+				targetProp = propMap.get(prop);
+				if (targetProp == null) {
+					targetProp = prop;
+				}
+				if (mapModel.dtoPropsIndex.containsKey(targetProp.toLowerCase())) {
+					pojoMapped.add(prop);
+					dtoMapped.add(targetProp);
+				}
+			}
+			getMethods = new Method[pojoMapped.size()];
+			for (String prop : pojoMapped) {
+				index = mapModel.pojoPropsIndex.get(prop.toLowerCase());
+				getMethods[i] = mapModel.pojoGetMethods[index];
+			}
+
+			setMethods = new Method[dtoMapped.size()];
+			i = 0;
+			for (String prop : dtoMapped) {
+				index = mapModel.dtoPropsIndex.get(prop.toLowerCase());
+				setMethods[i] = mapModel.dtoSetMethods[index];
+			}
+		} // dto ---> pojo
+		else {
+			for (String prop : dtoProps) {
+				targetProp = propMap.get(prop);
+				if (targetProp == null) {
+					targetProp = prop;
+				}
+				if (mapModel.pojoPropsIndex.containsKey(targetProp.toLowerCase())) {
+					dtoMapped.add(prop);
+					pojoMapped.add(targetProp);
+				}
+			}
+			getMethods = new Method[dtoMapped.size()];
+			for (String prop : dtoMapped) {
+				index = mapModel.dtoPropsIndex.get(prop.toLowerCase());
+				getMethods[i] = mapModel.dtoGetMethods[index];
+			}
+			setMethods = new Method[pojoMapped.size()];
+			i = 0;
+			for (String prop : pojoMapped) {
+				index = mapModel.pojoPropsIndex.get(prop.toLowerCase());
+				setMethods[i] = mapModel.pojoSetMethods[index];
+			}
 		}
-		return null;
+
+		List dataSets = invokeGetValues(sourceList, getMethods);
+		return reflectListToBean(dataSets, resultType, setMethods);
+	}
+
+	private static List invokeGetValues(List sourceList, Method[] getMethods) {
+		List result = new ArrayList();
+		Object row;
+		for (int i = 0; i < sourceList.size(); i++) {
+			row = sourceList.get(i);
+			List rowData = new ArrayList();
+			for (Method method : getMethods) {
+				if (method == null) {
+					rowData.add(null);
+				} else {
+					rowData.add(method.invoke(row));
+				}
+			}
+			result.add(rowData);
+		}
+		return result;
 	}
 
 	/**
@@ -125,6 +194,7 @@ public class MapperUtils {
 			String[] dtoProps = new String[dtoFields.length];
 			for (int i = 0; i < dtoFields.length; i++) {
 				dtoProps[i] = dtoFields[i].getName();
+				result.dtoPropsIndex.put(dtoProps[i].toLowerCase(), i);
 			}
 			result.dtoClassName = dtoClass.getName();
 			result.dtoProps = dtoProps;
@@ -135,6 +205,9 @@ public class MapperUtils {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(pojoClass);
 			result.pojoClassName = pojoClass.getName();
 			result.pojoProps = entityMeta.getFieldsArray();
+			for (int i = 0; i < result.pojoProps.length; i++) {
+				result.dtoPropsIndex.put(result.pojoProps[i].toLowerCase(), i);
+			}
 			result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
 			result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
 
