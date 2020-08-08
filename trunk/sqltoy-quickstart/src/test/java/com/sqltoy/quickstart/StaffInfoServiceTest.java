@@ -105,6 +105,11 @@ public class StaffInfoServiceTest {
 	public void testDelete() {
 		sqlToyCRUDService.delete(new StaffInfoVO("S2007"));
 	}
+	
+	@Test
+	public void testLoad() {
+		StaffInfoVO staff=sqlToyCRUDService.load(new StaffInfoVO("S2007"));
+	}
 
 	@Test
 	public void testQueryStaff() {
