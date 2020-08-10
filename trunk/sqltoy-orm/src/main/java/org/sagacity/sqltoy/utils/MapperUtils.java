@@ -49,9 +49,6 @@ public class MapperUtils {
 		if (source == null || resultType == null) {
 			return null;
 		}
-		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
-			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
-		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
