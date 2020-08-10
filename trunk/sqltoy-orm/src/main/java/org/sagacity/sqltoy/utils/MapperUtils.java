@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.DTOEntityMapModel;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -44,7 +44,7 @@ public class MapperUtils {
 	 * @return
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
-			IgnoreKeyCaseMap<String, String> propsMapping) {
+			IgnoreKeyCaseMap<String, String> propsMapping) throws Exception {
 		if (source == null || resultType == null) {
 			return null;
 		}
@@ -65,7 +65,7 @@ public class MapperUtils {
 	 * @return
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType, IgnoreKeyCaseMap<String, String> propsMapping) {
+			Class<T> resultType, IgnoreKeyCaseMap<String, String> propsMapping) throws Exception {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			return null;
 		}
@@ -142,7 +142,7 @@ public class MapperUtils {
 		return reflectListToBean(dataSets, resultType, setMethods);
 	}
 
-	private static List invokeGetValues(List sourceList, Method[] getMethods) {
+	private static List invokeGetValues(List sourceList, Method[] getMethods) throws Exception {
 		List result = new ArrayList();
 		Object row;
 		for (int i = 0; i < sourceList.size(); i++) {
