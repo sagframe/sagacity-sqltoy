@@ -9,10 +9,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
-import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.MapperUtils;
 
 /**
  * @project sqltoy-orm
