@@ -68,6 +68,7 @@ public class MapperUtils {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			return null;
 		}
+		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
 			throw new IllegalArgumentException("resultType:" + resultType.getName() + " 是抽象类或接口,非法参数!");
 		}
