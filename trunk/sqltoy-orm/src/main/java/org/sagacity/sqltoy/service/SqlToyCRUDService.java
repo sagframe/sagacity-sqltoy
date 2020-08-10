@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.MapperUtils;
@@ -287,7 +288,7 @@ public interface SqlToyCRUDService {
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
 
 	/**
-	 * @TODO 实现VO和POJO之间属性值的复制
+	 * @TODO 实现VO和POJO之间属性值的复制,如名称不一致，在VO中字段上使用@SqlToyFieldAlias 注解来处理
 	 * @param <T>
 	 * @param source
 	 * @param resultType
@@ -297,7 +298,7 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception;
 
 	/**
-	 * @TODO 实现VO和POJO 集合之间属性值的复制
+	 * @TODO 实现VO和POJO 集合之间属性值的复制，如名称不一致，在VO中字段上使用@SqlToyFieldAlias 注解来处理
 	 * @param <T>
 	 * @param sourceList
 	 * @param resultType
