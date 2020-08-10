@@ -48,6 +48,7 @@ public class StaffInfoVO implements Serializable {
 
 	private String telNo;
 
+	// postType 对应pojo中的post
 	@SqlToyFieldAlias("post")
 	private String postType;
 
