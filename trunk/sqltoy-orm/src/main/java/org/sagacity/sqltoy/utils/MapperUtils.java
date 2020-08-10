@@ -114,7 +114,7 @@ public class MapperUtils {
 	}
 
 	/**
-	 * @TODO 组织构造dto和pojo的映射模型
+	 * @TODO 组织构造dto和pojo的映射模型放入缓存，并通过get和set方法调用完成复制过程(比BeanUtils.copyProperties效率高)
 	 * @param sqlToyContext
 	 * @param sourceClass
 	 * @param resultType
@@ -139,7 +139,7 @@ public class MapperUtils {
 		if (pojoClass == null) {
 			throw new IllegalArgumentException("请检查参数,sqltoy pojo 必须要有@SqlToyEntity标注!");
 		}
-
+		// 通过缓存获取
 		if (!dtoEntityMappCache.containsKey(key)) {
 			DTOEntityMapModel result = new DTOEntityMapModel();
 			// pojo
@@ -171,6 +171,7 @@ public class MapperUtils {
 				throw new IllegalArgumentException(
 						"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
 			}
+			// 模型赋值
 			result.dtoClassName = dtoClass.getName();
 			result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
 			result.pojoClassName = pojoClass.getName();
