@@ -1,4 +1,5 @@
 # 根据大家的反馈，重新打造一个更加清晰的快速上手演示项目
+# 如果sqltoy能够给你来比mybatis、jooq等更有价值的帮助，请为sqltoy点星!
 
 # 小提示
 * quickstart只演示了部分功能,核心是让大家快速上手，详细功能参见文档
@@ -222,6 +223,7 @@ java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
 * CascadeCaseTest 演示级联操作 
 * LockCaseTest 演示锁记录修改操作
 * JavaCodeSqlTest 演示在代码中写sql实现原本xml中的功能
+* DTOConvertPOJOTest 演示在严格分层场景下DTO和POJO互转的范例
 
 
 

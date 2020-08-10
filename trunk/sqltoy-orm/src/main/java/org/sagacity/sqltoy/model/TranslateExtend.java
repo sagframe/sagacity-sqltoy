@@ -9,8 +9,8 @@ import org.sagacity.sqltoy.SqlToyConstants;
 
 /**
  * @project sagacity-sqltoy
- * @description 请在此说明类的功能
- * @author zhong
+ * @description Translate内部扩展类，便于隐藏属性避免暴露过多get方法
+ * @author zhongxuchen@gmail.com
  * @version v1.0, Date:2020-8-7
  * @modify 2020-8-7,修改说明
  */

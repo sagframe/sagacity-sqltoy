@@ -501,6 +501,17 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.cacheMatchKeys(cacheName, cacheType, matchRegex, matchIndexes);
 	}
 
+	@Override
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
+			throws Exception {
+		return sqlToyLazyDao.convertType(sourceList, resultType);
+	}
+
+	@Override
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
+		return sqlToyLazyDao.convertType(source, resultType);
+	}
+
 //	@Override
 //	@Deprecated
 //	@Transactional

@@ -636,4 +636,24 @@ public interface SqlToyLazyDao {
 	 */
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
 
+	/**
+	 * @TODO 实现VO和POJO之间属性值的复制
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @return
+	 * @throws Exception
+	 */
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception;
+
+	/**
+	 * @TODO 实现VO和POJO 集合之间属性值的复制
+	 * @param <T>
+	 * @param sourceList
+	 * @param resultType
+	 * @return
+	 */
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
+			throws Exception;
+
 }
