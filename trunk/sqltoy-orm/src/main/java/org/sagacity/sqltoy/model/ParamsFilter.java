@@ -53,7 +53,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 等于
+	 * @TODO 等于
 	 * 
 	 * @return
 	 */
@@ -64,7 +64,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 不等于
+	 * @TODO 不等于
 	 * 
 	 * @return
 	 */
@@ -75,7 +75,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 大于
+	 * @TODO 大于
 	 * 
 	 * @param values
 	 * @return
@@ -87,7 +87,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 大于等于
+	 * @TODO 大于等于
 	 * 
 	 * @param values
 	 * @return
@@ -99,7 +99,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 小于
+	 * @TODO 小于
 	 * 
 	 * @param values
 	 * @return
@@ -111,7 +111,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 小于等于
+	 * @TODO 小于等于
 	 * 
 	 * @param values
 	 * @return
@@ -123,7 +123,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * left like
+	 * @TODO left like
 	 * 
 	 * @return
 	 */
@@ -133,7 +133,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * right like
+	 * @TODO right like
 	 * 
 	 * @return
 	 */
@@ -143,7 +143,7 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
-	 * 参数转日期
+	 * @TODO 参数转日期
 	 * 
 	 * @return
 	 */
@@ -154,6 +154,13 @@ public class ParamsFilter implements Serializable {
 		return this;
 	}
 
+	// primary 这里用法上确实容易存在歧义(请注意)
+	/**
+	 * @TODO 决定性参数过滤(注意:new ParamsFilter(params) 指定了首要参数,primary(excludes)
+	 *       指定的是排除哪些属性不直接设置为null)
+	 * @param excludes
+	 * @return
+	 */
 	public ParamsFilter primary(String... excludes) {
 		this.type = "primary";
 		this.excludes = excludes;
