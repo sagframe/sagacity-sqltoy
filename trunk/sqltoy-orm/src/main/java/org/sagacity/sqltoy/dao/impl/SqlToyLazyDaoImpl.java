@@ -876,4 +876,14 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.cacheMatchKeys(cacheName, cacheType, matchName, matchIndexes);
 	}
 
+	@Override
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
+		return super.convertType(source, resultType);
+	}
+
+	@Override
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
+			throws Exception {
+		return super.convertType(sourceList, resultType);
+	}
 }

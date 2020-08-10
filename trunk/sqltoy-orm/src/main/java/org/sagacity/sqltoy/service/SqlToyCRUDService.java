@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
+import org.sagacity.sqltoy.utils.MapperUtils;
 
 /**
  * @project sqltoy-orm
@@ -284,6 +285,26 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
+
+	/**
+	 * @TODO 实现VO和POJO之间属性值的复制
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @return
+	 * @throws Exception
+	 */
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception;
+
+	/**
+	 * @TODO 实现VO和POJO 集合之间属性值的复制
+	 * @param <T>
+	 * @param sourceList
+	 * @param resultType
+	 * @return
+	 */
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
+			throws Exception;
 
 //	/**
 //	 * @TODO 提供一个自由定义操作的服务窗口

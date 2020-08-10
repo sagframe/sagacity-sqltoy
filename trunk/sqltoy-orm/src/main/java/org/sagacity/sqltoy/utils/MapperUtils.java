@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.DTOEntityMapModel;
-import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +43,8 @@ public class MapperUtils {
 	 * @param resultType
 	 * @return
 	 */
-	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType,
-			IgnoreKeyCaseMap<String, String> propsMapping) throws Exception {
+	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
+			throws Exception {
 		if (source == null || resultType == null) {
 			return null;
 		}
@@ -54,7 +54,7 @@ public class MapperUtils {
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
 		sourceList.add(source);
-		List<T> result = mapList(sqlToyContext, sourceList, resultType, propsMapping);
+		List<T> result = mapList(sqlToyContext, sourceList, resultType);
 		return result.get(0);
 	}
 
@@ -65,7 +65,7 @@ public class MapperUtils {
 	 * @return
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
-			Class<T> resultType, IgnoreKeyCaseMap<String, String> propsMapping) throws Exception {
+			Class<T> resultType) throws Exception {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			return null;
 		}
@@ -74,70 +74,17 @@ public class MapperUtils {
 		}
 		DTOEntityMapModel mapModel = getDTOEntityMap(sqlToyContext, sourceList.iterator().next().getClass(),
 				resultType);
-
-		boolean asDTO = false;
-		if (mapModel.dtoClassName.equals(resultType.getName())) {
-			asDTO = true;
-		}
-		IgnoreKeyCaseMap<String, String> propMap = (propsMapping == null) ? new IgnoreKeyCaseMap<String, String>()
-				: propsMapping;
-		String[] pojoProps = mapModel.pojoProps;
-		String[] dtoProps = mapModel.dtoProps;
-		List<String> pojoMapped = new ArrayList<String>();
-		List<String> dtoMapped = new ArrayList<String>();
 		Method[] getMethods;
 		Method[] setMethods;
-		String targetProp;
-		int i = 0;
-		int index;
-		if (asDTO) {
-			for (String prop : pojoProps) {
-				targetProp = propMap.get(prop);
-				if (targetProp == null) {
-					targetProp = prop;
-				}
-				if (mapModel.dtoPropsIndex.containsKey(targetProp.toLowerCase())) {
-					pojoMapped.add(prop);
-					dtoMapped.add(targetProp);
-				}
-			}
-			getMethods = new Method[pojoMapped.size()];
-			for (String prop : pojoMapped) {
-				index = mapModel.pojoPropsIndex.get(prop.toLowerCase());
-				getMethods[i] = mapModel.pojoGetMethods[index];
-			}
-
-			setMethods = new Method[dtoMapped.size()];
-			i = 0;
-			for (String prop : dtoMapped) {
-				index = mapModel.dtoPropsIndex.get(prop.toLowerCase());
-				setMethods[i] = mapModel.dtoSetMethods[index];
-			}
+		// pojo-->dto
+		if (mapModel.dtoClassName.equals(resultType.getName())) {
+			getMethods = mapModel.pojoGetMethods;
+			setMethods = mapModel.dtoSetMethods;
 		} // dto ---> pojo
 		else {
-			for (String prop : dtoProps) {
-				targetProp = propMap.get(prop);
-				if (targetProp == null) {
-					targetProp = prop;
-				}
-				if (mapModel.pojoPropsIndex.containsKey(targetProp.toLowerCase())) {
-					dtoMapped.add(prop);
-					pojoMapped.add(targetProp);
-				}
-			}
-			getMethods = new Method[dtoMapped.size()];
-			for (String prop : dtoMapped) {
-				index = mapModel.dtoPropsIndex.get(prop.toLowerCase());
-				getMethods[i] = mapModel.dtoGetMethods[index];
-			}
-			setMethods = new Method[pojoMapped.size()];
-			i = 0;
-			for (String prop : pojoMapped) {
-				index = mapModel.pojoPropsIndex.get(prop.toLowerCase());
-				setMethods[i] = mapModel.pojoSetMethods[index];
-			}
+			getMethods = mapModel.dtoGetMethods;
+			setMethods = mapModel.pojoSetMethods;
 		}
-
 		List dataSets = invokeGetValues(sourceList, getMethods);
 		return reflectListToBean(dataSets, resultType, setMethods);
 	}
@@ -168,17 +115,17 @@ public class MapperUtils {
 	 * @return
 	 */
 	private static DTOEntityMapModel getDTOEntityMap(SqlToyContext sqlToyContext, Class sourceClass, Class resultType) {
-		String key1 = sourceClass.getName();
-		String key2 = resultType.getName();
+		String sourceKey = sourceClass.getName();
+		String resultKey = resultType.getName();
 		String key;
 		Class dtoClass = null;
 		Class pojoClass = null;
 		if (sqlToyContext.isEntity(sourceClass)) {
 			dtoClass = resultType;
 			pojoClass = sourceClass;
-			key = "POJO=".concat(key1).concat(";DTO=").concat(key2);
+			key = "POJO=".concat(sourceKey).concat(";DTO=").concat(resultKey);
 		} else {
-			key = "POJO=".concat(key2).concat(";DTO=").concat(key1);
+			key = "POJO=".concat(resultKey).concat(";DTO=").concat(sourceKey);
 			dtoClass = sourceClass;
 			pojoClass = resultType;
 		}
@@ -188,29 +135,44 @@ public class MapperUtils {
 
 		if (!dtoEntityMappCache.containsKey(key)) {
 			DTOEntityMapModel result = new DTOEntityMapModel();
-
-			// dto
-			Field[] dtoFields = dtoClass.getDeclaredFields();
-			String[] dtoProps = new String[dtoFields.length];
-			for (int i = 0; i < dtoFields.length; i++) {
-				dtoProps[i] = dtoFields[i].getName();
-				result.dtoPropsIndex.put(dtoProps[i].toLowerCase(), i);
-			}
-			result.dtoClassName = dtoClass.getName();
-			result.dtoProps = dtoProps;
-			result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, dtoProps);
-			result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, dtoProps);
-
 			// pojo
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(pojoClass);
-			result.pojoClassName = pojoClass.getName();
-			result.pojoProps = entityMeta.getFieldsArray();
-			for (int i = 0; i < result.pojoProps.length; i++) {
-				result.dtoPropsIndex.put(result.pojoProps[i].toLowerCase(), i);
+			HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
+			for (String field : entityMeta.getFieldsArray()) {
+				pojoPropsMap.put(field.toLowerCase(), field);
 			}
+			// dto
+			SqlToyFieldAlias alias;
+			List<String> dtoProps = new ArrayList<String>();
+			List<String> pojoProps = new ArrayList<String>();
+			String fieldName;
+			String aliasName;
+			for (Field field : dtoClass.getDeclaredFields()) {
+				fieldName = field.getName();
+				aliasName = fieldName;
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					aliasName = alias.value();
+				}
+				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				}
+			}
+
+			if (dtoProps.isEmpty()) {
+				throw new IllegalArgumentException(
+						"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
+			}
+			result.dtoClassName = dtoClass.getName();
+			result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
+			result.pojoClassName = pojoClass.getName();
+			result.pojoProps = (String[]) pojoProps.toArray(new String[pojoProps.size()]);
+
+			result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, result.dtoProps);
+			result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, result.dtoProps);
 			result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
 			result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
-
 			dtoEntityMappCache.put(key, result);
 		}
 		return dtoEntityMappCache.get(key);
@@ -220,9 +182,8 @@ public class MapperUtils {
 	/**
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
 	 * @param datas
-	 * @param indexs
-	 * @param properties
 	 * @param voClass
+	 * @param realMethods
 	 * @return
 	 * @throws Exception
 	 */

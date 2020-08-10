@@ -49,6 +49,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -1413,7 +1414,6 @@ public class SqlToyDaoSupport {
 		int index = 0;
 		while (iter.hasNext()) {
 			entry = iter.next();
-
 			// entry.getKey() is field
 			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
@@ -1432,4 +1432,28 @@ public class SqlToyDaoSupport {
 		return executeSql(sql.toString(), null, realValues, false, getDataSource(innerModel.dataSource));
 	}
 
+	/**
+	 * @TODO 实现POJO和DTO(VO) 之间类型的相互转换和数据复制
+	 * @param <T>
+	 * @param source
+	 * @param resultType
+	 * @return
+	 * @throws Exception
+	 */
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
+		return MapperUtils.map(sqlToyContext, source, resultType);
+	}
+
+	/**
+	 * @TODO 实现POJO和DTO(VO) 集合之间类型的相互转换和数据复制
+	 * @param <T>
+	 * @param sourceList
+	 * @param resultType
+	 * @return
+	 * @throws Exception
+	 */
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
+			throws Exception {
+		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+	}
 }
