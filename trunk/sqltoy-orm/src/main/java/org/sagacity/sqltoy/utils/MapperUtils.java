@@ -89,6 +89,13 @@ public class MapperUtils {
 		return reflectListToBean(dataSets, resultType, setMethods);
 	}
 
+	/**
+	 * @TODO 通过get方法回去对象的值放入List中
+	 * @param sourceList
+	 * @param getMethods
+	 * @return
+	 * @throws Exception
+	 */
 	private static List invokeGetValues(List sourceList, Method[] getMethods) throws Exception {
 		List result = new ArrayList();
 		Object row;
@@ -120,6 +127,7 @@ public class MapperUtils {
 		String key;
 		Class dtoClass = null;
 		Class pojoClass = null;
+		// 判断是否是pojo
 		if (sqlToyContext.isEntity(sourceClass)) {
 			dtoClass = resultType;
 			pojoClass = sourceClass;
