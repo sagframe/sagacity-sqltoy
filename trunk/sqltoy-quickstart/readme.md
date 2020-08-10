@@ -222,6 +222,7 @@ java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
 * CascadeCaseTest 演示级联操作 
 * LockCaseTest 演示锁记录修改操作
 * JavaCodeSqlTest 演示在代码中写sql实现原本xml中的功能
+* DTOConvertPOJOTest 演示在严格分层场景下DTO和POJO互转的范例
 
 
 
