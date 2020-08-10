@@ -10,10 +10,9 @@
 # QQ 交流群:531812227 
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.13.12 发版日期: 2020-08-05
-* 1、大幅改进EntityQuery和QueryExecutor，为其增加缓存翻译、filters、分页优化、日期数字格式化、安全脱敏等，为中等规模sql代码中编写提供了便利。
-* 2、改进isUnique的实现策略，减少一次count查询提升了效率！
-* 3、修复update级联操作时，在mysql、postgresql、sqlite等场景下改用2次交互模式解决上述数据库自身bug导致的问题(非空字段问题)!
+# 最新版本号: 4.13.12.1 发版日期: 2020-08-10
+* 1、增加DTO和POJO互转工具,在SqlToyCRUDService、SqlToyLazyDao、SqlToySupportDao中都可调用
+* 2、优化代码中Translate内部定义，增加内部类，减少开发调用时出现过多get方法，对选择形成干扰
 
 # 使用单位或项目: 
 * 宁波农行  
