@@ -833,7 +833,7 @@ public class BeanUtil {
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
 						methodTypesLow[i] = methodTypes[i].toLowerCase();
 					}
 				}
