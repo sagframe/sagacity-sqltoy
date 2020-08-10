@@ -65,6 +65,8 @@ public class MapperUtilsTest {
 			context.initialize();
 			StaffInfoVO staffInfoVO = MapperUtils.map(context, staffInfo, StaffInfoVO.class);
 			System.err.println(JSON.toJSONString(staffInfoVO));
+			StaffInfo staffInfo1 = MapperUtils.map(context, staffInfoVO, StaffInfo.class);
+			System.err.println(JSON.toJSONString(staffInfo1));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

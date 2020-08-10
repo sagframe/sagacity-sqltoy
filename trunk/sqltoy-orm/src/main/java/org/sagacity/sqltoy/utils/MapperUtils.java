@@ -123,7 +123,15 @@ public class MapperUtils {
 	private static DTOEntityMapModel getDTOEntityMap(SqlToyContext sqlToyContext, Class sourceClass, Class resultType) {
 		String sourceKey = sourceClass.getName();
 		String resultKey = resultType.getName();
-		String key;
+		String key = "POJO=".concat(sourceKey).concat(";DTO=").concat(resultKey);
+		// 通过缓存获取
+		if (dtoEntityMappCache.containsKey(key)) {
+			return dtoEntityMappCache.get(key);
+		}
+		key = "POJO=".concat(resultKey).concat(";DTO=").concat(sourceKey);
+		if (dtoEntityMappCache.containsKey(key)) {
+			return dtoEntityMappCache.get(key);
+		}
 		Class dtoClass = null;
 		Class pojoClass = null;
 		// 判断是否是pojo
@@ -139,51 +147,49 @@ public class MapperUtils {
 		if (pojoClass == null) {
 			throw new IllegalArgumentException("请检查参数,sqltoy pojo 必须要有@SqlToyEntity标注!");
 		}
-		// 通过缓存获取
-		if (!dtoEntityMappCache.containsKey(key)) {
-			DTOEntityMapModel result = new DTOEntityMapModel();
-			// pojo
-			EntityMeta entityMeta = sqlToyContext.getEntityMeta(pojoClass);
-			HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
-			for (String field : entityMeta.getFieldsArray()) {
-				pojoPropsMap.put(field.toLowerCase(), field);
-			}
-			// dto
-			SqlToyFieldAlias alias;
-			List<String> dtoProps = new ArrayList<String>();
-			List<String> pojoProps = new ArrayList<String>();
-			String fieldName;
-			String aliasName;
-			for (Field field : dtoClass.getDeclaredFields()) {
-				fieldName = field.getName();
-				aliasName = fieldName;
-				alias = field.getAnnotation(SqlToyFieldAlias.class);
-				if (alias != null) {
-					aliasName = alias.value();
-				}
-				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
-					dtoProps.add(fieldName);
-					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
-				}
-			}
 
-			if (dtoProps.isEmpty()) {
-				throw new IllegalArgumentException(
-						"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
-			}
-			// 模型赋值
-			result.dtoClassName = dtoClass.getName();
-			result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
-			result.pojoClassName = pojoClass.getName();
-			result.pojoProps = (String[]) pojoProps.toArray(new String[pojoProps.size()]);
-
-			result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, result.dtoProps);
-			result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, result.dtoProps);
-			result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
-			result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
-			dtoEntityMappCache.put(key, result);
+		DTOEntityMapModel result = new DTOEntityMapModel();
+		// pojo
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(pojoClass);
+		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
+		for (String field : entityMeta.getFieldsArray()) {
+			pojoPropsMap.put(field.toLowerCase(), field);
 		}
-		return dtoEntityMappCache.get(key);
+		// dto
+		SqlToyFieldAlias alias;
+		List<String> dtoProps = new ArrayList<String>();
+		List<String> pojoProps = new ArrayList<String>();
+		String fieldName;
+		String aliasName;
+		for (Field field : dtoClass.getDeclaredFields()) {
+			fieldName = field.getName();
+			aliasName = fieldName;
+			alias = field.getAnnotation(SqlToyFieldAlias.class);
+			if (alias != null) {
+				aliasName = alias.value();
+			}
+			if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+				dtoProps.add(fieldName);
+				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+			}
+		}
+
+		if (dtoProps.isEmpty()) {
+			throw new IllegalArgumentException(
+					"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
+		}
+		// 模型赋值
+		result.dtoClassName = dtoClass.getName();
+		result.dtoProps = (String[]) dtoProps.toArray(new String[dtoProps.size()]);
+		result.pojoClassName = pojoClass.getName();
+		result.pojoProps = (String[]) pojoProps.toArray(new String[pojoProps.size()]);
+
+		result.dtoGetMethods = BeanUtil.matchGetMethods(dtoClass, result.dtoProps);
+		result.dtoSetMethods = BeanUtil.matchSetMethods(dtoClass, result.dtoProps);
+		result.pojoGetMethods = BeanUtil.matchGetMethods(pojoClass, result.pojoProps);
+		result.pojoSetMethods = BeanUtil.matchSetMethods(pojoClass, result.pojoProps);
+		dtoEntityMappCache.put(key, result);
+		return result;
 	}
 
 	// 提取映射对应的methods
