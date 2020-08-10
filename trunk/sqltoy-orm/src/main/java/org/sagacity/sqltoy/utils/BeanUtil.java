@@ -150,31 +150,33 @@ public class BeanUtil {
 		boolean matched = false;
 		Class type;
 		for (int i = 0; i < indexSize; i++) {
-			prop = props[i].toLowerCase();
-			matched = false;
-			for (int j = 0; j < realMeth.size(); j++) {
-				method = realMeth.get(j);
-				name = method.getName().toLowerCase();
-				// get完全匹配
-				if (name.equals("get".concat(prop))) {
-					matched = true;
-				} else if (name.startsWith("is")) {
-					// boolean型 is开头的方法
-					type = method.getReturnType();
-					if ((type.equals(Boolean.class) || type.equals(boolean.class))
-							&& (name.equals(prop) || name.equals("is".concat(prop)))) {
+			if (props[i] != null) {
+				prop = props[i].toLowerCase();
+				matched = false;
+				for (int j = 0; j < realMeth.size(); j++) {
+					method = realMeth.get(j);
+					name = method.getName().toLowerCase();
+					// get完全匹配
+					if (name.equals("get".concat(prop))) {
 						matched = true;
+					} else if (name.startsWith("is")) {
+						// boolean型 is开头的方法
+						type = method.getReturnType();
+						if ((type.equals(Boolean.class) || type.equals(boolean.class))
+								&& (name.equals(prop) || name.equals("is".concat(prop)))) {
+							matched = true;
+						}
+					}
+					if (matched) {
+						result[i] = method;
+						result[i].setAccessible(true);
+						realMeth.remove(j);
+						break;
 					}
 				}
-				if (matched) {
-					result[i] = method;
-					result[i].setAccessible(true);
-					realMeth.remove(j);
+				if (realMeth.isEmpty()) {
 					break;
 				}
-			}
-			if (realMeth.isEmpty()) {
-				break;
 			}
 		}
 		return result;
