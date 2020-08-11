@@ -1390,7 +1390,7 @@ public class DialectUtils {
 			}
 		}
 
-		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("saveAll:[" + paramValues.size() + "]条记录,insertSql=" + insertSql, null);
 		// sqlserver需要特殊化处理(针对timestamp问题)
 		if (dbType == DBType.SQLSERVER) {
 			return SqlUtilsExt.batchUpdateBySqlServer(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
@@ -1437,8 +1437,6 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-
-		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
 		return SqlUtil.executeSql(updateSql, fieldsValues, entityMeta.getFieldsTypeArray(), conn, dbType, null);
 	}
 
@@ -1709,9 +1707,9 @@ public class DialectUtils {
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, tableName);
 		if (updateSql == null) {
-			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlExecuteStat.showSql("update execute sql=" + updateSql, null);
+		SqlExecuteStat.showSql("updateAll:[" + paramsValues.size() + "]条记录,execute sql=" + updateSql, null);
 		if (dbType == DBType.SQLSERVER) {
 			return SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues,
 					entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
@@ -1760,12 +1758,10 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					SqlExecuteStat.showSql("cascade delete sub table sql=" + oneToMany.getDeleteSubTableSql(), null);
 					SqlUtil.executeSql(oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, conn, dbType, null);
 				}
 			}
 		}
-		SqlExecuteStat.showSql("delete sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
 		return SqlUtil.executeSql(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, conn, dbType,
 				null);
 	}
@@ -1821,7 +1817,8 @@ public class DialectUtils {
 				}
 			}
 		}
-		SqlExecuteStat.showSql("delete all sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
+		SqlExecuteStat.showSql(
+				"批量删除deleteAll:[" + idValues.size() + "]条记录,sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, null,
 				null, batchSize, autoCommit, conn, dbType);
 	}
@@ -1838,8 +1835,7 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, final String[] paramsNamed,
-			Connection conn, final Integer dbType, final String tableName,
-			final UniqueSqlHandler uniqueSqlHandler) {
+			Connection conn, final Integer dbType, final String tableName, final UniqueSqlHandler uniqueSqlHandler) {
 		try {
 			EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 			String[] realParamNamed;
