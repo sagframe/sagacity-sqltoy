@@ -271,7 +271,6 @@ public class ClickHouseDialectUtils {
 
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
-		SqlExecuteStat.showSql("deleteSql=" + deleteSql, null);
 		return SqlUtil.executeSql(deleteSql, idValues, parameterTypes, conn, dbType, null);
 	}
 
@@ -349,7 +348,6 @@ public class ClickHouseDialectUtils {
 			deleteSql.append(entityMeta.getColumnName(field));
 			deleteSql.append(" in (:").append(field).append(") ");
 		}
-		SqlExecuteStat.showSql("deleteAll Sql=" + deleteSql, null);
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
 				idValues);
 		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,
