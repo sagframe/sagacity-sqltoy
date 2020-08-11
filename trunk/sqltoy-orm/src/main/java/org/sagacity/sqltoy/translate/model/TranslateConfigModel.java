@@ -71,7 +71,7 @@ public class TranslateConfigModel implements Serializable {
 	private int keyIndex = 0;
 
 	/**
-	 * 过期时长:默认60分钟
+	 * 过期时长:默认60分钟(负数表示不过期，永久有效)
 	 */
 	private int keepAlive = 3600;
 
