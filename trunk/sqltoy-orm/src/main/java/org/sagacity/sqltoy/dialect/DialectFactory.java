@@ -1608,7 +1608,7 @@ public class DialectFactory {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
 			final DataSource dataSource) {
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "callStore", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
 			return (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
