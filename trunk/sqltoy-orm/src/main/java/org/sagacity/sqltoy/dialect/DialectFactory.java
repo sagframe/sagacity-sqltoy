@@ -226,7 +226,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate:[" + dataSet.size() + "]条记录!",
+					sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -276,7 +277,7 @@ public class DialectFactory {
 			final String[] paramsNamed, final Object[] paramsValue, final Boolean autoCommit,
 			final DataSource dataSource) {
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "update", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql", sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 							new QueryExecutor(sqlToyConfig.getSql(), paramsNamed, paramsValue), dataSource),
@@ -791,7 +792,7 @@ public class DialectFactory {
 		}
 		try {
 			extend.optimizeArgs(sqlToyConfig);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "query", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
 			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -847,7 +848,7 @@ public class DialectFactory {
 		}
 		extend.optimizeArgs(sqlToyConfig);
 		try {
-			SqlExecuteStat.start(sqlToyConfig.getId(), "count", sqlToyConfig.isShowSql());
+			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -994,7 +995,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll", null);
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll:[" + entities.size() + "]条记录!",
+					null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					new ParallelCallbackHandler() {
 						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
@@ -1050,7 +1052,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist", null);
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist:[" + entities.size() + "]条记录!",
+					null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					new ParallelCallbackHandler() {
 						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
@@ -1140,7 +1143,7 @@ public class DialectFactory {
 			return entities;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll", null);
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll:[" + entities.size() + "]条记录!", null);
 			// 一般in的最大数量是1000
 			int batchSize = SqlToyConstants.getLoadAllBatchSize();
 			// 对可能存在的配置参数定义错误进行校正,最大控制在1000内
@@ -1237,6 +1240,7 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					new ParallelCallbackHandler() {
@@ -1332,6 +1336,7 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "updateAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
 					new ParallelCallbackHandler() {
@@ -1419,6 +1424,7 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
+			SqlExecuteStat.start(entities.get(0).getClass().getName(), "deleteAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
 					new ParallelCallbackHandler() {
