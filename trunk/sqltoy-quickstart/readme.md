@@ -228,7 +228,7 @@ java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
 
 # 疑问解答
 
-## 为什么要讲*.sql.xml 放在java路径下?
+## 为什么要将*.sql.xml 放在java路径下?
 * sqltoy推荐大家项目按照业务划分先分模块(消息中心、系统管理、订单管理等)后分层(web层、service)，sql文件放于模块中便于模块整体迁移和产品化，同时有利于开发过程，让开发者不需要不断的切换目录
 * 当然这个是sqltoy推荐做法，开发者则可以根据自身实际情况而定,并非强制!
 
