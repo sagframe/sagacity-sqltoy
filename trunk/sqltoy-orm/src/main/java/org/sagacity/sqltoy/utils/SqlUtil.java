@@ -436,7 +436,8 @@ public class SqlUtil {
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
 	 * @param rs
 	 * @param columnLabels
-	 * @param pds
+	 * @param setMethods
+	 * @param propTypes
 	 * @param voClass
 	 * @param ignoreAllEmptySet
 	 * @return
