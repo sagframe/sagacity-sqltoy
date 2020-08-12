@@ -140,30 +140,31 @@ public class SqlExecuteStat {
 			uid = sqlTrace.getUid();
 			// 异常或超时
 			if (isErrorOrWarn) {
-				logger.error("UID={},执行:{} 类型的sql,sqlId={}, 发生异常!", uid, sqlTrace.getType(), sqlTrace.getId());
+				logger.error("UID={},类型:{} ,sqlId={},发生异常!", uid, sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
 				if (isDebug) {
-					logger.debug("UID={},执行:{} 类型sql,sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId());
+					logger.debug("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId());
 				} else {
-					out.println("UID=" + uid + ",执行:" + sqlTrace.getType() + " 类型sql,sqlId=" + sqlTrace.getId());
+					out.println(
+							StringUtil.fillArgs("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId()));
 				}
 			}
 		}
 		if (isErrorOrWarn) {
 			// 为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
-			logger.error("UID=" + uid + ",带入参数值后的sql={}", fitSqlParams(sql, paramValues));
+			logger.error("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
 				logger.error("params:{}", paramStr);
 			}
 		} else {
 			if (isDebug) {
-				logger.debug("UID=" + uid + ",带入参数值后的sql={}", fitSqlParams(sql, paramValues));
+				logger.debug("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					logger.debug("params:{}", paramStr);
 				}
 			} else {
-				out.println("UID=" + uid + ",带入参数值后的sql=" + fitSqlParams(sql, paramValues));
+				out.println("UID=" + uid + ",入参后sql=" + fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					out.println("params:" + paramStr);
 				}
@@ -185,20 +186,20 @@ public class SqlExecuteStat {
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
 				if (logger.isWarnEnabled()) {
-					logger.warn("slowSql:UID={},超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
+					logger.warn("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
 							sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
 				} else {
-					out.println(StringUtil.fillArgs("slowSql:UID={},超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid,
+					out.println(StringUtil.fillArgs("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid,
 							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
 				}
 			} // 未超时也未发生错误,无需打印日志
 			else {
 				if (debug || printSqlStrategy.equals("debug")) {
 					if (logger.isDebugEnabled()) {
-						logger.debug("UID={},sqlId={} 执行时长为:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
+						logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
 					} else {
-						out.println("UID=" + uid + ",sqlId=" + sqlTrace.getId() + " 执行时长为:" + sqlTrace.getExecuteTime()
-								+ "毫秒!");
+						out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
+								sqlTrace.getExecuteTime()));
 					}
 				}
 			}
