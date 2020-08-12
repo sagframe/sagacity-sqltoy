@@ -83,13 +83,14 @@ public class EntityManager {
 	};
 
 	/**
-	 * id产生器的包路径
+	 * id产生器的包路径(针对类名补充包路径，直接包含了包路径的除外)
 	 */
 	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
 
 	/**
-	 * 扫描的包
+	 * 扫描的包(意义不大,sqltoy已经改为用时自动加载)
 	 */
+	@Deprecated
 	private String[] packagesToScan;
 
 	/**
@@ -98,8 +99,9 @@ public class EntityManager {
 	private boolean recursive = true;
 
 	/**
-	 * 指定的entity class
+	 * 指定的entity class(意义不大,sqltoy已经改为用时自动加载)
 	 */
+	@Deprecated
 	private String[] annotatedClasses;
 
 	/**
@@ -148,7 +150,7 @@ public class EntityManager {
 		String className = entityClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27
-		// 增加在使用对象时动态解析的功能,让sqltoy可以不用配置packagesToScan和annotatedClasses
+		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 			if (entityMeta == null) {
@@ -616,7 +618,7 @@ public class EntityManager {
 		// 原则上可以:oneToManyModel.setMappedColumns(oneToMany.mappedColumns())
 		// 直接复制,考虑主键顺序可能会被人为调整
 		String idFieldName;
-		//主表字段名称
+		// 主表字段名称
 		String masterField;
 		for (int i = 0; i < idSize; i++) {
 			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
