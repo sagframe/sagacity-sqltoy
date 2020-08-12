@@ -164,7 +164,13 @@ public class SqlExecuteStat {
 						sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError()) {
-				logger.debug("sqlId={} 执行时长为:{}毫秒!", sqlTrace.getId(), sqlTrace.getExecuteTime());
+				if (debug || printSqlStrategy.equals("debug")) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("sqlId={} 执行时长为:{}毫秒!", sqlTrace.getId(), sqlTrace.getExecuteTime());
+					} else {
+						out.println("sqlId=" + sqlTrace.getId() + " 执行时长为:" + sqlTrace.getExecuteTime() + "毫秒!");
+					}
+				}
 				return;
 			}
 			// 记录错误日志
