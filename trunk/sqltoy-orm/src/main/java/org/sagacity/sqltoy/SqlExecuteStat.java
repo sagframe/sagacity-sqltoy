@@ -8,6 +8,7 @@ import static java.lang.System.out;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlExecuteStat.java,Revision:v1.0,Date:2015年6月12日
  * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
+ * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}
  */
 public class SqlExecuteStat {
 	/**
@@ -95,6 +98,30 @@ public class SqlExecuteStat {
 	}
 
 	/**
+	 * @TODO 提供中间日志输出
+	 * @param message
+	 * @param args
+	 */
+	public static void debug(String message, Object... args) {
+		try {
+			if (debug || printSqlStrategy.equals("debug")) {
+				String uid = "";
+				if (threadLocal.get() != null) {
+					uid = threadLocal.get().getUid();
+				}
+				String debugInfo = StringUtil.fillArgs(message, args);
+				if (logger.isDebugEnabled()) {
+					logger.debug("UID=" + uid + "," + debugInfo);
+				} else {
+					out.println("UID=" + uid + "," + debugInfo);
+				}
+			}
+		} catch (Exception e) {
+
+		}
+	}
+
+	/**
 	 * @todo 实际执行打印sql和参数
 	 * @param sql
 	 * @param paramValues
@@ -112,34 +139,37 @@ public class SqlExecuteStat {
 			}
 		}
 		SqlExecuteTrace sqlTrace = threadLocal.get();
+		String uid = null;
 		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
 		if (sqlTrace != null) {
+			uid = sqlTrace.getUid();
 			// 异常或超时
 			if (isErrorOrWarn) {
-				logger.error("执行:{} 类型的sql,sqlId={}, 发生异常!", sqlTrace.getType(), sqlTrace.getId());
+				logger.error("UID={},类型:{} ,sqlId={},发生异常!", uid, sqlTrace.getType(), sqlTrace.getId());
 			} // showSql
 			else {
 				if (isDebug) {
-					logger.debug("执行:{} 类型sql,sqlId={}", sqlTrace.getType(), sqlTrace.getId());
+					logger.debug("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId());
 				} else {
-					out.println("执行:" + sqlTrace.getType() + " 类型sql,sqlId=" + sqlTrace.getId());
+					out.println(
+							StringUtil.fillArgs("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId()));
 				}
 			}
 		}
 		if (isErrorOrWarn) {
 			// 为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
-			logger.error("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
+			logger.error("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
 			if (paramValues != null) {
 				logger.error("params:{}", paramStr);
 			}
 		} else {
 			if (isDebug) {
-				logger.debug("为方便调试带入参数值后的sql={}", fitSqlParams(sql, paramValues));
+				logger.debug("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					logger.debug("params:{}", paramStr);
 				}
 			} else {
-				out.println("为方便调试带入参数值后的sql=" + fitSqlParams(sql, paramValues));
+				out.println("UID=" + uid + ",入参后sql=" + fitSqlParams(sql, paramValues));
 				if (paramValues != null) {
 					out.println("params:" + paramStr);
 				}
@@ -156,19 +186,34 @@ public class SqlExecuteStat {
 			if (sqlTrace == null) {
 				return;
 			}
+			String uid = sqlTrace.getUid();
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("slowSql:超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
-						overTime + printSqlTimeoutMillis, printSqlTimeoutMillis, sqlTrace.getId());
+				if (logger.isWarnEnabled()) {
+					logger.warn("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
+							sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
+				} else {
+					out.println(StringUtil.fillArgs("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid,
+							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
+				}
 			} // 未超时也未发生错误,无需打印日志
-			else if (!sqlTrace.isError()) {
-				return;
+			else {
+				if (debug || printSqlStrategy.equals("debug")) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
+					} else {
+						out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
+								sqlTrace.getExecuteTime()));
+					}
+				}
 			}
-			// 记录错误日志
-			List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
-			for (SqlToyResult sqlResult : sqlToyResults) {
-				printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
+			// 输出错误日志
+			if (sqlTrace.isError()) {
+				List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
+				for (SqlToyResult sqlResult : sqlToyResults) {
+					printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
+				}
 			}
 		} catch (Exception e) {
 
@@ -239,6 +284,10 @@ public class SqlExecuteStat {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + "'");
 				} else if (paramValue instanceof LocalTime) {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "HH:mm:ss") + "'");
+				} else if (paramValue instanceof Object[]) {
+					lastSql.append(combineArray((Object[]) paramValue));
+				} else if (paramValue instanceof Collection) {
+					lastSql.append(combineArray(((Collection) paramValue).toArray()));
 				} else {
 					lastSql.append("" + paramValue);
 				}
@@ -254,9 +303,43 @@ public class SqlExecuteStat {
 		return lastSql.toString();
 	}
 
+	/**
+	 * @TODO 组合in参数
+	 * @param array
+	 * @return
+	 */
+	private static String combineArray(Object[] array) {
+		if (array == null || array.length == 0) {
+			return " null ";
+		}
+		StringBuilder result = new StringBuilder();
+		Object value;
+		for (int i = 0; i < array.length; i++) {
+			if (i > 0) {
+				result.append(",");
+			}
+			value = array[i];
+			if (value instanceof CharSequence) {
+				result.append("'" + value + "'");
+			} else if (value instanceof Date || value instanceof LocalDateTime) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+			} else if (value instanceof LocalDate) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+			} else if (value instanceof LocalTime) {
+				result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+			} else {
+				result.append("" + value);
+			}
+		}
+		return result.toString();
+	}
+
 //	public static void main(String[] args) {
-//		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and t.sex_type='F'";
-//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
+//		List tmp = new ArrayList();
+//		tmp.add("chen");
+//		tmp.add("abc");
+//		String sql = "select * from table where name=? and status in(?) and create_date>=? and t.sex_type in (?)";
+//		Object[] params = new Object[] { "chen", new Object[] { 1, 2 }, LocalDate.now(), tmp };
 //		String result = fitSqlParams(sql, params);
 //		System.err.println(result);
 //	}

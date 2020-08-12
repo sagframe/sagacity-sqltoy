@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.utils.IdUtil;
 
 /**
  * @project sagacity-sqltoy4.2
@@ -26,6 +27,8 @@ public class SqlExecuteTrace implements Serializable {
 		this.type = type;
 		this.start = System.currentTimeMillis();
 		this.isPrint = isPrint;
+		// 不需要体现年月日
+		this.uid = IdUtil.getDebugId();
 	}
 
 	/**
@@ -37,6 +40,11 @@ public class SqlExecuteTrace implements Serializable {
 	 * sqlid
 	 */
 	private String id;
+
+	/**
+	 * 全局id
+	 */
+	private String uid;
 
 	/**
 	 * 是否输出
@@ -73,8 +81,9 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	public long getExecuteTime() {
-		if (start == null)
+		if (start == null) {
 			return -1;
+		}
 		return System.currentTimeMillis() - start;
 	}
 
@@ -86,8 +95,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param id
-	 *            the id to set
+	 * @param id the id to set
 	 */
 	public void setId(String id) {
 		this.id = id;
@@ -101,8 +109,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -116,8 +123,7 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param sqlToyResults
-	 *            the sqlToyResults to set
+	 * @param sqlToyResults the sqlToyResults to set
 	 */
 	public void addSqlToyResult(String sql, Object[] paramsValue) {
 		sqlToyResults.add(new SqlToyResult(sql, paramsValue));
@@ -131,11 +137,16 @@ public class SqlExecuteTrace implements Serializable {
 	}
 
 	/**
-	 * @param error
-	 *            the error to set
+	 * @param error the error to set
 	 */
 	public void setError(boolean error) {
 		this.error = error;
 	}
 
+	/**
+	 * @return the uid
+	 */
+	public String getUid() {
+		return uid;
+	}
 }
