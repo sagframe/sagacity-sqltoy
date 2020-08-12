@@ -183,10 +183,15 @@ public class SqlExecuteStat {
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				logger.warn("slowSql:UID={},超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
-						sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
+				if (logger.isWarnEnabled()) {
+					logger.warn("slowSql:UID={},超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
+							sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
+				} else {
+					out.println(StringUtil.fillArgs("slowSql:UID={},超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid,
+							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
+				}
 			} // 未超时也未发生错误,无需打印日志
-			else if (!sqlTrace.isError()) {
+			else {
 				if (debug || printSqlStrategy.equals("debug")) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("UID={},sqlId={} 执行时长为:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
@@ -195,12 +200,13 @@ public class SqlExecuteStat {
 								+ "毫秒!");
 					}
 				}
-				return;
 			}
-			// 记录错误日志
-			List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
-			for (SqlToyResult sqlResult : sqlToyResults) {
-				printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
+			// 输出错误日志
+			if (sqlTrace.isError()) {
+				List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
+				for (SqlToyResult sqlResult : sqlToyResults) {
+					printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
+				}
 			}
 		} catch (Exception e) {
 
