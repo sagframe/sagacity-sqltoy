@@ -27,7 +27,8 @@ public class SqlExecuteTrace implements Serializable {
 		this.type = type;
 		this.start = System.currentTimeMillis();
 		this.isPrint = isPrint;
-		this.uid = "" + IdUtil.getNanoTimeId(null);
+		// 不需要体现年月日
+		this.uid = IdUtil.getDebugId();
 	}
 
 	/**

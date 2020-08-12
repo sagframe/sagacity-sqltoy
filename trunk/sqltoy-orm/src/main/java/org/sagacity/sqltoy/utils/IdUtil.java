@@ -72,6 +72,24 @@ public class IdUtil {
 	}
 
 	/**
+	 * @TODO 获取debug ID,只需保障单机当天唯一，主要帮助日志分组
+	 * @return
+	 */
+	public static String getDebugId() {
+		// 当前时间(毫秒)
+		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
+		// 后7位纳秒间隔
+		String nanoTime = "" + System.nanoTime();
+		int length = nanoTime.length();
+		if (nanoTime.endsWith("00")) {
+			nanoTime = nanoTime.substring(length - 9, length - 2);
+		} else {
+			nanoTime = nanoTime.substring(length - 7);
+		}
+		return nowTime.concat(".").concat(nanoTime);
+	}
+
+	/**
 	 * @todo 获取本机IP地址
 	 * @param hasHostName
 	 * @param hasIPV6
