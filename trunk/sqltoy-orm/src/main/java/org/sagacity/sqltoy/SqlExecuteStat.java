@@ -103,10 +103,10 @@ public class SqlExecuteStat {
 	 */
 	public static void debug(String message, Object... args) {
 		if (debug || printSqlStrategy.equals("debug")) {
-			if (threadLocal.get() != null && threadLocal.get().isPrint() == false) {
-				return;
+			String uid = null;
+			if (threadLocal.get() != null) {
+				uid = threadLocal.get().getUid();
 			}
-			String uid = threadLocal.get().getUid();
 			String debugInfo = StringUtil.fillArgs(message, args);
 			if (logger.isDebugEnabled()) {
 				logger.debug("UID=".concat(uid).concat(",").concat(debugInfo));
@@ -134,9 +134,10 @@ public class SqlExecuteStat {
 			}
 		}
 		SqlExecuteTrace sqlTrace = threadLocal.get();
-		String uid = sqlTrace.getUid();
+		String uid = null;
 		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
 		if (sqlTrace != null) {
+			uid = sqlTrace.getUid();
 			// 异常或超时
 			if (isErrorOrWarn) {
 				logger.error("UID={},执行:{} 类型的sql,sqlId={}, 发生异常!", uid, sqlTrace.getType(), sqlTrace.getId());
