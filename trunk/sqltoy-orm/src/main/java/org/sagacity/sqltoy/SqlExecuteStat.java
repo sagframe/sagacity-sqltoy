@@ -103,15 +103,15 @@ public class SqlExecuteStat {
 	 */
 	public static void debug(String message, Object... args) {
 		if (debug || printSqlStrategy.equals("debug")) {
-			String uid = null;
+			String uid = "";
 			if (threadLocal.get() != null) {
 				uid = threadLocal.get().getUid();
 			}
 			String debugInfo = StringUtil.fillArgs(message, args);
 			if (logger.isDebugEnabled()) {
-				logger.debug("UID=".concat(uid).concat(",").concat(debugInfo));
+				logger.debug("UID=" + uid + "," + debugInfo);
 			} else {
-				out.println("UID=".concat(uid).concat(",").concat(debugInfo));
+				out.println("UID=" + uid + "," + debugInfo);
 			}
 		}
 	}
