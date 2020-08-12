@@ -333,14 +333,4 @@ public class SqlExecuteStat {
 		}
 		return result.toString();
 	}
-
-//	public static void main(String[] args) {
-//		List tmp = new ArrayList();
-//		tmp.add("chen");
-//		tmp.add("abc");
-//		String sql = "select * from table where name=? and status in(?) and create_date>=? and t.sex_type in (?)";
-//		Object[] params = new Object[] { "chen", new Object[] { 1, 2 }, LocalDate.now(), tmp };
-//		String result = fitSqlParams(sql, params);
-//		System.err.println(result);
-//	}
 }
