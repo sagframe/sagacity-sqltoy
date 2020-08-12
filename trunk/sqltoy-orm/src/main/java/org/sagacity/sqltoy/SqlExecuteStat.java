@@ -8,6 +8,7 @@ import static java.lang.System.out;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -160,9 +161,10 @@ public class SqlExecuteStat {
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
 				logger.warn("slowSql:超时警告:{}类型的sql执行耗时(毫秒):{} >= {}(阀值),sqlId={}!", sqlTrace.getType(),
-						overTime + printSqlTimeoutMillis, printSqlTimeoutMillis, sqlTrace.getId());
+						sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
 			} // 未超时也未发生错误,无需打印日志
 			else if (!sqlTrace.isError()) {
+				logger.debug("sqlId={} 执行时长为:{}毫秒!", sqlTrace.getId(), sqlTrace.getExecuteTime());
 				return;
 			}
 			// 记录错误日志
@@ -239,6 +241,10 @@ public class SqlExecuteStat {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + "'");
 				} else if (paramValue instanceof LocalTime) {
 					lastSql.append("'" + DateUtil.formatDate(paramValue, "HH:mm:ss") + "'");
+				} else if (paramValue instanceof Object[]) {
+					lastSql.append(combineArray((Object[]) paramValue));
+				} else if (paramValue instanceof Collection) {
+					lastSql.append(combineArray(((Collection) paramValue).toArray()));
 				} else {
 					lastSql.append("" + paramValue);
 				}
@@ -254,9 +260,43 @@ public class SqlExecuteStat {
 		return lastSql.toString();
 	}
 
+	/**
+	 * @TODO 组合in参数
+	 * @param array
+	 * @return
+	 */
+	private static String combineArray(Object[] array) {
+		if (array == null || array.length == 0) {
+			return " null ";
+		}
+		StringBuilder result = new StringBuilder();
+		Object value;
+		for (int i = 0; i < array.length; i++) {
+			if (i > 0) {
+				result.append(",");
+			}
+			value = array[i];
+			if (value instanceof CharSequence) {
+				result.append("'" + value + "'");
+			} else if (value instanceof Date || value instanceof LocalDateTime) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd HH:mm:ss") + "'");
+			} else if (value instanceof LocalDate) {
+				result.append("'" + DateUtil.formatDate(value, "yyyy-MM-dd") + "'");
+			} else if (value instanceof LocalTime) {
+				result.append("'" + DateUtil.formatDate(value, "HH:mm:ss") + "'");
+			} else {
+				result.append("" + value);
+			}
+		}
+		return result.toString();
+	}
+
 //	public static void main(String[] args) {
-//		String sql = "select * from table where name=? and status in(?,?) and create_date>=? and t.sex_type='F'";
-//		Object[] params = new Object[] { "chen", 1, 2, LocalDate.now() };
+//		List tmp = new ArrayList();
+//		tmp.add("chen");
+//		tmp.add("abc");
+//		String sql = "select * from table where name=? and status in(?) and create_date>=? and t.sex_type in (?)";
+//		Object[] params = new Object[] { "chen", new Object[] { 1, 2 }, LocalDate.now(), tmp };
 //		String result = fitSqlParams(sql, params);
 //		System.err.println(result);
 //	}
