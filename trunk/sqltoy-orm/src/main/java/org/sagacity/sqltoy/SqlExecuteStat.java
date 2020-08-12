@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +93,26 @@ public class SqlExecuteStat {
 			}
 		} catch (Exception e) {
 
+		}
+	}
+
+	/**
+	 * @TODO 提供中间日志输出
+	 * @param message
+	 * @param args
+	 */
+	public static void debug(String message, Object... args) {
+		if (debug || printSqlStrategy.equals("debug")) {
+			if (threadLocal.get() != null && threadLocal.get().isPrint() == false) {
+				return;
+			}
+			String uid = threadLocal.get().getUid();
+			String debugInfo = StringUtil.fillArgs(message, args);
+			if (logger.isDebugEnabled()) {
+				logger.debug("UID=".concat(uid).concat(",").concat(debugInfo));
+			} else {
+				out.println("UID=".concat(uid).concat(",").concat(debugInfo));
+			}
 		}
 	}
 
