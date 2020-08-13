@@ -3,10 +3,8 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -22,6 +20,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PageOptimizeUtils.java,Revision:v1.0,Date:2016年11月24日
  * @modify 2020-8-4 修改原本只支持xml中必须有id的sql才能缓存的策略,便于今后直接从代码中实现分页优化功能
+ * @modify 2020-8-13 修改失效策略，在登记时只控制aliveMax，在获取时判定aliveSeconds清除过期的
  */
 public class PageOptimizeUtils {
 	private static final int INITIAL_CAPACITY = 128;
@@ -97,46 +96,41 @@ public class PageOptimizeUtils {
 	 */
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		// sql初次执行查询
-		if (null == map) {
+		if (!pageOptimizeCache.containsKey(sqlToyConfig.getIdOrSql())) {
 			return null;
 		}
-		Object[] values = map.get(conditionsKey);
-		// 为null表示条件初次查询或已经全部过期移除
-		if (null == values) {
-			return null;
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
+		synchronized (map) {
+			// 为null表示条件初次查询或已经全部过期移除
+			if (!map.containsKey(conditionsKey)) {
+				return null;
+			}
+			Object[] values = map.get(conditionsKey);
+			// 总记录数
+			Long totalCount = (Long) values[1];
+			// 失效时间
+			long expireTime = (Long) values[0];
+			// 已经失效
+			if (System.currentTimeMillis() >= expireTime) {
+				// 剔除过时的
+				map.remove(conditionsKey);
+				return null;
+			}
+			//没有过期返回总记录数量
+			return totalCount;
 		}
-		// 总记录数
-		Long totalCount = (Long) values[1];
-		// 失效时间
-		long expireTime = (Long) values[0];
-		long nowTime = System.currentTimeMillis();
-
-		// 先移除(为了调整排列顺序)
-		map.remove(conditionsKey);
-		// 超时,返回null表示需要重新查询，并不需要定时检测
-		// 1、控制总记录数量,最早的始终会排在最前面，会最先排挤出去
-		// 2、每次查询时相同的条件会自动检测是否过期，过期则会重新执行
-		if (nowTime >= expireTime) {
-			return null;
-		}
-		// 重置过期时间
-		values[0] = nowTime + pageOptimize.getAliveSeconds() * 1000;
-		// 重新置于linkedHashMap的最后位置
-		map.put(conditionsKey, values);
-		return totalCount;
 	}
 
 	/**
 	 * @TODO 将具体条件查询的记录数按照sql id放入缓存
 	 * @param sqlToyConfig
 	 * @param pageOptimize
-	 * @param pageQueryKey
+	 * @param conditionsKey
 	 * @param totalCount
 	 */
 	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
-			String pageQueryKey, Long totalCount) {
+			String conditionsKey, Long totalCount) {
 		long nowTime = System.currentTimeMillis();
 		// 当前时间
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
@@ -144,28 +138,23 @@ public class PageOptimizeUtils {
 		int aliveMax = pageOptimize.getAliveMax();
 		// sql id
 		String id = sqlToyConfig.getIdOrSql();
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(id);
-		if (null == map) {
+		LinkedHashMap<String, Object[]> map = null;
+		if (!pageOptimizeCache.containsKey(id)) {
 			map = new LinkedHashMap<String, Object[]>(aliveMax);
-			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
+			map.put(conditionsKey, new Object[] { expireTime, totalCount });
 			pageOptimizeCache.put(id, map);
 		} else {
-			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
-			// 长度超阀值,移除最早进入的
-			while (map.size() > aliveMax) {
-				map.remove(map.keySet().iterator().next());
-			}
-
-			// 剔除过期数据
-			Iterator<Map.Entry<String, Object[]>> iter = map.entrySet().iterator();
-			Map.Entry<String, Object[]> entry;
-			while (iter.hasNext()) {
-				entry = iter.next();
-				// 当前时间已经大于过期时间
-				if (nowTime >= ((Long) entry.getValue()[0])) {
-					iter.remove();
-				} else {
-					break;
+			map = pageOptimizeCache.get(id);
+			synchronized (map) {
+				// 已经存在,先移除
+				if (map.containsKey(conditionsKey)) {
+					map.remove(conditionsKey);
+				}
+				// 放入最新的(在最后位置)
+				map.put(conditionsKey, new Object[] { expireTime, totalCount });
+				// 长度超阀值,移除最早进入的
+				while (map.size() > aliveMax) {
+					map.remove(map.keySet().iterator().next());
 				}
 			}
 		}

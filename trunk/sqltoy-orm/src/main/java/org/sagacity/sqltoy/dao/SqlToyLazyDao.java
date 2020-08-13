@@ -132,7 +132,7 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
-
+	
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet

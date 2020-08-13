@@ -107,6 +107,10 @@ public class SqlExecuteStat {
 			if (debug || printSqlStrategy.equals("debug")) {
 				String uid = "";
 				if (threadLocal.get() != null) {
+					// 不输出sql和日志
+					if (threadLocal.get().isPrint() == false) {
+						return;
+					}
 					uid = threadLocal.get().getUid();
 				}
 				String debugInfo = StringUtil.fillArgs(message, args);
@@ -180,7 +184,7 @@ public class SqlExecuteStat {
 	/**
 	 * 在执行结尾时记录日志
 	 */
-	private static void loggerSql() {
+	private static void destroyLog() {
 		try {
 			SqlExecuteTrace sqlTrace = threadLocal.get();
 			if (sqlTrace == null) {
@@ -198,14 +202,12 @@ public class SqlExecuteStat {
 							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
 				}
 			} // 未超时也未发生错误,无需打印日志
-			else {
-				if (debug || printSqlStrategy.equals("debug")) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
-					} else {
-						out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
-								sqlTrace.getExecuteTime()));
-					}
+			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
+				} else {
+					out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
+							sqlTrace.getExecuteTime()));
 				}
 			}
 			// 输出错误日志
@@ -225,7 +227,7 @@ public class SqlExecuteStat {
 	 */
 	public static void destroy() {
 		// 执行完成时打印日志
-		loggerSql();
+		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
 	}
