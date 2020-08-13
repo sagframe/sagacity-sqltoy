@@ -40,7 +40,7 @@ public class StoreTest {
 	}
 	
 	@Test
-	public void testCallStore1() {
+	public void testCallStoreBySql() {
 		List<StaffInfoVO> result = sqlToyLazyDao.findBySql("{ call sp_showcase(?)}", null, new Object[] {1},StaffInfoVO.class);
 		for (StaffInfoVO staff : result) {
 			System.err.println(JSON.toJSONString(staff));
