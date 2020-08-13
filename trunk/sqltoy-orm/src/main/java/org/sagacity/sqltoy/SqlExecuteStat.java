@@ -184,7 +184,7 @@ public class SqlExecuteStat {
 	/**
 	 * 在执行结尾时记录日志
 	 */
-	private static void loggerSql() {
+	private static void destroyLog() {
 		try {
 			SqlExecuteTrace sqlTrace = threadLocal.get();
 			if (sqlTrace == null) {
@@ -227,7 +227,7 @@ public class SqlExecuteStat {
 	 */
 	public static void destroy() {
 		// 执行完成时打印日志
-		loggerSql();
+		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
 	}
