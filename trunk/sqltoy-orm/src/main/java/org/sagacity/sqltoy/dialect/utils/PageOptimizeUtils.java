@@ -151,22 +151,23 @@ public class PageOptimizeUtils {
 			pageOptimizeCache.put(id, map);
 		} else {
 			map = pageOptimizeCache.get(id);
-			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
-			// 长度超阀值,移除最早进入的
-			while (map.size() > aliveMax) {
-				map.remove(map.keySet().iterator().next());
-			}
-
-			// 剔除过期数据
-			Iterator<Map.Entry<String, Object[]>> iter = map.entrySet().iterator();
-			Map.Entry<String, Object[]> entry;
-			while (iter.hasNext()) {
-				entry = iter.next();
-				// 当前时间已经大于过期时间
-				if (nowTime >= ((Long) entry.getValue()[0])) {
-					iter.remove();
-				} else {
-					break;
+			synchronized (map) {
+				map.put(pageQueryKey, new Object[] { expireTime, totalCount });
+				// 长度超阀值,移除最早进入的
+				while (map.size() > aliveMax) {
+					map.remove(map.keySet().iterator().next());
+				}
+				// 剔除过期数据
+				Iterator<Map.Entry<String, Object[]>> iter = map.entrySet().iterator();
+				Map.Entry<String, Object[]> entry;
+				while (iter.hasNext()) {
+					entry = iter.next();
+					// 当前时间已经大于过期时间
+					if (nowTime >= ((Long) entry.getValue()[0])) {
+						iter.remove();
+					} else {
+						break;
+					}
 				}
 			}
 		}
