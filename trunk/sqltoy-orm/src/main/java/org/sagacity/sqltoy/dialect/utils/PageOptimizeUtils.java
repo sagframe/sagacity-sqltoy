@@ -97,11 +97,11 @@ public class PageOptimizeUtils {
 	 */
 	public static Long getPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
 			String conditionsKey) {
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		// sql初次执行查询
-		if (null == map) {
+		if (!pageOptimizeCache.containsKey(sqlToyConfig.getIdOrSql())) {
 			return null;
 		}
+		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		Object[] values = map.get(conditionsKey);
 		// 为null表示条件初次查询或已经全部过期移除
 		if (null == values) {
@@ -144,12 +144,13 @@ public class PageOptimizeUtils {
 		int aliveMax = pageOptimize.getAliveMax();
 		// sql id
 		String id = sqlToyConfig.getIdOrSql();
-		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(id);
-		if (null == map) {
+		LinkedHashMap<String, Object[]> map = null;
+		if (!pageOptimizeCache.containsKey(id)) {
 			map = new LinkedHashMap<String, Object[]>(aliveMax);
 			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
 			pageOptimizeCache.put(id, map);
 		} else {
+			map = pageOptimizeCache.get(id);
 			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
 			// 长度超阀值,移除最早进入的
 			while (map.size() > aliveMax) {
