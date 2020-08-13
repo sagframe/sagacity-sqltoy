@@ -112,20 +112,12 @@ public class PageOptimizeUtils {
 			Long totalCount = (Long) values[1];
 			// 失效时间
 			long expireTime = (Long) values[0];
-			long nowTime = System.currentTimeMillis();
-
-			// 先移除(为了调整排列顺序)
-			map.remove(conditionsKey);
-			// 超时,返回null表示需要重新查询，并不需要定时检测
-			// 1、控制总记录数量,最早的始终会排在最前面，会最先排挤出去
-			// 2、每次查询时相同的条件会自动检测是否过期，过期则会重新执行
-			if (nowTime >= expireTime) {
+			// 已经失效
+			if (System.currentTimeMillis() >= expireTime) {
+				// 剔除过时的
+				map.remove(conditionsKey);
 				return null;
 			}
-			// 重置过期时间
-			values[0] = nowTime + pageOptimize.getAliveSeconds() * 1000;
-			// 重新置于linkedHashMap的最后位置
-			map.put(conditionsKey, values);
 			return totalCount;
 		}
 	}
@@ -158,23 +150,11 @@ public class PageOptimizeUtils {
 				if (map.containsKey(conditionsKey)) {
 					map.remove(conditionsKey);
 				}
-				//放入最新的(在最后位置)
+				// 放入最新的(在最后位置)
 				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
 					map.remove(map.keySet().iterator().next());
-				}
-				// 剔除过期数据
-				Iterator<Map.Entry<String, Object[]>> iter = map.entrySet().iterator();
-				Map.Entry<String, Object[]> entry;
-				while (iter.hasNext()) {
-					entry = iter.next();
-					// 当前时间已经大于过期时间
-					if (nowTime >= ((Long) entry.getValue()[0])) {
-						iter.remove();
-					} else {
-						break;
-					}
 				}
 			}
 		}
