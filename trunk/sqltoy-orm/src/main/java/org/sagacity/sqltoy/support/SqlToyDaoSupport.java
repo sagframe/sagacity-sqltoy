@@ -230,10 +230,10 @@ public class SqlToyDaoSupport {
 	 * @todo 通用存储过程调用,一般数据库{?=call xxxStore(? in,? in,? out)} 针对oracle数据库只能{call
 	 *       xxxStore(? in,? in,? out)} 同时结果集必须通过OracleTypes.CURSOR out 参数返回
 	 *       目前此方法只能返回一个结果集(集合类数据),可以返回多个非集合类数据，如果有特殊用法，则自行封装调用
-	 * @param storeSqlOrKey
+	 * @param storeSqlOrKey 可以直接传call storeName (?,?) 也可以传xml中的存储过程sqlId
 	 * @param inParamsValue
-	 * @param outParamsType(可以为null)
-	 * @param resultType             (VOClass,HashMap或null)
+	 * @param outParamsType (可以为null)
+	 * @param resultType  VOClass,HashMap或null(表示二维List)
 	 * @param dataSource
 	 * @return
 	 */
