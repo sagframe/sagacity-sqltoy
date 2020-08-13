@@ -117,6 +117,7 @@ public class PageOptimizeUtils {
 				map.remove(conditionsKey);
 				return null;
 			}
+			//没有过期返回总记录数量
 			return totalCount;
 		}
 	}
