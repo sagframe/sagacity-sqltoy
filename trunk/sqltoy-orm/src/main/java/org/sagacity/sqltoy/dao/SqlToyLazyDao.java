@@ -86,13 +86,21 @@ public interface SqlToyLazyDao {
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
 
 	/**
-	 * @todo 无结果存储过程调用
-	 * @param storeNameOrKey
+	 * @todo 存储过程调用
+	 * @param storeSqlOrKey
 	 * @param inParamValues
 	 */
-	public StoreResult executeStore(final String storeNameOrKey, final Object[] inParamValues);
+	public StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues);
 
-	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
+	/**
+	 * @TODO 存储过程调用，outParams可以为null
+	 * @param storeSqlOrKey
+	 * @param inParamValues
+	 * @param outParamsType 可以为null
+	 * @param resultType 可以是VO、Map、Array,null(二维List)
+	 * @return
+	 */
+	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
 
 	/**
@@ -124,7 +132,7 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
-
+	
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet

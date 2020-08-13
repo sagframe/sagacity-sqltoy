@@ -1586,10 +1586,10 @@ public class DialectFactory {
 							 */
 							SqlConfigParseUtils.replaceNull(sqlToyResult, isFirstResult ? 1 : 0);
 							// 针对不同数据库执行存储过程调用
-							SqlExecuteStat.showSql(sqlToyResult.getSql(), inParamsValue);
+							SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
-									sqlToyConfig, sqlToyResult.getSql(), inParamsValue, outParamsType, conn, dbType,
-									dialect);
+									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
+									conn, dbType, dialect);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
