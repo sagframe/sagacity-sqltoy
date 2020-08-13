@@ -134,11 +134,11 @@ public class PageOptimizeUtils {
 	 * @TODO 将具体条件查询的记录数按照sql id放入缓存
 	 * @param sqlToyConfig
 	 * @param pageOptimize
-	 * @param pageQueryKey
+	 * @param conditionsKey
 	 * @param totalCount
 	 */
 	public static void registPageTotalCount(final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize,
-			String pageQueryKey, Long totalCount) {
+			String conditionsKey, Long totalCount) {
 		long nowTime = System.currentTimeMillis();
 		// 当前时间
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
@@ -149,12 +149,13 @@ public class PageOptimizeUtils {
 		LinkedHashMap<String, Object[]> map = null;
 		if (!pageOptimizeCache.containsKey(id)) {
 			map = new LinkedHashMap<String, Object[]>(aliveMax);
-			map.put(pageQueryKey, new Object[] { expireTime, totalCount });
+			map.put(conditionsKey, new Object[] { expireTime, totalCount });
 			pageOptimizeCache.put(id, map);
 		} else {
 			map = pageOptimizeCache.get(id);
 			synchronized (map) {
-				map.put(pageQueryKey, new Object[] { expireTime, totalCount });
+				//放入最新的
+				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
 					map.remove(map.keySet().iterator().next());
