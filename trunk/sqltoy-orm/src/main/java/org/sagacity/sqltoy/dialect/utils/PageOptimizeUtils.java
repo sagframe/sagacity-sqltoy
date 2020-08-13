@@ -154,7 +154,11 @@ public class PageOptimizeUtils {
 		} else {
 			map = pageOptimizeCache.get(id);
 			synchronized (map) {
-				//放入最新的
+				// 已经存在,先移除
+				if (map.containsKey(conditionsKey)) {
+					map.remove(conditionsKey);
+				}
+				//放入最新的(在最后位置)
 				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
