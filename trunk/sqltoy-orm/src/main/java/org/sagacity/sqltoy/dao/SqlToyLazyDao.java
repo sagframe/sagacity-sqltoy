@@ -132,9 +132,6 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
-
-	//此方法跟update(Serializable serializableVO, String... forceUpdateProps) 合并了
-	//public Long update(Serializable serializableVO);
 	
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量
