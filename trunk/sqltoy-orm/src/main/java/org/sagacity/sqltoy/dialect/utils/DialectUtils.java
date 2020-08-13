@@ -2056,9 +2056,9 @@ public class DialectUtils {
 				callStat.execute();
 				rs = callStat.getResultSet();
 				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-				while (callStat.getMoreResults()) {
-					rs = callStat.getResultSet();
-				}
+//				while (callStat.getMoreResults()) {
+//					rs = callStat.getResultSet();
+//				}
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
