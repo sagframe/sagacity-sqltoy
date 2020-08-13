@@ -1446,6 +1446,10 @@ public class SqlUtil {
 		if (sqlLow.startsWith("select") || sqlLow.startsWith("with")) {
 			return sql;
 		}
+		//存储过程模式直接返回
+		if (StringUtil.matches(sqlLow, "^\\s*\\{?\\W*call\\W+")) {
+			return sql;
+		}
 		if (!sqlToyContext.isEntity(entityClass)) {
 			return sql;
 		}
