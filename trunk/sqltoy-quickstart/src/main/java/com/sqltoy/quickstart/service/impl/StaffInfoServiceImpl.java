@@ -68,11 +68,17 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 						});
 	}
 
-	@Override
+	@Transactional
 	public void updateLockStaff(String id, String address) {
 		StaffInfoVO staffInfo = sqlToyLazyDao.load(new StaffInfoVO(id));
 		staffInfo.setAddress(address);
 		sqlToyLazyDao.update(staffInfo);
+	}
+
+	@Transactional
+	public List<StaffInfoVO> callStore() {
+		return sqlToyLazyDao.executeStore("{call sp_showcase(?)}", new Object[] { 1 }, null, StaffInfoVO.class)
+				.getRows();
 	}
 
 }

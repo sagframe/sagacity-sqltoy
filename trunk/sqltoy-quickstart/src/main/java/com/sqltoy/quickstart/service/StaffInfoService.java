@@ -28,4 +28,6 @@ public interface StaffInfoService {
 	 * @param address
 	 */
 	public void updateLockStaff(String id, String address);
+
+	public List<StaffInfoVO> callStore();
 }
