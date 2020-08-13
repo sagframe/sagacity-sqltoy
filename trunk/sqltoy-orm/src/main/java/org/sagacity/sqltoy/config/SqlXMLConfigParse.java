@@ -1134,7 +1134,7 @@ public class SqlXMLConfigParse {
 				elt = (Element) elements.item(i);
 				eltName = elt.getNodeName();
 				// 旋转(只能进行一次旋转)
-				if (eltName.equals("pivot")) {
+				if (eltName.equals(local.concat("pivot"))) {
 					PivotModel pivotModel = new PivotModel();
 					if (elt.hasAttribute("group-columns")) {
 						pivotModel
@@ -1170,7 +1170,7 @@ public class SqlXMLConfigParse {
 					pivotModel.setPivotCols(pivotCols);
 					resultProcessor.add(pivotModel);
 				} // 列转行
-				else if (eltName.equals("unpivot")) {
+				else if (eltName.equals(local.concat("unpivot"))) {
 					UnpivotModel unpivotModel = new UnpivotModel();
 					XMLUtil.setAttributes(elt, unpivotModel);
 					if (unpivotModel.getColumnsToRows().length > 1) {
@@ -1178,7 +1178,7 @@ public class SqlXMLConfigParse {
 					}
 				}
 				// 汇总合计
-				else if (eltName.equals("summary")) {
+				else if (eltName.equals(local.concat("summary"))) {
 					SummaryModel summaryModel = new SummaryModel();
 					// 是否逆向汇总
 					if (elt.hasAttribute("reverse")) {
@@ -1249,17 +1249,17 @@ public class SqlXMLConfigParse {
 					}
 					resultProcessor.add(summaryModel);
 				} // 列与列进行比较
-				else if (eltName.equals("cols-chain-relative")) {
+				else if (eltName.equals(local.concat("cols-chain-relative"))) {
 					ColsChainRelativeModel colsRelativeModel = new ColsChainRelativeModel();
 					XMLUtil.setAttributes(elt, colsRelativeModel);
 					resultProcessor.add(colsRelativeModel);
 				} // 行与行进行比较
-				else if (eltName.equals("rows-chain-relative")) {
+				else if (eltName.equals(local.concat("rows-chain-relative"))) {
 					RowsChainRelativeModel rowsRelativeModel = new RowsChainRelativeModel();
 					XMLUtil.setAttributes(elt, rowsRelativeModel);
 					resultProcessor.add(rowsRelativeModel);
 				} // 集合数据顺序颠倒
-				else if (eltName.equals("reverse")) {
+				else if (eltName.equals(local.concat("reverse"))) {
 					ReverseModel reverseModel = new ReverseModel();
 					XMLUtil.setAttributes(elt, reverseModel);
 					resultProcessor.add(reverseModel);
