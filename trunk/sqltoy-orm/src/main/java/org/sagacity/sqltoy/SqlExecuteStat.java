@@ -202,16 +202,12 @@ public class SqlExecuteStat {
 							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
 				}
 			} // 未超时也未发生错误,无需打印日志
-			else {
-				if (debug || printSqlStrategy.equals("debug")) {
-					if (sqlTrace.isPrint()) {
-						if (logger.isDebugEnabled()) {
-							logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
-						} else {
-							out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
-									sqlTrace.getExecuteTime()));
-						}
-					}
+			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
+				} else {
+					out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
+							sqlTrace.getExecuteTime()));
 				}
 			}
 			// 输出错误日志
