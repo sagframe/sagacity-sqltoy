@@ -77,6 +77,9 @@ public class DataSourceUtils {
 		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
 
+		// 人大金仓数据库
+		public final static String KINGBASE = "kingbase";
+
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
 
@@ -116,11 +119,14 @@ public class DataSourceUtils {
 		public final static int OCEANBASE = 100;
 		// 达梦
 		public final static int DM = 110;
-		public final static int MONGO = 120;
-		public final static int ES = 130;
+
+		// 人大金仓数据库
+		public final static int KINGBASE = 120;
+		public final static int MONGO = 130;
+		public final static int ES = 140;
 
 		// 下面将逐步淘汰
-		public final static int SYBASE_IQ = 140;
+		public final static int SYBASE_IQ = 150;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -145,6 +151,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.OCEANBASE, DBType.OCEANBASE);
 		// 2020-6-5 增加对达梦数据库的支持
 		DBNameTypeMap.put(Dialect.DM, DBType.DM);
+		// 2020-8-14 增加对人大金仓数据库支持
+		DBNameTypeMap.put(Dialect.KINGBASE, DBType.KINGBASE);
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
 
