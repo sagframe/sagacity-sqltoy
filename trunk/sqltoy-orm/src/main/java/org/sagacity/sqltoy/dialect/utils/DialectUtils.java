@@ -401,6 +401,7 @@ public class DialectUtils {
 		// 判断是否xml文件中定义的sql
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// update 2020-08-14
 		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
 		if (!isNamed && (extend.entity == null) && (extend.paramsName == null || extend.paramsName.length == 0)
 				&& (extend.paramsValue == null || extend.paramsValue.length == 0)) {
