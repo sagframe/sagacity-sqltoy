@@ -46,6 +46,15 @@
 			</roles>
 			<timezone>+8</timezone>
 		</developer>
+		<developer>
+			<name>joliny</name>
+			<id>joliny</id>
+			<email>jbakwd@163.com</email>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>+8</timezone>
+		</developer>
 	</developers>
 	<distributionManagement>
 		<snapshotRepository>
