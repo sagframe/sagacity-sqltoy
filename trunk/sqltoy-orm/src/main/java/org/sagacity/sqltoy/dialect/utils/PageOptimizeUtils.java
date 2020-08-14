@@ -102,6 +102,7 @@ public class PageOptimizeUtils {
 		}
 		LinkedHashMap<String, Object[]> map = pageOptimizeCache.get(sqlToyConfig.getIdOrSql());
 		synchronized (map) {
+			
 			// 为null表示条件初次查询或已经全部过期移除
 			if (!map.containsKey(conditionsKey)) {
 				return null;
@@ -111,13 +112,15 @@ public class PageOptimizeUtils {
 			Long totalCount = (Long) values[1];
 			// 失效时间
 			long expireTime = (Long) values[0];
+			long nowTime=System.currentTimeMillis();
 			// 已经失效
-			if (System.currentTimeMillis() >= expireTime) {
+			if (nowTime >= expireTime) {
 				// 剔除过时的
 				map.remove(conditionsKey);
+				System.err.println("删除过期的key=" + conditionsKey);
 				return null;
 			}
-			//没有过期返回总记录数量
+			// 没有过期返回总记录数量
 			return totalCount;
 		}
 	}
@@ -134,6 +137,7 @@ public class PageOptimizeUtils {
 		long nowTime = System.currentTimeMillis();
 		// 当前时间
 		long expireTime = nowTime + pageOptimize.getAliveSeconds() * 1000;
+		//System.err.println("expireTime="+expireTime+"aliveSeconds="+pageOptimize.getAliveSeconds());
 		// 同一个分页查询sql保留的不同查询条件记录数量
 		int aliveMax = pageOptimize.getAliveMax();
 		// sql id
@@ -154,6 +158,7 @@ public class PageOptimizeUtils {
 				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
+					System.err.println("size="+map.size()+":删除超量数据");
 					map.remove(map.keySet().iterator().next());
 				}
 			}
