@@ -17,15 +17,16 @@ public class PageOptimizeThread extends Thread {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig("mysql");
 		sqlToyConfig.setId("sqltoy_showcase");
 		PageOptimize pageOptimize = new PageOptimize();
-		//30秒
-		pageOptimize.aliveSeconds(30);
+		//60秒
+		pageOptimize.aliveSeconds(60);
 		//100个
-		pageOptimize.aliveMax(100);
+		pageOptimize.aliveMax(200);
 		while (true) {
 			//验证超量则需要随机记录>aliveMax,验证超时尽量将量控制在aliveMax边缘
-			String key = "key_" + NumberUtil.getRandomNum(1, 130);
+			String key = "key_" + NumberUtil.getRandomNum(1, 250);
 			try {
-				Thread.sleep(NumberUtil.getRandomNum(3, 10)*1000);
+				//每次操作间隔在3~50秒之间
+				Thread.sleep(NumberUtil.getRandomNum(3, 25)*1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
