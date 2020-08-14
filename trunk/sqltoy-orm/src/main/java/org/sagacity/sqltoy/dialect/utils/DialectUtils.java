@@ -403,8 +403,7 @@ public class DialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// update 2020-08-14
 		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
-		if (!isNamed && (extend.entity == null) && (extend.paramsName == null || extend.paramsName.length == 0)
-				&& (extend.paramsValue == null || extend.paramsValue.length == 0)) {
+		if (!isNamed && (extend.paramsValue == null || extend.paramsValue.length == 0)) {
 			isNamed = true;
 		}
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
