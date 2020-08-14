@@ -77,7 +77,7 @@ public class StaffInfoServiceImpl implements StaffInfoService {
 
 	@Transactional
 	public List<StaffInfoVO> callStore() {
-		return sqlToyLazyDao.executeStore("{call sp_showcase(?)}", new Object[] { 1 }, null, StaffInfoVO.class)
+		return sqlToyLazyDao.executeStore("{call sp_showcase(?,?)}", new Object[] { 1,null }, null, StaffInfoVO.class)
 				.getRows();
 	}
 

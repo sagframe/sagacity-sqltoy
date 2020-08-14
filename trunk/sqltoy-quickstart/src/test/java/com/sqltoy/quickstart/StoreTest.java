@@ -31,6 +31,12 @@ public class StoreTest {
 	@Autowired
 	StaffInfoService staffInfoService;
 
+	// 注意要先创建存储过程
+//	CREATE PROCEDURE sp_showcase(IN userId int,IN endDate datetime )
+//	BEGIN
+//	 select * from sqltoy_staff_info;
+//	END;
+	
 	@Test
 	public void testCallStore() {
 		List<StaffInfoVO> result = staffInfoService.callStore();
@@ -38,10 +44,11 @@ public class StoreTest {
 			System.err.println(JSON.toJSONString(staff));
 		}
 	}
-	
+
 	@Test
 	public void testCallStoreBySql() {
-		List<StaffInfoVO> result = sqlToyLazyDao.findBySql("{ call sp_showcase(?)}", null, new Object[] {1},StaffInfoVO.class);
+		List<StaffInfoVO> result = sqlToyLazyDao.findBySql("{ call sp_showcase(?,?)}", null, new Object[] { 1,null },
+				StaffInfoVO.class);
 		for (StaffInfoVO staff : result) {
 			System.err.println(JSON.toJSONString(staff));
 		}
