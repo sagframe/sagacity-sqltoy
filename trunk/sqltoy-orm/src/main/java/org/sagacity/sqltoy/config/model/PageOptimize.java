@@ -40,13 +40,13 @@ public class PageOptimize implements Serializable {
 	 * @param aliveMax the aliveMax to set
 	 */
 	public PageOptimize aliveMax(int aliveMax) {
-		// 最大不超过5000
+		// 最大不超过10000
 		if (aliveMax > 10000) {
 			this.aliveMax = 10000;
 		}
-		// 最小20
-		else if (aliveMax < 20) {
-			this.aliveMax = 20;
+		// 最小100
+		else if (aliveMax < 100) {
+			this.aliveMax = 100;
 		} else {
 			this.aliveMax = aliveMax;
 		}
