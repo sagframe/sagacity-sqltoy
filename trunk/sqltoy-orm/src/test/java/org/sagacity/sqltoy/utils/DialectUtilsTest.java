@@ -1,0 +1,28 @@
+package org.sagacity.sqltoy.utils;
+
+import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.config.model.UnifySqlParams;
+import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+
+/**
+ * 增加对带问号查询转命名参数模式的校验测试
+ * 
+ * @author zhong
+ *
+ */
+public class DialectUtilsTest {
+
+	@Test
+	public void testConvertQuesToNamed() {
+		String sql = "select *,' and ? ' from table where a=' ? ' and b in(?,?,?) and c like ? and d>? and m<\"?\") or a>?";
+		UnifySqlParams unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
+		System.err.println(unifySqlParams.getSql());
+		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
+		
+		sql = "select * from table where a=' ? ' and b is ? and c like ? and m between ? and ?";
+		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
+		System.err.println(unifySqlParams.getSql());
+		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
+	}
+
+}

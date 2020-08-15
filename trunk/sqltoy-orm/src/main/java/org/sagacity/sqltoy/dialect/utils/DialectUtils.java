@@ -465,31 +465,99 @@ public class DialectUtils {
 	 * @param startIndex
 	 * @return
 	 */
+//	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
+//		UnifySqlParams sqlParam = new UnifySqlParams();
+//		if (sql == null || sql.trim().equals("")) {
+//			return sqlParam;
+//		}
+//		// 不以转义符开始的问号
+//		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
+//		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
+//		StringBuilder lastSql = new StringBuilder();
+//		String group;
+//		int start = 0;
+//		int index = 0;
+//		while (m.find()) {
+//			index++;
+//			group = m.group();
+//			lastSql.append(sql.substring(start, m.start()));
+//			lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
+//			start = m.end();
+//		}
+//		sqlParam.setParamCnt(index);
+//		if (index == 0) {
+//			sqlParam.setSql(sql);
+//		} else {
+//			// 添加尾部sql
+//			lastSql.append(sql.substring(start));
+//			String[] paramsName = new String[index];
+//			for (int i = 0; i < index; i++) {
+//				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
+//			}
+//			sqlParam.setSql(lastSql.toString());
+//			sqlParam.setParamsName(paramsName);
+//		}
+//		return sqlParam;
+//	}
+
+	/**
+	 * update 2020-08-15 增强对非条件参数?的判断处理
+	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
+	 * @param sql
+	 * @param startIndex
+	 * @return
+	 */
 	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
 		UnifySqlParams sqlParam = new UnifySqlParams();
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
+		Pattern quesP = Pattern.compile("\\W\\?\\W");
+		// 统一格式便于用统一的规则处理
+		String realSql = " ".concat(sql).concat(" ");
 		// 不以转义符开始的问号
-		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
-		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
+		Matcher m = quesP.matcher(realSql);
 		StringBuilder lastSql = new StringBuilder();
 		String group;
 		int start = 0;
 		int index = 0;
-		while (m.find()) {
-			index++;
+		String pre;
+		boolean isMatch = true;
+		int findStart = 0;
+		String next;
+		while (m.find(findStart)) {
 			group = m.group();
-			lastSql.append(sql.substring(start, m.start()));
-			lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
-			start = m.end();
+			group = group.substring(1, group.length() - 1);
+			findStart = m.end() - 1;
+			pre = realSql.substring(start, m.start() + 1);
+			isMatch = true;
+			// 非正常字符结束
+			if (!StringUtil.matches(pre.toLowerCase().trim(),
+					"(and|between|is|or|not|any|all|like|\\=|\\>|\\<|\\,|\\()$")) {
+				isMatch = false;
+			}
+			if (isMatch) {
+				next = realSql.substring(findStart).toLowerCase().trim();
+				// 非正常字符结束
+				if (!next.equals("")
+						&& !StringUtil.matches(next, "^(and|between|is|or|not|any|all|like|\\=|\\>|\\<|\\,|\\))")) {
+					isMatch = false;
+				}
+			}
+			// 问号前后不能是单引号和双引号
+			if (isMatch) {
+				lastSql.append(pre);
+				lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
+				start = findStart;
+				index++;
+			}
 		}
 		sqlParam.setParamCnt(index);
 		if (index == 0) {
 			sqlParam.setSql(sql);
 		} else {
 			// 添加尾部sql
-			lastSql.append(sql.substring(start));
+			lastSql.append(realSql.substring(start));
 			String[] paramsName = new String[index];
 			for (int i = 0; i < index; i++) {
 				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
