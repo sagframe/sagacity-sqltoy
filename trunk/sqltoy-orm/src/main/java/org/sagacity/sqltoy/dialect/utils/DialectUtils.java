@@ -459,6 +459,7 @@ public class DialectUtils {
 		return result;
 	}
 
+	// 保留原始版本
 //	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
 //		UnifySqlParams sqlParam = new UnifySqlParams();
 //		if (sql == null || sql.trim().equals("")) {
