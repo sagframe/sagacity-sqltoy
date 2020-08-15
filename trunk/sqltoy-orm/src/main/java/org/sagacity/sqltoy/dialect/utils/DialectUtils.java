@@ -539,8 +539,8 @@ public class DialectUtils {
 			}
 			if (isMatch) {
 				next = realSql.substring(findStart).toLowerCase().trim();
-				// 非正常字符结束
-				if (!next.equals("") && StringUtil.matches(next, "^".concat(illegReg))) {
+				// 非正常字符结束(排除以?和?;结尾场景)
+				if (!next.equals("") && !next.equals(";") && StringUtil.matches(next, "^".concat(illegReg))) {
 					isMatch = false;
 				}
 			}
