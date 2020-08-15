@@ -18,17 +18,20 @@ public class DialectUtilsTest {
 		UnifySqlParams unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
-		
+		sql = "select *,' and ? ' from table where a=' ? ' and b in(?   ,?) and c like ? and d>? and m<\"?\") or a>?";
+		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
+		System.err.println(unifySqlParams.getSql());
+		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
 		sql = "select * from table where a=' ? ' and b is ? and c like ? and m between ? and ?";
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
-		
+
 		sql = "update table set a.nnn=?,xxx=?_ where t.xxx=\\?";
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
-		
+
 		sql = "update table set a.nnn=?,xxx=? where t.xxx=?;";
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
