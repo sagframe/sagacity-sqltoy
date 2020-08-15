@@ -18,6 +18,9 @@ public class DialectUtilsTest {
 		UnifySqlParams unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
+		for (String s : unifySqlParams.getParamsName()) {
+			System.err.println("param=" + s);
+		}
 		sql = "select *,' and ? ' from table where a=' ? ' and b in(?   ,?) and c like ? and d>? and m<\"?\") or a>?";
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
