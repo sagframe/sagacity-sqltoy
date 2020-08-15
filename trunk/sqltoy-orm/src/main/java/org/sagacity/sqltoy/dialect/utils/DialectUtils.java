@@ -459,12 +459,6 @@ public class DialectUtils {
 		return result;
 	}
 
-	/**
-	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
-	 * @param sql
-	 * @param startIndex
-	 * @return
-	 */
 //	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
 //		UnifySqlParams sqlParam = new UnifySqlParams();
 //		if (sql == null || sql.trim().equals("")) {
@@ -502,6 +496,7 @@ public class DialectUtils {
 
 	/**
 	 * update 2020-08-15 增强对非条件参数?的判断处理
+	 * 
 	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
 	 * @param startIndex
