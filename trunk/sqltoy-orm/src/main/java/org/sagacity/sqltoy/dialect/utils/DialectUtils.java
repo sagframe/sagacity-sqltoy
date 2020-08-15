@@ -112,6 +112,11 @@ public class DialectUtils {
 	private static final String WHERE_REGEX = "\\s+where[\\(\\s+]";
 
 	/**
+	 * 问号条件表达式
+	 */
+	private static final Pattern QuesRegex = Pattern.compile("\\W\\?\\W");
+
+	/**
 	 * @todo 处理分页sql的参数
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
@@ -496,7 +501,7 @@ public class DialectUtils {
 //	}
 
 	/**
-	 * update 2020-08-15 增强对非条件参数?的判断处理
+	 * update 2020-08-15 增强对非条件参数?的判断处理(并不能绝对杜绝误将sql自身的问号当成参数,但绝大多数正确)
 	 * 
 	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
@@ -508,11 +513,12 @@ public class DialectUtils {
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
-		Pattern quesP = Pattern.compile("\\W\\?\\W");
+		String illegReg = "(\\#|'|\"|\\$|\\?|:|;|\\|.|_|@|\\[|\\]|\\^|~|\\{|\\}|、|\\\\)";
+
 		// 统一格式便于用统一的规则处理
 		String realSql = " ".concat(sql).concat(" ");
 		// 不以转义符开始的问号
-		Matcher m = quesP.matcher(realSql);
+		Matcher m = QuesRegex.matcher(realSql);
 		StringBuilder lastSql = new StringBuilder();
 		String group;
 		int start = 0;
@@ -527,16 +533,14 @@ public class DialectUtils {
 			findStart = m.end() - 1;
 			pre = realSql.substring(start, m.start() + 1);
 			isMatch = true;
-			// 非正常字符结束
-			if (!StringUtil.matches(pre.toLowerCase().trim(),
-					"(and|between|is|or|not|any|all|like|\\=|\\>|\\<|\\,|\\()$")) {
+			// 非正常字符结束,如果有异常，请使用:paramName 模式的查询，不推荐sql中用问号模式的查询
+			if (StringUtil.matches(pre.toLowerCase().trim(), illegReg.concat("$"))) {
 				isMatch = false;
 			}
 			if (isMatch) {
 				next = realSql.substring(findStart).toLowerCase().trim();
 				// 非正常字符结束
-				if (!next.equals("")
-						&& !StringUtil.matches(next, "^(and|between|is|or|not|any|all|like|\\=|\\>|\\<|\\,|\\))")) {
+				if (!next.equals("") && StringUtil.matches(next, "^".concat(illegReg))) {
 					isMatch = false;
 				}
 			}
