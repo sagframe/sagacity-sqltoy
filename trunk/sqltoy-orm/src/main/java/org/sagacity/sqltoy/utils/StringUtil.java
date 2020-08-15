@@ -550,11 +550,19 @@ public class StringUtil {
 			return new String[] { source };
 		}
 		if (filterMap == null || filterMap.isEmpty()) {
-			return source.split(splitSign);
+			if (splitSign.equals("?")) {
+				return source.split("\\?");
+			} else {
+				return source.split(splitSign);
+			}
 		}
 		List<String[]> filters = matchFilters(source, filterMap);
 		if (filters.isEmpty()) {
-			return source.split(splitSign);
+			if (splitSign.equals("?")) {
+				return source.split("\\?");
+			} else {
+				return source.split(splitSign);
+			}
 		}
 		int start = 0;
 		int skipIndex = 0;

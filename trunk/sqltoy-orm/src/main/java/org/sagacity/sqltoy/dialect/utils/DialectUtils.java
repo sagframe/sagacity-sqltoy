@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -111,10 +110,14 @@ public class DialectUtils {
 
 	private static final String WHERE_REGEX = "\\s+where[\\(\\s+]";
 
-	/**
-	 * 问号条件表达式
-	 */
-	private static final Pattern QuesRegex = Pattern.compile("\\W\\?\\W");
+	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
+		private static final long serialVersionUID = 7135705054559913831L;
+
+		{
+			put("'", "'");
+			put("\"", "\"");
+		}
+	};
 
 	/**
 	 * @todo 处理分页sql的参数
@@ -464,44 +467,8 @@ public class DialectUtils {
 		return result;
 	}
 
-	// 保留原始版本
-//	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
-//		UnifySqlParams sqlParam = new UnifySqlParams();
-//		if (sql == null || sql.trim().equals("")) {
-//			return sqlParam;
-//		}
-//		// 不以转义符开始的问号
-//		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
-//		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
-//		StringBuilder lastSql = new StringBuilder();
-//		String group;
-//		int start = 0;
-//		int index = 0;
-//		while (m.find()) {
-//			index++;
-//			group = m.group();
-//			lastSql.append(sql.substring(start, m.start()));
-//			lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
-//			start = m.end();
-//		}
-//		sqlParam.setParamCnt(index);
-//		if (index == 0) {
-//			sqlParam.setSql(sql);
-//		} else {
-//			// 添加尾部sql
-//			lastSql.append(sql.substring(start));
-//			String[] paramsName = new String[index];
-//			for (int i = 0; i < index; i++) {
-//				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
-//			}
-//			sqlParam.setSql(lastSql.toString());
-//			sqlParam.setParamsName(paramsName);
-//		}
-//		return sqlParam;
-//	}
-
 	/**
-	 * update 2020-08-15 增强对非条件参数?的判断处理(并不能绝对杜绝误将sql自身的问号当成参数,但绝大多数正确)
+	 * update 2020-08-15 增强对非条件参数?的判断处理
 	 * 
 	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
@@ -513,58 +480,25 @@ public class DialectUtils {
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
-		String illegReg = "(\\#|'|\"|\\$|\\?|:|;|\\|.|_|@|\\[|\\]|\\^|~|\\{|\\}|、|\\\\)";
-
-		// 统一格式便于用统一的规则处理
-		String realSql = " ".concat(sql).concat(" ");
-		// 不以转义符开始的问号
-		Matcher m = QuesRegex.matcher(realSql);
-		StringBuilder lastSql = new StringBuilder();
-		String group;
-		int start = 0;
-		int index = 0;
-		String pre;
-		boolean isMatch = true;
-		int findStart = 0;
-		String next;
-		while (m.find(findStart)) {
-			group = m.group();
-			group = group.substring(1, group.length() - 1);
-			findStart = m.end() - 1;
-			pre = realSql.substring(start, m.start() + 1);
-			isMatch = true;
-			// 非正常字符结束,如果有异常，请使用:paramName 模式的查询，不推荐sql中用问号模式的查询
-			if (StringUtil.matches(pre.toLowerCase().trim(), illegReg.concat("$"))) {
-				isMatch = false;
-			}
-			if (isMatch) {
-				next = realSql.substring(findStart).toLowerCase().trim();
-				// 非正常字符结束(排除以?和?;结尾场景)
-				if (!next.equals("") && !next.equals(";") && StringUtil.matches(next, "^".concat(illegReg))) {
-					isMatch = false;
-				}
-			}
-			// 问号前后不能是单引号和双引号
-			if (isMatch) {
-				lastSql.append(pre);
-				lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
-				start = findStart;
-				index++;
-			}
-		}
-		sqlParam.setParamCnt(index);
-		if (index == 0) {
+		String[] strs = StringUtil.splitExcludeSymMark(sql, "?", QuesFilters);
+		int size = strs.length;
+		if (size == 1) {
 			sqlParam.setSql(sql);
-		} else {
-			// 添加尾部sql
-			lastSql.append(realSql.substring(start));
-			String[] paramsName = new String[index];
-			for (int i = 0; i < index; i++) {
-				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
-			}
-			sqlParam.setSql(lastSql.toString());
-			sqlParam.setParamsName(paramsName);
+			return sqlParam;
 		}
+		String preName = SqlToyConstants.DEFAULT_PARAM_NAME;
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < size - 1; i++) {
+			result.append(strs[i]).append(":" + preName + (i + startIndex + 1));
+		}
+		result.append(strs[size - 1]);
+		String[] paramsName = new String[size - 1];
+		for (int i = 0; i < size - 1; i++) {
+			paramsName[i] = preName + (i + startIndex + 1);
+		}
+		sqlParam.setSql(result.toString());
+		sqlParam.setParamsName(paramsName);
+		sqlParam.setParamCnt(size - 1);
 		return sqlParam;
 	}
 

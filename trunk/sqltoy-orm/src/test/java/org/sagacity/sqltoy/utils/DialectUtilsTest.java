@@ -31,7 +31,7 @@ public class DialectUtilsTest {
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
-
+//
 		sql = "update table set a.nnn=?,xxx=? where t.xxx=?;";
 		unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
