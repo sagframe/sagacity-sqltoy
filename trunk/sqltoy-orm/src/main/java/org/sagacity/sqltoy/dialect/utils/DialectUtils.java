@@ -488,14 +488,14 @@ public class DialectUtils {
 		}
 		String preName = SqlToyConstants.DEFAULT_PARAM_NAME;
 		StringBuilder result = new StringBuilder();
+		String[] paramsName = new String[size - 1];
+		int index;
 		for (int i = 0; i < size - 1; i++) {
-			result.append(strs[i]).append(":" + preName + (i + startIndex + 1));
+			index = i + startIndex + 1;
+			result.append(strs[i]).append(":" + preName + index);
+			paramsName[i] = preName + index;
 		}
 		result.append(strs[size - 1]);
-		String[] paramsName = new String[size - 1];
-		for (int i = 0; i < size - 1; i++) {
-			paramsName[i] = preName + (i + startIndex + 1);
-		}
 		sqlParam.setSql(result.toString());
 		sqlParam.setParamsName(paramsName);
 		sqlParam.setParamCnt(size - 1);
