@@ -6,7 +6,8 @@
 
 # 如何快速上手
 ## 请参见trunk/sqltoy-quickstart演示项目,阅读其readme.md学习 
- 
+
+# QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.13.13(感谢广大网友的积极反馈) 发版日期: 2020-08-13
