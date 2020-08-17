@@ -552,6 +552,8 @@ public class StringUtil {
 		if (filterMap == null || filterMap.isEmpty()) {
 			if (splitSign.equals("?")) {
 				return source.split("\\?");
+			} else if (splitSign.equals(",")) {
+				return source.split("\\,");
 			} else {
 				return source.split(splitSign);
 			}
@@ -560,6 +562,8 @@ public class StringUtil {
 		if (filters.isEmpty()) {
 			if (splitSign.equals("?")) {
 				return source.split("\\?");
+			} else if (splitSign.equals(",")) {
+				return source.split("\\,");
 			} else {
 				return source.split(splitSign);
 			}
