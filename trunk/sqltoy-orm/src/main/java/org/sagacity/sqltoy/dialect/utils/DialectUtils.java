@@ -480,6 +480,7 @@ public class DialectUtils {
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
+		//以?号对字符串进行切割，并忽视'' 和"" 之间的
 		String[] strs = StringUtil.splitExcludeSymMark(sql, "?", QuesFilters);
 		int size = strs.length;
 		if (size == 1) {
