@@ -20,9 +20,9 @@ public class PageOptimize implements Serializable {
 	private static final long serialVersionUID = -4202934471963179375L;
 
 	/**
-	 * 100个不同条件查询
+	 * 1000个不同条件查询
 	 */
-	private int aliveMax = 100;
+	private int aliveMax = 1000;
 
 	/**
 	 * 1.5分钟
@@ -40,13 +40,13 @@ public class PageOptimize implements Serializable {
 	 * @param aliveMax the aliveMax to set
 	 */
 	public PageOptimize aliveMax(int aliveMax) {
-		// 最大不超过5000
-		if (aliveMax > 5000) {
-			this.aliveMax = 5000;
+		// 最大不超过10000
+		if (aliveMax > 10000) {
+			this.aliveMax = 10000;
 		}
-		// 最小20
-		else if (aliveMax < 20) {
-			this.aliveMax = 20;
+		// 最小100
+		else if (aliveMax < 100) {
+			this.aliveMax = 100;
 		} else {
 			this.aliveMax = aliveMax;
 		}

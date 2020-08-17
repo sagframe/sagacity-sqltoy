@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -110,6 +109,15 @@ public class DialectUtils {
 	private static final String FROM_REGEX = "\\s+from[\\(\\s+]";
 
 	private static final String WHERE_REGEX = "\\s+where[\\(\\s+]";
+
+	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
+		private static final long serialVersionUID = 7135705054559913831L;
+
+		{
+			put("'", "'");
+			put("\"", "\"");
+		}
+	};
 
 	/**
 	 * @todo 处理分页sql的参数
@@ -403,8 +411,7 @@ public class DialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// update 2020-08-14
 		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
-		if (!isNamed && (extend.entity == null) && (extend.paramsName == null || extend.paramsName.length == 0)
-				&& (extend.paramsValue == null || extend.paramsValue.length == 0)) {
+		if (!isNamed && (extend.paramsValue == null || extend.paramsValue.length == 0)) {
 			isNamed = true;
 		}
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
@@ -461,6 +468,8 @@ public class DialectUtils {
 	}
 
 	/**
+	 * update 2020-08-15 增强对非条件参数?的判断处理
+	 * 
 	 * @todo sql中替换?为:sagParamName+i形式,便于查询处理(主要针对分页和取随机记录的查询)
 	 * @param sql
 	 * @param startIndex
@@ -471,33 +480,25 @@ public class DialectUtils {
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
-		// 不以转义符开始的问号
-		// Pattern ARG_NAME_PATTERN = Pattern.compile("[^\\\\]\\?");
-		Matcher m = SqlConfigParseUtils.ARG_NAME_PATTERN.matcher(sql);
-		StringBuilder lastSql = new StringBuilder();
-		String group;
-		int start = 0;
-		int index = 0;
-		while (m.find()) {
-			index++;
-			group = m.group();
-			lastSql.append(sql.substring(start, m.start()));
-			lastSql.append(group.replace("?", ":" + SqlToyConstants.DEFAULT_PARAM_NAME + (index + startIndex)));
-			start = m.end();
-		}
-		sqlParam.setParamCnt(index);
-		if (index == 0) {
+		String[] strs = StringUtil.splitExcludeSymMark(sql, "?", QuesFilters);
+		int size = strs.length;
+		if (size == 1) {
 			sqlParam.setSql(sql);
-		} else {
-			// 添加尾部sql
-			lastSql.append(sql.substring(start));
-			String[] paramsName = new String[index];
-			for (int i = 0; i < index; i++) {
-				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + startIndex + 1);
-			}
-			sqlParam.setSql(lastSql.toString());
-			sqlParam.setParamsName(paramsName);
+			return sqlParam;
 		}
+		String preName = SqlToyConstants.DEFAULT_PARAM_NAME;
+		StringBuilder result = new StringBuilder();
+		String[] paramsName = new String[size - 1];
+		int index;
+		for (int i = 0; i < size - 1; i++) {
+			index = i + startIndex + 1;
+			result.append(strs[i]).append(":" + preName + index);
+			paramsName[i] = preName + index;
+		}
+		result.append(strs[size - 1]);
+		sqlParam.setSql(result.toString());
+		sqlParam.setParamsName(paramsName);
+		sqlParam.setParamCnt(size - 1);
 		return sqlParam;
 	}
 

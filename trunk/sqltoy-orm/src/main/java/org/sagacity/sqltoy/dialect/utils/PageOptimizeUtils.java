@@ -107,17 +107,19 @@ public class PageOptimizeUtils {
 				return null;
 			}
 			Object[] values = map.get(conditionsKey);
-			// 总记录数
-			Long totalCount = (Long) values[1];
 			// 失效时间
 			long expireTime = (Long) values[0];
+			// 总记录数
+			Long totalCount = (Long) values[1];
+			long nowTime = System.currentTimeMillis();
 			// 已经失效
-			if (System.currentTimeMillis() >= expireTime) {
+			if (nowTime >= expireTime) {
 				// 剔除过时的
 				map.remove(conditionsKey);
+				// System.err.println("删除过期的key=" + conditionsKey);
 				return null;
 			}
-			//没有过期返回总记录数量
+			// 没有过期返回总记录数量
 			return totalCount;
 		}
 	}
@@ -154,6 +156,7 @@ public class PageOptimizeUtils {
 				map.put(conditionsKey, new Object[] { expireTime, totalCount });
 				// 长度超阀值,移除最早进入的
 				while (map.size() > aliveMax) {
+					// System.err.println("size="+map.size()+":删除超量数据");
 					map.remove(map.keySet().iterator().next());
 				}
 			}
