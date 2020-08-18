@@ -594,10 +594,8 @@ public class SqlConfigParseUtils {
 				// 逗号分隔的条件参数
 				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
 					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					/**
-					 * update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-					 * 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-					 */
+					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
+					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
 					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
 						partSql = (String) paramsValue[parameterMarkCnt - 1];
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
@@ -724,9 +722,8 @@ public class SqlConfigParseUtils {
 		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN)) {
 			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		}
-		/**
-		 * 只有在查询模式前提下才支持fastPage机制
-		 */
+
+		// 只有在查询模式前提下才支持fastPage机制
 		if (sqlType.equals(SqlType.search)) {
 			// 判断是否有快速分页@fast 宏
 			Matcher matcher = FAST_PATTERN.matcher(originalSql);
@@ -765,7 +762,7 @@ public class SqlConfigParseUtils {
 	 * @param dialect
 	 */
 	public static void processFastWith(SqlToyConfig sqlToyConfig, String dialect) {
-		//不存在fast 和with 不做处理
+		// 不存在fast 和with 不做处理
 		if (!sqlToyConfig.isHasFast() || !sqlToyConfig.isHasWith()) {
 			return;
 		}

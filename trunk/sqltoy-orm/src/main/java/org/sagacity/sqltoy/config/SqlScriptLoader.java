@@ -184,10 +184,10 @@ public class SqlScriptLoader {
 	/**
 	 * @todo 提供根据sql或sqlId获取sql配置模型
 	 * @param sqlKey
-	 * @param type
+	 * @param sqlType
 	 * @return
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey, SqlType type) {
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType) {
 		SqlToyConfig result = sqlCache.get(sqlKey);
 		if (null == result) {
 			result = codeSqlCache.get(sqlKey);
@@ -197,7 +197,7 @@ public class SqlScriptLoader {
 		}
 		// 判断是否是sqlId,非在xml中定义id的sql
 		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), type);
+			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), sqlType);
 			// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
 			result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 			// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
