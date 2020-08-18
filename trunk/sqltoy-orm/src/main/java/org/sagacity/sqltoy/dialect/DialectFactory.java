@@ -865,11 +865,13 @@ public class DialectFactory {
 			final QueryExecutor queryExecutor, final Connection conn, Integer dbType, String dialect) throws Exception {
 		String sql;
 		boolean isLastSql = false;
+		//是否自定义了count sql语句(直接定义了则跳过各种优化处理)
 		String tmp = sqlToyConfig.getCountSql(dialect);
 		if (tmp != null) {
 			sql = tmp;
 			isLastSql = true;
 		} else {
+			//是否是select * from @fast(select * from xxx where  xxx) t1 left join xx 模式
 			if (!sqlToyConfig.isHasFast()) {
 				sql = sqlToyConfig.getSql(dialect);
 			} else {
