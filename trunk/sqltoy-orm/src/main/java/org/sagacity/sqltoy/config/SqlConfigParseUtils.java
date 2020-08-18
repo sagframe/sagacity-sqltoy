@@ -757,8 +757,9 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 提取fastWith(@fast 涉及到的cte 查询,这里是很别致的地方，假如sql中存在with as t1 (),t2 (),t3 () select * from @fast(t1,t2) 做count查询时将执行:
-	 *  with as t1(),t2 () select count(1) from xxx,而不会额外的多执行t3)
+	 * @todo 提取fastWith(@fast 涉及到的cte 查询,这里是很别致的地方，假如sql中存在with as t1 (),t2 (),t3 ()
+	 *       select * from @fast(t1,t2) 做count查询时将执行: with as t1(),t2 () select
+	 *       count(1) from xxx,而不会额外的多执行t3)
 	 * @param sqlToyConfig
 	 * @param dialect
 	 */
