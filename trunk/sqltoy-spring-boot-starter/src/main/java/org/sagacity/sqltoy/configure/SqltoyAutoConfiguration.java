@@ -37,6 +37,7 @@ public class SqltoyAutoConfiguration {
 	@Autowired
 	SqlToyContextProperties properties;
 
+	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
@@ -66,10 +67,12 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setAnnotatedClasses(properties.getAnnotatedClasses());
 		}
 
+		// 批量操作时(saveAll、updateAll)，每批次数量,默认200
 		if (properties.getBatchSize() != null) {
 			sqlToyContext.setBatchSize(properties.getBatchSize());
 		}
 
+		// 分页查询单页最大记录数量(默认50000)
 		if (properties.getPageFetchSizeLimit() != null) {
 			sqlToyContext.setPageFetchSizeLimit(properties.getPageFetchSizeLimit());
 		}
