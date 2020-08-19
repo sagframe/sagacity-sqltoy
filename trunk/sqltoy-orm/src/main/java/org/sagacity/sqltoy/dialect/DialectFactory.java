@@ -504,6 +504,7 @@ public class DialectFactory {
 					treeModel.idTypeIsChar(true);
 				}
 			}
+			SqlExecuteStat.start(treeModel.getTableName(), "wrapTreeTableRoute", true);
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -514,6 +515,8 @@ public class DialectFactory {
 			logger.error("封装树形表节点路径操作:wrapTreeTableRoute发生错误,{}", e.getMessage());
 			e.printStackTrace();
 			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
 		}
 	}
 
@@ -705,6 +708,7 @@ public class DialectFactory {
 	public QueryResult findTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final double topSize, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 合法校验
 		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
@@ -769,6 +773,7 @@ public class DialectFactory {
 	public QueryResult findByQuery(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final LockMode lockMode, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		// 合法校验
 		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
@@ -865,13 +870,13 @@ public class DialectFactory {
 			final QueryExecutor queryExecutor, final Connection conn, Integer dbType, String dialect) throws Exception {
 		String sql;
 		boolean isLastSql = false;
-		//是否自定义了count sql语句(直接定义了则跳过各种优化处理)
+		// 是否自定义了count sql语句(直接定义了则跳过各种优化处理)
 		String tmp = sqlToyConfig.getCountSql(dialect);
 		if (tmp != null) {
 			sql = tmp;
 			isLastSql = true;
 		} else {
-			//是否是select * from @fast(select * from xxx where  xxx) t1 left join xx 模式
+			// 是否是select * from @fast(select * from xxx where xxx) t1 left join xx 模式
 			if (!sqlToyConfig.isHasFast()) {
 				sql = sqlToyConfig.getSql(dialect);
 			} else {
@@ -968,11 +973,13 @@ public class DialectFactory {
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
 			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
+		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
 			return 0L;
 		}
 		try {
+			// 启动执行日志
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll:[" + entities.size() + "]条记录!",
 					null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
@@ -1001,12 +1008,14 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
+			// 输出修改记录量日志
 			SqlExecuteStat.debug("saveOrUpdateAll operate updateTotalCnt={}", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
 		} finally {
+			// 最终输出执行失效和错误日志
 			SqlExecuteStat.destroy();
 		}
 	}
