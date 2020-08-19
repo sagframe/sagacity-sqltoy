@@ -11,7 +11,7 @@
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.13.13.1 发版日期: 2020-08-19
-* 1、排除问号传参场景下非条件问号字符干扰,如:select 'x?' from table where status=? 
+* 排除问号传参(常规是:paramName模式)场景下非条件问号字符干扰,如:select 'x?' from table where status=? 
 
 # 使用单位或项目: 
 * 宁波农行  
