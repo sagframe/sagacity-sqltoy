@@ -192,7 +192,7 @@ public class ScanEntityAndSqlResource {
 	 * @todo 获取sqltoy配置的sql文件
 	 * @param resourceDir
 	 * @param mappingResources
-	 * @param dialect
+	 * @param dialect 方言过滤(目前已经废弃)
 	 * @return
 	 * @throws Exception
 	 */

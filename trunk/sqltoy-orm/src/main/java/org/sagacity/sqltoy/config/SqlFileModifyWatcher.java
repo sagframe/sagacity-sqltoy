@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sqltoy-orm
  * @description 用于检测sql文件内容发生变化,如果发生变化则重新加载文件
- * @author zhongxuchen
+ * @author zhongxuchen@hotmail.com
  * @version v1.0, Date:2012年8月26日
- * @modify 2019年8月26日,将原本调用sql时检测sql文件更新改为一个独立的后台线程
+ * @modify 2019年8月26日,将原本调用sql时检测sql文件更新改为一个独立的后台程序进行检测
  */
 public class SqlFileModifyWatcher extends Thread {
 	/**

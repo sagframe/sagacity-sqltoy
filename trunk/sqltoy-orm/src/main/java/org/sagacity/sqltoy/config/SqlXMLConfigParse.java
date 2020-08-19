@@ -405,7 +405,7 @@ public class SqlXMLConfigParse {
 	private static void parseNoSql(SqlToyConfig sqlToyConfig, Element sqlElt, String local) {
 		NoSqlConfigModel noSqlConfig = new NoSqlConfigModel();
 		NodeList nodeList;
-
+		// mongo 的collection
 		if (sqlElt.hasAttribute("collection")) {
 			noSqlConfig.setCollection(sqlElt.getAttribute("collection"));
 		}
@@ -422,7 +422,7 @@ public class SqlXMLConfigParse {
 		if (sqlElt.hasAttribute("index")) {
 			noSqlConfig.setIndex(sqlElt.getAttribute("index"));
 		}
-
+		// es 索引类型
 		if (sqlElt.hasAttribute("type")) {
 			noSqlConfig.setType(sqlElt.getAttribute("type"));
 		}
@@ -568,6 +568,12 @@ public class SqlXMLConfigParse {
 		sqlToyConfig.setSecureMasks(secureMasks);
 	}
 
+	/**
+	 * @TODO 获取xml元素的属性值
+	 * @param elt
+	 * @param attrName
+	 * @return
+	 */
 	private static String getAttrValue(Element elt, String attrName) {
 		if (elt.hasAttribute(attrName)) {
 			return elt.getAttribute(attrName);

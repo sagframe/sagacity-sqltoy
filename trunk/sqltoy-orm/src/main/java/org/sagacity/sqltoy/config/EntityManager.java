@@ -226,7 +226,7 @@ public class EntityManager {
 					hasAbstractVO = true;
 				}
 			}
-			// 判断是否是实体类
+			// 是实体类则开始解析类上的其它注解配置
 			if (isEntity) {
 				entityMeta = new EntityMeta();
 				entityMeta.setEntityClass(realEntityClass);

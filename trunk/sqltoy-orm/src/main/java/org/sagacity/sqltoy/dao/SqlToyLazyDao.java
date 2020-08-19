@@ -141,7 +141,7 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable serializableVO, String... forceUpdateProps);
 
 	/**
-	 * @基于对象单表对象查询进行数据更新
+	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
 	 * @param entityUpdate
 	 * @return
@@ -257,8 +257,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
 	/**
-	 * TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
-	 * 
+	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
 	 * @param resultType
 	 * @param entityQuery
