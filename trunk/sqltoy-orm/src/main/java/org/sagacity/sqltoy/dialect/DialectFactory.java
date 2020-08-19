@@ -221,11 +221,13 @@ public class DialectFactory {
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
 			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
+		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
 			logger.warn("batchUpdate dataSet is null or empty,please check!");
 			return 0L;
 		}
 		try {
+			// 启动执行日志(会在threadlocal中创建一个当前执行信息,并建立一个唯一跟踪id)
 			SqlExecuteStat.start(sqlToyConfig.getId(), "batchUpdate:[" + dataSet.size() + "]条记录!",
 					sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
@@ -251,12 +253,14 @@ public class DialectFactory {
 									fieldTypes, autoCommit, conn, dbType));
 						}
 					});
+			// 输出执行结果更新记录量日志
 			SqlExecuteStat.debug("batchUpdate update record count={}", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
 		} finally {
+			// 输出执行效率和超时、错误日志
 			SqlExecuteStat.destroy();
 		}
 	}
@@ -831,8 +835,8 @@ public class DialectFactory {
 		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
