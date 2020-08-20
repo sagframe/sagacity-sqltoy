@@ -98,6 +98,7 @@ public class DMDialect implements Dialect {
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
+		boolean isNamed = sqlToyConfig.isNamedParam();
 		// 是否有order by,update 2017-5-22
 		boolean hasOrderBy = SqlUtil.hasOrderBy(
 				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
@@ -113,9 +114,9 @@ public class DMDialect implements Dialect {
 			sql.append(") SAG_Paginationtable ");
 		}
 		sql.append(" offset ");
-		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
+		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" rows fetch next ");
-		sql.append(sqlToyConfig.isNamedParam() ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
+		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		sql.append(" rows only ");
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
