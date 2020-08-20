@@ -1,5 +1,6 @@
 # 根据大家的反馈，重新打造一个更加清晰的快速上手演示项目
-# 如给您带来比mybatis、jooq等更有价值的帮助，请为sqltoy点星!
+* 如给您带来比mybatis、jooq等更有价值的帮助并成为了sqltoy的用户，请为sqltoy点星!
+
 # 我坚信当您已经跨越了crud阶段，面对更多查询分析诉求的时候会非常认可sqltoy!
 
 # 小提示
@@ -20,7 +21,7 @@
     <dependency>
 		<groupId>com.sagframe</groupId>
 		<artifactId>sagacity-sqltoy-starter</artifactId>
-		<version>4.13.12</version>
+		<version>4.13.3.1</version>
 	</dependency>
 ```
 
