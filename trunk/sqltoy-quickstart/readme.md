@@ -5,7 +5,7 @@
 
 # 小提示
 * quickstart只演示了部分功能,核心是让大家快速上手，详细功能参见文档
-* 理论上来sqltoy可以解决您项目上全部数据库交互，我们的erp、数据平台、电商平台已经验证了这一点
+*    理论上来sqltoy可以解决您项目上全部数据库交互，我们的erp、数据平台、电商平台已经验证了这一点
 
 # 学习步骤
 * 1. 配置pom引入sqltoy的依赖
@@ -206,11 +206,15 @@ jdbc.password=quickstart
 ```
 
 * 点击quickvo.bat 即可生产VO了,linux 或 mac 则执行quickvo.sh 
-```
-# windows
-java -cp ./libs/* org.sagacity.quickvo.QuickVOStart quickvo.xml
+* windows环境下:
 
-# mac
+```
+java -cp ./libs/* org.sagacity.quickvo.QuickVOStart quickvo.xml
+```
+
+* mac电脑:
+
+```
 java -cp ./libs/\* org.sagacity.quickvo.QuickVOStart ./quickvo.xml
 ```
 
