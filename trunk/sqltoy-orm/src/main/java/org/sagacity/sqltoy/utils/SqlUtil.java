@@ -1107,7 +1107,7 @@ public class SqlUtil {
 		if (splitSign.indexOf("go") != -1) {
 			sqlContent = StringUtil.clearMistyChars(sqlContent, " ");
 		}
-		// sqlserver sybase 数据库以go 分割,则整个sql文件作为一个语句执行
+		// 分割成多个子语句
 		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, splitSign, sqlCommentfilters);
 		boolean hasSetAutoCommit = false;
 		// 是否自动提交
