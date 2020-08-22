@@ -428,6 +428,10 @@ public class UserLogVO extends AbstractUserLogVO {
 
 ## 2.10 elastic原生查询支持
 ## 2.11 elasticsearch-sql 插件模式sql模式支持
+## 2.12 sql文件变更自动重载，方便开发和调试
+## 2.13 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
+## 2.14 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
+
 
 # 3.集成说明
 
@@ -663,7 +667,7 @@ public class CrudCaseServiceTest {
 # 5. sqltoy关键代码说明
 
 * sqltoy-orm 主要分以下几个部分：
-  - BaseDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
+  - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
   - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
@@ -681,4 +685,4 @@ public class CrudCaseServiceTest {
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
   - SqlToyContext:sqltoy配置的上下文,通过这个类可以看到sqltoy全貌。
-  - PageOptimizeCacheImpl:可以看到分页优化默认实现原理。
+  - PageOptimizeUtils:可以看到分页优化默认实现原理。
