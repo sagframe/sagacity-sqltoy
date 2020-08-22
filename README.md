@@ -84,7 +84,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(你如何让我将上面的写法改成这样?无论mybatis多有名气都不能接受,因为这是污染代码和玷污眼睛)!
+* mybatis同样的功能的写法(请思考:看起来清晰吗?需求变更调整方便吗?如何快速在dbeaver客户端和放入xml文件转换?)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
