@@ -1,3 +1,7 @@
+# 为什么开源sqltoy
+* 对sqltoy的用户负责并为其树立信念，大家言必称mybatis(plus)，那是因为个人思维的惯性！
+* 想告诉大家一个更好的orm框架，大家任由惯性思维言必称mybatis会导致劣币驱逐良币！
+
 # 在线文档
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
