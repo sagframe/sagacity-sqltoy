@@ -13,6 +13,10 @@
 # 最新版本号: 4.13.13.1 发版日期: 2020-08-19
 * 排除问号传参(常规是:paramName模式)场景下非条件问号字符干扰,如:select 'x?' from table where status=? 
 
+# 未来规划
+* 4.15版本parallQuery 并行查询功能
+* 4.16版本提供multi-query扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
