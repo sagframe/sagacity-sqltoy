@@ -233,7 +233,7 @@ public class SqlToyDaoSupport {
 	 * @param storeSqlOrKey 可以直接传call storeName (?,?) 也可以传xml中的存储过程sqlId
 	 * @param inParamsValue
 	 * @param outParamsType (可以为null)
-	 * @param resultType  VOClass,HashMap或null(表示二维List)
+	 * @param resultType    VOClass,HashMap或null(表示二维List)
 	 * @param dataSource
 	 * @return
 	 */
@@ -1455,5 +1455,28 @@ public class SqlToyDaoSupport {
 	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
 			throws Exception {
 		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+	}
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @return
+	 */
+	public List parallQuery(List<QueryExecutor> querys) {
+		return parallQuery(querys, null, null);
+	}
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @param parallSize
+	 * @param maxWaitSeconds
+	 * @return
+	 */
+	public List parallQuery(List<QueryExecutor> querys, Integer parallSize, Integer maxWaitSeconds) {
+		if (querys == null || querys.isEmpty()) {
+			return null;
+		}
+		return null;
 	}
 }
