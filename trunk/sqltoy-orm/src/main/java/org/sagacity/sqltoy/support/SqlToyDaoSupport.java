@@ -40,6 +40,7 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.SqlServiceResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -1482,6 +1483,15 @@ public class SqlToyDaoSupport {
 		if (querys == null || querys.isEmpty()) {
 			return null;
 		}
+		return null;
+	}
+
+	/**
+	 * @TODO 提供sql查询服务的调用
+	 * sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
+	 * @return
+	 */
+	public SqlServiceResult callSqlService() {
 		return null;
 	}
 }
