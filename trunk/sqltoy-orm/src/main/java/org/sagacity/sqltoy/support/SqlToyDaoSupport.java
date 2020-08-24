@@ -1466,6 +1466,11 @@ public class SqlToyDaoSupport {
 		return parallQuery(querys, null, null);
 	}
 
+	public List parallQuery(List<String> sqlList, String[] paramNames, Object[] paramValues, Class resultType) {
+		// return parallQuery(querys, null, null);
+		return null;
+	}
+
 	/**
 	 * @TODO 并行查询
 	 * @param querys
