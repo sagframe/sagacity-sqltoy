@@ -14,7 +14,7 @@
 * 排除问号传参(常规是:paramName模式)场景下非条件问号字符干扰,如:select 'x?' from table where status=? 
 
 # 未来规划
-* 4.15版本支持parallQuery 并行查询功能，让一组sql查询同时提交数据库查询,方便开发者
+* 4.15版本支持parallQuery 并行查询功能，让一组sql同时提交数据库查询,简化开发者写并行的实现同时提升查询效率
 * 4.16版本在parallQuery的基础上更进一步直接提供multi-query扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
 
 # 1. 前言
