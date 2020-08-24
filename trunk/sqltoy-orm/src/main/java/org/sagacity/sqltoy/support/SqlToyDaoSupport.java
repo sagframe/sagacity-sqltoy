@@ -38,6 +38,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SqlServiceResult;
@@ -1458,16 +1459,7 @@ public class SqlToyDaoSupport {
 		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
 	}
 
-	/**
-	 * @TODO 并行查询
-	 * @param querys
-	 * @return
-	 */
-	public List parallQuery(List<QueryExecutor> querys) {
-		return parallQuery(querys, null, null);
-	}
-
-	public List parallQuery(List<String> sqlList, String[] paramNames, Object[] paramValues, Class resultType) {
+	public List parallQuery(List<ParallQuery> sqlList, String[] paramNames, Object[] paramValues) {
 		// return parallQuery(querys, null, null);
 		return null;
 	}
@@ -1475,11 +1467,10 @@ public class SqlToyDaoSupport {
 	/**
 	 * @TODO 并行查询
 	 * @param querys
-	 * @param parallSize
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public List parallQuery(List<QueryExecutor> querys, Integer parallSize, Integer maxWaitSeconds) {
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues, Integer maxWaitSeconds) {
 		if (querys == null || querys.isEmpty()) {
 			return null;
 		}
