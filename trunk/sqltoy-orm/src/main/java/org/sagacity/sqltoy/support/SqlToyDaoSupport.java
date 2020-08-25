@@ -1488,8 +1488,9 @@ public class SqlToyDaoSupport {
 		if (threadSize > 10) {
 			threadSize = 10;
 		}
-		ExecutorService pool = Executors.newFixedThreadPool(threadSize);
+		ExecutorService pool = null;
 		try {
+			pool = Executors.newFixedThreadPool(threadSize);
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallQueryResult> future;
@@ -1521,7 +1522,9 @@ public class SqlToyDaoSupport {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
 		} finally {
-			pool.shutdownNow();
+			if (pool != null) {
+				pool.shutdownNow();
+			}
 		}
 		return results;
 	}
