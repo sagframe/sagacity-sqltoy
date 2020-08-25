@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @version id:DataSetResult.java,Revision:v1.0,Date:2016年3月8日
  */
 @SuppressWarnings("rawtypes")
-public class DataSetResult implements Serializable {
+public class DataSetResult<T> implements Serializable {
 	private static final long serialVersionUID = -2125295102578360914L;
 
 	/**
@@ -32,7 +32,7 @@ public class DataSetResult implements Serializable {
 	/**
 	 * 结果记录信息,默认为空集合
 	 */
-	private List rows;
+	private List<T> rows;
 
 	/**
 	 * 总记录数量
