@@ -665,7 +665,7 @@ public interface SqlToyLazyDao {
 			throws Exception;
 
 	/**
-	 * @TODO 并行查询
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
@@ -674,8 +674,10 @@ public interface SqlToyLazyDao {
 	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues);
 
 	/**
-	 * @TODO 并行查询
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param parallQueryList
+	 * @param paramNames
+	 * @param paramValues
 	 * @param maxWaitSeconds
 	 * @return
 	 */
