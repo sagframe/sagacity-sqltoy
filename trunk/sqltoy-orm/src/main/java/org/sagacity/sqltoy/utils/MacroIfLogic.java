@@ -63,6 +63,7 @@ public class MacroIfLogic {
 		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1) {
 			return "undefine";
 		}
+		//2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", "include" };
 		String splitStr = "==";
