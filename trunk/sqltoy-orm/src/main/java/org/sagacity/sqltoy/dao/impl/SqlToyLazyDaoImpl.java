@@ -889,12 +889,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public List<QueryResult> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
 		return super.parallQuery(querys, paramNames, paramValues, null);
 	}
 
 	@Override
-	public List<QueryResult> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds) {
 		return super.parallQuery(querys, paramNames, paramValues, maxWaitSeconds);
 	}

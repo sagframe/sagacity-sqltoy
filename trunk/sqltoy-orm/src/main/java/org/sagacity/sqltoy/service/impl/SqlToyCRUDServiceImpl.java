@@ -515,13 +515,14 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
-	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
-			Integer maxWaitSeconds) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds) {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
