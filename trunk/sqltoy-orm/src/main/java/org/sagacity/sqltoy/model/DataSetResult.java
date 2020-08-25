@@ -70,16 +70,17 @@ public class DataSetResult<T> implements Serializable {
 	/**
 	 * @return the rows
 	 */
-	public List getRows() {
-		if (this.rows == null)
-			return new ArrayList();
+	public List<T> getRows() {
+		if (this.rows == null) {
+			return new ArrayList<T>();
+		}
 		return this.rows;
 	}
 
 	/**
 	 * @param rows the rows to set
 	 */
-	public void setRows(List rows) {
+	public void setRows(List<T> rows) {
 		this.rows = rows;
 	}
 
