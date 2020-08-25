@@ -13,6 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
@@ -30,6 +34,8 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.EntityQuery;
@@ -39,9 +45,9 @@ import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.SqlServiceResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -1459,9 +1465,8 @@ public class SqlToyDaoSupport {
 		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
 	}
 
-	public List parallQuery(List<ParallQuery> sqlList, String[] paramNames, Object[] paramValues) {
-		// return parallQuery(querys, null, null);
-		return null;
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
+		return parallQuery(querys, paramNames, paramValues, null);
 	}
 
 	/**
@@ -1470,19 +1475,61 @@ public class SqlToyDaoSupport {
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues, Integer maxWaitSeconds) {
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+			Integer maxWaitSeconds) {
 		if (querys == null || querys.isEmpty()) {
 			return null;
 		}
-		return null;
+		List results = new ArrayList();
+		// 并行线程数量(默认最大十个)
+		int threadSize = querys.size();
+		if (threadSize > 10) {
+			threadSize = 10;
+		}
+		ExecutorService pool = Executors.newFixedThreadPool(threadSize);
+		try {
+			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
+			SqlToyConfig sqlToyConfig;
+			Future<ParallQueryResult> future;
+			for (ParallQuery query : querys) {
+				sqlToyConfig = sqlToyContext.getSqlToyConfig(
+						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
+						SqlType.search);
+				future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+						paramNames, paramValues, getDataSource(dataSource, sqlToyConfig)));
+				futureResult.add(future);
+			}
+			pool.shutdown();
+			// 设置最大等待时长
+			if (maxWaitSeconds != null && maxWaitSeconds > 0) {
+				pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS);
+			}
+			ParallQueryResult item;
+			int index = 0;
+			for (Future<ParallQueryResult> result : futureResult) {
+				index++;
+				item = result.get();
+				// 存在执行异常则整体抛出
+				if (item != null && !item.isSuccess()) {
+					throw new DataAccessException("第:{} 个sql执行异常:{}!", index, item.getMessage());
+				}
+				results.add(item.getResult());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误" + e.getMessage(), e);
+		} finally {
+			pool.shutdownNow();
+		}
+		return results;
 	}
 
 	/**
 	 * @TODO 提供sql查询服务的调用(面向复杂计算提供便利)
-	 * sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
+	 *       sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
 	 * @return
 	 */
-	public SqlServiceResult callSqlService() {
-		return null;
-	}
+//	public SqlServiceResult callSqlService() {
+//		return null;
+//	}
 }
