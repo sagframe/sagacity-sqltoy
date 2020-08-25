@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @project sagacity-sqltoy
