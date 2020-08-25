@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
@@ -304,6 +305,24 @@ public interface SqlToyCRUDService {
 	 */
 	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
 			throws Exception;
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @param paramNames
+	 * @param paramValues
+	 * @return
+	 */
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues);
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @param maxWaitSeconds
+	 * @return
+	 */
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+			Integer maxWaitSeconds);
 
 //	/**
 //	 * @TODO 提供一个自由定义操作的服务窗口

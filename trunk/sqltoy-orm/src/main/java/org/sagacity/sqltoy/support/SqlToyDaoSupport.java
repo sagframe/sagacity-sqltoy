@@ -1500,9 +1500,9 @@ public class SqlToyDaoSupport {
 				futureResult.add(future);
 			}
 			pool.shutdown();
-			// 设置最大等待时长
+			// 设置最大等待时长(最大不能超过10个小时)
 			if (maxWaitSeconds != null && maxWaitSeconds > 0) {
-				pool.awaitTermination(maxWaitSeconds, TimeUnit.SECONDS);
+				pool.awaitTermination((maxWaitSeconds > 36000) ? 36000 : maxWaitSeconds, TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;

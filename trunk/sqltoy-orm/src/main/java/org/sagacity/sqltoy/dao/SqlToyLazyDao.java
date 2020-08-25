@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -97,7 +98,7 @@ public interface SqlToyLazyDao {
 	 * @param storeSqlOrKey
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
-	 * @param resultType 可以是VO、Map、Array,null(二维List)
+	 * @param resultType    可以是VO、Map、Array,null(二维List)
 	 * @return
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
@@ -132,7 +133,7 @@ public interface SqlToyLazyDao {
 	 * @param reflectPropertyHandler
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
-	
+
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量
 	 * @param entitySet
@@ -662,5 +663,23 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
 			throws Exception;
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @param paramNames
+	 * @param paramValues
+	 * @return
+	 */
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues);
+
+	/**
+	 * @TODO 并行查询
+	 * @param querys
+	 * @param maxWaitSeconds
+	 * @return
+	 */
+	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+			Integer maxWaitSeconds);
 
 }
