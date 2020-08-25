@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:QueryResult.java,Revision:v1.0,Date:2014年12月14日
  */
-public class QueryResult extends DataSetResult implements Serializable {
+public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 
 	/**
 	 * 

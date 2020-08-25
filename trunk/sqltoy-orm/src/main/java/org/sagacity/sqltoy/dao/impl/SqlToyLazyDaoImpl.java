@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -886,4 +887,16 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 			throws Exception {
 		return super.convertType(sourceList, resultType);
 	}
+
+	@Override
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
+		return super.parallQuery(querys, paramNames, paramValues, null);
+	}
+
+	@Override
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+			Integer maxWaitSeconds) {
+		return super.parallQuery(querys, paramNames, paramValues, maxWaitSeconds);
+	}
+
 }

@@ -13,6 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
@@ -30,6 +34,8 @@ import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.EntityQuery;
@@ -38,6 +44,8 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -76,6 +84,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2019-3-1 {增加通过缓存获取Key然后作为查询条件cache-arg 功能，从而避免二次查询或like检索}
  * @modify Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
  * @modify Date:2020-4-5 {分页PaginationModel中设置skipQueryCount=true跳过查总记录,默认false}
+ * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
  */
 //新的模式不鼓励自己继承DaoSupport,一般情况下使用SqlToyLazyDao即可
 @SuppressWarnings("rawtypes")
@@ -233,7 +242,7 @@ public class SqlToyDaoSupport {
 	 * @param storeSqlOrKey 可以直接传call storeName (?,?) 也可以传xml中的存储过程sqlId
 	 * @param inParamsValue
 	 * @param outParamsType (可以为null)
-	 * @param resultType  VOClass,HashMap或null(表示二维List)
+	 * @param resultType    VOClass,HashMap或null(表示二维List)
 	 * @param dataSource
 	 * @return
 	 */
@@ -1456,4 +1465,89 @@ public class SqlToyDaoSupport {
 			throws Exception {
 		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
 	}
+
+	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
+	/**
+	 * -- 避免开发者将全部功能用一个超级sql完成，提供拆解执行的同时确保执行效率，达到了效率和可维护的平衡
+	 * 
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramNames
+	 * @param paramValues
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
+		return parallQuery(parallQueryList, paramNames, paramValues, null);
+	}
+
+	/**
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * @param parallQueryList
+	 * @param paramNames
+	 * @param paramValues
+	 * @param maxWaitSeconds
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds) {
+		if (parallQueryList == null || parallQueryList.isEmpty()) {
+			return null;
+		}
+		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
+		// 并行线程数量(默认最大十个)
+		int threadSize = parallQueryList.size();
+		if (threadSize > 10) {
+			threadSize = 10;
+		}
+		ExecutorService pool = null;
+		try {
+			pool = Executors.newFixedThreadPool(threadSize);
+			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
+			SqlToyConfig sqlToyConfig;
+			Future<ParallQueryResult> future;
+			for (ParallQuery query : parallQueryList) {
+				sqlToyConfig = sqlToyContext.getSqlToyConfig(
+						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
+						SqlType.search);
+				future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+						paramNames, paramValues, getDataSource(dataSource, sqlToyConfig)));
+				futureResult.add(future);
+			}
+			pool.shutdown();
+			// 设置最大等待时长(最大不能超过10个小时)
+			if (maxWaitSeconds != null && maxWaitSeconds > 0) {
+				pool.awaitTermination((maxWaitSeconds > 36000) ? 36000 : maxWaitSeconds, TimeUnit.SECONDS);
+			}
+			ParallQueryResult item;
+			int index = 0;
+			for (Future<ParallQueryResult> result : futureResult) {
+				index++;
+				item = result.get();
+				// 存在执行异常则整体抛出
+				if (item != null && !item.isSuccess()) {
+					throw new DataAccessException("第:{} 个sql执行异常:{}!", index, item.getMessage());
+				}
+				results.add(item.getResult());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
+		} finally {
+			if (pool != null) {
+				pool.shutdownNow();
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * @TODO 提供sql查询服务的调用(面向复杂计算提供便利)
+	 *       sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
+	 * @return
+	 */
+//	public SqlServiceResult callSqlService() {
+//		return null;
+//	}
 }

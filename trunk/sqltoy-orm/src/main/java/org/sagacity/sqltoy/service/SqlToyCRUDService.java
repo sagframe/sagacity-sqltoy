@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
@@ -304,6 +306,28 @@ public interface SqlToyCRUDService {
 	 */
 	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
 			throws Exception;
+
+	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
+	/**
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * @param parallQueryList
+	 * @param paramNames
+	 * @param paramValues
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues);
+
+	/**
+	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+	 * @param parallQueryList
+	 * @param paramNames
+	 * @param paramValues
+	 * @param maxWaitSeconds
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds);
 
 //	/**
 //	 * @TODO 提供一个自由定义操作的服务窗口

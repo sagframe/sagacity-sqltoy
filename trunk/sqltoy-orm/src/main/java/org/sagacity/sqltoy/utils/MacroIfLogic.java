@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -62,8 +63,9 @@ public class MacroIfLogic {
 		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1) {
 			return "undefine";
 		}
+		//2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=" };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", "include" };
 		String splitStr = "==";
 		String logicStr = "&&";
 		String[] expressions;
@@ -73,17 +75,20 @@ public class MacroIfLogic {
 			}
 			expressions = sql.split(logicStr);
 			// 超过2个运算,交freemarker
-			if (expressions.length > 2)
+			if (expressions.length > 2) {
 				return "undefine";
+			}
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
 			Object value;
 			String compareValue;
+			String expressLow;
 			for (int i = 0; i < expressions.length; i++) {
 				value = paramValues.get(preCount + i);
 				express = expressions[i].trim();
+				expressLow = express.toLowerCase();
 				for (int j = 0; j < compareStr.length; j++) {
-					if (express.indexOf(compareStr[j]) != -1) {
+					if (expressLow.indexOf(compareStr[j]) != -1) {
 						splitStr = compareStr[j];
 						break;
 					}
@@ -182,6 +187,10 @@ public class MacroIfLogic {
 		if (compareType.equals("<")) {
 			return less(value, realValue, compareValue, type);
 		}
+		// 包含
+		if (compareType.equals("include")) {
+			return include(value, realValue, compareValue, type);
+		}
 		return true;
 	}
 
@@ -259,5 +268,45 @@ public class MacroIfLogic {
 			return Double.parseDouble(valueStr) < Double.parseDouble(compare);
 		}
 		return valueStr.compareTo(compare) < 0;
+	}
+
+	/**
+	 * @todo include包含
+	 * @param value
+	 * @param valueStr
+	 * @param compare
+	 * @param type
+	 * @return
+	 */
+	private static boolean include(Object value, String valueStr, String compare, String type) {
+		if (value == null) {
+			return false;
+		}
+		//字符串包含
+		if (value instanceof String) {
+			return valueStr.contains(compare);
+		}
+		//数组集合包含
+		if (value.getClass().isArray()) {
+			Object[] values = CollectionUtil.convertArray(value);
+			for (Object var : values) {
+				if (compare.equals((var == null) ? null : var.toString())) {
+					return true;
+				}
+			}
+		}
+
+		//List集合包含
+		if (value instanceof Collection) {
+			Iterator iter = ((Collection) value).iterator();
+			Object var;
+			while (iter.hasNext()) {
+				var = iter.next();
+				if (compare.equals((var == null) ? null : var.toString())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
