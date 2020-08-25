@@ -1517,7 +1517,7 @@ public class SqlToyDaoSupport {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new DataAccessException("并行查询执行错误" + e.getMessage(), e);
+			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
 		} finally {
 			pool.shutdownNow();
 		}
