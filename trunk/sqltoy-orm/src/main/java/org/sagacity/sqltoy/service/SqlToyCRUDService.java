@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
 /**
@@ -313,7 +314,7 @@ public interface SqlToyCRUDService {
 	 * @param paramValues
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues);
+	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues);
 
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
@@ -323,7 +324,7 @@ public interface SqlToyCRUDService {
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
+	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds);
 
 //	/**

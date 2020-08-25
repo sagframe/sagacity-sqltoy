@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @project sagacity-sqltoy
@@ -21,7 +22,7 @@ public class ParallQueryResult implements Serializable {
 	/**
 	 * 结果对象
 	 */
-	private Object result;
+	private QueryResult result;
 
 	/**
 	 * 是否成功
@@ -36,14 +37,14 @@ public class ParallQueryResult implements Serializable {
 	/**
 	 * @return the result
 	 */
-	public Object getResult() {
+	public QueryResult getResult() {
 		return result;
 	}
 
 	/**
 	 * @param result the result to set
 	 */
-	public void setResult(Object result) {
+	public void setResult(QueryResult result) {
 		this.result = result;
 	}
 

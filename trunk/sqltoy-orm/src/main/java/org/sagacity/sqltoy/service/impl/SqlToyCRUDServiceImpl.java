@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -514,12 +515,12 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
-	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
+	public List<QueryResult> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds) {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
