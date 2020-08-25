@@ -1465,24 +1465,24 @@ public class SqlToyDaoSupport {
 		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
 	}
 
-	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
-		return parallQuery(querys, paramNames, paramValues, null);
+	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+		return parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	/**
 	 * @TODO 并行查询
-	 * @param querys
+	 * @param parallQueryList
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds) {
-		if (querys == null || querys.isEmpty()) {
+		if (parallQueryList == null || parallQueryList.isEmpty()) {
 			return null;
 		}
 		List results = new ArrayList();
 		// 并行线程数量(默认最大十个)
-		int threadSize = querys.size();
+		int threadSize = parallQueryList.size();
 		if (threadSize > 10) {
 			threadSize = 10;
 		}
@@ -1491,7 +1491,7 @@ public class SqlToyDaoSupport {
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallQueryResult> future;
-			for (ParallQuery query : querys) {
+			for (ParallQuery query : parallQueryList) {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search);

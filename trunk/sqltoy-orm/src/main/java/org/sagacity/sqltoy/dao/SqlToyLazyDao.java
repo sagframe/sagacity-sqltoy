@@ -666,20 +666,20 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 并行查询
-	 * @param querys
+	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues);
+	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues);
 
 	/**
 	 * @TODO 并行查询
-	 * @param querys
+	 * @param parallQueryList
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public List parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+	public List parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds);
 
 }
