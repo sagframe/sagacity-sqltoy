@@ -63,7 +63,7 @@ public class MacroIfLogic {
 		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1) {
 			return "undefine";
 		}
-		//2020-08-25 增加include场景
+		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", "include" };
 		String splitStr = "==";
@@ -271,7 +271,7 @@ public class MacroIfLogic {
 	}
 
 	/**
-	 * @todo include包含
+	 * @todo include包含(忽视大小写)
 	 * @param value
 	 * @param valueStr
 	 * @param compare
@@ -282,27 +282,28 @@ public class MacroIfLogic {
 		if (value == null) {
 			return false;
 		}
-		//字符串包含
+		String compareLow = compare.toLowerCase();
+		// 字符串包含
 		if (value instanceof String) {
-			return valueStr.contains(compare);
+			return valueStr.toLowerCase().contains(compareLow);
 		}
-		//数组集合包含
+		// 数组集合包含
 		if (value.getClass().isArray()) {
 			Object[] values = CollectionUtil.convertArray(value);
 			for (Object var : values) {
-				if (compare.equals((var == null) ? null : var.toString())) {
+				if (compareLow.equals((var == null) ? null : var.toString().toLowerCase())) {
 					return true;
 				}
 			}
 		}
 
-		//List集合包含
+		// List集合包含
 		if (value instanceof Collection) {
 			Iterator iter = ((Collection) value).iterator();
 			Object var;
 			while (iter.hasNext()) {
 				var = iter.next();
-				if (compare.equals((var == null) ? null : var.toString())) {
+				if (compareLow.equals((var == null) ? null : var.toString().toLowerCase())) {
 					return true;
 				}
 			}
