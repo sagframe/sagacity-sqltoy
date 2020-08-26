@@ -2,7 +2,7 @@
 ## [https://chenrenfei.github.io/sqltoy/](https://chenrenfei.github.io/sqltoy/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.13使用手册.doc
+## 请见:docs/睿智平台SqlToy4.15使用手册.doc
 
 # 如何快速上手
 ## 请参见trunk/sqltoy-quickstart演示项目,阅读其readme.md学习 
