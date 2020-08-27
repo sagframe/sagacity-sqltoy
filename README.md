@@ -141,7 +141,7 @@ where t.ORDER_ID=?
 这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
-### 2.3.1 分页sql示例
+### 2.3.2 分页sql示例
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
