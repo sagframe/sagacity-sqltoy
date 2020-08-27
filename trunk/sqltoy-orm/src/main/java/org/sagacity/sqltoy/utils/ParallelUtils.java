@@ -68,10 +68,11 @@ public class ParallelUtils {
 			threads = shardingConfig.getMaxConcurrents();
 		}
 		ExecutorService pool = Executors.newFixedThreadPool(threads);
-		List<Future<ShardingResult>> futureResult = new ArrayList<Future<ShardingResult>>();
-		for (final ShardingGroupModel group : shardingGroups) {
-			Future<ShardingResult> future = pool.submit(new DialectExecutor(sqlToyContext, group, handler));
-			futureResult.add(future);
+		List<Future<ShardingResult>> futureResults = new ArrayList<Future<ShardingResult>>();
+		Future<ShardingResult> future;
+		for (ShardingGroupModel group : shardingGroups) {
+			future = pool.submit(new DialectExecutor(sqlToyContext, group, handler));
+			futureResults.add(future);
 		}
 		pool.shutdown();
 		// 设置最大等待时长
@@ -80,8 +81,9 @@ public class ParallelUtils {
 		}
 		// 提取各个线程返回的结果进行合并
 		try {
-			for (Future<ShardingResult> future : futureResult) {
-				ShardingResult item = future.get();
+			ShardingResult item;
+			for (Future<ShardingResult> futureResult : futureResults) {
+				item = futureResult.get();
 				// 全局异常则抛出,让事务进行全部回滚。
 				if (item != null && !item.isSuccess() && globalRollback) {
 					throw new RuntimeException(item.getMessage());
