@@ -53,9 +53,9 @@ public class AdvanceQueryTest {
 		List<DeviceOrderVO> result = sqlToyLazyDao.findBySql("qstart_order_search",
 				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 				new Object[] { null, authedOrgans, "陈", LocalDate.parse("2018-09-01"), null }, DeviceOrderVO.class);
-		for (DeviceOrderVO vo : result) {
+		result.forEach((vo) -> {
 			System.err.println(JSON.toJSONString(vo));
-		}
+		});
 	}
 
 	/**
@@ -74,9 +74,9 @@ public class AdvanceQueryTest {
 		// 使用了分页优化器
 		// 第一次调用:执行count 和 取记录两次查询
 		PaginationModel<StaffInfoVO> result = sqlToyLazyDao.findPageBySql(pageModel, "qstart_fastPage", staffVO);
-		for (StaffInfoVO staff : result.getRows()) {
+		result.getRows().forEach((staff) -> {
 			System.err.println(JSON.toJSONString(staff));
-		}
+		});
 		// 第二次调用:条件一致，不执行count查询
 		result = sqlToyLazyDao.findPageBySql(pageModel, "qstart_fastPage", staffVO);
 		System.err.println(JSON.toJSONString(result));
@@ -94,9 +94,9 @@ public class AdvanceQueryTest {
 		List<DeviceOrderVO> result = sqlToyLazyDao.findTopBySql("qstart_order_search",
 				new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 				new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderVO.class, topSize);
-		for (DeviceOrderVO vo : result) {
+		result.forEach((vo) -> {
 			System.err.println(JSON.toJSONString(vo));
-		}
+		});
 	}
 
 	@Test
@@ -109,9 +109,9 @@ public class AdvanceQueryTest {
 		double topSize = 20;
 		List<DeviceOrderVO> result = sqlToyLazyDao.findTopByQuery(new QueryExecutor("qstart_order_search")
 				.names(paramNames).values(paramValues).resultType(DeviceOrderVO.class), topSize).getRows();
-		for (DeviceOrderVO vo : result) {
+		result.forEach((vo) -> {
 			System.err.println(JSON.toJSONString(vo));
-		}
+		});
 	}
 
 	/**
@@ -129,9 +129,9 @@ public class AdvanceQueryTest {
 					new String[] { "orderId", "authedOrganIds", "staffName", "beginDate", "endDate" },
 					new Object[] { null, authedOrgans, "陈", "2018-09-01", null }, DeviceOrderVO.class, randomSize);
 			System.err.println("======第[" + i + "]次取随机记录的结果输出====================");
-			for (DeviceOrderVO vo : result) {
+			result.forEach((vo) -> {
 				System.err.println(JSON.toJSONString(vo));
-			}
+			});
 			Thread.sleep(100000);
 		}
 	}
