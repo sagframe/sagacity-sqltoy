@@ -354,12 +354,11 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 ## 2.9 分库分表
 ### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
-        sql参见showcase项目:com/sagframe/sqltoy/showcase/sqltoy-showcase.sql.xml 文件
-        sharding策略配置参见:src/main/resources/spring/spring-sqltoy-sharding.xml 配置
-        <!-- 演示分库 -->
-	<sql id="sqltoy_db_sharding_case">
-		<sharding-datasource
-			strategy="hashBalanceDBSharding" params="userId" />
+   sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
+   <!-- 演示分库 -->
+	<sql id="qstart_db_sharding_case">
+		<sharding-datasource strategy="hashDataSource"
+			params="userId" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_user_log t 
@@ -372,9 +371,9 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 	</sql>
 
 	<!-- 演示分表 -->
-	<sql id="sqltoy_15d_table_sharding_case">
+	<sql id="qstart_sharding_table_case">
 		<sharding-table tables="sqltoy_trans_info_15d"
-			strategy="historyTableStrategy" params="beginDate" />
+			strategy="realHisTable" params="beginDate" />
 		<value>
 			<![CDATA[
 			select * from sqltoy_trans_info_15d t 
@@ -390,10 +389,10 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
-参见:com.sagframe.sqltoy.showcase.ShardingCaseServiceTest 进行演示
+参见:com.sqltoy.quickstart.ShardingSearchTest 进行演示
 
 ```java
-package com.sagframe.sqltoy.showcase.vo;
+package com.sqltoy.showcase.vo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
