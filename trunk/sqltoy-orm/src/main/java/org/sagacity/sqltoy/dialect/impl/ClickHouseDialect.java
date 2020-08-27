@@ -36,12 +36,11 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			Integer dbType, final String tableName) {
+			final Integer dbType, final String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				new UniqueSqlHandler() {
-					@Override
 					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
-							Integer dbType, int topSize) {
+							int topSize) {
 						String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName);
 						return queryStr + " limit " + topSize;
 					}

@@ -18,7 +18,6 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -50,7 +49,6 @@ import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.ShardingGroupModel;
 import org.sagacity.sqltoy.model.ShardingModel;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -987,24 +985,21 @@ public class DialectFactory {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll:[" + entities.size() + "]条记录!",
 					null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
-					new ParallelCallbackHandler() {
-						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-								throws Exception {
-							final ShardingModel shardingModel = batchModel.getShardingModel();
-							Long updateCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-									shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(sqlToyContext,
-													batchModel.getEntities(), batchSize, reflectPropertyHandler,
-													forceUpdateProps, conn, dbType, dialect, autoCommit,
-													shardingModel.getTableName()));
-										}
-									});
-							List<Long> tmp = new ArrayList();
-							tmp.add(updateCnt);
-							return tmp;
-						}
+					(context, batchModel) -> {
+						ShardingModel shardingModel = batchModel.getShardingModel();
+						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
+								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(context,
+												batchModel.getEntities(), batchSize, reflectPropertyHandler,
+												forceUpdateProps, conn, dbType, dialect, autoCommit,
+												shardingModel.getTableName()));
+									}
+								});
+						List<Long> tmp = new ArrayList();
+						tmp.add(updateCnt);
+						return tmp;
 					});
 			long updateTotalCnt = 0;
 			if (result != null) {
@@ -1044,24 +1039,20 @@ public class DialectFactory {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist:[" + entities.size() + "]条记录!",
 					null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
-					new ParallelCallbackHandler() {
-						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-								throws Exception {
-							final ShardingModel shardingModel = batchModel.getShardingModel();
-							Long updateCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-									shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(
-													sqlToyContext, batchModel.getEntities(), batchSize,
-													reflectPropertyHandler, conn, dbType, dialect, autoCommit,
-													shardingModel.getTableName()));
-										}
-									});
-							List<Long> tmp = new ArrayList();
-							tmp.add(updateCnt);
-							return tmp;
-						}
+					(context, batchModel) -> {
+						ShardingModel shardingModel = batchModel.getShardingModel();
+						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
+								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
+												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
+												dbType, dialect, autoCommit, shardingModel.getTableName()));
+									}
+								});
+						List<Long> tmp = new ArrayList();
+						tmp.add(updateCnt);
+						return tmp;
 					});
 			long updateTotalCnt = 0;
 			if (result != null) {
@@ -1146,22 +1137,19 @@ public class DialectFactory {
 				batchEntities = entities.subList(i * batchSize, (i == batch - 1) ? totalSize : (i + 1) * batchSize);
 				// 分库分表并行执行,并返回结果
 				result.addAll(ParallelUtils.execute(sqlToyContext, batchEntities, false, dataSource,
-						new ParallelCallbackHandler() {
-							public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-									throws Exception {
-								final ShardingModel shardingModel = batchModel.getShardingModel();
-								return (List) DataSourceUtils.processDataSource(sqlToyContext,
-										shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-											public void doConnection(Connection conn, Integer dbType, String dialect)
-													throws Exception {
-												this.setResult(getDialectSqlWrapper(dbType).loadAll(sqlToyContext,
-														batchModel.getEntities(),
-														(cascadeTypes == null) ? null
-																: CollectionUtil.arrayToList(cascadeTypes),
-														lockMode, conn, dbType, dialect, shardingModel.getTableName()));
-											}
-										});
-							}
+						(context, batchModel) -> {
+							ShardingModel shardingModel = batchModel.getShardingModel();
+							return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
+									new DataSourceCallbackHandler() {
+										public void doConnection(Connection conn, Integer dbType, String dialect)
+												throws Exception {
+											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
+													batchModel.getEntities(),
+													(cascadeTypes == null) ? null
+															: CollectionUtil.arrayToList(cascadeTypes),
+													lockMode, conn, dbType, dialect, shardingModel.getTableName()));
+										}
+									});
 						}));
 			}
 			SqlExecuteStat.debug("loadAll record count={}", result.size());
@@ -1227,23 +1215,20 @@ public class DialectFactory {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
-					new ParallelCallbackHandler() {
-						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-								throws Exception {
-							final ShardingModel shardingModel = batchModel.getShardingModel();
-							Long updateCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-									shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											this.setResult(getDialectSqlWrapper(dbType).saveAll(sqlToyContext,
-													batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
-													dbType, dialect, autoCommit, shardingModel.getTableName()));
-										}
-									});
-							List<Long> tmp = new ArrayList();
-							tmp.add(updateCnt);
-							return tmp;
-						}
+					(context, batchModel) -> {
+						ShardingModel shardingModel = batchModel.getShardingModel();
+						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
+								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
+												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
+												dbType, dialect, autoCommit, shardingModel.getTableName()));
+									}
+								});
+						List<Long> tmp = new ArrayList();
+						tmp.add(updateCnt);
+						return tmp;
 					});
 			long updateTotalCnt = 0;
 			if (result != null) {
@@ -1320,24 +1305,21 @@ public class DialectFactory {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "updateAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
-					new ParallelCallbackHandler() {
-						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-								throws Exception {
-							final ShardingModel shardingModel = batchModel.getShardingModel();
-							Long updateCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-									shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											this.setResult(getDialectSqlWrapper(dbType).updateAll(sqlToyContext,
-													batchModel.getEntities(), batchSize, forceUpdateFields,
-													reflectPropertyHandler, conn, dbType, dialect, autoCommit,
-													shardingModel.getTableName()));
-										}
-									});
-							List<Long> tmp = new ArrayList();
-							tmp.add(updateCnt);
-							return tmp;
-						}
+					(context, batchModel) -> {
+						ShardingModel shardingModel = batchModel.getShardingModel();
+						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
+								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
+												batchModel.getEntities(), batchSize, forceUpdateFields,
+												reflectPropertyHandler, conn, dbType, dialect, autoCommit,
+												shardingModel.getTableName()));
+									}
+								});
+						List<Long> tmp = new ArrayList();
+						tmp.add(updateCnt);
+						return tmp;
 					});
 			long updateTotalCnt = 0;
 			if (result != null) {
@@ -1405,23 +1387,20 @@ public class DialectFactory {
 			SqlExecuteStat.start(entities.get(0).getClass().getName(), "deleteAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
-					new ParallelCallbackHandler() {
-						public List execute(SqlToyContext sqlToyContext, ShardingGroupModel batchModel)
-								throws Exception {
-							final ShardingModel shardingModel = batchModel.getShardingModel();
-							Long updateCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-									shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-										public void doConnection(Connection conn, Integer dbType, String dialect)
-												throws Exception {
-											this.setResult(getDialectSqlWrapper(dbType).deleteAll(sqlToyContext,
-													batchModel.getEntities(), batchSize, conn, dbType, dialect,
-													autoCommit, shardingModel.getTableName()));
-										}
-									});
-							List<Long> tmp = new ArrayList();
-							tmp.add(updateCnt);
-							return tmp;
-						}
+					(context, batchModel) -> {
+						final ShardingModel shardingModel = batchModel.getShardingModel();
+						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
+								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									public void doConnection(Connection conn, Integer dbType, String dialect)
+											throws Exception {
+										this.setResult(getDialectSqlWrapper(dbType).deleteAll(context,
+												batchModel.getEntities(), batchSize, conn, dbType, dialect, autoCommit,
+												shardingModel.getTableName()));
+									}
+								});
+						List<Long> tmp = new ArrayList();
+						tmp.add(updateCnt);
+						return tmp;
 					});
 			long updateTotalCnt = 0;
 			if (result != null) {

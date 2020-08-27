@@ -480,7 +480,7 @@ public class DialectUtils {
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}
-		//以?号对字符串进行切割，并忽视'' 和"" 之间的
+		// 以?号对字符串进行切割，并忽视'' 和"" 之间的
 		String[] strs = StringUtil.splitExcludeSymMark(sql, "?", QuesFilters);
 		int size = strs.length;
 		if (size == 1) {
@@ -1878,7 +1878,7 @@ public class DialectUtils {
 				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed, null, null);
 			}
 			// 取出符合条件的2条记录
-			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, dbType, 2);
+			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
 			SqlExecuteStat.showSql("isUnique sql=" + queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr, paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {

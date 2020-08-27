@@ -60,12 +60,11 @@ public class Oracle11gDialect implements Dialect {
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			Integer dbType, String tableName) {
+			final Integer dbType, String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				new UniqueSqlHandler() {
-					@Override
 					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
-							Integer dbType, int topSize) {
+							int topSize) {
 						StringBuilder sql = new StringBuilder();
 						sql.append("SELECT sag_uniqueTop.* FROM ( ");
 						sql.append(DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName));
