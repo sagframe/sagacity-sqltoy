@@ -64,12 +64,11 @@ public class SybaseIQDialect implements Dialect {
 
 	@Override
 	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
-			Connection conn, Integer dbType, final String tableName) {
+			Connection conn, final Integer dbType, final String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				new UniqueSqlHandler() {
-					@Override
 					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
-							Integer dbType, int topSize) {
+							int topSize) {
 						String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName);
 						return queryStr.replaceFirst("(?i)select ", "select top " + topSize + " ");
 					}

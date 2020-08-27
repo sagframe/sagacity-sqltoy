@@ -14,5 +14,5 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
  */
 @FunctionalInterface
 public interface UniqueSqlHandler {
-	public String process(EntityMeta entityMeta, String[] paramNames, String tableName, Integer dbType, int topSize);
+	public String process(EntityMeta entityMeta, String[] paramNames, String tableName, int topSize);
 }
