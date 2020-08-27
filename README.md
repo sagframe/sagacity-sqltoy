@@ -453,7 +453,7 @@ public class UserLogVO extends AbstractUserLogVO {
 
 # 3.集成说明
 
-  * 参见trunk 下面的quickstart,并阅读readme.md进行上手
+## 3.1 参见trunk 下面的quickstart,并阅读readme.md进行上手
   
 ```java
 package com.sqltoy.quickstart;
@@ -485,7 +485,7 @@ public class SqlToyApplication {
 
 ```
 
-application.properties sqltoy部分配置
+## 3.2 application.properties sqltoy部分配置
 
 ```properties
 # sqltoy config
@@ -500,7 +500,7 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 
 ```
 
-缓存翻译的配置文件sqltoy-translate.xml 
+## 3.3 缓存翻译的配置文件sqltoy-translate.xml 
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -612,6 +612,7 @@ public class CrudCaseServiceTest {
 	}
  }
 ```
+
 # 4. sqltoy sql关键说明
 ## 4.1 sqltoy sql最简单规则#[] 对称符号
 * #[] 等于if(中间语句参数是否有null)? true: 剔除#[] 整块代码，false：拿掉#[ 和 ] ,将中间的sql作为执行的一部分。
@@ -710,7 +711,7 @@ public class CrudCaseServiceTest {
 
 # 5. sqltoy关键代码说明
 
-* sqltoy-orm 主要分以下几个部分：
+## 5.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
   - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
@@ -722,7 +723,7 @@ public class CrudCaseServiceTest {
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
   
 
-* 快速阅读理解sqltoy:
+## 5.2 快速阅读理解sqltoy:
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
