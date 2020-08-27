@@ -239,7 +239,38 @@ public void findPageByParams() {
 	</value>
 </sql>
 ```
-## 2.5 最跨数据库
+## 2.5 并行查询
+
+* 接口规范
+
+```java
+// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
+/**
+  * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
+  * @param parallQueryList
+  * @param paramNames
+  * @param paramValues
+  */
+public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues);
+```
+* 使用范例
+
+```java
+//定义参数
+String[] paramNames = new String[] { "userId", "defaultRoles", "deployId", "authObjType" };
+Object[] paramValues = new Object[] { userId, defaultRoles, GlobalConstants.DEPLOY_ID,
+		SagacityConstants.TempAuthObjType.GROUP };
+// 使用并行查询同时执行2个sql,条件参数是2个查询的合集
+List<QueryResult<TreeModel>> list = super.parallQuery(
+		Arrays.asList(
+		        ParallQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
+				ParallQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
+		paramNames, paramValues);
+		
+```
+
+## 2.6 最跨数据库
 * 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
 * 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
 * 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
@@ -247,6 +278,7 @@ public void findPageByParams() {
 * 5、sqltoy提供了函数替换功能，比如可以让oracle的语句在mysql或sqlserver上执行(sql加载时将函数替换成了mysql的函数),最大程度上实现了代码的产品化。
     <property name="functionConverts" value="default" /> 
     default:SubStr\Trim\Instr\Concat\Nvl 函数；可以参见org.sagacity.sqltoy.plugins.function.Nvl 代码实现
+    
  ```xml
         <!-- 跨数据库函数自动替换(非必须项),适用于跨数据库软件产品,如mysql开发，oracle部署 -->
 	<property name="functionConverts" value="default">
@@ -263,7 +295,7 @@ public void findPageByParams() {
 
 ```
   
-## 2.6 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.7 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 
 ```xml
         <!-- 列转行测试 -->
@@ -297,7 +329,8 @@ public void findPageByParams() {
 			group-columns="TRANS_DATE" />
 	</sql>
 ```
-## 2.7 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+
+## 2.8 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
 ```xml
 	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
 	<sql id="sys_summarySearch">
@@ -318,8 +351,8 @@ public void findPageByParams() {
 		</summary>
 	</sql>
 ```
-## 2.8 分库分表
-### 2.8.1 查询分库分表（分库和分表策略可以同时使用）
+## 2.9 分库分表
+### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
         sql参见showcase项目:com/sagframe/sqltoy/showcase/sqltoy-showcase.sql.xml 文件
         sharding策略配置参见:src/main/resources/spring/spring-sqltoy-sharding.xml 配置
@@ -353,7 +386,7 @@ public void findPageByParams() {
         
 ```
    
-### 2.8.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+### 2.9.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -399,33 +432,31 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.9 五种非数据库相关主键生成策略
+## 2.10 五种非数据库相关主键生成策略
     主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
-### 2.9.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
-### 2.9.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
-### 2.9.3 uuid:32 位uuid
-### 2.9.4 SnowflakeId 雪花算法ID
-### 2.9.5 redisId  基于redis 来产生规则的ID主键
+### 2.10.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
+### 2.10.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
+### 2.10.3 uuid:32 位uuid
+### 2.10.4 SnowflakeId 雪花算法ID
+### 2.10.5 redisId  基于redis 来产生规则的ID主键
    根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
    订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
    最终会生成单号为:SI191120001 
    
 
-## 2.10 elastic原生查询支持
-## 2.11 elasticsearch-sql 插件模式sql模式支持
-## 2.12 sql文件变更自动重载，方便开发和调试
-## 2.13 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
-## 2.14 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
+## 2.11 elastic原生查询支持
+## 2.12 elasticsearch-sql 插件模式sql模式支持
+## 2.13 sql文件变更自动重载，方便开发和调试
+## 2.14 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
+## 2.15 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
 
 
 # 3.集成说明
 
-  * 参见trunk 下面的sqltoy-showcase 和 sqltoy-starter-showcase
-  * sqltoy-showcase 是演示springboot 和sqltoy基于xml配置模式的集成，大多数功能演示在此项目中，其中tools/quickvo 目录是利用数据库生成POJO的配置示例(具体是VO还是其它可根据实际情况修改配置)
-  * sqltoy-starter-showcase：演示无xml配置形式的基于boot-starter模式的集成
+  * 参见trunk 下面的quickstart,并阅读readme.md进行上手
   
-  ```java
- package com.sagframe.sqltoy;
+```java
+package com.sqltoy.quickstart;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -433,13 +464,17 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
+ * 
+ * @project sqltoy-quickstart
+ * @description quickstart 主程序入口
  * @author zhongxuchen
+ * @version v1.0, Date:2020年7月17日
+ * @modify 2020年7月17日,修改说明
  */
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.sagframe.sqltoy" })
+@ComponentScan(basePackages = { "com.sqltoy.config", "com.sqltoy.quickstart" })
 @EnableTransactionManagement
 public class SqlToyApplication {
-
 	/**
 	 * @param args
 	 */
@@ -449,23 +484,22 @@ public class SqlToyApplication {
 }
 
 ```
+
 application.properties sqltoy部分配置
-```javascript
-##  sqltoy 配置 
-# sql.xml 文件的路径,多个路径用;符合分割(原则上也是可选配置，如果只用对象操作的话,但不建议)
-spring.sqltoy.sqlResourcesDir=/com/sqltoy/quickstart
-# 缓存翻译的配置(可选配置)
+
+```properties
+# sqltoy config
+spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
-# 是否debug模式,debug 模式会打印执行的sql和参数信息(可选配置)
 spring.sqltoy.debug=true
-# 设置默认使用的datasource(可选配置,不配置会自动注入)
-spring.sqltoy.defaultDataSource=dataSource
-# 提供统一字段:createBy createTime updateBy updateTime 等字段补漏性(为空时)赋值(可选配置)
+#spring.sqltoy.reservedWords=status,sex_type
+#obtainDataSource: org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSourc
+#spring.sqltoy.defaultDataSource=dataSource
 spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
-# sql执行超过多长时间则进行日志输出(可选配置:默认30秒)，用于监控哪些慢sql
-spring.sqltoy.printSqlTimeoutMillis=30000
+#spring.sqltoy.printSqlTimeoutMillis=200000
 
 ```
+
 缓存翻译的配置文件sqltoy-translate.xml 
 
 ```xml
@@ -475,8 +509,7 @@ spring.sqltoy.printSqlTimeoutMillis=30000
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.sagframe.com/schema/sqltoy-translate http://www.sagframe.com/schema/sqltoy/sqltoy-translate.xsd">
 	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
-	<cache-translates
-		disk-store-path="./sqltoy-showcase/translateCaches">
+	<cache-translates>
 		<!-- 基于sql直接查询的方式获取缓存 -->
 		<sql-translate cache="dictKeyName"
 			datasource="dataSource">
@@ -500,28 +533,54 @@ spring.sqltoy.printSqlTimeoutMillis=30000
 			]]>
 			</sql>
 		</sql-translate>
+		<!-- 机构号和机构名称的缓存 -->
+		<sql-translate cache="organIdName"
+			datasource="dataSource">
+			<sql>
+			<![CDATA[
+				select ORGAN_ID,ORGAN_NAME from SQLTOY_ORGAN_INFO order by SHOW_INDEX
+			]]>
+			</sql>
+		</sql-translate>
 	</cache-translates>
 
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测,间隔为秒，可以分段设置，也可以直接设置一个数组如60，表示一分钟检测一次-->
-		<sql-checker
-			check-frequency="30"
-			datasource="dataSource">
+		<!-- 基于sql的缓存更新检测 -->
+		<sql-increment-checker cache="organIdName"
+			check-frequency="60" datasource="dataSource">
 			<sql><![CDATA[
 			--#not_debug#--
-			select distinct 'staffIdName' cacheName,null cache_type
-			from SQLTOY_STAFF_INFO t1
-			where t1.UPDATE_TIME >=:lastUpdateTime
-			-- 数据字典key和name缓存检测
-			union all 
-			select distinct 'dictKeyName' cacheName,t2.DICT_TYPE cache_type
-			from SQLTOY_DICT_DETAIL t2
-			where t2.UPDATE_TIME >=:lastUpdateTime
+			select ORGAN_ID,ORGAN_NAME 
+			from SQLTOY_ORGAN_INFO
+			where UPDATE_TIME >=:lastUpdateTime
 			]]></sql>
-		</sql-checker>
+		</sql-increment-checker>
+
+		<!-- 增量更新，检测到变化直接更新缓存 -->
+		<sql-increment-checker cache="staffIdName"
+			check-frequency="30" datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select STAFF_ID,STAFF_NAME,STATUS
+			from SQLTOY_STAFF_INFO
+	        where UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-increment-checker>
+
+		<!-- 增量更新，带有内部分类的查询结果第一列是分类 -->
+		<sql-increment-checker cache="dictKeyName"
+			check-frequency="15" has-inside-group="true" datasource="dataSource">
+			<sql><![CDATA[
+			--#not_debug#--
+			select t.DICT_TYPE,t.DICT_KEY,t.DICT_NAME,t.STATUS
+			from SQLTOY_DICT_DETAIL t
+	        where t.UPDATE_TIME >=:lastUpdateTime
+			]]></sql>
+		</sql-increment-checker>
 	</cache-update-checkers>
 </sagacity>
+
 ```
 * 实际业务开发使用，直接利用SqlToyCRUDService 就可以进行常规的操作，避免简单的对象操作自己写service，
 另外针对复杂逻辑则自己写service直接通过调用sqltoy提供的：SqlToyLazyDao 完成数据库交互操作！
