@@ -12,7 +12,8 @@ import java.sql.SQLException;
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:PreparedStatementSetter.java,Revision:v1.0,Date:2011-7-14
  */
-public abstract class PreparedStatementSetter {
+@FunctionalInterface
+public interface PreparedStatementSetter {
 	/**
 	 * @todo <b>demo:new PreparedStatementSetter(pst){public void
 	 *       setter(pst.set(1,xx)};</b>
@@ -21,5 +22,5 @@ public abstract class PreparedStatementSetter {
 	 * @param pst
 	 * @throws SQLException
 	 */
-	public abstract void setValues(PreparedStatement pst) throws SQLException;
+	public void setValues(PreparedStatement pst) throws SQLException;
 }
