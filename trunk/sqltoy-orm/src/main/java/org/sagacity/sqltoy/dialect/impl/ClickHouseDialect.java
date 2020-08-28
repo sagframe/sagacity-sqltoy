@@ -9,7 +9,6 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
-import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -38,12 +37,9 @@ public class ClickHouseDialect implements Dialect {
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
 			final Integer dbType, final String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
-				new UniqueSqlHandler() {
-					public String process(EntityMeta entityMeta, String[] realParamNamed, String tableName,
-							int topSize) {
-						String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, tableName);
-						return queryStr + " limit " + topSize;
-					}
+				(entityMeta, realParamNamed, table, topSize) -> {
+					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
+					return queryStr + " limit " + topSize;
 				});
 	}
 
@@ -52,10 +48,9 @@ public class ClickHouseDialect implements Dialect {
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		/*
-		 * select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
-		 * row_number 再排序方式性能稍好 同时也可以保证通用性
-		 */
+
+		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
+		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
