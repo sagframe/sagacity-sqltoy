@@ -14,8 +14,7 @@
 *  增加并行查询功能，帮助开发者分解大sql同时也提升整体查询性能
 
 # 未来规划:
-* 4.15版本支持parallQuery 并行查询功能，让一组sql同时提交数据库查询,简化开发者写并行的实现同时提升查询效率(已完成)
-* 4.16版本在parallQuery的基础上更进一步直接提供multi-query扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
+* 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
