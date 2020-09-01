@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -1287,7 +1288,29 @@ public class SqlToyDaoSupport {
 			}
 		}
 
-		String sql = "select ".concat(entityMeta.getAllColumnNames()).concat(translateFields).concat(" from ")
+		// 指定的查询字段
+		String fields = "";
+		if (innerModel.fields != null && innerModel.fields.length > 0) {
+			int index = 0;
+			String colName;
+			HashSet<String> cols = new HashSet<String>();
+			for (String field : innerModel.fields) {
+				// 去除重复字段
+				if (!cols.contains(field)) {
+					colName = entityMeta.getColumnName(field);
+					if (index > 0) {
+						fields = fields.concat(",");
+					}
+					fields = fields.concat(colName == null ? field : colName);
+					index++;
+					cols.add(field);
+				}
+			}
+		} else {
+			fields = entityMeta.getAllColumnNames();
+		}
+
+		String sql = "select ".concat(fields).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
 		// 处理order by 排序
 		if (!innerModel.orderBy.isEmpty()) {

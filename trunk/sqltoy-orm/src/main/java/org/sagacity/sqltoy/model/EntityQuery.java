@@ -32,6 +32,16 @@ public class EntityQuery implements Serializable {
 	private EntityQueryExtend innerModel = new EntityQueryExtend();
 
 	/**
+	 * @TODO 设置查询的字段(不设置默认查询全部字段)
+	 * @param fields
+	 * @return
+	 */
+	public EntityQuery select(String... fields) {
+		innerModel.fields = fields;
+		return this;
+	}
+
+	/**
 	 * @TODO where 条件
 	 * @param where
 	 * @return
