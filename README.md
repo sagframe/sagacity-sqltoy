@@ -11,8 +11,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.0 发版日期: 2020-08-26
-*  增加并行查询功能，帮助开发者分解大sql同时也提升整体查询性能
+# 最新版本号: 4.15.1 发版日期: 2020-09-02
+*  针对findEntity单表查询增加select(String...fields) 指定字段功能
 
 # 未来规划:
 * 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
