@@ -8,7 +8,7 @@
 	<name>sagacity-sqltoy-starter</name>
 	<artifactId>sagacity-sqltoy-starter</artifactId>
 	<description>sqltoy springboot starter</description>
-	<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
+	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-boot.version>2.3.3.RELEASE</spring-boot.version>
@@ -21,8 +21,8 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:git:https://github.com/chenrenfei/sagacity-sqltoy.git</connection>
-		<url>https://github.com/chenrenfei/sagacity-sqltoy</url>
+		<connection>scm:git:https://github.com/sagframe/sagacity-sqltoy.git</connection>
+		<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	</scm>
 	<developers>
 		<developer>
