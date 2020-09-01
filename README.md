@@ -5,7 +5,7 @@
 ## 请见:docs/睿智平台SqlToy4.15使用手册.doc
 
 # 如何快速上手
-## 请见 https://github.com/sagframe/sqltoy-quickstart 演示项目
+## 请见演示项目: https://github.com/sagframe/sqltoy-quickstart 
 ## 阅读其readme.md学习 
 
 # QQ 交流群:531812227
