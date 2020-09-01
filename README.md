@@ -1,5 +1,5 @@
 # 在线文档
-## [https://github.com/sagframe/sqltoy-online-doc/](https://github.com/sagframe/sqltoy-online-doc)
+## [https://github.com/sagframe/sqltoy-online-doc](https://github.com/sagframe/sqltoy-online-doc)
 
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy4.15使用手册.doc
