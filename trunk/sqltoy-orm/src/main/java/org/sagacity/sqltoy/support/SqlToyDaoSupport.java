@@ -1288,7 +1288,7 @@ public class SqlToyDaoSupport {
 			}
 		}
 
-		// 查询字段
+		// 指定的查询字段
 		String fields = "";
 		if (innerModel.fields != null && innerModel.fields.length > 0) {
 			int index = 0;
