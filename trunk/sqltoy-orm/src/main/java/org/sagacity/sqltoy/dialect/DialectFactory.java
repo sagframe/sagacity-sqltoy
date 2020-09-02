@@ -196,7 +196,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new SybaseIQDialect();
 			break;
 		}
-		// 如果匹配不上抛出异常
+		// 如果匹配不上使用默认dialect
 		default:
 			dialectSqlWrapper = new DefaultDialect();
 //			// 不支持
