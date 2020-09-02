@@ -174,6 +174,21 @@ public class MapperUtils {
 				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
 			}
 		}
+		// dto也是pojo
+		if (sqlToyContext.isEntity(dtoClass)) {
+			for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
+				fieldName = field.getName();
+				aliasName = fieldName;
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					aliasName = alias.value();
+				}
+				if (pojoPropsMap.containsKey(aliasName.toLowerCase())) {
+					dtoProps.add(fieldName);
+					pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
+				}
+			}
+		}
 
 		if (dtoProps.isEmpty()) {
 			throw new IllegalArgumentException(
