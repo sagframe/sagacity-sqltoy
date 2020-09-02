@@ -101,7 +101,7 @@
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
 			<version>${ojdbc.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -115,7 +115,7 @@
 			<groupId>org.ehcache</groupId>
 			<artifactId>ehcache</artifactId>
 			<version>${ehcache.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -148,7 +148,7 @@
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
 			<version>${spring-data-redis.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -161,7 +161,7 @@
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
 			<version>${spring-data-mongo.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -174,14 +174,14 @@
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
 			<version>${mongo.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>${httpclient.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -194,28 +194,28 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
 			<version>${httpclient.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
 			<version>${httpclient-core.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>elasticsearch-rest-high-level-client</artifactId>
 			<version>${elastic-rest-client.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -228,7 +228,7 @@
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>elasticsearch-rest-client</artifactId>
 			<version>${elastic-rest-client.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
@@ -246,21 +246,21 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
 			<version>${log4j.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
 			<version>${log4j.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<optional>true</optional>
 			<exclusions>
 				<exclusion>
