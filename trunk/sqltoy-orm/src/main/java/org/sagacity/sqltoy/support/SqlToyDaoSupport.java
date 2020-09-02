@@ -344,6 +344,17 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * @TODO 根据id集合批量加载对象
+	 * @param <T>
+	 * @param voClass
+	 * @param ids
+	 * @return
+	 */
+	protected <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids) {
+		return loadByIds(voClass, null, ids);
+	}
+
+	/**
 	 * @TODO 通过id集合批量加载对象
 	 * @param <T>
 	 * @param voClass
@@ -357,13 +368,11 @@ public class SqlToyDaoSupport {
 			throw new IllegalArgumentException("voClass、ids must not null!");
 		}
 		EntityMeta entityMeta = this.getEntityMeta(voClass);
-		if (entityMeta == null) {
-			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity!");
+		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
+			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
-		return null;
-		// BeanUtil.reflectListToBean(datas, properties, voClass)
-		// return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode,
-		// this.getDataSource(null));
+		List<T> entities = BeanUtil.wrapEntities(entityMeta, voClass, ids);
+		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
 	/**

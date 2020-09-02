@@ -251,6 +251,12 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.loadAll(entities);
 	}
 
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
+		return sqlToyLazyDao.loadByIds(voClass, ids);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
