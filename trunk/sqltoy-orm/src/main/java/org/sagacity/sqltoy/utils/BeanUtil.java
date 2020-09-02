@@ -1199,6 +1199,14 @@ public class BeanUtil {
 		return method.invoke(bean);
 	}
 
+	/**
+	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
+	 * @param <T>
+	 * @param entityMeta
+	 * @param voClass
+	 * @param ids
+	 * @return
+	 */
 	public static <T extends Serializable> List<T> wrapEntities(EntityMeta entityMeta, Class<T> voClass,
 			Object... ids) {
 		List<T> entities = new ArrayList<T>();
@@ -1207,9 +1215,11 @@ public class BeanUtil {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
 			String typeName = method.getParameterTypes()[0].getName().toLowerCase();
+			T bean;
 			for (Object id : ids) {
+				// 去除重复
 				if (!repeat.contains(id)) {
-					T bean = voClass.getDeclaredConstructor().newInstance();
+					bean = voClass.getDeclaredConstructor().newInstance();
 					method.invoke(bean, BeanUtil.convertType(id, typeName));
 					entities.add(bean);
 					repeat.add(id);
