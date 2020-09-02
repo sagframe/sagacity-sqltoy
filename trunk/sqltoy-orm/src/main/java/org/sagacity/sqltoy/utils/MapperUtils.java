@@ -249,7 +249,7 @@ public class MapperUtils {
 				pojoProps.add(pojoPropsMap.get(aliasName.toLowerCase()));
 			}
 		}
-
+		// 没有匹配的属性
 		if (dtoProps.isEmpty()) {
 			throw new IllegalArgumentException(
 					"dto:" + dtoClass.getName() + " mapping pojo:" + pojoClass.getName() + " 没有属性名称是匹配的，请检查!");
