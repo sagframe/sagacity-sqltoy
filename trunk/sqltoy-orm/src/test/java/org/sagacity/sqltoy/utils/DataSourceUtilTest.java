@@ -50,7 +50,7 @@ public class DataSourceUtilTest {
 		String driver = "ru.yandex.clickhouse.ClickHouseDriver";
 		String url = "jdbc:clickhouse://192.168.56.107:8123/sagframe";
 		String user = "default";
-		String password = "SagFrame@123";
+		String password = "sagframe";
 		Connection conn = getConnection(driver, url, user, password);
 		String[] types = new String[] { "TABLE" };
 		String tableName;
@@ -78,6 +78,6 @@ public class DataSourceUtilTest {
 	}
 
 	public static void main(String[] args) {
-		DataSourceUtilTest.getDBDialect();
+		//DataSourceUtilTest.getPolarDBDialect();
 	}
 }
