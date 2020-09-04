@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.utils;
 import static java.lang.System.err;
 
 import java.io.BufferedReader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -19,11 +20,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1193,5 +1197,38 @@ public class BeanUtil {
 			getMethods.put(key, method);
 		}
 		return method.invoke(bean);
+	}
+
+	/**
+	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
+	 * @param <T>
+	 * @param entityMeta
+	 * @param voClass
+	 * @param ids
+	 * @return
+	 */
+	public static <T extends Serializable> List<T> wrapEntities(EntityMeta entityMeta, Class<T> voClass,
+			Object... ids) {
+		List<T> entities = new ArrayList<T>();
+		Set<Object> repeat = new HashSet<Object>();
+		try {
+			// 获取主键的set方法
+			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
+			String typeName = method.getParameterTypes()[0].getName().toLowerCase();
+			T bean;
+			for (Object id : ids) {
+				// 去除重复
+				if (!repeat.contains(id)) {
+					bean = voClass.getDeclaredConstructor().newInstance();
+					method.invoke(bean, BeanUtil.convertType(id, typeName));
+					entities.add(bean);
+					repeat.add(id);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
+			throw new RuntimeException(e);
+		}
+		return entities;
 	}
 }

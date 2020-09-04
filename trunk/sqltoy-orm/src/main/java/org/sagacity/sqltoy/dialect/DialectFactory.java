@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
+import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
@@ -195,10 +196,11 @@ public class DialectFactory {
 			dialectSqlWrapper = new SybaseIQDialect();
 			break;
 		}
-		// 如果匹配不上抛出异常
+		// 如果匹配不上使用默认dialect
 		default:
-			// 不支持
-			throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
+			dialectSqlWrapper = new DefaultDialect();
+//			// 不支持
+//			throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
 		}
 		dialects.put(dbType, dialectSqlWrapper);
 		return dialectSqlWrapper;

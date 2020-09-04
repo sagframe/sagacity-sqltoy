@@ -524,6 +524,16 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.loadAllCascade(entities, lockMode, cascadeTypes);
 	}
 
+	@Override
+	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, LockMode lockMode, Object... ids) {
+		return super.loadByIds(voClass, lockMode, ids);
+	}
+
+	@Override
+	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
+		return super.loadByIds(voClass, null, ids);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

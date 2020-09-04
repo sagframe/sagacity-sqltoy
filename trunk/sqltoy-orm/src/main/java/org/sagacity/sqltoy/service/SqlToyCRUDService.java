@@ -183,6 +183,15 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
 	/**
+	 * @TODO 根据id集合批量加载对象
+	 * @param <T>
+	 * @param voClass
+	 * @param ids
+	 * @return
+	 */
+	public <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids);
+
+	/**
 	 * 在controller层不允许直接暴露sql,因此sql必须是通过注解在POJO上的
 	 * 
 	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集
