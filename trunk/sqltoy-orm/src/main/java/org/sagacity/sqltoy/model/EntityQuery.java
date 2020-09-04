@@ -37,7 +37,7 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery select(String... fields) {
-		// fieldA,fieldB 这种模式编写
+		// 支持"fieldA,fieldB" 这种模式编写
 		if (fields != null && fields.length == 1) {
 			String[] realFields = fields[0].split("\\,");
 			for (int i = 0; i < realFields.length; i++) {
