@@ -17,7 +17,7 @@
 		<ehcache.version>3.8.1</ehcache.version>
 		<httpclient.version>4.5.12</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
-		<elastic-rest-client.version>7.9.0</elastic-rest-client.version>
+		<elastic-rest-client.version>7.9.1</elastic-rest-client.version>
 		<fastjson.version>1.2.73</fastjson.version>
 		<mongo.version>3.12.7</mongo.version>
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
@@ -57,20 +57,20 @@
 		</developer>
 	</developers>
 	<distributionManagement>
-		<snapshotRepository>
+		<!-- <snapshotRepository>
 			<id>sonatype-nexus-snapshots</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
 		<repository>
 			<id>sonatype-nexus-staging</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
+		</repository> -->
 
 
-		<!-- <repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
+		<repository> <id>nexus-release</id> <name>3rd party</name> <url>https://nexus.1chemic.com/repository/releases/</url> 
 			</repository> <snapshotRepository> <id>nexus-snapshots</id> <name>Department 
 			Repository</name> <url>https://nexus.1chemic.com/repository/snapshots/</url> 
-			</snapshotRepository> -->
+			</snapshotRepository>
 
 	</distributionManagement>
 	<dependencies>
@@ -351,7 +351,7 @@
 				</executions>
 			</plugin>
 
-			<plugin>
+		<!-- 	<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.6</version>
@@ -363,7 +363,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 </project>
