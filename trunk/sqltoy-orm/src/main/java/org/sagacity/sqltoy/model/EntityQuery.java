@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.callback.SelectFields;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
@@ -46,6 +47,18 @@ public class EntityQuery implements Serializable {
 			innerModel.fields = realFields;
 		} else {
 			innerModel.fields = fields;
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 用链式模式实现字段选择
+	 * @param selectFields
+	 * @return
+	 */
+	public EntityQuery select(SelectFields selectFields) {
+		if (selectFields != null) {
+			innerModel.fields = selectFields.getSelectFields();
 		}
 		return this;
 	}
