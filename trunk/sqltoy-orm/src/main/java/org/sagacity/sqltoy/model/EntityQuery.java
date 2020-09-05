@@ -37,7 +37,6 @@ public class EntityQuery implements Serializable {
 	 * @param fields
 	 * @return
 	 */
-	@Deprecated
 	public EntityQuery select(String... fields) {
 		// 支持"fieldA,fieldB" 这种模式编写
 		if (fields != null && fields.length == 1) {
