@@ -327,11 +327,17 @@ public class ResultUtils {
 			Object preIdentity = null;
 			Object linkValue;
 			Object linkStr;
-			boolean translateLink = hasTranslate ? translateMap.containsKey(linkModel.getColumns()[0].toLowerCase())
-					: false;
+			boolean translateLink = false;
+			if (hasTranslate) {
+				for (String linkCol : linkModel.getColumns()) {
+					if (translateMap.containsKey(linkCol.toLowerCase())) {
+						translateLink = true;
+						break;
+					}
+				}
+			}
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
-			// Translate translateModel = null;
 			TranslateExtend extend = null;
 			if (translateLink) {
 				extend = translateMap.get(linkModel.getColumns()[0].toLowerCase()).getExtend();
