@@ -135,7 +135,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 修改数据并返回数据库记录变更数量
+	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entitySet
 	 * @param forceUpdateProps 强制修改的字段属性
 	 */
@@ -165,6 +165,13 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
+	/**
+	 * @TODO 批量修改操作，并可以指定强制修改的属性(非强制修改属性，当属性值为null不参与修改)
+	 * @param <T>
+	 * @param entities
+	 * @param forceUpdateProps
+	 * @return
+	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
@@ -176,6 +183,13 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
 			String... forceUpdateProps);
 
+	/**
+	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
+	 * @param <T>
+	 * @param entities
+	 * @param reflectPropertyHandler
+	 * @return
+	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler);
 
@@ -186,6 +200,13 @@ public interface SqlToyLazyDao {
 	 */
 	public Long saveOrUpdate(Serializable serializableVO, String... forceUpdateProps);
 
+	/**
+	 * @TODO 批量保存或修改操作
+	 * @param <T>
+	 * @param entities
+	 * @param forceUpdateProps
+	 * @return
+	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
@@ -266,6 +287,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
+	/**
+	 * @TODO 单表分页查询
+	 * @param <T>
+	 * @param resultType
+	 * @param paginationModel
+	 * @param entityQuery
+	 * @return
+	 */
 	public <T> PaginationModel<T> findEntity(Class<T> resultType, final PaginationModel paginationModel,
 			EntityQuery entityQuery);
 
@@ -318,6 +347,11 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
 
+	/**
+	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
+	 * @param query
+	 * @return
+	 */
 	public Object loadByQuery(final QueryExecutor query);
 
 	/**
@@ -493,75 +527,70 @@ public interface SqlToyLazyDao {
 	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel);
 
 	/**
-	 * 数据库提交
+	 * @TODO 数据库提交
 	 */
 	public void flush();
 
 	/**
-	 * 删除操作集合
+	 * @TODO 提供链式操作模式删除操作集合
 	 * 
 	 * @return
 	 */
 	public Delete delete();
 
 	/**
-	 * 修改操作集合
-	 * 
+	 * @TODO 提供链式操作模式修改操作集合
 	 * @return
 	 */
 	public Update update();
 
 	/**
-	 * 存储过程操作集合
-	 * 
+	 * @TODO 提供链式操作模式存储过程操作集合
 	 * @return
 	 */
 	public Store store();
 
 	/**
-	 * 保存操作集合
-	 * 
+	 * @TODO 提供链式操作模式保存操作集合
 	 * @return
 	 */
 	public Save save();
 
 	/**
-	 * 查询操作集合
-	 * 
+	 * @TODO 提供链式操作模式查询操作集合
 	 * @return
 	 */
 	public Query query();
 
 	/**
-	 * 对象加载操作集合
-	 * 
+	 * @TODO 提供链式操作模式对象加载操作集合
 	 * @return
 	 */
 	public Load load();
 
 	/**
-	 * 唯一性验证操作集合
+	 * @TODO 提供链式操作模式唯一性验证操作集合
 	 * 
 	 * @return
 	 */
 	public Unique unique();
 
 	/**
-	 * 树形表结构封装操作集合
+	 * @TODO 提供链式操作模式树形表结构封装操作集合
 	 * 
 	 * @return
 	 */
 	public TreeTable treeTable();
 
 	/**
-	 * sql语句直接执行修改数据库操作集合
+	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
 	 * 
 	 * @return
 	 */
 	public Execute execute();
 
 	/**
-	 * 批量执行操作集合
+	 * @TODO 提供链式操作模式批量执行操作集合
 	 * 
 	 * @return
 	 */
@@ -618,6 +647,12 @@ public interface SqlToyLazyDao {
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
 
+	/**
+	 * @TODO 通过反调对集合数据进行翻译处理
+	 * @param dataSet
+	 * @param cacheName
+	 * @param handler
+	 */
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**
