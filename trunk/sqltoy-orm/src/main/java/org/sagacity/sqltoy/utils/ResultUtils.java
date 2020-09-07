@@ -284,6 +284,11 @@ public class ResultUtils {
 			String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
+		// 多列
+		if (linkModel != null && linkModel.getColumns().length > 1) {
+			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, conn, rs, rowCnt, labelIndexMap, labelNames,
+					startColIndex);
+		}
 		List<List> items = new ArrayList();
 		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
@@ -317,7 +322,8 @@ public class ResultUtils {
 		List rowTemp;
 		if (linkModel != null) {
 			Object identity = null;
-			int linkIndex = labelIndexMap.get(linkModel.getColumns()[0].toLowerCase());
+			String linkColumn = linkModel.getColumns()[0];
+			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
 			StringBuilder linkBuffer = new StringBuilder();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
@@ -328,19 +334,14 @@ public class ResultUtils {
 			Object linkValue;
 			Object linkStr;
 			boolean translateLink = false;
-			if (hasTranslate) {
-				for (String linkCol : linkModel.getColumns()) {
-					if (translateMap.containsKey(linkCol.toLowerCase())) {
-						translateLink = true;
-						break;
-					}
-				}
+			if (hasTranslate && translateMap.containsKey(linkColumn.toLowerCase())) {
+				translateLink = true;
 			}
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
 			TranslateExtend extend = null;
 			if (translateLink) {
-				extend = translateMap.get(linkModel.getColumns()[0].toLowerCase()).getExtend();
+				extend = translateMap.get(linkColumn.toLowerCase()).getExtend();
 				linkTranslateIndex = extend.index;
 				linkTranslateMap = translateCache.get(extend.column);
 			}
@@ -349,7 +350,7 @@ public class ResultUtils {
 			boolean isLastProcess = false;
 			while (rs.next()) {
 				isLastProcess = false;
-				linkValue = rs.getObject(linkModel.getColumns()[0]);
+				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
 				} else {
@@ -461,6 +462,146 @@ public class ResultUtils {
 					}
 				}
 			}
+		}
+		// 超出警告阀值
+		if (warnLimit) {
+			warnLog(sqlToyConfig, index);
+		}
+		// 超过最大提取数据阀值
+		if (maxLimit) {
+			logger.error("MaxLargeResult:执行sql提取数据超出最大阀值限制{},sqlId={},具体语句={}", index, sqlToyConfig.getId(),
+					sqlToyConfig.getSql(null));
+		}
+		return items;
+	}
+
+	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
+			ResultSet rs, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex)
+			throws Exception {
+		// 字段连接(多行数据拼接成一个数据,以一行显示)
+		LinkModel linkModel = sqlToyConfig.getLinkModel();
+		List<List> items = new ArrayList();
+		boolean isDebug = logger.isDebugEnabled();
+		// 判断是否有缓存翻译器定义
+		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
+		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
+		HashMap<String, HashMap<String, Object[]>> translateCache = null;
+		if (hasTranslate) {
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
+			if (translateCache == null || translateCache.isEmpty()) {
+				hasTranslate = false;
+				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
+			}
+		}
+
+		// link 目前只支持单个字段运算
+		int columnSize = labelNames.length;
+		int index = 0;
+
+		// 警告阀值
+		int warnThresholds = SqlToyConstants.getWarnThresholds();
+		boolean warnLimit = false;
+		// 最大阀值
+		long maxThresholds = SqlToyConstants.getMaxThresholds();
+		boolean maxLimit = false;
+		// 是否判断全部为null的行记录
+		boolean ignoreAllEmpty = sqlToyConfig.isIgnoreEmpty();
+		// 最大值要大于等于警告阀值
+		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
+			maxThresholds = warnThresholds;
+		}
+		List rowTemp;
+		Object identity = null;
+		int linkIndex = labelIndexMap.get(linkModel.getColumns()[0].toLowerCase());
+		StringBuilder linkBuffer = new StringBuilder();
+		boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
+		boolean isLeft = true;
+		if (hasDecorate) {
+			isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
+		}
+		Object preIdentity = null;
+		Object linkValue;
+		Object linkStr;
+		boolean translateLink = false;
+		if (hasTranslate) {
+			for (String linkCol : linkModel.getColumns()) {
+				if (translateMap.containsKey(linkCol.toLowerCase())) {
+					translateLink = true;
+					break;
+				}
+			}
+		}
+		HashMap<String, Object[]> linkTranslateMap = null;
+		int linkTranslateIndex = 1;
+		TranslateExtend extend = null;
+		if (translateLink) {
+			extend = translateMap.get(linkModel.getColumns()[0].toLowerCase()).getExtend();
+			linkTranslateIndex = extend.index;
+			linkTranslateMap = translateCache.get(extend.column);
+		}
+		Object[] cacheValues;
+		// 判断link拼接是否重新开始
+		boolean isLastProcess = false;
+		while (rs.next()) {
+			isLastProcess = false;
+			linkValue = rs.getObject(linkModel.getColumns()[0]);
+			if (linkValue == null) {
+				linkStr = "";
+			} else {
+				if (translateLink) {
+					cacheValues = linkTranslateMap.get(linkValue.toString());
+					if (cacheValues == null) {
+						linkStr = "";
+						if (isDebug) {
+							logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+									extend.cacheType, linkValue);
+						}
+					} else {
+						linkStr = cacheValues[linkTranslateIndex];
+					}
+				} else {
+					linkStr = linkValue.toString();
+				}
+			}
+			identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
+			// 不相等
+			if (!identity.equals(preIdentity)) {
+				if (index != 0) {
+					items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+					linkBuffer.delete(0, linkBuffer.length());
+				}
+				linkBuffer.append(linkStr);
+				if (hasTranslate) {
+					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
+							ignoreAllEmpty);
+				} else {
+					rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
+				}
+				if (rowTemp != null) {
+					items.add(rowTemp);
+				}
+				preIdentity = identity;
+			} else {
+				if (linkBuffer.length() > 0) {
+					linkBuffer.append(linkModel.getSign());
+				}
+				linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr.toString(),
+						linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStr);
+				isLastProcess = true;
+			}
+			index++;
+			// 存在超出25000条数据的查询
+			if (index == warnThresholds) {
+				warnLimit = true;
+			}
+			// 提取数据超过上限(-1表示不限制)
+			if (index == maxThresholds) {
+				maxLimit = true;
+				break;
+			}
+		}
+		if (isLastProcess) {
+			items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 		}
 		// 超出警告阀值
 		if (warnLimit) {
