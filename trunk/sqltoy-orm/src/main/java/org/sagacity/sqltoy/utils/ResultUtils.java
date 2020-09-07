@@ -475,6 +475,19 @@ public class ResultUtils {
 		return items;
 	}
 
+	/**
+	 * @TODO 针对多列link提供额外的处理,避免对最常用的单列形成影响
+	 * @param sqlToyConfig
+	 * @param sqlToyContext
+	 * @param conn
+	 * @param rs
+	 * @param rowCnt
+	 * @param labelIndexMap
+	 * @param labelNames
+	 * @param startColIndex
+	 * @return
+	 * @throws Exception
+	 */
 	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
 			ResultSet rs, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex)
 			throws Exception {
