@@ -39,9 +39,11 @@ public class MapperUtils {
 	/**
 	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
 	 * @param <T>
-	 * @param entity
+	 * @param sqlToyContext
+	 * @param source
 	 * @param resultType
 	 * @return
+	 * @throws Exception
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
 			throws Exception {
