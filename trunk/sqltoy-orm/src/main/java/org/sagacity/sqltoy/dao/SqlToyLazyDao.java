@@ -648,9 +648,9 @@ public interface SqlToyLazyDao {
 	public String generateBizId(Serializable entity);
 
 	/**
-	 * @todo 获取sqltoy中用于翻译的缓存
+	 * @todo 获取sqltoy中用于翻译的缓存,方便用于页面下拉框选项、checkbox选项、suggest组件等
 	 * @param cacheName
-	 * @param elementId
+	 * @param elementId 如是数据字典,则为字典类型否则为null即可
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
