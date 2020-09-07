@@ -171,7 +171,12 @@ public class MapperUtils {
 		String fieldName;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
 		// pojo
-		for (Field field : pojoClass.getFields()) {
+		for (Field field : pojoClass.getDeclaredFields()) {
+			fieldName = field.getName();
+			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		}
+		// 父类
+		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
 			fieldName = field.getName();
 			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
 		}
@@ -179,7 +184,15 @@ public class MapperUtils {
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getFields()) {
+		for (Field field : dtoClass.getDeclaredFields()) {
+			fieldName = field.getName();
+			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
+				dtoProps.add(fieldName);
+				pojoProps.add(pojoPropsMap.get(fieldName.toLowerCase()));
+			}
+		}
+		// 父类
+		for (Field field : dtoClass.getSuperclass().getDeclaredFields()) {
 			fieldName = field.getName();
 			if (pojoPropsMap.containsKey(fieldName.toLowerCase())) {
 				dtoProps.add(fieldName);
@@ -211,7 +224,12 @@ public class MapperUtils {
 		SqlToyFieldAlias alias;
 		HashMap<String, String> pojoPropsMap = new HashMap<String, String>();
 		// pojo
-		for (Field field : pojoClass.getFields()) {
+		for (Field field : pojoClass.getDeclaredFields()) {
+			fieldName = field.getName();
+			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
+		}
+		// 父类
+		for (Field field : pojoClass.getSuperclass().getDeclaredFields()) {
 			fieldName = field.getName();
 			pojoPropsMap.put(fieldName.toLowerCase(), fieldName);
 		}
@@ -219,7 +237,7 @@ public class MapperUtils {
 		// dto
 		List<String> dtoProps = new ArrayList<String>();
 		List<String> pojoProps = new ArrayList<String>();
-		for (Field field : dtoClass.getFields()) {
+		for (Field field : dtoClass.getDeclaredFields()) {
 			fieldName = field.getName();
 			aliasName = fieldName;
 			alias = field.getAnnotation(SqlToyFieldAlias.class);
