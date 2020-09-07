@@ -1048,7 +1048,11 @@ public class SqlXMLConfigParse {
 		}
 		Element link = (Element) linkNode.item(0);
 		LinkModel linkModel = new LinkModel();
-		linkModel.setColumn(link.getAttribute("column"));
+		if (link.hasAttribute("column")) {
+			linkModel.setColumns(trimParams(link.getAttribute("column").split("\\,")));
+		} else if (link.hasAttribute("columns")) {
+			linkModel.setColumns(trimParams(link.getAttribute("columns").split("\\,")));
+		}
 		if (link.hasAttribute("id-column")) {
 			linkModel.setIdColumn(link.getAttribute("id-column"));
 		}
