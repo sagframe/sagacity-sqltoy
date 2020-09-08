@@ -11,10 +11,12 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.3 发版日期: 2020-09-05
-*  针对findEntity单表查询增加select(String...fields) 指定字段功能
-*  增加loadByIds方法便于直接根据id集合加载对象
-*  quickvo工具修复postgresql默认值处理缺陷同时配合findEntity提供链式选择字段功能
+# 最新版本号: 4.15.4 发版日期: 2020-09-08
+* 修复EntityQuery where中vo属性兼容的缺陷。
+* 增加EntityQuery和QueryExecutor关闭blankToNull的功能，便于特殊场景下使用。
+* 修复EntityQuery 条件以？形式传参，blankToNull因没有参数名称未生效
+* 修复postgresql saveOrUpdate场景下字段默认值未设置问题
+* quickvo 增加了一个关闭适配EntityQuery功能在POJO中抽象类里产生SelectFieldsImpl内部类的开关(适应部分用户不喜欢链式字段筛选场景)
 
 # 未来规划:
 * 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
@@ -534,29 +536,11 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			]]>
 			</sql>
 		</sql-translate>
-		<!-- 机构号和机构名称的缓存 -->
-		<sql-translate cache="organIdName"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select ORGAN_ID,ORGAN_NAME from SQLTOY_ORGAN_INFO order by SHOW_INDEX
-			]]>
-			</sql>
-		</sql-translate>
 	</cache-translates>
 
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
 		<!-- 基于sql的缓存更新检测 -->
-		<sql-increment-checker cache="organIdName"
-			check-frequency="60" datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			select ORGAN_ID,ORGAN_NAME 
-			from SQLTOY_ORGAN_INFO
-			where UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-increment-checker>
 
 		<!-- 增量更新，检测到变化直接更新缓存 -->
 		<sql-increment-checker cache="staffIdName"
