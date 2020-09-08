@@ -47,9 +47,13 @@ public class PaginationModel<T> implements Serializable {
 
 	}
 
-	public PaginationModel(int pageSize, long pageNo) {
-		this.pageSize = pageSize;
-		this.pageNo = pageNo;
+	public PaginationModel(Integer pageSize, Long pageNo) {
+		if (pageSize != null) {
+			this.pageSize = pageSize;
+		}
+		if (pageNo != null) {
+			this.pageNo = pageNo;
+		}
 	}
 
 	public PaginationModel(List<T> rows, long recordCount) {
