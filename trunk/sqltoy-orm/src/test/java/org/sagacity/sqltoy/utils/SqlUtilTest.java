@@ -40,33 +40,22 @@ public class SqlUtilTest {
 		assertEquals(sql.trim(),
 				"select STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType");
 	}
-	
+
+	/**
+	 * @TODO 测试vo属性名称转表字段名称
+	 */
 	@Test
 	public void testConvertFieldsToCols1() {
 		String sql = "sexType=:sexType";
 		EntityMeta entityMeta = new EntityMeta();
 		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
-		FieldMeta staffMeta = new FieldMeta();
-		staffMeta.setFieldName("staffName");
-		staffMeta.setColumnName("STAFF_NAME");
-		fieldsMeta.put("staffname", staffMeta);
-
-		FieldMeta bizStaffMeta = new FieldMeta();
-		bizStaffMeta.setFieldName("bizStaffName");
-		bizStaffMeta.setColumnName("BIZ_STAFF_NAME");
-		fieldsMeta.put("bizstaffname", bizStaffMeta);
-
-		FieldMeta nameMeta = new FieldMeta();
-		nameMeta.setFieldName("name");
-		nameMeta.setColumnName("NAME");
-		fieldsMeta.put("name", nameMeta);
 
 		FieldMeta sexMeta = new FieldMeta();
 		sexMeta.setFieldName("sexType");
 		sexMeta.setColumnName("SEX_TYPE");
 		fieldsMeta.put("sextype", sexMeta);
 		entityMeta.setFieldsMeta(fieldsMeta);
-		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
+		entityMeta.setFieldsArray(new String[] { "sexType" });
 		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
 		System.err.println(sql);
 	}
