@@ -44,7 +44,7 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
 	 * @param sqlToyContext
-	 * @param paramsName
+	 * @param paramArgs
 	 * @param values
 	 * @param filters
 	 * @return
@@ -54,7 +54,8 @@ public class ParamFilterUtils {
 		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
 			return values;
 		}
-		//update 2020-09-08
+		//update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
+		//构造出参数便于统一处理
 		String[] paramsName;
 		if ((paramArgs == null || paramArgs.length == 0)) {
 			paramsName = new String[values.length];
