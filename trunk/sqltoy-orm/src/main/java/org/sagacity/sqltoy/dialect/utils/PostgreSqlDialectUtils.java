@@ -260,23 +260,35 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
-		String columnName;
+
 		sql.append(realTable);
 		sql.append(" AS t1 (");
+		FieldMeta fieldMeta;
+		String fieldName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			values.append("?");
+			fieldName = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(fieldName);
+			// sql中的关键字处理
+			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
+			// 默认值处理
+			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				values.append("COALESCE(?,");
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				values.append(")");
+			} else {
+				values.append("?");
+			}
 		}
 		sql.append(") values (");
 		sql.append(values);
 		sql.append(") ");
 		// 非全部是主键
 		if (!allIds) {
+			String columnName;
 			sql.append(" ON CONFLICT ON ");
 			if (entityMeta.getPkConstraint() != null) {
 				sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
@@ -340,20 +352,20 @@ public class PostgreSqlDialectUtils {
 		// 全部是主键采用replace into 策略进行保存或修改,不考虑只有一个字段且是主键的表情况
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
-		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
 		FieldMeta fieldMeta;
-		String field;
+		String fieldName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			field = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(field);
-			columnName = fieldMeta.getColumnName();
-			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+			fieldName = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(fieldName);
+			//关键字处理
+			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
+			//默认值处理
 			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 				values.append("COALESCE(?,");
 				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
@@ -367,6 +379,7 @@ public class PostgreSqlDialectUtils {
 		sql.append(") ");
 		// 非全部是主键
 		if (entityMeta.getRejectIdFieldArray() != null) {
+			String columnName;
 			sql.append(" ON CONFLICT ON ");
 			if (entityMeta.getPkConstraint() != null) {
 				sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
