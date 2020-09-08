@@ -49,10 +49,20 @@ public class ParamFilterUtils {
 	 * @param filters
 	 * @return
 	 */
-	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramsName, Object[] values,
+	public static Object[] filterValue(SqlToyContext sqlToyContext, String[] paramArgs, Object[] values,
 			List<ParamFilterModel> filters) {
-		if (paramsName == null || paramsName.length == 0 || filters == null || filters.size() == 0) {
+		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
 			return values;
+		}
+		//update 2020-09-08
+		String[] paramsName;
+		if ((paramArgs == null || paramArgs.length == 0)) {
+			paramsName = new String[values.length];
+			for (int i = 0; i < values.length; i++) {
+				paramsName[i] = "param_" + i;
+			}
+		} else {
+			paramsName = paramArgs;
 		}
 		HashMap<String, Integer> paramIndexMap = new HashMap<String, Integer>();
 		int paramSize = paramsName.length;
