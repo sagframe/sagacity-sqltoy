@@ -43,21 +43,33 @@ public class SqliteDialectUtils {
 			sql = new StringBuilder("insert into ");
 		}
 		StringBuilder values = new StringBuilder();
-		String columnName;
+		
 		sql.append(realTable);
 		sql.append(" (");
+		FieldMeta fieldMeta;
+		String fieldName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			values.append("?");
+			fieldName = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(fieldName);
+			// sql中的关键字处理
+			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
+			// 默认值处理
+			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				values.append("ifnull(?,");
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				values.append(")");
+			} else {
+				values.append("?");
+			}
 		}
 		sql.append(") values (").append(values).append(") ");
 		// 非全部是主键
 		if (!allIds) {
+			String columnName;
 			sql.append(" ON CONFLICT (");
 			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 				if (i > 0) {
@@ -124,6 +136,7 @@ public class SqliteDialectUtils {
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = fieldMeta.getColumnName();
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+			// 默认值处理
 			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 				values.append("ifnull(?,");
 				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
