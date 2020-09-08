@@ -6,7 +6,10 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -43,13 +46,25 @@ public class MySqlDialectUtils {
 		StringBuilder values = new StringBuilder();
 		sql.append(realTable);
 		sql.append(" (");
+		FieldMeta fieldMeta;
+		String fieldName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(entityMeta.getColumnName(entityMeta.getFieldsArray()[i]));
-			values.append("?");
+			fieldName = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(fieldName);
+			// sql中的关键字处理
+			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
+			// 默认值处理
+			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				values.append("ifnull(?,");
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				values.append(")");
+			} else {
+				values.append("?");
+			}
 		}
 		sql.append(") values (");
 		sql.append(values);
