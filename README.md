@@ -10,8 +10,12 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.0 发版日期: 2020-08-26
-*  增加并行查询功能，帮助开发者分解大sql同时也提升整体查询性能
+# 最新版本号: 4.15.4 发版日期: 2020-09-08
+* 修复EntityQuery where中vo属性兼容的缺陷。
+* 增加EntityQuery和QueryExecutor关闭blankToNull的功能，便于特殊场景下使用。
+* 修复EntityQuery 条件以？形式传参，blankToNull因没有参数名称未生效
+* 修复postgresql saveOrUpdate场景下字段默认值未设置问题
+* quickvo 增加了一个关闭适配EntityQuery功能在POJO中抽象类里产生SelectFieldsImpl内部类的开关(适应部分用户不喜欢链式字段筛选场景)
 
 # 未来规划:
 * 4.15版本支持parallQuery 并行查询功能，让一组sql同时提交数据库查询,简化开发者写并行的实现同时提升查询效率(已完成)
@@ -510,18 +514,6 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 	<!-- 缓存有默认失效时间，默认为1小时,因此只有较为频繁的缓存才需要及时检测 -->
 	<cache-translates>
 		<!-- 基于sql直接查询的方式获取缓存 -->
-		<sql-translate cache="dictKeyName"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select t.DICT_KEY,t.DICT_NAME,t.STATUS
-				from SQLTOY_DICT_DETAIL t
-		        where t.DICT_TYPE=:dictType
-		        order by t.SHOW_INDEX
-			]]>
-			</sql>
-		</sql-translate>
-
 		<!-- 员工ID和姓名的缓存 -->
 		<sql-translate cache="staffIdName"
 			datasource="dataSource">
@@ -546,16 +538,6 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
 		<!-- 基于sql的缓存更新检测 -->
-		<sql-increment-checker cache="organIdName"
-			check-frequency="60" datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			select ORGAN_ID,ORGAN_NAME 
-			from SQLTOY_ORGAN_INFO
-			where UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-increment-checker>
-
 		<!-- 增量更新，检测到变化直接更新缓存 -->
 		<sql-increment-checker cache="staffIdName"
 			check-frequency="30" datasource="dataSource">
