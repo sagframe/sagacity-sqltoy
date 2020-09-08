@@ -1366,7 +1366,7 @@ public class SqlUtil {
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
 		// 末尾补齐一位空白,便于后续取index时避免越界
-		String realSql = " ".concat(sql).concat(" ");
+		String realSql = sql.concat(" ");
 		int start = 0;
 		int index;
 		String preSql;
