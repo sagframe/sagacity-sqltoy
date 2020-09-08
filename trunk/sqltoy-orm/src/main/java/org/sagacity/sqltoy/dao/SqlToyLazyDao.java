@@ -135,7 +135,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
-	 * @todo 修改数据并返回数据库记录变更数量
+	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entitySet
 	 * @param forceUpdateProps 强制修改的字段属性
 	 */
@@ -165,6 +165,13 @@ public interface SqlToyLazyDao {
 	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
+	/**
+	 * @TODO 批量修改操作，并可以指定强制修改的属性(非强制修改属性，当属性值为null不参与修改)
+	 * @param <T>
+	 * @param entities
+	 * @param forceUpdateProps
+	 * @return
+	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
@@ -176,6 +183,13 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
 			String... forceUpdateProps);
 
+	/**
+	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
+	 * @param <T>
+	 * @param entities
+	 * @param reflectPropertyHandler
+	 * @return
+	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler);
 
@@ -186,6 +200,13 @@ public interface SqlToyLazyDao {
 	 */
 	public Long saveOrUpdate(Serializable serializableVO, String... forceUpdateProps);
 
+	/**
+	 * @TODO 批量保存或修改操作
+	 * @param <T>
+	 * @param entities
+	 * @param forceUpdateProps
+	 * @return
+	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
@@ -266,6 +287,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
 
+	/**
+	 * @TODO 单表分页查询
+	 * @param <T>
+	 * @param resultType
+	 * @param paginationModel
+	 * @param entityQuery
+	 * @return
+	 */
 	public <T> PaginationModel<T> findEntity(Class<T> resultType, final PaginationModel paginationModel,
 			EntityQuery entityQuery);
 
@@ -318,6 +347,11 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
 
+	/**
+	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
+	 * @param query
+	 * @return
+	 */
 	public Object loadByQuery(final QueryExecutor query);
 
 	/**
@@ -339,7 +373,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrNamedSql 可以是具体sql也可以是对应xml中的sqlId
 	 * @param entity        通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
@@ -348,7 +382,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrSqlId
-	 * @param paramsNamed
+	 * @param paramsNamed 如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
 	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
@@ -379,14 +413,14 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass
+	 * @param voClass 返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
 	 * @return
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
 
 	/**
-	 * @TODO 将分页结果按二维List返回
+	 * @TODO  通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
 	 * @param paginationModel
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
@@ -396,6 +430,14 @@ public interface SqlToyLazyDao {
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
+	/**
+	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
+	 * @param <T>
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @return
+	 */
 	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
 			final String sqlOrNamedSql, final T entity);
 
@@ -404,7 +446,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 取记录的前多少条记录
 	 * @param sqlOrNamedSql
-	 * @param paramsNamed
+	 * @param paramsNamed   如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
 	 * @param paramValues
 	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
@@ -493,75 +535,70 @@ public interface SqlToyLazyDao {
 	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel);
 
 	/**
-	 * 数据库提交
+	 * @TODO 数据库提交
 	 */
 	public void flush();
 
 	/**
-	 * 删除操作集合
+	 * @TODO 提供链式操作模式删除操作集合
 	 * 
 	 * @return
 	 */
 	public Delete delete();
 
 	/**
-	 * 修改操作集合
-	 * 
+	 * @TODO 提供链式操作模式修改操作集合
 	 * @return
 	 */
 	public Update update();
 
 	/**
-	 * 存储过程操作集合
-	 * 
+	 * @TODO 提供链式操作模式存储过程操作集合
 	 * @return
 	 */
 	public Store store();
 
 	/**
-	 * 保存操作集合
-	 * 
+	 * @TODO 提供链式操作模式保存操作集合
 	 * @return
 	 */
 	public Save save();
 
 	/**
-	 * 查询操作集合
-	 * 
+	 * @TODO 提供链式操作模式查询操作集合
 	 * @return
 	 */
 	public Query query();
 
 	/**
-	 * 对象加载操作集合
-	 * 
+	 * @TODO 提供链式操作模式对象加载操作集合
 	 * @return
 	 */
 	public Load load();
 
 	/**
-	 * 唯一性验证操作集合
+	 * @TODO 提供链式操作模式唯一性验证操作集合
 	 * 
 	 * @return
 	 */
 	public Unique unique();
 
 	/**
-	 * 树形表结构封装操作集合
+	 * @TODO 提供链式操作模式树形表结构封装操作集合
 	 * 
 	 * @return
 	 */
 	public TreeTable treeTable();
 
 	/**
-	 * sql语句直接执行修改数据库操作集合
+	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
 	 * 
 	 * @return
 	 */
 	public Execute execute();
 
 	/**
-	 * 批量执行操作集合
+	 * @TODO 提供链式操作模式批量执行操作集合
 	 * 
 	 * @return
 	 */
@@ -611,13 +648,19 @@ public interface SqlToyLazyDao {
 	public String generateBizId(Serializable entity);
 
 	/**
-	 * @todo 获取sqltoy中用于翻译的缓存
+	 * @todo 获取sqltoy中用于翻译的缓存,方便用于页面下拉框选项、checkbox选项、suggest组件等
 	 * @param cacheName
-	 * @param elementId
+	 * @param elementId 如是数据字典,则为字典类型否则为null即可
 	 * @return
 	 */
 	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId);
 
+	/**
+	 * @TODO 通过反调对集合数据进行翻译处理
+	 * @param dataSet
+	 * @param cacheName
+	 * @param handler
+	 */
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**

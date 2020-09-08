@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:MapperUtils.java,Revision:v1.0,Date:2020-8-8
- * @modify data:2020-8-8 初始创建
+ * @modify data:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
  */
 public class MapperUtils {
 	/**
@@ -39,9 +39,11 @@ public class MapperUtils {
 	/**
 	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
 	 * @param <T>
-	 * @param entity
+	 * @param sqlToyContext
+	 * @param source
 	 * @param resultType
 	 * @return
+	 * @throws Exception
 	 */
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
 			throws Exception {

@@ -22,7 +22,7 @@ public class LinkModel implements Serializable {
 	/**
 	 * 需要link的字段
 	 */
-	private String column;
+	private String[] columns;
 
 	/**
 	 * link字段之间的分割符
@@ -50,17 +50,17 @@ public class LinkModel implements Serializable {
 	private int decorateSize;
 
 	/**
-	 * @return the column
+	 * @return the columns
 	 */
-	public String getColumn() {
-		return column;
+	public String[] getColumns() {
+		return columns;
 	}
 
 	/**
-	 * @param column the column to set
+	 * @param columns the columns to set
 	 */
-	public void setColumn(String column) {
-		this.column = column;
+	public void setColumns(String[] columns) {
+		this.columns = columns;
 	}
 
 	/**
@@ -76,7 +76,6 @@ public class LinkModel implements Serializable {
 	public void setSign(String sign) {
 		this.sign = sign;
 	}
-
 
 	/**
 	 * @return the idColumn
@@ -133,7 +132,5 @@ public class LinkModel implements Serializable {
 	public void setDecorateSize(int decorateSize) {
 		this.decorateSize = decorateSize;
 	}
-	
-	
 
 }

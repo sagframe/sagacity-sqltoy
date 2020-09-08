@@ -317,7 +317,8 @@ public class ResultUtils {
 		List rowTemp;
 		if (linkModel != null) {
 			Object identity = null;
-			int linkIndex = labelIndexMap.get(linkModel.getColumn().toLowerCase());
+			String linkColumn = linkModel.getColumns()[0];
+			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
 			StringBuilder linkBuffer = new StringBuilder();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
@@ -327,14 +328,13 @@ public class ResultUtils {
 			Object preIdentity = null;
 			Object linkValue;
 			Object linkStr;
-			boolean translateLink = hasTranslate ? translateMap.containsKey(linkModel.getColumn().toLowerCase())
-					: false;
+			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumn.toLowerCase()) : false;
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
 			// Translate translateModel = null;
 			TranslateExtend extend = null;
 			if (translateLink) {
-				extend = translateMap.get(linkModel.getColumn().toLowerCase()).getExtend();
+				extend = translateMap.get(linkColumn.toLowerCase()).getExtend();
 				linkTranslateIndex = extend.index;
 				linkTranslateMap = translateCache.get(extend.column);
 			}
@@ -343,7 +343,7 @@ public class ResultUtils {
 			boolean isLastProcess = false;
 			while (rs.next()) {
 				isLastProcess = false;
-				linkValue = rs.getObject(linkModel.getColumn());
+				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
 				} else {

@@ -82,7 +82,7 @@ public class QueryExecutor implements Serializable {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
 					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
 				}
-				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte")) {
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
 					if (StringUtil.isBlank(filter.getValue())) {
 						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
@@ -136,6 +136,15 @@ public class QueryExecutor implements Serializable {
 
 	public QueryExecutor humpMapLabel(boolean humpMapLabel) {
 		innerModel.humpMapLabel = humpMapLabel;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置条件过滤空白转null为false
+	 * @return
+	 */
+	public QueryExecutor blankNotNull() {
+		innerModel.blankToNull = false;
 		return this;
 	}
 

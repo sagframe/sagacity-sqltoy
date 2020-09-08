@@ -354,7 +354,14 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (SqlType.search.equals(type) && queryExecutor.getInnerModel().resultType != null) {
 			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
 		}
-		return scriptLoader.getSqlConfig(sqlKey, type);
+		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, type);
+		// 剔除空白转null的默认设置
+		if (!queryExecutor.getInnerModel().blankToNull && StringUtil.isBlank(result.getId())) {
+			if (result.getFilters().size() == 1) {
+				result.getFilters().remove(0);
+			}
+		}
+		return result;
 	}
 
 	// 设置workerId和dataCenterId,当没有通过配置文件指定workerId时通过IP来自动分配

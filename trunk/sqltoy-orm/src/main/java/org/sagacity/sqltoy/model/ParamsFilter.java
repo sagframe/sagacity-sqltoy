@@ -53,6 +53,16 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
+	 * @TODO blank
+	 * 
+	 * @return
+	 */
+	public ParamsFilter blank() {
+		this.type = "blank";
+		return this;
+	}
+
+	/**
 	 * @TODO 等于
 	 * 
 	 * @return
