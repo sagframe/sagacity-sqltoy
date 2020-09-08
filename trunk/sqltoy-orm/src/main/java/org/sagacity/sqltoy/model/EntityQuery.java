@@ -83,8 +83,8 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	public EntityQuery blankToNull(boolean blankToNull) {
-		innerModel.blankToNull = blankToNull;
+	public EntityQuery blankNotNull() {
+		innerModel.blankToNull = false;
 		return this;
 	}
 
