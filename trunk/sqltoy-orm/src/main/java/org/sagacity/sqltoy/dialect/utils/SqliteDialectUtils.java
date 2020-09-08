@@ -6,7 +6,9 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -111,14 +113,24 @@ public class SqliteDialectUtils {
 		String columnName;
 		sql.append(realTable);
 		sql.append(" (");
+		FieldMeta fieldMeta;
+		String field;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			field = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = fieldMeta.getColumnName();
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			values.append("?");
+			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				values.append("ifnull(?,");
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				values.append(")");
+			} else {
+				values.append("?");
+			}
 		}
 		sql.append(") values (").append(values).append(") ");
 		return sql.toString();

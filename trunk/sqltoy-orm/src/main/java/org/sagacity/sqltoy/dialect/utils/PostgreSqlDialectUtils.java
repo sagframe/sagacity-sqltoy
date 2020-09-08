@@ -352,7 +352,7 @@ public class PostgreSqlDialectUtils {
 			}
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
-			columnName = entityMeta.getColumnName(field);
+			columnName = fieldMeta.getColumnName();
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
 			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 				values.append("COALESCE(?,");
