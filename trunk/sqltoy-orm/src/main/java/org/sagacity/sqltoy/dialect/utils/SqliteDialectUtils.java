@@ -122,7 +122,6 @@ public class SqliteDialectUtils {
 		}
 		StringBuilder sql = new StringBuilder("insert or ignore into ");
 		StringBuilder values = new StringBuilder();
-		String columnName;
 		sql.append(realTable);
 		sql.append(" (");
 		FieldMeta fieldMeta;
@@ -134,8 +133,8 @@ public class SqliteDialectUtils {
 			}
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
-			columnName = fieldMeta.getColumnName();
-			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+			//sql中关键字处理
+			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
 			// 默认值处理
 			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 				values.append("ifnull(?,");
