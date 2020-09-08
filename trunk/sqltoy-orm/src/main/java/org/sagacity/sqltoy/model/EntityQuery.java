@@ -152,6 +152,10 @@ public class EntityQuery implements Serializable {
 						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
 				}
+				// 存在blank 过滤器自动将blank param="*" 关闭
+				if (filter.getType().equals("blank")) {
+					innerModel.blankToNull = false;
+				}
 				innerModel.paramFilters.add(filter);
 			}
 		}
