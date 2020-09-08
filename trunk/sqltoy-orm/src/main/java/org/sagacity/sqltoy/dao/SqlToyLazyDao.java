@@ -373,7 +373,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrNamedSql 可以是具体sql也可以是对应xml中的sqlId
 	 * @param entity        通过对象传参数,并按对象类型返回结果
 	 * @return
 	 */
@@ -382,7 +382,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrSqlId
-	 * @param paramsNamed
+	 * @param paramsNamed 如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
 	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
@@ -446,7 +446,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 取记录的前多少条记录
 	 * @param sqlOrNamedSql
-	 * @param paramsNamed
+	 * @param paramsNamed   如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
 	 * @param paramValues
 	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
