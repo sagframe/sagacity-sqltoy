@@ -83,6 +83,10 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置条件过滤空白转null为false
+	 * @return
+	 */
 	public EntityQuery blankNotNull() {
 		innerModel.blankToNull = false;
 		return this;

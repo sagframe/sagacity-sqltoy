@@ -139,6 +139,10 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置条件过滤空白转null为false
+	 * @return
+	 */
 	public QueryExecutor blankNotNull() {
 		innerModel.blankToNull = false;
 		return this;
