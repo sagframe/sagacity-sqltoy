@@ -83,6 +83,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	public EntityQuery blankToNull(boolean blankToNull) {
+		innerModel.blankToNull = blankToNull;
+		return this;
+	}
+
 	// 排序
 	public EntityQuery orderBy(String field) {
 		// 默认为升序
@@ -138,7 +143,7 @@ public class EntityQuery implements Serializable {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
 					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置参数名称和过滤的类型!");
 				}
-				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte")) {
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
 					if (StringUtil.isBlank(filter.getValue())) {
 						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}

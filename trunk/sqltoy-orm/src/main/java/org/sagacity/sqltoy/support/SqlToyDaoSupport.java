@@ -1377,6 +1377,8 @@ public class SqlToyDaoSupport {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(entityClass).dataSource(getDataSource(innerModel.dataSource));
 		}
+		//设置是否空白转null
+		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
 		// 设置额外的缓存翻译
 		if (!innerModel.translates.isEmpty()) {
 			queryExecutor.getInnerModel().translates.putAll(innerModel.translates);

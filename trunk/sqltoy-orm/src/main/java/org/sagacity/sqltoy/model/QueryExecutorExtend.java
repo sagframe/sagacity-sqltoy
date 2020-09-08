@@ -128,6 +128,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public PageOptimize pageOptimize;
 
+	/**
+	 * 空白字符转为null，默认为true
+	 */
+	public boolean blankToNull = true;
+
 	// 分库分表策略配置
 	// public ShardingConfig shardingConfig = new ShardingConfig();
 
