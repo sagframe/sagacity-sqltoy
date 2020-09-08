@@ -12,6 +12,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -24,6 +25,7 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -341,14 +343,24 @@ public class PostgreSqlDialectUtils {
 		String columnName;
 		sql.append(realTable);
 		sql.append(" AS t1 (");
+		FieldMeta fieldMeta;
+		String field;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
 			if (i > 0) {
 				sql.append(",");
 				values.append(",");
 			}
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			field = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = entityMeta.getColumnName(field);
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			values.append("?");
+			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				values.append("COALESCE(?,");
+				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
+				values.append(")");
+			} else {
+				values.append("?");
+			}
 		}
 		sql.append(") values (");
 		sql.append(values);
