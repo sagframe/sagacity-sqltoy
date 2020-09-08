@@ -12,7 +12,7 @@ public class SqlUtilTest {
 
 	@Test
 	public void testConvertFieldsToCols() {
-		String sql = "select staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
+		String sql = "staffName,`sexType`,name,bizStaffName from table where #[t.staffName like ?] and sexType=:sexType";
 		EntityMeta entityMeta = new EntityMeta();
 		HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
 		FieldMeta staffMeta = new FieldMeta();
@@ -38,7 +38,7 @@ public class SqlUtilTest {
 		entityMeta.setFieldsArray(new String[] { "name", "staffName", "bizStaffName", "sexType" });
 		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
 		assertEquals(sql.trim(),
-				"select STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType");
+				"STAFF_NAME,`SEX_TYPE`,name,BIZ_STAFF_NAME from table where #[t.STAFF_NAME like ?] and SEX_TYPE=:sexType");
 	}
 
 	/**
