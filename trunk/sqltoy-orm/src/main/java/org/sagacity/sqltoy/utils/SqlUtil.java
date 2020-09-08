@@ -1366,7 +1366,7 @@ public class SqlUtil {
 		String[] fields = entityMeta.getFieldsArray();
 		StringBuilder sqlBuff = new StringBuilder();
 		// 末尾补齐一位空白,便于后续取index时避免越界
-		String realSql = sql.concat(" ");
+		String realSql = " ".concat(sql).concat(" ");
 		int start = 0;
 		int index;
 		String preSql;
@@ -1390,7 +1390,11 @@ public class SqlUtil {
 					}
 					varSql = preSql.trim();
 					// 首位字符不是数字(48~57)、(A-Z|a-z)字母(65~90,97~122)、下划线(95)、冒号(58)
-					preChar = varSql.charAt(varSql.length() - 1);
+					if (!varSql.equals("")) {
+						preChar = varSql.charAt(varSql.length() - 1);
+					} else {
+						preChar = ' ';
+					}
 					tailChar = realSql.charAt(index + field.length());
 					// 非条件参数(58为冒号)
 					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
