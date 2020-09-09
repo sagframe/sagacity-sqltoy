@@ -3,7 +3,7 @@
 * 远远超越mybatis太自负了吧? NO！不远超mybatis(plus)就根本没有做下去的必要！谁能给我一个理由在996的大环境下做一个跟mybatis(plus)提升不大的框架有何意义？
 * 请正确的看待远超的内涵：理念和使用便捷性、高效性远超,代码实现厉不厉害可以听取大家的建议不断改进(在这种成熟度非常高的领域好的想法是前提)
 * 我只是几次灵感发现了一些被证实非常有效的做法，真的希望将这些特点分析给大家，帮助大家摆脱查询的复杂性
-* 如果有可能非常乐意将sqltoy捐赠给开源组织和大的企业机构让sqltoy可以持续发展下去
+* 如果有可能非常乐意将sqltoy捐赠给开源组织或大的企业机构让sqltoy可以持续发展下去
 
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://github.com/sagframe/sqltoy-online-doc)
