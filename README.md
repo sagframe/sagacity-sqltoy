@@ -1,7 +1,9 @@
 # 选择和坚持sqltoy的理由
 * sqltoy远远超越mybatis(plus),mybatis 如果不借鉴sqltoy的动态查询写法、缓存翻译、分页优化、数据旋转统计等特点就永远都无法赶上sqltoy！
-* 远远超越mybatis太吹牛了吧? NO！不远超mybatis(plus)就根本没有做下去的必要！谁能给我一个理由在996的大环境下做一个跟mybatis(plus)提升不大的框架有何意义？
+* 远远超越mybatis太自负了吧? NO！不远超mybatis(plus)就根本没有做下去的必要！谁能给我一个理由在996的大环境下做一个跟mybatis(plus)提升不大的框架有何意义？
 * 请正确的看待远超的内涵：理念和使用便捷性、高效性远超,代码实现厉不厉害可以听取大家的建议不断改进(很多人直奔代码不关心思想和设计理念)
+* 我只是几次灵感发现了一些被证实非常有效的做法，真的希望将这些特点分析给大家，帮助大家摆脱查询的复杂性
+* 如果有可能非常乐意将sqltoy捐赠给开源组织和大的企业机构让sqltoy可以持续发展下去
 
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://github.com/sagframe/sqltoy-online-doc)
