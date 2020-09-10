@@ -19,29 +19,27 @@ public class NamedValuesModel implements Serializable {
 	/**
 	 * 参数名称
 	 */
-	private String[] paramNames;
+	private String[] names;
 	
 	/**
 	 * 参数值
 	 */
-	private Object[] paramValues;
+	private Object[] values;
 
-	public String[] getParamNames() {
-		return paramNames;
+	public String[] getNames() {
+		return names;
 	}
 
-	public void setParamNames(String[] paramNames) {
-		this.paramNames = paramNames;
+	public void setNames(String[] names) {
+		this.names = names;
 	}
 
-	public Object[] getParamValues() {
-		return paramValues;
+	public Object[] getValues() {
+		return values;
 	}
 
-	public void setParamValues(Object[] paramValues) {
-		this.paramValues = paramValues;
-	}
-	
-	
+	public void setValues(Object[] values) {
+		this.values = values;
+	}	
 
 }

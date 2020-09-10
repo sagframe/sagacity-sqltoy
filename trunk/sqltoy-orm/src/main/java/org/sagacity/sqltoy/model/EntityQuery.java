@@ -91,8 +91,8 @@ public class EntityQuery implements Serializable {
 	 */
 	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.names = model.getParamNames();
-		innerModel.values = model.getParamValues();
+		innerModel.names = model.getNames();
+		innerModel.values = model.getValues();
 		return this;
 	}
 

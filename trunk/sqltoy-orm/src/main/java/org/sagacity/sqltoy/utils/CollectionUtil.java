@@ -1229,8 +1229,8 @@ public class CollectionUtil {
 			values[i] = entry.getValue();
 			i++;
 		}
-		result.setParamNames(names);
-		result.setParamValues(values);
+		result.setNames(names);
+		result.setValues(values);
 		return result;
 	}
 }

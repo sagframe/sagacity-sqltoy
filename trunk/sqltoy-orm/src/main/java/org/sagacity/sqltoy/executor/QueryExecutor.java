@@ -102,9 +102,9 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor(String sql, Map<String,Object> paramsMap) {
 		innerModel.sql = sql;
 		NamedValuesModel model=CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.paramsName = model.getParamNames();
-		innerModel.paramsValue = model.getParamValues();
-		innerModel.shardingParamsValue = model.getParamValues();
+		innerModel.paramsName = model.getNames();
+		innerModel.paramsValue = model.getValues();
+		innerModel.shardingParamsValue = model.getValues();
 	}
 	
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
