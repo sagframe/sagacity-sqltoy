@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -80,6 +81,18 @@ public class EntityQuery implements Serializable {
 
 	public EntityQuery values(Object... values) {
 		innerModel.values = values;
+		return this;
+	}
+
+	/**
+	 * @TODO 用map形式传参
+	 * @param paramsMap
+	 * @return
+	 */
+	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		innerModel.names = model.getParamNames();
+		innerModel.values = model.getParamValues();
 		return this;
 	}
 

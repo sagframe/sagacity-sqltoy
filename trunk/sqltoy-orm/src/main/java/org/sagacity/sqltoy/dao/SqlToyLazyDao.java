@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -85,6 +86,8 @@ public interface SqlToyLazyDao {
 	 * @return Long
 	 */
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
+	
+	public Long getCount(String sqlOrNamedQuery, Map<String,Object> paramsMap);
 
 	/**
 	 * @todo 存储过程调用
@@ -338,6 +341,9 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
+	
+	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String,Object> paramsMap,
+			final Class<T> voClass);
 
 	/**
 	 * @todo 通过对象实体传参数,框架结合sql中的参数名称来映射对象属性取值
@@ -362,6 +368,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+	
+	public Object getSingleValue(final String sqlOrNamedSql, final Map<String,Object> paramsMap);
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
@@ -389,6 +397,9 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
+	
+	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String,Object> paramsMap,
+			final Class<T> voClass);
 
 	/**
 	 * @TODO 将查询结果直接按二维List返回
@@ -398,6 +409,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public List findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
+	
+	public List findBySql(final String sqlOrSqlId, final Map<String,Object> paramsMap);
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
@@ -418,6 +431,9 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
+	
+	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final Map<String,Object> paramsMap, final Class<T> voClass);
 
 	/**
 	 * @TODO  通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
@@ -429,6 +445,9 @@ public interface SqlToyLazyDao {
 	 */
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
+	
+	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final Map<String,Object> paramsMap);
 
 	/**
 	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
@@ -453,6 +472,9 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
+			final Class<T> voClass, final double topSize);
+	
+	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String,Object> paramsMap,
 			final Class<T> voClass, final double topSize);
 
 	/**
@@ -481,7 +503,9 @@ public interface SqlToyLazyDao {
 
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
-
+	
+	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String,Object> paramsMap, final Class<T> voClass, final double randomCount);
+	
 	/**
 	 * @todo 批量集合通过sql进行修改操作
 	 * @param sqlOrNamedSql
@@ -526,6 +550,8 @@ public interface SqlToyLazyDao {
 			final ReflectPropertyHandler reflectPropertyHandler);
 
 	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
+	
+	public Long executeSql(final String sqlOrNamedSql, final Map<String,Object> paramsMap);
 
 	/**
 	 * @todo 构造树形表的节点路径、层次等级、是否叶子节点等必要信息
@@ -749,5 +775,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds);
+	
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String,Object> paramsMap);
 
 }

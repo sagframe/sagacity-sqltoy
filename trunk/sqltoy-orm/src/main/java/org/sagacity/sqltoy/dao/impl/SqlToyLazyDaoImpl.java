@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -35,6 +36,7 @@ import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -42,6 +44,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.support.BaseDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -76,6 +79,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
 	}
 
+	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.getCountBySql(sqlOrNamedQuery, model.getParamNames(), model.getParamValues());
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -87,6 +95,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue);
 	}
 
+	@Override
+	public Object getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.getSingleValue(sqlOrNamedSql, model.getParamNames(), model.getParamValues());
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -109,6 +123,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.loadBySql(sqlOrNamedSql, entity);
 	}
 
+	@Override
+	public <T> T loadBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.loadBySql(sqlOrNamedSql, model.getParamNames(), model.getParamValues(), resultType);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -131,6 +151,18 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return (List<T>) super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, voClass);
 	}
 
+	@Override
+	public <T> List<T> findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return (List<T>) super.findBySql(sqlOrNamedSql, model.getParamNames(), model.getParamValues(), voClass);
+	}
+
+	@Override
+	public List findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.findBySql(sqlOrNamedSql, model.getParamNames(), model.getParamValues(), null);
+	}
+	
 	@Override
 	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
 		return super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, null);
@@ -180,6 +212,20 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 				.getPageResult();
 	}
 
+	@Override
+	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
+			Map<String, Object> paramsMap, Class<T> voClass) {
+		return (PaginationModel<T>)super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
+				.getPageResult();
+	}
+
+	@Override
+	public PaginationModel findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
+			Map<String, Object> paramsMap) {
+		return super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsMap))
+				.getPageResult();
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -192,6 +238,13 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.findTopBySql(sqlOrNamedSql, paramsNamed, paramValues, voClass, topSize);
 	}
 
+	@Override
+	public <T> List<T> findTopBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
+			double topSize) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.findTopBySql(sqlOrNamedSql, model.getParamNames(), model.getParamValues(), voClass, topSize);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -227,6 +280,13 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return (List<T>) super.getRandomResult(new QueryExecutor(sqlOrNamedSql, entity), randomCount).getRows();
 	}
 
+	@Override
+	public <T> List<T> getRandomResult(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
+			double randomCount) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.getRandomResult(sqlOrNamedSql, model.getParamNames(), model.getParamValues(), voClass, randomCount);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -628,6 +688,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.executeSql(sqlOrNamedSql, entity, reflectPropertyHandler);
 	}
 
+	@Override
+	public Long executeSql(String sqlOrNamedSql, Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.executeSql(sqlOrNamedSql, model.getParamNames(), model.getParamValues());
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -899,14 +965,19 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues) {
-		return super.parallQuery(querys, paramNames, paramValues, null);
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+		return super.parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> querys, String[] paramNames, Object[] paramValues,
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
 			Integer maxWaitSeconds) {
-		return super.parallQuery(querys, paramNames, paramValues, maxWaitSeconds);
+		return super.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
+	@Override
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return super.parallQuery(parallQueryList, model.getParamNames(), model.getParamValues(), null);
+	}
 }

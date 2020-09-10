@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.executor;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -16,6 +17,7 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.MaskType;
+import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.TranslateExtend;
@@ -97,6 +99,14 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	public QueryExecutor(String sql, Map<String,Object> paramsMap) {
+		innerModel.sql = sql;
+		NamedValuesModel model=CollectionUtil.mapToNamedValues(paramsMap);
+		innerModel.paramsName = model.getParamNames();
+		innerModel.paramsValue = model.getParamValues();
+		innerModel.shardingParamsValue = model.getParamValues();
+	}
+	
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
 		innerModel.sql = sql;
 		innerModel.paramsName = paramsName;
