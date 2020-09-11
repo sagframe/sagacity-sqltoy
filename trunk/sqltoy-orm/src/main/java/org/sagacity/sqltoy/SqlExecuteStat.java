@@ -116,7 +116,7 @@ public class SqlExecuteStat {
 				String debugInfo = StringUtil.fillArgs(message, args);
 				StringBuilder result = new StringBuilder();
 				result.append("\n/*|----start 执行调试, UID=" + uid + " --------------------*/");
-				result.append("\n/*|debug info:" + debugInfo);
+				result.append("\n/*| debug info:" + debugInfo);
 				result.append("\n/*|----end   执行调试,UID=" + uid + " ---------------------*/");
 				if (logger.isDebugEnabled()) {
 					logger.debug(result.toString());
@@ -153,16 +153,18 @@ public class SqlExecuteStat {
 		if (sqlTrace != null) {
 			uid = sqlTrace.getUid();
 			result.append("\n/*|执行类型=" + sqlTrace.getType());
+			result.append("\n/*|代码定位=" + getFirstTrace());
 			result.append("\n/*|sqlId=" + sqlTrace.getId());
 		}
 		result.append("\n/*|入参后sql:").append(fitSqlParams(sql, paramValues));
 		result.append("\n/*|sql 参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
+		// 错误或警告
 		if (isErrorOrWarn) {
-			result.insert(0,"\n/*|----start 执行错误日志, UID=" + uid + "---------------------------------*/");
+			result.insert(0, "\n/*|----start 执行错误日志, UID=" + uid + "---------------------------------*/");
 			result.append("\n/*|----end   执行错误日志,  UID=" + uid + "---------------------------------*/");
 			logger.error(result.toString());
 		} else {
-			result.insert(0,"\n/*|----start 执行调试, UID=" + uid + "---------------------------------*/");
+			result.insert(0, "\n/*|----start 执行调试, UID=" + uid + "---------------------------------*/");
 			result.append("\n/*|----end   执行调试,  UID=" + uid + "---------------------------------*/");
 			if (isDebug) {
 				logger.debug(result.toString());
@@ -189,8 +191,9 @@ public class SqlExecuteStat {
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
 				result.append("\n/*|----start超时警告slowSql  UID=" + uid + "---------------------------------*/");
 				result.append("\n/*|执行类型=" + sqlTrace.getType());
+				result.append("\n/*|代码定位=" + getFirstTrace());
 				result.append("\n/*|sqlId=" + sqlTrace.getId());
-				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime() + ">=" + printSqlTimeoutMillis + "(阀值)!");
+				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime() + ">=" + printSqlTimeoutMillis + " (阀值)!");
 				result.append("\n/*|----end  超时警告slowSql  UID=" + uid + "---------------------------------*/");
 				if (logger.isWarnEnabled()) {
 					logger.warn(result.toString());
@@ -201,8 +204,9 @@ public class SqlExecuteStat {
 			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
 				result.append("\n/*|----start执行时效提醒  UID=" + uid + "---------------------------------*/");
 				result.append("\n/*|执行类型=" + sqlTrace.getType());
+				result.append("\n/*|代码定位=" + getFirstTrace());
 				result.append("\n/*|sqlId=" + sqlTrace.getId());
-				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime());
+				result.append("\n/*|耗时:" + sqlTrace.getExecuteTime() + " 毫秒!");
 				result.append("\n/*|----end  执行时效提醒  UID=" + uid + "---------------------------------*/");
 				if (logger.isDebugEnabled()) {
 					logger.debug(result.toString());
@@ -334,5 +338,35 @@ public class SqlExecuteStat {
 			}
 		}
 		return result.toString();
+	}
+
+	/**
+	 * @TODO 定位第一个调用sqltoy的代码位置
+	 * @return
+	 */
+	public static String getFirstTrace() {
+		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+		String className = null;
+		int lineNumber = 0;
+		String method = null;
+		StackTraceElement traceElement;
+		int length = stackTraceElements.length;
+		// 逆序
+		for (int i = length - 1; i > 0; i--) {
+			traceElement = stackTraceElements[i];
+			className = traceElement.getClassName();
+			// 进入调用sqltoy的代码，此时取上一个
+			if (className.startsWith("org.sagacity.sqltoy")) {
+				// 避免异常发生
+				if (i + 1 < length) {
+					traceElement = stackTraceElements[i + 1];
+					className = traceElement.getClassName();
+					method = traceElement.getMethodName();
+					lineNumber = traceElement.getLineNumber();
+				}
+				break;
+			}
+		}
+		return "" + className + "." + method + "[line:" + lineNumber + "]";
 	}
 }
