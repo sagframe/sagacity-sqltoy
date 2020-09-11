@@ -114,10 +114,14 @@ public class SqlExecuteStat {
 					uid = threadLocal.get().getUid();
 				}
 				String debugInfo = StringUtil.fillArgs(message, args);
+				StringBuilder result = new StringBuilder();
+				result.append("\n/*|----start 执行调试, UID=" + uid + " --------------------*/");
+				result.append("\n/*|debug info:" + debugInfo);
+				result.append("\n/*|----end   执行调试,UID=" + uid + " ---------------------*/");
 				if (logger.isDebugEnabled()) {
-					logger.debug("UID=" + uid + "," + debugInfo);
+					logger.debug(result.toString());
 				} else {
-					out.println("UID=" + uid + "," + debugInfo);
+					out.println(result.toString());
 				}
 			}
 		} catch (Exception e) {
@@ -143,40 +147,27 @@ public class SqlExecuteStat {
 			}
 		}
 		SqlExecuteTrace sqlTrace = threadLocal.get();
+		StringBuilder result = new StringBuilder();
 		String uid = null;
 		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
 		if (sqlTrace != null) {
 			uid = sqlTrace.getUid();
-			// 异常或超时
-			if (isErrorOrWarn) {
-				logger.error("UID={},类型:{} ,sqlId={},发生异常!", uid, sqlTrace.getType(), sqlTrace.getId());
-			} // showSql
-			else {
-				if (isDebug) {
-					logger.debug("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId());
-				} else {
-					out.println(
-							StringUtil.fillArgs("UID={},类型:{},sqlId={}", uid, sqlTrace.getType(), sqlTrace.getId()));
-				}
-			}
+			result.append("\n/*|执行类型=" + sqlTrace.getType());
+			result.append("\n/*|sqlId=" + sqlTrace.getId());
 		}
+		result.append("\n/*|入参后sql:").append(fitSqlParams(sql, paramValues));
+		result.append("\n/*|sql 参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
 		if (isErrorOrWarn) {
-			// 为了避免初学者误以为sqltoy执行的sql是条件拼接模式容易引入sql注入问题,故在日志中提示仅为方便调试
-			logger.error("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
-			if (paramValues != null) {
-				logger.error("params:{}", paramStr);
-			}
+			result.insert(0,"\n/*|----start 执行错误日志, UID=" + uid + "---------------------------------*/");
+			result.append("\n/*|----end   执行错误日志,  UID=" + uid + "---------------------------------*/");
+			logger.error(result.toString());
 		} else {
+			result.insert(0,"\n/*|----start 执行调试, UID=" + uid + "---------------------------------*/");
+			result.append("\n/*|----end   执行调试,  UID=" + uid + "---------------------------------*/");
 			if (isDebug) {
-				logger.debug("UID=" + uid + ",入参后sql={}", fitSqlParams(sql, paramValues));
-				if (paramValues != null) {
-					logger.debug("params:{}", paramStr);
-				}
+				logger.debug(result.toString());
 			} else {
-				out.println("UID=" + uid + ",入参后sql=" + fitSqlParams(sql, paramValues));
-				if (paramValues != null) {
-					out.println("params:" + paramStr);
-				}
+				out.println(result.toString());
 			}
 		}
 	}
@@ -192,22 +183,31 @@ public class SqlExecuteStat {
 			}
 			String uid = sqlTrace.getUid();
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
+			StringBuilder result = new StringBuilder();
+
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
+				result.append("\n/*|----start超时警告slowSql  UID=" + uid + "---------------------------------*/");
+				result.append("\n/*|执行类型=" + sqlTrace.getType());
+				result.append("\n/*|sqlId=" + sqlTrace.getId());
+				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime() + ">=" + printSqlTimeoutMillis + "(阀值)!");
+				result.append("\n/*|----end  超时警告slowSql  UID=" + uid + "---------------------------------*/");
 				if (logger.isWarnEnabled()) {
-					logger.warn("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid, sqlTrace.getType(),
-							sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId());
+					logger.warn(result.toString());
 				} else {
-					out.println(StringUtil.fillArgs("UID={},超时警告slowSql:类型:{},耗时(毫秒):{} >= {}(阀值),sqlId={}!", uid,
-							sqlTrace.getType(), sqlTrace.getExecuteTime(), printSqlTimeoutMillis, sqlTrace.getId()));
+					out.println(result.toString());
 				}
 			} // 未超时也未发生错误,无需打印日志
 			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
+				result.append("\n/*|----start执行时效提醒  UID=" + uid + "---------------------------------*/");
+				result.append("\n/*|执行类型=" + sqlTrace.getType());
+				result.append("\n/*|sqlId=" + sqlTrace.getId());
+				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime());
+				result.append("\n/*|----end  执行时效提醒  UID=" + uid + "---------------------------------*/");
 				if (logger.isDebugEnabled()) {
-					logger.debug("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(), sqlTrace.getExecuteTime());
+					logger.debug(result.toString());
 				} else {
-					out.println(StringUtil.fillArgs("UID={},sqlId={},耗时:{}毫秒!", uid, sqlTrace.getId(),
-							sqlTrace.getExecuteTime()));
+					out.println(result.toString());
 				}
 			}
 			// 输出错误日志
