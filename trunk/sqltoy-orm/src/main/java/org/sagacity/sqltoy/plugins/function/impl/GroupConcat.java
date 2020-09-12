@@ -38,6 +38,9 @@ public class GroupConcat extends IFunction {
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
+			if (functionName.toLowerCase().equals("string_agg")) {
+				return super.IGNORE;
+			}
 			// 原则上可以通过string_agg 但如果类型不是字符串就会报错
 			if (args.length > 1) {
 				return " array_to_string(ARRAY_AGG(" + args[0] + ")," + args[1] + ") ";
