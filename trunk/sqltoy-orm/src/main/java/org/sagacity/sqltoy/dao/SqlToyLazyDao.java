@@ -86,8 +86,8 @@ public interface SqlToyLazyDao {
 	 * @return Long
 	 */
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
-	
-	public Long getCount(String sqlOrNamedQuery, Map<String,Object> paramsMap);
+
+	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 存储过程调用
@@ -341,9 +341,8 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
-	
-	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String,Object> paramsMap,
-			final Class<T> voClass);
+
+	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
 
 	/**
 	 * @todo 通过对象实体传参数,框架结合sql中的参数名称来映射对象属性取值
@@ -368,8 +367,8 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
-	
-	public Object getSingleValue(final String sqlOrNamedSql, final Map<String,Object> paramsMap);
+
+	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
@@ -390,16 +389,24 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrSqlId
-	 * @param paramsNamed 如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
+	 * @param paramsNamed 如果sql是select * from table where xxx=?
+	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
 	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
-	
-	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String,Object> paramsMap,
-			final Class<T> voClass);
+
+	/**
+	 * @TODO 提供基于Map传参的查询
+	 * @param <T>
+	 * @param sqlOrSqlId
+	 * @param paramsMap
+	 * @param voClass
+	 * @return
+	 */
+	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> voClass);
 
 	/**
 	 * @TODO 将查询结果直接按二维List返回
@@ -409,8 +416,6 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public List findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
-	
-	public List findBySql(final String sqlOrSqlId, final Map<String,Object> paramsMap);
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
@@ -426,17 +431,26 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass 返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
+	 * @param voClass         返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
 	 * @return
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
-	
-	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Map<String,Object> paramsMap, final Class<T> voClass);
 
 	/**
-	 * @TODO  通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
+	 * @TODO 提供基于Map传参的分页查询
+	 * @param <T>
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param voClass
+	 * @return
+	 */
+	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+			final Map<String, Object> paramsMap, final Class<T> voClass);
+
+	/**
+	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
 	 * @param paginationModel
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
@@ -445,9 +459,6 @@ public interface SqlToyLazyDao {
 	 */
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
-	
-	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
-			final Map<String,Object> paramsMap);
 
 	/**
 	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
@@ -465,7 +476,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 取记录的前多少条记录
 	 * @param sqlOrNamedSql
-	 * @param paramsNamed   如果sql是select * from  table where xxx=? 问号传参模式，paramNamed设置为null
+	 * @param paramsNamed   如果sql是select * from table where xxx=?
+	 *                      问号传参模式，paramNamed设置为null
 	 * @param paramValues
 	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
@@ -473,8 +485,17 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramValues,
 			final Class<T> voClass, final double topSize);
-	
-	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String,Object> paramsMap,
+
+	/**
+	 * @TODO 提供基于Map传参的top查询
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param voClass
+	 * @param topSize
+	 * @return
+	 */
+	public <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> voClass, final double topSize);
 
 	/**
@@ -503,9 +524,19 @@ public interface SqlToyLazyDao {
 
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
-	
-	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String,Object> paramsMap, final Class<T> voClass, final double randomCount);
-	
+
+	/**
+	 * @TODO 提供基于Map传参的随机记录查询
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param voClass
+	 * @param randomCount
+	 * @return
+	 */
+	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> voClass, final double randomCount);
+
 	/**
 	 * @todo 批量集合通过sql进行修改操作
 	 * @param sqlOrNamedSql
@@ -550,8 +581,14 @@ public interface SqlToyLazyDao {
 			final ReflectPropertyHandler reflectPropertyHandler);
 
 	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
-	
-	public Long executeSql(final String sqlOrNamedSql, final Map<String,Object> paramsMap);
+
+	/**
+	 * @TODO 提供基于Map传参的sql执行
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @return
+	 */
+	public Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 构造树形表的节点路径、层次等级、是否叶子节点等必要信息
@@ -775,7 +812,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds);
-	
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String,Object> paramsMap);
+
+	/**
+	 * @TODO 提供基于Map传参的并行查询
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
 }

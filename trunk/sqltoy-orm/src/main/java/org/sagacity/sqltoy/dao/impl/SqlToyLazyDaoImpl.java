@@ -100,7 +100,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getSingleValue(sqlOrNamedSql, model.getNames(), model.getValues());
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -128,7 +128,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.loadBySql(sqlOrNamedSql, model.getNames(), model.getValues(), resultType);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -154,15 +154,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> List<T> findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return (List<T>) super.findBySql(sqlOrNamedSql,model.getNames(), model.getValues(), voClass);
+		return (List<T>) super.findBySql(sqlOrNamedSql, model.getNames(), model.getValues(), voClass);
 	}
 
-	@Override
-	public List findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return super.findBySql(sqlOrNamedSql, model.getNames(), model.getValues(), null);
-	}
-	
 	@Override
 	public List findBySql(String sqlOrNamedSql, String[] paramsNamed, Object[] paramsValue) {
 		return super.findBySql(sqlOrNamedSql, paramsNamed, paramsValue, null);
@@ -215,17 +209,10 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
 			Map<String, Object> paramsMap, Class<T> voClass) {
-		return (PaginationModel<T>)super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
-				.getPageResult();
+		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
+				new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getPageResult();
 	}
 
-	@Override
-	public PaginationModel findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
-			Map<String, Object> paramsMap) {
-		return super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsMap))
-				.getPageResult();
-	}
-	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -244,7 +231,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.findTopBySql(sqlOrNamedSql, model.getNames(), model.getValues(), voClass, topSize);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -286,7 +273,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getRandomResult(sqlOrNamedSql, model.getNames(), model.getValues(), voClass, randomCount);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -693,7 +680,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.executeSql(sqlOrNamedSql, model.getNames(), model.getValues());
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -965,13 +952,14 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
 		return super.parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames, Object[] paramValues,
-			Integer maxWaitSeconds) {
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds) {
 		return super.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
