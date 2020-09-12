@@ -603,6 +603,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		scriptLoader.setEncoding(encoding);
 	}
 
+	// functionConverts=close 表示关闭
 	/**
 	 * @param functionConverts the functionConverts to set
 	 */
@@ -616,7 +617,7 @@ public class SqlToyContext implements ApplicationContextAware {
 			String converts = (String) functionConverts;
 			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
 				FunctionUtils.setFunctionConverts(null);
-			} else {
+			} else if (!"close".equalsIgnoreCase(converts)) {
 				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split(",")));
 			}
 		}

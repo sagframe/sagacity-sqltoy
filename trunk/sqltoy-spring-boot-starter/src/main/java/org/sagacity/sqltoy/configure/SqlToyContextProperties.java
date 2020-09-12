@@ -28,7 +28,7 @@ public class SqlToyContextProperties implements Serializable {
 	private String translateConfig;
 
 	/**
-	 * 针对不同数据库函数进行转换,非必须属性
+	 * 针对不同数据库函数进行转换,非必须属性,close 表示关闭
 	 */
 	private Object functionConverts;
 
@@ -167,6 +167,11 @@ public class SqlToyContextProperties implements Serializable {
 		return functionConverts;
 	}
 
+	/**
+	 * functionConverts=close 表示关闭
+	 * 
+	 * @param functionConverts
+	 */
 	public void setFunctionConverts(Object functionConverts) {
 		this.functionConverts = functionConverts;
 	}
