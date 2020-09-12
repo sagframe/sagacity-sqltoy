@@ -11,12 +11,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.4 发版日期: 2020-09-08
-* 修复EntityQuery where中vo属性兼容的缺陷。
-* 增加EntityQuery和QueryExecutor关闭blankToNull的功能，便于特殊场景下使用。
-* 修复EntityQuery 条件以？形式传参，blankToNull因没有参数名称未生效
-* 修复postgresql saveOrUpdate场景下字段默认值未设置问题
-* quickvo 增加了一个关闭适配EntityQuery功能在POJO中抽象类里产生SelectFieldsImpl内部类的开关(适应部分用户不喜欢链式字段筛选场景)
+# 最新版本号: 4.15.5 发版日期: 2020-09-12
+* 针对查询开发Map<String,Object> 类型传参，便于一些报表类项目的开发
 
 # 未来规划:
 * 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
