@@ -38,7 +38,6 @@ public class GroupConcat extends IFunction {
 			sign = tmp.substring(matchIndex + 11).trim();
 		}
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB) {
-			// postgresql 默认是string_agg 的语法,不做替换
 			if (functionName.toLowerCase().equals("string_agg")) {
 				return super.IGNORE;
 			}

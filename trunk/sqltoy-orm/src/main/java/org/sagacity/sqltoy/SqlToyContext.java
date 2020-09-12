@@ -257,11 +257,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		ReservedWordsUtil.put(reservedWords);
 
 		/**
-		 * 设置保留字
-		 */
-		ReservedWordsUtil.put(reservedWords);
-
-		/**
 		 * 初始化sql执行统计的基本参数
 		 */
 		SqlExecuteStat.setDebug(this.debug);
@@ -603,8 +598,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		scriptLoader.setEncoding(encoding);
 	}
 
-	// functionConverts=close 表示关闭
 	/**
+	 * functionConverts=close表示关闭
 	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(Object functionConverts) {
@@ -617,7 +612,7 @@ public class SqlToyContext implements ApplicationContextAware {
 			String converts = (String) functionConverts;
 			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
 				FunctionUtils.setFunctionConverts(null);
-			} else if (!"close".equalsIgnoreCase(converts)) {
+			} else if (!converts.equalsIgnoreCase("close")) {
 				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split(",")));
 			}
 		}
