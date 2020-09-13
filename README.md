@@ -11,8 +11,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.5 发版日期: 2020-09-12
+# 最新版本号: 4.15.7 发版日期: 2020-09-13
 * 针对查询开放Map<String,Object> 类型传参模式，便于一些报表类项目的开发
+* 美化日志输出格式
+* 优化functionConvert 对postgresql group_concat 的处理
 
 # 未来规划:
 * 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
