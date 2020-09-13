@@ -473,6 +473,19 @@ public class ResultUtils {
 		return items;
 	}
 
+	/**
+	 * 目前还未实现，只支持单列link
+	 * @param sqlToyConfig
+	 * @param sqlToyContext
+	 * @param conn
+	 * @param rs
+	 * @param rowCnt
+	 * @param labelIndexMap
+	 * @param labelNames
+	 * @param startColIndex
+	 * @return
+	 * @throws Exception
+	 */
 	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
 			ResultSet rs, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex)
 			throws Exception {
