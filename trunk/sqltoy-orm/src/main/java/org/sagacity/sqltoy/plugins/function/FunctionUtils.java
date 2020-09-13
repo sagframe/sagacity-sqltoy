@@ -178,7 +178,7 @@ public class FunctionUtils {
 					else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
 						functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
 					}
-					className = functionName.substring(functionName.lastIndexOf(".") + 1);
+					className = functionName.substring(functionName.lastIndexOf(".") + 1).toLowerCase();
 					// 名字已经存在的排除
 					if (!nameSet.contains(className)) {
 						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
