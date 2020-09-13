@@ -4,7 +4,11 @@
 package org.sagacity.sqltoy.plugins.function;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -27,6 +31,23 @@ public class FunctionUtils {
 			funPackage.concat("Length"), funPackage.concat("ToChar"), funPackage.concat("If"),
 			funPackage.concat("GroupConcat") };
 
+	private final static Map<String, String> functionNames = new HashMap<String, String>() {
+		{
+			put("substr", "SubStr");
+			put("trim", "Trim");
+			put("instr", "Instr");
+			put("concat", "Concat");
+			put("concatws", "ConcatWs");
+			put("nvl", "Nvl");
+			put("dateformat", "DateFormat");
+			put("now", "Now");
+			put("length", "Length");
+			put("tochar", "ToChar");
+			put("if", "If");
+			put("groupconcat", "GroupConcat");
+
+		}
+	};
 	private static List<IFunction> functionConverts = new ArrayList<IFunction>();
 
 	public static String getDialectSql(String sql, String dialect) {
@@ -136,7 +157,7 @@ public class FunctionUtils {
 						}
 					}
 				}
-				// 包含默认的函数
+				// 包含默认的函数,将默认的在后面加载
 				if (hasDefault) {
 					for (String convert : functions) {
 						if (!realConverts.contains(convert)) {
@@ -145,15 +166,23 @@ public class FunctionUtils {
 					}
 				}
 				String functionName = null;
+				// 排除重复,让自定义同名函数生效
+				Set<String> nameSet = new HashSet<String>();
+				String className;
 				for (int i = 0; i < realConverts.size(); i++) {
-					functionName = realConverts.get(i).toString().trim();
+					functionName = realConverts.get(i).trim();
 					// sql函数包名变更,修正调整后的包路径,保持兼容
 					if (functionName.startsWith("org.sagacity.sqltoy")) {
-						String funName = functionName.substring(functionName.lastIndexOf(".") + 1);
-						converts.add((IFunction) (Class.forName(funPackage.concat(funName)).getDeclaredConstructor()
-								.newInstance()));
-					} else {
+						functionName = funPackage.concat(functionName.substring(functionName.lastIndexOf(".") + 1));
+					} // trim、nvl等简写模式
+					else if (!functionName.contains(".") && functionNames.containsKey(functionName.toLowerCase())) {
+						functionName = funPackage.concat(functionNames.get(functionName.toLowerCase()));
+					}
+					className = functionName.substring(functionName.lastIndexOf(".") + 1);
+					// 名字已经存在的排除
+					if (!nameSet.contains(className)) {
 						converts.add((IFunction) (Class.forName(functionName).getDeclaredConstructor().newInstance()));
+						nameSet.add(className);
 					}
 				}
 			} // 为null时启用默认配置
@@ -168,5 +197,4 @@ public class FunctionUtils {
 		functionConverts = converts;
 	}
 
-	
 }
