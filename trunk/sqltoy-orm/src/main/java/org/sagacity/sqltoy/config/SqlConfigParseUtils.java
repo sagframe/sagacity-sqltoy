@@ -700,7 +700,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 将动态的sql解析组合成一个SqlToyConfig模型，以便统一处理
 	 * @param querySql
-	 * @param dialect
+	 * @param dialect 当前的数据库类型,默认为null不指定
 	 * @param sqlType
 	 * @return
 	 */
