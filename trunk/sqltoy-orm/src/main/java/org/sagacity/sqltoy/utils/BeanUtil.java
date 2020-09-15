@@ -907,7 +907,7 @@ public class BeanUtil {
 				index++;
 			}
 		} catch (Exception e) {
-			logger.error("将集合数据{}反射到Java Bean的属性{}过程异常!{}", cellData, propertyName, e.getMessage());
+			logger.error("将集合单元格数据:{} 反射到Java Bean的属性:{}过程异常!{}", cellData, propertyName, e.getMessage());
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
