@@ -188,7 +188,7 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 提供对外的访问
+	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
 	 * @param sqlToyContext
 	 * @param cacheName
 	 * @param cacheType
@@ -238,6 +238,35 @@ public class TranslateManager {
 	 */
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
+	}
+
+	/**
+	 * @todo 将数据放入缓存
+	 * @param cacheConfig
+	 * @param cacheName
+	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 * @param cacheValue
+	 */
+	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
+		if (translateCacheManager != null) {
+			TranslateConfigModel cacheModel = translateMap.get(cacheName);
+			if (cacheModel == null) {
+				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
+				return;
+			}
+			translateCacheManager.put(cacheModel, cacheName, cacheType, cacheValue);
+		}
+	}
+
+	/**
+	 * @todo 清空缓存
+	 * @param cacheName
+	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 */
+	public void clear(String cacheName, String cacheType) {
+		if (translateCacheManager != null) {
+			translateCacheManager.clear(cacheName, cacheType);
+		}
 	}
 
 	public void destroy() {

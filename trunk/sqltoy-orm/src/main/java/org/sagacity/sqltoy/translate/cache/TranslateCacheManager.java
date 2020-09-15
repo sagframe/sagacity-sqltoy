@@ -38,27 +38,27 @@ public abstract class TranslateCacheManager {
 	/**
 	 * @todo 从缓存中获取翻译的hashMap 集合数据
 	 * @param cacheName
-	 * @param elementId
+	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @return
 	 */
-	public abstract HashMap<String, Object[]> getCache(String cacheName, String elementId);
+	public abstract HashMap<String, Object[]> getCache(String cacheName, String cacheType);
 
 	/**
 	 * @todo 将数据放入缓存
 	 * @param cacheConfig
 	 * @param cacheName
-	 * @param elementId
+	 * @param cacheType   (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @param cacheValue
 	 */
-	public abstract void put(TranslateConfigModel cacheModel, String cacheName, String elementId,
+	public abstract void put(TranslateConfigModel cacheModel, String cacheName, String cacheType,
 			HashMap<String, Object[]> cacheValue);
 
 	/**
 	 * @todo 清空缓存
 	 * @param cacheName
-	 * @param elementId
+	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 */
-	public abstract void clear(String cacheName, String elementId);
+	public abstract void clear(String cacheName, String cacheType);
 
 	/**
 	 * 初始化(便于扩展实例启动一些处理逻辑)
