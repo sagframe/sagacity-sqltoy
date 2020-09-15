@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.config.annotation.Entity;
+import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1230,5 +1232,28 @@ public class BeanUtil {
 			throw new RuntimeException(e);
 		}
 		return entities;
+	}
+
+	/**
+	 * @TODO 获取VO对应的Class
+	 * @param entityClass
+	 * @return
+	 */
+	public static Class getEntityClass(Class entityClass) {
+		Class realEntityClass = entityClass;
+		// 通过逐层递归来判断是否SqlToy annotation注解所规定的关联数据库的实体类
+		// 即@Entity 注解的抽象类
+		boolean isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);
+		while (!isEntity) {
+			realEntityClass = realEntityClass.getSuperclass();
+			if (realEntityClass == null) {
+				break;
+			}
+			isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);
+		}
+		if (isEntity) {
+			return realEntityClass;
+		}
+		return entityClass;
 	}
 }
