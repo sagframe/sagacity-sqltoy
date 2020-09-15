@@ -135,8 +135,8 @@ public class DialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
 		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
-		//update 2020-09-11
-		//避免无:name模式的sql,通过参数名称和values传参,当paramNames不为空将参数设置为null
+		// update 2020-09-11
+		// 避免无:name模式的sql,通过参数名称和values传参,当paramNames不为空将参数设置为null
 		if (sqlToyConfig.getParamsName() == null || sqlToyConfig.getParamsName().length == 0) {
 			if (paramsNamed != null && paramsNamed.length > 0) {
 				paramsNamed = new String[] {};
@@ -1047,7 +1047,7 @@ public class DialectUtils {
 		Serializable result = null;
 		if (rows != null && rows.size() > 0) {
 			rows = BeanUtil.reflectListToBean(rows, ResultUtils.humpFieldNames(queryResult.getLabelNames()),
-					entity.getClass());
+					BeanUtil.getEntityClass(entity.getClass()));
 			result = (Serializable) rows.get(0);
 		}
 		if (result == null) {
@@ -1091,7 +1091,7 @@ public class DialectUtils {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
-		Class entityClass = entities.get(0).getClass();
+		Class entityClass = BeanUtil.getEntityClass(entities.get(0).getClass());
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 
 		// 没有主键不能进行load相关的查询
