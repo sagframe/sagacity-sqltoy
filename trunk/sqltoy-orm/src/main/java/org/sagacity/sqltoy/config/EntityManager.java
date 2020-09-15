@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -120,16 +121,15 @@ public class EntityManager {
 	 * @param entityClass
 	 * @return
 	 */
-	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
-		String className = entityClass.getName();
+	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
+		String className = voClass.getName();
 		if (unEntityMap.contains(className)) {
 			return false;
 		}
 		if (entitysMetaMap.contains(className)) {
 			return true;
 		}
-
-		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, BeanUtil.getEntityClass(voClass));
 		if (entityMeta != null) {
 			return true;
 		}
@@ -143,16 +143,16 @@ public class EntityManager {
 	 * @param entityClass
 	 * @return
 	 */
-	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
-		if (entityClass == null) {
+	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class voClass) {
+		if (voClass == null) {
 			return null;
 		}
-		String className = entityClass.getName();
+		String className = voClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
-			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+			entityMeta = parseEntityMeta(sqlToyContext, BeanUtil.getEntityClass(voClass));
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
