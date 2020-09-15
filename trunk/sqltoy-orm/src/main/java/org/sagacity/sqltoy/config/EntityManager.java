@@ -118,7 +118,7 @@ public class EntityManager {
 	/**
 	 * @TODO 判断是否是实体对象
 	 * @param sqlToyContext
-	 * @param entityClass
+	 * @param voClass
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
@@ -140,7 +140,7 @@ public class EntityManager {
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
 	 * @param sqlToyContext
-	 * @param entityClass
+	 * @param voClass
 	 * @return
 	 */
 	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class voClass) {
