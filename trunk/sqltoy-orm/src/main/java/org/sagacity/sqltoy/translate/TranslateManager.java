@@ -135,12 +135,10 @@ public class TranslateManager {
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(SqlToyContext sqlToyContext, Connection conn,
 			HashMap<String, Translate> translates) {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
-		// Translate translate;
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
 		TranslateExtend extend;
 		for (Map.Entry<String, Translate> entry : translates.entrySet()) {
-			// translate = entry.getValue();
 			extend = entry.getValue().getExtend();
 			if (translateMap.containsKey(extend.cache)) {
 				cacheModel = translateMap.get(extend.cache);
@@ -191,7 +189,7 @@ public class TranslateManager {
 	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
 	 * @param sqlToyContext
 	 * @param cacheName
-	 * @param cacheType
+	 * @param cacheType     (一般为null,不为空时一般用于数据字典等同于dictType)
 	 * @return
 	 * @throws Exception
 	 */
@@ -244,7 +242,7 @@ public class TranslateManager {
 	 * @todo 将数据放入缓存
 	 * @param cacheConfig
 	 * @param cacheName
-	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 * @param cacheType   (默认为null，针对诸如数据字典类型的，对应字典类型)
 	 * @param cacheValue
 	 */
 	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
