@@ -79,7 +79,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private EntityManager entityManager = new EntityManager();
 
 	/**
-	 * 翻译器插件
+	 * sqltoy的翻译器插件(可以通过其完成对缓存的管理扩展)
 	 */
 	private TranslateManager translateManager = new TranslateManager();
 
@@ -94,7 +94,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private IUnifyFieldsHandler unifyFieldsHandler;
 
 	/**
-	 * 缓存管理器
+	 * 具体缓存实现
 	 */
 	private TranslateCacheManager translateCacheManager;
 
@@ -600,6 +600,7 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	/**
 	 * functionConverts=close表示关闭
+	 * 
 	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(Object functionConverts) {

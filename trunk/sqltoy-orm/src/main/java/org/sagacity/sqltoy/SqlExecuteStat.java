@@ -115,9 +115,9 @@ public class SqlExecuteStat {
 				}
 				String debugInfo = StringUtil.fillArgs(message, args);
 				StringBuilder result = new StringBuilder();
-				result.append("\n/*|----start 执行调试, UID=" + uid + " --------------------*/");
-				result.append("\n/*| debug info:" + debugInfo);
-				result.append("\n/*|----end   执行调试,UID=" + uid + " ---------------------*/");
+				result.append("\n\n/*|----start debug,UID=" + uid + " --------------------*/");
+				result.append("\n/*| 调试信息:" + debugInfo);
+				result.append("\n/*|----end   debug,UID=" + uid + " ---------------------*/\n");
 				if (logger.isDebugEnabled()) {
 					logger.debug(result.toString());
 				} else {
@@ -160,12 +160,12 @@ public class SqlExecuteStat {
 		result.append("\n/*|sql 参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
 		// 错误或警告
 		if (isErrorOrWarn) {
-			result.insert(0, "\n/*|----start 执行错误日志, UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   执行错误日志,  UID=" + uid + "---------------------------------*/");
+			result.insert(0, "\n\n/*|----start error,UID=" + uid + "---------------------------------*/");
+			result.append("\n/*|----end   error,UID=" + uid + "---------------------------------*/\n");
 			logger.error(result.toString());
 		} else {
-			result.insert(0, "\n/*|----start 执行调试, UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   执行调试,  UID=" + uid + "---------------------------------*/");
+			result.insert(0, "\n\n/*|----start debug,UID=" + uid + "---------------------------------*/");
+			result.append("\n/*|----end   debug,UID=" + uid + "---------------------------------*/\n");
 			if (isDebug) {
 				logger.debug(result.toString());
 			} else {
@@ -189,12 +189,12 @@ public class SqlExecuteStat {
 
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				result.append("\n/*|----start超时警告slowSql  UID=" + uid + "---------------------------------*/");
+				result.append("\n\n/*|----start warn slowsql overtime,UID=" + uid + "---------------------------------*/");
 				result.append("\n/*|执行类型=" + sqlTrace.getType());
 				result.append("\n/*|代码定位=" + getFirstTrace());
 				result.append("\n/*|sqlId=" + sqlTrace.getId());
 				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime() + ">=" + printSqlTimeoutMillis + " (阀值)!");
-				result.append("\n/*|----end  超时警告slowSql  UID=" + uid + "---------------------------------*/");
+				result.append("\n/*|----end  warn slowsql overtime,UID=" + uid + "---------------------------------*/\n");
 				if (logger.isWarnEnabled()) {
 					logger.warn(result.toString());
 				} else {
@@ -202,12 +202,12 @@ public class SqlExecuteStat {
 				}
 			} // 未超时也未发生错误,无需打印日志
 			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
-				result.append("\n/*|----start执行时效提醒  UID=" + uid + "---------------------------------*/");
+				result.append("\n\n/*|----start debug runtime,UID=" + uid + "---------------------------------*/");
 				result.append("\n/*|执行类型=" + sqlTrace.getType());
 				result.append("\n/*|代码定位=" + getFirstTrace());
 				result.append("\n/*|sqlId=" + sqlTrace.getId());
 				result.append("\n/*|耗时:" + sqlTrace.getExecuteTime() + " 毫秒!");
-				result.append("\n/*|----end  执行时效提醒  UID=" + uid + "---------------------------------*/");
+				result.append("\n/*|----end  debug runtime,UID=" + uid + "---------------------------------*/\n");
 				if (logger.isDebugEnabled()) {
 					logger.debug(result.toString());
 				} else {
@@ -346,6 +346,8 @@ public class SqlExecuteStat {
 	 */
 	public static String getFirstTrace() {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+		// StackTraceElement[] stackTraceElements=new Throwable().getStackTrace();
+
 		String className = null;
 		int lineNumber = 0;
 		String method = null;
