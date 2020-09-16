@@ -122,14 +122,15 @@ public class EntityManager {
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
-		String className = voClass.getName();
+		Class entityClass = BeanUtil.getEntityClass(voClass);
+		String className = entityClass.getName();
 		if (unEntityMap.contains(className)) {
 			return false;
 		}
 		if (entitysMetaMap.contains(className)) {
 			return true;
 		}
-		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, BeanUtil.getEntityClass(voClass));
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 		if (entityMeta != null) {
 			return true;
 		}
@@ -147,12 +148,13 @@ public class EntityManager {
 		if (voClass == null) {
 			return null;
 		}
-		String className = voClass.getName();
+		Class entityClass = BeanUtil.getEntityClass(voClass);
+		String className = entityClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
-			entityMeta = parseEntityMeta(sqlToyContext, BeanUtil.getEntityClass(voClass));
+			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));

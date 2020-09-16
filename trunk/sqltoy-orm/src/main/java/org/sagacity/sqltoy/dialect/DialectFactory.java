@@ -321,7 +321,8 @@ public class DialectFactory {
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
 					false, dataSource);
-			SqlExecuteStat.start(uniqueExecutor.getEntity().getClass().getName(), "isUnique", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(uniqueExecutor.getEntity().getClass()).getName(), "isUnique",
+					null);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -984,8 +985,8 @@ public class DialectFactory {
 		}
 		try {
 			// 启动执行日志
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveOrUpdateAll:[" + entities.size() + "]条记录!",
-					null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"saveOrUpdateAll:[" + entities.size() + "]条记录!", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -1038,8 +1039,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAllNotExist:[" + entities.size() + "]条记录!",
-					null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"saveAllNotExist:[" + entities.size() + "]条记录!", null);
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -1090,7 +1091,7 @@ public class DialectFactory {
 		try {
 			// 单记录操作返回对应的库和表配置
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
-			SqlExecuteStat.start(entity.getClass().getName(), "load", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "load", null);
 			return (T) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1123,7 +1124,8 @@ public class DialectFactory {
 			return entities;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "loadAll:[" + entities.size() + "]条记录!", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"loadAll:[" + entities.size() + "]条记录!", null);
 			// 一般in的最大数量是1000
 			int batchSize = SqlToyConstants.getLoadAllBatchSize();
 			// 对可能存在的配置参数定义错误进行校正,最大控制在1000内
@@ -1178,7 +1180,7 @@ public class DialectFactory {
 			return null;
 		}
 		try {
-			SqlExecuteStat.start(entity.getClass().getName(), "save", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "save", null);
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
@@ -1214,7 +1216,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "saveAll:[" + entities.size() + "]条记录!", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"saveAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, true, dataSource,
 					(context, batchModel) -> {
@@ -1266,7 +1269,7 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entity.getClass().getName(), "update", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "update", null);
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -1304,7 +1307,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "updateAll:[" + entities.size() + "]条记录!", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"updateAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
 					(context, batchModel) -> {
@@ -1351,7 +1355,7 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entity.getClass().getName(), "delete", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "delete", null);
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
@@ -1386,7 +1390,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(entities.get(0).getClass().getName(), "deleteAll:[" + entities.size() + "]条记录!", null);
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entities.get(0).getClass()).getName(),
+					"deleteAll:[" + entities.size() + "]条记录!", null);
 			// 分库分表并行执行
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, dataSource,
 					(context, batchModel) -> {
