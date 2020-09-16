@@ -1239,7 +1239,8 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static Class getEntityClass(Class entityClass) {
-		// 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类
+		// update 2020-9-16
+		// 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类(双括号实例化modifiers会等于0)
 		if (entityClass == null || entityClass.getModifiers() != 0) {
 			return entityClass;
 		}
