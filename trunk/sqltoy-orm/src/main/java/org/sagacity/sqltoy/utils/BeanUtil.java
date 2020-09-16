@@ -1239,6 +1239,10 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static Class getEntityClass(Class entityClass) {
+		// 主要规避VO对象{{}}模式初始化，导致Class获取变成了内部类
+		if (entityClass == null || entityClass.getModifiers() != 0) {
+			return entityClass;
+		}
 		Class realEntityClass = entityClass;
 		// 通过逐层递归来判断是否SqlToy annotation注解所规定的关联数据库的实体类
 		// 即@Entity 注解的抽象类
