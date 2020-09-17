@@ -541,6 +541,11 @@ public class DialectFactory {
 		if (StringUtil.isBlank(extend.sql)) {
 			throw new IllegalArgumentException("findSkipTotalCountPage operate sql is null!");
 		}
+		// 页数必须要大于等于1，pageSize必须要大于1
+		if (pageNo < 1 || pageSize < 1) {
+			throw new IllegalArgumentException(
+					"findSkipTotalCountPage operate  pageSize:" + pageSize + "<1 or pageNo:" + pageNo + " < 1!");
+		}
 		int limitSize = sqlToyContext.getPageFetchSizeLimit();
 		// 分页查询不允许单页数据超过上限，避免大规模数据提取
 		if (pageSize >= limitSize) {
