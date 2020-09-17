@@ -652,7 +652,9 @@ public class DialectFactory {
 								queryResult.setPageSize(pageSize);
 								queryResult.setRecordCount(0L);
 								if (illegal) {
-									logger.warn("非法进行分页查询,提取记录总数为:{},sql={}", recordCnt, sqlToyConfig.getIdOrSql());
+									logger.warn(
+											"非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}",
+											recordCnt, limitSize, sqlToyConfig.getIdOrSql());
 								} else {
 									SqlExecuteStat.debug("提取记录总数为0,sql={}", sqlToyConfig.getIdOrSql());
 								}
