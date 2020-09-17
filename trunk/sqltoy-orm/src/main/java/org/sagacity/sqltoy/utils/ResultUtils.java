@@ -291,7 +291,6 @@ public class ResultUtils {
 		}
 
 		List<List> items = new ArrayList();
-		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
@@ -356,10 +355,8 @@ public class ResultUtils {
 						cacheValues = linkTranslateMap.get(linkValue.toString());
 						if (cacheValues == null) {
 							linkStr = "[" + linkValue + "]未匹配";
-							if (isDebug) {
-								logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-										extend.cacheType, linkValue);
-							}
+							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+									extend.cacheType, linkValue);
 						} else {
 							linkStr = (cacheValues[linkTranslateIndex] == null) ? ""
 									: cacheValues[linkTranslateIndex].toString();
@@ -497,7 +494,6 @@ public class ResultUtils {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		List<List> items = new ArrayList();
-		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
@@ -545,7 +541,7 @@ public class ResultUtils {
 				}
 			}
 		}
-
+		// link是否有修饰器
 		boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 		boolean isLeft = true;
 		if (hasDecorate) {
@@ -555,7 +551,6 @@ public class ResultUtils {
 		Object[] linkValues = new Object[linkCols];
 		String[] linkStrs = new String[linkCols];
 
-		HashMap<String, Object[]> linkTranslateMap = null;
 		TranslateExtend extend = null;
 		Object[] cacheValues;
 		List rowTemp;
@@ -569,14 +564,11 @@ public class ResultUtils {
 				} else {
 					if (translateLinks[i]) {
 						extend = transExtends[i];
-						linkTranslateMap = translateCache.get(extend.column);
-						cacheValues = linkTranslateMap.get(linkValues[i].toString());
+						cacheValues = translateCache.get(extend.column).get(linkValues[i].toString());
 						if (cacheValues == null) {
 							linkStrs[i] = "[" + linkValues[i] + "]未匹配";
-							if (isDebug) {
-								logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-										extend.cacheType, linkValues[i]);
-							}
+							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+									extend.cacheType, linkValues[i]);
 						} else {
 							linkStrs[i] = (cacheValues[extend.index] == null) ? ""
 									: cacheValues[extend.index].toString();
@@ -586,7 +578,7 @@ public class ResultUtils {
 					}
 				}
 			}
-
+			// 取分组列的值
 			identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
