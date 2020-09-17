@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -117,10 +118,11 @@ public class EntityManager {
 	/**
 	 * @TODO 判断是否是实体对象
 	 * @param sqlToyContext
-	 * @param entityClass
+	 * @param voClass
 	 * @return
 	 */
-	public boolean isEntity(SqlToyContext sqlToyContext, Class entityClass) {
+	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
+		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
 		if (unEntityMap.contains(className)) {
 			return false;
@@ -128,7 +130,6 @@ public class EntityManager {
 		if (entitysMetaMap.contains(className)) {
 			return true;
 		}
-
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
 		if (entityMeta != null) {
 			return true;
@@ -140,13 +141,14 @@ public class EntityManager {
 	/**
 	 * @todo <b>获取Entity类的对应数据库表信息，如：查询、修改、插入sql、对象属性跟表字段之间的关系等信息</b>
 	 * @param sqlToyContext
-	 * @param entityClass
+	 * @param voClass
 	 * @return
 	 */
-	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
-		if (entityClass == null) {
+	public EntityMeta getEntityMeta(SqlToyContext sqlToyContext, Class voClass) {
+		if (voClass == null) {
 			return null;
 		}
+		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
 		// update 2017-11-27

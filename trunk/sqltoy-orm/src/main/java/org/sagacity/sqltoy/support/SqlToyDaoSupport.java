@@ -328,7 +328,7 @@ public class SqlToyDaoSupport {
 		Class[] cascades = cascadeTypes;
 		// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
 		if (cascades == null || cascades.length == 0) {
-			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
+			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
 		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
 	}
@@ -367,7 +367,7 @@ public class SqlToyDaoSupport {
 		if (voClass == null || ids == null || ids.length == 0) {
 			throw new IllegalArgumentException("voClass、ids must not null!");
 		}
-		EntityMeta entityMeta = this.getEntityMeta(voClass);
+		EntityMeta entityMeta = getEntityMeta(voClass);
 		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
@@ -389,7 +389,7 @@ public class SqlToyDaoSupport {
 		}
 		Class[] cascades = cascadeTypes;
 		if (cascades == null || cascades.length == 0) {
-			cascades = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
+			cascades = getEntityMeta(entities.get(0).getClass()).getCascadeTypes();
 		}
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}

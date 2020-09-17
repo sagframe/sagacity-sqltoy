@@ -291,7 +291,6 @@ public class ResultUtils {
 		}
 
 		List<List> items = new ArrayList();
-		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
@@ -333,7 +332,7 @@ public class ResultUtils {
 			}
 			Object preIdentity = null;
 			Object linkValue;
-			Object linkStr;
+			String linkStr;
 			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumn.toLowerCase()) : false;
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
@@ -345,9 +344,7 @@ public class ResultUtils {
 			}
 			Object[] cacheValues;
 			// 判断link拼接是否重新开始
-			boolean isLastProcess = false;
 			while (rs.next()) {
-				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
@@ -355,13 +352,12 @@ public class ResultUtils {
 					if (translateLink) {
 						cacheValues = linkTranslateMap.get(linkValue.toString());
 						if (cacheValues == null) {
-							linkStr = "";
-							if (isDebug) {
-								logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-										extend.cacheType, linkValue);
-							}
+							linkStr = "[" + linkValue + "]未匹配";
+							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+									extend.cacheType, linkValue);
 						} else {
-							linkStr = cacheValues[linkTranslateIndex];
+							linkStr = (cacheValues[linkTranslateIndex] == null) ? ""
+									: cacheValues[linkTranslateIndex].toString();
 						}
 					} else {
 						linkStr = linkValue.toString();
@@ -389,9 +385,11 @@ public class ResultUtils {
 					if (linkBuffer.length() > 0) {
 						linkBuffer.append(linkModel.getSign());
 					}
-					linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr.toString(),
-							linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStr);
-					isLastProcess = true;
+					linkBuffer
+							.append(hasDecorate
+									? StringUtil.appendStr(linkStr, linkModel.getDecorateAppendChar(),
+											linkModel.getDecorateSize(), isLeft)
+									: linkStr);
 				}
 				index++;
 				// 存在超出25000条数据的查询
@@ -404,7 +402,8 @@ public class ResultUtils {
 					break;
 				}
 			}
-			if (isLastProcess) {
+			// 对最后一条写入循环值
+			if (items.size() > 1) {
 				items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 			}
 		} else {
@@ -475,6 +474,7 @@ public class ResultUtils {
 
 	/**
 	 * 目前还未实现，只支持单列link
+	 * 
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
 	 * @param conn
@@ -492,7 +492,6 @@ public class ResultUtils {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		List<List> items = new ArrayList();
-		boolean isDebug = logger.isDebugEnabled();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
@@ -521,60 +520,79 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-		List rowTemp;
-		Object identity = null;
-		String linkColumn = linkModel.getColumns()[0];
-		int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
-		StringBuilder linkBuffer = new StringBuilder();
+
+		int linkCols = linkModel.getColumns().length;
+		String[] linkColumns = linkModel.getColumns();
+		int[] linkIndexs = new int[linkCols];
+		StringBuilder[] linkBuffers = new StringBuilder[linkCols];
+		boolean[] translateLinks = new boolean[linkCols];
+		TranslateExtend[] transExtends = new TranslateExtend[linkCols];
+		String linkColumn;
+		for (int i = 0; i < linkCols; i++) {
+			linkBuffers[i] = new StringBuilder();
+			linkColumn = linkColumns[i];
+			linkIndexs[i] = labelIndexMap.get(linkColumn.toLowerCase());
+			if (hasTranslate) {
+				translateLinks[i] = translateMap.containsKey(linkColumn.toLowerCase());
+				if (translateLinks[i]) {
+					transExtends[i] = translateMap.get(linkColumn.toLowerCase()).getExtend();
+				}
+			}
+		}
+		// link是否有修饰器
 		boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 		boolean isLeft = true;
 		if (hasDecorate) {
 			isLeft = linkModel.getDecorateAlign().equals("left") ? true : false;
 		}
 		Object preIdentity = null;
-		Object linkValue;
-		Object linkStr;
-		boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumn.toLowerCase()) : false;
-		HashMap<String, Object[]> linkTranslateMap = null;
-		int linkTranslateIndex = 1;
+		Object[] linkValues = new Object[linkCols];
+		String[] linkStrs = new String[linkCols];
+
 		TranslateExtend extend = null;
-		if (translateLink) {
-			extend = translateMap.get(linkColumn.toLowerCase()).getExtend();
-			linkTranslateIndex = extend.index;
-			linkTranslateMap = translateCache.get(extend.column);
-		}
 		Object[] cacheValues;
-		// 判断link拼接是否重新开始
-		boolean isLastProcess = false;
+		List rowTemp;
+		Object identity = null;
 		while (rs.next()) {
-			isLastProcess = false;
-			linkValue = rs.getObject(linkColumn);
-			if (linkValue == null) {
-				linkStr = "";
-			} else {
-				if (translateLink) {
-					cacheValues = linkTranslateMap.get(linkValue.toString());
-					if (cacheValues == null) {
-						linkStr = "";
-						if (isDebug) {
-							logger.debug("translate cache:{},dictType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
-									extend.cacheType, linkValue);
+			// 对多个link字段取值并进行翻译转义
+			for (int i = 0; i < linkCols; i++) {
+				linkValues[i] = rs.getObject(linkColumns[i]);
+				if (linkValues[i] == null) {
+					linkStrs[i] = "";
+				} else {
+					if (translateLinks[i]) {
+						extend = transExtends[i];
+						cacheValues = translateCache.get(extend.column).get(linkValues[i].toString());
+						if (cacheValues == null) {
+							linkStrs[i] = "[" + linkValues[i] + "]未匹配";
+							logger.debug("translate cache:{},cacheType:{}, 对应的key:{} 没有设置相应的value!", extend.cache,
+									extend.cacheType, linkValues[i]);
+						} else {
+							linkStrs[i] = (cacheValues[extend.index] == null) ? ""
+									: cacheValues[extend.index].toString();
 						}
 					} else {
-						linkStr = cacheValues[linkTranslateIndex];
+						linkStrs[i] = linkValues[i].toString();
 					}
-				} else {
-					linkStr = linkValue.toString();
 				}
 			}
+			// 取分组列的值
 			identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
+				// 不相等时先对最后一条记录修改，写入拼接后的字符串
 				if (index != 0) {
-					items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
-					linkBuffer.delete(0, linkBuffer.length());
+					rowTemp = items.get(items.size() - 1);
+					for (int i = 0; i < linkCols; i++) {
+						rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+						linkBuffers[i].delete(0, linkBuffers[i].length());
+					}
 				}
-				linkBuffer.append(linkStr);
+				// 再写入新的拼接串
+				for (int i = 0; i < linkCols; i++) {
+					linkBuffers[i].append(linkStrs[i]);
+				}
+				// 提取result中的数据(identity相等时不需要提取)
 				if (hasTranslate) {
 					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
 							ignoreAllEmpty);
@@ -586,12 +604,14 @@ public class ResultUtils {
 				}
 				preIdentity = identity;
 			} else {
-				if (linkBuffer.length() > 0) {
-					linkBuffer.append(linkModel.getSign());
+				// identity相同，表示还在同一组内，直接拼接link字符
+				for (int i = 0; i < linkCols; i++) {
+					if (linkBuffers[i].length() > 0) {
+						linkBuffers[i].append(linkModel.getSign());
+					}
+					linkBuffers[i].append(hasDecorate ? StringUtil.appendStr(linkStrs[i],
+							linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStrs[i]);
 				}
-				linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr.toString(),
-						linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStr);
-				isLastProcess = true;
 			}
 			index++;
 			// 存在超出25000条数据的查询
@@ -604,8 +624,12 @@ public class ResultUtils {
 				break;
 			}
 		}
-		if (isLastProcess) {
-			items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
+		// 数据集合不为空,对最后一条记录写入循环值
+		if (items.size() > 0) {
+			rowTemp = items.get(items.size() - 1);
+			for (int i = 0; i < linkCols; i++) {
+				rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
+			}
 		}
 		// 超出警告阀值
 		if (warnLimit) {

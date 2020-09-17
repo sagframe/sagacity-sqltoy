@@ -353,7 +353,9 @@ public class PostgreSqlDialectUtils {
 		StringBuilder sql = new StringBuilder("insert into ");
 		StringBuilder values = new StringBuilder();
 		sql.append(realTable);
-		sql.append(" AS t1 (");
+		//9.4 不支持as
+		// sql.append(" AS t1 (");
+		sql.append("  (");
 		FieldMeta fieldMeta;
 		String fieldName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
@@ -363,9 +365,9 @@ public class PostgreSqlDialectUtils {
 			}
 			fieldName = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(fieldName);
-			//关键字处理
+			// 关键字处理
 			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
-			//默认值处理
+			// 默认值处理
 			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 				values.append("COALESCE(?,");
 				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());

@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -63,7 +64,8 @@ public class QueryExecutor implements Serializable {
 		innerModel.sql = sql;
 		innerModel.entity = entity;
 		if (entity != null) {
-			innerModel.resultType = entity.getClass();
+			// 避免使用{{}}双大括号来初始化对象时getClass不是VO自身的问题
+			innerModel.resultType = BeanUtil.getEntityClass(entity.getClass());
 			// 类型检测
 			if (innerModel.resultType.equals("".getClass().getClass())) {
 				throw new IllegalArgumentException("查询参数是要求传递对象的实例,不是传递对象的class类别!你的参数=" + ((Class) entity).getName());
@@ -89,7 +91,7 @@ public class QueryExecutor implements Serializable {
 						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
 					}
 				}
-				//存在blank 过滤器自动将blank param="*" 关闭
+				// 存在blank 过滤器自动将blank param="*" 关闭
 				if (filter.getType().equals("blank")) {
 					innerModel.blankToNull = false;
 				}
@@ -99,14 +101,14 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
-	public QueryExecutor(String sql, Map<String,Object> paramsMap) {
+	public QueryExecutor(String sql, Map<String, Object> paramsMap) {
 		innerModel.sql = sql;
-		NamedValuesModel model=CollectionUtil.mapToNamedValues(paramsMap);
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		innerModel.paramsName = model.getNames();
 		innerModel.paramsValue = model.getValues();
 		innerModel.shardingParamsValue = model.getValues();
 	}
-	
+
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
 		innerModel.sql = sql;
 		innerModel.paramsName = paramsName;
