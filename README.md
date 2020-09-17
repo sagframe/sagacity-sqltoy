@@ -11,10 +11,12 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.7 发版日期: 2020-09-13
-* 针对查询开放Map<String,Object> 类型传参模式，便于一些报表类项目的开发
-* 美化日志输出格式
-* 优化functionConvert 对postgresql group_concat 的处理
+# 最新版本号: 4.15.7.3 发版日期: 2020-09-17
+* 完善基于算法的link功能，支持多列link(用算法代替sql的group_concat,实现跨数据库功能)
+* 优化postgresql9.4 版本的saveOrUpdate功能(9.4 不支持insert table AS T1别名模式，剔除别名)
+* 增强loadBySql、load(entity)对象类型处理，避免new VO(){{setId("");}} 双大括号极端特殊场景下定义对象导致类型获取错误。
+* 增强sql中参数:param判断逻辑，适配postgresql带有json形式的查询场景::jsonb 这种对条件参数的干扰
+* quickvo增强支持JSONB等类型
 
 # 未来规划:
 * 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
