@@ -344,9 +344,7 @@ public class ResultUtils {
 			}
 			Object[] cacheValues;
 			// 判断link拼接是否重新开始
-			boolean isLastProcess = false;
 			while (rs.next()) {
-				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
@@ -392,7 +390,6 @@ public class ResultUtils {
 									? StringUtil.appendStr(linkStr, linkModel.getDecorateAppendChar(),
 											linkModel.getDecorateSize(), isLeft)
 									: linkStr);
-					isLastProcess = true;
 				}
 				index++;
 				// 存在超出25000条数据的查询
@@ -405,7 +402,8 @@ public class ResultUtils {
 					break;
 				}
 			}
-			if (isLastProcess) {
+			// 对最后一条写入循环值
+			if (items.size() > 1) {
 				items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 			}
 		} else {
