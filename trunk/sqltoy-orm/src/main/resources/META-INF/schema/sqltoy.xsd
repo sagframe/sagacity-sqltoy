@@ -115,12 +115,29 @@
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="link" minOccurs="0" maxOccurs="1">
+				<xsd:annotation>
+					<xsd:documentation>
+					<![CDATA[分组拼接组内的字段,代替group_concat实现跨数据库]]>
+					</xsd:documentation>
+				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="id-column" type="xsd:string" />
-					<xsd:attribute name="column" type="xsd:string"
-						use="required" />
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[可以对多列拼接,如:staff_id,staff_name]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="sign" type="xsd:string"
-						use="required" />
+						use="required">
+						<xsd:annotation>
+							<xsd:documentation>
+							<![CDATA[拼接的连接符号,默认逗号分隔]]>
+							</xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
