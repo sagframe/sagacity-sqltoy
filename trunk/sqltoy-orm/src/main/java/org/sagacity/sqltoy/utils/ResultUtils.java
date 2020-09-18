@@ -344,7 +344,9 @@ public class ResultUtils {
 			}
 			Object[] cacheValues;
 			// 判断link拼接是否重新开始
+			boolean isLastProcess = false;
 			while (rs.next()) {
+				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
 				if (linkValue == null) {
 					linkStr = "";
@@ -382,6 +384,7 @@ public class ResultUtils {
 					}
 					preIdentity = identity;
 				} else {
+					isLastProcess = true;
 					if (linkBuffer.length() > 0) {
 						linkBuffer.append(linkModel.getSign());
 					}
@@ -403,7 +406,7 @@ public class ResultUtils {
 				}
 			}
 			// 对最后一条写入循环值
-			if (items.size() > 1) {
+			if (isLastProcess) {
 				items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 			}
 		} else {
@@ -553,7 +556,10 @@ public class ResultUtils {
 		Object[] cacheValues;
 		List rowTemp;
 		Object identity = null;
+		// 判断link拼接是否重新开始
+		boolean isLastProcess = false;
 		while (rs.next()) {
+			isLastProcess = false;
 			// 对多个link字段取值并进行翻译转义
 			for (int i = 0; i < linkCols; i++) {
 				linkValues[i] = rs.getObject(linkColumns[i]);
@@ -604,6 +610,7 @@ public class ResultUtils {
 				}
 				preIdentity = identity;
 			} else {
+				isLastProcess = true;
 				// identity相同，表示还在同一组内，直接拼接link字符
 				for (int i = 0; i < linkCols; i++) {
 					if (linkBuffers[i].length() > 0) {
@@ -625,7 +632,7 @@ public class ResultUtils {
 			}
 		}
 		// 数据集合不为空,对最后一条记录写入循环值
-		if (items.size() > 0) {
+		if (isLastProcess) {
 			rowTemp = items.get(items.size() - 1);
 			for (int i = 0; i < linkCols; i++) {
 				rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
