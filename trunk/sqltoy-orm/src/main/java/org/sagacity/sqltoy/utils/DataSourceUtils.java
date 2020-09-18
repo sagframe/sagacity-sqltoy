@@ -228,7 +228,7 @@ public class DataSourceUtils {
 	 */
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
-			int dbType = getDbType(conn);
+			int dbType = getDBType(conn);
 			// sybase or sqlserver
 			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
 				return " go ";
@@ -330,7 +330,7 @@ public class DataSourceUtils {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static int getDbType(final Connection conn) throws SQLException {
+	public static int getDBType(final Connection conn) throws SQLException {
 		// 从hashMap中获取
 		String productName = conn.getMetaData().getDatabaseProductName();
 		int majorVersion = getDBVersion(conn);
@@ -414,7 +414,7 @@ public class DataSourceUtils {
 	 * @throws Exception
 	 */
 	public static String getValidateQuery(final Connection conn) throws Exception {
-		int dbType = getDbType(conn);
+		int dbType = getDBType(conn);
 		switch (dbType) {
 		case DBType.DB2: {
 			return "select 1 from sysibm.sysdummy1";
@@ -453,7 +453,7 @@ public class DataSourceUtils {
 				dialect = sqltoyContext.getDialect();
 				dbType = getDBType(dialect);
 			} else {
-				dbType = getDbType(conn);
+				dbType = getDBType(conn);
 				dialect = getDialect(dbType);
 			}
 			// 调试显示数据库信息,便于在多数据库场景下辨别查询对应的数据库
@@ -475,5 +475,22 @@ public class DataSourceUtils {
 		}
 		// 返回反调的结果
 		return handler.getResult();
+	}
+
+	public static int getDBType(DataSource datasource) {
+		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		Integer dbType = DBType.UNDEFINE;
+		try {
+			dbType = getDBType(conn);
+		} catch (Exception e) {
+			e.printStackTrace();
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			conn = null;
+			throw new RuntimeException(e);
+		} finally {
+			// 释放连接,连接池实际是归还连接，未必一定关闭
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+		}
+		return dbType;
 	}
 }

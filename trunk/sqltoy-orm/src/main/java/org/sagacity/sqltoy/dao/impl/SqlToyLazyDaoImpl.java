@@ -968,4 +968,15 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
 	}
+
+	@Override
+	public int getDBType() {
+		return super.getDBType(null);
+	}
+
+	@Override
+	public int getDBType(DataSource dataSource) {
+		return super.getDBType(dataSource);
+	}
+
 }

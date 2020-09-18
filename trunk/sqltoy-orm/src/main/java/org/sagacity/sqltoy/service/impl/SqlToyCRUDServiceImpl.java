@@ -532,6 +532,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
+	@Override
+	public int getDBType() {
+		return sqlToyLazyDao.getDBType();
+	}
+
 //	@Override
 //	@Deprecated
 //	@Transactional

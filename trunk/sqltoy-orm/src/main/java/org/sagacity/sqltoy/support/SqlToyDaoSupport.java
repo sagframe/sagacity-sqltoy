@@ -62,6 +62,7 @@ import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1599,6 +1600,14 @@ public class SqlToyDaoSupport {
 		return results;
 	}
 
+	/**
+	 * @TODO 获取数据库类型，便于在极为特殊场景下为开发者提供一些灵活处理
+	 * @param dataSource
+	 * @return
+	 */
+	public int getDBType(DataSource dataSource) {
+		return DataSourceUtils.getDBType(getDataSource(dataSource));
+	}
 	/**
 	 * @TODO 提供sql查询服务的调用(面向复杂计算提供便利)
 	 *       sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
