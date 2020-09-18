@@ -11,7 +11,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.7.3 发版日期: 2020-09-17
+# 最新版本号: 4.15.8 发版日期: 2020-09-18
+## 已经完成生产验证,link功能做了适度调整
 * 完善基于算法的link功能，支持多列link(用算法代替sql的group_concat,实现跨数据库功能)
 * 优化postgresql9.4 版本的saveOrUpdate功能(9.4 不支持insert table AS T1别名模式，剔除别名)
 * 增强loadBySql、load(entity)对象类型处理，避免new VO(){{setId("");}} 双大括号极端特殊场景下定义对象导致类型获取错误。
