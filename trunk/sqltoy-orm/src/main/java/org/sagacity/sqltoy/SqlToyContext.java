@@ -488,6 +488,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
+	 * @TODO 判断sql是否存在
+	 * @param sqlId
+	 * @return
+	 */
+	public boolean hasSql(String sqlId) {
+		return scriptLoader.hasSql(sqlId);
+	}
+
+	/**
 	 * @return the dialect
 	 */
 	public String getDialect() {

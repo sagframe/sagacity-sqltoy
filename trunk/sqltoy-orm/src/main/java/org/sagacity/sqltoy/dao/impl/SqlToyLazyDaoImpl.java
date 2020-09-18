@@ -979,4 +979,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getDBType(dataSource);
 	}
 
+	/**
+	 * @TODO 判断sql是否存在
+	 * @param sqlId
+	 * @return
+	 */
+	public boolean hasSql(String sqlId) {
+		return super.hasSql(sqlId);
+	}
 }

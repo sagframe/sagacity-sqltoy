@@ -343,7 +343,14 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public int getDBType();
-	
+
+	/**
+	 * @TODO 判断sql是否存在
+	 * @param sqlId
+	 * @return
+	 */
+	public boolean hasSql(String sqlId);
+
 //	/**
 //	 * @TODO 提供一个自由定义操作的服务窗口
 //	 * @param values

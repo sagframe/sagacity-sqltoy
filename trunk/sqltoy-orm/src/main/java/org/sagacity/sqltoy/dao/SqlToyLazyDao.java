@@ -43,7 +43,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 
 /**
  * @project sqltoy-orm
@@ -830,5 +829,12 @@ public interface SqlToyLazyDao {
 	public int getDBType();
 
 	public int getDBType(DataSource dataSource);
+
+	/**
+	 * @TODO 判断sql是否存在
+	 * @param sqlId
+	 * @return
+	 */
+	public boolean hasSql(String sqlId);
 
 }
