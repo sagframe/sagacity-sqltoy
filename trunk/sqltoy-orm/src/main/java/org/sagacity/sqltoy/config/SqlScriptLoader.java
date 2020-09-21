@@ -185,29 +185,34 @@ public class SqlScriptLoader {
 	 * @todo 提供根据sql或sqlId获取sql配置模型
 	 * @param sqlKey
 	 * @param sqlType
+	 * @param dialect
 	 * @return
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
-		SqlToyConfig result = sqlCache.get(sqlKey);
-		if (null == result) {
-			result = codeSqlCache.get(sqlKey);
-		}
-		if (null != result) {
-			return result;
-		}
-		// 判断是否是sqlId,非在xml中定义id的sql
-		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), sqlType);
-			// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
-			result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
-			// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
-			if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
-				codeSqlCache.put(sqlKey, result);
+		SqlToyConfig result = null;
+		String realDialect = (dialect == null) ? "" : dialect;
+		// sqlId形式
+		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
+			//sqlId_dialect
+			result = sqlCache.get((sqlKey.concat("_").concat(realDialect)));
+			//dialect_sqlId
+			if (result == null) {
+				result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
+			}
+			if (result == null) {
+				result = sqlCache.get(sqlKey);
 			}
 		} else {
-			// 这一步理论上不应该执行
-			result = new SqlToyConfig(getDialect());
-			result.setSql(sqlKey);
+			result = codeSqlCache.get(sqlKey);
+			if (result == null) {
+				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, dialect, sqlType);
+				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
+				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
+				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
+				if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
+					codeSqlCache.put(sqlKey, result);
+				}
+			}
 		}
 		return result;
 	}

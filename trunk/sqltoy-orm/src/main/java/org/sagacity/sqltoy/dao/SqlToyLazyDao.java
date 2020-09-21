@@ -821,20 +821,4 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
-
-	/**
-	 * @TODO 提供给开发者快速获取数据库方言类型，跟DataSourceUtils.DBType 进行对比
-	 * @return
-	 */
-	public int getDBType();
-
-	public int getDBType(DataSource dataSource);
-
-	/**
-	 * @TODO 判断sql是否存在
-	 * @param sqlId
-	 * @return
-	 */
-	public boolean hasSql(String sqlId);
-
 }

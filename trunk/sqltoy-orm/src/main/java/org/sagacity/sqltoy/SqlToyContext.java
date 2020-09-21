@@ -337,16 +337,18 @@ public class SqlToyContext implements ApplicationContextAware {
 //		return getSqlToyConfig(sqlKey, SqlType.search, "");
 //	}
 
-	/**
-	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
-	 * @param sqlKey
-	 * @param type
-	 * @return
-	 */
+	
 //	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type) {
 //		return scriptLoader.getSqlConfig(sqlKey, type, "");
 //	}
 
+	/**
+	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
+	 * @param sqlKey
+	 * @param type
+	 * @param dialect
+	 * @return
+	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type, String dialect) {
 		return scriptLoader.getSqlConfig(sqlKey, type, "");
 	}

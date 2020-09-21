@@ -1612,15 +1612,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 获取数据库类型，便于在极为特殊场景下为开发者提供一些灵活处理
+	 * @TODO 获取当前数据库方言的名称
 	 * @param dataSource
 	 * @return
 	 */
-	public int getDBType(DataSource dataSource) {
-		return DataSourceUtils.getDBType(getDataSource(dataSource));
-	}
-
 	public String getDialect(DataSource dataSource) {
+		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
+			return sqlToyContext.getDialect().toLowerCase();
+		}
 		return DataSourceUtils.getDialect(getDataSource(dataSource));
 	}
 

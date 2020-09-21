@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -62,7 +63,14 @@ public abstract class BaseLink implements Serializable {
 		return result;
 	}
 
+	/**
+	 * @TODO 获取当前数据库的方言名称
+	 * @return
+	 */
 	public String getDialect() {
+		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
+			return sqlToyContext.getDialect().toLowerCase();
+		}
 		return DataSourceUtils.getDialect(getDataSource(null));
 	}
 }

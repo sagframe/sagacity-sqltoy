@@ -338,19 +338,6 @@ public interface SqlToyCRUDService {
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds);
 
-	/**
-	 * @TODO 提供给开发者快速获取数据库方言类型，跟DataSourceUtils.DBType 进行对比
-	 * @return
-	 */
-	public int getDBType();
-
-	/**
-	 * @TODO 判断sql是否存在
-	 * @param sqlId
-	 * @return
-	 */
-	public boolean hasSql(String sqlId);
-
 //	/**
 //	 * @TODO 提供一个自由定义操作的服务窗口
 //	 * @param values
