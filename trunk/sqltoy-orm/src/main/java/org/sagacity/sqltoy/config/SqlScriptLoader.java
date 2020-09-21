@@ -196,20 +196,20 @@ public class SqlScriptLoader {
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
 			if (!realDialect.equals("")) {
 				// sqlId_dialect
-				result = sqlCache.get((sqlKey.concat("_").concat(realDialect)));
+				result = sqlCache.get(sqlKey.concat("_").concat(realDialect));
 				// dialect_sqlId
 				if (result == null) {
 					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
 				}
 				// 兼容一下sqlserver的命名
 				if (result == null && realDialect.equals(Dialect.SQLSERVER)) {
-					result = sqlCache.get((sqlKey.concat("_mssql")));
+					result = sqlCache.get(sqlKey.concat("_mssql"));
 					if (result == null) {
 						result = sqlCache.get("mssql_".concat(sqlKey));
 					}
 				} // 兼容一下postgres的命名
 				if (result == null && realDialect.equals(Dialect.POSTGRESQL)) {
-					result = sqlCache.get((sqlKey.concat("_postgres")));
+					result = sqlCache.get(sqlKey.concat("_postgres"));
 					if (result == null) {
 						result = sqlCache.get("postgres_".concat(sqlKey));
 					}
