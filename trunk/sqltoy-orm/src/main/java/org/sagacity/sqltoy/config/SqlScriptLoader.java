@@ -252,15 +252,6 @@ public class SqlScriptLoader {
 	}
 
 	/**
-	 * @TODO 验证sqlId是否存在
-	 * @param sqlId
-	 * @return
-	 */
-	public boolean hasSql(String sqlId) {
-		return sqlCache.containsKey(sqlId);
-	}
-
-	/**
 	 * @param resourcesDir the resourcesDir to set
 	 */
 	public void setSqlResourcesDir(String sqlResourcesDir) {
