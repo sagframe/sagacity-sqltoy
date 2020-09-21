@@ -532,11 +532,4 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
-//	@Override
-//	@Deprecated
-//	@Transactional
-//	public Object freedomOpts(Object values, FreedomHandler freedomHandler) {
-//		return freedomHandler.process(values);
-//	}
-
 }

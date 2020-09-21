@@ -337,13 +337,4 @@ public interface SqlToyCRUDService {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds);
-
-//	/**
-//	 * @TODO 提供一个自由定义操作的服务窗口
-//	 * @param values
-//	 * @param freedomHandler
-//	 * @return
-//	 */
-//	@Deprecated
-//	public Object freedomOpts(Object values, FreedomHandler freedomHandler);
 }
