@@ -208,6 +208,13 @@ public class SqlScriptLoader {
 					if (result == null) {
 						result = sqlCache.get("mssql_".concat(sqlKey));
 					}
+				} // 兼容一下postgres的命名
+				if (result == null && realDialect.equals(Dialect.POSTGRESQL)) {
+					result = sqlCache.get((sqlKey.concat("_postgres")));
+					// dialect_sqlId
+					if (result == null) {
+						result = sqlCache.get("postgres_".concat(sqlKey));
+					}
 				}
 			}
 			if (result == null) {
