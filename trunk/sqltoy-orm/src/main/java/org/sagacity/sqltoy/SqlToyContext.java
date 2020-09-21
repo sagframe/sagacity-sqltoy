@@ -329,37 +329,33 @@ public class SqlToyContext implements ApplicationContextAware {
 		return null;
 	}
 
-//	public SqlToyConfig getSqlToyConfig(String sqlKey) {
-//		return getSqlToyConfig(sqlKey, SqlType.search, "");
-//	}
-//
-//	public SqlToyConfig getSqlToyConfig(String sqlKey, String dialect) {
-//		return getSqlToyConfig(sqlKey, SqlType.search, "");
-//	}
-
-	
-//	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type) {
-//		return scriptLoader.getSqlConfig(sqlKey, type, "");
-//	}
+	/**
+	 * @TODO 保留一个获取查询的sql(针对报表平台)
+	 * @param sqlKey
+	 * @return
+	 */
+	public SqlToyConfig getSqlToyConfig(String sqlKey) {
+		return getSqlToyConfig(sqlKey, SqlType.search, (getDialect() == null) ? "" : getDialect());
+	}
 
 	/**
 	 * @todo 获取sql对应的配置模型(请阅读scriptLoader,硬code的sql对应模型也利用了内存来存放非每次都动态构造对象)
 	 * @param sqlKey
-	 * @param type
+	 * @param sqlType
 	 * @param dialect
 	 * @return
 	 */
-	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType type, String dialect) {
-		return scriptLoader.getSqlConfig(sqlKey, type, "");
+	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, "");
 	}
 
-	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType type, String dialect) {
+	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
 		String sqlKey = queryExecutor.getInnerModel().sql;
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
-		if (SqlType.search.equals(type) && queryExecutor.getInnerModel().resultType != null) {
+		if (SqlType.search.equals(sqlType) && queryExecutor.getInnerModel().resultType != null) {
 			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
 		}
-		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, type,dialect);
+		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
 		// 剔除空白转null的默认设置
 		if (!queryExecutor.getInnerModel().blankToNull && StringUtil.isBlank(result.getId())) {
 			if (result.getFilters().size() == 1) {

@@ -190,12 +190,12 @@ public class SqlScriptLoader {
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
 		SqlToyConfig result = null;
-		String realDialect = (dialect == null) ? "" : dialect;
+		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			//sqlId_dialect
+			// sqlId_dialect
 			result = sqlCache.get((sqlKey.concat("_").concat(realDialect)));
-			//dialect_sqlId
+			// dialect_sqlId
 			if (result == null) {
 				result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
 			}
@@ -205,7 +205,7 @@ public class SqlScriptLoader {
 		} else {
 			result = codeSqlCache.get(sqlKey);
 			if (result == null) {
-				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, dialect, sqlType);
+				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
 				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
 				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
@@ -213,6 +213,11 @@ public class SqlScriptLoader {
 					codeSqlCache.put(sqlKey, result);
 				}
 			}
+		}
+		// 这一步理论上不应该执行
+		if (result == null) {
+			result = new SqlToyConfig(realDialect);
+			result.setSql(sqlKey);
 		}
 		return result;
 	}
