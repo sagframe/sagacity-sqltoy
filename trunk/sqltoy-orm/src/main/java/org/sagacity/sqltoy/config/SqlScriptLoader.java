@@ -193,11 +193,13 @@ public class SqlScriptLoader {
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
 		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			// sqlId_dialect
-			result = sqlCache.get((sqlKey.concat("_").concat(realDialect)));
-			// dialect_sqlId
-			if (result == null) {
-				result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
+			if (!realDialect.equals("")) {
+				// sqlId_dialect
+				result = sqlCache.get((sqlKey.concat("_").concat(realDialect)));
+				// dialect_sqlId
+				if (result == null) {
+					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
+				}
 			}
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
