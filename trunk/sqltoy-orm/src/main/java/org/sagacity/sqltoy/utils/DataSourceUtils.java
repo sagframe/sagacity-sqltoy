@@ -493,4 +493,44 @@ public class DataSourceUtils {
 		}
 		return dbType;
 	}
+
+	public static String getDialect(DataSource datasource) {
+		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		try {
+			int dbType = getDBType(conn);
+			switch (dbType) {
+			case DBType.DB2:
+				return Dialect.DB2;
+			case DBType.ORACLE:
+			case DBType.ORACLE11:
+				return Dialect.ORACLE;
+			case DBType.POSTGRESQL:
+				return Dialect.POSTGRESQL;
+			case DBType.MYSQL:
+			case DBType.MYSQL57:
+				return Dialect.MYSQL;
+			case DBType.SQLSERVER:
+				return Dialect.SQLSERVER;
+			case DBType.SQLITE:
+				return Dialect.SQLITE;
+			case DBType.CLICKHOUSE:
+				return Dialect.CLICKHOUSE;
+			case DBType.TIDB:
+				return Dialect.TIDB;
+			case DBType.OCEANBASE:
+				return Dialect.OCEANBASE;
+			default:
+				return "";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			conn = null;
+			throw new RuntimeException(e);
+		} finally {
+			// 释放连接,连接池实际是归还连接，未必一定关闭
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+		}
+
+	}
 }
