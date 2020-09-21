@@ -1618,26 +1618,8 @@ public class SqlToyDaoSupport {
 	 */
 	public String getDialect(DataSource dataSource) {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
-			return sqlToyContext.getDialect().toLowerCase();
+			return sqlToyContext.getDialect();
 		}
 		return DataSourceUtils.getDialect(getDataSource(dataSource));
 	}
-
-	/**
-	 * @TODO 判断sql是否存在
-	 * @param sqlId
-	 * @return
-	 */
-	public boolean hasSql(String sqlId) {
-		return sqlToyContext.hasSql(sqlId);
-	}
-
-	/**
-	 * @TODO 提供sql查询服务的调用(面向复杂计算提供便利)
-	 *       sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
-	 * @return
-	 */
-//	public SqlServiceResult callSqlService() {
-//		return null;
-//	}
 }
