@@ -187,7 +187,7 @@ public class SqlScriptLoader {
 	 * @param sqlType
 	 * @return
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType) {
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
 		SqlToyConfig result = sqlCache.get(sqlKey);
 		if (null == result) {
 			result = codeSqlCache.get(sqlKey);

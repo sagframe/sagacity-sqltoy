@@ -967,7 +967,7 @@ public class ResultUtils {
 					PivotModel pivotModel = (PivotModel) processor;
 					if (pivotModel.getCategorySql() != null) {
 						SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search),
+								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, dialect),
 								queryExecutor, dialect, false);
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 								extend.getParamsName(pivotSqlConfig),

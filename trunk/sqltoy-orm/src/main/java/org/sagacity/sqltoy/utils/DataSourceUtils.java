@@ -477,6 +477,11 @@ public class DataSourceUtils {
 		return handler.getResult();
 	}
 
+	/**
+	 * @TODO 获取数据库的类型
+	 * @param datasource
+	 * @return
+	 */
 	public static int getDBType(DataSource datasource) {
 		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
 		Integer dbType = DBType.UNDEFINE;
@@ -494,6 +499,11 @@ public class DataSourceUtils {
 		return dbType;
 	}
 
+	/**
+	 * @TDDO 获取数据库类型的名称
+	 * @param datasource
+	 * @return
+	 */
 	public static String getDialect(DataSource datasource) {
 		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
 		try {
