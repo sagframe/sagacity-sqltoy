@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,6 +200,14 @@ public class SqlScriptLoader {
 				// dialect_sqlId
 				if (result == null) {
 					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
+				}
+				// 兼容一下sqlserver的命名
+				if (result == null && realDialect.equals(Dialect.SQLSERVER)) {
+					result = sqlCache.get((sqlKey.concat("_mssql")));
+					// dialect_sqlId
+					if (result == null) {
+						result = sqlCache.get("mssql_".concat(sqlKey));
+					}
 				}
 			}
 			if (result == null) {

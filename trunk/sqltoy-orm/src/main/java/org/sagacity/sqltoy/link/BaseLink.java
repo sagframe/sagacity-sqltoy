@@ -69,7 +69,7 @@ public abstract class BaseLink implements Serializable {
 	 */
 	public String getDialect() {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
-			return sqlToyContext.getDialect().toLowerCase();
+			return sqlToyContext.getDialect();
 		}
 		return DataSourceUtils.getDialect(getDataSource(null));
 	}

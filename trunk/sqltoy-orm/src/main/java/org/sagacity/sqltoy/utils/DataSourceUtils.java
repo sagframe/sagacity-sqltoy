@@ -296,6 +296,9 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.KINGBASE) != -1) {
+				return Dialect.KINGBASE;
+			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
@@ -529,6 +532,10 @@ public class DataSourceUtils {
 				return Dialect.TIDB;
 			case DBType.OCEANBASE:
 				return Dialect.OCEANBASE;
+			case DBType.DM:
+				return Dialect.DM;
+			case DBType.KINGBASE:
+				return Dialect.KINGBASE;
 			default:
 				return "";
 			}
