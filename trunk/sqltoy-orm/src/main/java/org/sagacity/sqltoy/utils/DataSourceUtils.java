@@ -508,8 +508,14 @@ public class DataSourceUtils {
 	 * @return
 	 */
 	public static String getDialect(DataSource datasource) {
+		if (datasource == null) {
+			return "";
+		}
 		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
 		try {
+			if (conn == null) {
+				return "";
+			}
 			int dbType = getDBType(conn);
 			switch (dbType) {
 			case DBType.DB2:
