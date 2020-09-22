@@ -19,9 +19,6 @@
 * 增强sql中参数:param判断逻辑，适配postgresql带有json形式的查询场景::jsonb 这种对条件参数的干扰
 * quickvo增强支持JSONB等类型
 
-# 未来规划:
-* 4.16版本在parallQuery的基础上更进一步直接提供query-service扩展直接组合多个sql,并提供并行、数据提取、计算(join\union)、H5Table(面向前端提供表格模型处理:merge、updateCell等等方便报表开发)，通过框架融合常用算法，大幅简化数据查询服务的开发。
-
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
