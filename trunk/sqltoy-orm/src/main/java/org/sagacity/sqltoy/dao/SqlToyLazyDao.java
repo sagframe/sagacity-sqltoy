@@ -87,21 +87,27 @@ public interface SqlToyLazyDao {
 	 */
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
 
+	/**
+	 * @TODO 通过map传参获取记录数量
+	 * @param sqlOrNamedQuery
+	 * @param paramsMap
+	 * @return
+	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 存储过程调用
-	 * @param storeSqlOrKey
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
 	 */
 	public StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues);
 
 	/**
 	 * @TODO 存储过程调用，outParams可以为null
-	 * @param storeSqlOrKey
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
-	 * @param resultType    可以是VO、Map、Array,null(二维List)
+	 * @param resultType    可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
 	 * @return
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
@@ -350,6 +356,14 @@ public interface SqlToyLazyDao {
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
+	/**
+	 * @TODO 通过map传参模式获取单条对象记录
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param voClass
+	 * @return
+	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
 
 	/**
