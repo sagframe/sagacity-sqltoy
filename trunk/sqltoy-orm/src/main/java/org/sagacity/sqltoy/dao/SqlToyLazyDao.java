@@ -470,6 +470,17 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final Map<String, Object> paramsMap, final Class<T> voClass);
+	
+	/**
+	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
+	 * @param <T>
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @return
+	 */
+	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+			final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
@@ -482,17 +493,7 @@ public interface SqlToyLazyDao {
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
-	/**
-	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
-	 * @param <T>
-	 * @param paginationModel
-	 * @param sqlOrNamedSql
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
-			final String sqlOrNamedSql, final T entity);
-
+	
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
