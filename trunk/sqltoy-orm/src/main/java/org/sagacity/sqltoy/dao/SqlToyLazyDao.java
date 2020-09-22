@@ -309,6 +309,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
 
+	/**
+	 * @TODO 锁住主表记录并级联加载子表数据
+	 * @param <T>
+	 * @param entities
+	 * @param lockMode
+	 * @param cascadeTypes
+	 * @return
+	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final LockMode lockMode,
 			final Class... cascadeTypes);
 
@@ -589,6 +597,13 @@ public interface SqlToyLazyDao {
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
 			final ReflectPropertyHandler reflectPropertyHandler);
 
+	/**
+	 * @TODO 通过数组传参执行sql,并返回更新记录量
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
 	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
@@ -610,71 +625,6 @@ public interface SqlToyLazyDao {
 	 * @TODO 数据库提交
 	 */
 	public void flush();
-
-	/**
-	 * @TODO 提供链式操作模式删除操作集合
-	 * 
-	 * @return
-	 */
-	public Delete delete();
-
-	/**
-	 * @TODO 提供链式操作模式修改操作集合
-	 * @return
-	 */
-	public Update update();
-
-	/**
-	 * @TODO 提供链式操作模式存储过程操作集合
-	 * @return
-	 */
-	public Store store();
-
-	/**
-	 * @TODO 提供链式操作模式保存操作集合
-	 * @return
-	 */
-	public Save save();
-
-	/**
-	 * @TODO 提供链式操作模式查询操作集合
-	 * @return
-	 */
-	public Query query();
-
-	/**
-	 * @TODO 提供链式操作模式对象加载操作集合
-	 * @return
-	 */
-	public Load load();
-
-	/**
-	 * @TODO 提供链式操作模式唯一性验证操作集合
-	 * 
-	 * @return
-	 */
-	public Unique unique();
-
-	/**
-	 * @TODO 提供链式操作模式树形表结构封装操作集合
-	 * 
-	 * @return
-	 */
-	public TreeTable treeTable();
-
-	/**
-	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
-	 * 
-	 * @return
-	 */
-	public Execute execute();
-
-	/**
-	 * @TODO 提供链式操作模式批量执行操作集合
-	 * 
-	 * @return
-	 */
-	public Batch batch();
 
 	/**
 	 * es操作
@@ -830,4 +780,71 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
+
+	/** ---------------- 链式操作 -------------------------- */
+
+	/**
+	 * @TODO 提供链式操作模式删除操作集合
+	 * 
+	 * @return
+	 */
+	public Delete delete();
+
+	/**
+	 * @TODO 提供链式操作模式修改操作集合
+	 * @return
+	 */
+	public Update update();
+
+	/**
+	 * @TODO 提供链式操作模式存储过程操作集合
+	 * @return
+	 */
+	public Store store();
+
+	/**
+	 * @TODO 提供链式操作模式保存操作集合
+	 * @return
+	 */
+	public Save save();
+
+	/**
+	 * @TODO 提供链式操作模式查询操作集合
+	 * @return
+	 */
+	public Query query();
+
+	/**
+	 * @TODO 提供链式操作模式对象加载操作集合
+	 * @return
+	 */
+	public Load load();
+
+	/**
+	 * @TODO 提供链式操作模式唯一性验证操作集合
+	 * 
+	 * @return
+	 */
+	public Unique unique();
+
+	/**
+	 * @TODO 提供链式操作模式树形表结构封装操作集合
+	 * 
+	 * @return
+	 */
+	public TreeTable treeTable();
+
+	/**
+	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
+	 * 
+	 * @return
+	 */
+	public Execute execute();
+
+	/**
+	 * @TODO 提供链式操作模式批量执行操作集合
+	 * 
+	 * @return
+	 */
+	public Batch batch();
 }
