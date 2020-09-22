@@ -518,9 +518,9 @@ public class SqlConfigParseUtils {
 			sqlToyResult.setParamsValue(paramValueList.toArray());
 		}
 	}
-
-	// #[or @loop(:beginDates,'or',' (startTime between :beginDates[i] and
-	// endDates[i]) ')]
+	
+	//格式:loop(:loopArgs,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
+	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and endDates[i])',or)]
 	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
 		return queryStr;
 	}
