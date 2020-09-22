@@ -574,9 +574,18 @@ public interface SqlToyLazyDao {
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrNamedSql
 	 * @param entity
+	 * @return
+	 */
+	public Long executeSql(final String sqlOrNamedSql, final Serializable entity);
+
+	/**
+	 * @todo 执行sql,并返回被修改的记录数量
+	 * @param sqlOrNamedSql
+	 * @param entity
 	 * @param reflectPropertyHandler (一般传null)
 	 * @return Long updateCount
 	 */
+	@Deprecated
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
 			final ReflectPropertyHandler reflectPropertyHandler);
 

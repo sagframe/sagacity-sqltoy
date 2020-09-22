@@ -663,6 +663,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateFetchRandom(queryExecutor, random, updateRowHandler);
 	}
 
+	@Override
+	public Long executeSql(String sqlOrNamedSql, Serializable entity) {
+		return super.executeSql(sqlOrNamedSql, entity, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
