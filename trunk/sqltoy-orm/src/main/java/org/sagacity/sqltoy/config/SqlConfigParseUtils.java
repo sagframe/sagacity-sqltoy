@@ -91,6 +91,9 @@ public class SqlConfigParseUtils {
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 
+	public final static String LOOP_REGEX = "(?i)\\@loop\\s*\\(\\s*\\?\\s*\\)";
+	public final static Pattern LOOP_PATTERN = Pattern.compile(LOOP_REGEX);
+
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
 	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
@@ -178,7 +181,10 @@ public class SqlConfigParseUtils {
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
-			sqlParam = processNamedParamsQuery(queryStr.replaceAll(ARG_REGEX, questionMark));
+			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
+			// 处理sql中的循环
+			sql = processLoop(sql, paramsNamed, paramsValue);
+			sqlParam = processNamedParamsQuery(sql);
 		} else {
 			sqlParam = processNamedParamsQuery(queryStr);
 		}
@@ -513,6 +519,12 @@ public class SqlConfigParseUtils {
 		}
 	}
 
+	// #[or @loop(:beginDates,'or',' (startTime between :beginDates[i] and
+	// endDates[i]) ')]
+	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
+		return queryStr;
+	}
+
 	/**
 	 * @todo 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
@@ -700,7 +712,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 将动态的sql解析组合成一个SqlToyConfig模型，以便统一处理
 	 * @param querySql
-	 * @param dialect 当前的数据库类型,默认为null不指定
+	 * @param dialect  当前的数据库类型,默认为null不指定
 	 * @param sqlType
 	 * @return
 	 */
