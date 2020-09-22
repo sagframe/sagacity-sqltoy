@@ -636,34 +636,30 @@ public interface SqlToyLazyDao {
 	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel);
 
 	/**
-	 * @TODO 数据库提交
+	 * @TODO 数据库提交(针对特殊场景使用,正常情况下此方法不要使用)
 	 */
 	public void flush();
 
 	/**
-	 * es操作
-	 * 
+	 * @TODO es操作
 	 * @return
 	 */
 	public Elastic elastic();
 
 	/**
-	 * mongo操作
-	 * 
+	 * @TODO mongo操作
 	 * @return
 	 */
 	public Mongo mongo();
 
 	/**
-	 * 获取sqltoy的上下文
-	 * 
+	 * @TODO 获取sqltoy的上下文
 	 * @return
 	 */
 	public SqlToyContext getSqlToyContext();
 
 	/**
-	 * 获取当前dataSource
-	 * 
+	 * @TODO 获取当前dataSource
 	 * @return
 	 */
 	public DataSource getDataSource();
@@ -700,7 +696,7 @@ public interface SqlToyLazyDao {
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**
-	 * @todo 对记录进行翻译
+	 * @todo 对记录通过反调自定义对那个属性进行翻译
 	 * @param dataSet
 	 * @param cacheName
 	 * @param cacheType
