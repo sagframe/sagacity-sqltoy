@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,11 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -91,9 +96,6 @@ public class SqlConfigParseUtils {
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 
-	public final static String LOOP_REGEX = "(?i)\\@loop\\s*\\(\\s*\\?\\s*\\)";
-	public final static Pattern LOOP_PATTERN = Pattern.compile(LOOP_REGEX);
-
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
 	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
@@ -117,6 +119,13 @@ public class SqlConfigParseUtils {
 	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
+
+	// 利用宏模式来完成@loop循环处理
+	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
+
+	static {
+		macros.put("@loop", new SqlLoop());
+	}
 
 	/**
 	 * @todo 判断sql语句中是否存在:named 方式的参数
@@ -521,13 +530,25 @@ public class SqlConfigParseUtils {
 
 	// update 2020-09-22 增加sql中的循环功能,避免极为特殊场景下不必要的争议
 	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
-	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and endDates[i])',or)]
+	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	// endDates[i])',or)]
+	/**
+	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换
+	 * @param queryStr
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
 	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
 		// return queryStr;
 		if (null == paramsValue || paramsValue.length == 0) {
 			return queryStr;
 		}
-		return queryStr;
+		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
+		for (int i = 0; i < paramsNamed.length; i++) {
+			keyValues.put(paramsNamed[i], paramsValue[i]);
+		}
+		return MacroUtils.replaceMacros(queryStr, keyValues, false, macros);
 	}
 
 	/**
