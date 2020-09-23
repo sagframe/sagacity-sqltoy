@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
  * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
+ * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -191,7 +192,7 @@ public class SqlConfigParseUtils {
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
-			// 处理sql中的循环
+			// update 2020-09-23 处理sql中的循环
 			sql = processLoop(sql, paramsNamed, paramsValue);
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
