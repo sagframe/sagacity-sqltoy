@@ -540,7 +540,6 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		// return queryStr;
 		if (null == paramsValue || paramsValue.length == 0) {
 			return queryStr;
 		}
