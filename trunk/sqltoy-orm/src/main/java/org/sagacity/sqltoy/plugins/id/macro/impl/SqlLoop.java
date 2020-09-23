@@ -18,7 +18,8 @@ import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description 提供在sql中通过@loop(:args,loopContent,linkSign) 函数来循环组织sql
+ * @description 此类不用于主键策略的配置,提供在sql中通过@loop(:args,loopContent,linkSign)
+ *              函数来循环组织sql(借用主键里面的宏工具来完成@loop处理)
  * @author zhongxuchen
  * @version v1.0, Date:2020-9-23
  * @modify 2020-9-23,修改说明

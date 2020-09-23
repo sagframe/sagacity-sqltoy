@@ -548,6 +548,7 @@ public class SqlConfigParseUtils {
 		for (int i = 0; i < paramsNamed.length; i++) {
 			keyValues.put(paramsNamed[i], paramsValue[i]);
 		}
+		// 这里是借用业务主键生成里面的宏处理模式来解决
 		return MacroUtils.replaceMacros(queryStr, keyValues, false, macros);
 	}
 
