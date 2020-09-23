@@ -521,8 +521,7 @@ public class SqlConfigParseUtils {
 
 	// update 2020-09-22 增加sql中的循环功能,避免极为特殊场景下不必要的争议
 	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
-	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
-	// endDates[i])',or)]
+	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and endDates[i])',or)]
 	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
 		// return queryStr;
 		if (null == paramsValue || paramsValue.length == 0) {
