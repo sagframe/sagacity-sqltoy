@@ -41,14 +41,18 @@ public class SqlLoop extends AbstractMacro {
 			}
 			params[i] = varStr;
 		}
+		//循环依据的数组参数
 		String loopParam = params[0].trim();
 		// 剔除:符号
 		if (loopParam.startsWith(":")) {
 			loopParam = loopParam.substring(1).trim();
 		}
+		//循环内容
 		String loopContent = params[1];
+		//循环连接符号(字符串)
 		String linkSign = (params.length > 2) ? params[2] : " ";
-
+		
+		//获取循环依据的参数数组值
 		Object[] loopValues = CollectionUtil.convertArray(keyValues.get(loopParam));
 		if (loopValues == null || loopValues.length == 0) {
 			return " ";
@@ -64,6 +68,7 @@ public class SqlLoop extends AbstractMacro {
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
+				//统一转为key.lowCase[i]模式
 				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", ":" + key + "[i]");
 				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", ":" + key + "[i]");
 				regParamValues.add(CollectionUtil.convertArray(keyValues.get(key)));
