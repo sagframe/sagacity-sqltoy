@@ -85,13 +85,11 @@ public class SqlLoop extends AbstractMacro {
 				key = "\\:" + keys.get(j) + "\\[i\\]";
 				paramValue = regParamValues.get(j)[i];
 				if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
-					valueStr = "'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + "'";
+					valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
 				} else if (paramValue instanceof LocalDate) {
-					valueStr = "'" + DateUtil.formatDate(paramValue, "yyyy-MM-dd") + "'";
+					valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd");
 				} else if (paramValue instanceof LocalTime) {
-					valueStr = "'" + DateUtil.formatDate(paramValue, "HH:mm:ss") + "'";
-				} else if (paramValue instanceof CharSequence) {
-					valueStr = "'" + paramValue + "'";
+					valueStr = "" + DateUtil.formatDate(paramValue, "HH:mm:ss");
 				} else {
 					valueStr = "" + paramValue;
 				}
