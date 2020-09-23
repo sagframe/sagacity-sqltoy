@@ -44,7 +44,7 @@ public class MacroUtilsTest {
 		Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
 		macros.put("@loop", new SqlLoop());
-		String sql = "select * from table where 1=1 @loop(:startDates,'or (bizDate between :startDates[i] and :endDates[i])')";
+		String sql = "select * from table where 1=1 @loop(:startDates,' (bizDate between str_to_date(':startDates[i]','%Y-%m-%d') and str_to_date(':endDates[i]','%Y-%m-%d')','or')";
 		String[] paramsNamed = { "startDates", "endDates" };
 		String[][] paramsValue = { { "2020-10-01", "2020-11-01", "2020-12-01" },
 				{ "2020-10-30", "2020-11-30", "2020-12-30" } };

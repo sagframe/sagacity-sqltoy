@@ -28,7 +28,7 @@ public class SqlLoop extends AbstractMacro {
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
 		if (params == null || params.length < 2 || keyValues == null || keyValues.size() == 0) {
-			return "";
+			return " ";
 		}
 		// 剔除为了规避宏参数切割附加的符号
 		String varStr;
@@ -50,7 +50,7 @@ public class SqlLoop extends AbstractMacro {
 
 		Object[] loopValues = CollectionUtil.convertArray(keyValues.get(loopParam));
 		if (loopValues == null || loopValues.length == 0) {
-			return "";
+			return " ";
 		}
 		// 提取循环体内的参数对应的值
 		List<String> keys = new ArrayList<String>();
