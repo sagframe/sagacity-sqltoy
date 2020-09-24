@@ -297,7 +297,7 @@ public class ResultUtils {
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
@@ -325,7 +325,7 @@ public class ResultUtils {
 			Object identity = null;
 			String linkColumn = linkModel.getColumns()[0];
 			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
-				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn+",请检查sql或link 配置的正确性!");
+				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
 			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
 			StringBuilder linkBuffer = new StringBuilder();
@@ -504,7 +504,7 @@ public class ResultUtils {
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
@@ -539,7 +539,7 @@ public class ResultUtils {
 			linkBuffers[i] = new StringBuilder();
 			linkColumn = linkColumns[i];
 			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
-				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn+",请检查sql或link 配置的正确性!");
+				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
 			linkIndexs[i] = labelIndexMap.get(linkColumn.toLowerCase());
 			if (hasTranslate) {

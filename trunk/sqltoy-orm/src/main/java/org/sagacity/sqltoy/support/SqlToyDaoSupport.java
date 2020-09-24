@@ -1175,7 +1175,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
-		return this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext, cacheName, cacheType);
+		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
 	protected String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
@@ -1198,8 +1198,8 @@ public class SqlToyDaoSupport {
 		if (matchIndexes != null && matchIndexes.length > 0) {
 			nameIndexes = matchIndexes;
 		}
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext,
-				cacheName, cacheType);
+		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(cacheName,
+				cacheType);
 		Collection<Object[]> values = cacheDatas.values();
 		List<String> keySet = new ArrayList<String>();
 		String lowName = matchRegex.toLowerCase();
