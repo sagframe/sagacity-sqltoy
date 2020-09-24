@@ -83,6 +83,7 @@ public class MacroIfLogic {
 			Object value;
 			String compareValue;
 			String expressLow;
+			String[] params;
 			for (int i = 0; i < expressions.length; i++) {
 				value = paramValues.get(preCount + i);
 				express = expressions[i].trim();
@@ -93,10 +94,16 @@ public class MacroIfLogic {
 						break;
 					}
 				}
+				params = express.split(splitStr);
 				// update 2018-3-29,去除空格增强容错性
-				compareValue = express.split(splitStr)[1].trim();
+				compareValue = params[1].trim();
 				// 计算单个比较的结果
-				expressResult[i] = compare(value, splitStr, compareValue);
+				if (params[0].trim().toLowerCase().startsWith("size(")) {
+					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr,
+							compareValue);
+				} else {
+					expressResult[i] = compare(value, splitStr, compareValue);
+				}
 			}
 			if (expressions.length == 1) {
 				return (expressResult[0] ? "true" : "false");
@@ -169,8 +176,9 @@ public class MacroIfLogic {
 			return !realValue.equalsIgnoreCase(compareValue);
 		}
 		// 为null时只参与等于或不等于逻辑判断
-		if (value == null)
+		if (value == null) {
 			return false;
+		}
 		// 大于等于
 		if (compareType.equals(">=")) {
 			return moreEqual(value, realValue, compareValue, type);
