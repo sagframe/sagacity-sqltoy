@@ -98,7 +98,8 @@ public class MacroIfLogic {
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
 				// 计算单个比较的结果
-				if (params[0].trim().toLowerCase().startsWith("size(")) {
+				if (params[0].trim().toLowerCase().startsWith("size(")
+						|| params[0].trim().toLowerCase().startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr,
 							compareValue);
 				} else {
