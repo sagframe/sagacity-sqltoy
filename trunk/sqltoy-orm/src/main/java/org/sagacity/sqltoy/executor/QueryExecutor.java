@@ -84,7 +84,8 @@ public class QueryExecutor implements Serializable {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
-					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
+					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置filterParams=[" + filter.getParams()
+							+ "],和filterType=[" + filter.getType() + "]!");
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
 					if (StringUtil.isBlank(filter.getValue())) {
