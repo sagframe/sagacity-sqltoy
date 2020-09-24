@@ -186,6 +186,18 @@ public class TranslateManager {
 	}
 
 	/**
+	 * @see getCacheData(String cacheName, String cacheType)
+	 * @param sqlToyContext
+	 * @param cacheName
+	 * @param cacheType
+	 * @return
+	 */
+	@Deprecated
+	public HashMap<String, Object[]> getCacheData(SqlToyContext sqlToyContext, String cacheName, String cacheType) {
+		return getCacheData(cacheName, cacheType);
+	}
+
+	/**
 	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
 	 * @param cacheName
 	 * @param cacheType (一般为null,不为空时一般用于数据字典等同于dictType)
