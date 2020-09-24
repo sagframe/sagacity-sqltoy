@@ -175,7 +175,8 @@ public class QueryExecutor implements Serializable {
 			for (Translate trans : translates) {
 				extend = trans.getExtend();
 				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
-					throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
+					throw new IllegalArgumentException(
+							"给查询增加的缓存翻译时未定义具体的cacheName=[" + extend.cache + "] 或 对应的column=[" + extend.column + "]!");
 				}
 				innerModel.translates.put(extend.column, trans);
 			}
