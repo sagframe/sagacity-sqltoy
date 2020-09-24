@@ -1435,7 +1435,8 @@ public class DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			logger.warn("表:" + realTable + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			return 0L;
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1475,6 +1476,11 @@ public class DialectUtils {
 			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			final Integer dbType, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// 全部是主键则无需update，无主键则同样不符合修改规则
+		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
+			logger.warn("表:" + entityMeta.getSchemaTable(tableName) + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+			return 0L;
+		}
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
 		// 不存在级联操作
