@@ -94,9 +94,10 @@ public class SqlLoop extends AbstractMacro {
 		String loopStr;
 		Object paramValue;
 		String valueStr;
+		int index = 0;
 		for (int i = start; i < end; i++) {
 			loopStr = loopContent;
-			if (i > 0) {
+			if (index > 0) {
 				result.append(" ");
 				result.append(linkSign);
 			}
@@ -117,6 +118,7 @@ public class SqlLoop extends AbstractMacro {
 				loopStr = loopStr.replaceAll(key, valueStr);
 			}
 			result.append(loopStr);
+			index++;
 		}
 		result.append(" ");
 		return result.toString();
