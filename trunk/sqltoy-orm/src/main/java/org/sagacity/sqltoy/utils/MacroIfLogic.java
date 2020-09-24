@@ -97,7 +97,7 @@ public class MacroIfLogic {
 				params = express.split(splitStr);
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
-				// 计算单个比较的结果
+				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
 				if (params[0].trim().toLowerCase().startsWith("size(")
 						|| params[0].trim().toLowerCase().startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr,
