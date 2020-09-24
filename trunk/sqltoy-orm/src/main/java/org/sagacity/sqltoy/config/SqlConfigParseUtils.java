@@ -96,6 +96,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
@@ -394,7 +395,7 @@ public class SqlConfigParseUtils {
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
 				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
 				boolean logicValue = true;
-				int start = markContentSql.toLowerCase().indexOf("@if");
+				int start = StringUtil.matchIndex(markContentSql, IF_PATTERN);
 				// sql中存在逻辑判断
 				if (start > -1) {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
