@@ -1685,7 +1685,8 @@ public class DialectUtils {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		// 全部是主键则无需update，无主键则同样不符合修改规则
 		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			logger.warn("表:" + realTable + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler);
