@@ -146,7 +146,7 @@ public class SqlExecuteStat {
 		String reportStatus = "成功!";
 		if (sqlTrace.isOverTime()) {
 			printLog = true;
-			reportStatus = "执行超时!";
+			reportStatus = "执行耗时超阀值!";
 		}
 		if (sqlTrace.isError()) {
 			printLog = true;
