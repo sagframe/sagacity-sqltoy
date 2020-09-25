@@ -117,14 +117,14 @@ public class SqlExecuteStat {
 			if (sqlTrace == null) {
 				return;
 			}
-			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
+			long runTime = sqlTrace.getExecuteTime();
+			long overTime = runTime - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
 			if (overTime >= 0) {
 				sqlTrace.setOverTime(true);
-				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", sqlTrace.getExecuteTime(),
-						printSqlTimeoutMillis);
+				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
 			} else {
-				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", sqlTrace.getExecuteTime());
+				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
 			}
 			// 日志输出
 			printLogs(sqlTrace);
