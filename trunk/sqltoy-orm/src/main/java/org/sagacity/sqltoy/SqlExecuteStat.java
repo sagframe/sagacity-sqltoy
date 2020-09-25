@@ -171,27 +171,34 @@ public class SqlExecuteStat {
 		}
 		List<SqlExecuteLog> executeLogs = sqlTrace.getExecuteLogs();
 		int step = 0;
+		int logType;
+		String topic;
+		String content;
+		Object[] args;
 		for (SqlExecuteLog log : executeLogs) {
 			step++;
-			if (log.getType() == 0) {
-				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + "----------------");
-				result.append("\n/*|     入参后sql: ").append(fitSqlParams(log.getContent(), log.getArgs()));
+			logType = log.getType();
+			topic = log.getTopic();
+			content = log.getContent();
+			args = log.getArgs();
+			if (logType == 0) {
+				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
+				result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
 				result.append("\n/*|     sql参数: ");
-				if (log.getArgs() != null && log.getArgs().length > 0) {
+				if (args != null && args.length > 0) {
 					StringBuilder paramStr = new StringBuilder();
-					for (int i = 0; i < log.getArgs().length; i++) {
+					for (int i = 0; i < args.length; i++) {
 						if (i > 0) {
 							paramStr.append(",");
 						}
-						paramStr.append("p[" + i + "]=" + log.getArgs()[i]);
+						paramStr.append("p[" + i + "]=" + args[i]);
 					}
 					result.append(paramStr);
 				} else {
 					result.append("无参数");
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + ":"
-						+ StringUtil.fillArgs(log.getContent(), log.getArgs()));
+				result.append("\n/*|---- 过程: " + step + "," + topic + ":" + StringUtil.fillArgs(content, args));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
