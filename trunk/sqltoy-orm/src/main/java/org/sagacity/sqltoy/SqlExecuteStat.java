@@ -85,10 +85,8 @@ public class SqlExecuteStat {
 	public static void showSql(String topic, String sql, Object[] paramValues) {
 		try {
 			// debug模式直接输出
-			if (debug || printSqlStrategy.equals("debug")) {
-				if (threadLocal.get() != null) {
-					threadLocal.get().addSqlLog(topic, sql, paramValues);
-				}
+			if (threadLocal.get() != null) {
+				threadLocal.get().addSqlLog(topic, sql, paramValues);
 			}
 		} catch (Exception e) {
 
@@ -102,10 +100,8 @@ public class SqlExecuteStat {
 	 */
 	public static void debug(String topic, String message, Object... args) {
 		try {
-			if (debug || printSqlStrategy.equals("debug")) {
-				if (threadLocal.get() != null) {
-					threadLocal.get().addLog(topic, message, args);
-				}
+			if (threadLocal.get() != null) {
+				threadLocal.get().addLog(topic, message, args);
 			}
 		} catch (Exception e) {
 
