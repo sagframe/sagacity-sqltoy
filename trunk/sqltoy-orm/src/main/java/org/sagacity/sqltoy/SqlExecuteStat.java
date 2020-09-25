@@ -113,51 +113,6 @@ public class SqlExecuteStat {
 	}
 
 	/**
-	 * @todo 实际执行打印sql和参数
-	 * @param sql
-	 * @param paramValues
-	 * @param isErrorOrWarn
-	 */
-	private static void printSql(String sql, Object[] paramValues, boolean isErrorOrWarn) {
-		StringBuilder paramStr = new StringBuilder();
-		boolean isDebug = logger.isDebugEnabled();
-		if (paramValues != null) {
-			for (int i = 0; i < paramValues.length; i++) {
-				if (i > 0) {
-					paramStr.append(",");
-				}
-				paramStr.append("p[" + i + "]=" + paramValues[i]);
-			}
-		}
-		SqlExecuteTrace sqlTrace = threadLocal.get();
-		StringBuilder result = new StringBuilder();
-		String uid = null;
-		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
-		if (sqlTrace != null) {
-			uid = sqlTrace.getUid();
-			result.append("\n/*|执行类型=" + sqlTrace.getType());
-			result.append("\n/*|代码定位=" + getFirstTrace());
-			result.append("\n/*|sqlId=" + sqlTrace.getId());
-		}
-		result.append("\n/*|入参后sql:").append(fitSqlParams(sql, paramValues));
-		result.append("\n/*|sql 参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
-		// 错误或警告
-		if (isErrorOrWarn) {
-			result.insert(0, "\n\n/*|----start error,UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   error,UID=" + uid + "---------------------------------*/\n");
-			logger.error(result.toString());
-		} else {
-			result.insert(0, "\n\n/*|----start debug,UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   debug,UID=" + uid + "---------------------------------*/\n");
-			if (isDebug) {
-				logger.debug(result.toString());
-			} else {
-				out.println(result.toString());
-			}
-		}
-	}
-
-	/**
 	 * 在执行结尾时记录日志
 	 */
 	private static void destroyLog() {
@@ -182,6 +137,10 @@ public class SqlExecuteStat {
 		}
 	}
 
+	/**
+	 * @TODO 输出日志
+	 * @param sqlTrace
+	 */
 	private static void printLogs(SqlExecuteTrace sqlTrace) {
 		boolean printLog = false;
 		String reportStatus = "成功!";
@@ -236,6 +195,15 @@ public class SqlExecuteStat {
 			}
 		}
 		result.append("\n/*|----------------------结束执行报告 --------------------------------------------------*/");
+		if (sqlTrace.isError() || sqlTrace.isOverTime()) {
+			logger.error(result.toString());
+		} else {
+			if (logger.isDebugEnabled()) {
+				logger.debug(result.toString());
+			} else {
+				out.println(result.toString());
+			}
+		}
 	}
 
 	/**
