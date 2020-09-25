@@ -20,21 +20,27 @@ public class SqlExecuteLog implements Serializable {
 	private static final long serialVersionUID = 9086562500060758958L;
 
 	/**
+	 * 日志类型:0 表示sql日志，1:普通日志
+	 */
+	private int type = 0;
+
+	/**
 	 * 日志主题
 	 */
 	private String topic;
 
-	private String sql;
+	private String content;
 
-	private Object[] paramValues;
+	private Object[] args;
 
 	/**
 	 * 
 	 */
-	public SqlExecuteLog(String topic, String sql, Object[] paramValues) {
+	public SqlExecuteLog(int type, String topic, String content, Object[] args) {
+		this.type = type;
 		this.topic = topic;
-		this.sql = sql;
-		this.paramValues = paramValues;
+		this.content = content;
+		this.args = args;
 	}
 
 	/**
@@ -52,31 +58,47 @@ public class SqlExecuteLog implements Serializable {
 	}
 
 	/**
-	 * @return the sql
+	 * @return the type
 	 */
-	public String getSql() {
-		return sql;
+	public int getType() {
+		return type;
 	}
 
 	/**
-	 * @param sql the sql to set
+	 * @param type the type to set
 	 */
-	public void setSql(String sql) {
-		this.sql = sql;
+	public void setType(int type) {
+		this.type = type;
 	}
 
 	/**
-	 * @return the paramValues
+	 * @return the content
 	 */
-	public Object[] getParamValues() {
-		return paramValues;
+	public String getContent() {
+		return content;
 	}
 
 	/**
-	 * @param paramValues the paramValues to set
+	 * @param content the content to set
 	 */
-	public void setParamValues(Object[] paramValues) {
-		this.paramValues = paramValues;
+	public void setContent(String content) {
+		this.content = content;
 	}
+
+	/**
+	 * @return the args
+	 */
+	public Object[] getArgs() {
+		return args;
+	}
+
+	/**
+	 * @param args the args to set
+	 */
+	public void setArgs(Object[] args) {
+		this.args = args;
+	}
+
+	
 
 }

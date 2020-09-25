@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.utils.IdUtil;
 
 /**
@@ -52,6 +51,11 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean isPrint = true;
 
 	/**
+	 * 超时标志
+	 */
+	private boolean overTime = false;
+
+	/**
 	 * @return the isPrint
 	 */
 	public boolean isPrint() {
@@ -69,9 +73,14 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean error = false;
 
 	/**
+	 * 错误信息
+	 */
+	private List<String> errorMsg = new ArrayList<String>();
+
+	/**
 	 * 执行的sql和参数
 	 */
-	private List<SqlToyResult> sqlToyResults = new ArrayList<SqlToyResult>();
+	private List<SqlExecuteLog> executeLogs = new ArrayList<SqlExecuteLog>();
 
 	/**
 	 * @return the start
@@ -118,15 +127,22 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * @return the sqlToyResults
 	 */
-	public List<SqlToyResult> getSqlToyResults() {
-		return sqlToyResults;
+	public List<SqlExecuteLog> getExecuteLogs() {
+		return executeLogs;
 	}
 
 	/**
 	 * @param sqlToyResults the sqlToyResults to set
 	 */
-	public void addSqlToyResult(String sql, Object[] paramsValue) {
-		sqlToyResults.add(new SqlToyResult(sql, paramsValue));
+	public void addSqlLog(String topic, String sql, Object... paramsValue) {
+		executeLogs.add(new SqlExecuteLog(0, topic, sql, paramsValue));
+	}
+
+	/**
+	 * @param sqlToyResults the sqlToyResults to set
+	 */
+	public void addLog(String topic, String content, Object... paramsValue) {
+		executeLogs.add(new SqlExecuteLog(1, topic, content, paramsValue));
 	}
 
 	/**
@@ -139,8 +155,9 @@ public class SqlExecuteTrace implements Serializable {
 	/**
 	 * @param error the error to set
 	 */
-	public void setError(boolean error) {
-		this.error = error;
+	public void setError(String errorMsg) {
+		this.error = true;
+		executeLogs.add(0, new SqlExecuteLog(1, "错误信息", errorMsg, null));
 	}
 
 	/**
@@ -149,4 +166,19 @@ public class SqlExecuteTrace implements Serializable {
 	public String getUid() {
 		return uid;
 	}
+
+	/**
+	 * @return the overTime
+	 */
+	public boolean isOverTime() {
+		return overTime;
+	}
+
+	/**
+	 * @param overTime the overTime to set
+	 */
+	public void setOverTime(boolean overTime) {
+		this.overTime = overTime;
+	}
+
 }
