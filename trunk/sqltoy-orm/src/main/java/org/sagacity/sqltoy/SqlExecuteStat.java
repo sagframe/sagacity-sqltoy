@@ -327,7 +327,6 @@ public class SqlExecuteStat {
 	public static String getFirstTrace() {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 		// StackTraceElement[] stackTraceElements=new Throwable().getStackTrace();
-
 		String className = null;
 		int lineNumber = 0;
 		String method = null;
