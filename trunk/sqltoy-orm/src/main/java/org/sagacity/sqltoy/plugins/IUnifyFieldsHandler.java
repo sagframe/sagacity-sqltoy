@@ -16,17 +16,19 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
  */
 public interface IUnifyFieldsHandler {
 	/**
-	 * @TODO 返回创建记录时需要修改的字段和对应的值
+	 * @TODO 设置创建记录时需要赋值的字段和对应的值
 	 * @return
 	 */
 	public Map<String, Object> createUnifyFields();
 
 	/**
-	 * @TODO 返回修改记录时相关字段的名称和值
+	 * @TODO 设置修改记录时需要赋值的字段和对应的值
 	 * @return
 	 */
 	public Map<String, Object> updateUnifyFields();
 
+	//在非强制情况下，create和update赋值都是先判断字段是否已经赋值，如已经赋值则忽视
+	//强制赋值后，则忽视字段赋值，强制覆盖
 	/**
 	 * @TODO 強制修改的字段(一般针对update属性)
 	 * @return
