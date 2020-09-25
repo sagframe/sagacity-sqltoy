@@ -176,16 +176,19 @@ public class SqlExecuteStat {
 			if (log.getType() == 0) {
 				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + "----------------");
 				result.append("\n/*|     入参后sql: ").append(fitSqlParams(log.getContent(), log.getArgs()));
-				StringBuilder paramStr = new StringBuilder();
-				if (log.getArgs() != null) {
+				result.append("\n/*|     sql参数: ");
+				if (log.getArgs() != null && log.getArgs().length > 0) {
+					StringBuilder paramStr = new StringBuilder();
 					for (int i = 0; i < log.getArgs().length; i++) {
 						if (i > 0) {
 							paramStr.append(",");
 						}
 						paramStr.append("p[" + i + "]=" + log.getArgs()[i]);
 					}
+					result.append(paramStr);
+				} else {
+					result.append("无参数");
 				}
-				result.append("\n/*|     sql参数: ").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
 			} else {
 				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + ":"
 						+ StringUtil.fillArgs(log.getContent(), log.getArgs()));
@@ -242,7 +245,7 @@ public class SqlExecuteStat {
 	 * @return
 	 */
 	private static String fitSqlParams(String sql, Object[] params) {
-		if (params == null || params.length == 0) {
+		if (sql == null || params == null || params.length == 0) {
 			return sql;
 		}
 		StringBuilder lastSql = new StringBuilder();
