@@ -254,7 +254,7 @@ public class DialectFactory {
 						}
 					});
 			// 输出执行结果更新记录量日志
-			SqlExecuteStat.debug("执行结果", "批量更新记录数量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "批量更新记录数量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -296,7 +296,7 @@ public class DialectFactory {
 									dbType, autoCommit));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "受影响记录数量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "受影响记录数量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -384,7 +384,7 @@ public class DialectFactory {
 								}
 
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
-								SqlExecuteStat.debug("过程提示", "按比例提取总记录数={} 条,需取随机记录={} 条!", totalCount, randomCnt);
+								SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条!", totalCount, randomCnt);
 								// 如果总记录数不为零，randomCnt最小为1
 								if (totalCount >= 1 && randomCnt < 1) {
 									randomCnt = 1L;
@@ -409,7 +409,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
-							SqlExecuteStat.debug("查询结果", "取得随机记录数量={} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
@@ -578,7 +578,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							queryResult.setSkipQueryCount(true);
-							SqlExecuteStat.debug("查询结果", "分页查询出记录={}条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("查询结果", "分页查询出记录数量:{}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
@@ -638,7 +638,7 @@ public class DialectFactory {
 									PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey,
 											recordCnt);
 								} else {
-									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数={}!", recordCnt);
+									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
 								}
 							} else {
 								recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
@@ -697,7 +697,7 @@ public class DialectFactory {
 											(Class) extend.resultType));
 								}
 							}
-							SqlExecuteStat.debug("查询结果", "分页总记录数={}条,取得记录数={} 条!",
+							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
 									((QueryResult) queryResult).getRows().size());
 							this.setResult(queryResult);
@@ -743,14 +743,14 @@ public class DialectFactory {
 										dbType, dialect);
 
 								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
-								SqlExecuteStat.debug("过程提示", "按比例提取,总记录数={} 条,按比例top记录要取:{} 条!", totalCount,
+								SqlExecuteStat.debug("过程提示", "按比例提取,总记录数:{}条,按比例top记录要取:{} 条!", totalCount,
 										realTopSize);
 							} else {
 								realTopSize = Double.valueOf(topSize).intValue();
 							}
 							if (realTopSize == 0) {
 								this.setResult(new QueryResult());
-								SqlExecuteStat.debug("查询结果", "实际取得top记录数=0 条!");
+								SqlExecuteStat.debug("查询结果", "实际取得top记录数:0 条!");
 								return;
 							}
 
@@ -766,7 +766,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
-							SqlExecuteStat.debug("查询结果", "实际取得top记录数= {} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});

@@ -166,12 +166,12 @@ public class SqlExecuteStat {
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
-		result.append("\n/*|执行uid:" + uid);
-		result.append("\n/*|执行状态:" + reportStatus);
+		result.append("\n/*|任务UID:" + uid);
+		result.append("\n/*|执行结果:" + reportStatus);
 		result.append("\n/*|执行类型:" + sqlTrace.getType());
 		result.append("\n/*|代码定位:" + getFirstTrace());
 		if (sqlTrace.getId() != null) {
-			result.append("\n/*|sqlId=" + sqlTrace.getId());
+			result.append("\n/*|对应sqlId:" + sqlTrace.getId());
 		}
 		List<SqlExecuteLog> executeLogs = sqlTrace.getExecuteLogs();
 		int step = 0;
