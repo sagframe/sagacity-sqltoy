@@ -658,7 +658,7 @@ public class DialectFactory {
 											"非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}",
 											recordCnt, limitSize, sqlToyConfig.getIdOrSql());
 								} else {
-									SqlExecuteStat.debug("过程提示", "提取count数为0,sql={}", sqlToyConfig.getIdOrSql());
+									SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
 								}
 							} else {
 								// 合法的全记录提取,设置页号为1按记录数
@@ -967,7 +967,7 @@ public class DialectFactory {
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "实际影响记录数量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1023,7 +1023,7 @@ public class DialectFactory {
 				}
 			}
 			// 输出修改记录量日志
-			SqlExecuteStat.debug("执行结果", "实际影响记录数量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1075,7 +1075,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			SqlExecuteStat.debug("执行结果", "实际影响记录数量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "实际影响记录数量:{} 条!", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1168,7 +1168,7 @@ public class DialectFactory {
 									});
 						}));
 			}
-			SqlExecuteStat.debug("执行结果", "查询结果记录={} 条!", result.size());
+			SqlExecuteStat.debug("执行结果", "查询结果记录:{} 条!", result.size());
 			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1201,7 +1201,7 @@ public class DialectFactory {
 									dialect, shardingModel.getTableName()));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "单对象保存返回主键值={}", result);
+			SqlExecuteStat.debug("执行结果", "单对象保存返回主键值:{}", result);
 			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1253,7 +1253,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			SqlExecuteStat.debug("执行结果", "批量保存记录量={}条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "批量保存记录量:{}条!", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1291,7 +1291,7 @@ public class DialectFactory {
 									shardingModel.getTableName()));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "update操作影响记录量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "update操作影响记录量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1345,7 +1345,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			SqlExecuteStat.debug("执行结果", "批量更新影响记录量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "批量更新影响记录量:{} 条!", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1377,7 +1377,7 @@ public class DialectFactory {
 									dialect, shardingModel.getTableName()));
 						}
 					});
-			SqlExecuteStat.debug("执行结果", "删除操作影响记录量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "删除操作影响记录量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1427,7 +1427,7 @@ public class DialectFactory {
 					updateTotalCnt = updateTotalCnt + cnt.longValue();
 				}
 			}
-			SqlExecuteStat.debug("执行结果", "批量删除操作影响记录量={} 条!", updateTotalCnt);
+			SqlExecuteStat.debug("执行结果", "批量删除操作影响记录量:{} 条!", updateTotalCnt);
 			return Long.valueOf(updateTotalCnt);
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
@@ -1471,7 +1471,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
-							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录={} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
@@ -1511,7 +1511,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
-							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录={} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
@@ -1550,7 +1550,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType));
 							}
-							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录={} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
@@ -1617,7 +1617,7 @@ public class DialectFactory {
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										resultType));
 							}
-							SqlExecuteStat.debug("执行结果", "存储过程影响记录={} 条!", queryResult.getRecordCount());
+							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
