@@ -165,11 +165,11 @@ public class SqlExecuteStat {
 
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
-		result.append("\n/*|----------------------开始执行报告 --------------------------------------------------*/");
-		result.append("\n/*|执行uid=" + uid);
-		result.append("\n/*|执行状态=" + reportStatus);
-		result.append("\n/*|执行类型=" + sqlTrace.getType());
-		result.append("\n/*|代码定位=" + getFirstTrace());
+		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
+		result.append("\n/*|执行uid:" + uid);
+		result.append("\n/*|执行状态:" + reportStatus);
+		result.append("\n/*|执行类型:" + sqlTrace.getType());
+		result.append("\n/*|代码定位:" + getFirstTrace());
 		if (sqlTrace.getId() != null) {
 			result.append("\n/*|sqlId=" + sqlTrace.getId());
 		}
@@ -177,9 +177,9 @@ public class SqlExecuteStat {
 		int step = 0;
 		for (SqlExecuteLog log : executeLogs) {
 			step++;
-			result.append("\n/*|---- 步骤 " + step + "," + log.getTopic() + "----------------");
 			if (log.getType() == 0) {
-				result.append("\n/*|入参后sql:").append(fitSqlParams(log.getContent(), log.getArgs()));
+				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + "----------------");
+				result.append("\n/*|     入参后sql:").append(fitSqlParams(log.getContent(), log.getArgs()));
 				StringBuilder paramStr = new StringBuilder();
 				if (log.getArgs() != null) {
 					for (int i = 0; i < log.getArgs().length; i++) {
@@ -189,12 +189,13 @@ public class SqlExecuteStat {
 						paramStr.append("p[" + i + "]=" + log.getArgs()[i]);
 					}
 				}
-				result.append("\n/*|sql参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
+				result.append("\n/*|     sql参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
 			} else {
-				result.append("\n/*|日志信息:").append(StringUtil.fillArgs(log.getContent(), log.getArgs()));
+				result.append("\n/*|---- 过程: " + step + "," + log.getTopic() + ":"
+						+ StringUtil.fillArgs(log.getContent(), log.getArgs()));
 			}
 		}
-		result.append("\n/*|----------------------结束执行报告 --------------------------------------------------*/");
+		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
 		if (sqlTrace.isError() || sqlTrace.isOverTime()) {
 			logger.error(result.toString());
 		} else {
@@ -348,6 +349,6 @@ public class SqlExecuteStat {
 				break;
 			}
 		}
-		return "" + className + "." + method + "[line:" + lineNumber + "]";
+		return "" + className + "." + method + "[代码第:" + lineNumber + " 行]";
 	}
 }
