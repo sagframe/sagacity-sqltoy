@@ -119,7 +119,7 @@ public class SqlExecuteStat {
 			}
 			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
-			if (overTime >= 0 && sqlTrace.getStart() != null) {
+			if (overTime >= 0) {
 				sqlTrace.setOverTime(true);
 				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", sqlTrace.getExecuteTime(),
 						printSqlTimeoutMillis);
