@@ -128,7 +128,7 @@ public class ClickHouseDialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-		SqlExecuteStat.showSql("insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("执行插入语句", insertSql, null);
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
@@ -227,7 +227,7 @@ public class ClickHouseDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("批量执行插入语句", insertSql, null);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
 				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
 				dbType);
