@@ -32,6 +32,8 @@
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
+   * oceanBase
+   * guassdb
    * mongodb (只支持查询)
    * sybase_iq 支持15.4以上版本，建议使用16版本
    
