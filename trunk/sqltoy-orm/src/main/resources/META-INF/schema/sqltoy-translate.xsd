@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema
-	xmlns="https://www.sagframe.com/schema/sqltoy-translate"
-	xmlns:tns="https://www.sagframe.com/schema/sqltoy-translate"
+	xmlns="http://www.sagframe.com/schema/sqltoy-translate"
+	xmlns:tns="http://www.sagframe.com/schema/sqltoy-translate"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	targetNamespace="https://www.sagframe.com/schema/sqltoy-translate"
+	targetNamespace="http://www.sagframe.com/schema/sqltoy-translate"
 	elementFormDefault="qualified">
 	<xsd:attributeGroup name="sqlToyTranslateAttrs">
 		<xsd:attribute name="cache" type="xsd:string"
