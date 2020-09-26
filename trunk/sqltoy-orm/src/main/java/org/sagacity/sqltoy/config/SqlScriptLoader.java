@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 解析sql配置文件，并放入缓存
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlScriptLoader.java,Revision:v1.0,Date:2009-12-13 
+ * @version id:SqlScriptLoader.java,Revision:v1.0,Date:2009-12-13
  * @modify Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
  * @modify Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
@@ -185,28 +186,53 @@ public class SqlScriptLoader {
 	 * @todo 提供根据sql或sqlId获取sql配置模型
 	 * @param sqlKey
 	 * @param sqlType
+	 * @param dialect
 	 * @return
 	 */
-	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType) {
-		SqlToyConfig result = sqlCache.get(sqlKey);
-		if (null == result) {
-			result = codeSqlCache.get(sqlKey);
-		}
-		if (null != result) {
-			return result;
-		}
-		// 判断是否是sqlId,非在xml中定义id的sql
-		if (!SqlConfigParseUtils.isNamedQuery(sqlKey)) {
-			result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, getDialect(), sqlType);
-			// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
-			result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
-			// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
-			if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
-				codeSqlCache.put(sqlKey, result);
+	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
+		SqlToyConfig result = null;
+		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
+		// sqlId形式
+		if (SqlConfigParseUtils.isNamedQuery(sqlKey)) {
+			if (!realDialect.equals("")) {
+				// sqlId_dialect
+				result = sqlCache.get(sqlKey.concat("_").concat(realDialect));
+				// dialect_sqlId
+				if (result == null) {
+					result = sqlCache.get(realDialect.concat("_").concat(sqlKey));
+				}
+				// 兼容一下sqlserver的命名
+				if (result == null && realDialect.equals(Dialect.SQLSERVER)) {
+					result = sqlCache.get(sqlKey.concat("_mssql"));
+					if (result == null) {
+						result = sqlCache.get("mssql_".concat(sqlKey));
+					}
+				} // 兼容一下postgres的命名
+				if (result == null && realDialect.equals(Dialect.POSTGRESQL)) {
+					result = sqlCache.get(sqlKey.concat("_postgres"));
+					if (result == null) {
+						result = sqlCache.get("postgres_".concat(sqlKey));
+					}
+				}
+			}
+			if (result == null) {
+				result = sqlCache.get(sqlKey);
 			}
 		} else {
-			// 这一步理论上不应该执行
-			result = new SqlToyConfig(getDialect());
+			result = codeSqlCache.get(sqlKey);
+			if (result == null) {
+				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
+				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
+				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
+				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
+				if (codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
+					codeSqlCache.put(sqlKey, result);
+				}
+			}
+		}
+		// 这一步理论上不应该执行
+		if (result == null) {
+			result = new SqlToyConfig(realDialect);
 			result.setSql(sqlKey);
 		}
 		return result;

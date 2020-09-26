@@ -68,6 +68,8 @@ public class TranslateManager {
 
 	private CacheUpdateWatcher cacheCheck;
 
+	private SqlToyContext sqlToyContext;
+
 	/**
 	 * @param translateConfig the translateConfig to set
 	 */
@@ -82,6 +84,7 @@ public class TranslateManager {
 			return;
 		}
 		try {
+			this.sqlToyContext = sqlToyContext;
 			initialized = true;
 			logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
 			// 加载和解析缓存翻译的配置
@@ -126,13 +129,12 @@ public class TranslateManager {
 
 	/**
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存(多个translate对应的多个缓存结果)
-	 * @param sqlToyContext
 	 * @param conn
 	 * @param translates
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap<String, HashMap<String, Object[]>> getTranslates(SqlToyContext sqlToyContext, Connection conn,
+	public HashMap<String, HashMap<String, Object[]>> getTranslates(Connection conn,
 			HashMap<String, Translate> translates) {
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
 		HashMap<String, Object[]> cache;
@@ -142,7 +144,7 @@ public class TranslateManager {
 			extend = entry.getValue().getExtend();
 			if (translateMap.containsKey(extend.cache)) {
 				cacheModel = translateMap.get(extend.cache);
-				cache = getCacheData(sqlToyContext, cacheModel, extend.cacheType);
+				cache = getCacheData(cacheModel, extend.cacheType);
 				if (cache != null) {
 					result.put(extend.column, cache);
 				} else {
@@ -164,14 +166,12 @@ public class TranslateManager {
 
 	/**
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存
-	 * @param sqlToyContext
 	 * @param cacheModel
-	 * @param cacheType     一般为null,不为空时一般用于数据字典等同于dictType
+	 * @param cacheType  一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
 	 * @throws Exception
 	 */
-	private HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
-			String cacheType) {
+	private HashMap<String, Object[]> getCacheData(TranslateConfigModel cacheModel, String cacheType) {
 		// 从缓存中提取数据
 		HashMap<String, Object[]> result = translateCacheManager.getCache(cacheModel.getCache(), cacheType);
 		// 数据为空则执行调用逻辑提取数据放入缓存，否则直接返回
@@ -186,21 +186,59 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
+	 * @see getCacheData(String cacheName, String cacheType)
 	 * @param sqlToyContext
 	 * @param cacheName
-	 * @param cacheType     (一般为null,不为空时一般用于数据字典等同于dictType)
+	 * @param cacheType
+	 * @return
+	 */
+	@Deprecated
+	public HashMap<String, Object[]> getCacheData(SqlToyContext sqlToyContext, String cacheName, String cacheType) {
+		return getCacheData(cacheName, cacheType);
+	}
+
+	/**
+	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
+	 * @param cacheName
+	 * @param cacheType (一般为null,不为空时一般用于数据字典等同于dictType)
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap<String, Object[]> getCacheData(final SqlToyContext sqlToyContext, String cacheName,
-			String cacheType) {
+	public HashMap<String, Object[]> getCacheData(String cacheName, String cacheType) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
 		if (cacheModel == null) {
 			logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
 			return null;
 		}
-		return getCacheData(sqlToyContext, cacheModel, cacheType);
+		return getCacheData(cacheModel, cacheType);
+	}
+
+	/**
+	 * @todo 更新单个缓存的整体数据
+	 * @param cacheName
+	 * @param cacheType  (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 * @param cacheValue
+	 */
+	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
+		if (translateCacheManager != null) {
+			TranslateConfigModel cacheModel = translateMap.get(cacheName);
+			if (cacheModel == null) {
+				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
+				return;
+			}
+			translateCacheManager.put(cacheModel, cacheName, cacheType, cacheValue);
+		}
+	}
+
+	/**
+	 * @todo 清空缓存
+	 * @param cacheName
+	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
+	 */
+	public void clear(String cacheName, String cacheType) {
+		if (translateCacheManager != null) {
+			translateCacheManager.clear(cacheName, cacheType);
+		}
 	}
 
 	/**
@@ -236,35 +274,6 @@ public class TranslateManager {
 	 */
 	public TranslateCacheManager getTranslateCacheManager() {
 		return translateCacheManager;
-	}
-
-	/**
-	 * @todo 将数据放入缓存
-	 * @param cacheConfig
-	 * @param cacheName
-	 * @param cacheType   (默认为null，针对诸如数据字典类型的，对应字典类型)
-	 * @param cacheValue
-	 */
-	public void put(String cacheName, String cacheType, HashMap<String, Object[]> cacheValue) {
-		if (translateCacheManager != null) {
-			TranslateConfigModel cacheModel = translateMap.get(cacheName);
-			if (cacheModel == null) {
-				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
-				return;
-			}
-			translateCacheManager.put(cacheModel, cacheName, cacheType, cacheValue);
-		}
-	}
-
-	/**
-	 * @todo 清空缓存
-	 * @param cacheName
-	 * @param cacheType (默认为null，针对诸如数据字典类型的，对应字典类型)
-	 */
-	public void clear(String cacheName, String cacheType) {
-		if (translateCacheManager != null) {
-			translateCacheManager.clear(cacheName, cacheType);
-		}
 	}
 
 	public void destroy() {

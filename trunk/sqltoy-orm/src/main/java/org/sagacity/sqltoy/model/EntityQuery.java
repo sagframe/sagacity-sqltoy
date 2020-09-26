@@ -158,7 +158,8 @@ public class EntityQuery implements Serializable {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
-					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置参数名称和过滤的类型!");
+					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置filterParams=[" + filter.getParams()
+							+ "],和filterType=[" + filter.getType() + "]!");
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
 					if (StringUtil.isBlank(filter.getValue())) {
@@ -188,7 +189,8 @@ public class EntityQuery implements Serializable {
 				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.keyColumn)
 						|| StringUtil.isBlank(extend.column)) {
 					throw new IllegalArgumentException(
-							"针对EntityQuery设置缓存翻译必须要明确:cacheName、keyColumn(作为key的字段列)、 column(翻译结果映射的列)!");
+							"针对EntityQuery设置缓存翻译必须要明确:cacheName=[" + extend.cache + "]、keyColumn=[" + extend.keyColumn
+									+ "](作为key的字段列)、 column=[" + extend.column + "](翻译结果映射的列)!");
 				}
 				innerModel.translates.put(extend.column, trans);
 			}

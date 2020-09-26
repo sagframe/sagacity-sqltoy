@@ -84,7 +84,8 @@ public class QueryExecutor implements Serializable {
 		if (filters != null && filters.length > 0) {
 			for (ParamsFilter filter : filters) {
 				if (StringUtil.isBlank(filter.getType()) || StringUtil.isBlank(filter.getParams())) {
-					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置参数名称和过滤的类型!");
+					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置filterParams=[" + filter.getParams()
+							+ "],和filterType=[" + filter.getType() + "]!");
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
 					if (StringUtil.isBlank(filter.getValue())) {
@@ -175,7 +176,8 @@ public class QueryExecutor implements Serializable {
 			for (Translate trans : translates) {
 				extend = trans.getExtend();
 				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
-					throw new IllegalArgumentException("给查询增加的缓存翻译时未定义具体的cacheName 或 对应的column!");
+					throw new IllegalArgumentException(
+							"给查询增加的缓存翻译时未定义具体的cacheName=[" + extend.cache + "] 或 对应的column=[" + extend.column + "]!");
 				}
 				innerModel.translates.put(extend.column, trans);
 			}

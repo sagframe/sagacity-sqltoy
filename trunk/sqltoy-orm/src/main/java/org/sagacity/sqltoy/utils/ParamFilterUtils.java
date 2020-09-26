@@ -54,8 +54,8 @@ public class ParamFilterUtils {
 		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
 			return values;
 		}
-		//update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
-		//构造出参数便于统一处理
+		// update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
+		// 构造出参数便于统一处理
 		String[] paramsName;
 		if ((paramArgs == null || paramArgs.length == 0)) {
 			paramsName = new String[values.length];
@@ -150,8 +150,8 @@ public class ParamFilterUtils {
 				return;
 			}
 			// 获取缓存数据
-			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager().getCacheData(sqlToyContext,
-					paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
+			HashMap<String, Object[]> cacheDataMap = sqlToyContext.getTranslateManager()
+					.getCacheData(paramFilterModel.getCacheName(), paramFilterModel.getCacheType());
 			if (cacheDataMap == null || cacheDataMap.isEmpty()) {
 				logger.warn("缓存:{} 可能不存在,在通过缓存获取查询条件key值时异常,请检查!", paramFilterModel.getCacheName());
 				return;

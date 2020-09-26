@@ -64,7 +64,7 @@ public class MacroUtils {
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues) {
-		return replaceMacros(hasMacroStr, keyValues, false);
+		return replaceMacros(hasMacroStr, keyValues, false, macros);
 	}
 
 	/**
@@ -72,15 +72,15 @@ public class MacroUtils {
 	 * @param reportContext
 	 * @param reportId
 	 * @param hasMacroStr
-	 * @param isOuter(isOuter
-	 *            当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
-	 *            然后再执行@abc())
+	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
+	 *                        然后再执行@abc())
 	 * @return
 	 */
-	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues,
-			boolean isOuter) {
-		if (StringUtil.isBlank(hasMacroStr))
+	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues, boolean isOuter,
+			Map<String, AbstractMacro> macros) {
+		if (StringUtil.isBlank(hasMacroStr)) {
 			return hasMacroStr;
+		}
 		if (StringUtil.matches(hasMacroStr, macroPattern)) {
 			String source = hasMacroStr;
 			Matcher matcher = macroPattern.matcher(source);
@@ -93,20 +93,22 @@ public class MacroUtils {
 				index = matcher.start();
 				tmpMatchedMacro = matcher.group();
 				// 判断是否是转换器
-				if (isMacro(tmpMatchedMacro, true)) {
+				if (isMacro(macros, tmpMatchedMacro, true)) {
 					count++;
 					matchedMacro = tmpMatchedMacro;
 					// index后移1
 					subIndexCount += index + 1;
-					if (isOuter)
+					if (isOuter) {
 						break;
+					}
 				}
 				source = source.substring(index + 1);
 				matcher = macroPattern.matcher(source);
 			}
 			// 匹配不上，则表示字符串中的转换器已经全部执行被替换，返回结果终止递归
-			if (count == 0)
+			if (count == 0) {
 				return hasMacroStr;
+			}
 			int sysMarkIndex = StringUtil.getSymMarkIndex("(", ")", matchedMacro, 0);
 			// 得到最后一个转换器中的参数
 			String macroParam = matchedMacro.substring(matchedMacro.indexOf("(") + 1, sysMarkIndex);
@@ -116,17 +118,17 @@ public class MacroUtils {
 			AbstractMacro macro = macros.get(macroName);
 			String result = macro.execute(StringUtil.splitExcludeSymMark(macroParam, ",", filters), keyValues);
 			// 最外层是转换器，则将转结果直接以对象方式返回
-			if (hasMacroStr.trim().equals(macroStr.trim()))
+			if (hasMacroStr.trim().equals(macroStr.trim())) {
 				return result;
+			}
 			String macroResult = (result == null) ? "" : result;
 			hasMacroStr = replaceStr(hasMacroStr, macroStr, macroResult, subIndexCount - 1);
-			return replaceMacros(hasMacroStr, keyValues, isOuter);
+			return replaceMacros(hasMacroStr, keyValues, isOuter, macros);
 		}
 		return hasMacroStr;
 	}
 
 	/**
-	 * 
 	 * @todo <b>判断匹配的字符串是否是转换器</b>
 	 * @author zhongxuchen
 	 * @date 2011-6-10 下午12:01:47
@@ -134,7 +136,7 @@ public class MacroUtils {
 	 * @param isStart
 	 * @return
 	 */
-	private static boolean isMacro(String matchedStr, boolean isStart) {
+	private static boolean isMacro(Map<String, AbstractMacro> macros, String matchedStr, boolean isStart) {
 		int index = matchedStr.indexOf("(");
 		if (matchedStr.startsWith("@") && index != -1) {
 			if (macros.containsKey(matchedStr.substring(0, index))) {
@@ -145,12 +147,15 @@ public class MacroUtils {
 	}
 
 	private static String replaceStr(String source, String template, String target, int fromIndex) {
-		if (source == null)
+		if (source == null) {
 			return null;
-		if (template == null)
+		}
+		if (template == null) {
 			return source;
-		if (fromIndex >= source.length() - 1)
+		}
+		if (fromIndex >= source.length() - 1) {
 			return source;
+		}
 		int index = source.indexOf(template, fromIndex);
 		if (index != -1) {
 			source = source.substring(0, index).concat(target).concat(source.substring(index + template.length()));
@@ -165,8 +170,9 @@ public class MacroUtils {
 	 * @return
 	 */
 	public static String replaceParams(String template, IgnoreKeyCaseMap<String, Object> keyValues) {
-		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty())
+		if (StringUtil.isBlank(template) || keyValues == null || keyValues.isEmpty()) {
 			return template;
+		}
 		LinkedHashMap<String, String> paramsMap = parseParams(template);
 		String result = template;
 		if (paramsMap.size() > 0) {
@@ -201,8 +207,9 @@ public class MacroUtils {
 	}
 
 	private static String replaceAllStr(String source, String template, String target) {
-		if (source == null || template.equals(target))
+		if (source == null || template.equals(target)) {
 			return source;
+		}
 		int index = source.indexOf(template, 0);
 		int subLength = target.length() - template.length();
 		int begin = index - 1;

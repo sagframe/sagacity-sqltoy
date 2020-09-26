@@ -62,7 +62,6 @@ import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -181,7 +180,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected SqlToyConfig getSqlToyConfig(final String sqlKey, final SqlType sqlType) {
-		return sqlToyContext.getSqlToyConfig(sqlKey, sqlType);
+		return sqlToyContext.getSqlToyConfig(sqlKey, sqlType, getDialect(null));
 	}
 
 	/**
@@ -223,7 +222,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long getCountByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(extend.sql, SqlType.search,
+				getDialect(extend.dataSource));
 		return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
 	}
@@ -434,7 +434,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Object loadByQuery(final QueryExecutor queryExecutor) {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(extend.dataSource));
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
 		List rows = result.getRows();
@@ -489,7 +490,8 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
+				getDialect(dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, autoCommit,
 				this.getDataSource(dataSource, sqlToyConfig));
 	}
@@ -550,7 +552,8 @@ public class SqlToyDaoSupport {
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
 			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
 			final Boolean autoCommit, final DataSource dataSource) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
+				getDialect(dataSource));
 		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, reflectPropertyHandler,
 				insertCallhandler, autoCommit, getDataSource(dataSource, sqlToyConfig));
 	}
@@ -598,7 +601,8 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
@@ -610,7 +614,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 跳过查询总记录数量
 		if (paginationModel.getSkipQueryCount() != null && paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
@@ -669,7 +674,8 @@ public class SqlToyDaoSupport {
 	}
 
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
@@ -682,7 +688,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
@@ -1012,7 +1019,8 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
@@ -1027,7 +1035,8 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
 			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
@@ -1042,7 +1051,8 @@ public class SqlToyDaoSupport {
 	@Deprecated
 	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
 			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, sqlToyConfig, random, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
@@ -1165,7 +1175,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
-		return this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext, cacheName, cacheType);
+		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
 	protected String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
@@ -1188,8 +1198,8 @@ public class SqlToyDaoSupport {
 		if (matchIndexes != null && matchIndexes.length > 0) {
 			nameIndexes = matchIndexes;
 		}
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(this.sqlToyContext,
-				cacheName, cacheType);
+		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(cacheName,
+				cacheType);
 		Collection<Object[]> values = cacheDatas.values();
 		List<String> keySet = new ArrayList<String>();
 		String lowName = matchRegex.toLowerCase();
@@ -1397,7 +1407,8 @@ public class SqlToyDaoSupport {
 		// 设置分页优化
 		queryExecutor.getInnerModel().pageOptimize = innerModel.pageOptimize;
 
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
+				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
 			// dataSource sharding
@@ -1568,9 +1579,9 @@ public class SqlToyDaoSupport {
 			for (ParallQuery query : parallQueryList) {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
-						SqlType.search);
+						SqlType.search, getDialect(query.getExtend().dataSource));
 				future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
-						paramNames, paramValues, getDataSource(dataSource, sqlToyConfig)));
+						paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
 				futureResult.add(future);
 			}
 			pool.shutdown();
@@ -1601,19 +1612,14 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @TODO 获取数据库类型，便于在极为特殊场景下为开发者提供一些灵活处理
+	 * @TODO 获取当前数据库方言的名称
 	 * @param dataSource
 	 * @return
 	 */
-	public int getDBType(DataSource dataSource) {
-		return DataSourceUtils.getDBType(getDataSource(dataSource));
+	public String getDialect(DataSource dataSource) {
+		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
+			return sqlToyContext.getDialect();
+		}
+		return DataSourceUtils.getDialect(getDataSource(dataSource));
 	}
-	/**
-	 * @TODO 提供sql查询服务的调用(面向复杂计算提供便利)
-	 *       sql服务是一个服务id下面聚合多个sql查询，并包含join、union、H5Table相关的merge、updateCell等二次操作
-	 * @return
-	 */
-//	public SqlServiceResult callSqlService() {
-//		return null;
-//	}
 }

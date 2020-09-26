@@ -219,7 +219,7 @@ public class DialectUtils {
 		// 做sql签名
 		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
-		SqlExecuteStat.showSql(lastSql, paramsValue);
+		SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
 		PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		if (fetchSize > 0) {
 			pst.setFetchSize(fetchSize);
@@ -257,7 +257,7 @@ public class DialectUtils {
 		// 做sql签名
 		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
-		SqlExecuteStat.showSql(lastSql, paramsValue);
+		SqlExecuteStat.showSql("执行updateFetch", lastSql, paramsValue);
 		PreparedStatement pst = null;
 		if (updateRowHandler == null) {
 			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -380,7 +380,7 @@ public class DialectUtils {
 		// 做sql签名
 		lastCountSql = SqlUtilsExt.signSql(lastCountSql, dbType, sqlToyConfig);
 		// 打印sql
-		SqlExecuteStat.showSql(lastCountSql, realParams);
+		SqlExecuteStat.showSql("执行count查询", lastCountSql, realParams);
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -578,7 +578,7 @@ public class DialectUtils {
 		}
 
 		String saveOrUpdateSql = generateSqlHandler.generateSql(entityMeta, forceUpdateFields);
-		SqlExecuteStat.showSql("saveOrUpdateSql=" + saveOrUpdateSql, null);
+		SqlExecuteStat.showSql("执行saveOrUpdate语句", saveOrUpdateSql, null);
 		return SqlUtil.batchUpdateByJdbc(saveOrUpdateSql, paramValues, batchSize, null, entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}
@@ -652,7 +652,7 @@ public class DialectUtils {
 		}
 
 		String saveAllNotExistSql = generateSqlHandler.generateSql(entityMeta, null);
-		SqlExecuteStat.showSql("saveAllNotExistSql=" + saveAllNotExistSql, null);
+		SqlExecuteStat.showSql("批量插入且忽视已存在记录", saveAllNotExistSql, null);
 		return SqlUtil.batchUpdateByJdbc(saveAllNotExistSql, paramValues, batchSize, null,
 				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
@@ -1062,8 +1062,7 @@ public class DialectUtils {
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
 							oneToMany.getMappedFields(), pkValues);
-					SqlExecuteStat.showSql("cascade load subtable sql:" + sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue());
+					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, dbType, false);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
@@ -1127,7 +1126,7 @@ public class DialectUtils {
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), idValues);
 
-		SqlExecuteStat.showSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), entityClass,
 				null, conn, dbType, false);
@@ -1154,7 +1153,7 @@ public class DialectUtils {
 					}
 					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), entityMeta.getIdArray(),
 							idValues);
-					SqlExecuteStat.showSql(subToyResult.getSql(), subToyResult.getParamsValue());
+					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(subToyResult.getSql(), subToyResult.getParamsValue(),
 							oneToMany.getMappedType(), null, conn, dbType, false);
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
@@ -1239,7 +1238,7 @@ public class DialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
@@ -1406,7 +1405,7 @@ public class DialectUtils {
 			}
 		}
 
-		SqlExecuteStat.showSql("saveAll:[" + paramValues.size() + "]条记录,insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
 		// sqlserver需要特殊化处理(针对timestamp问题)
 		if (dbType == DBType.SQLSERVER) {
 			return SqlUtilsExt.batchUpdateBySqlServer(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
@@ -1433,9 +1432,14 @@ public class DialectUtils {
 			String nullFunction, String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName)
 			throws Exception {
 		String realTable = entityMeta.getSchemaTable(tableName);
-		// 全部是主键则无需update，无主键则同样不符合修改规则
-		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 字段全部是主键或无主键,不符合update规则,请检查表设计是否合理!");
+		// 无主键
+		if (entityMeta.getIdArray() == null) {
+			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+		}
+		// 全部是主键则无需update
+		if (entityMeta.getRejectIdFieldArray() == null) {
+			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			return 0L;
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
@@ -1475,6 +1479,16 @@ public class DialectUtils {
 			final Class[] forceCascadeClasses, final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			final Integer dbType, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		String realTable = entityMeta.getSchemaTable(tableName);
+		// 无主键
+		if (entityMeta.getIdArray() == null) {
+			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+		}
+		// 全部是主键则无需update
+		if (entityMeta.getRejectIdFieldArray() == null) {
+			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			return 0L;
+		}
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
 		// 不存在级联操作
@@ -1677,9 +1691,14 @@ public class DialectUtils {
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
-		// 全部是主键则无需update，无主键则同样不符合修改规则
-		if (entityMeta.getRejectIdFieldArray() == null || entityMeta.getIdArray() == null) {
-			throw new IllegalArgumentException("表:" + realTable + " 字段全部是主键或无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+		// 无主键
+		if (entityMeta.getIdArray() == null) {
+			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+		}
+		// 全部是主键则无需update
+		if (entityMeta.getRejectIdFieldArray() == null) {
+			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler);
@@ -1725,7 +1744,7 @@ public class DialectUtils {
 		if (updateSql == null) {
 			throw new IllegalArgumentException("updateAll sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
-		SqlExecuteStat.showSql("updateAll:[" + paramsValues.size() + "]条记录,execute sql=" + updateSql, null);
+		SqlExecuteStat.showSql("批量修改[" + paramsValues.size() + "]条记录", updateSql, null);
 		if (dbType == DBType.SQLSERVER) {
 			return SqlUtilsExt.batchUpdateBySqlServer(updateSql.toString(), paramsValues,
 					entityMeta.getFieldsTypeArray(), null, null, batchSize, autoCommit, conn, dbType);
@@ -1826,15 +1845,13 @@ public class DialectUtils {
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
-					SqlExecuteStat.showSql("cascade batch delete sub table sql=" + oneToMany.getDeleteSubTableSql(),
-							null);
+					SqlExecuteStat.showSql("级联删除子表记录", oneToMany.getDeleteSubTableSql(), null);
 					SqlUtilsExt.batchUpdateByJdbc(oneToMany.getDeleteSubTableSql(), idValues, parameterTypes, null,
 							null, sqlToyContext.getBatchSize(), null, conn, dbType);
 				}
 			}
 		}
-		SqlExecuteStat.showSql(
-				"批量删除deleteAll:[" + idValues.size() + "]条记录,sql=" + entityMeta.getDeleteByIdsSql(tableName), null);
+		SqlExecuteStat.showSql("批量删除[" + idValues.size() + "]条记录", entityMeta.getDeleteByIdsSql(tableName), null);
 		return SqlUtilsExt.batchUpdateByJdbc(entityMeta.getDeleteByIdsSql(tableName), idValues, parameterTypes, null,
 				null, batchSize, autoCommit, conn, dbType);
 	}
@@ -1887,7 +1904,7 @@ public class DialectUtils {
 			}
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
-			SqlExecuteStat.showSql("isUnique sql=" + queryStr, paramValues);
+			SqlExecuteStat.showSql("唯一性验证", queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(queryStr, paramValues, null, null, conn, dbType, false);
 			if (result.size() == 0) {
 				return true;

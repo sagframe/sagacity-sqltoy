@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.DataSetResult;
 import org.sagacity.sqltoy.model.LabelIndexModel;
@@ -296,7 +297,7 @@ public class ResultUtils {
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
@@ -323,6 +324,9 @@ public class ResultUtils {
 		if (linkModel != null) {
 			Object identity = null;
 			String linkColumn = linkModel.getColumns()[0];
+			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
+				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
+			}
 			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
 			StringBuilder linkBuffer = new StringBuilder();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
@@ -500,7 +504,7 @@ public class ResultUtils {
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
@@ -534,6 +538,9 @@ public class ResultUtils {
 		for (int i = 0; i < linkCols; i++) {
 			linkBuffers[i] = new StringBuilder();
 			linkColumn = linkColumns[i];
+			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
+				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
+			}
 			linkIndexs[i] = labelIndexMap.get(linkColumn.toLowerCase());
 			if (hasTranslate) {
 				translateLinks[i] = translateMap.containsKey(linkColumn.toLowerCase());
@@ -967,7 +974,7 @@ public class ResultUtils {
 					PivotModel pivotModel = (PivotModel) processor;
 					if (pivotModel.getCategorySql() != null) {
 						SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search),
+								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 								queryExecutor, dialect, false);
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 								extend.getParamsName(pivotSqlConfig),

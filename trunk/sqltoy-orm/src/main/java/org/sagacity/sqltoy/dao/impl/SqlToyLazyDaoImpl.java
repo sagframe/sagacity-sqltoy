@@ -663,6 +663,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateFetchRandom(queryExecutor, random, updateRowHandler);
 	}
 
+	@Override
+	public Long executeSql(String sqlOrNamedSql, Serializable entity) {
+		return super.executeSql(sqlOrNamedSql, entity, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -968,15 +973,4 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
 	}
-
-	@Override
-	public int getDBType() {
-		return super.getDBType(null);
-	}
-
-	@Override
-	public int getDBType(DataSource dataSource) {
-		return super.getDBType(dataSource);
-	}
-
 }

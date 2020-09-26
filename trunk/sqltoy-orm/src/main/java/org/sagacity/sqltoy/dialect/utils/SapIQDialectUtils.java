@@ -115,7 +115,7 @@ public class SapIQDialectUtils {
 		if (isIdentity) {
 			insertSql = insertSql + " select @@IDENTITY ";
 		}
-		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("执行iq插入", insertSql, null);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -194,7 +194,7 @@ public class SapIQDialectUtils {
 			insertSql = "DECLARE @mySeqVariable decimal(20) select @mySeqVariable=" + entityMeta.getSequence()
 					+ ".NEXTVAL " + insertSql;
 		}
-		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType);
 	}
@@ -278,7 +278,7 @@ public class SapIQDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
 				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, null, conn, dbType);
 	}

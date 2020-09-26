@@ -11,7 +11,7 @@ public class MacroIfLogicTest {
 	@Test
 	public void testInclude()
 	{
-		String sql=":statusAry include 1";
+		String sql="size(:statusAry) >=4";
 		List params=new ArrayList();
 		params.add(new Object[] {1,2});
 		boolean result=MacroIfLogic.evalLogic(sql, params, 0, 1);

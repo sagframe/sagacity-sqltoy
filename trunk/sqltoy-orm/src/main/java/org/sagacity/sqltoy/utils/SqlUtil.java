@@ -1216,7 +1216,7 @@ public class SqlUtil {
 	 */
 	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
 			final Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
-		SqlExecuteStat.showSql("execute sql=" + executeSql, params);
+		SqlExecuteStat.showSql("execute sql=", executeSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
 		if (autoCommit != null) {

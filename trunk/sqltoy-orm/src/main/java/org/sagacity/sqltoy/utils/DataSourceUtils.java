@@ -296,6 +296,9 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.KINGBASE) != -1) {
+				return Dialect.KINGBASE;
+			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
@@ -477,6 +480,11 @@ public class DataSourceUtils {
 		return handler.getResult();
 	}
 
+	/**
+	 * @TODO 获取数据库的类型
+	 * @param datasource
+	 * @return
+	 */
 	public static int getDBType(DataSource datasource) {
 		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
 		Integer dbType = DBType.UNDEFINE;
@@ -492,5 +500,60 @@ public class DataSourceUtils {
 			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
 		}
 		return dbType;
+	}
+
+	/**
+	 * @TDDO 获取数据库类型的名称
+	 * @param datasource
+	 * @return
+	 */
+	public static String getDialect(DataSource datasource) {
+		if (datasource == null) {
+			return "";
+		}
+		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		try {
+			if (conn == null) {
+				return "";
+			}
+			int dbType = getDBType(conn);
+			switch (dbType) {
+			case DBType.DB2:
+				return Dialect.DB2;
+			case DBType.ORACLE:
+			case DBType.ORACLE11:
+				return Dialect.ORACLE;
+			case DBType.POSTGRESQL:
+				return Dialect.POSTGRESQL;
+			case DBType.MYSQL:
+			case DBType.MYSQL57:
+				return Dialect.MYSQL;
+			case DBType.SQLSERVER:
+				return Dialect.SQLSERVER;
+			case DBType.SQLITE:
+				return Dialect.SQLITE;
+			case DBType.CLICKHOUSE:
+				return Dialect.CLICKHOUSE;
+			case DBType.TIDB:
+				return Dialect.TIDB;
+			case DBType.OCEANBASE:
+				return Dialect.OCEANBASE;
+			case DBType.DM:
+				return Dialect.DM;
+			case DBType.KINGBASE:
+				return Dialect.KINGBASE;
+			default:
+				return "";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			conn = null;
+			throw new RuntimeException(e);
+		} finally {
+			// 释放连接,连接池实际是归还连接，未必一定关闭
+			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+		}
+
 	}
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.SqlExecuteLog;
 import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -72,25 +72,21 @@ public class SqlExecuteStat {
 	 */
 	public static void error(Exception e) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setError(true);
+			threadLocal.get().setError(e.getMessage());
 		}
 	}
 
 	/**
 	 * @todo 在debug模式下,在console端输出sql,便于开发人员查看
+	 * @param topic
 	 * @param sql
 	 * @param paramValues
 	 */
-	public static void showSql(String sql, Object[] paramValues) {
+	public static void showSql(String topic, String sql, Object[] paramValues) {
 		try {
 			// debug模式直接输出
-			if (debug || printSqlStrategy.equals("debug")) {
-				if (threadLocal.get() != null && threadLocal.get().isPrint() == false) {
-					return;
-				}
-				printSql(sql, paramValues, false);
-			} else if (threadLocal.get() != null) {
-				threadLocal.get().addSqlToyResult(sql, paramValues);
+			if (threadLocal.get() != null) {
+				threadLocal.get().addSqlLog(topic, sql, paramValues);
 			}
 		} catch (Exception e) {
 
@@ -102,75 +98,13 @@ public class SqlExecuteStat {
 	 * @param message
 	 * @param args
 	 */
-	public static void debug(String message, Object... args) {
+	public static void debug(String topic, String message, Object... args) {
 		try {
-			if (debug || printSqlStrategy.equals("debug")) {
-				String uid = "";
-				if (threadLocal.get() != null) {
-					// 不输出sql和日志
-					if (threadLocal.get().isPrint() == false) {
-						return;
-					}
-					uid = threadLocal.get().getUid();
-				}
-				String debugInfo = StringUtil.fillArgs(message, args);
-				StringBuilder result = new StringBuilder();
-				result.append("\n\n/*|----start debug,UID=" + uid + " --------------------*/");
-				result.append("\n/*| 调试信息:" + debugInfo);
-				result.append("\n/*|----end   debug,UID=" + uid + " ---------------------*/\n");
-				if (logger.isDebugEnabled()) {
-					logger.debug(result.toString());
-				} else {
-					out.println(result.toString());
-				}
+			if (threadLocal.get() != null) {
+				threadLocal.get().addLog(topic, message, args);
 			}
 		} catch (Exception e) {
 
-		}
-	}
-
-	/**
-	 * @todo 实际执行打印sql和参数
-	 * @param sql
-	 * @param paramValues
-	 * @param isErrorOrWarn
-	 */
-	private static void printSql(String sql, Object[] paramValues, boolean isErrorOrWarn) {
-		StringBuilder paramStr = new StringBuilder();
-		boolean isDebug = logger.isDebugEnabled();
-		if (paramValues != null) {
-			for (int i = 0; i < paramValues.length; i++) {
-				if (i > 0) {
-					paramStr.append(",");
-				}
-				paramStr.append("p[" + i + "]=" + paramValues[i]);
-			}
-		}
-		SqlExecuteTrace sqlTrace = threadLocal.get();
-		StringBuilder result = new StringBuilder();
-		String uid = null;
-		// 这里用system.out 的原因就是给开发者在开发阶段在控制台输出sql观察程序
-		if (sqlTrace != null) {
-			uid = sqlTrace.getUid();
-			result.append("\n/*|执行类型=" + sqlTrace.getType());
-			result.append("\n/*|代码定位=" + getFirstTrace());
-			result.append("\n/*|sqlId=" + sqlTrace.getId());
-		}
-		result.append("\n/*|入参后sql:").append(fitSqlParams(sql, paramValues));
-		result.append("\n/*|sql 参数:").append(StringUtil.isBlank(paramStr) ? "无参数" : paramStr);
-		// 错误或警告
-		if (isErrorOrWarn) {
-			result.insert(0, "\n\n/*|----start error,UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   error,UID=" + uid + "---------------------------------*/\n");
-			logger.error(result.toString());
-		} else {
-			result.insert(0, "\n\n/*|----start debug,UID=" + uid + "---------------------------------*/");
-			result.append("\n/*|----end   debug,UID=" + uid + "---------------------------------*/\n");
-			if (isDebug) {
-				logger.debug(result.toString());
-			} else {
-				out.println(result.toString());
-			}
 		}
 	}
 
@@ -183,46 +117,100 @@ public class SqlExecuteStat {
 			if (sqlTrace == null) {
 				return;
 			}
-			String uid = sqlTrace.getUid();
-			long overTime = sqlTrace.getExecuteTime() - printSqlTimeoutMillis;
-			StringBuilder result = new StringBuilder();
-
+			long runTime = sqlTrace.getExecuteTime();
+			long overTime = runTime - printSqlTimeoutMillis;
 			// sql执行超过阀值记录日志为软件优化提供依据
-			if (overTime >= 0 && sqlTrace.getStart() != null) {
-				result.append("\n\n/*|----start warn slowsql overtime,UID=" + uid + "---------------------------------*/");
-				result.append("\n/*|执行类型=" + sqlTrace.getType());
-				result.append("\n/*|代码定位=" + getFirstTrace());
-				result.append("\n/*|sqlId=" + sqlTrace.getId());
-				result.append("\n/*|耗时(毫秒):" + sqlTrace.getExecuteTime() + ">=" + printSqlTimeoutMillis + " (阀值)!");
-				result.append("\n/*|----end  warn slowsql overtime,UID=" + uid + "---------------------------------*/\n");
-				if (logger.isWarnEnabled()) {
-					logger.warn(result.toString());
-				} else {
-					out.println(result.toString());
-				}
-			} // 未超时也未发生错误,无需打印日志
-			else if ((debug || printSqlStrategy.equals("debug")) && sqlTrace.isPrint()) {
-				result.append("\n\n/*|----start debug runtime,UID=" + uid + "---------------------------------*/");
-				result.append("\n/*|执行类型=" + sqlTrace.getType());
-				result.append("\n/*|代码定位=" + getFirstTrace());
-				result.append("\n/*|sqlId=" + sqlTrace.getId());
-				result.append("\n/*|耗时:" + sqlTrace.getExecuteTime() + " 毫秒!");
-				result.append("\n/*|----end  debug runtime,UID=" + uid + "---------------------------------*/\n");
-				if (logger.isDebugEnabled()) {
-					logger.debug(result.toString());
-				} else {
-					out.println(result.toString());
-				}
+			if (overTime >= 0) {
+				sqlTrace.setOverTime(true);
+				sqlTrace.addLog("slowSql执行超时", "耗时(毫秒):{} >={} (阀值)!", runTime, printSqlTimeoutMillis);
+			} else {
+				sqlTrace.addLog("执行时长", "耗时:{} 毫秒 !", runTime);
 			}
-			// 输出错误日志
-			if (sqlTrace.isError()) {
-				List<SqlToyResult> sqlToyResults = sqlTrace.getSqlToyResults();
-				for (SqlToyResult sqlResult : sqlToyResults) {
-					printSql(sqlResult.getSql(), sqlResult.getParamsValue(), true);
-				}
-			}
+			// 日志输出
+			printLogs(sqlTrace);
 		} catch (Exception e) {
 
+		}
+	}
+
+	/**
+	 * @TODO 输出日志
+	 * @param sqlTrace
+	 */
+	private static void printLogs(SqlExecuteTrace sqlTrace) {
+		boolean printLog = false;
+		String reportStatus = "成功!";
+		if (sqlTrace.isOverTime()) {
+			printLog = true;
+			reportStatus = "执行耗时超阀值!";
+		}
+		if (sqlTrace.isError()) {
+			printLog = true;
+			reportStatus = "发生异常错误!";
+		}
+
+		if (!printLog) {
+			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
+			if (!sqlTrace.isPrint()) {
+				return;
+			}
+			if (!(debug || printSqlStrategy.equals("debug"))) {
+				return;
+			}
+		}
+
+		String uid = sqlTrace.getUid();
+		StringBuilder result = new StringBuilder();
+		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
+		result.append("\n/*|任 务 ID: " + uid);
+		result.append("\n/*|执行结果: " + reportStatus);
+		result.append("\n/*|执行类型: " + sqlTrace.getType());
+		result.append("\n/*|代码定位: " + getFirstTrace());
+		if (sqlTrace.getId() != null) {
+			result.append("\n/*|对应sqlId: " + sqlTrace.getId());
+		}
+		List<SqlExecuteLog> executeLogs = sqlTrace.getExecuteLogs();
+		int step = 0;
+		int logType;
+		String topic;
+		String content;
+		Object[] args;
+		for (SqlExecuteLog log : executeLogs) {
+			step++;
+			logType = log.getType();
+			topic = log.getTopic();
+			content = log.getContent();
+			args = log.getArgs();
+			if (logType == 0) {
+				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
+				result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
+				result.append("\n/*|     sql参数: ");
+				if (args != null && args.length > 0) {
+					StringBuilder paramStr = new StringBuilder();
+					for (int i = 0; i < args.length; i++) {
+						if (i > 0) {
+							paramStr.append(",");
+						}
+						paramStr.append("p[" + i + "]=" + args[i]);
+					}
+					result.append(paramStr);
+				} else {
+					result.append("无参数");
+				}
+			} else {
+				result.append("\n/*|---- 过程: " + step + "," + topic + ":" + StringUtil.fillArgs(content, args));
+			}
+		}
+		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
+		result.append("\n");
+		if (sqlTrace.isError() || sqlTrace.isOverTime()) {
+			logger.error(result.toString());
+		} else {
+			if (logger.isDebugEnabled()) {
+				logger.debug(result.toString());
+			} else {
+				out.println(result.toString());
+			}
 		}
 	}
 
@@ -264,7 +252,7 @@ public class SqlExecuteStat {
 	 * @return
 	 */
 	private static String fitSqlParams(String sql, Object[] params) {
-		if (params == null || params.length == 0) {
+		if (sql == null || params == null || params.length == 0) {
 			return sql;
 		}
 		StringBuilder lastSql = new StringBuilder();
@@ -347,7 +335,6 @@ public class SqlExecuteStat {
 	public static String getFirstTrace() {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 		// StackTraceElement[] stackTraceElements=new Throwable().getStackTrace();
-
 		String className = null;
 		int lineNumber = 0;
 		String method = null;
@@ -369,6 +356,6 @@ public class SqlExecuteStat {
 				break;
 			}
 		}
-		return "" + className + "." + method + "[line:" + lineNumber + "]";
+		return "" + className + "." + method + "[代码第:" + lineNumber + " 行]";
 	}
 }

@@ -43,7 +43,6 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 
 /**
  * @project sqltoy-orm
@@ -88,21 +87,27 @@ public interface SqlToyLazyDao {
 	 */
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
 
+	/**
+	 * @TODO 通过map传参获取记录数量
+	 * @param sqlOrNamedQuery
+	 * @param paramsMap
+	 * @return
+	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
 	/**
 	 * @todo 存储过程调用
-	 * @param storeSqlOrKey
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
 	 */
 	public StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues);
 
 	/**
 	 * @TODO 存储过程调用，outParams可以为null
-	 * @param storeSqlOrKey
+	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
-	 * @param resultType    可以是VO、Map、Array,null(二维List)
+	 * @param resultType    可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
 	 * @return
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
@@ -310,6 +315,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
 
+	/**
+	 * @TODO 锁住主表记录并级联加载子表数据
+	 * @param <T>
+	 * @param entities
+	 * @param lockMode
+	 * @param cascadeTypes
+	 * @return
+	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final LockMode lockMode,
 			final Class... cascadeTypes);
 
@@ -343,6 +356,14 @@ public interface SqlToyLazyDao {
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Class<T> voClass);
 
+	/**
+	 * @TODO 通过map传参模式获取单条对象记录
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param voClass
+	 * @return
+	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
 
 	/**
@@ -449,6 +470,17 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final Map<String, Object> paramsMap, final Class<T> voClass);
+	
+	/**
+	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
+	 * @param <T>
+	 * @param paginationModel
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @return
+	 */
+	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+			final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
@@ -461,17 +493,7 @@ public interface SqlToyLazyDao {
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
-	/**
-	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
-	 * @param <T>
-	 * @param paginationModel
-	 * @param sqlOrNamedSql
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
-			final String sqlOrNamedSql, final T entity);
-
+	
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
@@ -575,12 +597,28 @@ public interface SqlToyLazyDao {
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param reflectPropertyHandler
+	 * @return
+	 */
+	public Long executeSql(final String sqlOrNamedSql, final Serializable entity);
+
+	/**
+	 * @todo 执行sql,并返回被修改的记录数量
+	 * @param sqlOrNamedSql
+	 * @param entity
+	 * @param reflectPropertyHandler (一般传null)
 	 * @return Long updateCount
 	 */
+	@Deprecated
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
 			final ReflectPropertyHandler reflectPropertyHandler);
 
+	/**
+	 * @TODO 通过数组传参执行sql,并返回更新记录量
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
 	public Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
@@ -599,99 +637,30 @@ public interface SqlToyLazyDao {
 	public boolean wrapTreeTableRoute(final TreeTableModel treeTableModel);
 
 	/**
-	 * @TODO 数据库提交
+	 * @TODO 数据库提交(针对特殊场景使用,正常情况下此方法不要使用)
 	 */
 	public void flush();
 
 	/**
-	 * @TODO 提供链式操作模式删除操作集合
-	 * 
-	 * @return
-	 */
-	public Delete delete();
-
-	/**
-	 * @TODO 提供链式操作模式修改操作集合
-	 * @return
-	 */
-	public Update update();
-
-	/**
-	 * @TODO 提供链式操作模式存储过程操作集合
-	 * @return
-	 */
-	public Store store();
-
-	/**
-	 * @TODO 提供链式操作模式保存操作集合
-	 * @return
-	 */
-	public Save save();
-
-	/**
-	 * @TODO 提供链式操作模式查询操作集合
-	 * @return
-	 */
-	public Query query();
-
-	/**
-	 * @TODO 提供链式操作模式对象加载操作集合
-	 * @return
-	 */
-	public Load load();
-
-	/**
-	 * @TODO 提供链式操作模式唯一性验证操作集合
-	 * 
-	 * @return
-	 */
-	public Unique unique();
-
-	/**
-	 * @TODO 提供链式操作模式树形表结构封装操作集合
-	 * 
-	 * @return
-	 */
-	public TreeTable treeTable();
-
-	/**
-	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
-	 * 
-	 * @return
-	 */
-	public Execute execute();
-
-	/**
-	 * @TODO 提供链式操作模式批量执行操作集合
-	 * 
-	 * @return
-	 */
-	public Batch batch();
-
-	/**
-	 * es操作
-	 * 
+	 * @TODO es操作
 	 * @return
 	 */
 	public Elastic elastic();
 
 	/**
-	 * mongo操作
-	 * 
+	 * @TODO mongo操作
 	 * @return
 	 */
 	public Mongo mongo();
 
 	/**
-	 * 获取sqltoy的上下文
-	 * 
+	 * @TODO 获取sqltoy的上下文
 	 * @return
 	 */
 	public SqlToyContext getSqlToyContext();
 
 	/**
-	 * 获取当前dataSource
-	 * 
+	 * @TODO 获取当前dataSource
 	 * @return
 	 */
 	public DataSource getDataSource();
@@ -728,7 +697,7 @@ public interface SqlToyLazyDao {
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
 
 	/**
-	 * @todo 对记录进行翻译
+	 * @todo 对记录通过反调自定义对那个属性进行翻译
 	 * @param dataSet
 	 * @param cacheName
 	 * @param cacheType
@@ -823,12 +792,70 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
+	/** ---------------- 链式操作 -------------------------- */
+
 	/**
-	 * @TODO 提供给开发者快速获取数据库方言类型，跟DataSourceUtils.DBType 进行对比
+	 * @TODO 提供链式操作模式删除操作集合
+	 * 
 	 * @return
 	 */
-	public int getDBType();
+	public Delete delete();
 
-	public int getDBType(DataSource dataSource);
+	/**
+	 * @TODO 提供链式操作模式修改操作集合
+	 * @return
+	 */
+	public Update update();
 
+	/**
+	 * @TODO 提供链式操作模式存储过程操作集合
+	 * @return
+	 */
+	public Store store();
+
+	/**
+	 * @TODO 提供链式操作模式保存操作集合
+	 * @return
+	 */
+	public Save save();
+
+	/**
+	 * @TODO 提供链式操作模式查询操作集合
+	 * @return
+	 */
+	public Query query();
+
+	/**
+	 * @TODO 提供链式操作模式对象加载操作集合
+	 * @return
+	 */
+	public Load load();
+
+	/**
+	 * @TODO 提供链式操作模式唯一性验证操作集合
+	 * 
+	 * @return
+	 */
+	public Unique unique();
+
+	/**
+	 * @TODO 提供链式操作模式树形表结构封装操作集合
+	 * 
+	 * @return
+	 */
+	public TreeTable treeTable();
+
+	/**
+	 * @TODO 提供链式操作模式sql语句直接执行修改数据库操作集合
+	 * 
+	 * @return
+	 */
+	public Execute execute();
+
+	/**
+	 * @TODO 提供链式操作模式批量执行操作集合
+	 * 
+	 * @return
+	 */
+	public Batch batch();
 }

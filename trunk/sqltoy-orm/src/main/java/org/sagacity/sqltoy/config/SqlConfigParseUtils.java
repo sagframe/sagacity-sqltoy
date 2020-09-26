@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,11 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -55,6 +60,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
  * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
+ * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -90,6 +96,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 
 	public final static String BLANK = " ";
 	// 匹配时已经小写转换
@@ -114,6 +121,13 @@ public class SqlConfigParseUtils {
 	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
+
+	// 利用宏模式来完成@loop循环处理
+	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
+
+	static {
+		macros.put("@loop", new SqlLoop());
+	}
 
 	/**
 	 * @todo 判断sql语句中是否存在:named 方式的参数
@@ -178,7 +192,10 @@ public class SqlConfigParseUtils {
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
-			sqlParam = processNamedParamsQuery(queryStr.replaceAll(ARG_REGEX, questionMark));
+			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
+			// update 2020-09-23 处理sql中的循环
+			sql = processLoop(sql, paramsNamed, paramsValue);
+			sqlParam = processNamedParamsQuery(sql);
 		} else {
 			sqlParam = processNamedParamsQuery(queryStr);
 		}
@@ -378,7 +395,7 @@ public class SqlConfigParseUtils {
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
 				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
 				boolean logicValue = true;
-				int start = markContentSql.toLowerCase().indexOf("@if");
+				int start = StringUtil.matchIndex(markContentSql, IF_PATTERN);
 				// sql中存在逻辑判断
 				if (start > -1) {
 					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
@@ -511,6 +528,29 @@ public class SqlConfigParseUtils {
 		if (valueCnt > 0) {
 			sqlToyResult.setParamsValue(paramValueList.toArray());
 		}
+	}
+
+	// update 2020-09-22 增加sql中的循环功能,避免极为特殊场景下不必要的争议
+	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
+	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	// endDates[i])',or)]
+	/**
+	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换
+	 * @param queryStr
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
+	private static String processLoop(String queryStr, String[] paramsNamed, Object[] paramsValue) {
+		if (null == paramsValue || paramsValue.length == 0) {
+			return queryStr;
+		}
+		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
+		for (int i = 0; i < paramsNamed.length; i++) {
+			keyValues.put(paramsNamed[i], paramsValue[i]);
+		}
+		// 这里是借用业务主键生成里面的宏处理模式来解决
+		return MacroUtils.replaceMacros(queryStr, keyValues, false, macros);
 	}
 
 	/**
@@ -700,7 +740,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * @todo 将动态的sql解析组合成一个SqlToyConfig模型，以便统一处理
 	 * @param querySql
-	 * @param dialect 当前的数据库类型,默认为null不指定
+	 * @param dialect  当前的数据库类型,默认为null不指定
 	 * @param sqlType
 	 * @return
 	 */

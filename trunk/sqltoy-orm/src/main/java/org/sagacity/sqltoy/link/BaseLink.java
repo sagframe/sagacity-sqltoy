@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -51,12 +53,24 @@ public abstract class BaseLink implements Serializable {
 	public DataSource getDataSource(SqlToyConfig sqlToyConfig) {
 		DataSource result = dataSource;
 		// 数据源为空或非强制指定了数据源，则使用sql中指定的数据源
-		if ((null == result || defaultDataSource == false) && null != sqlToyConfig.getDataSource()) {
+		if ((null == result || defaultDataSource == false)
+				&& (sqlToyConfig != null && null != sqlToyConfig.getDataSource())) {
 			result = sqlToyContext.getDataSourceBean(sqlToyConfig.getDataSource());
 		}
 		if (null == result) {
 			result = sqlToyContext.obtainDataSource();
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 获取当前数据库的方言名称
+	 * @return
+	 */
+	public String getDialect() {
+		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
+			return sqlToyContext.getDialect();
+		}
+		return DataSourceUtils.getDialect(getDataSource(null));
 	}
 }

@@ -412,7 +412,7 @@ public class MongoElasticUtils {
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		// 存在缓存翻译,获取缓存数据
 		if (!sqlToyConfig.getTranslateMap().isEmpty()) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(sqlToyContext, null, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(null, translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				logger.warn("mongo or elastic cache:{} has no data!{}", translateMap.keySet(), sqlToyConfig.getSql());
 			} else {

@@ -588,7 +588,7 @@ public class SqlServerDialectUtils {
 
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
-		SqlExecuteStat.showSql("save insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("mssql单条记录插入", insertSql, null);
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
@@ -762,7 +762,7 @@ public class SqlServerDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("saveAll insertSql=" + insertSql, null);
+		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
 		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
 				autoCommit, conn, dbType);
 	}

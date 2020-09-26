@@ -2,6 +2,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import javax.sql.DataSource;
+
 /**
  * 
  * @project sagacity-sqltoy
@@ -31,4 +33,9 @@ public class ParallQueryExtend implements Serializable {
 	 * 返回结果类型
 	 */
 	public Class resultType;
+
+	/**
+	 * 数据源
+	 */
+	public DataSource dataSource;
 }
