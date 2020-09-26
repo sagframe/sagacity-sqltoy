@@ -346,7 +346,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
-		return scriptLoader.getSqlConfig(sqlKey, sqlType, "");
+		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
