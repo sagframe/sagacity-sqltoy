@@ -11,12 +11,13 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.15.8 发版日期: 2020-09-18
-* 完善基于算法的link功能，支持多列link(用算法代替sql的group_concat,实现跨数据库功能)
-* 优化postgresql9.4 版本的saveOrUpdate功能(9.4 不支持insert table AS T1别名模式，剔除别名)
-* 增强loadBySql、load(entity)对象类型处理，避免new VO(){{setId("");}} 双大括号极端特殊场景下定义对象导致类型获取错误。
-* 增强sql中参数:param判断逻辑，适配postgresql带有json形式的查询场景::jsonb 这种对条件参数的干扰
-* quickvo增强支持JSONB等类型
+# 最新版本号: 4.16.0 发版日期: 2020-09-26 推荐更新!
+* 增强产品跨库执行能力，支持sql id=dialect_id或id_dialect ,以id调用优先结合当前数据库dialect组合，如mysql则优先找mysql_id和id_mysql的sql，找不到则执行id对应的sql，从而在函数自适配的基础上进一步增强了跨库能力
+* 增加@loop(loopParam,loopContent,linkSign) 宏嵌入sql，便于极端场景下灵活组合动态sql,结合@if(),@blank(),@value() 已经可以支撑几乎任意复杂场景
+* 增强@if() 功能，提供获取size和判断其中包含某个值的功能，@if(size(:statusAry)>0) 或@if(:statusAry include 1)
+* 改进saveOrUpdate 功能，将全主键和无主键进行了区分处理，全主键返回继续做saveAllIgnoreExist操作
+* 优化执行日志输出，以一个执行报告形式统一输出
+* 进一步改进TranslateManager，简化二次扩展，便于开发者通过扩展实现近实时的缓存更新管理
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
