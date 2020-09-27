@@ -251,7 +251,7 @@ public class CollectionUtil {
 			}
 		}
 		if (result.isEmpty()) {
-			throw new IllegalArgumentException("排序树形数据集合中没有对应的父ids:" + StringUtil.linkAry(",", pids));
+			throw new IllegalArgumentException("排序树形数据集合中没有对应的父ids:" + StringUtil.linkAry(",", false, pids));
 		}
 		int beginIndex = 0;
 		int addCount = 0;

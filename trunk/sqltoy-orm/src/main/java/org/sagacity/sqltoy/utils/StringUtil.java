@@ -921,10 +921,11 @@ public class StringUtil {
 	/**
 	 * @TODO 字符连接
 	 * @param sign
+	 * @param skipNull
 	 * @param arys
 	 * @return
 	 */
-	public static String linkAry(String sign, Object... arys) {
+	public static String linkAry(String sign, boolean skipNull, Object... arys) {
 		if (arys == null || arys.length == 0) {
 			return "";
 		}
@@ -932,11 +933,11 @@ public class StringUtil {
 		int index = 0;
 		StringBuilder result = new StringBuilder();
 		for (Object str : arys) {
-			if (str != null) {
+			if (str != null || !skipNull) {
 				if (index > 0) {
 					result.append(linkSign);
 				}
-				result.append(str.toString());
+				result.append((str == null) ? "null" : str.toString());
 				index++;
 			}
 		}

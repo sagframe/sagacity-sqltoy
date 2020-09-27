@@ -346,6 +346,8 @@ public class SqlExecuteStat {
 			className = traceElement.getClassName();
 			// 进入调用sqltoy的代码，此时取上一个
 			if (className.startsWith("org.sagacity.sqltoy")) {
+				method = traceElement.getMethodName();
+				lineNumber = traceElement.getLineNumber();
 				// 避免异常发生
 				if (i + 1 < length) {
 					traceElement = stackTraceElements[i + 1];
