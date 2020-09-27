@@ -79,7 +79,8 @@ public class CacheUpdateWatcher extends Thread {
 		if (updateCheckers != null && !updateCheckers.isEmpty()) {
 			Long checkTime = DateUtil.parse(System.currentTimeMillis(), dateFmt).getTime();
 			for (int i = 0; i < updateCheckers.size(); i++) {
-				lastCheckTime.put(prefix + i, checkTime);
+				// 初始化时间错开2秒,避免检测频率一致导致都集中时间执行
+				lastCheckTime.put(prefix + i, checkTime + 2000);
 			}
 		}
 	}
