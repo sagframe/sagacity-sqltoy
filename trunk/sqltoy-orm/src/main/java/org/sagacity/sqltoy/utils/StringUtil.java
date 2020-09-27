@@ -917,4 +917,29 @@ public class StringUtil {
 				.replaceAll("\\＇", "'").replaceAll("\\＂", "\"").replaceAll("\\，", ",").replaceAll("\\【", "[")
 				.replaceAll("\\】", "]").replaceAll("\\）", ")").replaceAll("\\（", "(").replaceAll("\\＝", "=");
 	}
+
+	/**
+	 * @TODO 字符连接
+	 * @param sign
+	 * @param arys
+	 * @return
+	 */
+	public static String linkAry(String sign, Object... arys) {
+		if (arys == null || arys.length == 0) {
+			return "";
+		}
+		String linkSign = (sign == null) ? "," : sign;
+		int index = 0;
+		StringBuilder result = new StringBuilder();
+		for (Object str : arys) {
+			if (str != null) {
+				if (index > 0) {
+					result.append(linkSign);
+				}
+				result.append(str.toString());
+				index++;
+			}
+		}
+		return result.toString();
+	}
 }

@@ -250,6 +250,9 @@ public class CollectionUtil {
 				i--;
 			}
 		}
+		if (result.isEmpty()) {
+			throw new IllegalArgumentException("排序树形数据集合中没有对应的父ids:" + StringUtil.linkAry(",", pids));
+		}
 		int beginIndex = 0;
 		int addCount = 0;
 		Object compareId;
