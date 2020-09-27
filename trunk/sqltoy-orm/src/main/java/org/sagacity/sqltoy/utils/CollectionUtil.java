@@ -272,7 +272,7 @@ public class CollectionUtil {
 			}
 		}
 		if (result.size() != totalRecord) {
-			System.err.println("sortTreeList操作发现部分数据不符合树形结构规则,请检查!");
+			logger.error("sortTreeList操作发现部分数据不符合树形结构规则,请检查!");
 		}
 		return result;
 	}
