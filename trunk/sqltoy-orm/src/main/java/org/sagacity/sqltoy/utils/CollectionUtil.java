@@ -239,10 +239,10 @@ public class CollectionUtil {
 		int totalRecord = treeList.size();
 		// 支持多根节点
 		List result = new ArrayList();
-		List row;
+		Object row;
 		Object pid;
 		for (int i = 0; i < treeList.size(); i++) {
-			row = (List) treeList.get(i);
+			row = treeList.get(i);
 			pid = treeIdAndPidGet.getIdAndPid(row)[1];
 			if (any(pid, pids)) {
 				result.add(row);
