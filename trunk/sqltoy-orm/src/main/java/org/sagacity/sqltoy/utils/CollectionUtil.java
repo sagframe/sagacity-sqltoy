@@ -228,34 +228,37 @@ public class CollectionUtil {
 	/**
 	 * @todo 处理树形数据，将子节点紧靠父节点排序
 	 * @param treeList
-	 * @param rootPidValue
-	 * @param treeIdAndPidGet 获取id和pid 值
+	 * @param treeIdAndPidGet
+	 * @param pids
 	 * @return
 	 */
-	public static List sortTreeList(List treeList, Object rootPidValue, TreeIdAndPidGet treeIdAndPidGet) {
-		if (treeList == null || treeList.isEmpty() || rootPidValue == null) {
-			return null;
+	public static List sortTreeList(List treeList, TreeIdAndPidGet treeIdAndPidGet, Object... pids) {
+		if (treeList == null || treeList.isEmpty() || pids == null || pids.length == 0) {
+			return treeList;
 		}
-		List result;
-		// 支持多根节点
-		if (rootPidValue instanceof List) {
-			result = (List) rootPidValue;
-		} else if (rootPidValue.getClass().isArray()) {
-			result = arrayToList(rootPidValue);
-		} else {
-			result = new ArrayList();
-		}
-
-		int beginIndex = (result.isEmpty()) ? -1 : 0;
-		int addCount = 1;
-		Object compareId;
 		int totalRecord = treeList.size();
+		// 支持多根节点
+		List result = new ArrayList();
+		List row;
+		Object pid;
+		for (int i = 0; i < treeList.size(); i++) {
+			row = (List) treeList.get(i);
+			pid = treeIdAndPidGet.getIdAndPid(row)[1];
+			if (any(pid, pids)) {
+				result.add(row);
+				treeList.remove(i);
+				i--;
+			}
+		}
+		int beginIndex = 0;
+		int addCount = 0;
+		Object compareId;
 		while (treeList.size() != 0) {
-			addCount = 1;
-			compareId = (beginIndex != -1) ? treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0] : rootPidValue;
+			addCount = 0;
+			compareId = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
 			for (int i = 0; i < treeList.size(); i++) {
 				if (BeanUtil.equalsIgnoreType(treeIdAndPidGet.getIdAndPid(treeList.get(i))[1], compareId, false)) {
-					result.add(beginIndex + addCount, treeList.get(i));
+					result.add(beginIndex + addCount + 1, treeList.get(i));
 					treeList.remove(i);
 					addCount++;
 					i--;
@@ -269,74 +272,7 @@ public class CollectionUtil {
 			}
 		}
 		if (result.size() != totalRecord) {
-			System.err.println("sortTree操作发现部分数据不符合树形结构规则,请检查!");
-		}
-		return result;
-	}
-
-	/**
-	 * @todo 树排序(内部数据位数组或List集合)
-	 * @param treeList
-	 * @param rootPidValue
-	 * @param idColumn
-	 * @param pidColumn
-	 * @return
-	 */
-	public static List sortTreeList(List treeList, Object rootPidValue, int idColumn, int pidColumn) {
-		if (treeList == null || treeList.isEmpty() || rootPidValue == null) {
-			return null;
-		}
-		List result;
-		// 支持多根节点
-		if (rootPidValue instanceof List) {
-			result = (List) rootPidValue;
-		} else if (rootPidValue.getClass().isArray()) {
-			result = arrayToList(rootPidValue);
-		} else {
-			result = new ArrayList();
-		}
-		int beginIndex = (result.isEmpty()) ? -1 : 0;
-		int addCount = 1;
-		int totalRecord = treeList.size();
-		// 是否是数组
-		boolean isArray = treeList.get(0).getClass().isArray();
-		Object rowSet;
-		Object idValue;
-		Object pidValue;
-		while (treeList.size() != 0) {
-			addCount = 1;
-			if (beginIndex != -1) {
-				if (isArray) {
-					idValue = ((Object[]) result.get(beginIndex))[idColumn];
-				} else {
-					idValue = ((List) result.get(beginIndex)).get(idColumn);
-				}
-			} else {
-				idValue = rootPidValue;
-			}
-			for (int i = 0; i < treeList.size(); i++) {
-				rowSet = treeList.get(i);
-				if (isArray) {
-					pidValue = ((Object[]) rowSet)[pidColumn];
-				} else {
-					pidValue = ((List) rowSet).get(pidColumn);
-				}
-				if (BeanUtil.equalsIgnoreType(pidValue, idValue, false)) {
-					result.add(beginIndex + addCount, rowSet);
-					treeList.remove(i);
-					addCount++;
-					i--;
-				}
-			}
-			// 下一个
-			beginIndex++;
-			// 防止因数据不符合规则造成的死循环
-			if (beginIndex + 1 > result.size()) {
-				break;
-			}
-		}
-		if (result.size() != totalRecord) {
-			System.err.println("sortTree操作发现部分数据不符合树形结构规则,请检查!");
+			logger.error("sortTreeList操作发现部分数据不符合树形结构规则,请检查!");
 		}
 		return result;
 	}
