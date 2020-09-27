@@ -239,16 +239,19 @@ public class CollectionUtil {
 		int totalRecord = treeList.size();
 		// 支持多根节点
 		List result = new ArrayList();
-		List row;
+		Object row;
 		Object pid;
 		for (int i = 0; i < treeList.size(); i++) {
-			row = (List) treeList.get(i);
+			row = treeList.get(i);
 			pid = treeIdAndPidGet.getIdAndPid(row)[1];
 			if (any(pid, pids)) {
 				result.add(row);
 				treeList.remove(i);
 				i--;
 			}
+		}
+		if (result.isEmpty()) {
+			throw new IllegalArgumentException("排序树形数据集合中没有对应的父ids:" + StringUtil.linkAry(",", pids));
 		}
 		int beginIndex = 0;
 		int addCount = 0;
