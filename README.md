@@ -2,7 +2,7 @@
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.15使用手册.doc
+## 请见:docs/睿智平台SqlToy4.16使用手册.doc
 
 # 如何快速上手
 ## 请见演示项目: https://github.com/sagframe/sqltoy-quickstart 
