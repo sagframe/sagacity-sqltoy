@@ -18,14 +18,34 @@ import com.alibaba.fastjson.JSON;
  */
 public class CollectionUtilTest {
 	@Test
-	public void testSortTree() {
-		Object[][] treeArray = new Object[][] { { 2, 1, "" }, { 3, 2, "" }, { 4, 2, "" }, { 5, 3, "" }, { 6, 0, "" },
-				{ 7, 0, "" }, { 8, 6, "" }, { 10, 6, "" }, { 9, 8, "" } };
+	public void testSortTreeFalse() {
+		try {
+			Object[][] treeArray = new Object[][] { { 2, 1, "" }, { 3, 2, "" }, { 4, 2, "" }, { 5, 3, "" },
+					{ 6, 0, "" }, { 7, 0, "" }, { 8, 6, "" }, { 10, 6, "" }, { 9, 8, "" } };
 
-		List treeList = CollectionUtil.arrayToDeepList(treeArray);
-		List result = CollectionUtil.sortTreeList(treeList, (obj) -> {
-			return new Object[] { ((List) obj).get(0), ((List) obj).get(1) };
-		}, 1, 0);
-		System.err.println(JSON.toJSONString(result));
+			List treeList = CollectionUtil.arrayToDeepList(treeArray);
+			List result = CollectionUtil.sortTreeList(treeList, (obj) -> {
+				return new Object[] { ((List) obj).get(0), ((List) obj).get(1) };
+			}, -1);
+			System.err.println(JSON.toJSONString(result));
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testSortTreeTrue() {
+		try {
+			Object[][] treeArray = new Object[][] { { 2, 1, "" }, { 3, 2, "" }, { 4, 2, "" }, { 5, 3, "" },
+					{ 6, 0, "" }, { 7, 0, "" }, { 8, 6, "" }, { 10, 6, "" }, { 9, 8, "" } };
+
+			List treeList = CollectionUtil.arrayToDeepList(treeArray);
+			List result = CollectionUtil.sortTreeList(treeList, (obj) -> {
+				return new Object[] { ((List) obj).get(0), ((List) obj).get(1) };
+			}, 1, 0);
+			System.err.println(JSON.toJSONString(result));
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
 	}
 }
