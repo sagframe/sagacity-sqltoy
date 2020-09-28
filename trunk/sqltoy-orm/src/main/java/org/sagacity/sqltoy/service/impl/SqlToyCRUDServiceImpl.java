@@ -223,7 +223,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T load(T entity) {
 		return sqlToyLazyDao.load(entity);
 	}
@@ -235,7 +234,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T loadCascade(T entity) {
 		return sqlToyLazyDao.loadCascade(entity, null);
 	}
@@ -246,13 +244,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#loadAll(java.util.List)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
 		return sqlToyLazyDao.loadByIds(voClass, ids);
 	}
@@ -298,7 +294,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, java.lang.String[], java.lang.String)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public boolean isUnique(Serializable entity, String... paramsNamed) {
 		return sqlToyLazyDao.isUnique(entity, paramsNamed);
 	}
@@ -335,7 +330,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -352,7 +346,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -371,7 +364,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .core.database.model.PaginationModel, java.io.Serializable)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getPageSql())) {
@@ -389,7 +381,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -409,7 +400,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -426,7 +416,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql()) && StringUtil.isBlank(entityMeta.getPageSql())) {
@@ -446,7 +435,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * int)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public long generateBizId(String signature, int increment) {
 		return sqlToyLazyDao.generateBizId(signature, increment);
 	}
@@ -458,13 +446,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public String generateBizId(Serializable entity) {
 		return sqlToyLazyDao.generateBizId(entity);
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, null, 1, handler);
 	}
@@ -478,7 +464,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.sqltoy.plugin.TranslateHandler)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
 			TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
