@@ -35,6 +35,7 @@
    * clickhouse 
    * oceanBase
    * guassdb
+   * tidb
    * mongodb (只支持查询)
    * sybase_iq 支持15.4以上版本，建议使用16版本
    
