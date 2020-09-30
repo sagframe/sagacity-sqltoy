@@ -12,6 +12,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -230,5 +231,9 @@ public class OracleDialectUtils {
 			return sql.concat(" for update  ");
 		}
 		return sql;
+	}
+
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		return true;
 	}
 }
