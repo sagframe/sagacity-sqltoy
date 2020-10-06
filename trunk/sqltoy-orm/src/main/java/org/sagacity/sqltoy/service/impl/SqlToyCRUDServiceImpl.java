@@ -438,6 +438,20 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 				randomCount);
 	}
 
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -446,7 +460,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * int)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public long generateBizId(String signature, int increment) {
 		return sqlToyLazyDao.generateBizId(signature, increment);
 	}
@@ -458,13 +471,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public String generateBizId(Serializable entity) {
 		return sqlToyLazyDao.generateBizId(entity);
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public void translate(Collection dataSet, String cacheName, TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, null, 1, handler);
 	}
@@ -478,7 +489,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.sqltoy.plugin.TranslateHandler)
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public void translate(Collection dataSet, String cacheName, String dictType, Integer index,
 			TranslateHandler handler) {
 		sqlToyLazyDao.translate(dataSet, cacheName, dictType, index, handler);
@@ -518,18 +528,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
 		return sqlToyLazyDao.convertType(source, resultType);
-	}
-
-	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues) {
-		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
-	}
-
-	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds) {
-		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
 }
