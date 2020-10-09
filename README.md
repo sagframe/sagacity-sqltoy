@@ -11,14 +11,11 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.1 发版日期: 2020-09-27 推荐更新!
-* 增强产品跨库执行能力，支持sql id=dialect_id或id_dialect ,以id调用优先结合当前数据库dialect组合，如mysql则优先找mysql_id和id_mysql的sql，找不到则执行id对应的sql，从而在函数自适配的基础上进一步增强了跨库能力
-* 增加@loop(loopParam,loopContent,linkSign) 宏嵌入sql，便于极端场景下灵活组合动态sql,结合@if(),@blank(),@value() 已经可以支撑几乎任意复杂场景
-* 增强@if() 功能，提供获取size和判断其中包含某个值的功能，@if(size(:statusAry)>0) 或@if(:statusAry include 1)
-* 改进saveOrUpdate 功能，将全主键和无主键进行了区分处理，全主键返回继续做saveAllIgnoreExist操作
-* 优化执行日志输出，以一个执行报告形式统一输出
-* 进一步改进TranslateManager，简化二次扩展，便于开发者通过扩展实现近实时的缓存更新管理
-* 在CollectionUtil中增加了树List排序,便于树机构表查询结果的处理从而便于页面直接输出!(4.16.1相对4.16.0 的差异点)
+# 最新版本号: 4.16.2 发版日期: 2020-10-09 推荐更新!
+* 优化对tidb、oceanbase、guassdb的支持
+* 修复@if中存在2个逻辑判断表达式切割bug
+* 优化日志输出，排除批量更新和保存提示“无参数”导致理解偏差
+* 优化convertType功能，不要求强exception捕获处理
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
