@@ -96,7 +96,7 @@ public class MacroIfLogic {
 					}
 				}
 				params = express.split(splitStr);
-				//对比的参照参数名称
+				// 对比的参照参数名称
 				compareParam = params[0].trim().toLowerCase();
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
@@ -112,7 +112,7 @@ public class MacroIfLogic {
 				return (expressResult[0] ? "true" : "false");
 			}
 			// 只支持&& 和||
-			if (logicStr.equals("&&")||logicStr.equals("\\&\\&")) {
+			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
 				return ((expressResult[0] && expressResult[1]) ? "true" : "false");
 			}
 			return ((expressResult[0] || expressResult[1]) ? "true" : "false");
