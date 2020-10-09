@@ -9,7 +9,7 @@
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
-## 严格POJO和DTO 分层演示项目
+## POJO和DTO 严格分层演示项目
 * https://github.com/sagframe/sqltoy-strict
 
 ## sharding演示
