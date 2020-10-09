@@ -4,9 +4,18 @@
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy4.16使用手册.doc
 
-# 如何快速上手
-## 请见演示项目: https://github.com/sagframe/sqltoy-quickstart 
-## 阅读其readme.md学习 
+# 范例演示项目
+## 快速上手项目
+* https://github.com/sagframe/sqltoy-quickstart 
+* 阅读其readme.md学习 
+
+## 严格POJO和DTO 分层演示项目
+* https://github.com/sagframe/sqltoy-strict
+
+## sharding演示
+* https://github.com/chenrenfei/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
+## nosql演示
+* https://github.com/chenrenfei/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
