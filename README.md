@@ -13,9 +13,9 @@
 * https://github.com/sagframe/sqltoy-strict
 
 ## sharding演示
-* https://github.com/chenrenfei/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
+* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 ## nosql演示
-* https://github.com/chenrenfei/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
+* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
