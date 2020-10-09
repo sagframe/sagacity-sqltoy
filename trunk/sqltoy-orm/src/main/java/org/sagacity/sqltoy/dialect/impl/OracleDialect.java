@@ -363,16 +363,16 @@ public class OracleDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		boolean isAssignPK = OracleDialectUtils.isAssignPKValue(pkStrategy);
 		String sequence = entityMeta.getSequence().concat(".nextval");
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy,
-				OracleDialectUtils.isAssignPKValue(pkStrategy), insertSql, entities, batchSize, reflectPropertyHandler,
-				conn, dbType, autoCommit);
+				isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
+				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
