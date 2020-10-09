@@ -41,7 +41,7 @@ public class MacroIfLogic {
 			}
 		}
 		// 规范判断符号标准
-		sql = sql.replaceAll("\\<\\>", "!=").trim();
+		sql = sql.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
 		// 先通过简单表达式进行计算,格式如:@if(:name>=xxx || :name<=xxx)
 		String simpleResult = evalSimpleExpress(sql, paramValues, preCount);
 		if (!simpleResult.equals("undefine")) {
@@ -65,7 +65,7 @@ public class MacroIfLogic {
 		}
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", "include" };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in "," out " };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -75,9 +75,9 @@ public class MacroIfLogic {
 			}
 			expressions = sql.split(logicStr);
 			// 超过2个运算,交freemarker
-			if (expressions.length > 2) {
-				return "undefine";
-			}
+//			if (expressions.length > 2) {
+//				return "undefine";
+//			}
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
 			Object value;
@@ -102,20 +102,26 @@ public class MacroIfLogic {
 				compareValue = params[1].trim();
 				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
-					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr,
+					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr.trim(),
 							compareValue);
 				} else {
-					expressResult[i] = compare(value, splitStr, compareValue);
+					expressResult[i] = compare(value, splitStr.trim(), compareValue);
 				}
-			}
-			if (expressions.length == 1) {
-				return (expressResult[0] ? "true" : "false");
 			}
 			// 只支持&& 和||
 			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
-				return ((expressResult[0] && expressResult[1]) ? "true" : "false");
+				boolean result = true;
+				for (int i = 0; i < expressions.length; i++) {
+					result = result && expressResult[i];
+				}
+				return (result) ? "true" : "false";
 			}
-			return ((expressResult[0] || expressResult[1]) ? "true" : "false");
+			for (int i = 0; i < expressions.length; i++) {
+				if (expressResult[i]) {
+					return "true";
+				}
+			}
+			return "false";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -201,6 +207,14 @@ public class MacroIfLogic {
 		// 包含
 		if (compareType.equals("include")) {
 			return include(value, realValue, compareValue, type);
+		}
+		// 在数组范围内
+		if (compareType.equals("in")) {
+			return in(value, realValue, compareValue, type);
+		}
+		// 在数组范围外
+		if (compareType.equals("out")) {
+			return out(value, realValue, compareValue, type);
 		}
 		return true;
 	}
@@ -320,5 +334,55 @@ public class MacroIfLogic {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @TODO 在数组范围内
+	 * @param value
+	 * @param valueStr
+	 * @param compare
+	 * @param type
+	 * @return
+	 */
+	private static boolean in(Object value, String valueStr, String compare, String type) {
+		if (value == null) {
+			return false;
+		}
+		String[] compareAry = compare.toLowerCase().split("\\,");
+		String compareLow = valueStr.toLowerCase();
+		if (compareAry.length == 1) {
+			return compareAry[0].contains(compareLow);
+		}
+		for (int i = 0; i < compareAry.length; i++) {
+			if (compareLow.equals(compareAry[i].trim())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @TODO 在数组范围外
+	 * @param value
+	 * @param valueStr
+	 * @param compare
+	 * @param type
+	 * @return
+	 */
+	private static boolean out(Object value, String valueStr, String compare, String type) {
+		if (value == null) {
+			return true;
+		}
+		String[] compareAry = compare.toLowerCase().split("\\,");
+		String compareLow = valueStr.toLowerCase();
+		if (compareAry.length == 1) {
+			return !compareAry[0].contains(compareLow);
+		}
+		for (int i = 0; i < compareAry.length; i++) {
+			if (compareLow.equals(compareAry[i].trim())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
