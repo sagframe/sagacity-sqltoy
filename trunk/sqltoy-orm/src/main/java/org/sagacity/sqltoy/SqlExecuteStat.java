@@ -184,6 +184,7 @@ public class SqlExecuteStat {
 			args = log.getArgs();
 			if (logType == 0) {
 				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
+				//区别一些批量写和更新操作，参数较多不便于输出
 				if (optType.startsWith("save") || optType.startsWith("deleteAll")
 						|| optType.startsWith("batchUpdate")) {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
