@@ -65,7 +65,7 @@ public class MacroIfLogic {
 		}
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
-		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in "," out " };
+		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -74,10 +74,6 @@ public class MacroIfLogic {
 				logicStr = "\\|\\|";
 			}
 			expressions = sql.split(logicStr);
-			// 超过2个运算,交freemarker
-//			if (expressions.length > 2) {
-//				return "undefine";
-//			}
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
 			Object value;
@@ -102,20 +98,23 @@ public class MacroIfLogic {
 				compareValue = params[1].trim();
 				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
-					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length, splitStr.trim(),
-							compareValue);
+					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
+							splitStr.trim(), compareValue);
 				} else {
 					expressResult[i] = compare(value, splitStr.trim(), compareValue);
 				}
 			}
 			// 只支持&& 和||
+			// 与运算
 			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
-				boolean result = true;
 				for (int i = 0; i < expressions.length; i++) {
-					result = result && expressResult[i];
+					if (!expressResult[i]) {
+						return "false";
+					}
 				}
-				return (result) ? "true" : "false";
+				return "true";
 			}
+			// 或运算
 			for (int i = 0; i < expressions.length; i++) {
 				if (expressResult[i]) {
 					return "true";
