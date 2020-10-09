@@ -48,7 +48,7 @@ public class MapperUtils {
 	public static <T extends Serializable> T map(SqlToyContext sqlToyContext, Serializable source, Class<T> resultType)
 			throws Exception {
 		if (source == null || resultType == null) {
-			return null;
+			throw new IllegalArgumentException("source 和 resultType 不能为null!");
 		}
 		// 转成List做统一处理
 		List<Serializable> sourceList = new ArrayList<Serializable>();
@@ -67,7 +67,7 @@ public class MapperUtils {
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
 			Class<T> resultType) throws Exception {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
-			return null;
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
 		}
 		// resultType不能是接口和抽象类
 		if (Modifier.isAbstract(resultType.getModifiers()) || Modifier.isInterface(resultType.getModifiers())) {
