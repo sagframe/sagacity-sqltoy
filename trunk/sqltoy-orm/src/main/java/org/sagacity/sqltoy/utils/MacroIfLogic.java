@@ -67,11 +67,11 @@ public class MacroIfLogic {
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", "include" };
 		String splitStr = "==";
-		String logicStr = "&&";
+		String logicStr = "\\&\\&";
 		String[] expressions;
 		try {
 			if (sql.indexOf("||") != -1) {
-				logicStr = "||";
+				logicStr = "\\|\\|";
 			}
 			expressions = sql.split(logicStr);
 			// 超过2个运算,交freemarker
@@ -96,7 +96,7 @@ public class MacroIfLogic {
 					}
 				}
 				params = express.split(splitStr);
-				//对比的参照参数名称
+				// 对比的参照参数名称
 				compareParam = params[0].trim().toLowerCase();
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
@@ -112,7 +112,7 @@ public class MacroIfLogic {
 				return (expressResult[0] ? "true" : "false");
 			}
 			// 只支持&& 和||
-			if (logicStr.equals("&&")) {
+			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
 				return ((expressResult[0] && expressResult[1]) ? "true" : "false");
 			}
 			return ((expressResult[0] || expressResult[1]) ? "true" : "false");

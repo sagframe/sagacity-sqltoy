@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -222,6 +223,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * )
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T load(T entity) {
 		return sqlToyLazyDao.load(entity);
 	}
@@ -233,6 +235,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> T loadCascade(T entity) {
 		return sqlToyLazyDao.loadCascade(entity, null);
 	}
@@ -243,11 +246,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#loadAll(java.util.List)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
 		return sqlToyLazyDao.loadByIds(voClass, ids);
 	}
@@ -293,6 +298,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, java.lang.String[], java.lang.String)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public boolean isUnique(Serializable entity, String... paramsNamed) {
 		return sqlToyLazyDao.isUnique(entity, paramsNamed);
 	}
@@ -329,6 +335,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -345,6 +352,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -363,6 +371,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .core.database.model.PaginationModel, java.io.Serializable)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getPageSql())) {
@@ -380,6 +389,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -399,6 +409,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
@@ -415,6 +426,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql()) && StringUtil.isBlank(entityMeta.getPageSql())) {
@@ -424,6 +436,20 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return (List<T>) sqlToyLazyDao.getRandomResult(
 				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
 				randomCount);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+			Object[] paramValues, Integer maxWaitSeconds) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
 	/*
@@ -494,26 +520,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
-			throws Exception {
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType) {
 		return sqlToyLazyDao.convertType(sourceList, resultType);
 	}
 
 	@Override
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
 		return sqlToyLazyDao.convertType(source, resultType);
-	}
-
-	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues) {
-		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, null);
-	}
-
-	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds) {
-		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
 	}
 
 }

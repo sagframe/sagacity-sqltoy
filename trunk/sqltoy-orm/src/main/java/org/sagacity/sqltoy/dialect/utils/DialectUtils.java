@@ -813,139 +813,6 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveIgnoreExist
-	 * @param dbType
-	 * @param entityMeta
-	 * @param pkStrategy
-	 * @param fromTable
-	 * @param isNullFunction
-	 * @param sequence
-	 * @param isAssignPK
-	 * @param tableName
-	 * @return
-	 */
-	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
-		// 在无主键的情况下产生insert sql语句
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
-		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
-					isAssignPK, realTable);
-		}
-		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
-		int columnSize = entityMeta.getFieldsArray().length;
-		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
-		String columnName;
-		sql.append("merge into ");
-		sql.append(realTable);
-		sql.append(" ta ");
-		sql.append(" using (select ");
-		for (int i = 0; i < columnSize; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-			if (i > 0) {
-				sql.append(",");
-			}
-			sql.append("? as ");
-			sql.append(columnName);
-		}
-		if (StringUtil.isNotBlank(fromTable)) {
-			sql.append(" from ").append(fromTable);
-		}
-		sql.append(") tv on (");
-		StringBuilder idColumns = new StringBuilder();
-		// 组织on部分的主键条件判断
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
-			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-			if (i > 0) {
-				sql.append(" and ");
-				idColumns.append(",");
-			}
-			sql.append(" ta.").append(columnName).append("=tv.").append(columnName);
-			idColumns.append("ta.").append(columnName);
-		}
-		sql.append(" ) ");
-		// 排除id的其他字段信息
-		StringBuilder insertRejIdCols = new StringBuilder();
-		StringBuilder insertRejIdColValues = new StringBuilder();
-		// 是否全部是ID,匹配上则无需进行更新，只需将未匹配上的插入即可
-		boolean allIds = (entityMeta.getRejectIdFieldArray() == null);
-		if (!allIds) {
-			int rejectIdColumnSize = entityMeta.getRejectIdFieldArray().length;
-			FieldMeta fieldMeta;
-			// update 只针对非主键字段进行修改
-			for (int i = 0; i < rejectIdColumnSize; i++) {
-				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
-				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-				if (i > 0) {
-					insertRejIdCols.append(",");
-					insertRejIdColValues.append(",");
-				}
-				insertRejIdCols.append(columnName);
-				// 存在默认值
-				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
-					insertRejIdColValues.append(isNullFunction);
-					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
-					insertRejIdColValues.append(")");
-				} else {
-					insertRejIdColValues.append("tv.").append(columnName);
-				}
-			}
-		}
-		// 主键未匹配上则进行插入操作
-		sql.append(" when not matched then insert (");
-		String idsColumnStr = idColumns.toString();
-		// 不考虑只有一个字段且还是主键的情况
-		if (allIds) {
-			sql.append(idsColumnStr.replaceAll("ta.", ""));
-			sql.append(") values (");
-			sql.append(idsColumnStr.replaceAll("ta.", "tv."));
-		} else {
-			sql.append(insertRejIdCols.toString());
-			// sequence方式主键
-			if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				sql.append(",");
-				sql.append(columnName);
-				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				if (isAssignPK && isSupportNUL) {
-					sql.append(isNullFunction);
-					sql.append("(tv.").append(columnName).append(",");
-					sql.append(sequence).append(") ");
-				} else {
-					sql.append(sequence);
-				}
-			} else if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[0]);
-				columnName = ReservedWordsUtil.convertWord(columnName, dbType);
-				if (isAssignPK) {
-					sql.append(",");
-					sql.append(columnName);
-				}
-				sql.append(") values (");
-				// identity 模式insert无需写插入该字段语句
-				sql.append(insertRejIdColValues);
-				if (isAssignPK) {
-					sql.append(",").append("tv.").append(columnName);
-				}
-			} else {
-				sql.append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", ""));
-				sql.append(") values (");
-				sql.append(insertRejIdColValues).append(",");
-				sql.append(idsColumnStr.replaceAll("ta.", "tv."));
-			}
-		}
-		sql.append(")");
-		return sql.toString();
-	}
-
-	/**
 	 * @todo 产生对象update的语句
 	 * @param dbType
 	 * @param entityMeta
@@ -1543,6 +1410,9 @@ public class DialectUtils {
 				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
+				} else if (dbType == DBType.OCEANBASE) {
+					oceanBaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.SQLITE) {
 					sqliteSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
@@ -1586,6 +1456,35 @@ public class DialectUtils {
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
+	// 针对oceanBase
+	private static void oceanBaseSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
+				conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+				PKStrategy pkStrategy = entityMeta.getIdStrategy();
+				String sequence = entityMeta.getSequence() + ".nextval";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
+				}
+				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+						OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+			}
+		}, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
@@ -1659,7 +1558,7 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
-				return getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);

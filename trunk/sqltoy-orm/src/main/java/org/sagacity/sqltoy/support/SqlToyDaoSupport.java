@@ -1516,10 +1516,19 @@ public class SqlToyDaoSupport {
 	 * @param source
 	 * @param resultType
 	 * @return
-	 * @throws Exception
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
-		return MapperUtils.map(sqlToyContext, source, resultType);
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+		if (source == null || resultType == null) {
+			throw new IllegalArgumentException("source 和 resultType 不能为null!");
+		}
+		try {
+			return MapperUtils.map(sqlToyContext, source, resultType);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"将对象:" + source.getClass().getName() + "属性数据复制到:" + resultType.getName() + "发生异常!" + e.getMessage(),
+					e);
+		}
 	}
 
 	/**
@@ -1528,11 +1537,18 @@ public class SqlToyDaoSupport {
 	 * @param sourceList
 	 * @param resultType
 	 * @return
-	 * @throws Exception
 	 */
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
-			throws Exception {
-		return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType) {
+		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
+			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
+		}
+		try {
+			return MapperUtils.mapList(sqlToyContext, sourceList, resultType);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("将对象:" + sourceList.get(0).getClass().getName() + " 属性数据复制到:"
+					+ resultType.getName() + " 发生异常!" + e.getMessage(), e);
+		}
 	}
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断

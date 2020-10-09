@@ -470,7 +470,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final Map<String, Object> paramsMap, final Class<T> voClass);
-	
+
 	/**
 	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
 	 * @param <T>
@@ -493,7 +493,6 @@ public interface SqlToyLazyDao {
 	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
-	
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
@@ -747,7 +746,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception;
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType);
 
 	/**
 	 * @TODO 实现VO和POJO 集合之间属性值的复制
@@ -756,8 +755,7 @@ public interface SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
-			throws Exception;
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**

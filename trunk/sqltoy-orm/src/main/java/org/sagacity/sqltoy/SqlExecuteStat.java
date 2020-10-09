@@ -161,10 +161,11 @@ public class SqlExecuteStat {
 
 		String uid = sqlTrace.getUid();
 		StringBuilder result = new StringBuilder();
+		String optType = sqlTrace.getType();
 		result.append("\n/*|----------------------开始执行报告输出 --------------------------------------------------*/");
 		result.append("\n/*|任 务 ID: " + uid);
 		result.append("\n/*|执行结果: " + reportStatus);
-		result.append("\n/*|执行类型: " + sqlTrace.getType());
+		result.append("\n/*|执行类型: " + optType);
 		result.append("\n/*|代码定位: " + getFirstTrace());
 		if (sqlTrace.getId() != null) {
 			result.append("\n/*|对应sqlId: " + sqlTrace.getId());
@@ -183,19 +184,26 @@ public class SqlExecuteStat {
 			args = log.getArgs();
 			if (logType == 0) {
 				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
-				result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
-				result.append("\n/*|     sql参数: ");
-				if (args != null && args.length > 0) {
-					StringBuilder paramStr = new StringBuilder();
-					for (int i = 0; i < args.length; i++) {
-						if (i > 0) {
-							paramStr.append(",");
-						}
-						paramStr.append("p[" + i + "]=" + args[i]);
-					}
-					result.append(paramStr);
+				//区别一些批量写和更新操作，参数较多不便于输出
+				if (optType.startsWith("save") || optType.startsWith("deleteAll")
+						|| optType.startsWith("batchUpdate")) {
+					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
+					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
-					result.append("无参数");
+					result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
+					result.append("\n/*|     sql参数: ");
+					if (args != null && args.length > 0) {
+						StringBuilder paramStr = new StringBuilder();
+						for (int i = 0; i < args.length; i++) {
+							if (i > 0) {
+								paramStr.append(",");
+							}
+							paramStr.append("p[" + i + "]=" + args[i]);
+						}
+						result.append(paramStr);
+					} else {
+						result.append("无参数");
+					}
 				}
 			} else {
 				result.append("\n/*|---- 过程: " + step + "," + topic + ":" + StringUtil.fillArgs(content, args));

@@ -17,4 +17,15 @@ public class MacroIfLogicTest {
 		boolean result=MacroIfLogic.evalLogic(sql, params, 0, 1);
 		assertEquals(result,true);
 	}
+	
+	@Test
+	public void testOr()
+	{
+		String sql=":status>='1' && :status<='3'";
+		List params=new ArrayList();
+		params.add(3);
+		params.add(3);
+		boolean result=MacroIfLogic.evalLogic(sql, params, 0, 2);
+		assertEquals(result,true);
+	}
 }

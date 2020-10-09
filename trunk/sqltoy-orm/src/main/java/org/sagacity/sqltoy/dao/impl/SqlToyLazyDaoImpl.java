@@ -946,13 +946,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) throws Exception {
+	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
 		return super.convertType(source, resultType);
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType)
-			throws Exception {
+	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType) {
 		return super.convertType(sourceList, resultType);
 	}
 
