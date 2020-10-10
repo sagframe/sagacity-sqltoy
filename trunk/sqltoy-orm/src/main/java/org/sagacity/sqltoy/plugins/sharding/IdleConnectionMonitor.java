@@ -95,8 +95,9 @@ public class IdleConnectionMonitor extends Thread {
 							e.printStackTrace();
 						}
 					}
-					if (dataSource != null)
+					if (dataSource != null) {
 						org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, dataSource);
+					}
 				}
 				i++;
 			}
