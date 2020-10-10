@@ -15,13 +15,13 @@
 		<spring-data-mongo.version>3.0.4.RELEASE</spring-data-mongo.version>
 		<ojdbc.version>19.7.0.0</ojdbc.version>
 		<ehcache.version>3.9.0</ehcache.version>
-		<httpclient.version>4.5.12</httpclient.version>
+		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>
 		<elastic-rest-client.version>7.9.2</elastic-rest-client.version>
 		<fastjson.version>1.2.74</fastjson.version>
 		<mongo.version>3.12.7</mongo.version>
-		<junit-jupiter.version>5.6.2</junit-jupiter.version>
-		<junit-platform.version>1.6.2</junit-platform.version>
+		<junit-jupiter.version>5.7.0</junit-jupiter.version>
+		<junit-platform.version>1.7.0</junit-platform.version>
 		<slf4j.version>1.7.30</slf4j.version>
 		<log4j.version>2.13.3</log4j.version>
 	</properties>
