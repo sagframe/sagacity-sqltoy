@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +45,7 @@ import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
@@ -57,6 +59,7 @@ import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -204,6 +207,11 @@ public class SqlToyDaoSupport {
 				this.getDataSource(uniqueExecutor.getDataSource()));
 	}
 
+	protected Long getCountBySql(final String sqlOrNamedQuery, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getCountByQuery(new QueryExecutor(sqlOrNamedQuery, model.getNames(), model.getValues()));
+	}
+
 	/**
 	 * @todo 获取数据库查询语句的总记录数
 	 * @param sqlOrNamedQuery
@@ -253,6 +261,11 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
 				this.getDataSource(dataSource, sqlToyConfig));
+	}
+
+	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getSingleValue(sqlOrNamedSql, model.getNames(), model.getValues(), null);
 	}
 
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -395,6 +408,12 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
+	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return loadBySql(sqlOrNamedSql, model.getNames(), model.getValues(), resultType);
+	}
+
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
 	 * @param sqlOrNamedSql
@@ -468,6 +487,11 @@ public class SqlToyDaoSupport {
 		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
 				reflectPropertyHandler);
 		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
+	}
+
+	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return executeSql(sqlOrNamedSql, model.getNames(), model.getValues(), false, null);
 	}
 
 	/**
@@ -582,6 +606,11 @@ public class SqlToyDaoSupport {
 		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
 	}
 
+	protected <T> List<T> findBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return findBySql(sql, model.getNames(), model.getValues(), voClass);
+	}
+
 	/**
 	 * @TODO 查询集合
 	 * @param <T>
@@ -651,6 +680,12 @@ public class SqlToyDaoSupport {
 		return (PaginationModel<T>) findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
+	protected <T> List<T> findTopBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass,
+			final double topSize) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return findTopBySql(sql, model.getNames(), model.getValues(), voClass, topSize);
+	}
+
 	/**
 	 * @todo 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
 	 * @param sql
@@ -692,6 +727,12 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+	}
+
+	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			Class<T> voClass, final double randomCount) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getRandomResult(sqlOrNamedSql, model.getNames(), model.getValues(), voClass, randomCount);
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
@@ -1565,6 +1606,12 @@ public class SqlToyDaoSupport {
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues) {
 		return parallQuery(parallQueryList, paramNames, paramValues, null);
+	}
+
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			Integer maxWaitSeconds) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
 	}
 
 	/**
