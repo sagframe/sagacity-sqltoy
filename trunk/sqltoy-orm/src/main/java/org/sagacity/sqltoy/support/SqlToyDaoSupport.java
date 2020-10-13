@@ -1361,6 +1361,7 @@ public class SqlToyDaoSupport {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
+
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
 			where = SqlUtil.wrapWhere(entityMeta);
@@ -1432,13 +1433,17 @@ public class SqlToyDaoSupport {
 			}
 		}
 		QueryExecutor queryExecutor;
+		Class resultType = entityClass;
+//		if (resultType == null) {
+//			resultType = entityClass;
+//		}
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(entityClass)
+			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)
 					.dataSource(getDataSource(innerModel.dataSource));
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
-					.resultType(entityClass).dataSource(getDataSource(innerModel.dataSource));
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource));
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
