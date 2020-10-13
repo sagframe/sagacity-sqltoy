@@ -913,6 +913,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
+	public <T extends Serializable> List<T> findAll(Class<T> resultType) {
+		return super.findAll(resultType);
+	}
+
+	@Override
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findEntity(entityClass, entityQuery);
 	}

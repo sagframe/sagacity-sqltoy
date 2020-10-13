@@ -597,6 +597,17 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * @TODO 提供加载全表的快捷方式(不推荐使用)
+	 * @param <T>
+	 * @param entityClass
+	 * @return
+	 */
+	protected <T extends Serializable> List<T> findAll(final Class<T> entityClass) {
+		EntityMeta entity = getEntityMeta(entityClass);
+		return (List<T>) findByQuery(new QueryExecutor(entity.getLoadAllSql()).resultType(entityClass)).getRows();
+	}
+
+	/**
 	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
 	 * @param sql
 	 * @param entity
