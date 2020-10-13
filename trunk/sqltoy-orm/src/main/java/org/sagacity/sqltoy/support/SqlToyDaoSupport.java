@@ -122,7 +122,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	public DataSource getDataSource(DataSource dataSource) {
+	protected DataSource getDataSource(DataSource dataSource) {
 		DataSource result = dataSource;
 		if (null == result) {
 			result = this.dataSource;
@@ -169,7 +169,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @return the sqlToyContext
 	 */
-	public SqlToyContext getSqlToyContext() {
+	protected SqlToyContext getSqlToyContext() {
 		return sqlToyContext;
 	}
 
@@ -973,7 +973,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
+	protected Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(innerModel.where)
 				|| StringUtil.isBlank(innerModel.values)) {
@@ -1155,7 +1155,7 @@ public class SqlToyDaoSupport {
 	 * @todo 获取所有缓存的名称
 	 * @return
 	 */
-	public Set<String> getCacheNames() {
+	protected Set<String> getCacheNames() {
 		return this.sqlToyContext.getTranslateManager().getCacheNames();
 	}
 
@@ -1280,7 +1280,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
+	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
 			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
 		}
@@ -1296,7 +1296,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
+	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
 		if (null == entityClass || null == paginationModel || null == entityQuery
 				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
@@ -1454,7 +1454,7 @@ public class SqlToyDaoSupport {
 	 * @param entityUpdate
 	 * @return
 	 */
-	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
+	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getInnerModel().where)
 				|| StringUtil.isBlank(entityUpdate.getInnerModel().values)
 				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
@@ -1517,7 +1517,7 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
 		if (source == null || resultType == null) {
 			throw new IllegalArgumentException("source 和 resultType 不能为null!");
 		}
@@ -1538,7 +1538,7 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
+	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
 		}
@@ -1562,7 +1562,7 @@ public class SqlToyDaoSupport {
 	 * @param paramValues
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues) {
 		return parallQuery(parallQueryList, paramNames, paramValues, null);
 	}
@@ -1575,7 +1575,7 @@ public class SqlToyDaoSupport {
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds) {
 		if (parallQueryList == null || parallQueryList.isEmpty()) {
 			return null;
@@ -1632,7 +1632,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	public String getDialect(DataSource dataSource) {
+	protected String getDialect(DataSource dataSource) {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
 			return sqlToyContext.getDialect();
 		}
