@@ -1538,7 +1538,7 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertListType(List<Serializable> sourceList, Class<T> resultType) {
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
 		}

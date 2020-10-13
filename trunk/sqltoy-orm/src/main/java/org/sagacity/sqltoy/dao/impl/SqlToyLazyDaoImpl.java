@@ -951,8 +951,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> convertListType(List<Serializable> sourceList, Class<T> resultType) {
-		return super.convertListType(sourceList, resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
+		return super.convertType(sourceList, resultType);
 	}
 
 	@Override
