@@ -313,7 +313,7 @@ public interface SqlToyCRUDService {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**

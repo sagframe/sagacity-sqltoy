@@ -57,7 +57,7 @@ public class EntityQueryExtend implements Serializable {
 	 * 锁类型
 	 */
 	public LockMode lockMode;
-	
+
 	/**
 	 * 空白字符转为null，默认为true
 	 */
@@ -87,5 +87,10 @@ public class EntityQueryExtend implements Serializable {
 	 * 分页优化模型
 	 */
 	public PageOptimize pageOptimize;
+
+	/**
+	 * 结果类型
+	 */
+	//public Class resultType;
 
 }

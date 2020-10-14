@@ -105,6 +105,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+//	public EntityQuery resultType(Class resultType) {
+//		innerModel.resultType = resultType;
+//		return this;
+//	}
+
 	// 排序
 	public EntityQuery orderBy(String field) {
 		// 默认为升序

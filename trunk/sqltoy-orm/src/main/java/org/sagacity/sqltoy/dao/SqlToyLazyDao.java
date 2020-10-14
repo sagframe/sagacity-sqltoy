@@ -288,6 +288,14 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
 	/**
+	 * @TODO 加载全表数据(不推荐使用)
+	 * @param <T>
+	 * @param resultType
+	 * @return
+	 */
+	public <T extends Serializable> List<T> findAll(Class<T> resultType);
+
+	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
 	 * @param resultType
@@ -755,7 +763,7 @@ public interface SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType);
+	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**
@@ -790,43 +798,49 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
-	/** ---------------- 链式操作 -------------------------- */
+	/** ---------------- 链式操作，不推荐使用 -------------------------- */
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public Delete delete();
 
 	/**
 	 * @TODO 提供链式操作模式修改操作集合
 	 * @return
 	 */
+	@Deprecated
 	public Update update();
 
 	/**
 	 * @TODO 提供链式操作模式存储过程操作集合
 	 * @return
 	 */
+	@Deprecated
 	public Store store();
 
 	/**
 	 * @TODO 提供链式操作模式保存操作集合
 	 * @return
 	 */
+	@Deprecated
 	public Save save();
 
 	/**
 	 * @TODO 提供链式操作模式查询操作集合
 	 * @return
 	 */
+	@Deprecated
 	public Query query();
 
 	/**
 	 * @TODO 提供链式操作模式对象加载操作集合
 	 * @return
 	 */
+	@Deprecated
 	public Load load();
 
 	/**
@@ -834,6 +848,7 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public Unique unique();
 
 	/**
@@ -841,6 +856,7 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public TreeTable treeTable();
 
 	/**
@@ -848,6 +864,7 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public Execute execute();
 
 	/**
@@ -855,5 +872,6 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public Batch batch();
 }

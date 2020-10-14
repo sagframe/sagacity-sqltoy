@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +45,7 @@ import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.EntityUpdateExtend;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
@@ -57,6 +59,7 @@ import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -122,7 +125,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	public DataSource getDataSource(DataSource dataSource) {
+	protected DataSource getDataSource(DataSource dataSource) {
 		DataSource result = dataSource;
 		if (null == result) {
 			result = this.dataSource;
@@ -169,7 +172,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @return the sqlToyContext
 	 */
-	public SqlToyContext getSqlToyContext() {
+	protected SqlToyContext getSqlToyContext() {
 		return sqlToyContext;
 	}
 
@@ -202,6 +205,11 @@ public class SqlToyDaoSupport {
 	protected boolean isUnique(final UniqueExecutor uniqueExecutor) {
 		return dialectFactory.isUnique(sqlToyContext, uniqueExecutor,
 				this.getDataSource(uniqueExecutor.getDataSource()));
+	}
+
+	protected Long getCountBySql(final String sqlOrNamedQuery, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getCountByQuery(new QueryExecutor(sqlOrNamedQuery, model.getNames(), model.getValues()));
 	}
 
 	/**
@@ -253,6 +261,11 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(storeSqlOrKey, SqlType.search);
 		return dialectFactory.executeStore(sqlToyContext, sqlToyConfig, inParamsValue, outParamsType, resultType,
 				this.getDataSource(dataSource, sqlToyConfig));
+	}
+
+	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getSingleValue(sqlOrNamedSql, model.getNames(), model.getValues(), null);
 	}
 
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -395,6 +408,12 @@ public class SqlToyDaoSupport {
 		return dialectFactory.loadAll(sqlToyContext, entities, cascades, lockMode, this.getDataSource(null));
 	}
 
+	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return loadBySql(sqlOrNamedSql, model.getNames(), model.getValues(), resultType);
+	}
+
 	/**
 	 * @todo 根据sql语句查询并返回单个VO对象(可指定自定义对象,sqltoy根据查询label跟对象的属性名称进行匹配映射)
 	 * @param sqlOrNamedSql
@@ -468,6 +487,11 @@ public class SqlToyDaoSupport {
 		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
 				reflectPropertyHandler);
 		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
+	}
+
+	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return executeSql(sqlOrNamedSql, model.getNames(), model.getValues(), false, null);
 	}
 
 	/**
@@ -573,6 +597,17 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * @TODO 提供加载全表的快捷方式(不推荐使用)
+	 * @param <T>
+	 * @param entityClass
+	 * @return
+	 */
+	protected <T extends Serializable> List<T> findAll(final Class<T> entityClass) {
+		EntityMeta entity = getEntityMeta(entityClass);
+		return (List<T>) findByQuery(new QueryExecutor(entity.getLoadAllSql()).resultType(entityClass)).getRows();
+	}
+
+	/**
 	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
 	 * @param sql
 	 * @param entity
@@ -580,6 +615,11 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T extends Serializable> List<T> findBySql(final String sql, final T entity) {
 		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
+	}
+
+	protected <T> List<T> findBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return findBySql(sql, model.getNames(), model.getValues(), voClass);
 	}
 
 	/**
@@ -651,6 +691,12 @@ public class SqlToyDaoSupport {
 		return (PaginationModel<T>) findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
+	protected <T> List<T> findTopBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass,
+			final double topSize) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return findTopBySql(sql, model.getNames(), model.getValues(), voClass, topSize);
+	}
+
 	/**
 	 * @todo 取符合条件的结果前多少数据,topSize>1 则取整数返回记录数量，topSize<1 则按比例返回结果记录(topSize必须是大于0)
 	 * @param sql
@@ -692,6 +738,12 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, randomCount,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+	}
+
+	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			Class<T> voClass, final double randomCount) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return getRandomResult(sqlOrNamedSql, model.getNames(), model.getValues(), voClass, randomCount);
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
@@ -973,7 +1025,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
+	protected Long deleteByQuery(Class entityClass, EntityQuery entityQuery) {
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(innerModel.where)
 				|| StringUtil.isBlank(innerModel.values)) {
@@ -1155,7 +1207,7 @@ public class SqlToyDaoSupport {
 	 * @todo 获取所有缓存的名称
 	 * @return
 	 */
-	public Set<String> getCacheNames() {
+	protected Set<String> getCacheNames() {
 		return this.sqlToyContext.getTranslateManager().getCacheNames();
 	}
 
@@ -1280,7 +1332,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
+	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
 			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
 		}
@@ -1296,7 +1348,7 @@ public class SqlToyDaoSupport {
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
+	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
 		if (null == entityClass || null == paginationModel || null == entityQuery
 				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
@@ -1309,6 +1361,7 @@ public class SqlToyDaoSupport {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
+
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
 			where = SqlUtil.wrapWhere(entityMeta);
@@ -1380,13 +1433,17 @@ public class SqlToyDaoSupport {
 			}
 		}
 		QueryExecutor queryExecutor;
+		Class resultType = entityClass;
+//		if (resultType == null) {
+//			resultType = entityClass;
+//		}
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(entityClass)
+			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)
 					.dataSource(getDataSource(innerModel.dataSource));
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
-					.resultType(entityClass).dataSource(getDataSource(innerModel.dataSource));
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource));
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
@@ -1454,7 +1511,7 @@ public class SqlToyDaoSupport {
 	 * @param entityUpdate
 	 * @return
 	 */
-	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
+	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		if (null == entityClass || null == entityUpdate || StringUtil.isBlank(entityUpdate.getInnerModel().where)
 				|| StringUtil.isBlank(entityUpdate.getInnerModel().values)
 				|| entityUpdate.getInnerModel().updateValues.isEmpty()) {
@@ -1517,7 +1574,7 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
+	protected <T extends Serializable> T convertType(Serializable source, Class<T> resultType) {
 		if (source == null || resultType == null) {
 			throw new IllegalArgumentException("source 和 resultType 不能为null!");
 		}
@@ -1538,7 +1595,7 @@ public class SqlToyDaoSupport {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> List<T> convertType(List<Serializable> sourceList, Class<T> resultType) {
+	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
 		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
 		}
@@ -1562,9 +1619,15 @@ public class SqlToyDaoSupport {
 	 * @param paramValues
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues) {
 		return parallQuery(parallQueryList, paramNames, paramValues, null);
+	}
+
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			Integer maxWaitSeconds) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		return parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
 	}
 
 	/**
@@ -1575,7 +1638,7 @@ public class SqlToyDaoSupport {
 	 * @param maxWaitSeconds
 	 * @return
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, Integer maxWaitSeconds) {
 		if (parallQueryList == null || parallQueryList.isEmpty()) {
 			return null;
@@ -1632,7 +1695,7 @@ public class SqlToyDaoSupport {
 	 * @param dataSource
 	 * @return
 	 */
-	public String getDialect(DataSource dataSource) {
+	protected String getDialect(DataSource dataSource) {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
 			return sqlToyContext.getDialect();
 		}
