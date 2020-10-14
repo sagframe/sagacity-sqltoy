@@ -13,7 +13,7 @@
 * https://github.com/sagframe/sqltoy-strict
 
 ## sharding演示
-* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
+* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
 ## nosql演示
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
