@@ -20,11 +20,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.3 发版日期: 2020-10-09 推荐更新!
-* 优化对tidb、oceanbase、guassdb的支持
-* 修复@if中存在2个逻辑判断表达式切割bug，增加@if(:status in '1,2,3') 和@if(:status out '1,2,3') 判断逻辑，进一步增强if判断能力
-* 优化日志输出，排除批量更新和保存提示“无参数”导致理解偏差
-* 优化convertType功能，不要求强exception捕获处理
+# 最新版本号: 4.16.4 发版日期: 2020-10-14 
+* 优化convertType转List场景的方法参数类型定义,避免跟单条类型调用冲突
+* 优化SqlToyDaoSupport里面的public转protected 避免调用自定义dao提示太多父类方法造成的干扰
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
