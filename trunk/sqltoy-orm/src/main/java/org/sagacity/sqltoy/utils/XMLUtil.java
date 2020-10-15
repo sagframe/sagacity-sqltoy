@@ -197,6 +197,11 @@ public class XMLUtil {
 		return null;
 	}
 
+	/**
+	 * @TODO 将数组2位一组转成map
+	 * @param keyValues
+	 * @return
+	 */
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
 		if (keyValues == null) {

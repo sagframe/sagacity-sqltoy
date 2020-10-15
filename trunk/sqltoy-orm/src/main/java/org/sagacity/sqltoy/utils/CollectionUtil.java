@@ -399,17 +399,15 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 集合进行数据旋转
-	 * @Modification $Date:2011-8-11 修改了设置初始值的bug
 	 * @param data
 	 * @param categorys
-	 * @param categCol
+	 * @param categoryCol
 	 * @param pkColumns
 	 * @param categCompareCol
 	 * @param startCol
 	 * @param endCol
 	 * @param defaultValue
 	 * @return
-	 * @throws Exception
 	 */
 	public static List pivotList(List data, List categorys, Integer[] categoryCol, Integer[] pkColumns,
 			Integer[] categCompareCol, int startCol, int endCol, Object defaultValue) {
@@ -737,14 +735,15 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs   {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs  {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
 	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
-	 * @param averageFormat
+	 * @param radixSize
 	 * @param sumRecordSite
+	 * @param totalSumReverse
 	 */
 	public static void groupSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns, int globalSumSite,
 			String totalLabel, boolean hasAverage, String averageLabel, int radixSize, String sumRecordSite,
@@ -861,18 +860,18 @@ public class CollectionUtil {
 			}
 		}
 	}
-
+	
 	/**
 	 * @todo 逆向分组合计
 	 * @param sumData
 	 * @param groupIndexs
 	 * @param sumColumns
-	 * @param totalColumnIndex
-	 * @param totalTitle
+	 * @param globalSumSite
+	 * @param totalLabel
 	 * @param hasAverage
-	 * @param averageTitle
-	 * @param radixSize        小数位长度
-	 * @param firstSummary
+	 * @param averageLabel
+	 * @param radixSize 小数位长度
+	 * @param sumRecordSite
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
 			int globalSumSite, String totalLabel, boolean hasAverage, String averageLabel, int radixSize,
