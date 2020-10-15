@@ -59,4 +59,6 @@ public class SqlUtilTest {
 		sql = SqlUtil.convertFieldsToColumns(entityMeta, sql);
 		System.err.println(sql);
 	}
+	
+	
 }

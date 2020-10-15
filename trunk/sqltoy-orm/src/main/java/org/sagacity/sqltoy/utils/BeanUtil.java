@@ -58,6 +58,11 @@ public class BeanUtil {
 	 */
 	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
 
+	// 静态方法避免实例化和继承
+	private BeanUtil() {
+
+	}
+
 	/**
 	 * <p>
 	 * update 2019-09-05 优化匹配方式，修复setIsXXX的错误 update 2020-04-09

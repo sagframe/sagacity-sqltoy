@@ -29,6 +29,10 @@ public class DataSourceUtils {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(DataSourceUtils.class);
 
+	private DataSourceUtils() {
+
+	}
+
 	/**
 	 * 数据库方言定义
 	 */

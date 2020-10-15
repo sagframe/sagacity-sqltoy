@@ -24,6 +24,9 @@ import java.util.Iterator;
 @SuppressWarnings("rawtypes")
 public class IOUtil {
 
+	private IOUtil() {
+	}
+
 	/**
 	 * @TODO 转换String为InputStream
 	 * @param str

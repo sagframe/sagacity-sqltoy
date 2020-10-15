@@ -42,6 +42,9 @@ public class FileUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
 
+	private FileUtil() {
+	}
+
 	/**
 	 * @todo 将文件转到OutputStream
 	 * @param out

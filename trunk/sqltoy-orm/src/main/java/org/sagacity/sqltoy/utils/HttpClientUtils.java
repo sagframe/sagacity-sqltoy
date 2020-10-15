@@ -62,6 +62,9 @@ public class HttpClientUtils {
 
 	private final static String POST = "POST";
 
+	private HttpClientUtils() {
+	}
+
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
 			String[] paramName, String[] paramValue) throws Exception {
 		HttpPost httpPost = new HttpPost(url);

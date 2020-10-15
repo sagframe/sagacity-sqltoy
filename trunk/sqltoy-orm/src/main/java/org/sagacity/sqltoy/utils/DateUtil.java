@@ -114,6 +114,10 @@ public class DateUtil {
 		public final static String DATETIME_HORIZONTAL = "yyyy-MM-dd HH:mm:ss";
 	}
 
+	private DateUtil() {
+
+	}
+
 	/**
 	 * @todo 将日期字符串或时间转换成时间类型 日期字符串中的日期分隔符可是:"/",".","-"， 返回时间具体到秒 只提供常用的日期格式处理
 	 * @param data

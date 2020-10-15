@@ -66,6 +66,9 @@ public class ResultUtils {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(ResultUtils.class);
 
+	private ResultUtils() {
+	}
+
 	/**
 	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据
 	 * @param sqlToyContext

@@ -25,6 +25,9 @@ public class ExpressionUtil {
 
 	public static final String OPTS = "+-*/%><][!|&=#";
 
+	private ExpressionUtil() {
+	}
+
 	@SuppressWarnings("unchecked")
 	public static Object calculate(String expression) {
 		try {

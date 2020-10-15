@@ -31,6 +31,9 @@ public class SqlUtilsExt {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(SqlUtilsExt.class);
 
+	private SqlUtilsExt() {
+	}
+
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
 	 * @param updateSql
@@ -308,7 +311,8 @@ public class SqlUtilsExt {
 	 * @return
 	 */
 	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
-		// 判断是否打开sql签名,提供开发者通过SqlToyContext dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
+		// 判断是否打开sql签名,提供开发者通过SqlToyContext
+		// dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
 		if (!SqlToyConstants.openSqlSign()) {
 			return sql;
 		}

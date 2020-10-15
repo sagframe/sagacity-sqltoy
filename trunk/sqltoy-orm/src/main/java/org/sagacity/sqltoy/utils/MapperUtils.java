@@ -36,6 +36,9 @@ public class MapperUtils {
 	 */
 	private static Map<String, DTOEntityMapModel> dtoEntityMappCache = new HashMap<String, DTOEntityMapModel>();
 
+	private MapperUtils() {
+	}
+
 	/**
 	 * @TODO 实现POJO和VO单个对象之间的相互转换和赋值
 	 * @param <T>

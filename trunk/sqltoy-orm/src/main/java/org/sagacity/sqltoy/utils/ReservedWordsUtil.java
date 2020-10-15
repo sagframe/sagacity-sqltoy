@@ -16,9 +16,11 @@ public class ReservedWordsUtil {
 	private static HashSet<String> reservedWords = new HashSet<String>();
 	private static Pattern singlePattern = null;
 
+	private ReservedWordsUtil() {
+	}
+
 	/**
-	 * 加载保留字
-	 * 
+	 * @TODO 加载保留字,形成一个正则表达式
 	 * @param words
 	 */
 	public static void put(String words) {
@@ -68,8 +70,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * 转换单词
-	 * 
+	 * @TODO 转换单词
 	 * @param column
 	 * @param dbType
 	 * @return

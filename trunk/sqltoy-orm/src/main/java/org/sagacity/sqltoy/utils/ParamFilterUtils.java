@@ -41,6 +41,9 @@ public class ParamFilterUtils {
 	// 默认日期格式
 	private static final String DAY_FORMAT = "yyyy-MM-dd";
 
+	private ParamFilterUtils() {
+	}
+
 	/**
 	 * @todo 对查询条件参数进行filter过滤加工处理(如:判断是否为null、日期格式转换等等)
 	 * @param sqlToyContext

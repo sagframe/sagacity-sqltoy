@@ -34,6 +34,11 @@ public class CollectionUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(CollectionUtil.class);
 
+	//静态方法避免实例化和继承
+	private CollectionUtil() {
+
+	}
+
 	/**
 	 * @todo 转换数组类型数据为对象数组,解决原始类型无法强制转换的问题
 	 * @param obj

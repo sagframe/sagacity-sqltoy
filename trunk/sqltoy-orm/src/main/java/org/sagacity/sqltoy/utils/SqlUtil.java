@@ -107,6 +107,9 @@ public class SqlUtil {
 		sqlCommentfilters.put("{", "}");
 	}
 
+	private SqlUtil() {
+	}
+
 	/**
 	 * @todo 合成数据库in 查询的条件(不建议使用)
 	 * @param conditions :数据库in条件的数据集合，可以是POJO List或Object[]

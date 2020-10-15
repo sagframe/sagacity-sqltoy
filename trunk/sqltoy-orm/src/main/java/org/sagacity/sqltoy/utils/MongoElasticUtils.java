@@ -50,6 +50,9 @@ public class MongoElasticUtils {
 	private final static String MQL_PSEUDO_END_MARK = "</#>";
 	private final static String BLANK = " ";
 
+	private MongoElasticUtils() {
+	}
+
 	private static SqlToyResult wrapNoSql(SqlToyConfig sqlToyConfig, String[] paramNames, Object[] paramValues) {
 		String mql = sqlToyConfig.getSql(null);
 		// 提取条件参数

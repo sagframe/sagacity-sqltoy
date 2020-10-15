@@ -59,6 +59,9 @@ public class NumberUtil {
 		public final static String CAPITAL_RMB = "capital-rmb";
 	}
 
+	private NumberUtil() {
+	}
+
 	/**
 	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
 	 * @param target

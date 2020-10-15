@@ -28,6 +28,9 @@ public class DebugUtil {
 		orderTime.remove();
 	}
 
+	private DebugUtil() {
+	}
+
 	/**
 	 * @todo 打印集合数据
 	 * @param obj

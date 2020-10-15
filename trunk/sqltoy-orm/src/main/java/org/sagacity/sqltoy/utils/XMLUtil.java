@@ -50,6 +50,9 @@ public class XMLUtil {
 
 	private final static String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
+	private XMLUtil() {
+	}
+
 	/**
 	 * @todo xml文件合法性验证
 	 * @param xsdStream

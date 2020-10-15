@@ -17,6 +17,9 @@ import java.util.List;
  */
 public class MacroIfLogic {
 
+	private MacroIfLogic() {
+	}
+
 	/**
 	 * @todo 简单逻辑判断,只支持2个逻辑,update 2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性
 	 * @param sql
