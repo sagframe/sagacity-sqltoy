@@ -106,31 +106,31 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行基于service调用的检测
 	 * @param sqlToyContext
-	 * @param config
+	 * @param checkerConfig
 	 * @param preCheckTime
 	 * @return
 	 * @throws Exception
 	 */
-	private static List doServiceCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
+	private static List doServiceCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel checkerConfig,
 			Timestamp preCheckTime) throws Exception {
-		return (List) sqlToyContext.getServiceData(config.getService(), config.getMethod(),
+		return (List) sqlToyContext.getServiceData(checkerConfig.getService(), checkerConfig.getMethod(),
 				new Object[] { preCheckTime });
 	}
 
 	/**
 	 * @todo 执行基于rest请求模式的缓存更新检测
 	 * @param sqlToyContext
-	 * @param config
+	 * @param checkerConfig
 	 * @param preCheckTime
 	 * @return
 	 * @throws Exception
 	 */
-	private static List doRestCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
+	private static List doRestCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel checkerConfig,
 			Timestamp preCheckTime) throws Exception {
 		String[] paramNames = { "lastUpdateTime" };
 		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
-		String jsonStr = HttpClientUtils.doPost(sqlToyContext, config.getUrl(), config.getUsername(),
-				config.getPassword(), paramNames, paramValues);
+		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(), checkerConfig.getUsername(),
+				checkerConfig.getPassword(), paramNames, paramValues);
 		if (jsonStr == null) {
 			return null;
 		}
@@ -158,10 +158,10 @@ public class TranslateFactory {
 	/**
 	 * @todo 包装检测结果为统一的对象集合
 	 * @param result
-	 * @param config
+	 * @param checkerConfig
 	 * @return
 	 */
-	private static List<CacheCheckResult> wrapClearCheckResult(List result, CheckerConfigModel config) {
+	private static List<CacheCheckResult> wrapClearCheckResult(List result, CheckerConfigModel checkerConfig) {
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -173,8 +173,8 @@ public class TranslateFactory {
 			cacheSet = result;
 		} else if (result.get(0) instanceof List) {
 			cacheSet = CollectionUtil.innerListToArray(result);
-		} else if (config.getProperties() != null && config.getProperties().length > 0) {
-			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
+		} else if (checkerConfig.getProperties() != null && checkerConfig.getProperties().length > 0) {
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null, false, 0);
 		}
 		if (cacheSet == null) {
 			return null;
@@ -197,10 +197,10 @@ public class TranslateFactory {
 	/**
 	 * @todo 包装检测结果为统一的对象集合
 	 * @param result
-	 * @param config
+	 * @param checkerConfig
 	 * @return
 	 */
-	private static List<CacheCheckResult> wrapIncrementCheckResult(List result, CheckerConfigModel config) {
+	private static List<CacheCheckResult> wrapIncrementCheckResult(List result, CheckerConfigModel checkerConfig) {
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -212,14 +212,14 @@ public class TranslateFactory {
 			cacheSet = CollectionUtil.innerListToArray(result);
 		} else if (result.get(0) instanceof Object[]) {
 			cacheSet = result;
-		} else if (config.getProperties() != null && config.getProperties().length > 0) {
-			cacheSet = BeanUtil.reflectBeansToInnerAry(result, config.getProperties(), null, null, false, 0);
+		} else if (checkerConfig.getProperties() != null && checkerConfig.getProperties().length > 0) {
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null, false, 0);
 		}
 		if (cacheSet == null) {
 			return null;
 		}
-		String cacheName = config.getCache();
-		boolean hasInsideGroup = config.isHasInsideGroup();
+		String cacheName = checkerConfig.getCache();
+		boolean hasInsideGroup = checkerConfig.isHasInsideGroup();
 		List<CacheCheckResult> checkResult = new ArrayList<CacheCheckResult>();
 		Object[] row;
 		CacheCheckResult item;
