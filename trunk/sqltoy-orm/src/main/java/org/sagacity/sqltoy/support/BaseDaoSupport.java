@@ -34,6 +34,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 对象加载操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Load load() {
 		return new Load(sqlToyContext, getDataSource(dataSource));
 	}
@@ -42,6 +43,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 删除操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Delete delete() {
 		return new Delete(sqlToyContext, getDataSource(dataSource));
 	}
@@ -50,6 +52,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 修改操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Update update() {
 		return new Update(sqlToyContext, getDataSource(dataSource));
 	}
@@ -58,6 +61,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 保存操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Save save() {
 		return new Save(sqlToyContext, getDataSource(dataSource));
 	}
@@ -66,6 +70,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 查询操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Query query() {
 		return new Query(sqlToyContext, getDataSource(dataSource));
 	}
@@ -74,6 +79,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 存储过程操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Store store() {
 		return new Store(sqlToyContext, getDataSource(dataSource));
 	}
@@ -82,6 +88,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 唯一性验证操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Unique unique() {
 		return new Unique(sqlToyContext, getDataSource(dataSource));
 	}
@@ -90,6 +97,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 树形表结构封装操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected TreeTable treeTable() {
 		return new TreeTable(sqlToyContext, getDataSource(dataSource));
 	}
@@ -98,6 +106,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo sql语句直接执行修改数据库操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Execute execute() {
 		return new Execute(sqlToyContext, getDataSource(dataSource));
 	}
@@ -106,6 +115,7 @@ public class BaseDaoSupport extends SqlToyDaoSupport {
 	 * @todo 批量执行操作集合
 	 * @return
 	 */
+	@Deprecated
 	protected Batch batch() {
 		return new Batch(sqlToyContext, getDataSource(dataSource));
 	}
