@@ -21,7 +21,7 @@
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.16.4 发版日期: 2020-10-14 
-* 优化convertType转List场景的方法参数类型定义,避免跟单条类型调用冲突
+* 优化pojo和dto互转工具convertType转List场景的方法参数类型定义,避免跟单条类型调用冲突
 * 优化SqlToyDaoSupport里面的public转protected 避免调用自定义dao提示太多父类方法造成的干扰
 
 # 1. 前言
