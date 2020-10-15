@@ -5,6 +5,8 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -14,6 +16,11 @@ import org.springframework.context.ApplicationContext;
  * @version id:DefaultObtainDataSource.java,Revision:v1.0,Date:2020年7月11日
  */
 public class DefaultObtainDataSource implements ObtainDataSource {
+	/**
+	 * 定义日志
+	 */
+	protected final Logger logger = LoggerFactory.getLogger(DefaultObtainDataSource.class);
+
 	private DataSource dataSource;
 
 	@Override
@@ -35,6 +42,9 @@ public class DefaultObtainDataSource implements ObtainDataSource {
 		// 多数据源情况下没有指定默认dataSource则返回名称为dataSource的数据源
 		if (this.dataSource == null && applicationContext.containsBean("dataSource")) {
 			this.dataSource = (DataSource) applicationContext.getBean("dataSource");
+		}
+		if (this.dataSource == null) {
+			logger.error("在多数据源场景下,请为dao正确指定dataSource,或配置spring.sqltoy.defaultDataSource=默认数据源名称!");
 		}
 		return this.dataSource;
 	}
