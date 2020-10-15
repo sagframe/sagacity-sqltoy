@@ -47,52 +47,56 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行检测,返回缓存相关数据最后修改时间,便于比较是否发生变化
 	 * @param sqlToyContext
-	 * @param config
+	 * @param checkerConfig
 	 * @param preCheckTime
 	 * @return
 	 */
-	public static List<CacheCheckResult> doCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
-			Timestamp preCheckTime) {
+	public static List<CacheCheckResult> doCheck(final SqlToyContext sqlToyContext,
+			final CheckerConfigModel checkerConfig, Timestamp preCheckTime) {
 		List result = null;
 		try {
-			if (config.getType().equals("sql")) {
-				result = doSqlCheck(sqlToyContext, config, preCheckTime);
-			} else if (config.getType().equals("service")) {
-				result = doServiceCheck(sqlToyContext, config, preCheckTime);
-			} else if (config.getType().equals("rest")) {
-				result = doRestCheck(sqlToyContext, config, preCheckTime);
+			// 直接sql查询加载缓存模式
+			if (checkerConfig.getType().equals("sql")) {
+				result = doSqlCheck(sqlToyContext, checkerConfig, preCheckTime);
+			} // 调用springBean模式
+			else if (checkerConfig.getType().equals("service")) {
+				result = doServiceCheck(sqlToyContext, checkerConfig, preCheckTime);
+			} // 调用rest请求模式
+			else if (checkerConfig.getType().equals("rest")) {
+				result = doRestCheck(sqlToyContext, checkerConfig, preCheckTime);
 			}
+			// local模式由应用自行管理
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("执行缓存变更检测发生错误,错误信息:{}", e.getMessage());
 		}
 
 		// 增量更新模式
-		if (config.isIncrement()) {
-			return wrapIncrementCheckResult(result, config);
+		if (checkerConfig.isIncrement()) {
+			return wrapIncrementCheckResult(result, checkerConfig);
 		}
 		// 清空模式
-		return wrapClearCheckResult(result, config);
+		return wrapClearCheckResult(result, checkerConfig);
 	}
 
 	/**
 	 * @todo 执行sql检测
 	 * @param sqlToyContext
-	 * @param config
+	 * @param checkerConfig
 	 * @param preCheckTime
 	 * @return
 	 * @throws Exception
 	 */
-	private static List doSqlCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel config,
+	private static List doSqlCheck(final SqlToyContext sqlToyContext, final CheckerConfigModel checkerConfig,
 			Timestamp preCheckTime) throws Exception {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(config.getSql(), SqlType.search, "");
-		String dataSourceName = config.getDataSource();
+		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(checkerConfig.getSql(), SqlType.search, "");
+		String dataSourceName = checkerConfig.getDataSource();
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
-						new QueryExecutor(config.getSql(), sqlToyConfig.getParamsName(),
+						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
 								new Object[] { new Date(preCheckTime.getTime()) }),
 						sqlToyConfig, null, StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource()
 								: sqlToyContext.getDataSourceBean(dataSourceName))

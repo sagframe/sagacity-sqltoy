@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @version id:CacheUpdateWatcher.java,Revision:v1.0,Date:2018年3月11日
  * @modify {Date:2019-1-22,修改检测时间格式为yyyy-MM-dd HH:mm:ss 避免时间对比精度差异}
  * @modify {Date:2019-10-14,增加集群节点的时间差异参数,便于包容性检测缓存更新}
- * @modify {Date:2020-3-26,增加缓存增量更新机制,而不是清除缓存，然后重新全量获取更新}
+ * @modify {Date:2020-3-26,增加缓存增量更新机制,而不是清除缓存}
  */
 public class CacheUpdateWatcher extends Thread {
 	/**
@@ -37,6 +37,9 @@ public class CacheUpdateWatcher extends Thread {
 	 */
 	private ConcurrentHashMap<String, Long> lastCheckTime = new ConcurrentHashMap<String, Long>();
 
+	/**
+	 * 更新检测任务前缀
+	 */
 	private final String prefix = "checker_";
 
 	/**
@@ -92,7 +95,7 @@ public class CacheUpdateWatcher extends Thread {
 	 */
 	@Override
 	public void run() {
-		// 延时
+		// 延时,避免项目启动过程中检测
 		try {
 			if (delaySeconds >= 1) {
 				Thread.sleep(1000 * delaySeconds);
