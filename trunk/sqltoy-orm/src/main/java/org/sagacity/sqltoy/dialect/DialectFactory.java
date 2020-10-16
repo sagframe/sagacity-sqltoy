@@ -487,6 +487,12 @@ public class DialectFactory {
 				// 如未定义则使用主键(update 2020-10-16)
 				if (StringUtil.isBlank(treeModel.getIdField())) {
 					treeModel.idField(idMeta.getColumnName());
+				} else {
+					//别名转换
+					columnName = entityMeta.getColumnName(treeModel.getIdField());
+					if (columnName != null) {
+						treeModel.idField(columnName);
+					}
 				}
 				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
