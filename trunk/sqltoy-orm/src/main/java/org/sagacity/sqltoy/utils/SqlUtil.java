@@ -888,6 +888,7 @@ public class SqlUtil {
 					.concat(treeTableModel.getNodeRouteField()).concat(" from ").concat(treeTableModel.getTableName())
 					.concat(" where ").concat(treeTableModel.getIdField()).concat("=").concat(flag)
 					.concat(treeTableModel.getRootId().toString()).concat(flag);
+			//附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
 			}
@@ -904,6 +905,7 @@ public class SqlUtil {
 					.append(" set ").append(treeTableModel.getNodeLevelField()).append("=?,")
 					.append(treeTableModel.getNodeRouteField()).append("=? ").append(" where ")
 					.append(treeTableModel.getIdField()).append("=?");
+			//附加条件
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				nextNodeQueryStr.append(" and ").append(treeTableModel.getConditions());
 				updateLevelAndRoute.append(" and ").append(treeTableModel.getConditions());
