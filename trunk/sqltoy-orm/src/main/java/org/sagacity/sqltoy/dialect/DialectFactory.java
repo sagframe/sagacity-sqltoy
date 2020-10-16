@@ -484,8 +484,10 @@ public class DialectFactory {
 				}
 
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
-				// 主键
-				treeModel.idField(idMeta.getColumnName());
+				// 如未定义则使用主键(update 2020-10-16)
+				if (StringUtil.isBlank(treeModel.getIdField())) {
+					treeModel.idField(idMeta.getColumnName());
+				}
 				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
 				if (!(treeModel.getEntity() instanceof Type)) {
