@@ -488,7 +488,7 @@ public class DialectFactory {
 				if (StringUtil.isBlank(treeModel.getIdField())) {
 					treeModel.idField(idMeta.getColumnName());
 				} else {
-					//别名转换
+					// 别名转换
 					columnName = entityMeta.getColumnName(treeModel.getIdField());
 					if (columnName != null) {
 						treeModel.idField(columnName);
@@ -497,7 +497,9 @@ public class DialectFactory {
 				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
 				if (!(treeModel.getEntity() instanceof Type)) {
-					Object rootValue = BeanUtil.getProperty(treeModel.getEntity(), entityMeta.getIdArray()[0]);
+					//update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
+					Object rootValue = BeanUtil.getProperty(treeModel.getEntity(),
+							StringUtil.toHumpStr(treeModel.getIdField(), false));
 					Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 							StringUtil.toHumpStr(treeModel.getPidField(), false));
 					if (null == treeModel.getRootId()) {
