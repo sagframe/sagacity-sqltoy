@@ -479,9 +479,6 @@ public class DialectFactory {
 				if (!columnMap.containsKey(treeModel.getNodeLevelField().toUpperCase())) {
 					throw new IllegalArgumentException("树形表:节点等级字段名称:" + treeModel.getNodeLevelField() + "不正确,请检查!");
 				}
-				if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length > 1) {
-					throw new IllegalArgumentException("树形表:" + entityMeta.getTableName() + "不存在唯一主键,不符合节点生成机制!");
-				}
 
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
 				// 如未定义则使用主键(update 2020-10-16)
