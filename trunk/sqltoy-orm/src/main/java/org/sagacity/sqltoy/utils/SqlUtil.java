@@ -945,9 +945,10 @@ public class SqlUtil {
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				updateLeafSql.append(" where ").append(treeTableModel.getConditions());
 			}
+			// 先将所有节点设置为叶子
 			executeSql(updateLeafSql.toString(), null, null, conn, dbType, true);
 
-			// 设置被设置为父节点的记录为非叶子节点(isLeaf=0)
+			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
 			// int dbType = DataSourceUtils.getDbType(conn);
