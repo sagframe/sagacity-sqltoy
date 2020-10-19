@@ -497,16 +497,16 @@ public class DialectFactory {
 				treeModel.table(entityMeta.getTableName());
 				// 设置加工的节点路径
 				if (!(treeModel.getEntity() instanceof Type)) {
-					//update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
-					Object rootValue = BeanUtil.getProperty(treeModel.getEntity(),
-							StringUtil.toHumpStr(treeModel.getIdField(), false));
-					Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
-							StringUtil.toHumpStr(treeModel.getPidField(), false));
+					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
 					if (null == treeModel.getRootId()) {
+						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
+								StringUtil.toHumpStr(treeModel.getPidField(), false));
 						treeModel.rootId(pidValue);
 					}
 					if (null == treeModel.getIdValue()) {
-						treeModel.setIdValue(rootValue);
+						Object idValue = BeanUtil.getProperty(treeModel.getEntity(),
+								StringUtil.toHumpStr(treeModel.getIdField(), false));
+						treeModel.setIdValue(idValue);
 					}
 				}
 				// 类型,默认值为false
