@@ -114,8 +114,6 @@ public class Execute extends BaseLink {
 		String[] names = paramsNamed;
 		if (entity != null) {
 			names = sqlToyConfig.getParamsName();
-			// values = SqlConfigParseUtils.reflectBeanParams(names, entity,
-			// reflectPropertyHandler);
 			values = BeanUtil.reflectBeanToAry(entity, names, null, reflectPropertyHandler);
 		}
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, autoCommit,
