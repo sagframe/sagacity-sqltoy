@@ -679,6 +679,9 @@ public class BeanUtil {
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
 			ReflectPropertyHandler reflectPropertyHandler) {
+		if (null == serializable || null == properties || properties.length == 0) {
+			return null;
+		}
 		List datas = new ArrayList();
 		datas.add(serializable);
 		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
