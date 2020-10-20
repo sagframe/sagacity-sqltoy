@@ -1435,9 +1435,6 @@ public class SqlToyDaoSupport {
 		}
 		QueryExecutor queryExecutor;
 		Class resultType = entityClass;
-//		if (resultType == null) {
-//			resultType = entityClass;
-//		}
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)

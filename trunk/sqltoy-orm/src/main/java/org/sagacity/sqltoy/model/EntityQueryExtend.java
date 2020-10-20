@@ -88,9 +88,4 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public PageOptimize pageOptimize;
 
-	/**
-	 * 结果类型
-	 */
-	//public Class resultType;
-
 }
