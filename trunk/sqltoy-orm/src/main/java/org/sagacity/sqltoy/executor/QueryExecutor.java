@@ -118,6 +118,11 @@ public class QueryExecutor implements Serializable {
 		innerModel.shardingParamsValue = paramsValue;
 	}
 
+	/**
+	 * @TODO 设置数据源
+	 * @param dataSource
+	 * @return
+	 */
 	public QueryExecutor dataSource(DataSource dataSource) {
 		innerModel.dataSource = dataSource;
 		return this;
@@ -134,11 +139,21 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 锁记录
+	 * @param lockMode
+	 * @return
+	 */
 	public QueryExecutor lock(LockMode lockMode) {
 		innerModel.lockMode = lockMode;
 		return this;
 	}
 
+	/**
+	 * @TODO 设置返回结果的类型
+	 * @param resultType
+	 * @return
+	 */
 	public QueryExecutor resultType(Type resultType) {
 		if (resultType == null) {
 			logger.warn("请关注:查询语句sql={} 指定的resultType=null,将以ArrayList作为默认类型返回!", innerModel.sql);
@@ -147,23 +162,38 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置jdbc参数，一般无需设置
+	 * @param fetchSize
+	 * @return
+	 */
 	public QueryExecutor fetchSize(int fetchSize) {
 		innerModel.fetchSize = fetchSize;
 		return this;
 	}
 
+	/**
+	 * @TODO 设置最大提取记录数量(一般不用设置)
+	 * @param maxRows
+	 * @return
+	 */
 	public QueryExecutor maxRows(int maxRows) {
 		innerModel.maxRows = maxRows;
 		return this;
 	}
 
+	/**
+	 * @TODO 针对resultType为Map.class 时，设定map的key是否转为骆驼命名法，默认true
+	 * @param humpMapLabel
+	 * @return
+	 */
 	public QueryExecutor humpMapLabel(boolean humpMapLabel) {
 		innerModel.humpMapLabel = humpMapLabel;
 		return this;
 	}
 
 	/**
-	 * @TODO 设置条件过滤空白转null为false
+	 * @TODO 设置条件过滤空白转null为false，默认true
 	 * @return
 	 */
 	public QueryExecutor blankNotNull() {
