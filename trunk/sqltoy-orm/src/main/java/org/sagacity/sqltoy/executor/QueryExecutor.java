@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
@@ -130,6 +131,11 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor values(Object... paramsValue) {
 		innerModel.paramsValue = paramsValue;
 		innerModel.shardingParamsValue = paramsValue;
+		return this;
+	}
+
+	public QueryExecutor lock(LockMode lockMode) {
+		innerModel.lockMode = lockMode;
 		return this;
 	}
 

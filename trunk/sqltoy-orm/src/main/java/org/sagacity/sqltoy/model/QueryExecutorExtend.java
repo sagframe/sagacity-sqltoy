@@ -133,6 +133,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public boolean blankToNull = true;
 
+	/**
+	 * 锁表
+	 */
+	public LockMode lockMode = null;
+
 	// 分库分表策略配置
 	// public ShardingConfig shardingConfig = new ShardingConfig();
 

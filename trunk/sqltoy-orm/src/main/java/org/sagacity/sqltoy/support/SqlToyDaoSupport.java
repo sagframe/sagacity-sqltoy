@@ -643,7 +643,8 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
+		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
+				queryExecutor.getInnerModel().lockMode,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
