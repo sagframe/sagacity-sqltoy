@@ -148,15 +148,16 @@ public class ResultUtils {
 		Integer index;
 		Object value;
 		SecureMask mask;
+		int columnIndex;
 		while (masks.hasNext()) {
 			mask = masks.next();
 			index = labelIndexMap.get(mask.getColumn());
 			if (index != null) {
-				int column = index.intValue();
+				columnIndex = index.intValue();
 				for (List row : rows) {
-					value = row.get(column);
+					value = row.get(columnIndex);
 					if (value != null) {
-						row.set(column, maskStr(mask, value));
+						row.set(columnIndex, maskStr(mask, value));
 					}
 				}
 			}
@@ -173,21 +174,22 @@ public class ResultUtils {
 		Integer index;
 		Object value;
 		FormatModel fmt;
+		int columnIndex;
 		while (formats.hasNext()) {
 			fmt = formats.next();
 			index = labelIndexMap.get(fmt.getColumn());
 			if (index != null) {
-				int column = index.intValue();
+				columnIndex = index.intValue();
 				for (List row : rows) {
-					value = row.get(column);
+					value = row.get(columnIndex);
 					if (value != null) {
 						// 日期格式
 						if (fmt.getType() == 1) {
-							row.set(column, DateUtil.formatDate(value, fmt.getFormat()));
+							row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat()));
 						}
 						// 数字格式化
 						else {
-							row.set(column, NumberUtil.format(value, fmt.getFormat()));
+							row.set(columnIndex, NumberUtil.format(value, fmt.getFormat()));
 						}
 					}
 				}
@@ -865,7 +867,6 @@ public class ResultUtils {
 			boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
-		// Translate translate;
 		TranslateExtend extend;
 		String label;
 		String keyIndex;
@@ -932,11 +933,12 @@ public class ResultUtils {
 		String linkSign = extend.linkSign;
 		StringBuilder result = new StringBuilder();
 		int index = 0;
+		Object[] cacheValues;
 		for (String key : keys) {
 			if (index > 0) {
 				result.append(linkSign);
 			}
-			Object[] cacheValues = translateKeyMap.get(key.trim());
+			cacheValues = translateKeyMap.get(key.trim());
 			if (cacheValues == null || cacheValues.length == 0) {
 				if (extend.uncached != null) {
 					result.append(extend.uncached.replace("${value}", key));

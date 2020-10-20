@@ -78,7 +78,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
 
@@ -95,7 +94,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public Object getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getSingleValue(sqlOrNamedSql, paramsMap);
 	}
 
@@ -123,7 +121,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public <T> T loadBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.loadBySql(sqlOrNamedSql, paramsMap, resultType);
 	}
 
@@ -151,7 +148,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public <T> List<T> findBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return (List<T>) super.findBySql(sqlOrNamedSql, paramsMap, voClass);
 	}
 
@@ -226,7 +222,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> List<T> findTopBySql(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
 			double topSize) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.findTopBySql(sqlOrNamedSql, paramsMap, voClass, topSize);
 	}
 
@@ -268,7 +263,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> List<T> getRandomResult(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass,
 			double randomCount) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getRandomResult(sqlOrNamedSql, paramsMap, voClass, randomCount);
 	}
 
@@ -440,6 +434,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
+	@Override
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
+		return super.updateAllDeeply(entities, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -546,7 +545,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return super.loadAll(entities, null);
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> loadAll(List<T> entities, LockMode lockMode) {
 		return super.loadAll(entities, lockMode);
@@ -685,7 +684,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public Long executeSql(String sqlOrNamedSql, Map<String, Object> paramsMap) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.executeSql(sqlOrNamedSql, paramsMap);
 	}
 
@@ -977,7 +975,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 
 	@Override
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.parallQuery(parallQueryList, paramsMap, null);
 	}
 }

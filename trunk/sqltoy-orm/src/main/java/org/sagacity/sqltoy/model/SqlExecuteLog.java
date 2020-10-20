@@ -7,8 +7,8 @@ import java.io.Serializable;
 
 /**
  * @project sagacity-sqltoy
- * @description 请在此说明类的功能
- * @author zhong
+ * @description sql执行日志模型
+ * @author zhongxuchen
  * @version v1.0, Date:2020-9-25
  * @modify 2020-9-25,修改说明
  */
@@ -29,8 +29,14 @@ public class SqlExecuteLog implements Serializable {
 	 */
 	private String topic;
 
+	/**
+	 * 日志内容
+	 */
 	private String content;
 
+	/**
+	 * 日志参数
+	 */
 	private Object[] args;
 
 	/**
@@ -98,7 +104,4 @@ public class SqlExecuteLog implements Serializable {
 	public void setArgs(Object[] args) {
 		this.args = args;
 	}
-
-	
-
 }

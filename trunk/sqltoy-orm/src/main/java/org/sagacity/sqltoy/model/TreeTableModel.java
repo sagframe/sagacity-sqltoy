@@ -93,7 +93,6 @@ public class TreeTableModel implements Serializable {
 	}
 
 	/**
-	 * 
 	 * @param tableName
 	 * @param rootId
 	 * @param idField

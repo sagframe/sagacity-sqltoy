@@ -9,9 +9,9 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -114,7 +114,7 @@ public class Execute extends BaseLink {
 		String[] names = paramsNamed;
 		if (entity != null) {
 			names = sqlToyConfig.getParamsName();
-			values = SqlConfigParseUtils.reflectBeanParams(names, entity, reflectPropertyHandler);
+			values = BeanUtil.reflectBeanToAry(entity, names, null, reflectPropertyHandler);
 		}
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, autoCommit,
 				getDataSource(sqlToyConfig));

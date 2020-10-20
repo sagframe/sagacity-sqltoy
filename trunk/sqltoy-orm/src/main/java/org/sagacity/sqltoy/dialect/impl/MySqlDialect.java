@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -249,12 +250,12 @@ public class MySqlDialect implements Dialect {
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
-			logger.debug("修改记录数为:{}", updateCnt);
+			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
 			return updateCnt;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
 				dialect, autoCommit, tableName);
-		logger.debug("变更记录数:{},新建记录数为:{}", updateCnt, saveCnt);
+		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
 	}
 

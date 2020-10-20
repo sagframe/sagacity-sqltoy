@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @version id:SqlToyLazyDao.java,Revision:v1.0,Date:2015年11月27日
  * @modify Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
+ * @modify Date:2020-10-20 {增加loadAll(list,lock)}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface SqlToyLazyDao {
@@ -141,6 +142,7 @@ public interface SqlToyLazyDao {
 	 * @param dataSet
 	 * @param reflectPropertyHandler
 	 */
+	@Deprecated
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -196,9 +198,18 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
+	 * @return
+	 */
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
+
+	/**
+	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
+	 * @param <T>
+	 * @param entities
 	 * @param reflectPropertyHandler
 	 * @return
 	 */
+	@Deprecated
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler);
 
@@ -226,6 +237,7 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @return
 	 */
+	@Deprecated
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
 
@@ -800,7 +812,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
-	/** ---------------- 链式操作，不推荐使用 -------------------------- */
+	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合

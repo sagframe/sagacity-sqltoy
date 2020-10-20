@@ -3,7 +3,6 @@
  */
 package org.sagacity.sqltoy.config;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,7 +13,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -25,7 +23,6 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MacroIfLogic;
@@ -37,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 提供sqlToy 针对sql语句以及查询条件加工处理的通用函数
+ * @description 提供sqlToy 针对sql语句以及查询条件加工处理的通用函数(sqltoy中最关键的sql加工)
  * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SqlConfigParseUtils.java,Revision:v1.0,Date:2009-12-14
  * @modify {Date:2010-6-10, 修改replaceNull函数}
@@ -127,6 +124,11 @@ public class SqlConfigParseUtils {
 
 	static {
 		macros.put("@loop", new SqlLoop());
+	}
+
+	// 避免实例化
+	private SqlConfigParseUtils() {
+
 	}
 
 	/**
@@ -360,8 +362,10 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 判断条件是否为null,过滤sql的组合查询条件 example: select t1.* from xx_table t1 where
-	 *       #[t1.status=?] #[and t1.auditTime=?]
+	 * @todo 判断条件是否为null,过滤sql的组合查询条件 example:
+	 *       <p>
+	 *       select t1.* from xx_table t1 where #[t1.status=?] #[and t1.auditTime=?]
+	 *       </p>
 	 * @param sqlToyResult
 	 */
 	private static void processNullConditions(SqlToyResult sqlToyResult) {
@@ -467,7 +471,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 将参数设置为空白
+	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
 	 * @param sqlToyResult
 	 */
 	private static void processBlank(SqlToyResult sqlToyResult) {
@@ -497,7 +501,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
 	private static void processValue(SqlToyResult sqlToyResult) {
@@ -554,7 +558,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @todo 加工处理like 部分，给参数值增加%符号
+	 * @TODO 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
 	 */
 	private static void processLike(SqlToyResult sqlToyResult) {
@@ -581,8 +585,13 @@ public class SqlConfigParseUtils {
 	/**
 	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
 	 * 
-	 * @todo 处理sql 语句中的in 条件，功能有2类： 1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
+	 * @TODO 处理sql 语句中的in 条件，功能有2类:
+	 *       <p>
+	 *       1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
+	 *       </p>
+	 *       <p>
 	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
+	 *       </p>
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {
@@ -846,20 +855,5 @@ public class SqlConfigParseUtils {
 				}
 			}
 		}
-	}
-
-	/**
-	 * @todo 根据sql中的参数名称，从entity对象中提取相应的值
-	 * @param paramsName
-	 * @param entity
-	 * @param reflectPropsHandler
-	 * @return
-	 */
-	public static Object[] reflectBeanParams(String[] paramsName, Serializable entity,
-			ReflectPropertyHandler reflectPropsHandler) {
-		if (null != entity && null != paramsName && paramsName.length > 0) {
-			return BeanUtil.reflectBeanToAry(entity, paramsName, null, reflectPropsHandler);
-		}
-		return null;
 	}
 }

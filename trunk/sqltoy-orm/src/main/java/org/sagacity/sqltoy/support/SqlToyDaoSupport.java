@@ -89,6 +89,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
  * @modify Date:2020-4-5 {分页PaginationModel中设置skipQueryCount=true跳过查总记录,默认false}
  * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
+ * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
  */
 //新的模式不鼓励自己继承DaoSupport,一般情况下使用SqlToyLazyDao即可
 @SuppressWarnings("rawtypes")
@@ -477,14 +478,14 @@ public class SqlToyDaoSupport {
 	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param reflectPropertyHandler
+	 * @param reflectPropertyHandler 用来批量设置某个属性的值,一般设置为null即可
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity,
 			final ReflectPropertyHandler reflectPropertyHandler) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 		// 根据sql中的变量从entity对象中提取参数值
-		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
+		Object[] paramValues = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getParamsName(), null,
 				reflectPropertyHandler);
 		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
 	}
@@ -643,6 +644,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
+		// update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
@@ -1043,8 +1045,8 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
-			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-					(Serializable) innerModel.values[0], null);
+			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
+					sqlToyConfig.getParamsName(), null, null);
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
 					getDataSource(innerModel.dataSource));
 		}
@@ -1435,9 +1437,6 @@ public class SqlToyDaoSupport {
 		}
 		QueryExecutor queryExecutor;
 		Class resultType = entityClass;
-//		if (resultType == null) {
-//			resultType = entityClass;
-//		}
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)

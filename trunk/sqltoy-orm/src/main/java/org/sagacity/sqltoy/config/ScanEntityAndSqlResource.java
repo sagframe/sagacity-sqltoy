@@ -154,7 +154,7 @@ public class ScanEntityAndSqlResource {
 		// 循环所有文件
 		String className;
 		for (File file : dirfiles) {
-			// 如果是目录 则继续扫描
+			// 如果是目录 则继续递归扫描
 			if (file.isDirectory()) {
 				addEntitiesInPackage(packageName.concat(".").concat(file.getName()), file.getAbsolutePath(), recursive,
 						entities);
