@@ -77,6 +77,7 @@ public class SqlUtilsExt {
 			Object cellValue;
 			int fieldType;
 			boolean hasFieldType = (fieldsType != null);
+			int[] updateRows;
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
 				if (rowData != null) {
@@ -97,7 +98,7 @@ public class SqlUtilsExt {
 						pst.addBatch();
 						// 判断是否是最后一条记录或到达批次量,执行批处理
 						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
-							int[] updateRows = pst.executeBatch();
+							updateRows = pst.executeBatch();
 							for (int t : updateRows) {
 								updateCount = updateCount + ((t > 0) ? t : 0);
 							}
@@ -172,6 +173,7 @@ public class SqlUtilsExt {
 			int index = 0;
 			Object cellValue;
 			int fieldType;
+			int[] updateRows;
 			boolean hasFieldType = (fieldsType != null);
 			for (int i = 0; i < totalRows; i++) {
 				rowData = rowDatas.get(i);
@@ -211,7 +213,7 @@ public class SqlUtilsExt {
 						pst.addBatch();
 						// 判断是否是最后一条记录或到达批次量,执行批处理
 						if ((meter % batchSize) == 0 || i + 1 == totalRows) {
-							int[] updateRows = pst.executeBatch();
+							updateRows = pst.executeBatch();
 							for (int t : updateRows) {
 								updateCount = updateCount + ((t > 0) ? t : 0);
 							}
