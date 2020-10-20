@@ -287,6 +287,8 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
+	public <T extends Serializable> List<T> loadAll(List<T> entities, final LockMode lockMode);
+
 	/**
 	 * @TODO 加载全表数据(不推荐使用)
 	 * @param <T>
@@ -415,7 +417,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
-	
+
 	/**
 	 * @todo 通过给定sql、sql中的参数、参数的数值以及返回结果的对象类型进行条件查询
 	 * @param sqlOrSqlId
