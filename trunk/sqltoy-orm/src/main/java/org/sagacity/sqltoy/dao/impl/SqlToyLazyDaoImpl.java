@@ -78,7 +78,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
-		// NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
 

@@ -485,7 +485,7 @@ public class SqlToyDaoSupport {
 			final ReflectPropertyHandler reflectPropertyHandler) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
 		// 根据sql中的变量从entity对象中提取参数值
-		Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(), entity,
+		Object[] paramValues = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getParamsName(), null,
 				reflectPropertyHandler);
 		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
 	}
@@ -644,7 +644,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
-		//update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
+		// update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
@@ -1045,8 +1045,10 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
-			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-					(Serializable) innerModel.values[0], null);
+//			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
+//					(Serializable) innerModel.values[0], null);
+			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
+					sqlToyConfig.getParamsName(), null, null);
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
 					getDataSource(innerModel.dataSource));
 		}

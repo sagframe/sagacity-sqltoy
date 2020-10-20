@@ -15,13 +15,13 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
-import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**
@@ -195,7 +195,7 @@ public class QueryExecutorExtend implements Serializable {
 		// 是否萃取过
 		if (!extracted) {
 			if (entity != null) {
-				paramsValue = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getFullParamNames(), entity,
+				paramsValue = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getFullParamNames(), null,
 						reflectPropertyHandler);
 			}
 			extracted = true;
@@ -226,7 +226,7 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getTableShardingParams(), entity,
+			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
 					reflectPropertyHandler);
 		}
 		return shardingParamsValue;
@@ -240,7 +240,7 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getDataSourceShardingParams(), entity,
+			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceShardingParams(), null,
 					reflectPropertyHandler);
 		}
 		return shardingParamsValue;
