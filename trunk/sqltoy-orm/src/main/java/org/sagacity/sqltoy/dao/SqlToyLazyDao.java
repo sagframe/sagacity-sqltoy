@@ -142,6 +142,7 @@ public interface SqlToyLazyDao {
 	 * @param dataSet
 	 * @param reflectPropertyHandler
 	 */
+	@Deprecated
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -197,9 +198,18 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
+	 * @return
+	 */
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
+
+	/**
+	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
+	 * @param <T>
+	 * @param entities
 	 * @param reflectPropertyHandler
 	 * @return
 	 */
+	@Deprecated
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler);
 
@@ -227,6 +237,7 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @return
 	 */
+	@Deprecated
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
 			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
 

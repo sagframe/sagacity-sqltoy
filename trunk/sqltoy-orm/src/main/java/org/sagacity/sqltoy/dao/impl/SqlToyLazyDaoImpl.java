@@ -440,6 +440,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
+	@Override
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
+		return super.updateAllDeeply(entities, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -546,7 +551,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return super.loadAll(entities, null);
 	}
-	
+
 	@Override
 	public <T extends Serializable> List<T> loadAll(List<T> entities, LockMode lockMode) {
 		return super.loadAll(entities, lockMode);
