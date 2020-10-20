@@ -851,19 +851,4 @@ public class SqlConfigParseUtils {
 			}
 		}
 	}
-
-//	/**
-//	 * @todo 根据sql中的参数名称，从entity对象中提取相应的值
-//	 * @param paramsName
-//	 * @param entity
-//	 * @param reflectPropsHandler
-//	 * @return
-//	 */
-//	public static Object[] reflectBeanParams1(String[] paramsName, Serializable entity,
-//			ReflectPropertyHandler reflectPropsHandler) {
-//		if (null != entity && null != paramsName && paramsName.length > 0) {
-//			return BeanUtil.reflectBeanToAry(entity, paramsName, null, reflectPropsHandler);
-//		}
-//		return null;
-//	}
 }

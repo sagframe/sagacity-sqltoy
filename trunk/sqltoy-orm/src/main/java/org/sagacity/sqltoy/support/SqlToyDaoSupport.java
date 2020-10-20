@@ -1045,8 +1045,6 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
-//			Object[] paramValues = SqlConfigParseUtils.reflectBeanParams(sqlToyConfig.getParamsName(),
-//					(Serializable) innerModel.values[0], null);
 			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
 					sqlToyConfig.getParamsName(), null, null);
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
