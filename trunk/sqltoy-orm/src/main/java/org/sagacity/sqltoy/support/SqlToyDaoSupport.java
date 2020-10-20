@@ -478,7 +478,7 @@ public class SqlToyDaoSupport {
 	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param reflectPropertyHandler
+	 * @param reflectPropertyHandler 用来批量设置某个属性的值,一般设置为null即可
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity,
