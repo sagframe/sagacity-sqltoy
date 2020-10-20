@@ -81,6 +81,7 @@ public class QueryExecutorExtend implements Serializable {
 	/**
 	 * 查询属性值反射处理
 	 */
+	@Deprecated
 	public ReflectPropertyHandler reflectPropertyHandler;
 
 	/**
