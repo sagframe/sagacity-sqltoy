@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @version id:SqlToyLazyDao.java,Revision:v1.0,Date:2015年11月27日
  * @modify Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
+ * @modify Date:2020-10-20 {增加loadAll(list,lock)}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface SqlToyLazyDao {

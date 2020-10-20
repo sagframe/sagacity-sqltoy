@@ -89,6 +89,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2019-6-25 {将异常统一转化成RuntimeException,不在方法上显式的抛异常}
  * @modify Date:2020-4-5 {分页PaginationModel中设置skipQueryCount=true跳过查总记录,默认false}
  * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
+ * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
  */
 //新的模式不鼓励自己继承DaoSupport,一般情况下使用SqlToyLazyDao即可
 @SuppressWarnings("rawtypes")
@@ -643,6 +644,7 @@ public class SqlToyDaoSupport {
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
+		//update 2020-10-20，将null转为queryExecutor.getInnerModel().lockMode
 		return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig,
 				queryExecutor.getInnerModel().lockMode,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
