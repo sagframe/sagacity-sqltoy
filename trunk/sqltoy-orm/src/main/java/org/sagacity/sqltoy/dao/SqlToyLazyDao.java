@@ -812,7 +812,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
-	/** ---------------- 链式操作，不推荐使用 -------------------------- */
+	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合
