@@ -73,11 +73,6 @@ public class SqlExecuteTrace implements Serializable {
 	private boolean error = false;
 
 	/**
-	 * 错误信息
-	 */
-	private List<String> errorMsg = new ArrayList<String>();
-
-	/**
 	 * 执行的sql和参数
 	 */
 	private List<SqlExecuteLog> executeLogs = new ArrayList<SqlExecuteLog>();

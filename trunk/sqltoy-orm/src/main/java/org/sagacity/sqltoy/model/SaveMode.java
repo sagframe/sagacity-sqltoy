@@ -5,7 +5,7 @@ package org.sagacity.sqltoy.model;
 
 /**
  * @project sagacity-sqltoy
- * @description 记录存在是如何处理
+ * @description 设置记录存在时如何处理，如:存在则修改、存在则忽视
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:SaveMode.java,Revision:v1.0,Date:2017年10月10日
  */

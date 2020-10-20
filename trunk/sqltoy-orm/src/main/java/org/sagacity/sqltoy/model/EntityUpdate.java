@@ -33,6 +33,11 @@ public class EntityUpdate implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置条件
+	 * @param where
+	 * @return
+	 */
 	public EntityUpdate where(String where) {
 		innerModel.where = where;
 		return this;
