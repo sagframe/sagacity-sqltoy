@@ -70,8 +70,8 @@ public class MacroIfLogic {
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
 		// 增加对应compareStr的切割表达式
-		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+", "\\s+in\\s+",
-				"\\s+out\\s+" };
+		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",
+				"\\s+in\\s+", "\\s+out\\s+" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -94,7 +94,7 @@ public class MacroIfLogic {
 				expressLow = express.toLowerCase();
 				for (int j = 0; j < compareStr.length; j++) {
 					if (expressLow.indexOf(compareStr[j]) != -1) {
-						compareType = compareStr[j];
+						compareType = compareStr[j].trim();
 						splitStr = splitReg[j];
 						break;
 					}
@@ -107,9 +107,9 @@ public class MacroIfLogic {
 				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
-							compareType.trim(), compareValue);
+							compareType, compareValue);
 				} else {
-					expressResult[i] = compare(value, compareType.trim(), compareValue);
+					expressResult[i] = compare(value, compareType, compareValue);
 				}
 			}
 			// 只支持&& 和||
