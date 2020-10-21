@@ -588,7 +588,19 @@ public class ParamFilterUtils {
 				return result;
 			}
 		} else {
-			String[] arrays = paramValue.toString().split(splitSign);
+			String[] arrays = null;
+			String split = splitSign.trim();
+			if (split.equals(",")) {
+				arrays = paramValue.toString().split("\\,");
+			} else if (split.equals(";")) {
+				arrays = paramValue.toString().split("\\;");
+			} else if (split.equals(":")) {
+				arrays = paramValue.toString().split("\\:");
+			} else if (split.equals("")) {
+				arrays = paramValue.toString().split("\\s+");
+			} else {
+				arrays = paramValue.toString().split(splitSign);
+			}
 			if (dataType == null || dataType.equals("string")) {
 				return arrays;
 			}

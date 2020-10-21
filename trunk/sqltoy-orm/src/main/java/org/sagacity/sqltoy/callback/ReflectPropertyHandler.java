@@ -8,10 +8,11 @@ import java.util.List;
 
 /**
  * @project sagacity-sqltoy
- * @description 反射对象提取数据时，提供对数据的判断和修改
+ * @description 反射对象提取数据时，提供对数据的判断和修改(已经很少使用)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ReflectPropertyHandler.java,Revision:v1.0,Date:2012-7-14
  */
+@Deprecated
 @SuppressWarnings("rawtypes")
 public abstract class ReflectPropertyHandler {
 	/**

@@ -34,6 +34,9 @@ public class EntityUpdateExtend implements Serializable {
 	 */
 	public DataSource dataSource;
 
+	/**
+	 * update 的字段名称和对应的值
+	 */
 	public LinkedHashMap<String, Object> updateValues = new LinkedHashMap<String, Object>();
 
 }

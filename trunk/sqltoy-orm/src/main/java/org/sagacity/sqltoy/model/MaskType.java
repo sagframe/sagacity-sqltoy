@@ -1,9 +1,11 @@
 package org.sagacity.sqltoy.model;
 
 /**
- * 
- * @author zhong
- *
+ * @project sagacity-sqltoy
+ * @description ParamFilters里面对查询结果值进行脱敏的类型
+ * @author zhongxuchen
+ * @version v1.0, Date:2020-10-21
+ * @modify 2020-10-21,修改说明
  */
 public enum MaskType {
 	// 电话

@@ -28,7 +28,7 @@ public class GroupSummary {
 		// 提供result.width() 和${dataWidth}两个变量表示数据的宽度
 		String cols = summaryModel.getSummaryCols().replaceAll("result\\.width\\(\\)", Integer.toString(dataWidth));
 		cols = cols.replaceAll("\\$\\{dataWidth\\}", Integer.toString(dataWidth));
-		String[] columns = cols.split(",");
+		String[] columns = cols.split("\\,");
 		String column;
 		String endColumnStr;
 		int step;
