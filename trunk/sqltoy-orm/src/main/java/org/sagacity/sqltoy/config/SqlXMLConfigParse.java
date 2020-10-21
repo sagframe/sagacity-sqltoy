@@ -630,7 +630,7 @@ public class SqlXMLConfigParse {
 			elt = (Element) shardingTables.item(i);
 			if (elt.hasAttribute("tables") && elt.hasAttribute("strategy")) {
 				QueryShardingModel shardingModel = new QueryShardingModel();
-				shardingModel.setTables(elt.getAttribute("tables").split(","));
+				shardingModel.setTables(elt.getAttribute("tables").split("\\,"));
 				if (elt.hasAttribute("params")) {
 					// params="a:a1,b:b1";params为{a:a1, b:b1}
 					shardingModel.setParams(elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,"));
@@ -1325,7 +1325,7 @@ public class SqlXMLConfigParse {
 		for (String str : strs) {
 			if (str.contains("[") && str.contains("]")) {
 				pre = str.substring(0, str.indexOf("[")).trim();
-				params = str.substring(str.indexOf("[") + 1, str.indexOf("]")).split(",");
+				params = str.substring(str.indexOf("[") + 1, str.indexOf("]")).split("\\,");
 				for (String param : params) {
 					fieldSet.add(pre.concat(".").concat(param.trim()));
 				}

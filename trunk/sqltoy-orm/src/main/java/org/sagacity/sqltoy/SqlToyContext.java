@@ -620,7 +620,7 @@ public class SqlToyContext implements ApplicationContextAware {
 			if (StringUtil.isBlank(converts) || converts.equals("default") || converts.equals("defaults")) {
 				FunctionUtils.setFunctionConverts(null);
 			} else if (!converts.equalsIgnoreCase("close")) {
-				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split(",")));
+				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
 			}
 		}
 	}

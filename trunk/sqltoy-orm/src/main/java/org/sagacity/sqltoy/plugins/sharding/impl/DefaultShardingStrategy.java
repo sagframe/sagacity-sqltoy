@@ -117,7 +117,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			return null;
 		}
 		Object bizDate = null;
-		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split(",");
+		String[] shardingTable = tableNamesMap.get(baseTableName.toUpperCase()).split("\\,");
 		// 单一参数，表示直接传递参数值
 		if (paramsMap.size() == 1) {
 			bizDate = paramsMap.values().iterator().next();
@@ -224,7 +224,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * @param days the days to set
 	 */
 	public void setDays(String days) {
-		String[] daysAry = days.split(",");
+		String[] daysAry = days.split("\\,");
 		this.days = new Integer[daysAry.length];
 		for (int i = 0; i < daysAry.length; i++) {
 			this.days[i] = Integer.parseInt(daysAry[i].trim());
@@ -235,7 +235,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * @param dateParams the dateParams to set
 	 */
 	public void setDateParams(String dateParams) {
-		this.dateParams = dateParams.toLowerCase().split(",");
+		this.dateParams = dateParams.toLowerCase().split("\\,");
 	}
 
 }
