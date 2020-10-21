@@ -554,6 +554,12 @@ public class StringUtil {
 				return source.split("\\?");
 			} else if (splitSign.equals(",")) {
 				return source.split("\\,");
+			} else if (splitSign.equals(";")) {
+				return source.split("\\;");
+			} else if (splitSign.equals(":")) {
+				return source.split("\\:");
+			} else if (splitSign.trim().equals("")) {
+				return source.split("\\s+");
 			} else {
 				return source.split(splitSign);
 			}
@@ -564,6 +570,12 @@ public class StringUtil {
 				return source.split("\\?");
 			} else if (splitSign.equals(",")) {
 				return source.split("\\,");
+			} else if (splitSign.equals(";")) {
+				return source.split("\\;");
+			} else if (splitSign.equals(":")) {
+				return source.split("\\:");
+			} else if (splitSign.trim().equals("")) {
+				return source.split("\\s+");
 			} else {
 				return source.split(splitSign);
 			}

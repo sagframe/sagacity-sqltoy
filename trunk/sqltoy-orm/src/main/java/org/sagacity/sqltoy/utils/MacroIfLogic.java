@@ -69,6 +69,9 @@ public class MacroIfLogic {
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
+		// 增加对应compareStr的切割表达式
+		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\sinclude\\s", "\\sin\\s",
+				"\\sout\\s" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
@@ -84,13 +87,15 @@ public class MacroIfLogic {
 			String expressLow;
 			String[] params;
 			String compareParam;
+			String compareType = "==";
 			for (int i = 0; i < expressions.length; i++) {
 				value = paramValues.get(preCount + i);
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
 				for (int j = 0; j < compareStr.length; j++) {
 					if (expressLow.indexOf(compareStr[j]) != -1) {
-						splitStr = compareStr[j];
+						compareType = compareStr[j];
+						splitStr = splitReg[j];
 						break;
 					}
 				}
@@ -102,9 +107,9 @@ public class MacroIfLogic {
 				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
-							splitStr.trim(), compareValue);
+							compareType.trim(), compareValue);
 				} else {
-					expressResult[i] = compare(value, splitStr.trim(), compareValue);
+					expressResult[i] = compare(value, compareType.trim(), compareValue);
 				}
 			}
 			// 只支持&& 和||
@@ -147,10 +152,11 @@ public class MacroIfLogic {
 		// 只支持加减运算
 		String append = "0";
 		String[] calculateStr = { "+", "-" };
+		String[] tmpAry;
 		// 判断是否有加减运算
 		for (String calculate : calculateStr) {
 			if (compareValue.trim().indexOf(calculate) > 0) {
-				String[] tmpAry = compareValue.split(calculate.equals("+") ? "\\+" : "\\-");
+				tmpAry = compareValue.split(calculate.equals("+") ? "\\+" : "\\-");
 				// 正负数字
 				append = calculate + tmpAry[1].trim();
 				compareValue = tmpAry[0].trim();
