@@ -70,8 +70,8 @@ public class MacroIfLogic {
 		// 比较符号(等于用==,最后用=进行容错处理)
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
 		// 增加对应compareStr的切割表达式
-		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\sinclude\\s", "\\sin\\s",
-				"\\sout\\s" };
+		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+", "\\s+in\\s+",
+				"\\s+out\\s+" };
 		String splitStr = "==";
 		String logicStr = "\\&\\&";
 		String[] expressions;
