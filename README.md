@@ -20,8 +20,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.5.1 发版日期: 2020-10-20
-* 修复wrapTreeTable id字段不是主键字段场景下的依然使用主键字段的缺陷。
+# 最新版本号: 4.16.6 发版日期: 2020-10-22
+* 完善sqltoyLazyDao提供loadAll(List,lock)和findByQuery增加lock，便于锁查询
+* 代码优化和注释完善
 
 
 # 1. 前言
