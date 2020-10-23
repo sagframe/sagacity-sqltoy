@@ -1,3 +1,8 @@
+# 致谢
+* sqltoy是中国中化集团化销电子商务公司发起的开源项目
+* sqltoy的开源是中化公司践行科学发展观、响应央企要带头做创新主体的时代呼声的产物！
+* sqltoy开源要感谢中化集团领导的和同事的大力支持，共同为中国的开源事业添砖加瓦！
+
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
