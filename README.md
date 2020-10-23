@@ -5,14 +5,14 @@
 ## 请见:docs/睿智平台SqlToy4.16使用手册.doc
 
 # 范例演示项目
-## 快速上手项目
+## 快速上手主要功能项目
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
 ## POJO和DTO 严格分层演示项目
 * https://github.com/sagframe/sqltoy-strict
 
-## sharding演示
+## sharding分库分表演示
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
 ## nosql演示(mongo和elasticsearch)
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
