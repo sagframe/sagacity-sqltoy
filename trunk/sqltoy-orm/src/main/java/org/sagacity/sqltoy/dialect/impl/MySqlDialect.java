@@ -45,7 +45,8 @@ import org.slf4j.LoggerFactory;
  *              mysql8.x版本开始已经支持with as语法。
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MySqlDialect.java,Revision:v1.0,Date:2013-3-21
- * @modify {Date:2018-5-19,修复mysql on duplicate key update 非空字段修改报错}
+ * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
+ *         duplicate key update 非空字段修改报错}
  */
 @SuppressWarnings({ "rawtypes" })
 public class MySqlDialect implements Dialect {
@@ -235,6 +236,7 @@ public class MySqlDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
+	// 问为什么不用mysql的on duplicate key update特性?原本是用的这个，但其有bug，一切都是于原因的!
 	/*
 	 * (non-Javadoc)
 	 * 

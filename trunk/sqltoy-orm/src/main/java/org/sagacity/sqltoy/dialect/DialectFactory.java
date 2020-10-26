@@ -950,6 +950,8 @@ public class DialectFactory {
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}
 
+	// mysql、postgresql、sqlite等类似的on duplicate key update
+	// 存在缺陷,所以改为先update后save;但oracle、mssql、db2等可以用merge实现一次交互完成新增和修改
 	/**
 	 * @todo 保存或修改单个对象(数据库单条记录)
 	 * @param sqlToyContext

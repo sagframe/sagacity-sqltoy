@@ -145,6 +145,7 @@ public interface SqlToyLazyDao {
 	@Deprecated
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
+	// sqltoy的update内部处理是有特色的，比jpa更加合理，可以深入了解
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entitySet
@@ -292,6 +293,7 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
+	// sqltoy的loadAll 性能是极为优化的
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息
 	 * @param entities
@@ -591,6 +593,7 @@ public interface SqlToyLazyDao {
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
 
+	//sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
 	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
 	 * @param queryExecutor
