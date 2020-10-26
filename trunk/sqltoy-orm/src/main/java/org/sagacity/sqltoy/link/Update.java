@@ -70,6 +70,7 @@ public class Update extends BaseLink {
 
 	public Update dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -152,7 +153,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdate, cascade, forceCascadeClasses,
-				subTableForceUpdateProps, dataSource);
+				subTableForceUpdateProps, getDataSource(null));
 	}
 
 	/**
@@ -177,6 +178,6 @@ public class Update extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropertyHandler,
-				dataSource, autoCommit);
+				getDataSource(null), autoCommit);
 	}
 }

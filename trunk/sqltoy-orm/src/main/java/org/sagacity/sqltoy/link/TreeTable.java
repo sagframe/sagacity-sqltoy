@@ -34,6 +34,7 @@ public class TreeTable extends BaseLink {
 
 	public TreeTable dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -50,6 +51,6 @@ public class TreeTable extends BaseLink {
 		if (treeModel == null) {
 			throw new IllegalArgumentException("treeTable wrap:treeModel is null!");
 		}
-		return dialectFactory.wrapTreeTableRoute(sqlToyContext, treeModel, dataSource);
+		return dialectFactory.wrapTreeTableRoute(sqlToyContext, treeModel, getDataSource(null));
 	}
 }

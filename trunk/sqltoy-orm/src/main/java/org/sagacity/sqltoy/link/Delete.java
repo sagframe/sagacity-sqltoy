@@ -48,6 +48,7 @@ public class Delete extends BaseLink {
 	 */
 	public Delete dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -69,7 +70,7 @@ public class Delete extends BaseLink {
 		if (entity == null) {
 			throw new IllegalArgumentException("delete entity is null!");
 		}
-		return dialectFactory.delete(sqlToyContext, entity, dataSource);
+		return dialectFactory.delete(sqlToyContext, entity, getDataSource(null));
 	}
 
 	/**
@@ -81,7 +82,7 @@ public class Delete extends BaseLink {
 			throw new IllegalArgumentException("deleteAll entities is null or empty!");
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.deleteAll(sqlToyContext, entities, realBatchSize, dataSource, autoCommit);
+		return dialectFactory.deleteAll(sqlToyContext, entities, realBatchSize, getDataSource(null), autoCommit);
 	}
 
 }

@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialect.java,Revision:v1.0,Date:2015年8月10日
- * @modify Date:2019-3-12 修复saveOrUpdate的缺陷
+ * @modify Date:2019-3-12 修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 @SuppressWarnings({ "rawtypes" })
@@ -296,6 +296,7 @@ public class PostgreSqlDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
+	// 问为什么不用postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性?原本是用的这个，但其有bug!
 	/*
 	 * (non-Javadoc)
 	 * 
