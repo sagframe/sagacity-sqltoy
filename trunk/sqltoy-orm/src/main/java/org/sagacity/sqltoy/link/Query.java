@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.QueryResult;
 
@@ -76,6 +77,11 @@ public class Query extends BaseLink {
 	private boolean humpMapLabel = true;
 
 	/**
+	 * 锁表
+	 */
+	private LockMode lockMode;
+
+	/**
 	 * @param sqlToyContext
 	 * @param dataSource
 	 */
@@ -92,6 +98,11 @@ public class Query extends BaseLink {
 	@Deprecated
 	public Query maxRows(int maxRows) {
 		this.maxRows = maxRows;
+		return this;
+	}
+
+	public Query lock(LockMode lockMode) {
+		this.lockMode = lockMode;
 		return this;
 	}
 
@@ -179,7 +190,7 @@ public class Query extends BaseLink {
 	public Object getOne() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, super.getDialect());
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, lockMode,
 				getDataSource(sqlToyConfig));
 		List rows = result.getRows();
 		if (rows != null && rows.size() > 0) {
@@ -205,7 +216,7 @@ public class Query extends BaseLink {
 	public List<?> find() {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, super.getDialect());
-		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
+		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, lockMode,
 				getDataSource(sqlToyConfig));
 		return result.getRows();
 	}
