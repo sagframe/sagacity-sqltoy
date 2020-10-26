@@ -42,6 +42,7 @@ public class Unique extends BaseLink {
 
 	public Unique dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -63,6 +64,6 @@ public class Unique extends BaseLink {
 		if (entity == null) {
 			throw new IllegalArgumentException("Unique check operate entity is null!");
 		}
-		return dialectFactory.isUnique(sqlToyContext, new UniqueExecutor(entity, fields), dataSource);
+		return dialectFactory.isUnique(sqlToyContext, new UniqueExecutor(entity, fields), getDataSource(null));
 	}
 }

@@ -48,6 +48,7 @@ public class Load extends BaseLink {
 	 */
 	public Load dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
+		this.defaultDataSource = false;
 		return this;
 	}
 
@@ -80,7 +81,7 @@ public class Load extends BaseLink {
 		if (entity == null) {
 			throw new IllegalArgumentException("load entity is null!");
 		}
-		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, dataSource);
+		return dialectFactory.load(sqlToyContext, entity, cascadeTypes, lockMode, getDataSource(null));
 	}
 
 	/**
@@ -92,7 +93,7 @@ public class Load extends BaseLink {
 		if (entities == null || entities.isEmpty()) {
 			throw new IllegalArgumentException("loadAll entities is null or empty!");
 		}
-		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, dataSource);
+		return dialectFactory.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, getDataSource(null));
 	}
 
 }
