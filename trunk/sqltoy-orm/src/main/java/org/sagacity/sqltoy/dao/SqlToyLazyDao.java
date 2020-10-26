@@ -145,7 +145,7 @@ public interface SqlToyLazyDao {
 	@Deprecated
 	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
-	// sqltoy的update内部处理是有特色的，比jpa更加合理，可以深入了解
+	// sqltoy的update内部处理是考虑属性为null情况的，一次交互完成，比jpa更加合理，可以深入了解
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entitySet
