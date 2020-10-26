@@ -103,6 +103,7 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String realSql = sqlToyConfig.getSql(dialect);
+		//存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
