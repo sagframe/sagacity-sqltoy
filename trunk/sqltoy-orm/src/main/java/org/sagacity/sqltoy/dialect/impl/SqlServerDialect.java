@@ -111,7 +111,7 @@ public class SqlServerDialect implements Dialect {
 		}
 		// order by位置
 		int orderByIndex = StringUtil.matchIndex(realSql, ORDER_BY);
-		// 存在order by，继续判断order by 是否在子查询 内
+		// 存在order by，继续判断order by 是否在子查询内
 		if (orderByIndex > 0) {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
 			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(realSql), ORDER_BY);
