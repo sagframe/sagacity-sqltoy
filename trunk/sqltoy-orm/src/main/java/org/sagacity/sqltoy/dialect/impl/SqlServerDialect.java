@@ -111,7 +111,7 @@ public class SqlServerDialect implements Dialect {
 		}
 		// order by位置
 		int orderByIndex = StringUtil.matchIndex(realSql, ORDER_BY);
-		// 存在order by
+		// 存在order by，继续判断order by 是否在子查询 内
 		if (orderByIndex > 0) {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
 			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(realSql), ORDER_BY);
@@ -120,6 +120,7 @@ public class SqlServerDialect implements Dialect {
 		if (orderByIndex < 0) {
 			sql.append(" order by NEWID() ");
 		}
+		// 增加分页语句
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" rows fetch next ");
