@@ -116,7 +116,7 @@ public class SqlServerDialect implements Dialect {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
 			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(realSql), ORDER_BY);
 		}
-		// 不存在order by或order by存在在子查询中
+		// 不存在order by或order by存在于子查询中
 		if (orderByIndex < 0) {
 			sql.append(" order by NEWID() ");
 		}
