@@ -193,7 +193,7 @@ public class SqlServerDialect implements Dialect {
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		String realSql = sql;
-		// 重新组织锁表语句
+		// 组织锁表语句
 		if (lockMode != null) {
 			realSql = SqlServerDialectUtils.lockSql(realSql, null, lockMode);
 		}
