@@ -56,7 +56,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
+	//private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
 
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
@@ -102,18 +102,26 @@ public class SqlServerDialect implements Dialect {
 			final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
+		String realSql = sqlToyConfig.getSql(dialect);
+		//存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
 		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
+			sql.append(realSql);
 		}
-		// 判断是否存在order by
-		int lastFromIndex = StringUtil.matchLastIndex(sqlToyConfig.getSql(dialect), FROM);
-		// 没有order by 自动补充
-		if (lastFromIndex > 0 && !StringUtil.matches(sqlToyConfig.getSql(dialect).substring(lastFromIndex), ORDER_BY)) {
+		// order by位置
+		int orderByIndex = StringUtil.matchIndex(realSql, ORDER_BY);
+		// 存在order by，继续判断order by 是否在子查询内
+		if (orderByIndex > 0) {
+			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
+			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(realSql), ORDER_BY);
+		}
+		// 不存在order by或order by存在于子查询中
+		if (orderByIndex < 0) {
 			sql.append(" order by NEWID() ");
 		}
+		// 增加分页语句
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(" rows fetch next ");
@@ -185,7 +193,7 @@ public class SqlServerDialect implements Dialect {
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		String realSql = sql;
-		// 重新组织锁表语句
+		// 组织锁表语句
 		if (lockMode != null) {
 			realSql = SqlServerDialectUtils.lockSql(realSql, null, lockMode);
 		}
