@@ -25,9 +25,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.6 发版日期: 2020-10-22
-* 完善sqltoyLazyDao提供loadAll(List,lock)和findByQuery增加lock，便于锁查询
-* 代码优化和注释完善
+# 最新版本号: 4.16.7 发版日期: 2020-10-27
+* 针对sqlserver分页语句中的order by判断进行增强优化(top 子查询可以有order by)，避免开发者手工增加order by
+* 将save()、update()、query()等链式操作变为推荐使用
 
 
 # 1. 前言
