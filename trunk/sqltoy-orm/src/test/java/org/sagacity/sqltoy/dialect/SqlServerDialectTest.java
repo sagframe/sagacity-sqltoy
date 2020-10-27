@@ -11,8 +11,8 @@ public class SqlServerDialectTest {
 
 	@Test
 	public void testPageSql() {
-		String realSql = "select * from (select from order by a ) t1 where t1.name=?";
-		realSql = "select * from (select from order by a ) t1 where t1.name=? order by name";
+		String realSql = "select top partation( order by) from (select from table ) t1 where t1.name=?";
+		//realSql = "select * from (select from order by a ) t1 where t1.name=? order by name";
 		StringBuilder sql = new StringBuilder(realSql);
 		// order by位置
 		int orderByIndex = StringUtil.matchIndex(realSql, ORDER_BY);
