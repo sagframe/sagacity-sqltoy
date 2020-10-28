@@ -22,6 +22,9 @@
 ## nosql演示(mongo和elasticsearch)
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
+## sqltoy基于xml配置演示
+* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase
+
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
