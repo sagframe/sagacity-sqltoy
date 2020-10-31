@@ -38,6 +38,17 @@ public class MacroIfLogicTest {
 		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
 		assertEquals(result, true);
 	}
+	
+	//sqltoy @if() 逻辑兼容=和==场景
+	@Test
+	public void testEqual() {
+		String sql = ":status='1' || :status=='2'";
+		List params = new ArrayList();
+		params.add(2);
+		params.add(2);
+		boolean result = MacroIfLogic.evalLogic(sql, params, 0, params.size());
+		assertEquals(result, true);
+	}
 
 	@Test
 	public void testIn() {
