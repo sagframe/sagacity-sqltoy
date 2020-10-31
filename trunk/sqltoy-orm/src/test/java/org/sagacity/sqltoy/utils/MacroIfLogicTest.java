@@ -50,7 +50,6 @@ public class MacroIfLogicTest {
 		assertEquals(result, true);
 	}
 
-	// sqltoy @if() 逻辑兼容=和==场景
 	@Test
 	public void testNotEqual() {
 		String sql = ":status!='1' || :status<>'2'";
