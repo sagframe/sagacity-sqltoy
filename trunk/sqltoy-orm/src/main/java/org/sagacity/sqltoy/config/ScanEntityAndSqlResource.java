@@ -47,7 +47,7 @@ public class ScanEntityAndSqlResource {
 	private static final String CLASSPATH = "classpath:";
 
 	/**
-	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为使用时加载解析模式)
+	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
 	 * @param pack
 	 * @param recursive
 	 * @param charset
