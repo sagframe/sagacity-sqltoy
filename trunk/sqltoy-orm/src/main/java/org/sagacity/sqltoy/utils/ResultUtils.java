@@ -140,7 +140,7 @@ public class ResultUtils {
 
 	/**
 	 * @todo 对字段进行安全脱敏
-	 * @param result
+	 * @param rows
 	 * @param masks
 	 * @param labelIndexMap
 	 */
@@ -166,7 +166,7 @@ public class ResultUtils {
 
 	/**
 	 * @todo 对字段进行格式化
-	 * @param result
+	 * @param rows
 	 * @param formats
 	 * @param labelIndexMap
 	 */
@@ -485,8 +485,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 目前还未实现，只支持单列link
-	 * 
+	 * @TODO 实现多列link
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
 	 * @param conn
@@ -900,7 +899,7 @@ public class ResultUtils {
 	/**
 	 * @date 2018-5-26 优化缓存翻译，提供keyCode1,keyCode2,keyCode3 形式的多代码翻译
 	 * @todo 统一对key进行缓存翻译
-	 * @param translate
+	 * @param translateExtend
 	 * @param translateKeyMap
 	 * @param fieldValue
 	 * @return
