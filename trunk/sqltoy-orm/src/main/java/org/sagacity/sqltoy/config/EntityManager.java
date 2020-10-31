@@ -71,6 +71,7 @@ public class EntityManager {
 		{
 			//13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
 			put("default", "DefaultIdGenerator");
+			//32位uuid
 			put("uuid", "UUIDGenerator");
 			put("redis", "RedisIdGenerator");
 			//26位
@@ -94,7 +95,7 @@ public class EntityManager {
 	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
 
 	/**
-	 * 扫描的包(意义不大,sqltoy已经改为用时自动加载)
+	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
 	 */
 	@Deprecated
 	private String[] packagesToScan;
