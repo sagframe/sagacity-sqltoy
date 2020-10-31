@@ -928,7 +928,20 @@ public class ResultUtils {
 			return fieldValue;
 		}
 		// 将字符串用分隔符切分开进行逐个翻译
-		String[] keys = fieldStr.split(extend.splitRegex);
+		String[] keys = null;
+		String splitReg = extend.splitRegex.trim();
+		if (splitReg.equals(",")) {
+			keys = fieldStr.split("\\,");
+		} else if (splitReg.equals(";")) {
+			keys = fieldStr.split("\\;");
+		} else if (splitReg.equals(":")) {
+			keys = fieldStr.split("\\:");
+		} else if (splitReg.equals("")) {
+			keys = fieldStr.split("\\s+");
+		} else {
+			keys = fieldStr.split(extend.splitRegex);
+		}
+
 		String linkSign = extend.linkSign;
 		StringBuilder result = new StringBuilder();
 		int index = 0;
