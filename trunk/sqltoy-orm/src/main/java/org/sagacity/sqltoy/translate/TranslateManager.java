@@ -92,6 +92,7 @@ public class TranslateManager {
 					updateCheckers, translateConfig, charset);
 			// 配置了缓存翻译
 			if (!translateMap.isEmpty()) {
+				//可以自定义缓存管理器,默认为ehcache实现
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
 				} else {
