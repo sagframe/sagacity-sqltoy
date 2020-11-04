@@ -823,7 +823,7 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-							// 结果映射成对象
+							// 结果映射成对象、map等
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),

@@ -255,7 +255,7 @@ public class QueryExecutorExtend implements Serializable {
 		if (sqlToyConfig.getCacheArgNames().isEmpty() || entity != null) {
 			return;
 		}
-		// 只有这种场景下需要校正参数
+		// 只有使用cache-arg 场景下需要校正参数
 		if (paramsName != null && paramsValue != null) {
 			List<String> tmp = new ArrayList<String>();
 			boolean exist = false;

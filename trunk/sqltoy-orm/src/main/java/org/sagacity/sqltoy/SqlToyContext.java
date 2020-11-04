@@ -95,7 +95,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private IUnifyFieldsHandler unifyFieldsHandler;
 
 	/**
-	 * 具体缓存实现
+	 * 具体缓存实现(默认ehcache,可以根据自己喜好来自行扩展实现,sqltoy习惯将有争议的提供默认实现但用户可自行选择)
 	 */
 	private TranslateCacheManager translateCacheManager;
 

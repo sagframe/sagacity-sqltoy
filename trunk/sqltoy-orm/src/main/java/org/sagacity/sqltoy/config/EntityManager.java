@@ -69,14 +69,20 @@ public class EntityManager {
 		 */
 		private static final long serialVersionUID = 3964534243191167226L;
 		{
+			//13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
 			put("default", "DefaultIdGenerator");
+			//32位uuid
 			put("uuid", "UUIDGenerator");
 			put("redis", "RedisIdGenerator");
+			//26位
 			put("nanotime", "NanoTimeIdGenerator");
+			//16位雪花算法
 			put("snowflake", "SnowflakeIdGenerator");
+			//default的命名容错
 			put("defaultidgenerator", "DefaultIdGenerator");
 			put("defaultgenerator", "DefaultIdGenerator");
 			put("nanotimeidgenerator", "NanoTimeIdGenerator");
+			//雪花算法命名容错
 			put("snowflakeidgenerator", "SnowflakeIdGenerator");
 			put("uuidgenerator", "UUIDGenerator");
 			put("redisidgenerator", "RedisIdGenerator");
@@ -89,7 +95,7 @@ public class EntityManager {
 	private static final String IdGeneratorPackage = "org.sagacity.sqltoy.plugins.id.impl.";
 
 	/**
-	 * 扫描的包(意义不大,sqltoy已经改为用时自动加载)
+	 * 扫描的包(意义不大,sqltoy已经改为在使用时自动加载)
 	 */
 	@Deprecated
 	private String[] packagesToScan;

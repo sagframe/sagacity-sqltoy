@@ -43,7 +43,7 @@ public class MacroIfLogic {
 				}
 			}
 		}
-		// 规范判断符号标准
+		// 规范判断符号标准(<>转为!=)
 		sql = sql.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
 		// 先通过简单表达式进行计算,格式如:@if(:name>=xxx || :name<=xxx)
 		String simpleResult = evalSimpleExpress(sql, paramValues, preCount);
@@ -67,7 +67,7 @@ public class MacroIfLogic {
 			return "undefine";
 		}
 		// 2020-08-25 增加include场景
-		// 比较符号(等于用==,最后用=进行容错处理)
+		// 比较符号(等于用==,最后用=进行容错处理),<>符号前面已经统一规范成!=
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
 		// 增加对应compareStr的切割表达式
 		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",

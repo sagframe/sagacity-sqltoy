@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:TranslateManager.java,Revision:v1.0,Date:2013年4月8日
  * @modify {Date:2017-12-8,提取缓存时增加分库策略判断,如果存在分库策略dataSource则按照分库逻辑提取}
- * @modify {Date:2018-1-5,增加redis缓存翻译的管理和支持}
+ * @modify {Date:2018-1-5,增强缓存更新检测机制}
  */
 public class TranslateManager {
 	/**
@@ -66,6 +66,9 @@ public class TranslateManager {
 	 */
 	private String translateConfig = "classpath:sqltoy-translate.xml";
 
+	/**
+	 * 缓存更新检测程序(后台线程)
+	 */
 	private CacheUpdateWatcher cacheCheck;
 
 	private SqlToyContext sqlToyContext;
@@ -92,6 +95,7 @@ public class TranslateManager {
 					updateCheckers, translateConfig, charset);
 			// 配置了缓存翻译
 			if (!translateMap.isEmpty()) {
+				//可以自定义缓存管理器,默认为ehcache实现
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
 				} else {
@@ -186,7 +190,7 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @see getCacheData(String cacheName, String cacheType)
+	 * @see getCacheData(String cacheName, String cacheType) 剔除sqlToyContext参数
 	 * @param sqlToyContext
 	 * @param cacheName
 	 * @param cacheType
