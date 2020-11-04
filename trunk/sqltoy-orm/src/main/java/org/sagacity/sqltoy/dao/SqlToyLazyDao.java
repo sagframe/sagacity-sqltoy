@@ -822,42 +822,36 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	public Delete delete();
 
 	/**
 	 * @TODO 提供链式操作模式修改操作集合
 	 * @return
 	 */
-	@Deprecated
 	public Update update();
 
 	/**
 	 * @TODO 提供链式操作模式存储过程操作集合
 	 * @return
 	 */
-	@Deprecated
 	public Store store();
 
 	/**
 	 * @TODO 提供链式操作模式保存操作集合
 	 * @return
 	 */
-	@Deprecated
 	public Save save();
 
 	/**
 	 * @TODO 提供链式操作模式查询操作集合
 	 * @return
 	 */
-	@Deprecated
 	public Query query();
 
 	/**
 	 * @TODO 提供链式操作模式对象加载操作集合
 	 * @return
 	 */
-	@Deprecated
 	public Load load();
 
 	/**
@@ -865,7 +859,6 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	public Unique unique();
 
 	/**
@@ -873,7 +866,6 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	public TreeTable treeTable();
 
 	/**
@@ -881,7 +873,6 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	public Execute execute();
 
 	/**
@@ -889,6 +880,5 @@ public interface SqlToyLazyDao {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	public Batch batch();
 }
