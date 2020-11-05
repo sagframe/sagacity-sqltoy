@@ -141,6 +141,9 @@ public class DateUtil {
 			}
 			return parseString(dateString, format, local);
 		}
+		if (format == null) {
+			return convertDateObject(data, null, local);
+		}
 		String result = formatDate(data, format, local);
 		return parseString(result, format, local);
 	}
