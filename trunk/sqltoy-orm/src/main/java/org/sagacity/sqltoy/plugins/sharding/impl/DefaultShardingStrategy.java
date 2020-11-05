@@ -171,7 +171,6 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 
 	/**
 	 * @TODO 根据权重配置分配数据库
-	 * @param dataSourceMap
 	 * @return
 	 */
 	private ShardingDBModel getDataSource() {

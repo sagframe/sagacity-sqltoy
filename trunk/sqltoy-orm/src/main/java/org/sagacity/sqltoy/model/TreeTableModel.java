@@ -65,7 +65,6 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * 附加条件
 	 */
-	@Deprecated
 	private String conditions;
 
 	/**
