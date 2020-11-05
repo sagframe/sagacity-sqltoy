@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:StoreResult.java,Revision:v1.0,Date:2009-12-25
  */
-public class StoreResult extends DataSetResult implements Serializable {
+public class StoreResult<T> extends DataSetResult<T> implements Serializable {
 
 	/**
 	 * 
