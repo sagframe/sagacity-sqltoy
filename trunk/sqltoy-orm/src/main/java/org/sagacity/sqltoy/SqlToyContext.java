@@ -47,12 +47,13 @@ import org.springframework.context.ApplicationContextAware;
 //6、根本杜绝sql注入问题，以后不需要讨论这个话题
 //7、支持行列转换、分组汇总求平均、同比环比计算，在于用算法解决复杂sql，同时也解决了sql跨数据库问题
 //8、支持保留字自动适配
-//9、支持跨数据库函数自适配,从而非常有利于一套代码适应多种数据库便于产品化
+//9、支持跨数据库函数自适配,从而非常有利于一套代码适应多种数据库便于产品化,比如oracle的nvl，当sql在mysql环境执行时自动替换为ifnull
 //10、支持分库分表
 //11、提供了取top、取random记录、树形表结构构造和递归查询支持、updateFetch单次交互完成修改和查询等实用的功能
-//12、sqltoy的update、save、saveAll、load 等crud操作规避了hibernate jpa的缺陷
-//13、提供了有趣的条件处理：排它性条件、日期条件加减和提取月末月初处理等
-//14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
+//12、sqltoy的update、save、saveAll、load 等crud操作规避了hibernate jpa的缺陷,
+//    可以深入对比update/updateAll、saveOrUpdate/saveOrUpdateAll内部差异
+//13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
+//14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
 //-------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy4.0
