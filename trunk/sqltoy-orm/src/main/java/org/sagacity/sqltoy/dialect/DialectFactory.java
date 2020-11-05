@@ -1135,7 +1135,7 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)
+	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param cascadeTypes
