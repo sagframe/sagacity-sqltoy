@@ -366,6 +366,10 @@ public class DialectFactory {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
+							// 比较优化写法如下(因为取随机记录的条数值是直接带入sql中的,非条件参数)
+							// SqlToyConfig realSqlToyConfig
+							// =DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,sqlToyConfig,
+							// queryExecutor, dialect, false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
 									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
@@ -403,7 +407,10 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
+							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
+							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -577,8 +584,10 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
+							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-							// 结果映射成对象
+							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
+							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -696,8 +705,10 @@ public class DialectFactory {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
+								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象
+								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
+								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 											ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -760,14 +771,16 @@ public class DialectFactory {
 								SqlExecuteStat.debug("查询结果", "实际取得top记录数:0 条!");
 								return;
 							}
-
+							// 调用数据库方言查询结果
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findTopBySql(sqlToyContext,
 									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType, dialect);
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
+							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-							// 结果映射成对象
+							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
+							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -822,8 +835,10 @@ public class DialectFactory {
 							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
+							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-							// 结果映射成对象、map等
+							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
+							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
@@ -1130,7 +1145,7 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)
+	 * @todo 批量加载集合(自4.13.1 版本已经自动将超大规模集合拆分执行)，规避了jpa等框架的缺陷
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param cascadeTypes

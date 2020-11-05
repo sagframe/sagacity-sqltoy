@@ -1009,7 +1009,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 非存储过程模式调用结果计算处理器
+	 * @todo 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet

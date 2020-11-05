@@ -14,7 +14,6 @@ import java.util.List;
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:RowCallbackHandler.java,Revision:v1.0,Date:2008-12-9
  */
-@Deprecated
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class RowCallbackHandler {
 	/**
