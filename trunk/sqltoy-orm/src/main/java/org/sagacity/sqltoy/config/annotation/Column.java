@@ -35,7 +35,7 @@ public @interface Column {
 	// 小数位长度
 	int scale() default 0;
 
-	//是否是关键词
+	//是否是关键词(目前没有使用)
 	boolean keyword() default false;
 
 	// 默认值

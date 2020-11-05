@@ -5,7 +5,6 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 /**
- * 
  * @project sagacity-sqltoy
  * @description 提供并行查询内部扩展参数类
  * @author zhongxuchen

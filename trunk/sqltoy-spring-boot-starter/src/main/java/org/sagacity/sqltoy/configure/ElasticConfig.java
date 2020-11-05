@@ -35,6 +35,9 @@ public class ElasticConfig implements Serializable {
 	 */
 	private String version;
 
+	/**
+	 * 相对路径
+	 */
 	private String path;
 
 	private String keyStore;

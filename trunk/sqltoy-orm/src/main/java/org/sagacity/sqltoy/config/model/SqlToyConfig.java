@@ -243,7 +243,6 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.id = id;
 	}
 
-	@Deprecated
 	public String getSql() {
 		return getDialectSql("sql", sql, dialect);
 	}

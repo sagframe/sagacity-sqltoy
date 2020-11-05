@@ -32,7 +32,7 @@ public @interface Entity {
 	String schema() default "";
 
 	/**
-	 * 主键约束名称
+	 * 主键约束名称(postgresql有用)
 	 * 
 	 * @return
 	 */
