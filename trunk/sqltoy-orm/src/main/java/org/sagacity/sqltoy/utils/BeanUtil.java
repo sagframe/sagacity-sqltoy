@@ -326,6 +326,39 @@ public class BeanUtil {
 	}
 
 	/**
+	 * @TODO 比较两个对象的大小
+	 * @param target
+	 * @param compared
+	 * @return
+	 */
+	public static int compare(Object target, Object compared) {
+		if (null == target && null == compared)
+			return 0;
+		if (null == target) {
+			return -1;
+		}
+		if (null == compared) {
+			return 1;
+		}
+
+		// 直接相等
+		if (target.equals(compared))
+			return 0;
+		// 日期类型
+		if ((target instanceof Date || target instanceof LocalDate || target instanceof LocalTime
+				|| target instanceof LocalDateTime)
+				|| (compared instanceof Date || compared instanceof LocalDate || compared instanceof LocalTime
+						|| compared instanceof LocalDateTime)) {
+			return DateUtil.convertDateObject(target).compareTo(DateUtil.convertDateObject(compared));
+		} // 数字
+		else if ((target instanceof Number) || (compared instanceof Number)) {
+			return new BigDecimal(target.toString()).compareTo(new BigDecimal(compared.toString()));
+		} else {
+			return target.toString().compareTo(compared.toString());
+		}
+	}
+
+	/**
 	 * @todo 类型转换
 	 * @param paramValue
 	 * @param typeName   小写
@@ -1267,5 +1300,11 @@ public class BeanUtil {
 			return realEntityClass;
 		}
 		return entityClass;
+	}
+
+	public static void main(String[] args) {
+		BigDecimal a = new BigDecimal("29.200");
+		int result = compare(null, null);
+		System.err.println(result);
 	}
 }
