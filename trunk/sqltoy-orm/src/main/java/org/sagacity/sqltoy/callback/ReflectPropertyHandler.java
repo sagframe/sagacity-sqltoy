@@ -12,7 +12,6 @@ import java.util.List;
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ReflectPropertyHandler.java,Revision:v1.0,Date:2012-7-14
  */
-@Deprecated
 @SuppressWarnings("rawtypes")
 public abstract class ReflectPropertyHandler {
 	/**

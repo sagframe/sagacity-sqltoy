@@ -12,7 +12,6 @@ import java.sql.SQLException;
  * @author chenrf <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @version id:InsertRowCallbackHandler.java,Revision:v1.0,Date:2010-1-5
  */
-@Deprecated
 @FunctionalInterface
 public interface InsertRowCallbackHandler {
 	/**
