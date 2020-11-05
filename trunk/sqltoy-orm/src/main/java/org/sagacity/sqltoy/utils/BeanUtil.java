@@ -1301,10 +1301,4 @@ public class BeanUtil {
 		}
 		return entityClass;
 	}
-
-	public static void main(String[] args) {
-		BigDecimal a = new BigDecimal("29.200");
-		int result = compare(null, null);
-		System.err.println(result);
-	}
 }
