@@ -404,7 +404,7 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param dialect
-	 * @param wrapNamed
+	 * @param wrapNamed 一般在分页、取随机记录需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
 	 * @return
 	 * @throws Exception
 	 */

@@ -364,8 +364,13 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
+							// 最后一个参数应该为false,因为取随机记录的条数值是直接带入sql中的，而非变量(这里暂缓修改并无影响)
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
+							// 合理的写法如下
+							// SqlToyConfig realSqlToyConfig
+							// =DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,sqlToyConfig,
+							// queryExecutor, dialect, false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
 									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
