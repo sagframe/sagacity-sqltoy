@@ -3,7 +3,7 @@
 spring:
    sqltoy:
       ## sqlResourcesDir 常用配置，如多个路径用;符号分割
-      sqlResourcesDir: /com/sagframe/modules
+      sqlResourcesDir: classpath:com/sagframe/modules
       ## translateConfig 常用配置,使用缓存翻译时需要配置
       translateConfig: classpath:sqltoy-translate.xml
       ## 开发阶段设置debug,便于打印执行的sql,默认为false

@@ -1,3 +1,8 @@
+# 致谢
+* sqltoy是中国中化集团化销电子商务公司发起的开源项目
+* sqltoy的开源是中化公司践行科学发展观、响应央企要带头做创新主体的时代呼声的产物！
+* sqltoy开源要感谢中化集团领导和同事的大力支持，共同为中国的开源事业添砖加瓦！
+
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
@@ -5,23 +10,27 @@
 ## 请见:docs/睿智平台SqlToy4.16使用手册.doc
 
 # 范例演示项目
-## 快速上手项目
+## 快速上手主要功能项目
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
 ## POJO和DTO 严格分层演示项目
 * https://github.com/sagframe/sqltoy-strict
 
-## sharding演示
+## sharding分库分表演示
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
 ## nosql演示(mongo和elasticsearch)
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
+## sqltoy基于xml配置演示
+* https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-showcase
+
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.5 发版日期: 2020-10-17 
-* 修复wrapTreeTable id字段不是主键字段场景下的依然使用主键字段的缺陷。
+# 最新版本号: 4.16.7 发版日期: 2020-10-27
+* 针对sqlserver分页语句中的order by判断进行增强优化(top 子查询可以有order by)，避免开发者手工增加order by
+* 将save()、update()、query()等链式操作变为推荐使用
 
 
 # 1. 前言
