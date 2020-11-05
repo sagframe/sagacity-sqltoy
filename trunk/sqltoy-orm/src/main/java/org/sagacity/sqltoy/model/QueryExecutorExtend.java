@@ -248,7 +248,7 @@ public class QueryExecutorExtend implements Serializable {
 	}
 
 	/**
-	 * @TODO 用于cache-arg模式下传参数容易漏掉alias-name 的场景
+	 * @TODO 用于cache-arg模式下因aliasName是间接产生的，传参数容易漏掉alias-name,这里进行参数补齐
 	 * @param sqlToyConfig
 	 */
 	public void optimizeArgs(SqlToyConfig sqlToyConfig) {
@@ -257,10 +257,12 @@ public class QueryExecutorExtend implements Serializable {
 		}
 		// 只有使用cache-arg 场景下需要校正参数
 		if (paramsName != null && paramsValue != null) {
-			List<String> tmp = new ArrayList<String>();
+			//遗漏掉的参数名称
+			List<String> omitParams = new ArrayList<String>();
 			boolean exist = false;
 			for (String comp : sqlToyConfig.getCacheArgNames()) {
 				exist = false;
+				//判断cacheArgs参数是否在传递的参数中
 				for (String param : paramsName) {
 					if (param.toLowerCase().equals(comp)) {
 						exist = true;
@@ -268,18 +270,18 @@ public class QueryExecutorExtend implements Serializable {
 					}
 				}
 				if (!exist) {
-					tmp.add(comp);
+					omitParams.add(comp);
 				}
 			}
-			if (tmp.isEmpty()) {
+			if (omitParams.isEmpty()) {
 				return;
 			}
 			// 补全额外的参数名称,对应的值则为null
-			String[] realParams = new String[paramsName.length + tmp.size()];
-			Object[] realValues = new Object[paramsValue.length + tmp.size()];
+			String[] realParams = new String[paramsName.length + omitParams.size()];
+			Object[] realValues = new Object[paramsValue.length + omitParams.size()];
 			System.arraycopy(paramsName, 0, realParams, 0, paramsName.length);
 			int index = paramsName.length;
-			for (String extParam : tmp) {
+			for (String extParam : omitParams) {
 				realParams[index] = extParam;
 				index++;
 			}

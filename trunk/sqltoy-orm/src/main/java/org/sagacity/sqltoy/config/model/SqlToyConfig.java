@@ -145,7 +145,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private String[] paramsName;
 
 	/**
-	 * 缓存条件参数名称
+	 * 缓存条件参数名称(包含aliasName),解析过程已经增加
 	 */
 	private List<String> cacheArgNames = new ArrayList<String>();
 
@@ -644,6 +644,10 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		return null;
 	}
 
+	/**
+	 * @TODO 已经包含aliasName,解析过程已经增加
+	 * @param name
+	 */
 	public void addCacheArgParam(String name) {
 		String param = name.toLowerCase();
 		if (!this.cacheArgNames.contains(param)) {
