@@ -363,13 +363,15 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							//当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
+							boolean rewrapParams = false;
+							//sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数
+							if (dbType.intValue() == DBType.SYBASE_IQ) {
+								rewrapParams = true;
+							}
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, true);
-							// 比较优化写法如下(因为取随机记录的条数值是直接带入sql中的,非条件参数)
-							// SqlToyConfig realSqlToyConfig
-							// =DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,sqlToyConfig,
-							// queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, rewrapParams);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
 									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
