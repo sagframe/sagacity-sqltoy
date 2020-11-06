@@ -23,12 +23,12 @@ public class KingbaseDialectUtils {
 		if (pkStrategy == null) {
 			return true;
 		}
-		// 目前不支持sequence模式
 		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return false;
-		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 			return true;
+		}
+		// 目前不支持identity模式
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
 		}
 		return true;
 	}
@@ -54,28 +54,32 @@ public class KingbaseDialectUtils {
 		String field;
 		String columnName;
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		boolean isStart = true;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (i > 0) {
+			if (!isStart) {
 				sql.append(",");
 				values.append(",");
 			}
-			sql.append(columnName);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					if (isAssignPK) {
+						sql.append(columnName);
 						values.append("?");
+						isStart = false;
 					}
-				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
-				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					sql.append(columnName);
 					values.append("isnull(?,").append(sequence).append(")");
 				} else {
+					sql.append(columnName);
 					values.append("?");
 				}
 			} else {
+				sql.append(columnName);
 				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append("isnull(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),

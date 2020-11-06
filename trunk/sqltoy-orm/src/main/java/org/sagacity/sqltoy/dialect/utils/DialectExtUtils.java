@@ -53,25 +53,21 @@ public class DialectExtUtils {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			if (!isStart) {
+				sql.append(",");
+				values.append(",");
+			}
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					// 目前只有mysql支持
 					if (isAssignPK) {
-						if (!isStart) {
-							sql.append(",");
-							values.append(",");
-						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
 				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-					if (!isStart) {
-						sql.append(",");
-						values.append(",");
-					}
 					sql.append(columnName);
 					if (isAssignPK && isSupportNULL) {
 						values.append(isNullFunction);
@@ -81,19 +77,11 @@ public class DialectExtUtils {
 					}
 					isStart = false;
 				} else {
-					if (!isStart) {
-						sql.append(",");
-						values.append(",");
-					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
-				if (!isStart) {
-					sql.append(",");
-					values.append(",");
-				}
 				sql.append(columnName);
 				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
@@ -189,7 +177,7 @@ public class DialectExtUtils {
 		}
 		return queryStr.toString();
 	}
-	
+
 	/**
 	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveIgnoreExist
 	 * @param dbType
