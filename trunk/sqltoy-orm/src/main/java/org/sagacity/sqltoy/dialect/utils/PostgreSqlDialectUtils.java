@@ -289,9 +289,9 @@ public class PostgreSqlDialectUtils {
 		// 非全部是主键
 		if (!allIds) {
 			String columnName;
-			sql.append(" ON CONFLICT ON ");
+			sql.append(" ON CONFLICT  ");
 			if (entityMeta.getPkConstraint() != null) {
-				sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
+				sql.append(" ON CONSTRAINT ").append(entityMeta.getPkConstraint());
 			} else {
 				sql.append(" (");
 				for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
@@ -382,9 +382,9 @@ public class PostgreSqlDialectUtils {
 		// 非全部是主键
 		if (entityMeta.getRejectIdFieldArray() != null) {
 			String columnName;
-			sql.append(" ON CONFLICT ON ");
+			sql.append(" ON CONFLICT  ");
 			if (entityMeta.getPkConstraint() != null) {
-				sql.append(" CONSTRAINT ").append(entityMeta.getPkConstraint());
+				sql.append(" ON CONSTRAINT ").append(entityMeta.getPkConstraint());
 			} else {
 				sql.append(" (");
 				for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
