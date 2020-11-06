@@ -365,7 +365,7 @@ public class DialectFactory {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							//当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
 							boolean rewrapParams = false;
-							//sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数
+							//sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数(sybaseIq已经很少在用)
 							if (dbType.intValue() == DBType.SYBASE_IQ) {
 								rewrapParams = true;
 							}
