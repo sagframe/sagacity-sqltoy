@@ -497,7 +497,7 @@ public class KingbaseDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " limit " + topSize + getLockSql(dbType);
+		String realSql = sql + " limit " + topSize + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -515,7 +515,7 @@ public class KingbaseDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by random() limit " + random + getLockSql(dbType);
+		String realSql = sql + " order by random() limit " + random + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -533,8 +533,8 @@ public class KingbaseDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
-	private String getLockSql(Integer dbType) {
-		return " for update skip locked ";
-	}
+//	private String getLockSql(Integer dbType) {
+//		return " for update skip locked ";
+//	}
 
 }
