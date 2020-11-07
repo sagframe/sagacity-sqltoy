@@ -525,9 +525,4 @@ public class KingbaseDialect implements Dialect {
 			final String dialect) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
-
-//	private String getLockSql(Integer dbType) {
-//		return " for update skip locked ";
-//	}
-
 }
