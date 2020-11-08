@@ -275,8 +275,9 @@ public class PostgreSqlDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
-								forceUpdateFields, null);
+						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
+								sequence, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
@@ -339,6 +340,8 @@ public class PostgreSqlDialect implements Dialect {
 				dialect, autoCommit, tableName);
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
+//		return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
+//				forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
 	}
 
 	/*

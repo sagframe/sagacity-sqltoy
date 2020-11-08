@@ -237,6 +237,27 @@ public class PostgreSqlDialectUtils {
 				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
+	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
+							pkStrategy = PKStrategy.SEQUENCE;
+							sequence = "DEFAULT";
+						}
+						return getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), sequence,
+								forceUpdateFields, tableName);
+					}
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
+	}
+
 	/**
 	 * @todo postgresql9.5以及以上版本的saveOrUpdate语句，实际不会使用(用update和saveIgnore组合替代)，因为postgresql
 	 *       此功能存在bug
@@ -248,9 +269,8 @@ public class PostgreSqlDialectUtils {
 	 * @param tableName
 	 * @return
 	 */
-	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String sequence, String[] forceUpdateFields, String tableName) {
+			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
@@ -266,22 +286,53 @@ public class PostgreSqlDialectUtils {
 		sql.append(" AS t1 (");
 		FieldMeta fieldMeta;
 		String fieldName;
+		boolean isStart = true;
+		String columnName;
 		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
-			if (i > 0) {
+			fieldName = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(fieldName);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			// sql中的关键字处理
+			if (!isStart) {
 				sql.append(",");
 				values.append(",");
 			}
-			fieldName = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(fieldName);
-			// sql中的关键字处理
-			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
-			// 默认值处理
-			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
-				values.append("COALESCE(?,");
-				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-				values.append(")");
+			if (fieldMeta.isPK()) {
+				// identity主键策略，且支持主键手工赋值
+				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+					// 目前只有mysql支持
+					if (isAssignPK) {
+						sql.append(columnName);
+						values.append("?");
+						isStart = false;
+					}
+				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
+				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					sql.append(columnName);
+					if (isAssignPK) {
+						values.append(NVL_FUNCTION);
+						values.append("(?,").append(sequence).append(")");
+					} else {
+						values.append(sequence);
+					}
+					isStart = false;
+				} else {
+					sql.append(columnName);
+					values.append("?");
+					isStart = false;
+				}
 			} else {
-				values.append("?");
+				sql.append(columnName);
+				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					values.append(NVL_FUNCTION);
+					values.append("(?,");
+					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
+					values.append(")");
+				} else {
+					values.append("?");
+				}
+				isStart = false;
 			}
 		}
 		sql.append(") values (");
@@ -289,7 +340,7 @@ public class PostgreSqlDialectUtils {
 		sql.append(") ");
 		// 非全部是主键
 		if (!allIds) {
-			String columnName;
+			// String columnName;
 			sql.append(" ON CONFLICT (");
 			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
 				if (i > 0) {

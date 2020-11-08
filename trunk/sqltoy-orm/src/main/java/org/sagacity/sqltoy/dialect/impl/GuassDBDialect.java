@@ -269,8 +269,9 @@ public class GuassDBDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, sequence,
-								forceUpdateFields, null);
+						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
+								sequence, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
