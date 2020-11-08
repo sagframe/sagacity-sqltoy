@@ -406,7 +406,7 @@ public class PostgreSqlDialectUtils {
 	 * @param pkStrategy
 	 * @return
 	 */
-	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;
 		}
