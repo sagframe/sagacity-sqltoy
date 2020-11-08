@@ -190,7 +190,7 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public	static String mergeIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable,
+	public static String mergeIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
@@ -353,9 +353,11 @@ public class DialectExtUtils {
 				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
 					sql.append(columnName);
 					values.append(isNullFunction).append("(?,").append(sequence).append(")");
+					isStart = false;
 				} else {
 					sql.append(columnName);
 					values.append("?");
+					isStart = false;
 				}
 			} else {
 				sql.append(columnName);
@@ -367,6 +369,7 @@ public class DialectExtUtils {
 				} else {
 					values.append("?");
 				}
+				isStart = false;
 			}
 		}
 		sql.append(") values ( ");
