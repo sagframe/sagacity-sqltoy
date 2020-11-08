@@ -276,6 +276,11 @@ public class KingbaseDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "NEXTVAL FOR " + entityMeta.getSequence();
+						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+							// 伪造成sequence模式
+							pkStrategy = PKStrategy.SEQUENCE;
+							sequence = "DEFAULT";
+						}
 						// identity主键策略不允许手工赋值
 						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
 						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,

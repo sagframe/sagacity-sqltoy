@@ -1588,6 +1588,11 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
+				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+					// 伪造成sequence模式
+					pkStrategy = PKStrategy.SEQUENCE;
+					sequence = "DEFAULT";
+				}
 				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "isnull", sequence,
 						KingbaseDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
