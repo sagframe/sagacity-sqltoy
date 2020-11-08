@@ -15,7 +15,6 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -35,39 +34,6 @@ public class ClickHouseDialectUtils {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(ClickHouseDialectUtils.class);
-
-	/**
-	 * @todo 产生对象对应的insert sql语句
-	 * @param entityMeta
-	 * @param tableName
-	 * @return
-	 */
-	public static String generateInsertSql(EntityMeta entityMeta, String tableName) {
-		int columnSize = entityMeta.getFieldsArray().length;
-		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
-		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
-		sql.append("insert into ");
-		sql.append(entityMeta.getSchemaTable(tableName));
-		sql.append(" (");
-		FieldMeta fieldMeta;
-		String field;
-		boolean isStart = true;
-		for (int i = 0; i < columnSize; i++) {
-			field = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(field);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
-			sql.append(fieldMeta.getColumnName());
-			values.append("?");
-			isStart = false;
-		}
-		sql.append(") values (");
-		sql.append(values);
-		sql.append(")");
-		return sql.toString();
-	}
 
 	/**
 	 * @todo 保存对象
