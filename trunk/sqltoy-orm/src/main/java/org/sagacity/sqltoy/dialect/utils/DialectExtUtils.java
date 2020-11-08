@@ -190,8 +190,8 @@ public class DialectExtUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+	public	static String mergeIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable,
+			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// 在无主键的情况下产生insert sql语句
 		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
 		if (entityMeta.getIdArray() == null) {
@@ -308,6 +308,84 @@ public class DialectExtUtils {
 			}
 		}
 		sql.append(")");
+		return sql.toString();
+	}
+
+	/**
+	 * @TODO 针对postgresql\sqlite\guassdb等数据库
+	 * @param dbType
+	 * @param entityMeta
+	 * @param pkStrategy
+	 * @param isNullFunction
+	 * @param sequence
+	 * @param isAssignPK
+	 * @param tableName
+	 * @return
+	 */
+	public static String insertIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
+			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
+		int columnSize = entityMeta.getFieldsArray().length;
+		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
+		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
+		sql.append("insert into ");
+		sql.append(entityMeta.getSchemaTable(tableName));
+		sql.append(" (");
+		FieldMeta fieldMeta;
+		String field;
+		String columnName;
+		boolean isStart = true;
+		for (int i = 0; i < columnSize; i++) {
+			field = entityMeta.getFieldsArray()[i];
+			fieldMeta = entityMeta.getFieldMeta(field);
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+			if (!isStart) {
+				sql.append(",");
+				values.append(",");
+			}
+			if (fieldMeta.isPK()) {
+				// identity主键策略，且支持主键手工赋值
+				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+					if (isAssignPK) {
+						sql.append(columnName);
+						values.append("?");
+						isStart = false;
+					}
+				} else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					sql.append(columnName);
+					values.append(isNullFunction).append("(?,").append(sequence).append(")");
+				} else {
+					sql.append(columnName);
+					values.append("?");
+				}
+			} else {
+				sql.append(columnName);
+				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					values.append(isNullFunction).append("(?,");
+					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
+							fieldMeta.getDefaultValue());
+					values.append(")");
+				} else {
+					values.append("?");
+				}
+			}
+		}
+		sql.append(") values ( ");
+		sql.append(values);
+		sql.append(")");
+
+		// 增加do noting
+		if (entityMeta.getIdArray() != null) {
+			sql.append(" ON CONFLICT (");
+			for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+				if (i > 0) {
+					sql.append(",");
+				}
+				columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+				sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+			}
+			sql.append(" ) DO NOTHING ");
+		}
+
 		return sql.toString();
 	}
 }

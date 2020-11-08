@@ -276,8 +276,8 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE,
-								NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION,
+								sequence, isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
