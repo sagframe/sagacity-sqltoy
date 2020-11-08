@@ -37,7 +37,8 @@ import org.slf4j.LoggerFactory;
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:PostgreSqlDialect.java,Revision:v1.0,Date:2015年8月10日
- * @modify Date:2019-3-12 修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
+ * @modify Date:2019-3-12
+ *         修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
  */
 @SuppressWarnings({ "rawtypes" })
@@ -363,11 +364,11 @@ public class PostgreSqlDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence,
-								tableName);
+						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								isAssignPK, tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
-
 	}
 
 	/*

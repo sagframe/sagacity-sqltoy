@@ -16,7 +16,6 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -259,13 +258,23 @@ public class SqliteDialect implements Dialect {
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
+//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+//		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+//				new GenerateSqlHandler() {
+//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+//						return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
+//					}
+//				}, reflectPropertyHandler, conn, dbType, autoCommit);
+
+		// sqlite只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
-					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert or ignore into ");
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 
 	}
 
@@ -335,7 +344,7 @@ public class SqliteDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		// sqlite 只提供autoincrement 机制，即identity模式，所以sequence可以忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPk = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk,
@@ -343,12 +352,12 @@ public class SqliteDialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
-								isAssignPKValue(entityMeta.getIdStrategy()), null);
+								SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
-								isAssignPKValue(entityMeta.getIdStrategy()));
+								SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
 				}, conn, dbType);
 	}
@@ -365,7 +374,7 @@ public class SqliteDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPk = isAssignPKValue(entityMeta.getIdStrategy());
+		boolean isAssignPk = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk, insertSql,
@@ -498,17 +507,4 @@ public class SqliteDialect implements Dialect {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
-	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null) {
-			return true;
-		}
-		// 目前不支持sequence模式
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return false;
-		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return false;
-		}
-		return true;
-	}
 }

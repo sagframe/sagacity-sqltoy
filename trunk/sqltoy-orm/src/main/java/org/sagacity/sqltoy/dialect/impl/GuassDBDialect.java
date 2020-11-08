@@ -358,8 +358,9 @@ public class GuassDBDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence,
-								tableName);
+						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								isAssignPK, tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 

@@ -7,6 +7,7 @@ import java.util.HashSet;
 
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -17,6 +18,20 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version id:SqliteDialectUtils.java,Revision:v1.0,Date:2015年3月5日
  */
 public class SqliteDialectUtils {
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		// 目前不支持sequence模式
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return false;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * @todo 利用sqlite3 的on conflict(id) DO UPDATE SET 语法,但只能用于关联子表更新
 	 * @param dbType
@@ -43,7 +58,7 @@ public class SqliteDialectUtils {
 			sql = new StringBuilder("insert into ");
 		}
 		StringBuilder values = new StringBuilder();
-		
+
 		sql.append(realTable);
 		sql.append(" (");
 		FieldMeta fieldMeta;
@@ -103,48 +118,6 @@ public class SqliteDialectUtils {
 				}
 			}
 		}
-		return sql.toString();
-	}
-
-	/**
-	 * @todo 构造保存并忽视已经存在记录的插入sql语句
-	 * @param dbType
-	 * @param entityMeta
-	 * @param tableName
-	 * @return
-	 */
-	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, String tableName) {
-		// 无主键表全部采用insert机制
-		String realTable = entityMeta.getSchemaTable(tableName);
-		if (entityMeta.getIdArray() == null) {
-			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
-					false, realTable);
-		}
-		StringBuilder sql = new StringBuilder("insert or ignore into ");
-		StringBuilder values = new StringBuilder();
-		sql.append(realTable);
-		sql.append(" (");
-		FieldMeta fieldMeta;
-		String field;
-		for (int i = 0, n = entityMeta.getFieldsArray().length; i < n; i++) {
-			if (i > 0) {
-				sql.append(",");
-				values.append(",");
-			}
-			field = entityMeta.getFieldsArray()[i];
-			fieldMeta = entityMeta.getFieldMeta(field);
-			//sql中关键字处理
-			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
-			// 默认值处理
-			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
-				values.append("ifnull(?,");
-				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
-				values.append(")");
-			} else {
-				values.append("?");
-			}
-		}
-		sql.append(") values (").append(values).append(") ");
 		return sql.toString();
 	}
 }

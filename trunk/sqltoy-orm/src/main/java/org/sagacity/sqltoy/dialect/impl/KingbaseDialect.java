@@ -271,11 +271,17 @@ public class KingbaseDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = KingbaseDialectUtils.getSaveIgnoreExist(dbType, entityMeta, entityMeta.getIdStrategy(),
-				"NEXTVAL FOR " + entityMeta.getSequence(), tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
+		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
+				new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+						String sequence = "NEXTVAL FOR " + entityMeta.getSequence();
+						// identity主键策略不允许手工赋值
+						boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(pkStrategy);
+						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
+								isAssignPK, tableName);
+					}
+				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -525,4 +531,5 @@ public class KingbaseDialect implements Dialect {
 			final String dialect) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
+
 }

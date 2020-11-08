@@ -1420,7 +1420,7 @@ public class DialectUtils {
 				else if (dbType == DBType.DM) {
 					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} //kingbase
+				} // kingbase
 				else if (dbType == DBType.KINGBASE) {
 					kingbaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
@@ -1486,7 +1486,7 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
-				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
@@ -1515,7 +1515,9 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
 				}
-				return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence, tableName);
+				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "COALESCE", sequence, isAssignPK,
+						tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -1534,11 +1536,14 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
-			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		// sqlite只支持identity,sequence 值忽略
+		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert or ignore into ");
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
@@ -1559,11 +1564,7 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-				}
-				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
@@ -1587,12 +1588,8 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-					// 伪造成sequence模式
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = "DEFAULT";
-				}
-				return KingbaseDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence, tableName);
+				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "isnull", sequence,
+						KingbaseDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
