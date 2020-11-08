@@ -233,7 +233,7 @@ public class KingbaseDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
-	// 问为什么不用mysql的on duplicate key update特性?原本是用的这个，但其有bug，一切都是于原因的!
+	// 问为什么不用kingbase的on conflict() do update特性?原本是用的这个，但其有bug，一切都是于原因的!
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -368,7 +368,6 @@ public class KingbaseDialect implements Dialect {
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		// mysql只支持identity,sequence 值忽略,mysql identity可以手工插入
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
