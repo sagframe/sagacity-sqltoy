@@ -839,8 +839,7 @@ public class DialectUtils {
 			}
 		}
 		FieldMeta fieldMeta;
-		boolean isPostgre = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB);
-		boolean isKingbase = (dbType == DBType.KINGBASE);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -856,15 +855,14 @@ public class DialectUtils {
 				if (fupc.contains(columnName)) {
 					sql.append("?");
 				} else {
-					// 2020-6-13 修复postgresql bytea类型处理错误
-					if (isPostgre && fieldMeta.getFieldType().equals("byte[]")) {
-						sql.append(" cast(");
-						sql.append(nullFunction);
-						sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
-						sql.append(" as bytea)");
-					} else if (isKingbase && fieldMeta.getFieldType().equals("byte[]")) {
+					// 2020-6-13 修复postgresql\kingbase\guassdb bytea类型处理错误
+					if (convertBlob && fieldMeta.getFieldType().equals("byte[]")) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
+//						sql.append(" cast(");
+//						sql.append(nullFunction);
+//						sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
+//						sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
