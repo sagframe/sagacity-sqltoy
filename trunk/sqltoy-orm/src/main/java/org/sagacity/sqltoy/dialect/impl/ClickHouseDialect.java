@@ -11,7 +11,6 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -33,6 +32,10 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
  * @version id:ClickHouseDialect.java,Revision:v1.0,Date:2020年1月20日
  */
 public class ClickHouseDialect implements Dialect {
+	/**
+	 * 判定为null的函数
+	 */
+	public static final String NVL_FUNCTION = "ifnull";
 
 	@Override
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
@@ -201,9 +204,10 @@ public class ClickHouseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		//clickhouse 不支持sequence，支持identity自增模式
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
-				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+		// clickhouse 不支持sequence，支持identity自增模式
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+				ClickHouseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, insertSql, entity, conn, dbType);
 	}
 
@@ -212,9 +216,10 @@ public class ClickHouseDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		//clickhouse 不支持sequence，支持identity自增模式
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
-				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+		// clickhouse 不支持sequence，支持identity自增模式
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+				ClickHouseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.saveAll(sqlToyContext, entityMeta, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -303,16 +308,4 @@ public class ClickHouseDialect implements Dialect {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
-	private boolean isAssignPKValue(PKStrategy pkStrategy) {
-		if (pkStrategy == null) {
-			return true;
-		}
-		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
-			return true;
-		}
-		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
-			return false;
-		}
-		return true;
-	}
 }

@@ -15,7 +15,9 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -48,7 +50,19 @@ public class ClickHouseDialectUtils {
 	 */
 	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, final String insertSql,
 			Serializable entity, final Connection conn, final Integer dbType) throws Exception {
-		String[] reflectColumns = entityMeta.getFieldsArray();
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		ReturnPkType returnPkType = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE))
+				? ReturnPkType.GENERATED_KEYS
+				: ReturnPkType.PREPARD_ID;
+		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
+		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
+		String[] reflectColumns;
+		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
+			reflectColumns = entityMeta.getRejectIdFieldArray();
+		} else {
+			reflectColumns = entityMeta.getFieldsArray();
+		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
@@ -94,15 +108,47 @@ public class ClickHouseDialectUtils {
 				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
-		SqlExecuteStat.showSql("执行插入语句", insertSql, null);
+		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
 		final Object[] paramValues = fullParamValues;
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				pst = conn.prepareStatement(insertSql);
+				if (isIdentity || isSequence) {
+					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
+						pst = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
+					} else if (returnPkType.equals(ReturnPkType.PREPARD_ID)) {
+						pst = conn.prepareStatement(insertSql,
+								new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
+					} else {
+						pst = conn.prepareStatement(insertSql);
+					}
+				} else {
+					pst = conn.prepareStatement(insertSql);
+				}
 				SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
-				pst.execute();
+				ResultSet keyResult = null;
+				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
+					keyResult = pst.executeQuery();
+				} else {
+					pst.execute();
+				}
+				if (isIdentity || isSequence) {
+					if (!returnPkType.equals(ReturnPkType.RESULT_GET)) {
+						keyResult = pst.getGeneratedKeys();
+					}
+					if (keyResult != null) {
+						List result = new ArrayList();
+						while (keyResult.next()) {
+							result.add(keyResult.getObject(1));
+						}
+						if (result.size() == 1) {
+							this.setResult(result.get(0));
+						} else {
+							this.setResult(result.toArray());
+						}
+					}
+				}
 			}
 		});
 		// 无主键直接返回null
@@ -113,7 +159,7 @@ public class ClickHouseDialectUtils {
 			result = fullParamValues[pkIndex];
 		}
 		// 回置到entity 主键值
-		if (needUpdatePk) {
+		if (needUpdatePk || isIdentity || isSequence) {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		return result;
@@ -136,10 +182,19 @@ public class ClickHouseDialectUtils {
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
 			final int batchSize, ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
-		String[] reflectColumns = entityMeta.getFieldsArray();
+		PKStrategy pkStrategy = entityMeta.getIdStrategy();
+		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
+		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
+		String[] reflectColumns;
+		boolean isAssignPK = isAssignPKValue(pkStrategy);
+		if ((isIdentity && !isAssignPK) || (isSequence && !isAssignPK)) {
+			reflectColumns = entityMeta.getRejectIdFieldArray();
+		} else {
+			reflectColumns = entityMeta.getFieldsArray();
+		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -150,7 +205,7 @@ public class ClickHouseDialectUtils {
 		String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
 		int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
 		// 无主键值以及多主键以及assign或通过generator方式产生主键策略
-		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
+		if (pkStrategy != null && null != entityMeta.getIdGenerator()) {
 			int bizIdLength = entityMeta.getBizIdLength();
 			int idLength = entityMeta.getIdLength();
 			Object[] rowData;
@@ -193,7 +248,7 @@ public class ClickHouseDialectUtils {
 				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
-		SqlExecuteStat.showSql("批量执行插入语句", insertSql, null);
+		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
 		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
 				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
 				dbType);
@@ -318,5 +373,18 @@ public class ClickHouseDialectUtils {
 				idValues);
 		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,
 				autoCommit);
+	}
+
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
+		}
+		return true;
 	}
 }
