@@ -1584,19 +1584,13 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				PKStrategy pkStrategy = entityMeta.getIdStrategy();
-				String sequence = "nextval('" + entityMeta.getSequence() + "')";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-					// 伪造成sequence模式
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = "DEFAULT";
-				}
-				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "isnull", sequence,
-						KingbaseDialectUtils.isAssignPKValue(pkStrategy), tableName);
-			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		// mysql只支持identity,sequence 值忽略
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull",
+				"nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
