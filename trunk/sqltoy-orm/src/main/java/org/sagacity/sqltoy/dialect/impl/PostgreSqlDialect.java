@@ -340,8 +340,6 @@ public class PostgreSqlDialect implements Dialect {
 				dialect, autoCommit, tableName);
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
-//		return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
-//				forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
