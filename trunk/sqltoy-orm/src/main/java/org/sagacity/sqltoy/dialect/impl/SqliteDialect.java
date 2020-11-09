@@ -258,14 +258,6 @@ public class SqliteDialect implements Dialect {
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-//		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
-//				new GenerateSqlHandler() {
-//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-//						return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
-//					}
-//				}, reflectPropertyHandler, conn, dbType, autoCommit);
-
 		// sqlite只支持identity,sequence 值忽略
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
