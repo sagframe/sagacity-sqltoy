@@ -393,6 +393,8 @@ public class DataSourceUtils {
 			} // TIDB
 			else if (dbDialect.equals(Dialect.TIDB)) {
 				dbType = DBType.TIDB;
+			} else if (dbDialect.equals(Dialect.KINGBASE)) {
+				dbType = DBType.KINGBASE;
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
