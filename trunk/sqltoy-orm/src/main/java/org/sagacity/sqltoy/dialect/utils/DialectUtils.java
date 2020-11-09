@@ -404,7 +404,7 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param dialect
-	 * @param wrapNamed 一般在分页、取随机记录需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
+	 * @param wrapNamed     一般在分页、取随机记录需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
 	 * @return
 	 * @throws Exception
 	 */
@@ -1420,7 +1420,12 @@ public class DialectUtils {
 				else if (dbType == DBType.DM) {
 					dmSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} // db2/oracle/mssql 通过merge 方式
+				} // kingbase
+				else if (dbType == DBType.KINGBASE) {
+					kingbaseSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
+							forceUpdateProps, conn, dbType);
+				}
+				// db2/oracle/mssql 通过merge 方式
 				else {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), subTableEntityMeta,
 							forceUpdateProps, generateSqlHandler,
@@ -1481,7 +1486,7 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 				}
-				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
@@ -1510,7 +1515,9 @@ public class DialectUtils {
 					pkStrategy = PKStrategy.SEQUENCE;
 					sequence = "DEFAULT";
 				}
-				return PostgreSqlDialectUtils.getSaveIgnoreExist(dbType, entityMeta, pkStrategy, sequence, tableName);
+				boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "COALESCE", sequence, isAssignPK,
+						tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
@@ -1529,11 +1536,14 @@ public class DialectUtils {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
 			return;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-				return SqliteDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, tableName);
-			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		// sqlite只支持identity,sequence 值忽略
+		boolean isAssignPK = SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert or ignore into ");
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
@@ -1554,14 +1564,33 @@ public class DialectUtils {
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
-				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-					pkStrategy = PKStrategy.SEQUENCE;
-					sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-				}
-				return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
+				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
 		}, reflectPropertyHandler, conn, dbType, null);
+		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
+	}
+
+	// 针对人大金仓kingbase数据库
+	private static void kingbaseSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
+			List<?> entities, ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			Connection conn, final Integer dbType) throws Exception {
+		int batchSize = sqlToyContext.getBatchSize();
+		final String tableName = entityMeta.getSchemaTable();
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+				"isnull", conn, dbType, null, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
+			return;
+		}
+		// mysql只支持identity,sequence 值忽略
+		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull",
+				"nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
+		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
+				batchSize, reflectPropertyHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 

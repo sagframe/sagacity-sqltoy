@@ -359,8 +359,8 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, entityMeta.getIdStrategy(),
-								null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
+						return DialectExtUtils.mergeIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), null,
+								NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);

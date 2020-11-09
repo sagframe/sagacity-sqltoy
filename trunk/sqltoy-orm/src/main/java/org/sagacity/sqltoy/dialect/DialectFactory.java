@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
+import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
 import org.sagacity.sqltoy.dialect.impl.Oracle11gDialect;
@@ -188,6 +189,10 @@ public class DialectFactory {
 		// 10g,11g
 		case DBType.ORACLE11: {
 			dialectSqlWrapper = new Oracle11gDialect();
+			break;
+		} // 北大金仓
+		case DBType.KINGBASE: {
+			dialectSqlWrapper = new KingbaseDialect();
 			break;
 		}
 		// sybase iq基本淘汰
@@ -363,9 +368,9 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							//当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
+							// 当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
 							boolean rewrapParams = false;
-							//sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数
+							// sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数(sybaseIq已经很少在用)
 							if (dbType.intValue() == DBType.SYBASE_IQ) {
 								rewrapParams = true;
 							}

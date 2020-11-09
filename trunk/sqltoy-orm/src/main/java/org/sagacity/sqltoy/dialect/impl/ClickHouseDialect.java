@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -200,7 +201,9 @@ public class ClickHouseDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		String insertSql = ClickHouseDialectUtils.generateInsertSql(entityMeta, tableName);
+		//clickhouse 不支持sequence，支持identity自增模式
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.save(sqlToyContext, entityMeta, insertSql, entity, conn, dbType);
 	}
 
@@ -209,7 +212,9 @@ public class ClickHouseDialect implements Dialect {
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		String insertSql = ClickHouseDialectUtils.generateInsertSql(entityMeta, tableName);
+		//clickhouse 不支持sequence，支持identity自增模式
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull",
+				"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.saveAll(sqlToyContext, entityMeta, insertSql, entities, batchSize,
 				reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -296,5 +301,18 @@ public class ClickHouseDialect implements Dialect {
 			throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
+	private boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return true;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return false;
+		}
+		return true;
 	}
 }

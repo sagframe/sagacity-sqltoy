@@ -264,7 +264,7 @@ public class OceanBaseDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectExtUtils.getSaveIgnoreExistSql(dbType, entityMeta, pkStrategy, "dual",
+						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual",
 								NVL_FUNCTION, sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
