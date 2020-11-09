@@ -54,7 +54,7 @@ public class KingbaseDialect implements Dialect {
 	/**
 	 * 判定为null的函数
 	 */
-	public static final String NVL_FUNCTION = "isnull";
+	public static final String NVL_FUNCTION = "NVL";
 
 	@Override
 	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,

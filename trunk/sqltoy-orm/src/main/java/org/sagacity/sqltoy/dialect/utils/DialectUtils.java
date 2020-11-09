@@ -840,6 +840,7 @@ public class DialectUtils {
 		}
 		FieldMeta fieldMeta;
 		boolean isPostgre = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB);
+		boolean isKingbase = (dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -861,6 +862,9 @@ public class DialectUtils {
 						sql.append(nullFunction);
 						sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
 						sql.append(" as bytea)");
+					} else if (isKingbase && fieldMeta.getFieldType().equals("byte[]")) {
+						sql.append(nullFunction);
+						sql.append("(cast(? as bytea),").append(columnName).append(" )");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -1577,8 +1581,8 @@ public class DialectUtils {
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable();
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
-				"isnull", conn, dbType, null, tableName, true);
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "NVL",
+				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
@@ -1586,8 +1590,7 @@ public class DialectUtils {
 		}
 		// mysql只支持identity,sequence 值忽略
 		boolean isAssignPK = KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
-		String insertSql = DialectExtUtils
-				.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "isnull",
+		String insertSql = DialectExtUtils.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "NVL",
 				"nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
 				batchSize, reflectPropertyHandler, conn, dbType, null);
