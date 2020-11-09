@@ -28,8 +28,6 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.KingbaseDialectUtils;
-import org.sagacity.sqltoy.dialect.utils.MySqlDialectUtils;
-//import org.sagacity.sqltoy.dialect.utils.MySqlDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
