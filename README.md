@@ -28,9 +28,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.7 发版日期: 2020-10-27
-* 针对sqlserver分页语句中的order by判断进行增强优化(top 子查询可以有order by)，避免开发者手工增加order by
-* 将save()、update()、query()等链式操作变为推荐使用
+# 最新版本号: 4.16.10 发版日期: 2020-11-10
+* 支持kingbase数据库
+* 优化postgresql 依据pk constraint 进行插入约束改为on conflict (pkFields) do nothing 模式
+* 其他的一些代码和注释优化
 
 
 # 1. 前言
