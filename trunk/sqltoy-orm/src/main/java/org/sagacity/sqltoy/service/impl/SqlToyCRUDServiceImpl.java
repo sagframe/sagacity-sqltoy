@@ -529,4 +529,9 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.convertType(source, resultType);
 	}
 
+	@Override
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+		return sqlToyLazyDao.convertType(sourcePage, resultType);
+	}
+
 }
