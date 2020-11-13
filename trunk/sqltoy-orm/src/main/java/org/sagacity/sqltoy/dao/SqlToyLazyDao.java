@@ -593,7 +593,7 @@ public interface SqlToyLazyDao {
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
 
-	//sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
+	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
 	 * @todo 获取并锁定数据并进行修改(只支持针对单表查询，查询语句要简单)
 	 * @param queryExecutor
@@ -781,6 +781,15 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType);
+
+	/**
+	 * @TODO 实现分页对象的类型转换
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @return
+	 */
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**

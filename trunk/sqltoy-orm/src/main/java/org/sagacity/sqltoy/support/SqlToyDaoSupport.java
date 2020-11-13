@@ -1608,6 +1608,21 @@ public class SqlToyDaoSupport {
 		}
 	}
 
+	protected <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+		if (sourcePage == null)
+			return null;
+		PaginationModel result = new PaginationModel();
+		result.setPageNo(sourcePage.getPageNo());
+		result.setPageSize(sourcePage.getPageSize());
+		result.setRecordCount(sourcePage.getRecordCount());
+		result.setSkipQueryCount(sourcePage.getSkipQueryCount());
+		if (sourcePage.getRows().isEmpty()) {
+			return result;
+		}
+		result.setRows(convertType(sourcePage.getRows(), resultType));
+		return result;
+	}
+
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**
 	 * -- 避免开发者将全部功能用一个超级sql完成，提供拆解执行的同时确保执行效率，达到了效率和可维护的平衡

@@ -961,6 +961,17 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.convertType(sourceList, resultType);
 	}
 
+	/**
+	 * @TODO 转换分页类型
+	 * @param <T>
+	 * @param sourcePage
+	 * @param resultType
+	 * @return
+	 */
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+		return super.convertType(sourcePage, resultType);
+	}
+
 	@Override
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues) {
