@@ -54,9 +54,9 @@ public class SqlLoop extends AbstractMacro {
 
 		// 获取循环依据的参数数组值
 		Object[] loopValues = CollectionUtil.convertArray(keyValues.get(loopParam));
-
+		// 返回@blank(:paramName)
 		if (loopValues == null || loopValues.length == 0) {
-			return " ";
+			return " @blank(:" + loopParam + ") ";
 		}
 		int start = 0;
 		int end = loopValues.length;
@@ -64,7 +64,7 @@ public class SqlLoop extends AbstractMacro {
 			start = Integer.parseInt(params[3].trim());
 		}
 		if (start > loopValues.length - 1) {
-			return " ";
+			return " @blank(:" + loopParam + ") ";
 		}
 		if (params.length > 4) {
 			end = Integer.parseInt(params[4].trim());
@@ -91,6 +91,7 @@ public class SqlLoop extends AbstractMacro {
 		}
 
 		StringBuilder result = new StringBuilder();
+		result.append(" @blank(:" + loopParam + ") ");
 		String loopStr;
 		Object paramValue;
 		String valueStr;
