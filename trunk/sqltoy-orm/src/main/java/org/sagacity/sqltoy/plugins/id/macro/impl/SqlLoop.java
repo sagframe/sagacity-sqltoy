@@ -54,7 +54,8 @@ public class SqlLoop extends AbstractMacro {
 
 		// 获取循环依据的参数数组值
 		Object[] loopValues = CollectionUtil.convertArray(keyValues.get(loopParam));
-		// 返回@blank(:paramName)
+		// 返回@blank(:paramName),便于#[ and @loop(:name,"name like ':name[i]'"," or ")]
+		// 先loop后没有参数导致#[]中内容全部被剔除的缺陷
 		if (loopValues == null || loopValues.length == 0) {
 			return " @blank(:" + loopParam + ") ";
 		}
