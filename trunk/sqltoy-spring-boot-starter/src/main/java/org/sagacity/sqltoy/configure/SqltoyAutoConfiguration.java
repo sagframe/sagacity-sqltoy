@@ -3,7 +3,6 @@ package org.sagacity.sqltoy.configure;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -31,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
-	@Resource
+	@Autowired
 	private ApplicationContext applicationContext;
 
 	@Autowired

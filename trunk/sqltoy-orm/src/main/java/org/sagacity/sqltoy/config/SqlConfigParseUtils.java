@@ -195,7 +195,7 @@ public class SqlConfigParseUtils {
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
-			// update 2020-09-23 处理sql中的循环
+			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
 			sql = processLoop(sql, paramsNamed, paramsValue);
 			sqlParam = processNamedParamsQuery(sql);
 		} else {

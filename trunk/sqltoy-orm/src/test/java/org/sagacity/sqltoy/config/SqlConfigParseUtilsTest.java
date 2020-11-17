@@ -71,4 +71,15 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
+
+	@Test
+	public void testLoop() throws Exception {
+		String sql = "select * from table where #[id=:id and name like :name] #[and @loop(:status,' status=':status[i]'','or')]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { "1", null, new Object[] { "1", "2", "3" } });
+		System.err.println(JSON.toJSONString(result));
+		result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { "1", null, null });
+		System.err.println(JSON.toJSONString(result));
+	}
 }
