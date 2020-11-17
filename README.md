@@ -28,10 +28,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.10 发版日期: 2020-11-10
-* 支持kingbase数据库
-* 优化postgresql 依据pk constraint 进行插入约束改为on conflict (pkFields) do nothing 模式
-* 其他的一些代码和注释优化
+# 最新版本号: 4.16.11 发版日期: 2020-11-18
+* 修复#[and @loop(:params,' status=':params[i]'','or')] 处理后#[]中没有参数导致被整体剔除的缺陷
+* 增加convertType(pageModel,classType) 便于对分页模型整体类型转换
 
 
 # 1. 前言
