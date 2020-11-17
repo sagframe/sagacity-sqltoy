@@ -438,7 +438,7 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed 如果sql是select * from table where xxx=?
 	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
-	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class,Array.class 返回List<Object[])
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
