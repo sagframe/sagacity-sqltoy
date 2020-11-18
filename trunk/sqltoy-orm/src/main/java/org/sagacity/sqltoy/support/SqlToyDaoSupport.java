@@ -1517,12 +1517,13 @@ public class SqlToyDaoSupport {
 		if (paginationModel == null) {
 			// 取top
 			if (innerModel.pickType == 0) {
-				return dialectFactory.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
-						realDataSource);
+				return dialectFactory
+						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
+						.getRows();
 			} // 取随机记录
 			else if (innerModel.pickType == 1) {
 				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
-						realDataSource);
+						realDataSource).getRows();
 			} else {
 				return dialectFactory
 						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
