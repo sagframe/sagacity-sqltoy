@@ -215,6 +215,34 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 取top记录
+	 * @param topSize
+	 * @return
+	 */
+	public EntityQuery top(double topSize) {
+		if (topSize <= 0) {
+			throw new IllegalArgumentException("topSize 值必须要大于0!");
+		}
+		innerModel.pickType = 0;
+		innerModel.pickSize = topSize;
+		return this;
+	}
+
+	/**
+	 * @TODO 取随机记录
+	 * @param randomSize
+	 * @return
+	 */
+	public EntityQuery random(double randomSize) {
+		if (randomSize <= 0) {
+			throw new IllegalArgumentException("randomSize 值必须要大于0!");
+		}
+		innerModel.pickType = 1;
+		innerModel.pickSize = randomSize;
+		return this;
+	}
+
 	public EntityQueryExtend getInnerModel() {
 		return innerModel;
 	}

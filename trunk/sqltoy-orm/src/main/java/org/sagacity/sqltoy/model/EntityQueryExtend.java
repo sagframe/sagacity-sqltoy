@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -90,13 +89,23 @@ public class EntityQueryExtend implements Serializable {
 	public PageOptimize pageOptimize;
 
 	/**
-	 * 实体类
+	 * -1:普通查询;  0:top;1:取随机记录
 	 */
-	public Class entityClass;
+	public int pickType = -1;
 
 	/**
-	 * 查询结果类型
+	 * 取记录数量
 	 */
-	public Type resultType;
+	public double pickSize;
+
+//	/**
+//	 * 实体类
+//	 */
+//	public Class entityClass;
+//
+//	/**
+//	 * 查询结果类型
+//	 */
+//	public Type resultType;
 
 }

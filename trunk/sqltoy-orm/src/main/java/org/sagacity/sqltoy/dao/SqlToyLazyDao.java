@@ -97,6 +97,14 @@ public interface SqlToyLazyDao {
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
 	/**
+	 * @TODO 通过POJO产生count语句
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public Long getCount(Class entityClass, EntityQuery entityQuery);
+
+	/**
 	 * @todo 存储过程调用
 	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
@@ -314,21 +322,21 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
-	 * @param resultType
+	 * @param entityClass
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
+	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @TODO 单表分页查询
 	 * @param <T>
-	 * @param resultType
+	 * @param entityClass
 	 * @param paginationModel
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> PaginationModel<T> findEntity(Class<T> resultType, final PaginationModel paginationModel,
+	public <T> PaginationModel<T> findEntity(Class<T> entityClass, final PaginationModel paginationModel,
 			EntityQuery entityQuery);
 
 	/**
@@ -438,7 +446,8 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed 如果sql是select * from table where xxx=?
 	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
-	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class,Array.class 返回List<Object[])
+	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class,Array.class
+	 *                    返回List<Object[])
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
