@@ -1401,8 +1401,12 @@ public class SqlToyDaoSupport {
 				extend = iter.next().getExtend();
 				// 将java模式的字段名称转化为数据库字段名称
 				keyColumn = entityMeta.getColumnName(extend.keyColumn);
-				translateFields = translateFields.concat(",").concat((keyColumn == null) ? extend.keyColumn : keyColumn)
-						.concat(" as ").concat(extend.column);
+				if (keyColumn == null) {
+					keyColumn = extend.keyColumn;
+				}
+				// 保留字处理
+				keyColumn = ReservedWordsUtil.convertWord(keyColumn, null);
+				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
 
