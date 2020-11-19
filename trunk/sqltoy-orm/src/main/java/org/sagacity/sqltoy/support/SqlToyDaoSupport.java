@@ -1416,10 +1416,15 @@ public class SqlToyDaoSupport {
 				// 去除重复字段
 				if (!cols.contains(field)) {
 					colName = entityMeta.getColumnName(field);
+					if (colName == null) {
+						colName = field;
+					}
+					// 保留字处理
+					colName = ReservedWordsUtil.convertWord(colName, null);
 					if (index > 0) {
 						fields = fields.concat(",");
 					}
-					fields = fields.concat(ReservedWordsUtil.convertWord(colName == null ? field : colName, null));
+					fields = fields.concat(colName);
 					index++;
 					cols.add(field);
 				}
