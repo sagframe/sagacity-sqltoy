@@ -1419,7 +1419,7 @@ public class SqlToyDaoSupport {
 					if (index > 0) {
 						fields = fields.concat(",");
 					}
-					fields = fields.concat(colName == null ? field : colName);
+					fields = fields.concat(ReservedWordsUtil.convertWord(colName == null ? field : colName, null));
 					index++;
 					cols.add(field);
 				}
