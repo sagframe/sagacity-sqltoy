@@ -225,6 +225,24 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * @TODO 通过entity对象来组织count查询语句
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	protected Long getCountByEntityQuery(Class entityClass, EntityQuery entityQuery) {
+		if (null == entityClass) {
+			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
+		}
+		if (entityQuery == null) {
+			// getCount会自动替换select *
+			String sql = "select * from ".concat(getEntityMeta(entityClass).getSchemaTable());
+			return getCountByQuery(new QueryExecutor(sql, null, null));
+		}
+		return (Long) findEntityUtil(entityClass, null, entityQuery, true);
+	}
+
+	/**
 	 * @todo 指定数据源查询记录数量
 	 * @param queryExecutor
 	 * @return
@@ -1337,9 +1355,9 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
+			throw new IllegalArgumentException("findEntityList entityClass、where、values 值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, entityQuery);
+		return (List<T>) findEntityUtil(entityClass, null, entityQuery, false);
 	}
 
 	/**
@@ -1355,12 +1373,13 @@ public class SqlToyDaoSupport {
 			EntityQuery entityQuery) {
 		if (null == entityClass || null == paginationModel || null == entityQuery
 				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、value 值不能为空!");
+			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、values 值不能为空!");
 		}
-		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery);
+		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery, false);
 	}
 
-	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery) {
+	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
+			boolean isCount) {
 		String where;
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
@@ -1489,20 +1508,35 @@ public class SqlToyDaoSupport {
 				sqlToyConfig.setTablesShardings(queryShardings);
 			}
 		}
+		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
+		// 取count数量
+		if (isCount) {
+			return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
+		}
 		// 非分页
 		if (paginationModel == null) {
-			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode,
-					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
+			// 取top
+			if (innerModel.pickType == 0) {
+				return dialectFactory
+						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
+						.getRows();
+			} // 取随机记录
+			else if (innerModel.pickType == 1) {
+				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
+						realDataSource).getRows();
+			} else {
+				return dialectFactory
+						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
+						.getRows();
+			}
 		}
 		// 跳过总记录数形式的分页
 		if (paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
-					paginationModel.getPageNo(), paginationModel.getPageSize(),
-					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getPageResult();
+					paginationModel.getPageNo(), paginationModel.getPageSize(), realDataSource).getPageResult();
 		}
 		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-				paginationModel.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig))
-				.getPageResult();
+				paginationModel.getPageSize(), realDataSource).getPageResult();
 	}
 
 	/**

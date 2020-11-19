@@ -81,6 +81,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
 
+	@Override
+	public Long getCount(Class entityClass, EntityQuery entityQuery) {
+		return super.getCountByEntityQuery(entityClass, entityQuery);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -926,9 +931,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> PaginationModel<T> findEntity(Class<T> resultType, PaginationModel paginationModel,
+	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
-		return super.findEntity(resultType, paginationModel, entityQuery);
+		return super.findEntity(entityClass, paginationModel, entityQuery);
 	}
 
 	@Override
