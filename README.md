@@ -28,9 +28,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.11 发版日期: 2020-11-18
-* 修复#[and @loop(:params,' status=':params[i]'','or')] 处理后#[]中没有参数导致被整体剔除的缺陷
-* 增加convertType(pageModel,classType) 便于对分页模型整体类型转换
+# 最新版本号: 4.16.12 发版日期: 2020-11-19
+* 增强findEntity支持取top和取random记录
+* 增加getCount(POJO.class,EntityQuery) 针对POJO取记录数功能
+* quickstart项目中增加了findEntity等相关演示
 
 
 # 1. 前言
