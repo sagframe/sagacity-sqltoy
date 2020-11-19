@@ -764,6 +764,7 @@ public class SqlConfigParseUtils {
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
+		//对关键词根据数据库类型进行转换,比如mysql的	``变成mssql时变为[]
 		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));
