@@ -89,7 +89,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(请思考:看起来清晰吗?需求变更调整方便吗?如何快速在dbeaver客户端和放入xml文件转换?)!
+* mybatis同样的功能的写法(需要多大的勇气还继续坚持使用mybatis?动态sql差距如此之大,您以为其它领域他就能强吗?)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
