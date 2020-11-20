@@ -53,6 +53,13 @@ public @interface OneToMany {
 	boolean delete() default true;
 
 	/**
+	 * 排序
+	 * 
+	 * @return
+	 */
+	String orderBy() default "";
+
+	/**
 	 * 定制级联修改保存对子表的操作语句
 	 * 
 	 * @return

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @project sagacity-sqltoy
@@ -42,6 +43,11 @@ public class ParamsFilter implements Serializable {
 	 * 转日期时的加减
 	 */
 	private int increase = 0;
+
+	/**
+	 * 时间单位类型
+	 */
+	private TimeUnit timeUnit = TimeUnit.DAYS;
 
 	/**
 	 * 日期格式
@@ -161,6 +167,17 @@ public class ParamsFilter implements Serializable {
 		this.type = "to-date";
 		this.dateType = dateType.getValue();
 		this.increase = increase;
+		this.timeUnit = TimeUnit.DAYS;
+		return this;
+	}
+
+	public ParamsFilter toDate(DateType dateType, TimeUnit timeUnit, int increase) {
+		this.type = "to-date";
+		this.dateType = dateType.getValue();
+		this.increase = increase;
+		if (timeUnit != null) {
+			this.timeUnit = timeUnit;
+		}
 		return this;
 	}
 
@@ -217,6 +234,13 @@ public class ParamsFilter implements Serializable {
 	 */
 	public String getDateType() {
 		return dateType;
+	}
+
+	/**
+	 * @return the timeUnit
+	 */
+	public TimeUnit getTimeUnit() {
+		return timeUnit;
 	}
 
 }

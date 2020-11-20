@@ -755,8 +755,34 @@ public class ParamFilterUtils {
 			}
 		}
 		// 存在日期加减
-		if (paramFilterModel.getIncrementDays() != 0) {
-			result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
+		if (paramFilterModel.getIncrementTime() != 0) {
+			switch (paramFilterModel.getTimeUnit()) {
+			//天优先
+			case DAYS: {
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			case SECONDS: {
+				result = DateUtil.addSecond(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			case MILLISECONDS: {
+				result = DateUtil.addMilliSecond(result, paramFilterModel.getIncrementTime().longValue());
+				break;
+			}
+			case MINUTES: {
+				result = DateUtil.addSecond(result, 60 * paramFilterModel.getIncrementTime());
+				break;
+			}
+			case HOURS: {
+				result = DateUtil.addSecond(result, 3600 * paramFilterModel.getIncrementTime());
+				break;
+			}
+			default: {
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			}
 		}
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
@@ -1108,7 +1134,8 @@ public class ParamFilterUtils {
 			paramFilter.setFormat(filter.getDateType());
 			paramFilter.setValues(filter.getValue());
 			// 加减天数
-			paramFilter.setIncrementDays(Double.valueOf(filter.getIncrease()));
+			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
+			paramFilter.setTimeUnit(filter.getTimeUnit());
 			result.add(paramFilter);
 		}
 		return result;

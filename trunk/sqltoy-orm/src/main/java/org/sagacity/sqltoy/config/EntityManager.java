@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,20 +70,20 @@ public class EntityManager {
 		 */
 		private static final long serialVersionUID = 3964534243191167226L;
 		{
-			//13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
+			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
 			put("default", "DefaultIdGenerator");
-			//32位uuid
+			// 32位uuid
 			put("uuid", "UUIDGenerator");
 			put("redis", "RedisIdGenerator");
-			//26位
+			// 26位
 			put("nanotime", "NanoTimeIdGenerator");
-			//16位雪花算法
+			// 16位雪花算法
 			put("snowflake", "SnowflakeIdGenerator");
-			//default的命名容错
+			// default的命名容错
 			put("defaultidgenerator", "DefaultIdGenerator");
 			put("defaultgenerator", "DefaultIdGenerator");
 			put("nanotimeidgenerator", "NanoTimeIdGenerator");
-			//雪花算法命名容错
+			// 雪花算法命名容错
 			put("snowflakeidgenerator", "SnowflakeIdGenerator");
 			put("uuidgenerator", "UUIDGenerator");
 			put("redisidgenerator", "RedisIdGenerator");
@@ -692,6 +693,14 @@ public class EntityManager {
 									.concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
 				}
 			}
+		}
+		
+		//update 2020-11-20 增加子表级联order by
+		String orderBy = oneToMany.orderBy();
+		if (StringUtil.isNotBlank(orderBy)) {
+			//对属性名称进行替换，替换为实际表字段名称
+			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
+			oneToManyModel.setLoadSubTableSql(oneToManyModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
 
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
