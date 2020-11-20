@@ -2127,32 +2127,33 @@ public class DialectUtils {
 	 * @todo 构造创建和修改记录时的反射
 	 * @param sqlToyContext
 	 * @param idFields
-	 * @param preHandler
+	 * @param prepHandler
 	 * @return
 	 */
 	public static ReflectPropertyHandler getSaveOrUpdateReflectHandler(SqlToyContext sqlToyContext,
-			final String[] idFields, final ReflectPropertyHandler preHandler) {
+			final String[] idFields, final ReflectPropertyHandler prepHandler) {
 		if (sqlToyContext.getUnifyFieldsHandler() == null) {
-			return preHandler;
+			return prepHandler;
 		}
 		final Map<String, Object> addKeyValues = sqlToyContext.getUnifyFieldsHandler().createUnifyFields();
 		final Map<String, Object> updateKeyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
-			return preHandler;
+			return prepHandler;
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		final int idLength = (idFields == null) ? 0 : idFields.length;
+		//构造一个新的包含update和save 的字段处理
 		ReflectPropertyHandler handler = new ReflectPropertyHandler() {
 			@Override
 			public void process() {
-				if (preHandler != null) {
-					preHandler.setPropertyIndexMap(this.getPropertyIndexMap());
-					preHandler.setRowIndex(this.getRowIndex());
-					preHandler.setRowData(this.getRowData());
-					preHandler.process();
+				if (prepHandler != null) {
+					prepHandler.setPropertyIndexMap(this.getPropertyIndexMap());
+					prepHandler.setRowIndex(this.getRowIndex());
+					prepHandler.setRowData(this.getRowData());
+					prepHandler.process();
 				}
 				// 主键为空表示save操作
 				if (idLength > 0 && this.getValue(idFields[0]) == null) {
