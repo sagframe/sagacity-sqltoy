@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.configure;
 import java.io.Serializable;
 import java.util.Map;
 
+import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -112,6 +113,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 自定义获取DataSource的策略类
 	 */
 	private String obtainDataSource;
+
+	/**
+	 * 缓存管理器
+	 */
+	private String translateCacheManager;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -321,4 +327,20 @@ public class SqlToyContextProperties implements Serializable {
 	public void setObtainDataSource(String obtainDataSource) {
 		this.obtainDataSource = obtainDataSource;
 	}
+
+	/**
+	 * @return the translateCacheManager
+	 */
+	public String getTranslateCacheManager() {
+		return translateCacheManager;
+	}
+
+	/**
+	 * @param translateCacheManager the translateCacheManager to set
+	 */
+	public void setTranslateCacheManager(String translateCacheManager) {
+		this.translateCacheManager = translateCacheManager;
+	}
+	
+	
 }

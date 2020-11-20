@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
+import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -173,6 +174,20 @@ public class SqltoyAutoConfiguration {
 			else if (obtainDataSource.contains(".")) {
 				sqlToyContext.setObtainDataSource(
 						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义缓存实现管理器
+		String translateCacheManager = properties.getTranslateCacheManager();
+		if (StringUtil.isNotBlank(translateCacheManager)) {
+			//缓存管理器的bean名称
+			if (applicationContext.containsBean(translateCacheManager)) {
+				sqlToyContext.setTranslateCacheManager(
+						(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
+			} // 包名和类名称
+			else if (translateCacheManager.contains(".")) {
+				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
+						.getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;
