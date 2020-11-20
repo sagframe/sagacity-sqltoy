@@ -54,11 +54,6 @@ public class OneToManyModel implements Serializable {
 	private Class mappedType;
 
 	/**
-	 * 级联排序
-	 */
-	private String orderBy;
-
-	/**
 	 * 查询子表记录sql
 	 */
 	private String loadSubTableSql;
@@ -211,20 +206,6 @@ public class OneToManyModel implements Serializable {
 	 */
 	public void setDelete(boolean delete) {
 		this.delete = delete;
-	}
-
-	/**
-	 * @return the orderBy
-	 */
-	public String getOrderBy() {
-		return orderBy;
-	}
-
-	/**
-	 * @param orderBy the orderBy to set
-	 */
-	public void setOrderBy(String orderBy) {
-		this.orderBy = orderBy;
 	}
 
 }
