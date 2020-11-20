@@ -708,7 +708,7 @@
 					<xsd:attribute name="increment-time"
 						type="xsd:integer">
 						<xsd:annotation>
-							<xsd:documentation><![CDATA[默认单位是天]]></xsd:documentation>
+							<xsd:documentation><![CDATA[增减时间,默认单位是天]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
 					<xsd:attribute name="increment-unit" default="days">
