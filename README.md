@@ -28,10 +28,11 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.12 发版日期: 2020-11-19
-* 增强findEntity支持取top和取random记录
-* 增加getCount(POJO.class,EntityQuery) 针对POJO取记录数功能
-* quickstart项目中增加了findEntity等相关演示
+# 最新版本号: 4.16.13 发版日期: 2020-11-21
+* 增加级联加载排序功能，quickvo里面增加配置
+* 优化findEntity 数据库关键词的处理
+* sqltoy-boot-starter增加可自行扩展translateCacheManger配置
+* 在xml中的filters里面to-date 增加了increment-unit 单位选择，默认是天
 
 
 # 1. 前言
