@@ -3,7 +3,6 @@ package org.sagacity.sqltoy.configure;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
