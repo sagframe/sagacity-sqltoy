@@ -699,7 +699,7 @@ public class EntityManager {
 		String orderBy = oneToMany.orderBy();
 		if (StringUtil.isNotBlank(orderBy)) {
 			//对属性名称进行替换，替换为实际表字段名称
-			orderBy = SqlUtil.convertFieldsToColumns(entityMeta, orderBy);
+			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
 			oneToManyModel.setLoadSubTableSql(oneToManyModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
 
