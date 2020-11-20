@@ -705,8 +705,23 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
-					<xsd:attribute name="increment-days"
-						type="xsd:double" />
+					<xsd:attribute name="increment-time"
+						type="xsd:integer">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[默认单位是天]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+					<xsd:attribute name="increment-unit" default="days">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="days" />
+								<xsd:enumeration value="hours" />
+								<xsd:enumeration value="minutes" />
+								<xsd:enumeration value="seconds" />
+								<xsd:enumeration value="milliseconds" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="neq" minOccurs="0"

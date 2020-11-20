@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -753,9 +754,29 @@ public class SqlXMLConfigParse {
 			filterModel
 					.setValues(new String[] { filter.getAttribute("start-value"), filter.getAttribute("end-value") });
 		}
-		if (filter.hasAttribute("increment-days")) {
-			filterModel.setIncrementDays(Double.valueOf(filter.getAttribute("increment-days")));
+
+		// 解析to-date 的加减操作
+		if (filter.hasAttribute("increment-time")) {
+			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-time")));
+		} // 兼容老版本
+		else if (filter.hasAttribute("increment-days")) {
+			filterModel.setIncrementTime(Double.valueOf(filter.getAttribute("increment-days")));
 		}
+		if (filter.hasAttribute("increment-unit")) {
+			String timeUnit = filter.getAttribute("increment-unit").toUpperCase();
+			if (timeUnit.equals("DAYS") || timeUnit.equals("DAY")) {
+				filterModel.setTimeUnit(TimeUnit.DAYS);
+			} else if (timeUnit.equals("HOURS") || timeUnit.equals("HOUR")) {
+				filterModel.setTimeUnit(TimeUnit.HOURS);
+			} else if (timeUnit.equals("MINUTES") || timeUnit.equals("MINUTE")) {
+				filterModel.setTimeUnit(TimeUnit.MINUTES);
+			} else if (timeUnit.equals("SECONDS") || timeUnit.equals("SECOND")) {
+				filterModel.setTimeUnit(TimeUnit.SECONDS);
+			} else if (timeUnit.equals("MILLISECONDS") || timeUnit.equals("MILLISECOND")) {
+				filterModel.setTimeUnit(TimeUnit.MILLISECONDS);
+			}
+		}
+
 		// to-date filter
 		if (filter.hasAttribute("format")) {
 			String fmt = filter.getAttribute("format");
@@ -1048,7 +1069,7 @@ public class SqlXMLConfigParse {
 		}
 		Element link = (Element) linkNode.item(0);
 		LinkModel linkModel = new LinkModel();
-		//update 2020-09-07 增加支持多列场景(兼容旧的模式)
+		// update 2020-09-07 增加支持多列场景(兼容旧的模式)
 		if (link.hasAttribute("column")) {
 			linkModel.setColumns(trimParams(link.getAttribute("column").split("\\,")));
 		} else if (link.hasAttribute("columns")) {
