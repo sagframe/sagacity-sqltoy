@@ -1717,8 +1717,15 @@ public class SqlToyDaoSupport {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search, getDialect(query.getExtend().dataSource));
-				future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
-						paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				//自定义条件参数
+				if (query.getExtend().selfCondition) {
+					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+							query.getExtend().names, query.getExtend().values,
+							getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				} else {
+					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+							paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				}
 				futureResult.add(future);
 			}
 			pool.shutdown();
