@@ -37,4 +37,20 @@ public class ParallQueryExtend implements Serializable {
 	 * 数据源
 	 */
 	public DataSource dataSource;
+
+	/**
+	 * 自定义条件
+	 */
+	public boolean selfCondition = false;
+
+	/**
+	 * 参数名称
+	 */
+	public String[] names;
+
+	/**
+	 * 参数值
+	 */
+	public Object[] values;
+
 }

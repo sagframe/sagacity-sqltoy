@@ -630,12 +630,10 @@ public class EntityManager {
 		// 主表字段名称
 		String masterField;
 		for (int i = 0; i < idSize; i++) {
-			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
 			masterField = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (masterField.equalsIgnoreCase(idFieldName)) {
-					// mappedFields[j] = var;
 					mappedFields[j] = oneToMany.mappedFields()[i];
 					mappedColumns[j] = oneToMany.mappedColumns()[i];
 					break;
@@ -676,29 +674,30 @@ public class EntityManager {
 		// 自动加载
 		if (StringUtil.isNotBlank(oneToMany.load())) {
 			String loadLow = oneToMany.load().toLowerCase();
-			// 是否是:xxx形式的参数条件
+			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
-			if (isNamedSql && !StringUtil.matches(oneToMany.load(), "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
-				// 自定义加载sql
+			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
+				// 自定义加载完整sql
 				if (!loadLow.equals("default") && !loadLow.equals("true")) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				}
 			} else {
+				String loadSql = SqlUtil.convertFieldsToColumns(subTableMeta, oneToMany.load());
 				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
-					oneToManyModel.setLoadSubTableSql(oneToMany.load());
+					oneToManyModel.setLoadSubTableSql(loadSql);
 				} else {
-					oneToManyModel.setLoadSubTableSql(
-							"select ".concat(subTableMeta.getAllColumnNames()).concat(" from ").concat(subSchemaTable)
-									.concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
+					oneToManyModel
+							.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
+									.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(loadSql));
 				}
 			}
 		}
-		
-		//update 2020-11-20 增加子表级联order by
+
+		// update 2020-11-20 增加子表级联order by
 		String orderBy = oneToMany.orderBy();
 		if (StringUtil.isNotBlank(orderBy)) {
-			//对属性名称进行替换，替换为实际表字段名称
+			// 对属性名称进行替换，替换为实际表字段名称
 			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
 			oneToManyModel.setLoadSubTableSql(oneToManyModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
