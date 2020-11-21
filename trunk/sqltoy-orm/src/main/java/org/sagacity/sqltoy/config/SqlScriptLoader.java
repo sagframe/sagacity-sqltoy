@@ -95,6 +95,12 @@ public class SqlScriptLoader {
 	 * @param scriptCheckIntervalSeconds
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds) {
+		// 增加路径验证提示,最易配错导致无法加载sql文件
+		if (StringUtil.isNotBlank(sqlResourcesDir)
+				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
+			throw new IllegalArgumentException("请正确配置:spring.sqltoy.sqlResourcesDir参数,您的配置:[" + sqlResourcesDir
+					+ "]是错误的格式!\n正确格式只接受单个或多个路径模式,如[classpath:com/sagacity/crm 或多逗号分隔的路径模式 classpath:com/sagacity/crm,classpath:com/sagacity/hr]");
+		}
 		if (initialized) {
 			return;
 		}
