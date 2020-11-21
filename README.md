@@ -28,9 +28,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.13 发版日期: 2020-11-21
+# 最新版本号: 4.16.14 发版日期: 2020-11-21
 * 增加级联加载排序功能，quickvo里面增加配置
 * 优化findEntity 数据库关键词的处理
+* 并行查询可以自行设置每个查询的条件参数
 * sqltoy-boot-starter增加可自行扩展translateCacheManger配置
 * 在xml中的filters里面to-date 增加了increment-unit 单位选择，默认是天
 
@@ -636,8 +637,8 @@ public class CrudCaseServiceTest {
 		<between params="" start-value="0" end-value="9999" />
 
 		<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
-		 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
-		<to-date params="" format="yyyyMMdd" increment-days="1" />
+		 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天，increment-unit默认为days -->
+		<to-date params="" format="yyyyMMdd" increment-time="1" increment-unit="days"/>
 		<!-- 将参数转为数字 --> 
 		<to-number params="" data-type="decimal" />
 		<!-- 将前端传过来的字符串切割成数组 -->
