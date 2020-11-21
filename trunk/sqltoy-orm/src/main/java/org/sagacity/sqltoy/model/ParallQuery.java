@@ -54,6 +54,11 @@ public class ParallQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置独立的条件参数
+	 * @param names
+	 * @return
+	 */
 	public ParallQuery names(String... names) {
 		extend.names = names;
 		extend.selfCondition = true;
@@ -66,6 +71,7 @@ public class ParallQuery implements Serializable {
 		return this;
 	}
 
+	//map传参
 	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
 		extend.names = model.getNames();
