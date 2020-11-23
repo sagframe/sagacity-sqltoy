@@ -28,12 +28,15 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.14 发版日期: 2020-11-21
+# 最新版本号: 4.16.15 发版日期: 2020-11-23
 * 增加级联加载排序功能，quickvo里面增加配置
 * 优化findEntity 数据库关键词的处理
 * 并行查询可以自行设置每个查询的条件参数
 * sqltoy-boot-starter增加可自行扩展translateCacheManger配置
 * 在xml中的filters里面to-date 增加了increment-unit 单位选择，默认是天
+* 增强sqltoy-boot-starter 对spring.sqltoy 配置的校验，避免有开发者写成sqltoy.xxx遗漏掉spring浅醉
+* sqltoy中增强sqlResourcesDir 格式的交易，防止开发者写成文件匹配表达式
+* 强化未匹配到sql的sqlId执行错误提示，避免开发者遇到错误时无法定位错误
 
 
 # 1. 前言
