@@ -36,7 +36,7 @@ public class SqltoyAutoConfiguration {
 	private ApplicationContext applicationContext;
 
 	@Autowired
-	SqlToyContextProperties properties;
+	private SqlToyContextProperties properties;
 
 	@Value("${sqltoy.sqlResourcesDir}")
 	private String sqlResourcesDir;
