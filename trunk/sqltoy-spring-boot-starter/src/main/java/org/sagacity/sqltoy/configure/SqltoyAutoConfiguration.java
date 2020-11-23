@@ -38,6 +38,7 @@ public class SqltoyAutoConfiguration {
 	@Autowired
 	private SqlToyContextProperties properties;
 
+	//增加一个辅助校验,避免不少新用户将spring.sqltoy开头写成sqltoy.开头
 	@Value("${sqltoy.sqlResourcesDir}")
 	private String sqlResourcesDir;
 
