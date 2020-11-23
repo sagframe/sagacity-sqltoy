@@ -39,7 +39,7 @@ public class SqltoyAutoConfiguration {
 	private SqlToyContextProperties properties;
 
 	//增加一个辅助校验,避免不少新用户将spring.sqltoy开头写成sqltoy.开头
-	@Value("${sqltoy.sqlResourcesDir}")
+	@Value("${sqltoy.sqlResourcesDir:}")
 	private String sqlResourcesDir;
 
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
@@ -48,7 +48,7 @@ public class SqltoyAutoConfiguration {
 	SqlToyContext sqlToyContext() throws Exception {
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
-					"请正确配置sqltoy配置,必须是spring.sqltoy开头,而不是sqltoy!\n例如: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		// sql 文件资源路径

@@ -99,8 +99,13 @@ public class SqlScriptLoader {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
-			throw new IllegalArgumentException("请正确配置:spring.sqltoy.sqlResourcesDir参数,您的配置:[" + sqlResourcesDir
-					+ "]是错误的格式!\n正确格式只接受单个或多个路径模式,如[classpath:com/sagacity/crm 或多逗号分隔的路径模式 classpath:com/sagacity/crm,classpath:com/sagacity/hr]");
+			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir
+					+ " 不正确!\n"
+					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*通配符(注意是路径!)----*/\n"
+					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
+					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
+					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
+					+ "/*------------------------------------------------------------------------------*/");
 		}
 		if (initialized) {
 			return;
@@ -225,8 +230,12 @@ public class SqlScriptLoader {
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
 				if (result == null) {
-					throw new DataAccessException("sqlId=[" + sqlKey
-							+ "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n错误原因:1、spring.sqltoy.sqlResourcesDir 配置错误,全部sql文件没有被加载;\n2、sql.xml文件没有被编译到classes目录下面;\n3、sqlId对应的文件格式错误!");
+					throw new DataAccessException("\n发生错误:sqlId=[" + sqlKey + "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n"
+							+ "/*----------------------错误可能的原因如下---------------------*/\n"
+							+ "/* 1、检查: spring.sqltoy.sqlResourcesDir配置,如配错会导致sql文件没有被加载;\n"
+							+ "/* 2、sql.xml文件没有被编译到classes目录下面;请检查maven的编译配置                        \n"
+							+ "/* 3、sqlId对应的文件内部错误!版本合并或书写错误会导致单个文件解析错误                          \n"
+							+ "/* ------------------------------------------------------------*/");
 				}
 			}
 		} else {
