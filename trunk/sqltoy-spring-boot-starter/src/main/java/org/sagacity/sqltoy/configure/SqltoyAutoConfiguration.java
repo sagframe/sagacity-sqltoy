@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -36,11 +37,18 @@ public class SqltoyAutoConfiguration {
 
 	@Autowired
 	SqlToyContextProperties properties;
-	
+
+	@Value("${sqltoy.sqlResourcesDir}")
+	private String sqlResourcesDir;
+
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
+		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
+			throw new IllegalArgumentException(
+					"请正确配置sqltoy配置,必须是spring.sqltoy开头,而不是sqltoy!\n例如: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
@@ -180,7 +188,7 @@ public class SqltoyAutoConfiguration {
 		// 自定义缓存实现管理器
 		String translateCacheManager = properties.getTranslateCacheManager();
 		if (StringUtil.isNotBlank(translateCacheManager)) {
-			//缓存管理器的bean名称
+			// 缓存管理器的bean名称
 			if (applicationContext.containsBean(translateCacheManager)) {
 				sqlToyContext.setTranslateCacheManager(
 						(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
