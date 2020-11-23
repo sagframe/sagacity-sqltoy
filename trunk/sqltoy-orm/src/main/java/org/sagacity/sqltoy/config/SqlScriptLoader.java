@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -223,6 +224,10 @@ public class SqlScriptLoader {
 			}
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
+				if (result == null) {
+					throw new DataAccessException("sqlId=[" + sqlKey
+							+ "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n错误原因:1、spring.sqltoy.sqlResourcesDir 配置错误,全部sql文件没有被加载;\n2、sql.xml文件没有被编译到classes目录下面;\n3、sqlId对应的文件格式错误!");
+				}
 			}
 		} else {
 			result = codeSqlCache.get(sqlKey);
