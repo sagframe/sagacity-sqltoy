@@ -34,7 +34,7 @@
 * 并行查询可以自行设置每个查询的条件参数
 * sqltoy-boot-starter增加可自行扩展translateCacheManger配置
 * 在xml中的filters里面to-date 增加了increment-unit 单位选择，默认是天
-* 增强sqltoy-boot-starter 对spring.sqltoy 配置的校验，避免有开发者写成sqltoy.xxx遗漏掉spring浅醉
+* 增强sqltoy-boot-starter 对spring.sqltoy 配置的校验，避免有开发者写成sqltoy.xxx遗漏掉spring前缀
 * sqltoy中增强sqlResourcesDir 格式的交易，防止开发者写成文件匹配表达式
 * 强化未匹配到sql的sqlId执行错误提示，避免开发者遇到错误时无法定位错误
 
