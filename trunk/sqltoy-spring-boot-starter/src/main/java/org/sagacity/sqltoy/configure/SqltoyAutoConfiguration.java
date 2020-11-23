@@ -36,7 +36,7 @@ public class SqltoyAutoConfiguration {
 
 	@Autowired
 	SqlToyContextProperties properties;
-
+	
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
