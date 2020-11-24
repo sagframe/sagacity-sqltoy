@@ -38,6 +38,11 @@ public class DataSetResult<T> implements Serializable {
 	 * 总记录数量
 	 */
 	private Long recordCount = 0L;
+	
+	/**
+	 * 执行总时长,毫秒
+	 */
+	private Long executeTime = -1L;
 
 	/**
 	 * @return the labelNames
@@ -115,4 +120,17 @@ public class DataSetResult<T> implements Serializable {
 		this.recordCount = recordCount;
 	}
 
+	/**
+	 * @return the executeTime
+	 */
+	public Long getExecuteTime() {
+		return executeTime;
+	}
+
+	/**
+	 * @param executeTime the executeTime to set
+	 */
+	public void setExecuteTime(Long executeTime) {
+		this.executeTime = executeTime;
+	}
 }

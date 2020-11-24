@@ -424,6 +424,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -602,6 +603,7 @@ public class DialectFactory {
 							}
 							queryResult.setSkipQueryCount(true);
 							SqlExecuteStat.debug("查询结果", "分页查询出记录数量:{}条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -726,6 +728,7 @@ public class DialectFactory {
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
 									((QueryResult) queryResult).getRows().size());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -795,6 +798,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -853,6 +857,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -1504,6 +1509,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -1544,6 +1550,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -1583,6 +1590,7 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
@@ -1650,6 +1658,7 @@ public class DialectFactory {
 										resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
+							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});

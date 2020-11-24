@@ -185,7 +185,7 @@ public class SqlExecuteStat {
 			args = log.getArgs();
 			if (logType == 0) {
 				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
-				//区别一些批量写和更新操作，参数较多不便于输出
+				// 区别一些批量写和更新操作，参数较多不便于输出
 				if (optType.startsWith("save") || optType.startsWith("deleteAll")
 						|| optType.startsWith("batchUpdate")) {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
@@ -368,5 +368,17 @@ public class SqlExecuteStat {
 			}
 		}
 		return "" + className + "." + method + "[代码第:" + lineNumber + " 行]";
+	}
+
+	/**
+	 * @TODO 获取执行总时长
+	 * @return
+	 */
+	public static Long getExecuteTime() {
+		SqlExecuteTrace sqlTrace = threadLocal.get();
+		if (sqlTrace != null) {
+			return sqlTrace.getExecuteTime();
+		}
+		return -1L;
 	}
 }
