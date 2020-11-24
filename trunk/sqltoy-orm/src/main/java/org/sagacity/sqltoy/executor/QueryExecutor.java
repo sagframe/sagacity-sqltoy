@@ -140,6 +140,16 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * @TODO 针对分页代码中写sql场景提供自定义countsql功能
+	 * @param countSql
+	 * @return
+	 */
+//	public QueryExecutor countSql(String countSql) {
+//		innerModel.countSql = countSql;
+//		return this;
+//	}
+
+	/**
 	 * @TODO 锁记录
 	 * @param lockMode
 	 * @return

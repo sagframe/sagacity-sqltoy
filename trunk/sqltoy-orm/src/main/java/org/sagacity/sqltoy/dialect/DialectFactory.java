@@ -650,6 +650,7 @@ public class DialectFactory {
 									queryExecutor, pageOptimize);
 							// 需要进行分页查询优化
 							if (null != pageQueryKey) {
+								//if()
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize,
 										pageQueryKey);

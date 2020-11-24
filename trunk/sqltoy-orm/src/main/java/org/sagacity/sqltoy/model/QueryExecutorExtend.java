@@ -139,6 +139,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public LockMode lockMode = null;
 
+	/**
+	 * 自定义countSql
+	 */
+	public String countSql;
+
 	// 分库分表策略配置
 	// public ShardingConfig shardingConfig = new ShardingConfig();
 
@@ -257,12 +262,12 @@ public class QueryExecutorExtend implements Serializable {
 		}
 		// 只有使用cache-arg 场景下需要校正参数
 		if (paramsName != null && paramsValue != null) {
-			//遗漏掉的参数名称
+			// 遗漏掉的参数名称
 			List<String> omitParams = new ArrayList<String>();
 			boolean exist = false;
 			for (String comp : sqlToyConfig.getCacheArgNames()) {
 				exist = false;
-				//判断cacheArgs参数是否在传递的参数中
+				// 判断cacheArgs参数是否在传递的参数中
 				for (String param : paramsName) {
 					if (param.toLowerCase().equals(comp)) {
 						exist = true;
