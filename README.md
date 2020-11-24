@@ -94,7 +94,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(需要多大的勇气还继续坚持使用mybatis?动态sql差距如此之大,您以为其它领域他就能强吗?)!
+* mybatis同样的功能的写法(很显然基于事实的对比，mybatis的写法不清晰也不便于维护)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
