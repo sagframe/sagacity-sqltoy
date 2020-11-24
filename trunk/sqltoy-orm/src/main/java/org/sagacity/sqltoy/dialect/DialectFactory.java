@@ -362,9 +362,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -424,10 +425,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -576,9 +578,10 @@ public class DialectFactory {
 					+ "}>= limit:{" + limitSize + "}!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -603,10 +606,11 @@ public class DialectFactory {
 							}
 							queryResult.setSkipQueryCount(true);
 							SqlExecuteStat.debug("查询结果", "分页查询出记录数量:{}条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -632,9 +636,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -652,7 +657,7 @@ public class DialectFactory {
 									queryExecutor, pageOptimize);
 							// 需要进行分页查询优化
 							if (null != pageQueryKey) {
-								//if()
+								// if()
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize,
 										pageQueryKey);
@@ -728,10 +733,11 @@ public class DialectFactory {
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
 									((QueryResult) queryResult).getRows().size());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -757,9 +763,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -798,10 +805,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -827,9 +835,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -857,10 +866,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1486,10 +1496,11 @@ public class DialectFactory {
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1509,10 +1520,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1526,10 +1538,11 @@ public class DialectFactory {
 			final SqlToyConfig sqlToyConfig, final Integer topSize, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1550,10 +1563,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1567,10 +1581,11 @@ public class DialectFactory {
 			final SqlToyConfig sqlToyConfig, final Integer random, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1590,10 +1605,11 @@ public class DialectFactory {
 										(Class) extend.resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1616,8 +1632,9 @@ public class DialectFactory {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
 			final DataSource dataSource) {
 		try {
+			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
-			return (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String dialectSql = sqlToyConfig.getSql(dialect);
@@ -1658,10 +1675,11 @@ public class DialectFactory {
 										resultType));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
-							queryResult.setExecuteTime(SqlExecuteStat.getExecuteTime());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
