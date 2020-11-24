@@ -54,6 +54,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -1584,8 +1585,35 @@ public class SqlToyDaoSupport {
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
-		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		Entry<String, Object> entry;
+		
+		//对统一更新字段做处理
+		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
+		if (unifyHandler != null) {
+			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
+			if (updateFields != null && !updateFields.isEmpty()) {
+				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
+				while (updateIter.hasNext()) {
+					entry = updateIter.next();
+					// 是数据库表的字段
+					if (entityMeta.getColumnName(entry.getKey()) != null) {
+						// 是否已经主动update
+						if (innerModel.updateValues.containsKey(entry.getKey())) {
+							// 判断是否存在强制更新
+							if (unifyHandler.forceUpdateFields() != null
+									&& unifyHandler.forceUpdateFields().contains(entry.getKey())) {
+								innerModel.updateValues.put(entry.getKey(), entry.getValue());
+							}
+						} else {
+							innerModel.updateValues.put(entry.getKey(), entry.getValue());
+						}
+					}
+				}
+			}
+		}
+		
+		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
+		// Entry<String, Object> entry;
 		String columnName;
 		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
 		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
@@ -1717,7 +1745,7 @@ public class SqlToyDaoSupport {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search, getDialect(query.getExtend().dataSource));
-				//自定义条件参数
+				// 自定义条件参数
 				if (query.getExtend().selfCondition) {
 					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
 							query.getExtend().names, query.getExtend().values,
