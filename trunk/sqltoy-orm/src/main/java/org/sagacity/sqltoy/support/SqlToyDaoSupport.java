@@ -1613,7 +1613,6 @@ public class SqlToyDaoSupport {
 		}
 		
 		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
-		// Entry<String, Object> entry;
 		String columnName;
 		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
 		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
