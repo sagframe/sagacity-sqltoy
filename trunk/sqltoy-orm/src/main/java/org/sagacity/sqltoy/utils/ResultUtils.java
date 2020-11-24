@@ -1176,9 +1176,15 @@ public class ResultUtils {
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getInnerModel().resultType;
 		boolean hump = true;
-		if (null != resultType && (resultType.equals(HashMap.class) || resultType.equals(Map.class)
-				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.getInnerModel().humpMapLabel) {
-			hump = false;
+		if (null != resultType) {
+			Class superClass = ((Class) resultType).getSuperclass();
+			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
+					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
+					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
+					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
+					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
+				hump = false;
+			}
 		}
 		if (hump) {
 			return humpFieldNames(labelNames);
