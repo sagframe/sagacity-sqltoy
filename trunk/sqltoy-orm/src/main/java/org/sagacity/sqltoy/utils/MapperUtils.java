@@ -309,7 +309,7 @@ public class MapperUtils {
 						if (cellData.getClass().getName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypesLow[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(null, cellData, methodTypesLow[j]));
 						}
 					}
 				}

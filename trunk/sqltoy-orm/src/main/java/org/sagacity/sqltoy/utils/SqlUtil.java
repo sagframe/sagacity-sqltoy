@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,8 +199,9 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
-			Integer[] paramsType, int fromIndex) throws SQLException, IOException {
+	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
+			throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
 		// 一般情况fromIndex 都是0
 		if (null != params && params.length > 0) {
@@ -208,11 +210,11 @@ public class SqlUtil {
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
+					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
 				}
 			} else {
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + i);
+					setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + i);
 				}
 			}
 		}
@@ -229,8 +231,9 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private static void setSqlServerParamsValue(Connection conn, final Integer dbType, PreparedStatement pst,
-			Object[] params, Integer[] paramsType, int fromIndex) throws SQLException, IOException {
+	private static void setSqlServerParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
+			throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
 		// 一般情况fromIndex 都是0
 		if (null != params && params.length > 0) {
@@ -239,13 +242,13 @@ public class SqlUtil {
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
+					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
 				}
 			} else {
 				int meter = 0;
 				for (int i = 0; i < n; i++) {
 					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
-						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
+						setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
 						meter++;
 					}
 				}
@@ -266,8 +269,8 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
-			int jdbcType, int paramIndex) throws SQLException, IOException {
+	public static void setParamValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object paramValue, int jdbcType, int paramIndex) throws SQLException, IOException {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		String tmpStr;
 		if (null == paramValue) {
@@ -358,7 +361,13 @@ public class SqlUtil {
 				pst.setByte(paramIndex, (Byte) paramValue);
 			} else {
 				if (jdbcType != -1) {
-					pst.setObject(paramIndex, paramValue, jdbcType);
+					boolean isMatched = false;
+					if (typeHandler != null) {
+						isMatched = typeHandler.setValue(pst, paramIndex, jdbcType, paramValue);
+					}
+					if (!isMatched) {
+						pst.setObject(paramIndex, paramValue, jdbcType);
+					}
 				} else {
 					pst.setObject(paramIndex, paramValue);
 				}
@@ -374,8 +383,8 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(ResultSet rs, Class voClass, boolean ignoreAllEmptySet)
-			throws Exception {
+	private static List reflectResultToValueObject(TypeHandler typeHandler, ResultSet rs, Class voClass,
+			boolean ignoreAllEmptySet) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -409,7 +418,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(rs, columnNames, setMethods, propTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, voClass,
+					ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -446,8 +456,8 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(ResultSet rs, String[] columnLabels, Method[] setMethods,
-			String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
+			Method[] setMethods, String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -462,7 +472,7 @@ public class SqlUtil {
 				fieldValue = rs.getObject(columnLabels[i]);
 				if (null != fieldValue) {
 					allNull = false;
-					method.invoke(bean, BeanUtil.convertType(fieldValue, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName));
 				}
 			}
 		}
@@ -621,10 +631,11 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object loadByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
-			final boolean ignoreAllEmptySet) throws Exception {
-		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn, dbType, ignoreAllEmptySet);
+	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
+			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final Integer dbType, final boolean ignoreAllEmptySet) throws Exception {
+		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, conn, dbType,
+				ignoreAllEmptySet);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -646,17 +657,17 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List findByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
-			final boolean ignoreAllEmptySet) throws Exception {
+	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
+			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final Integer dbType, final boolean ignoreAllEmptySet) throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				setParamsValue(conn, dbType, pst, params, null, 0);
+				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(processResultSet(rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet));
+				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet));
 			}
 		});
 		// 为null返回一个空集合
@@ -676,8 +687,8 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List processResultSet(ResultSet rs, Class voClass, RowCallbackHandler rowCallbackHandler,
-			int startColIndex, boolean ignoreAllEmptySet) throws Exception {
+	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
+			RowCallbackHandler rowCallbackHandler, int startColIndex, boolean ignoreAllEmptySet) throws Exception {
 		// 记录行记数器
 		int index = 0;
 		// 提取数据预警阈值
@@ -693,7 +704,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(rs, voClass, ignoreAllEmptySet);
+			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -769,9 +780,9 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final Collection rowDatas, final int batchSize,
-			final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes, final Boolean autoCommit,
-			final Connection conn, final Integer dbType) throws Exception {
+	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final Collection rowDatas,
+			final int batchSize, final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes,
+			final Boolean autoCommit, final Connection conn, final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return 0L;
@@ -809,14 +820,14 @@ public class SqlUtil {
 						if (rowData.getClass().isArray()) {
 							Object[] tmp = CollectionUtil.convertArray(rowData);
 							for (int i = 0; i < tmp.length; i++) {
-								setParamValue(conn, dbType, pst, tmp[i], updateTypes == null ? -1 : updateTypes[i],
-										i + 1);
+								setParamValue(typeHandler, conn, dbType, pst, tmp[i],
+										updateTypes == null ? -1 : updateTypes[i], i + 1);
 							}
 						} else if (rowData instanceof Collection) {
 							Collection tmp = (Collection) rowData;
 							int tmpIndex = 0;
 							for (Iterator tmpIter = tmp.iterator(); tmpIter.hasNext();) {
-								setParamValue(conn, dbType, pst, tmpIter.next(),
+								setParamValue(typeHandler, conn, dbType, pst, tmpIter.next(),
 										updateTypes == null ? -1 : updateTypes[tmpIndex], tmpIndex + 1);
 								tmpIndex++;
 							}
@@ -865,8 +876,8 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean wrapTreeTableRoute(final TreeTableModel treeTableModel, Connection conn, final Integer dbType)
-			throws Exception {
+	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
+			Connection conn, final Integer dbType) throws Exception {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
 				|| StringUtil.isBlank(treeTableModel.getPidField())) {
 			logger.error("请设置树形表的table名称、id字段名称、pid字段名称!");
@@ -888,12 +899,12 @@ public class SqlUtil {
 					.concat(treeTableModel.getNodeRouteField()).concat(" from ").concat(treeTableModel.getTableName())
 					.concat(" where ").concat(treeTableModel.getIdField()).concat("=").concat(flag)
 					.concat(treeTableModel.getRootId().toString()).concat(flag);
-			//附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
+			// 附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(idInfoSql, null, null, null, conn, dbType, false);
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -905,7 +916,7 @@ public class SqlUtil {
 					.append(" set ").append(treeTableModel.getNodeLevelField()).append("=?,")
 					.append(treeTableModel.getNodeRouteField()).append("=? ").append(" where ")
 					.append(treeTableModel.getIdField()).append("=?");
-			//附加条件
+			// 附加条件
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				nextNodeQueryStr.append(" and ").append(treeTableModel.getConditions());
 				updateLevelAndRoute.append(" and ").append(treeTableModel.getConditions());
@@ -924,15 +935,15 @@ public class SqlUtil {
 				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 					firstNextNodeQuery.append(" and ").append(treeTableModel.getConditions());
 				}
-				ids = findByJdbcQuery(firstNextNodeQuery.toString(), new Object[] { treeTableModel.getIdValue() }, null,
-						null, conn, dbType, false);
+				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
+						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false);
 			} else {
-				ids = findByJdbcQuery(nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
+				ids = findByJdbcQuery(typeHandler, nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
 						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false);
 			}
 			if (ids != null && !ids.isEmpty()) {
-				processNextLevel(updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel, pidsMap,
-						ids, nodeLevel + 1, conn, dbType);
+				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
+						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, dbType);
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
@@ -946,7 +957,7 @@ public class SqlUtil {
 				updateLeafSql.append(" where ").append(treeTableModel.getConditions());
 			}
 			// 先将所有节点设置为叶子
-			executeSql(updateLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, true);
 
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
@@ -989,7 +1000,7 @@ public class SqlUtil {
 					updateTrunkLeafSql.append(" and ").append(treeTableModel.getConditions());
 				}
 			}
-			executeSql(updateTrunkLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, true);
 		}
 		return true;
 	}
@@ -1006,11 +1017,11 @@ public class SqlUtil {
 	 * @param dbType
 	 * @throws Exception
 	 */
-	private static void processNextLevel(final String updateLevelAndRoute, final String nextNodeQueryStr,
-			final TreeTableModel treeTableModel, final HashMap pidsMap, List ids, final int nodeLevel, Connection conn,
-			final int dbType) throws Exception {
+	private static void processNextLevel(TypeHandler typeHandler, final String updateLevelAndRoute,
+			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
+			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
-		batchUpdateByJdbc(updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
+		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
@@ -1084,11 +1095,11 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 
 			// 获取下一层节点
-			nextIds = findByJdbcQuery(nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null, null, conn,
-					dbType, false);
+			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
+					null, conn, dbType, false);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
-				processNextLevel(updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
+				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
 						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType);
 			}
 			if (exist) {
@@ -1220,8 +1231,9 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
-			final Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
+	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
+			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit)
+			throws Exception {
 		SqlExecuteStat.showSql("execute sql=", executeSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
@@ -1236,9 +1248,9 @@ public class SqlUtil {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
-					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
+					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
 				} else {
-					setParamsValue(conn, dbType, pst, params, paramsType, 0);
+					setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
 				}
 				pst.executeUpdate();
 				// 返回update的记录数量

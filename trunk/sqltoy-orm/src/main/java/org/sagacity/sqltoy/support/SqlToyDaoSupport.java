@@ -405,7 +405,7 @@ public class SqlToyDaoSupport {
 		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
-		List<T> entities = BeanUtil.wrapEntities(entityMeta, voClass, ids);
+		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, ids);
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
@@ -1586,8 +1586,8 @@ public class SqlToyDaoSupport {
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
 		Entry<String, Object> entry;
-		
-		//对统一更新字段做处理
+
+		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
 			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
@@ -1611,7 +1611,7 @@ public class SqlToyDaoSupport {
 				}
 			}
 		}
-		
+
 		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		String columnName;
 		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];

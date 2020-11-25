@@ -15,6 +15,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
+	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final List<Object[]> rowDatas,
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
 			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
@@ -90,7 +91,7 @@ public class SqlUtilsExt {
 						} else {
 							cellValue = rowData[j];
 						}
-						SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, j + 1);
+						SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, j + 1);
 					}
 					meter++;
 					// 批量
@@ -144,10 +145,10 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateBySqlServer(final String updateSql, final List<Object[]> rowDatas,
-			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
-			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	public static Long batchUpdateBySqlServer(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
 			return 0L;
@@ -193,7 +194,7 @@ public class SqlUtilsExt {
 									cellValue = rowData[j];
 
 								}
-								SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, index + 1);
+								SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
 								index++;
 							}
 						}
@@ -204,7 +205,7 @@ public class SqlUtilsExt {
 							} else {
 								cellValue = rowData[j];
 							}
-							SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, j + 1);
+							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, -1, j + 1);
 						}
 					}
 					meter++;
@@ -255,8 +256,8 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
-			final EntityMeta entityMeta) throws SQLException, IOException {
+	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
 			Object cellValue;
 			int fieldType;
@@ -264,7 +265,7 @@ public class SqlUtilsExt {
 				fieldType = entityMeta.getFieldsTypeArray()[i];
 				cellValue = getDefaultValue(params[i], entityMeta.getFieldsDefaultValue()[i], fieldType,
 						entityMeta.getFieldsNullable()[i]);
-				SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, 1 + i);
+				SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, 1 + i);
 			}
 		}
 	}

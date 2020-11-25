@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -358,13 +359,17 @@ public class BeanUtil {
 		}
 	}
 
+//	public static Object convertType(Object value, String typeName) throws Exception {
+//		return convertType(null, value, typeName);
+//	}
+
 	/**
 	 * @todo 类型转换
 	 * @param paramValue
 	 * @param typeName   小写
 	 * @return
 	 */
-	public static Object convertType(Object value, String typeName) throws Exception {
+	public static Object convertType(TypeHandler typeHandler, Object value, String typeName) throws Exception {
 		Object paramValue = value;
 		// 转换为小写
 		typeName = typeName.toLowerCase();
@@ -816,7 +821,7 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static List reflectListToBean(List datas, String[] properties, Class voClass) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, String[] properties, Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -824,7 +829,7 @@ public class BeanUtil {
 				indexs[i] = i;
 			}
 		}
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
@@ -835,9 +840,9 @@ public class BeanUtil {
 	 * @param voClass
 	 * @return
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass)
-			throws Exception {
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass) throws Exception {
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
@@ -850,8 +855,8 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass,
-			boolean autoConvertType) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass, boolean autoConvertType) {
 		if (null == datas || datas.isEmpty()) {
 			return null;
 		}
@@ -911,7 +916,8 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType ? convertType(typeHandler, cellData, methodTypesLow[i])
+														: cellData);
 									}
 								}
 							}
@@ -928,7 +934,8 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType ? convertType(typeHandler, cellData, methodTypesLow[i])
+														: cellData);
 									}
 								}
 							}
@@ -954,9 +961,9 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType) {
-		batchSetProperties(voList, properties, values, autoConvertType, true);
+	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			Object[] values, boolean autoConvertType) {
+		batchSetProperties(typeHandler, voList, properties, values, autoConvertType, true);
 	}
 
 	/**
@@ -968,8 +975,8 @@ public class BeanUtil {
 	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
-	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType, boolean forceUpdate) {
+	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			Object[] values, boolean autoConvertType, boolean forceUpdate) {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1001,7 +1008,7 @@ public class BeanUtil {
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
-									autoConvertType ? convertType(values[i], methodTypes[i]) : values[i]);
+									autoConvertType ? convertType(typeHandler, values[i], methodTypes[i]) : values[i]);
 						}
 					}
 				}
@@ -1022,13 +1029,13 @@ public class BeanUtil {
 	 * @param autoConvertType
 	 * @throws Exception
 	 */
-	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType) throws Exception {
-		mappingSetProperties(voList, properties, values, index, autoConvertType, true);
+	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			List<Object[]> values, int[] index, boolean autoConvertType) throws Exception {
+		mappingSetProperties(typeHandler, voList, properties, values, index, autoConvertType, true);
 	}
 
-	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType, boolean forceUpdate) throws Exception {
+	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			List<Object[]> values, int[] index, boolean autoConvertType, boolean forceUpdate) throws Exception {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1065,8 +1072,9 @@ public class BeanUtil {
 					}
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
-							realMethods[i].invoke(bean, autoConvertType ? convertType(rowData[index[i]], methodTypes[i])
-									: rowData[index[i]]);
+							realMethods[i].invoke(bean,
+									autoConvertType ? convertType(typeHandler, rowData[index[i]], methodTypes[i])
+											: rowData[index[i]]);
 						}
 					}
 				}
@@ -1088,12 +1096,12 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass)
-			throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass) throws Exception {
 		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
-			return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, true);
+			return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, true);
 		}
-		return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, false);
+		return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, false);
 	}
 
 	/**
@@ -1106,11 +1114,11 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass,
-			boolean autoMapping) throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass, boolean autoMapping) throws Exception {
 		if (autoMapping == false) {
 			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
-			return reflectListToBean(result, targetProps == null ? fromProps : targetProps, newClass);
+			return reflectListToBean(typeHandler, result, targetProps == null ? fromProps : targetProps, newClass);
 		}
 		// 获取set方法
 		String[] properties = matchSetMethodNames(newClass);
@@ -1133,7 +1141,7 @@ public class BeanUtil {
 			getProperties = properties;
 		}
 		List result = reflectBeansToList(fromBeans, getProperties);
-		return reflectListToBean(result, properties, newClass);
+		return reflectListToBean(typeHandler, result, properties, newClass);
 	}
 
 	public static String[] matchSetMethodNames(Class voClass) {
@@ -1210,7 +1218,8 @@ public class BeanUtil {
 	 * @param value
 	 * @throws Exception
 	 */
-	public static void setProperty(Object bean, String property, Object value) throws Exception {
+	public static void setProperty(TypeHandler typeHandler, Object bean, String property, Object value)
+			throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
@@ -1220,7 +1229,7 @@ public class BeanUtil {
 		}
 		// 将数据类型进行转换再赋值
 		String type = method.getParameterTypes()[0].getTypeName().toLowerCase();
-		method.invoke(bean, convertType(value, type));
+		method.invoke(bean, convertType(typeHandler, value, type));
 	}
 
 	/**
@@ -1249,8 +1258,8 @@ public class BeanUtil {
 	 * @param ids
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> wrapEntities(EntityMeta entityMeta, Class<T> voClass,
-			Object... ids) {
+	public static <T extends Serializable> List<T> wrapEntities(TypeHandler typeHandler, EntityMeta entityMeta,
+			Class<T> voClass, Object... ids) {
 		List<T> entities = new ArrayList<T>();
 		Set<Object> repeat = new HashSet<Object>();
 		try {
@@ -1262,7 +1271,7 @@ public class BeanUtil {
 				// 去除重复
 				if (!repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, BeanUtil.convertType(id, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, id, typeName));
 					entities.add(bean);
 					repeat.add(id);
 				}

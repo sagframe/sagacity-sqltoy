@@ -43,6 +43,7 @@ import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -996,9 +997,9 @@ public class ResultUtils {
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 								extend.getParamsName(pivotSqlConfig),
 								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
-						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
-								pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
-								sqlToyConfig.isIgnoreEmpty());
+						List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
+								pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn,
+								dbType, sqlToyConfig.isIgnoreEmpty());
 						// 行转列返回
 						return CollectionUtil.convertColToRow(pivotCategory, null);
 					}
@@ -1109,7 +1110,8 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
+	public static List wrapQueryResult(TypeHandler typeHandler, List queryResultRows, String[] labelNames,
+			Class resultType) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
@@ -1148,7 +1150,7 @@ public class ResultUtils {
 			return result;
 		}
 		// 封装成VO对象形式
-		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
+		return BeanUtil.reflectListToBean(typeHandler, queryResultRows, labelNames, resultType);
 	}
 
 	/**
