@@ -29,6 +29,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.QueryShardingModel;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -536,7 +537,7 @@ public class SqlToyDaoSupport {
 			final Boolean autoCommit, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
 				getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, autoCommit,
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, null, autoCommit,
 				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
@@ -1615,10 +1616,22 @@ public class SqlToyDaoSupport {
 		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		String columnName;
 		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
+		Integer[] paramsTypes = new Integer[realValues.length];
+		for (int i = 0; i < paramsTypes.length; i++) {
+			paramsTypes[i] = java.sql.Types.OTHER;
+		}
 		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
 		int index = 0;
+		FieldMeta fieldMeta;
 		while (iter.hasNext()) {
 			entry = iter.next();
+			fieldMeta = entityMeta.getFieldMeta(entry.getKey());
+			if (fieldMeta != null) {
+				columnName = fieldMeta.getColumnName();
+				paramsTypes[index] = fieldMeta.getType();
+			} else {
+				columnName = entry.getKey();
+			}
 			// entry.getKey() is field
 			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
@@ -1626,6 +1639,7 @@ public class SqlToyDaoSupport {
 			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
+
 			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
@@ -1634,7 +1648,10 @@ public class SqlToyDaoSupport {
 			index++;
 		}
 		sql.append(" where ").append(where);
-		return executeSql(sql.toString(), null, realValues, false, getDataSource(innerModel.dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql.toString(), SqlType.update,
+				getDialect(dataSource));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, realValues, paramsTypes, false,
+				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
 
 	/**

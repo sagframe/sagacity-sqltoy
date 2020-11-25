@@ -116,7 +116,7 @@ public class Execute extends BaseLink {
 			names = sqlToyConfig.getParamsName();
 			values = BeanUtil.reflectBeanToAry(entity, names, null, reflectPropertyHandler);
 		}
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, autoCommit,
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, null, autoCommit,
 				getDataSource(sqlToyConfig));
 	}
 }

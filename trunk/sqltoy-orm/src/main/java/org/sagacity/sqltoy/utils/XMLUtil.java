@@ -312,7 +312,7 @@ public class XMLUtil {
 								method.invoke(entity, valueAry);
 							}
 						} else if (BeanUtil.isBaseDataType(argType)) {
-							method.invoke(entity, BeanUtil.convertType(null, values[i], className));
+							method.invoke(entity, BeanUtil.convertType(null, values[i], className,null));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();

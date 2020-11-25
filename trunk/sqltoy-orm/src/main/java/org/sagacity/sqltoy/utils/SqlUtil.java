@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -409,17 +411,23 @@ public class SqlUtil {
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
+		Class[] genericTypes = new Class[setMethods.length];
+		Type[] types;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
 				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName().toLowerCase();
+				types = setMethods[i].getGenericParameterTypes();
+				if (types.length > 0) {
+					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+				}
 			}
 		}
 		int index = 0;
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, voClass,
-					ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
+					voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -457,7 +465,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
-			Method[] setMethods, String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+			Method[] setMethods, String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet)
+			throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -472,7 +481,7 @@ public class SqlUtil {
 				fieldValue = rs.getObject(columnLabels[i]);
 				if (null != fieldValue) {
 					allNull = false;
-					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName, genericTypes[i]));
 				}
 			}
 		}

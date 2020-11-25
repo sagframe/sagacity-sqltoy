@@ -13,8 +13,13 @@ import java.sql.SQLException;
  * @version v1.0, Date:2020-11-25
  * @modify 2020-11-25,修改说明
  */
-public interface TypeHandler {
-	public void setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value) throws SQLException;
+public abstract class TypeHandler {
+	public boolean setNull(PreparedStatement pst, int paramIndex, int jdbcType) {
+		return false;
+	}
 
-	public Object toJavaType(String javaTypeName, Object jdbcValue) throws Exception;
+	public abstract boolean setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value)
+			throws SQLException;
+
+	public abstract Object toJavaType(String javaTypeName, Object jdbcValue) throws Exception;
 }
