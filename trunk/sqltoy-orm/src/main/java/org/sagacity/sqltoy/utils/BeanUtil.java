@@ -77,7 +77,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchSetMethods(Class voClass, String[] props) {
+	public static Method[] matchSetMethods(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
 		Method[] methods = voClass.getMethods();
@@ -140,7 +140,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchGetMethods(Class voClass, String[] props) {
+	public static Method[] matchGetMethods(Class voClass, String... props) {
 		Method[] methods = voClass.getMethods();
 		List<Method> realMeth = new ArrayList<Method>();
 		String name;
@@ -201,7 +201,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @return
 	 */
-	public static Integer[] matchMethodsType(Class voClass, String[] properties) {
+	public static Integer[] matchMethodsType(Class voClass, String... properties) {
 		if (properties == null || properties.length == 0) {
 			return null;
 		}
@@ -361,9 +361,9 @@ public class BeanUtil {
 		}
 	}
 
-//	public static Object convertType(Object value, String typeName) throws Exception {
-//		return convertType(null, value, typeName);
-//	}
+	public static Object convertType(Object value, String typeName) throws Exception {
+		return convertType(null, value, typeName, null);
+	}
 
 	/**
 	 * @todo 类型转换
@@ -371,11 +371,11 @@ public class BeanUtil {
 	 * @param typeName   小写
 	 * @return
 	 */
-	public static Object convertType(TypeHandler typeHandler, Object value, String typeName, Class typeClass)
+	public static Object convertType(TypeHandler typeHandler, Object value, String typeOriginName, Class typeClass)
 			throws Exception {
 		Object paramValue = value;
 		// 转换为小写
-		typeName = typeName.toLowerCase();
+		String typeName = typeOriginName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
@@ -579,7 +579,7 @@ public class BeanUtil {
 			return valueStr.toCharArray();
 		}
 		if (typeHandler != null) {
-			return typeHandler.toJavaType(typeName, paramValue);
+			return typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
 		}
 		return paramValue;
 	}
@@ -885,7 +885,6 @@ public class BeanUtil {
 			List rowList;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
-			String[] methodTypesLow = new String[indexSize];
 			String[] methodTypes = new String[indexSize];
 			Class[] genericTypes = new Class[indexSize];
 			Type[] types;
@@ -894,10 +893,11 @@ public class BeanUtil {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
-						methodTypesLow[i] = methodTypes[i].toLowerCase();
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
-							genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+							if (types[0] instanceof ParameterizedType) {
+								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+							}
 						}
 					}
 				}
@@ -929,7 +929,7 @@ public class BeanUtil {
 									} else {
 										realMethods[i].invoke(bean,
 												autoConvertType
-														? convertType(typeHandler, cellData, methodTypesLow[i],
+														? convertType(typeHandler, cellData, methodTypes[i],
 																genericTypes[i])
 														: cellData);
 									}
@@ -949,7 +949,7 @@ public class BeanUtil {
 									} else {
 										realMethods[i].invoke(bean,
 												autoConvertType
-														? convertType(typeHandler, cellData, methodTypesLow[i],
+														? convertType(typeHandler, cellData, methodTypes[i],
 																genericTypes[i])
 														: cellData);
 									}
@@ -1017,11 +1017,13 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
-										genericTypes[i] = (Class) ((ParameterizedType) types[0])
-												.getActualTypeArguments()[0];
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
 									}
 								}
 							}
@@ -1091,11 +1093,13 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
-										genericTypes[i] = (Class) ((ParameterizedType) types[0])
-												.getActualTypeArguments()[0];
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
 									}
 								}
 							}
@@ -1262,11 +1266,13 @@ public class BeanUtil {
 			setMethods.put(key, method);
 		}
 		// 将数据类型进行转换再赋值
-		String type = method.getParameterTypes()[0].getTypeName().toLowerCase();
+		String type = method.getParameterTypes()[0].getTypeName();
 		Type[] types = method.getGenericParameterTypes();
 		Class genericType = null;
 		if (types.length > 0) {
-			genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+			if (types[0] instanceof ParameterizedType) {
+				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+			}
 		}
 		method.invoke(bean, convertType(typeHandler, value, type, genericType));
 	}
@@ -1304,11 +1310,13 @@ public class BeanUtil {
 		try {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
-			String typeName = method.getParameterTypes()[0].getName().toLowerCase();
+			String typeName = method.getParameterTypes()[0].getName();
 			Type[] types = method.getGenericParameterTypes();
 			Class genericType = null;
 			if (types.length > 0) {
-				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+				if (types[0] instanceof ParameterizedType) {
+					genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+				}
 			}
 			T bean;
 			for (Object id : ids) {

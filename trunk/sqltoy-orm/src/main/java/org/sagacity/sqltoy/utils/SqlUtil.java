@@ -415,10 +415,12 @@ public class SqlUtil {
 		Type[] types;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName().toLowerCase();
+				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
 				types = setMethods[i].getGenericParameterTypes();
 				if (types.length > 0) {
-					genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+					if (types[0] instanceof ParameterizedType) {
+						genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+					}
 				}
 			}
 		}
