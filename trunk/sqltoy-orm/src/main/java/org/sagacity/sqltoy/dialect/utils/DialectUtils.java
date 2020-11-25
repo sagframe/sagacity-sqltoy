@@ -1050,7 +1050,7 @@ public class DialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object save(SqlToyContext sqlToyContext, final EntityMeta entityMeta, final PKStrategy pkStrategy,
+	public static Object save(final SqlToyContext sqlToyContext, final EntityMeta entityMeta, final PKStrategy pkStrategy,
 			final boolean isAssignPK, final ReturnPkType returnPkType, final String insertSql, Serializable entity,
 			final GenerateSqlHandler generateSqlHandler, final GenerateSavePKStrategy generateSavePKStrategy,
 			final Connection conn, final Integer dbType) throws Exception {

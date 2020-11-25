@@ -274,7 +274,7 @@ public class SqlUtil {
 		// jdbc部分数据库赋null值时必须要指定数据类型
 		String tmpStr;
 		if (null == paramValue) {
-			if (jdbcType != -1) {
+			if (jdbcType != java.sql.Types.NULL) {
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
@@ -359,13 +359,13 @@ public class SqlUtil {
 				pst.setShort(paramIndex, (java.lang.Short) paramValue);
 			} else if (paramValue instanceof java.lang.Byte) {
 				pst.setByte(paramIndex, (Byte) paramValue);
+			} else if (paramValue instanceof Object[]) {
+				pst.setObject(paramIndex, paramValue);
 			} else {
-				if (jdbcType != -1) {
-					boolean isMatched = false;
+				if (jdbcType != java.sql.Types.NULL) {
 					if (typeHandler != null) {
-						isMatched = typeHandler.setValue(pst, paramIndex, jdbcType, paramValue);
-					}
-					if (!isMatched) {
+						typeHandler.setValue(pst, paramIndex, jdbcType, paramValue);
+					} else {
 						pst.setObject(paramIndex, paramValue, jdbcType);
 					}
 				} else {

@@ -10,6 +10,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
@@ -38,7 +39,7 @@ public class SqltoyAutoConfiguration {
 	@Autowired
 	private SqlToyContextProperties properties;
 
-	//增加一个辅助校验,避免不少新用户将spring.sqltoy开头写成sqltoy.开头
+	// 增加一个辅助校验,避免不少新用户将spring.sqltoy开头写成sqltoy.开头
 	@Value("${sqltoy.sqlResourcesDir:}")
 	private String sqlResourcesDir;
 
@@ -46,7 +47,7 @@ public class SqltoyAutoConfiguration {
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
-		//用辅助配置来校验是否配置错误
+		// 用辅助配置来校验是否配置错误
 		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
 			throw new IllegalArgumentException(
 					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
@@ -198,6 +199,18 @@ public class SqltoyAutoConfiguration {
 			else if (translateCacheManager.contains(".")) {
 				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
 						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义typeHandler
+		String typeHandler = properties.getTypeHandler();
+		if (StringUtil.isNotBlank(typeHandler)) {
+			if (applicationContext.containsBean(typeHandler)) {
+				sqlToyContext.setTypeHandler((TypeHandler) applicationContext.getBean(typeHandler));
+			} // 包名和类名称
+			else if (typeHandler.contains(".")) {
+				sqlToyContext.setTypeHandler(
+						(TypeHandler) Class.forName(typeHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.plugins;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * @project sagacity-sqltoy
@@ -13,7 +14,7 @@ import java.sql.PreparedStatement;
  * @modify 2020-11-25,修改说明
  */
 public interface TypeHandler {
-	public boolean setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value);
+	public void setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value) throws SQLException;
 
-	public Object toJavaType(Object jdbcValue);
+	public Object toJavaType(String javaTypeName, Object jdbcValue);
 }

@@ -575,6 +575,9 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
+		if (typeHandler != null) {
+			return typeHandler.toJavaType(typeName, paramValue);
+		}
 		return paramValue;
 	}
 
