@@ -16,5 +16,5 @@ import java.sql.SQLException;
 public interface TypeHandler {
 	public void setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value) throws SQLException;
 
-	public Object toJavaType(String javaTypeName, Object jdbcValue);
+	public Object toJavaType(String javaTypeName, Object jdbcValue) throws Exception;
 }
