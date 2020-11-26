@@ -14,6 +14,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -394,6 +395,13 @@ public class BeanUtil {
 		if (value.getClass().getName().toLowerCase().equals(typeName)) {
 			return value;
 		}
+		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
+		if (typeHandler != null) {
+			Object result = typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
+			if (result != null) {
+				return result;
+			}
+		}
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
 		if (typeName.equals("string") || typeName.equals("java.lang.string")) {
@@ -578,13 +586,11 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
-		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
-		if (typeHandler != null) {
-			Object result = typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
-			if (result != null) {
-				return result;
-			}
+		// 数组类型
+		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
+			return ((Array) paramValue).getArray();
 		}
+
 		return paramValue;
 	}
 

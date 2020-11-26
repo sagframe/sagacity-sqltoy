@@ -41,6 +41,8 @@ public abstract class TypeHandler {
 
 	/**
 	 * @TODO 将例如json等resultSet中的结果转为java对象，映射到VO属性上
+	 *       <li>返回null，表示没有做处理，返回交框架继续处理</li>
+	 *       <li>返回非null结果，表示完成了转换，作为最终结果映射VO属性</li>
 	 * @param javaTypeName
 	 * @param genericType
 	 * @param jdbcValue
