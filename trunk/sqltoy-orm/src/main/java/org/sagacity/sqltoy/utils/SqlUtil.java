@@ -274,9 +274,13 @@ public class SqlUtil {
 	public static void setParamValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
 			PreparedStatement pst, Object paramValue, int jdbcType, int paramIndex) throws SQLException, IOException {
 		// jdbc部分数据库赋null值时必须要指定数据类型
-		String tmpStr;
 		if (null == paramValue) {
 			if (jdbcType != java.sql.Types.NULL) {
+				if (typeHandler != null) {
+					if (typeHandler.setNull(pst, paramIndex, jdbcType)) {
+						return;
+					}
+				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
@@ -286,93 +290,96 @@ public class SqlUtil {
 			} else {
 				pst.setNull(paramIndex, java.sql.Types.NULL);
 			}
-		} else {
-			if (paramValue instanceof java.lang.String) {
-				tmpStr = (String) paramValue;
-				if (jdbcType == java.sql.Types.CLOB) {
-					Clob clob = conn.createClob();
-					clob.setString(1, tmpStr);
-					pst.setClob(paramIndex, clob);
-				} else if (jdbcType == java.sql.Types.NCLOB) {
-					NClob nclob = conn.createNClob();
-					nclob.setString(1, tmpStr);
-					pst.setNClob(paramIndex, nclob);
-				} else {
-					pst.setString(paramIndex, tmpStr);
-				}
-			} else if (paramValue instanceof java.lang.Integer) {
-				pst.setInt(paramIndex, ((Integer) paramValue));
-			} else if (paramValue instanceof java.time.LocalDateTime) {
-				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
-			} else if (paramValue instanceof BigDecimal) {
-				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
-			} else if (paramValue instanceof java.time.LocalDate) {
-				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
-			} else if (paramValue instanceof java.util.Date) {
-				if (dbType == DBType.CLICKHOUSE) {
-					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
-				} else {
-					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
-				}
-			} else if (paramValue instanceof java.math.BigInteger) {
-				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
-			} else if (paramValue instanceof java.sql.Timestamp) {
-				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
-			} else if (paramValue instanceof java.lang.Double) {
-				pst.setDouble(paramIndex, ((Double) paramValue));
-			} else if (paramValue instanceof java.lang.Long) {
-				pst.setLong(paramIndex, ((Long) paramValue));
-			} else if (paramValue instanceof java.sql.Clob) {
-				tmpStr = clobToString((java.sql.Clob) paramValue);
+			return;
+		}
+		// 自定义类型处理器，完成setValue处理
+		if (typeHandler != null) {
+			if (typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
+				return;
+			}
+		}
+		String tmpStr;
+		if (paramValue instanceof java.lang.String) {
+			tmpStr = (String) paramValue;
+			if (jdbcType == java.sql.Types.CLOB) {
+				Clob clob = conn.createClob();
+				clob.setString(1, tmpStr);
+				pst.setClob(paramIndex, clob);
+			} else if (jdbcType == java.sql.Types.NCLOB) {
+				NClob nclob = conn.createNClob();
+				nclob.setString(1, tmpStr);
+				pst.setNClob(paramIndex, nclob);
+			} else {
 				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof byte[]) {
-				if (jdbcType == java.sql.Types.BLOB) {
-					Blob blob = null;
-					try {
-						blob = conn.createBlob();
-						OutputStream out = blob.setBinaryStream(1);
-						out.write((byte[]) paramValue);
-						out.flush();
-						out.close();
-						pst.setBlob(paramIndex, blob);
-					} catch (Exception e) {
-						pst.setBytes(paramIndex, (byte[]) paramValue);
-					}
-				} else {
+			}
+		} else if (paramValue instanceof java.lang.Integer) {
+			pst.setInt(paramIndex, ((Integer) paramValue));
+		} else if (paramValue instanceof java.time.LocalDateTime) {
+			pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
+		} else if (paramValue instanceof BigDecimal) {
+			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+		} else if (paramValue instanceof java.time.LocalDate) {
+			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+		} else if (paramValue instanceof java.util.Date) {
+			if (dbType == DBType.CLICKHOUSE) {
+				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+			} else {
+				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+			}
+		} else if (paramValue instanceof java.math.BigInteger) {
+			pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+		} else if (paramValue instanceof java.sql.Timestamp) {
+			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
+		} else if (paramValue instanceof java.lang.Double) {
+			pst.setDouble(paramIndex, ((Double) paramValue));
+		} else if (paramValue instanceof java.lang.Long) {
+			pst.setLong(paramIndex, ((Long) paramValue));
+		} else if (paramValue instanceof java.sql.Clob) {
+			tmpStr = clobToString((java.sql.Clob) paramValue);
+			pst.setString(paramIndex, tmpStr);
+		} else if (paramValue instanceof byte[]) {
+			if (jdbcType == java.sql.Types.BLOB) {
+				Blob blob = null;
+				try {
+					blob = conn.createBlob();
+					OutputStream out = blob.setBinaryStream(1);
+					out.write((byte[]) paramValue);
+					out.flush();
+					out.close();
+					pst.setBlob(paramIndex, blob);
+				} catch (Exception e) {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
 				}
-			} else if (paramValue instanceof java.lang.Float) {
-				pst.setFloat(paramIndex, ((Float) paramValue));
-			} else if (paramValue instanceof java.sql.Blob) {
-				Blob tmp = (java.sql.Blob) paramValue;
-				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
-			} else if (paramValue instanceof java.sql.Date) {
-				pst.setDate(paramIndex, (java.sql.Date) paramValue);
-			} else if (paramValue instanceof java.lang.Boolean) {
-				pst.setBoolean(paramIndex, (Boolean) paramValue);
-			} else if (paramValue instanceof java.time.LocalTime) {
-				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
-			} else if (paramValue instanceof java.sql.Time) {
-				pst.setTime(paramIndex, (java.sql.Time) paramValue);
-			} else if (paramValue instanceof java.lang.Character) {
-				tmpStr = ((Character) paramValue).toString();
-				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof java.lang.Short) {
-				pst.setShort(paramIndex, (java.lang.Short) paramValue);
-			} else if (paramValue instanceof java.lang.Byte) {
-				pst.setByte(paramIndex, (Byte) paramValue);
-			} else if (paramValue instanceof Object[]) {
-				pst.setObject(paramIndex, paramValue);
 			} else {
-				if (jdbcType != java.sql.Types.NULL) {
-					if (typeHandler != null) {
-						typeHandler.setValue(pst, paramIndex, jdbcType, paramValue);
-					} else {
-						pst.setObject(paramIndex, paramValue, jdbcType);
-					}
-				} else {
-					pst.setObject(paramIndex, paramValue);
-				}
+				pst.setBytes(paramIndex, (byte[]) paramValue);
+			}
+		} else if (paramValue instanceof java.lang.Float) {
+			pst.setFloat(paramIndex, ((Float) paramValue));
+		} else if (paramValue instanceof java.sql.Blob) {
+			Blob tmp = (java.sql.Blob) paramValue;
+			pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+		} else if (paramValue instanceof java.sql.Date) {
+			pst.setDate(paramIndex, (java.sql.Date) paramValue);
+		} else if (paramValue instanceof java.lang.Boolean) {
+			pst.setBoolean(paramIndex, (Boolean) paramValue);
+		} else if (paramValue instanceof java.time.LocalTime) {
+			pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
+		} else if (paramValue instanceof java.sql.Time) {
+			pst.setTime(paramIndex, (java.sql.Time) paramValue);
+		} else if (paramValue instanceof java.lang.Character) {
+			tmpStr = ((Character) paramValue).toString();
+			pst.setString(paramIndex, tmpStr);
+		} else if (paramValue instanceof java.lang.Short) {
+			pst.setShort(paramIndex, (java.lang.Short) paramValue);
+		} else if (paramValue instanceof java.lang.Byte) {
+			pst.setByte(paramIndex, (Byte) paramValue);
+		} else if (paramValue instanceof Object[]) {
+			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+		} else {
+			if (jdbcType != java.sql.Types.NULL) {
+				pst.setObject(paramIndex, paramValue, jdbcType);
+			} else {
+				pst.setObject(paramIndex, paramValue);
 			}
 		}
 	}
