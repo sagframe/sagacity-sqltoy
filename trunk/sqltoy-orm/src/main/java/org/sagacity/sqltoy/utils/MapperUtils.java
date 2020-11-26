@@ -285,13 +285,11 @@ public class MapperUtils {
 	private static List reflectListToBean(List datas, Class voClass, Method[] realMethods) throws Exception {
 		List result = new ArrayList();
 		int indexSize = realMethods.length;
-		String[] methodTypesLow = new String[indexSize];
 		String[] methodTypes = new String[indexSize];
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
 				methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
-				methodTypesLow[i] = methodTypes[i].toLowerCase();
 			}
 		}
 		int size;
@@ -309,7 +307,7 @@ public class MapperUtils {
 						if (cellData.getClass().getName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean, BeanUtil.convertType(null, cellData, methodTypesLow[j],null));
+							realMethods[j].invoke(bean, BeanUtil.convertType(null, cellData, methodTypes[j], null));
 						}
 					}
 				}

@@ -578,8 +578,12 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
+		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
 		if (typeHandler != null) {
-			return typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
+			Object result = typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
+			if (result != null) {
+				return result;
+			}
 		}
 		return paramValue;
 	}

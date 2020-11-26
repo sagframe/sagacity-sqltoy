@@ -39,5 +39,13 @@ public abstract class TypeHandler {
 	public abstract boolean setValue(PreparedStatement pst, int paramIndex, int jdbcType, Object value)
 			throws SQLException;
 
+	/**
+	 * @TODO 将例如json等resultSet中的结果转为java对象，映射到VO属性上
+	 * @param javaTypeName
+	 * @param genericType
+	 * @param jdbcValue
+	 * @return
+	 * @throws Exception
+	 */
 	public abstract Object toJavaType(String javaTypeName, Class genericType, Object jdbcValue) throws Exception;
 }
