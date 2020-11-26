@@ -105,7 +105,8 @@ public class ClickHouseDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(sqlToyContext.getTypeHandler(), entity, entityMeta.getBusinessIdField(),
+						fullParamValues[bizIdColIndex]);
 			}
 		}
 		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
@@ -126,7 +127,7 @@ public class ClickHouseDialectUtils {
 				} else {
 					pst = conn.prepareStatement(insertSql);
 				}
-				SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
+				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
 				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
 					keyResult = pst.executeQuery();
@@ -160,7 +161,7 @@ public class ClickHouseDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(sqlToyContext.getTypeHandler(), entity, entityMeta.getIdArray()[0], result);
 		}
 		return result;
 	}
@@ -239,19 +240,19 @@ public class ClickHouseDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(),entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
-				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
-				dbType);
+		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -292,7 +293,8 @@ public class ClickHouseDialectUtils {
 
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
-		return SqlUtil.executeSql(deleteSql, idValues, parameterTypes, conn, dbType, null);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,
+				null);
 	}
 
 	/**
@@ -371,8 +373,8 @@ public class ClickHouseDialectUtils {
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
 				idValues);
-		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,
-				autoCommit);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
+				paramTypes, conn, dbType, autoCommit);
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

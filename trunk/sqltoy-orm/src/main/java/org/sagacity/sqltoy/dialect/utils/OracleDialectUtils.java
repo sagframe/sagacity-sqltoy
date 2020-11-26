@@ -175,7 +175,7 @@ public class OracleDialectUtils {
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
-				SqlUtil.setParamsValue(conn, dbType, callStat, inParamValues, null, 0);
+				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null, 0);
 				int cursorIndex = -1;
 				int cursorCnt = 0;
 				int inCount = (inParamValues == null) ? 0 : inParamValues.length;

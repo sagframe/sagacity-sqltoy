@@ -94,7 +94,7 @@ public class ElasticSearchUtils {
 		ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
 
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
+		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(), resultSet.getRows(),
 				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));
 		return resultSet;
 	}

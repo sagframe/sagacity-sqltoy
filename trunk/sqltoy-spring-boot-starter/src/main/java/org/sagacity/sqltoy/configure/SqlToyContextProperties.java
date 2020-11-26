@@ -119,6 +119,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String translateCacheManager;
 
 	/**
+	 * 字段类型转换器
+	 */
+	private String typeHandler;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -340,6 +345,20 @@ public class SqlToyContextProperties implements Serializable {
 	public void setTranslateCacheManager(String translateCacheManager) {
 		this.translateCacheManager = translateCacheManager;
 	}
-	
+
+	/**
+	 * @return the typeHandler
+	 */
+	public String getTypeHandler() {
+		return typeHandler;
+	}
+
+	/**
+	 * @param typeHandler the typeHandler to set
+	 */
+	public void setTypeHandler(String typeHandler) {
+		this.typeHandler = typeHandler;
+	}
+
 	
 }

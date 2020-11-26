@@ -158,8 +158,8 @@ public class FieldMeta implements Serializable {
 		if (keyword) {
 			String sign = SqlToyConstants.keywordSign;
 			return sign.concat(this.columnName).concat(sign);
-		} else
-			return columnName;
+		}
+		return columnName;
 	}
 
 	/**

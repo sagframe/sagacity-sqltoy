@@ -10,8 +10,11 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +78,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchSetMethods(Class voClass, String[] props) {
+	public static Method[] matchSetMethods(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
 		Method[] methods = voClass.getMethods();
@@ -137,7 +141,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchGetMethods(Class voClass, String[] props) {
+	public static Method[] matchGetMethods(Class voClass, String... props) {
 		Method[] methods = voClass.getMethods();
 		List<Method> realMeth = new ArrayList<Method>();
 		String name;
@@ -198,7 +202,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @return
 	 */
-	public static Integer[] matchMethodsType(Class voClass, String[] properties) {
+	public static Integer[] matchMethodsType(Class voClass, String... properties) {
 		if (properties == null || properties.length == 0) {
 			return null;
 		}
@@ -358,16 +362,24 @@ public class BeanUtil {
 		}
 	}
 
+	public static Object convertType(Object value, String typeName) throws Exception {
+		return convertType(null, value, typeName, null);
+	}
+
 	/**
 	 * @todo 类型转换
-	 * @param paramValue
-	 * @param typeName   小写
+	 * @param typeHandler
+	 * @param value
+	 * @param typeOriginName
+	 * @param genericType 泛型类型
 	 * @return
+	 * @throws Exception
 	 */
-	public static Object convertType(Object value, String typeName) throws Exception {
+	public static Object convertType(TypeHandler typeHandler, Object value, String typeOriginName, Class genericType)
+			throws Exception {
 		Object paramValue = value;
 		// 转换为小写
-		typeName = typeName.toLowerCase();
+		String typeName = typeOriginName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
@@ -385,6 +397,13 @@ public class BeanUtil {
 		// value值的类型跟目标类型一致，直接返回
 		if (value.getClass().getName().toLowerCase().equals(typeName)) {
 			return value;
+		}
+		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
+		if (typeHandler != null) {
+			Object result = typeHandler.toJavaType(typeOriginName, genericType, paramValue);
+			if (result != null) {
+				return result;
+			}
 		}
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
@@ -570,6 +589,11 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
+		// 数组类型
+		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
+			return convertArray(((Array) paramValue).getArray(), typeName);
+		}
+
 		return paramValue;
 	}
 
@@ -816,7 +840,7 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static List reflectListToBean(List datas, String[] properties, Class voClass) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, String[] properties, Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -824,7 +848,7 @@ public class BeanUtil {
 				indexs[i] = i;
 			}
 		}
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
@@ -835,9 +859,9 @@ public class BeanUtil {
 	 * @param voClass
 	 * @return
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass)
-			throws Exception {
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass) throws Exception {
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
@@ -850,8 +874,8 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass,
-			boolean autoConvertType) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass, boolean autoConvertType) {
 		if (null == datas || datas.isEmpty()) {
 			return null;
 		}
@@ -874,14 +898,20 @@ public class BeanUtil {
 			List rowList;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
-			String[] methodTypesLow = new String[indexSize];
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
-						methodTypesLow[i] = methodTypes[i].toLowerCase();
+						types = realMethods[i].getGenericParameterTypes();
+						if (types.length > 0) {
+							if (types[0] instanceof ParameterizedType) {
+								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+							}
+						}
 					}
 				}
 			}
@@ -911,7 +941,10 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType
+														? convertType(typeHandler, cellData, methodTypes[i],
+																genericTypes[i])
+														: cellData);
 									}
 								}
 							}
@@ -928,7 +961,10 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType
+														? convertType(typeHandler, cellData, methodTypes[i],
+																genericTypes[i])
+														: cellData);
 									}
 								}
 							}
@@ -954,9 +990,9 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType) {
-		batchSetProperties(voList, properties, values, autoConvertType, true);
+	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			Object[] values, boolean autoConvertType) {
+		batchSetProperties(typeHandler, voList, properties, values, autoConvertType, true);
 	}
 
 	/**
@@ -968,8 +1004,8 @@ public class BeanUtil {
 	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
-	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
-			boolean autoConvertType, boolean forceUpdate) {
+	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			Object[] values, boolean autoConvertType, boolean forceUpdate) {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -981,6 +1017,8 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			Iterator iter = voList.iterator();
 			Object bean;
 			boolean inited = false;
@@ -992,7 +1030,14 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									types = realMethods[i].getGenericParameterTypes();
+									if (types.length > 0) {
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
+									}
 								}
 							}
 						}
@@ -1001,7 +1046,9 @@ public class BeanUtil {
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
-									autoConvertType ? convertType(values[i], methodTypes[i]) : values[i]);
+									autoConvertType
+											? convertType(typeHandler, values[i], methodTypes[i], genericTypes[i])
+											: values[i]);
 						}
 					}
 				}
@@ -1022,13 +1069,13 @@ public class BeanUtil {
 	 * @param autoConvertType
 	 * @throws Exception
 	 */
-	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType) throws Exception {
-		mappingSetProperties(voList, properties, values, index, autoConvertType, true);
+	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			List<Object[]> values, int[] index, boolean autoConvertType) throws Exception {
+		mappingSetProperties(typeHandler, voList, properties, values, index, autoConvertType, true);
 	}
 
-	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType, boolean forceUpdate) throws Exception {
+	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
+			List<Object[]> values, int[] index, boolean autoConvertType, boolean forceUpdate) throws Exception {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1040,6 +1087,8 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			Iterator iter = voList.iterator();
 			Object bean;
 			boolean inited = false;
@@ -1057,7 +1106,14 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									types = realMethods[i].getGenericParameterTypes();
+									if (types.length > 0) {
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
+									}
 								}
 							}
 						}
@@ -1065,8 +1121,11 @@ public class BeanUtil {
 					}
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
-							realMethods[i].invoke(bean, autoConvertType ? convertType(rowData[index[i]], methodTypes[i])
-									: rowData[index[i]]);
+							realMethods[i].invoke(bean,
+									autoConvertType
+											? convertType(typeHandler, rowData[index[i]], methodTypes[i],
+													genericTypes[i])
+											: rowData[index[i]]);
 						}
 					}
 				}
@@ -1088,12 +1147,12 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass)
-			throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass) throws Exception {
 		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
-			return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, true);
+			return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, true);
 		}
-		return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, false);
+		return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, false);
 	}
 
 	/**
@@ -1106,11 +1165,11 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass,
-			boolean autoMapping) throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass, boolean autoMapping) throws Exception {
 		if (autoMapping == false) {
 			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
-			return reflectListToBean(result, targetProps == null ? fromProps : targetProps, newClass);
+			return reflectListToBean(typeHandler, result, targetProps == null ? fromProps : targetProps, newClass);
 		}
 		// 获取set方法
 		String[] properties = matchSetMethodNames(newClass);
@@ -1133,7 +1192,7 @@ public class BeanUtil {
 			getProperties = properties;
 		}
 		List result = reflectBeansToList(fromBeans, getProperties);
-		return reflectListToBean(result, properties, newClass);
+		return reflectListToBean(typeHandler, result, properties, newClass);
 	}
 
 	public static String[] matchSetMethodNames(Class voClass) {
@@ -1210,7 +1269,8 @@ public class BeanUtil {
 	 * @param value
 	 * @throws Exception
 	 */
-	public static void setProperty(Object bean, String property, Object value) throws Exception {
+	public static void setProperty(TypeHandler typeHandler, Object bean, String property, Object value)
+			throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
@@ -1219,8 +1279,15 @@ public class BeanUtil {
 			setMethods.put(key, method);
 		}
 		// 将数据类型进行转换再赋值
-		String type = method.getParameterTypes()[0].getTypeName().toLowerCase();
-		method.invoke(bean, convertType(value, type));
+		String type = method.getParameterTypes()[0].getTypeName();
+		Type[] types = method.getGenericParameterTypes();
+		Class genericType = null;
+		if (types.length > 0) {
+			if (types[0] instanceof ParameterizedType) {
+				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+			}
+		}
+		method.invoke(bean, convertType(typeHandler, value, type, genericType));
 	}
 
 	/**
@@ -1249,20 +1316,27 @@ public class BeanUtil {
 	 * @param ids
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> wrapEntities(EntityMeta entityMeta, Class<T> voClass,
-			Object... ids) {
+	public static <T extends Serializable> List<T> wrapEntities(TypeHandler typeHandler, EntityMeta entityMeta,
+			Class<T> voClass, Object... ids) {
 		List<T> entities = new ArrayList<T>();
 		Set<Object> repeat = new HashSet<Object>();
 		try {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
-			String typeName = method.getParameterTypes()[0].getName().toLowerCase();
+			String typeName = method.getParameterTypes()[0].getName();
+			Type[] types = method.getGenericParameterTypes();
+			Class genericType = null;
+			if (types.length > 0) {
+				if (types[0] instanceof ParameterizedType) {
+					genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+				}
+			}
 			T bean;
 			for (Object id : ids) {
 				// 去除重复
 				if (!repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, BeanUtil.convertType(id, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}
@@ -1300,5 +1374,87 @@ public class BeanUtil {
 			return realEntityClass;
 		}
 		return entityClass;
+	}
+
+	/**
+	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
+	 * @param values
+	 * @param type
+	 * @return
+	 */
+	private static Object convertArray(Object values, String type) {
+		//类型完全一致
+		if (type == null||type.equals(values.getClass().getTypeName())) {
+			return values;
+		}
+		Object[] array;
+		int index = 0;
+		if (type.contains("integer") && !(values instanceof Integer[])) {
+			array = (Object[]) values;
+			Integer[] result = new Integer[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("long") && !(values instanceof Long[])) {
+			array = (Object[]) values;
+			Long[] result = new Long[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).longValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("bigdecimal") && !(values instanceof BigDecimal[])) {
+			array = (Object[]) values;
+			BigDecimal[] result = new BigDecimal[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("double") && !(values instanceof Double[])) {
+			array = (Object[]) values;
+			Double[] result = new Double[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).doubleValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("float") && !(values instanceof Float[])) {
+			array = (Object[]) values;
+			Float[] result = new Float[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).floatValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("int") && !(values instanceof int[])) {
+			array = (Object[]) values;
+			int[] result = new int[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		return values;
 	}
 }

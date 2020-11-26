@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -196,6 +197,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private Integer scriptCheckIntervalSeconds;
 
+	private TypeHandler typeHandler;
+
 	/**
 	 * @param workerId the workerId to set
 	 */
@@ -264,6 +267,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+
+		//
+//		if (typeHandler == null) {
+//			typeHandler = new FastJsonTypeHandler();
+//		}
 		logger.debug("sqltoy init complete!");
 	}
 
@@ -770,6 +778,20 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setReservedWords(String reservedWords) {
 		this.reservedWords = reservedWords;
+	}
+
+	/**
+	 * @return the typeHandler
+	 */
+	public TypeHandler getTypeHandler() {
+		return typeHandler;
+	}
+
+	/**
+	 * @param typeHandler the typeHandler to set
+	 */
+	public void setTypeHandler(TypeHandler typeHandler) {
+		this.typeHandler = typeHandler;
 	}
 
 	public void destroy() {

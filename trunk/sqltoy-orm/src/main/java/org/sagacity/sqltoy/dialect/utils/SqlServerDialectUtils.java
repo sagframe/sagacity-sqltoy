@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -582,7 +583,7 @@ public class SqlServerDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -603,7 +604,8 @@ public class SqlServerDialectUtils {
 					for (int i = 0, n = paramValues.length; i < n; i++) {
 						// sqlserver timestamp类型的字段无需赋值
 						if (!paramsType[i].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, dbType, pst, paramValues[i], paramsType[i], index + 1);
+							SqlUtil.setParamValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues[i],
+									paramsType[i], index + 1);
 							index++;
 						}
 					}
@@ -633,7 +635,7 @@ public class SqlServerDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getIdArray()[0], result);
 		}
 		// 是否有子表进行级联保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -753,18 +755,18 @@ public class SqlServerDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(),entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
-				autoCommit, conn, dbType);
+		return batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues, sqlToyContext.getBatchSize(),
+				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -779,9 +781,9 @@ public class SqlServerDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	private static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final int batchSize, final Integer[] updateTypes, final Boolean autoCommit,
+			final Connection conn, final Integer dbType) throws Exception {
 		if (rowDatas == null) {
 			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
 			return 0L;
@@ -810,7 +812,8 @@ public class SqlServerDialectUtils {
 					for (int j = 0, n = rowData.length; j < n; j++) {
 						// 类型为timestamp 则跳过
 						if (!updateTypes[j].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, dbType, pst, rowData[j], updateTypes[j], pstIndex + 1);
+							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, rowData[j], updateTypes[j],
+									pstIndex + 1);
 							pstIndex++;
 						}
 					}
@@ -897,7 +900,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(),sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
