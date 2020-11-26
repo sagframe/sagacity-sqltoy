@@ -1649,7 +1649,7 @@ public class SqlToyDaoSupport {
 		}
 		sql.append(" where ").append(where);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql.toString(), SqlType.update,
-				getDialect(dataSource));
+				getDialect(innerModel.dataSource));
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, realValues, paramsTypes, false,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
