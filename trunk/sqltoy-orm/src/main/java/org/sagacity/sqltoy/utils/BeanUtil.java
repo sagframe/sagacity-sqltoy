@@ -588,7 +588,7 @@ public class BeanUtil {
 		}
 		// 数组类型
 		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
-			return ((Array) paramValue).getArray();
+			return convertArray(((Array) paramValue).getArray(), typeName);
 		}
 
 		return paramValue;
@@ -1371,5 +1371,87 @@ public class BeanUtil {
 			return realEntityClass;
 		}
 		return entityClass;
+	}
+
+	/**
+	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
+	 * @param values
+	 * @param type
+	 * @return
+	 */
+	private static Object convertArray(Object values, String type) {
+		//类型完全一致
+		if (type == null||type.equals(values.getClass().getTypeName())) {
+			return values;
+		}
+		Object[] array;
+		int index = 0;
+		if (type.contains("integer") && !(values instanceof Integer[])) {
+			array = (Object[]) values;
+			Integer[] result = new Integer[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("long") && !(values instanceof Long[])) {
+			array = (Object[]) values;
+			Long[] result = new Long[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).longValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("bigdecimal") && !(values instanceof BigDecimal[])) {
+			array = (Object[]) values;
+			BigDecimal[] result = new BigDecimal[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("double") && !(values instanceof Double[])) {
+			array = (Object[]) values;
+			Double[] result = new Double[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).doubleValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("float") && !(values instanceof Float[])) {
+			array = (Object[]) values;
+			Float[] result = new Float[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).floatValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("int") && !(values instanceof int[])) {
+			array = (Object[]) values;
+			int[] result = new int[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		return values;
 	}
 }
