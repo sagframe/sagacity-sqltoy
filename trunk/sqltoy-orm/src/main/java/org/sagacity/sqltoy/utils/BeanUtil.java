@@ -368,11 +368,14 @@ public class BeanUtil {
 
 	/**
 	 * @todo 类型转换
-	 * @param paramValue
-	 * @param typeName   小写
+	 * @param typeHandler
+	 * @param value
+	 * @param typeOriginName
+	 * @param genericType 泛型类型
 	 * @return
+	 * @throws Exception
 	 */
-	public static Object convertType(TypeHandler typeHandler, Object value, String typeOriginName, Class typeClass)
+	public static Object convertType(TypeHandler typeHandler, Object value, String typeOriginName, Class genericType)
 			throws Exception {
 		Object paramValue = value;
 		// 转换为小写
@@ -397,7 +400,7 @@ public class BeanUtil {
 		}
 		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
 		if (typeHandler != null) {
-			Object result = typeHandler.toJavaType(typeOriginName, typeClass, paramValue);
+			Object result = typeHandler.toJavaType(typeOriginName, genericType, paramValue);
 			if (result != null) {
 				return result;
 			}
