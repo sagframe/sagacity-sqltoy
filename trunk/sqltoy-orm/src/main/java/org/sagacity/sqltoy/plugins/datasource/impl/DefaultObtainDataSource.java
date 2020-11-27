@@ -24,8 +24,7 @@ public class DefaultObtainDataSource implements ObtainDataSource {
 	private DataSource dataSource;
 
 	@Override
-	public DataSource getDataSource(ApplicationContext applicationContext, DataSource defaultDataSource,
-			String sqlDataSource) {
+	public DataSource getDataSource(ApplicationContext applicationContext, DataSource defaultDataSource) {
 		// 避免每次去查找(适用于固定数据源场景)
 		if (this.dataSource != null) {
 			return this.dataSource;

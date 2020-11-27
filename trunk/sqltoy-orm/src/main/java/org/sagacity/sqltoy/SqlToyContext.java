@@ -672,15 +672,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * 提供给SqlToyDaoSupport等获取数据源
-	 * 
+	 * @TODO 提供给SqlToyDaoSupport等获取数据源
 	 * @return
 	 */
 	public DataSource obtainDataSource(String sqlDataSource) {
 		if (obtainDataSource == null) {
 			return defaultDataSource;
 		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
+		return obtainDataSource.getDataSource(applicationContext, defaultDataSource);
 	}
 
 	/**
