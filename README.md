@@ -28,7 +28,7 @@
 
 # 最新版本号: 4.17.0 发版日期: 2020-11-27
 * 增加对数组类型、json类型的支持，增加TypeHandler给用户自行扩展用于json类型处理
-* quickvo工具升级4.16.8版本，支持自定义import类型，jdbc-type支持直接填写数字，便于区分json等类型
+* quickvo工具升级4.16.8版本，支持自定义import类型，jdbc-type支持直接填写数字，便于区分json等类型,配套sqltoy对json的支持
 
 
 # 1. 前言
