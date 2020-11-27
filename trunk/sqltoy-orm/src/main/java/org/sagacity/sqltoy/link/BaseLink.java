@@ -58,7 +58,7 @@ public abstract class BaseLink implements Serializable {
 			result = sqlToyContext.getDataSourceBean(sqlToyConfig.getDataSource());
 		}
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource());
 		}
 		return result;
 	}

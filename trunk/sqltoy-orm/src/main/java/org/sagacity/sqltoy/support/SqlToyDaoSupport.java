@@ -134,7 +134,7 @@ public class SqlToyDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(null);
 		}
 		return result;
 	}
@@ -158,7 +158,7 @@ public class SqlToyDaoSupport {
 		}
 		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(sqltoyConfig.getDataSource());
 		}
 		return result;
 	}
