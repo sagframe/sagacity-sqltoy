@@ -205,7 +205,7 @@ public class LinkDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(null);
 		}
 		return result;
 	}

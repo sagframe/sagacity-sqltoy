@@ -94,12 +94,12 @@ public class TranslateFactory {
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
-		return DialectFactory.getInstance()
-				.findByQuery(sqlToyContext,
-						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
-								new Object[] { new Date(preCheckTime.getTime()) }),
-						sqlToyConfig, null, StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource()
-								: sqlToyContext.getDataSourceBean(dataSourceName))
+		return DialectFactory.getInstance().findByQuery(sqlToyContext,
+				new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
+						new Object[] { new Date(preCheckTime.getTime()) }),
+				sqlToyConfig, null,
+				StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource())
+						: sqlToyContext.getDataSourceBean(dataSourceName))
 				.getRows();
 	}
 
@@ -298,7 +298,8 @@ public class TranslateFactory {
 		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
-						StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource()
+						StringUtil.isBlank(dataSourceName)
+								? sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource())
 								: sqlToyContext.getDataSourceBean(dataSourceName))
 				.getRows();
 	}
