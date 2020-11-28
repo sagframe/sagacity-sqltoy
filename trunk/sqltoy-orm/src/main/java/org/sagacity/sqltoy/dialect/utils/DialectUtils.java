@@ -2117,6 +2117,7 @@ public class DialectUtils {
 		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
 		}
+		//update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
@@ -2169,6 +2170,7 @@ public class DialectUtils {
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return prepHandler;
 		}
+		//update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
