@@ -18,7 +18,9 @@ public interface ObtainDataSource {
 	 * @TOOD 提供给用户自行扩展获取数据源
 	 * @param applicationContext
 	 * @param defaultDataSource  sqlToyContext 上配置的默认数据源
+	 * @param sqlDataSource      sqlId上配置的数据源名称，预览备用
 	 * @return
 	 */
-	public DataSource getDataSource(ApplicationContext applicationContext, DataSource defaultDataSource);
+	public DataSource getDataSource(ApplicationContext applicationContext, DataSource defaultDataSource,
+			String sqlDataSource);
 }
