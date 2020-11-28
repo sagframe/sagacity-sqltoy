@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -2104,6 +2105,7 @@ public class DialectUtils {
 	 * @todo 构造修改记录参数反射赋值处理器
 	 * @param sqlToyContext
 	 * @param preHandler
+	 * @param forceUpdateProps
 	 * @return
 	 */
 	public static ReflectPropertyHandler getUpdateReflectHandler(SqlToyContext sqlToyContext,
@@ -2114,6 +2116,12 @@ public class DialectUtils {
 		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
 		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
+		}
+		final Set<String> forceSet = new HashSet<String>();
+		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
+			for (String field : forceUpdateProps) {
+				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+			}
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
@@ -2129,9 +2137,12 @@ public class DialectUtils {
 				}
 				// 修改操作
 				for (Map.Entry<String, Object> entry : keyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey()))
-							|| forceUpdateFields.contains(entry.getKey())) {
-						this.setValue(entry.getKey(), entry.getValue());
+					// 统一修改字段不在强制更新字段范围内
+					if (!forceSet.contains(entry.getKey().toLowerCase())) {
+						if (StringUtil.isBlank(this.getValue(entry.getKey()))
+								|| forceUpdateFields.contains(entry.getKey())) {
+							this.setValue(entry.getKey(), entry.getValue());
+						}
 					}
 				}
 			}
@@ -2144,6 +2155,7 @@ public class DialectUtils {
 	 * @param sqlToyContext
 	 * @param idFields
 	 * @param prepHandler
+	 * @param forceUpdateProps
 	 * @return
 	 */
 	public static ReflectPropertyHandler getSaveOrUpdateReflectHandler(SqlToyContext sqlToyContext,
@@ -2156,6 +2168,12 @@ public class DialectUtils {
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return prepHandler;
+		}
+		final Set<String> forceSet = new HashSet<String>();
+		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
+			for (String field : forceUpdateProps) {
+				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+			}
 		}
 		// 强制修改字段赋值
 		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
@@ -2181,9 +2199,12 @@ public class DialectUtils {
 				}
 				// 修改属性值
 				for (Map.Entry<String, Object> entry : updateKeyValues.entrySet()) {
-					if (StringUtil.isBlank(this.getValue(entry.getKey()))
-							|| forceUpdateFields.contains(entry.getKey())) {
-						this.setValue(entry.getKey(), entry.getValue());
+					// 统一修改字段不在强制更新字段范围内
+					if (!forceSet.contains(entry.getKey().toLowerCase())) {
+						if (StringUtil.isBlank(this.getValue(entry.getKey()))
+								|| forceUpdateFields.contains(entry.getKey())) {
+							this.setValue(entry.getKey(), entry.getValue());
+						}
 					}
 				}
 			}
