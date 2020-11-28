@@ -679,7 +679,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (obtainDataSource == null) {
 			return defaultDataSource;
 		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource);
+		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
 	}
 
 	/**

@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -296,11 +298,14 @@ public class TranslateFactory {
 			queryExecutor = new QueryExecutor(cacheModel.getSql(), sqlToyConfig.getParamsName(),
 					new Object[] { cacheType.trim() });
 		}
-		return DialectFactory.getInstance()
-				.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
-						StringUtil.isBlank(dataSourceName)
-								? sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource())
-								: sqlToyContext.getDataSourceBean(dataSourceName))
+		DataSource dataSource = null;
+		if (StringUtil.isNotBlank(dataSourceName)) {
+			dataSource = sqlToyContext.getDataSourceBean(dataSourceName);
+		}
+		if (null == dataSource) {
+			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
+		}
+		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
 				.getRows();
 	}
 
