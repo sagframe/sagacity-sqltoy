@@ -29,6 +29,7 @@
 # 最新版本号: 4.17.1 发版日期: 2020-11-29
 * 优化update(entity,forceUpdateFields) 强制属性优先于统一字段处理
 * 为org.sagacity.sqltoy.plugins.datasource.ObtainDataSource 接口方法增加了一个参数（有自行实现的请关注调整）
+* quickvo 工具完善错误提示，帮助新用户自主判断错误原因
 
 
 # 1. 前言
