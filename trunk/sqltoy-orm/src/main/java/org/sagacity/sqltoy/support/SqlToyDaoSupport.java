@@ -1356,10 +1356,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery) {
+		if (null == entityClass) {
 			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, entityQuery, false);
+		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				false);
 	}
 
 	/**
@@ -1373,10 +1374,11 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
-		if (null == entityClass || null == paginationModel || null == entityQuery) {
+		if (null == entityClass || null == paginationModel) {
 			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel值不能为空!");
 		}
-		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery, false);
+		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel,
+				(entityQuery == null) ? EntityQuery.create() : entityQuery, false);
 	}
 
 	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
