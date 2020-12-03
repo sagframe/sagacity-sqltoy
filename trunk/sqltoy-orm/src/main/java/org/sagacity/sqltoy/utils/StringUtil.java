@@ -412,6 +412,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean matches(String source, Pattern p) {
+		if (isBlank(source)) {
+			return false;
+		}
 		return p.matcher(source).find();
 	}
 

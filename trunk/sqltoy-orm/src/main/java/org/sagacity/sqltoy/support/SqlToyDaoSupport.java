@@ -236,12 +236,8 @@ public class SqlToyDaoSupport {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
 		}
-		if (entityQuery == null) {
-			// getCount会自动替换select *
-			String sql = "select * from ".concat(getEntityMeta(entityClass).getSchemaTable());
-			return getCountByQuery(new QueryExecutor(sql, null, null));
-		}
-		return (Long) findEntityUtil(entityClass, null, entityQuery, true);
+		return (Long) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				true);
 	}
 
 	/**
@@ -1356,10 +1352,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityList entityClass、where、values 值不能为空!");
+		if (null == entityClass) {
+			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, entityQuery, false);
+		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				false);
 	}
 
 	/**
@@ -1373,22 +1370,24 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
-		if (null == entityClass || null == paginationModel || null == entityQuery
-				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、values 值不能为空!");
+		if (null == entityClass || null == paginationModel) {
+			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel值不能为空!");
 		}
-		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery, false);
+		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel,
+				(entityQuery == null) ? EntityQuery.create() : entityQuery, false);
 	}
 
 	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
 			boolean isCount) {
-		String where;
+		String where = "";
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
-			where = SqlUtil.wrapWhere(entityMeta);
+			if (innerModel.values != null && innerModel.values.length > 0) {
+				where = SqlUtil.wrapWhere(entityMeta);
+			}
 		} else {
 			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		}
@@ -1440,7 +1439,10 @@ public class SqlToyDaoSupport {
 		}
 
 		String sql = "select ".concat(fields).concat(translateFields).concat(" from ")
-				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+				.concat(entityMeta.getSchemaTable());
+		if (StringUtil.isNotBlank(where)) {
+			sql = sql.concat(" where ").concat(where);
+		}
 		// 处理order by 排序
 		if (!innerModel.orderBy.isEmpty()) {
 			sql = sql.concat(" order by ");

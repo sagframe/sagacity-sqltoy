@@ -371,7 +371,7 @@ public class BeanUtil {
 	 * @param typeHandler
 	 * @param value
 	 * @param typeOriginName
-	 * @param genericType 泛型类型
+	 * @param genericType    泛型类型
 	 * @return
 	 * @throws Exception
 	 */
@@ -726,6 +726,8 @@ public class BeanUtil {
 	}
 
 	/**
+	 * update 2020-12-2 支持多层对象反射取值
+	 * 
 	 * @todo 反射出单个对象中的属性并以对象数组返回
 	 * @param serializable
 	 * @param properties
@@ -739,13 +741,55 @@ public class BeanUtil {
 		if (null == serializable || null == properties || properties.length == 0) {
 			return null;
 		}
-		List datas = new ArrayList();
-		datas.add(serializable);
-		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty()) {
-			return (Object[]) result.get(0);
+		int methodLength = properties.length;
+		Object[] result = new Object[methodLength];
+		// 判断是否存在属性值处理反调
+		boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
+		// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
+		if (hasHandler) {
+			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
+			for (int i = 0; i < methodLength; i++) {
+				propertyIndexMap.put(properties[i].toLowerCase(), i);
+			}
+			reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 		}
-		return null;
+		String[] fields;
+		try {
+			// 通过反射提取属性getMethod返回的数据值
+			for (int i = 0; i < methodLength; i++) {
+				if (properties[i] != null) {
+					//支持xxxx.xxx 子对象属性提取
+					fields = properties[i].split("\\.");
+					Object value = serializable;
+					for (String field : fields) {
+						value = getProperty(value, field.trim());
+						if (value == null) {
+							break;
+						}
+					}
+					result[i] = value;
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+		// 默认值
+		if (defaultValues != null) {
+			int end = (defaultValues.length > methodLength) ? methodLength : defaultValues.length;
+			for (int i = 0; i < end; i++) {
+				if (result[i] == null) {
+					result[i] = defaultValues[i];
+				}
+			}
+		}
+		// 反调对数据值进行加工处理
+		if (hasHandler) {
+			reflectPropertyHandler.setRowIndex(0);
+			reflectPropertyHandler.setRowData(result);
+			reflectPropertyHandler.process();
+			return reflectPropertyHandler.getRowData();
+		}
+		return result;
 	}
 
 	/**
@@ -1383,8 +1427,8 @@ public class BeanUtil {
 	 * @return
 	 */
 	private static Object convertArray(Object values, String type) {
-		//类型完全一致
-		if (type == null||type.equals(values.getClass().getTypeName())) {
+		// 类型完全一致
+		if (type == null || type.equals(values.getClass().getTypeName())) {
 			return values;
 		}
 		Object[] array;

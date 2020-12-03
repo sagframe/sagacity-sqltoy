@@ -137,6 +137,9 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean hasNamedParam(String sql) {
+		if (sql == null) {
+			return false;
+		}
 		return StringUtil.matches(sql, SqlToyConstants.SQL_NAMED_PATTERN);
 	}
 
@@ -180,12 +183,19 @@ public class SqlConfigParseUtils {
 	 *       where #[t1.status=?] #[and t1.auditTime=?]
 	 * @param queryStr
 	 * @param paramsNamed
-	 * @param paramsValue
+	 * @param paramsArg
 	 * @return
 	 */
-	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		if (null == paramsValue || paramsValue.length == 0) {
-			return new SqlToyResult(queryStr, paramsValue);
+	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
+		Object[] paramsValue = paramsArg;
+		if (paramsNamed != null && paramsNamed.length > 0) {
+			// 构造全是null的条件值，将全部条件去除
+			if (null == paramsArg || paramsArg.length == 0) {
+				paramsValue = new Object[paramsNamed.length];
+			}
+		} // 无参数别名也无条件值
+		else if (null == paramsArg || paramsArg.length == 0) {
+			return new SqlToyResult(queryStr, paramsArg);
 		}
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		// 是否:paramName 形式的参数模式
@@ -764,7 +774,7 @@ public class SqlConfigParseUtils {
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
-		//对关键词根据数据库类型进行转换,比如mysql的	``变成mssql时变为[]
+		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
 		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));

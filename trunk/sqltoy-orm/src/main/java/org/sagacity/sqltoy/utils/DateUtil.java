@@ -362,6 +362,9 @@ public class DateUtil {
 		if (dt == null) {
 			return null;
 		}
+		if (fmt == null) {
+			throw new IllegalArgumentException("格式化日期指定的format 为null,请正确输入参数!");
+		}
 		String fmtUpper = fmt.toUpperCase();
 		if (fmtUpper.equals("YY")) {
 			String year = Integer.toString(getYear(dt));
