@@ -26,11 +26,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.1 发版日期: 2020-11-29
-* 优化update(entity,forceUpdateFields) 强制属性优先于统一字段处理
-* 为org.sagacity.sqltoy.plugins.datasource.ObtainDataSource 接口方法增加了一个参数，便于超极端场景下扩展预留（有自行实现的请关注调整）
-* quickvo 工具完善错误提示，帮助新用户自主判断错误原因
-
+# 最新版本号: 4.17.2 发版日期: 2020-12-03
+* findEntity 支持无条件查询
+* sql查询或executeSql对象传参时，sql中的参数变量支持:xxxx.xxxx 多层子对象属性提取
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
