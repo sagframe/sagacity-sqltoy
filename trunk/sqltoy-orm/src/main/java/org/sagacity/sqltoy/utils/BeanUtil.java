@@ -725,22 +725,9 @@ public class BeanUtil {
 		return resultList;
 	}
 
-//	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
-//			ReflectPropertyHandler reflectPropertyHandler) {
-//		if (null == serializable || null == properties || properties.length == 0) {
-//			return null;
-//		}
-//		List datas = new ArrayList();
-//		datas.add(serializable);
-//		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
-//		if (null != result && !result.isEmpty()) {
-//			return (Object[]) result.get(0);
-//		}
-//		return null;
-//	}
-
 	/**
 	 * update 2020-12-2 支持多层对象反射取值
+	 * 
 	 * @todo 反射出单个对象中的属性并以对象数组返回
 	 * @param serializable
 	 * @param properties
@@ -771,19 +758,16 @@ public class BeanUtil {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
-					if (!properties[i].contains(".")) {
-						result[i] = getProperty(serializable, properties[i]);
-					} else {
-						fields = properties[i].split("\\.");
-						Object value = serializable;
-						for (String field : fields) {
-							value = getProperty(value, field.trim());
-							if (value == null) {
-								break;
-							}
+					//支持xxxx.xxx 子对象属性提取
+					fields = properties[i].split("\\.");
+					Object value = serializable;
+					for (String field : fields) {
+						value = getProperty(value, field.trim());
+						if (value == null) {
+							break;
 						}
-						result[i] = value;
 					}
+					result[i] = value;
 				}
 			}
 		} catch (Exception e) {
