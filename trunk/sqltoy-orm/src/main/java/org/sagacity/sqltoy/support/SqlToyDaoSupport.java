@@ -1471,8 +1471,10 @@ public class SqlToyDaoSupport {
 		Class resultType = entityClass;
 		// :named 模式(named模式参数值必须存在)
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)
-					.dataSource(getDataSource(innerModel.dataSource));
+			queryExecutor = new QueryExecutor(sql,
+					(innerModel.values == null || innerModel.values.length == 0) ? null
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource));
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource));
