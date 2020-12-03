@@ -183,12 +183,19 @@ public class SqlConfigParseUtils {
 	 *       where #[t1.status=?] #[and t1.auditTime=?]
 	 * @param queryStr
 	 * @param paramsNamed
-	 * @param paramsValue
+	 * @param paramsArg
 	 * @return
 	 */
-	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		if (null == paramsValue || paramsValue.length == 0) {
-			return new SqlToyResult(queryStr, paramsValue);
+	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
+		Object[] paramsValue = paramsArg;
+		if (paramsNamed != null && paramsNamed.length > 0) {
+			// 构造全是null的条件值，将全部条件去除
+			if (null == paramsArg || paramsArg.length == 0) {
+				paramsValue = new Object[paramsNamed.length];
+			}
+		} // 无参数别名也无条件值
+		else if (null == paramsArg || paramsArg.length == 0) {
+			return new SqlToyResult(queryStr, paramsArg);
 		}
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		// 是否:paramName 形式的参数模式

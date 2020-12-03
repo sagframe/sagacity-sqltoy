@@ -1389,7 +1389,7 @@ public class SqlToyDaoSupport {
 
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
-			if (innerModel.values != null) {
+			if (innerModel.values != null && innerModel.values.length > 0) {
 				where = SqlUtil.wrapWhere(entityMeta);
 			}
 		} else {
