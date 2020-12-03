@@ -1321,7 +1321,7 @@ public class BeanUtil {
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
 			if (method == null) {
-				return;
+				throw new Exception(bean.getClass().getName() + " 没有对应的:" + property);
 			}
 			setMethods.put(key, method);
 		}
