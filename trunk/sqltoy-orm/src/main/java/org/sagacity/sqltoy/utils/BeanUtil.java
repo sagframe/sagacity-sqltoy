@@ -758,7 +758,7 @@ public class BeanUtil {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
-					//支持xxxx.xxx 子对象属性提取
+					// 支持xxxx.xxx 子对象属性提取
 					fields = properties[i].split("\\.");
 					Object value = serializable;
 					for (String field : fields) {
@@ -1320,6 +1320,9 @@ public class BeanUtil {
 		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
+			if (method == null) {
+				throw new Exception(bean.getClass().getName() + " 没有对应的:" + property);
+			}
 			setMethods.put(key, method);
 		}
 		// 将数据类型进行转换再赋值
@@ -1347,6 +1350,9 @@ public class BeanUtil {
 		Method method = getMethods.get(key);
 		if (method == null) {
 			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
+			if (method == null) {
+				return null;
+			}
 			getMethods.put(key, method);
 		}
 		return method.invoke(bean);
