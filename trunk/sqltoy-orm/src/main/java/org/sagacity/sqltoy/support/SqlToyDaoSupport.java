@@ -236,12 +236,8 @@ public class SqlToyDaoSupport {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
 		}
-		if (entityQuery == null) {
-			// getCount会自动替换select *
-			String sql = "select * from ".concat(getEntityMeta(entityClass).getSchemaTable());
-			return getCountByQuery(new QueryExecutor(sql, null, null));
-		}
-		return (Long) findEntityUtil(entityClass, null, entityQuery, true);
+		return (Long) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				true);
 	}
 
 	/**
