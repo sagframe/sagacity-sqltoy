@@ -424,7 +424,7 @@ public class DialectUtils {
 			isNamed = true;
 		}
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
-		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
+		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTableShardings()) {
 			// 没有自定义缓存翻译直接返回
 			if (extend.translates.isEmpty()) {
 				return sqlToyConfig;

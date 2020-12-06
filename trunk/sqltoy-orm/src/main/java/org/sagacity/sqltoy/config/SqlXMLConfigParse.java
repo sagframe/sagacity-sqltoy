@@ -30,10 +30,10 @@ import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
-import org.sagacity.sqltoy.config.model.QueryShardingModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
@@ -592,24 +592,28 @@ public class SqlXMLConfigParse {
 			return;
 		}
 		Element shardingDataSource = (Element) shardingDBNode.item(0);
+		ShardingStrategyConfig shardingConfig = new ShardingStrategyConfig(0);
 		// 策略辨别值
 		if (shardingDataSource.hasAttribute("strategy-value")) {
-			sqlToyConfig.setDataSourceShardingStrategyValue(shardingDataSource.getAttribute("strategy-value"));
+			shardingConfig.setDecisionType(shardingDataSource.getAttribute("strategy-value"));
+		} else if (shardingDataSource.hasAttribute("decision-type")) {
+			shardingConfig.setDecisionType(shardingDataSource.getAttribute("decision-type"));
 		}
 		if (shardingDataSource.hasAttribute("params")) {
-			sqlToyConfig.setDataSourceShardingParams(
-					shardingDataSource.getAttribute("params").replace(";", ",").toLowerCase().split("\\,"));
-			int size = sqlToyConfig.getDataSourceShardingParams().length;
+			String[] fields = shardingDataSource.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
+			int size = fields.length;
 			String[] paramsAlias = new String[size];
 			String[] paramName;
 			for (int i = 0; i < size; i++) {
-				paramName = sqlToyConfig.getDataSourceShardingParams()[i].split("\\:");
-				sqlToyConfig.getDataSourceShardingParams()[i] = paramName[0].trim();
+				paramName = fields[i].split("\\:");
+				fields[i] = paramName[0].trim();
 				paramsAlias[i] = paramName[paramName.length - 1].trim();
 			}
-			sqlToyConfig.setDataSourceShardingParamsAlias(paramsAlias);
+			shardingConfig.setFields(fields);
+			shardingConfig.setAliasNames(paramsAlias);
 		}
-		sqlToyConfig.setDataSourceShardingStragety(shardingDataSource.getAttribute("strategy"));
+		shardingConfig.setStrategy(shardingDataSource.getAttribute("strategy"));
+		sqlToyConfig.setDataSourceSharding(shardingConfig);
 	}
 
 	/**
@@ -621,33 +625,39 @@ public class SqlXMLConfigParse {
 		if (shardingTables == null || shardingTables.getLength() == 0) {
 			return;
 		}
-		List<QueryShardingModel> tablesShardings = new ArrayList();
+		List<ShardingStrategyConfig> tablesShardings = new ArrayList();
 		String[] paramName;
 		String[] paramsAlias;
 		int size;
-		List<String> params = new ArrayList();
 		Element elt;
+		List<String> params = new ArrayList<String>();
 		for (int i = 0; i < shardingTables.getLength(); i++) {
 			elt = (Element) shardingTables.item(i);
 			if (elt.hasAttribute("tables") && elt.hasAttribute("strategy")) {
-				QueryShardingModel shardingModel = new QueryShardingModel();
+				ShardingStrategyConfig shardingModel = new ShardingStrategyConfig(1);
 				shardingModel.setTables(elt.getAttribute("tables").split("\\,"));
+				String[] fields;
 				if (elt.hasAttribute("params")) {
+					fields = elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
 					// params="a:a1,b:b1";params为{a:a1, b:b1}
-					shardingModel.setParams(elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,"));
-					size = shardingModel.getParams().length;
+					size = fields.length;
 					paramsAlias = new String[size];
 					for (int j = 0; j < size; j++) {
-						paramName = shardingModel.getParams()[j].split("\\:");
+						paramName = fields[j].split("\\:");
 						// 重置params数组值
-						shardingModel.getParams()[j] = paramName[0].trim();
-						params.add(shardingModel.getParams()[j]);
+						fields[j] = paramName[0].trim();
+						if (!params.contains(fields[j])) {
+							params.add(fields[j]);
+						}
 						paramsAlias[j] = paramName[paramName.length - 1].trim();
 					}
-					shardingModel.setParamsAlias(paramsAlias);
+					shardingModel.setFields(fields);
+					shardingModel.setAliasNames(paramsAlias);
 				}
 				if (elt.hasAttribute("strategy-value")) {
-					shardingModel.setStrategyValue(elt.getAttribute("strategy-value"));
+					shardingModel.setDecisionType(elt.getAttribute("strategy-value"));
+				} else if (elt.hasAttribute("decision-type")) {
+					shardingModel.setDecisionType(elt.getAttribute("decision-type"));
 				}
 				shardingModel.setStrategy(elt.getAttribute("strategy"));
 				tablesShardings.add(shardingModel);
@@ -658,7 +668,7 @@ public class SqlXMLConfigParse {
 			params.toArray(paramAry);
 			sqlToyConfig.setTableShardingParams(paramAry);
 		}
-		sqlToyConfig.setTablesShardings(tablesShardings);
+		sqlToyConfig.setTableShardings(tablesShardings);
 	}
 
 	/**
@@ -1191,7 +1201,7 @@ public class SqlXMLConfigParse {
 						if (elt.hasAttribute("default-type")) {
 							String defaultType = elt.getAttribute("default-type").toLowerCase();
 							try {
-								pivotModel.setDefaultValue(BeanUtil.convertType(null, defaultValue, defaultType,null));
+								pivotModel.setDefaultValue(BeanUtil.convertType(null, defaultValue, defaultType, null));
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

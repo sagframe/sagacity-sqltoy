@@ -30,7 +30,6 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.QueryShardingModel;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -1502,25 +1501,15 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
-			// dataSource sharding
-			ShardingStrategyConfig shardingStrategy = entityMeta.getShardingConfig().getShardingDBStrategy();
-			if (shardingStrategy != null) {
-				sqlToyConfig.setDataSourceShardingStragety(shardingStrategy.getName());
-				sqlToyConfig.setDataSourceShardingParams(shardingStrategy.getFields());
-				sqlToyConfig.setDataSourceShardingParamsAlias(shardingStrategy.getAliasNames());
+			//db sharding
+			if (entityMeta.getShardingConfig().getShardingDBStrategy() != null) {
+				sqlToyConfig.setDataSourceSharding(entityMeta.getShardingConfig().getShardingDBStrategy());
 			}
 			// table sharding
-			shardingStrategy = entityMeta.getShardingConfig().getShardingTableStrategy();
-			if (shardingStrategy != null) {
-				sqlToyConfig.setTableShardingParams(shardingStrategy.getFields());
-				List<QueryShardingModel> queryShardings = new ArrayList<QueryShardingModel>();
-				QueryShardingModel model = new QueryShardingModel();
-				model.setParams(shardingStrategy.getFields());
-				model.setParamsAlias(shardingStrategy.getAliasNames());
-				model.setStrategy(shardingStrategy.getName());
-				model.setTables(new String[] { entityMeta.getSchemaTable() });
-				queryShardings.add(model);
-				sqlToyConfig.setTablesShardings(queryShardings);
+			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
+				List<ShardingStrategyConfig> queryShardings = new ArrayList<ShardingStrategyConfig>();
+				queryShardings.add(entityMeta.getShardingConfig().getShardingTableStrategy());
+				sqlToyConfig.setTableShardings(queryShardings);
 			}
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);

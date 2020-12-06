@@ -186,7 +186,9 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getDataSourceShardingParams();
+		if (sqlToyConfig.getDataSourceSharding() == null)
+			return null;
+		return sqlToyConfig.getDataSourceSharding().getFields();
 	}
 
 	/**
@@ -231,7 +233,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * @throws Exception
 	 */
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
-		if (entity != null) {
+		if (entity != null && sqlToyConfig.getTableShardingParams() != null) {
 			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
 					reflectPropertyHandler);
 		}
@@ -245,8 +247,8 @@ public class QueryExecutorExtend implements Serializable {
 	 * @throws Exception
 	 */
 	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
-		if (entity != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceShardingParams(), null,
+		if (entity != null && sqlToyConfig.getDataSourceSharding() != null) {
+			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
 					reflectPropertyHandler);
 		}
 		return shardingParamsValue;
