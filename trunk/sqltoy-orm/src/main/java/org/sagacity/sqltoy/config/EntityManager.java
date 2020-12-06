@@ -396,7 +396,6 @@ public class EntityManager {
 			if (shardingDB.aliasNames() != null) {
 				System.arraycopy(shardingDB.aliasNames(), 0, aliasNames, 0, shardingDB.aliasNames().length);
 			}
-
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
 			config.setStrategy(strategy);
