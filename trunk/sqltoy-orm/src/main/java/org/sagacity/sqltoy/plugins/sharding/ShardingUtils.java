@@ -294,6 +294,7 @@ public class ShardingUtils {
 	 * @todo 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
+	 * @param dialect
 	 * @param paramNames
 	 * @param paramValues
 	 */
