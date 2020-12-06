@@ -1016,14 +1016,15 @@ public class ResultUtils {
 	 * @param pivotCategorySet
 	 * @param extend
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
+	public static boolean calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
 		List items = dataSetResult.getRows();
 		// 数据为空直接跳出处理
 		if (items == null || items.isEmpty()) {
-			return;
+			return false;
 		}
 
+		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
 		List resultProcessors = sqlToyConfig.getResultProcessor();
@@ -1060,14 +1061,17 @@ public class ResultUtils {
 				// 数据旋转
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
+					changedCols = true;
 				} else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
+					changedCols = true;
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ColsChainRelativeModel) {
 					// 列数据环比
 					ColsChainRelative.process((ColsChainRelativeModel) processor, labelIndexMap, items);
+					changedCols = true;
 				} else if (processor instanceof RowsChainRelativeModel) {
 					// 行数据环比
 					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
@@ -1078,6 +1082,7 @@ public class ResultUtils {
 			}
 			dataSetResult.setRows(items);
 		}
+		return changedCols;
 	}
 
 	/**
@@ -1111,7 +1116,7 @@ public class ResultUtils {
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(TypeHandler typeHandler, List queryResultRows, String[] labelNames,
-			Class resultType) throws Exception {
+			Class resultType, boolean changedCols) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
@@ -1121,12 +1126,18 @@ public class ResultUtils {
 		if (Array.class.equals(resultType)) {
 			return CollectionUtil.innerListToArray(queryResultRows);
 		}
+		// 已经存在pivot、unpivot、列环比计算等
+		if (changedCols) {
+			logger.warn("查询中存在pivot、unpivot、列同比环比计算等类型的改变列长度的操作，结果类型不支持转map或VO对象!");
+			return queryResultRows;
+		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
 		if (resultType.equals(HashMap.class) || resultType.equals(ConcurrentHashMap.class)
 				|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
 				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
 				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
+
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;
