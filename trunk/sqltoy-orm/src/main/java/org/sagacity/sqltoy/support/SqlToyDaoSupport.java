@@ -1507,10 +1507,21 @@ public class SqlToyDaoSupport {
 			}
 			// table sharding
 			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
-				List<ShardingStrategyConfig> queryShardings = new ArrayList<ShardingStrategyConfig>();
-				queryShardings.add(entityMeta.getShardingConfig().getShardingTableStrategy());
-				queryExecutor.getInnerModel().tableShardings = queryShardings;
+				List<ShardingStrategyConfig> shardingConfig = new ArrayList<ShardingStrategyConfig>();
+				shardingConfig.add(entityMeta.getShardingConfig().getShardingTableStrategy());
+				queryExecutor.getInnerModel().tableShardings = shardingConfig;
 			}
+		}
+		if (innerModel.dbSharding != null) {
+			queryExecutor.getInnerModel().dbSharding = innerModel.dbSharding;
+		}
+		if (innerModel.tableSharding != null) {
+			ShardingStrategyConfig shardingConfig = innerModel.tableSharding;
+			//补充表名称
+			shardingConfig.setTables(new String[] { entityMeta.getSchemaTable() });
+			List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
+			tableShardings.add(shardingConfig);
+			queryExecutor.getInnerModel().tableShardings = tableShardings;
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
 		// 取count数量
