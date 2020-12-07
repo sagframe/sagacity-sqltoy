@@ -131,6 +131,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		if (bizDate == null) {
+			logger.error("分表操作对应的参数值为null,导致无法分表,请检查参数配置!");
 			return null;
 		}
 		// 间隔多少天
