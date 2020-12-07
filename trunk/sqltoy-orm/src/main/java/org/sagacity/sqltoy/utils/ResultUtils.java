@@ -1129,8 +1129,8 @@ public class ResultUtils {
 		}
 		// 已经存在pivot、unpivot、列环比计算等
 		if (changedCols) {
-			logger.error("查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作不支持转map或VO对象!");
-			SqlExecuteStat.debug("结果类型映射", "查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作，因此不支持转map或VO对象!");
+			logger.warn("查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作不支持转map或VO对象!");
+			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作，因此不支持转map或VO对象!");
 		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
