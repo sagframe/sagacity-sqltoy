@@ -190,9 +190,14 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		if (sqlToyConfig.getDataSourceSharding() == null)
-			return null;
-		return sqlToyConfig.getDataSourceSharding().getFields();
+		String[] fields = null;
+		if (sqlToyConfig.getDataSourceSharding() != null) {
+			fields = sqlToyConfig.getDataSourceSharding().getFields();
+		}
+		if (dbSharding != null) {
+			fields = dbSharding.getFields();
+		}
+		return fields;
 	}
 
 	/**
