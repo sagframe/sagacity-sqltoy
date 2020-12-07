@@ -301,6 +301,7 @@ public class ShardingUtils {
 	 * @todo 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
+	 * @param tableShardings
 	 * @param dialect
 	 * @param paramNames
 	 * @param paramValues
@@ -345,7 +346,7 @@ public class ShardingUtils {
 	 * @todo 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
 	 * @param sqlToyContext
 	 * @param sql
-	 * @param sqlToyConfig
+	 * @param tableShardings
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
@@ -378,7 +379,7 @@ public class ShardingUtils {
 	/**
 	 * @todo 获取sharding对应的表
 	 * @param sqlToyContext
-	 * @param sqlToyConfig
+	 * @param tableShardings
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
