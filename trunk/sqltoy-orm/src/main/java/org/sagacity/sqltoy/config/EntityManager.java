@@ -242,9 +242,12 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
+				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
+						.concat(entity.tableName()));
 
 				// 解析自定义注解
 				parseCustomAnnotation(entityMeta, entityClass);
+
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
 
@@ -252,8 +255,6 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-						.concat(entity.tableName()));
 
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
