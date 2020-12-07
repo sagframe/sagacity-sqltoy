@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -1128,7 +1129,8 @@ public class ResultUtils {
 		}
 		// 已经存在pivot、unpivot、列环比计算等
 		if (changedCols) {
-			logger.error("查询中存在类似pivot、unpivot、列同比环比计算等类型的改变列长度的操作，结果类型不支持转map或VO对象!");
+			logger.error("查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作不支持转map或VO对象!");
+			SqlExecuteStat.debug("结果类型映射", "查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作，因此不支持转map或VO对象!");
 		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
