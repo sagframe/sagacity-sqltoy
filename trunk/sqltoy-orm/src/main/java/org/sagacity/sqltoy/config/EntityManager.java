@@ -413,7 +413,7 @@ public class EntityManager {
 			if (shardingTable.aliasNames() != null) {
 				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-			config.setTables(new String[] { entityMeta.getTableName() });
+			config.setTables(new String[] { entityMeta.getSchemaTable() });
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
 			config.setStrategy(strategy);
