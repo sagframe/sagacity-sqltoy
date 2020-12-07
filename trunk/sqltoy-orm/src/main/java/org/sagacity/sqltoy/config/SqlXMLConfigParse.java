@@ -585,7 +585,7 @@ public class SqlXMLConfigParse {
 	/**
 	 * @todo 解析dataSource的sharding
 	 * @param sqlToyConfig
-	 * @param shardingDataSource
+	 * @param shardingDBNode
 	 */
 	private static void parseShardingDataSource(SqlToyConfig sqlToyConfig, NodeList shardingDBNode) {
 		if (shardingDBNode == null || shardingDBNode.getLength() == 0) {
