@@ -294,7 +294,7 @@ public class DialectFactory {
 									paramsNamed, paramsValue);
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
-									sqlToyConfig, paramsNamed, paramsValue);
+									sqlToyConfig.getTableShardings(), paramsNamed, paramsValue);
 							// 做sql签名
 							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,

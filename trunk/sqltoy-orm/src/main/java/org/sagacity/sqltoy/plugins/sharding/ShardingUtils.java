@@ -240,15 +240,22 @@ public class ShardingUtils {
 		// 获取sharding DataSource
 		// 优先以直接指定的dataSource为基准
 		DataSource shardingDataSource = dataSource;
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		ShardingStrategyConfig shardingConfig = null;
+		if (null != sqlToyConfig.getDataSourceSharding()) {
+			shardingConfig = sqlToyConfig.getDataSourceSharding();
+		}
+		if (null != extend.dbSharding) {
+			shardingConfig = extend.dbSharding;
+		}
 		// 如果没有sharding策略，则返回dataSource，否则以sharding的结果dataSource为基准
-		if (null == sqlToyConfig || null == sqlToyConfig.getDataSourceSharding()) {
+		if (null == sqlToyConfig || null == shardingConfig) {
 			return shardingDataSource;
 		}
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
 		Object[] paramValues = extend.getDataSourceShardingParamsValue(sqlToyConfig);
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
-		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, valueMap);
+		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, shardingConfig, valueMap);
 		if (result != null) {
 			return result;
 		}
@@ -259,12 +266,12 @@ public class ShardingUtils {
 	 * @todo 根据数据获取sharding对应的DataSource
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
+	 * @param shardingConfig
 	 * @param valueMap
 	 * @return
 	 */
 	private static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			IgnoreCaseLinkedMap<String, Object> valueMap) {
-		ShardingStrategyConfig shardingConfig = sqlToyConfig.getDataSourceSharding();
+			ShardingStrategyConfig shardingConfig, IgnoreCaseLinkedMap<String, Object> valueMap) {
 		if (shardingConfig == null) {
 			return null;
 		}
@@ -299,11 +306,11 @@ public class ShardingUtils {
 	 * @param paramValues
 	 */
 	public static void replaceShardingSqlToyConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			String dialect, String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTableShardings() == null) {
+			List<ShardingStrategyConfig> tableShardings, String dialect, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return;
 		}
-		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
+		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, tableShardings, paramNames,
 				paramValues);
 		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return;
@@ -343,12 +350,12 @@ public class ShardingUtils {
 	 * @param paramValues
 	 * @return
 	 */
-	public static String replaceShardingTables(SqlToyContext sqlToyContext, String sql, SqlToyConfig sqlToyConfig,
-			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTableShardings() == null) {
+	public static String replaceShardingTables(SqlToyContext sqlToyContext, String sql,
+			List<ShardingStrategyConfig> tableShardings, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return sql;
 		}
-		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
+		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, tableShardings, paramNames,
 				paramValues);
 		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return sql;
@@ -376,9 +383,9 @@ public class ShardingUtils {
 	 * @param paramValues
 	 * @return
 	 */
-	private static HashMap<String, String> getShardingTables(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTableShardings() == null) {
+	private static HashMap<String, String> getShardingTables(SqlToyContext sqlToyContext,
+			List<ShardingStrategyConfig> tableShardings, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return null;
 		}
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
@@ -388,7 +395,7 @@ public class ShardingUtils {
 		String shardingTable;
 		ShardingStrategy shardingStrategy;
 		IgnoreCaseLinkedMap<String, Object> realDataMap = null;
-		for (ShardingStrategyConfig shardingModel : sqlToyConfig.getTableShardings()) {
+		for (ShardingStrategyConfig shardingModel : tableShardings) {
 			shardingStrategy = sqlToyContext.getShardingStrategy(shardingModel.getStrategy());
 			if (shardingStrategy != null) {
 				tables = shardingModel.getTables();

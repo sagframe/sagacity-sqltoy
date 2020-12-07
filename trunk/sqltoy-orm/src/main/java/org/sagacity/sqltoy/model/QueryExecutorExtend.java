@@ -256,9 +256,15 @@ public class QueryExecutorExtend implements Serializable {
 	 * @throws Exception
 	 */
 	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
-		if (entity != null && sqlToyConfig.getDataSourceSharding() != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
-					reflectPropertyHandler);
+		if (entity != null) {
+			// 后续手工设定的优先于xml中原有配置
+			if (dbSharding != null) {
+				return BeanUtil.reflectBeanToAry(entity, dbSharding.getFields(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getDataSourceSharding() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}

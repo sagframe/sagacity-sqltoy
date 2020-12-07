@@ -26,7 +26,7 @@ public class ShardingDBModel implements Serializable {
 	private String dataSourceName;
 
 	/**
-	 * 数据源名称
+	 * 数据源
 	 */
 	private DataSource dataSource;
 
@@ -38,8 +38,7 @@ public class ShardingDBModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSourceName
-	 *            the dataSourceName to set
+	 * @param dataSourceName the dataSourceName to set
 	 */
 	public void setDataSourceName(String dataSourceName) {
 		this.dataSourceName = dataSourceName;
@@ -53,8 +52,7 @@ public class ShardingDBModel implements Serializable {
 	}
 
 	/**
-	 * @param dataSource
-	 *            the dataSource to set
+	 * @param dataSource the dataSource to set
 	 */
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
