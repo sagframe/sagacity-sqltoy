@@ -68,31 +68,12 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * 分表策略
 	 */
-	private List<ShardingStrategyConfig> tableShardings;
+	private List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
-	 * 基于dataSource的sharding策略
+	 * 分表对应参数合集
 	 */
-	// private String dataSourceShardingStragety = null;
-
-	/**
-	 * 基于dataSource的sharding参数
-	 */
-	// private String[] dataSourceShardingParams = null;
-
-	// private String[] dataSourceShardingParamsAlias = null;
-
-	/**
-	 * 自定义策略辨别值
-	 */
-	// private String dataSourceShardingStrategyValue = null;
-
 	private String[] tableShardingParams = null;
-
-	/**
-	 * 基于表的sharding配置
-	 */
-	// private List<QueryShardingModel> tablesShardings = null;
 
 	/**
 	 * 对列进行拼接方式定义
@@ -690,6 +671,5 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public void setTableShardingParams(String[] tableShardingParams) {
 		this.tableShardingParams = tableShardingParams;
 	}
-	
-	
+
 }

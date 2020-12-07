@@ -1501,15 +1501,15 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
-			//db sharding
+			// db sharding
 			if (entityMeta.getShardingConfig().getShardingDBStrategy() != null) {
-				sqlToyConfig.setDataSourceSharding(entityMeta.getShardingConfig().getShardingDBStrategy());
+				queryExecutor.getInnerModel().dbSharding = entityMeta.getShardingConfig().getShardingDBStrategy();
 			}
 			// table sharding
 			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
 				List<ShardingStrategyConfig> queryShardings = new ArrayList<ShardingStrategyConfig>();
 				queryShardings.add(entityMeta.getShardingConfig().getShardingTableStrategy());
-				sqlToyConfig.setTableShardings(queryShardings);
+				queryExecutor.getInnerModel().tableShardings = queryShardings;
 			}
 		}
 		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
