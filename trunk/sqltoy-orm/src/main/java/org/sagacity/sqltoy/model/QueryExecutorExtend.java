@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -144,8 +145,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public String countSql;
 
-	// 分库分表策略配置
-	// public ShardingConfig shardingConfig = new ShardingConfig();
+	// 分库策略配置
+	public ShardingStrategyConfig dataSourceSharding;
+
+	// 分表策略配置
+	public List<ShardingStrategyConfig> tableShardings;
 
 	/**
 	 * @param sqlToyConfig

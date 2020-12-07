@@ -630,6 +630,7 @@ public class SqlXMLConfigParse {
 		String[] paramsAlias;
 		int size;
 		Element elt;
+		//全部参数
 		List<String> params = new ArrayList<String>();
 		for (int i = 0; i < shardingTables.getLength(); i++) {
 			elt = (Element) shardingTables.item(i);
