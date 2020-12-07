@@ -1128,8 +1128,7 @@ public class ResultUtils {
 		}
 		// 已经存在pivot、unpivot、列环比计算等
 		if (changedCols) {
-			logger.warn("查询中存在pivot、unpivot、列同比环比计算等类型的改变列长度的操作，结果类型不支持转map或VO对象!");
-			return queryResultRows;
+			logger.error("查询中存在类似pivot、unpivot、列同比环比计算等类型的改变列长度的操作，结果类型不支持转map或VO对象!");
 		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
@@ -1137,7 +1136,6 @@ public class ResultUtils {
 				|| resultType.equals(Map.class) || resultType.equals(ConcurrentMap.class)
 				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
 				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
-
 			int width = labelNames.length;
 			List result = new ArrayList();
 			List rowList;
