@@ -176,7 +176,11 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getTableShardingParams();
+		if (tableShardings.isEmpty()) {
+			return sqlToyConfig.getTableShardingParams();
+		} else {
+			return getTableShardingParams();
+		}
 	}
 
 	/**
@@ -242,9 +246,14 @@ public class QueryExecutorExtend implements Serializable {
 	 * @throws Exception
 	 */
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
-		if (entity != null && sqlToyConfig.getTableShardingParams() != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
-					reflectPropertyHandler);
+		if (entity != null) {
+			if (!tableShardings.isEmpty()) {
+				return BeanUtil.reflectBeanToAry(entity, getTableShardingParams(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getTableShardingParams() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}
@@ -314,4 +323,22 @@ public class QueryExecutorExtend implements Serializable {
 		}
 	}
 
+	private String[] getTableShardingParams() {
+		if (tableShardings.isEmpty()) {
+			return null;
+		}
+		List<String> params = new ArrayList<String>();
+		for (ShardingStrategyConfig shardingConnfig : tableShardings) {
+			for (String field : shardingConnfig.getFields()) {
+				if (!params.contains(field)) {
+					params.add(field);
+				}
+			}
+		}
+		if (params.isEmpty())
+			return null;
+		String[] result = new String[params.size()];
+		params.toArray(result);
+		return result;
+	}
 }
