@@ -146,10 +146,10 @@ public class QueryExecutorExtend implements Serializable {
 	public String countSql;
 
 	// 分库策略配置
-	public ShardingStrategyConfig dataSourceSharding;
+	public ShardingStrategyConfig dbSharding;
 
 	// 分表策略配置
-	public List<ShardingStrategyConfig> tableShardings;
+	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
 	 * @param sqlToyConfig
