@@ -596,6 +596,8 @@ public class SqlXMLConfigParse {
 		// 策略辨别值
 		if (shardingDataSource.hasAttribute("strategy-value")) {
 			shardingConfig.setDecisionType(shardingDataSource.getAttribute("strategy-value"));
+		} else if (shardingDataSource.hasAttribute("strategy-type")) {
+			shardingConfig.setDecisionType(shardingDataSource.getAttribute("strategy-type"));
 		} else if (shardingDataSource.hasAttribute("decision-type")) {
 			shardingConfig.setDecisionType(shardingDataSource.getAttribute("decision-type"));
 		}
@@ -630,7 +632,7 @@ public class SqlXMLConfigParse {
 		String[] paramsAlias;
 		int size;
 		Element elt;
-		//全部参数
+		// 全部参数
 		List<String> params = new ArrayList<String>();
 		for (int i = 0; i < shardingTables.getLength(); i++) {
 			elt = (Element) shardingTables.item(i);
@@ -657,6 +659,8 @@ public class SqlXMLConfigParse {
 				}
 				if (elt.hasAttribute("strategy-value")) {
 					shardingModel.setDecisionType(elt.getAttribute("strategy-value"));
+				} else if (elt.hasAttribute("strategy-type")) {
+					shardingModel.setDecisionType(elt.getAttribute("strategy-type"));
 				} else if (elt.hasAttribute("decision-type")) {
 					shardingModel.setDecisionType(elt.getAttribute("decision-type"));
 				}
