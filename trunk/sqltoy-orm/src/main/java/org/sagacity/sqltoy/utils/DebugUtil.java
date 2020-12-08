@@ -18,7 +18,6 @@ import java.util.Set;
  * @version id:DebugUtil.java,Revision:v1.0,Date:2010-8-18
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-@Deprecated
 public class DebugUtil {
 	/**
 	 * 用于计时存储map
