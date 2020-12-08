@@ -248,9 +248,6 @@ public class EntityManager {
 				// 解析自定义注解
 				parseCustomAnnotation(entityMeta, entityClass);
 
-				// 解析sharding策略
-				parseSharding(entityMeta, entityClass);
-
 				// 主键约束(for postgresql)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
@@ -328,6 +325,9 @@ public class EntityManager {
 
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
+
+				// 解析sharding策略
+				parseSharding(entityMeta, entityClass);
 			}
 		} catch (Exception e) {
 			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
