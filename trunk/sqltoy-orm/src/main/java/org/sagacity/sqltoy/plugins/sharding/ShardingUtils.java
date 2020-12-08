@@ -235,7 +235,7 @@ public class ShardingUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static DataSource getShardingDataSource1(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+	public static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, DataSource dataSource) throws Exception {
 		// 获取sharding DataSource
 		// 优先以直接指定的dataSource为基准
