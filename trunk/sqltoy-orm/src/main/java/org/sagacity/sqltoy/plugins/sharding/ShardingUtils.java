@@ -235,7 +235,7 @@ public class ShardingUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+	public static DataSource getShardingDataSource1(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, DataSource dataSource) throws Exception {
 		// 获取sharding DataSource
 		// 优先以直接指定的dataSource为基准
@@ -249,7 +249,7 @@ public class ShardingUtils {
 			shardingConfig = extend.dbSharding;
 		}
 		// 如果没有sharding策略，则返回dataSource，否则以sharding的结果dataSource为基准
-		if (null == sqlToyConfig || null == shardingConfig) {
+		if (null == shardingConfig) {
 			return shardingDataSource;
 		}
 		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
