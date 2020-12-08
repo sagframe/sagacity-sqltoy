@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 
 /**
@@ -83,13 +84,19 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
 
+	// 分库策略配置
+	public ShardingStrategyConfig dbSharding;
+
+	// 分表策略配置
+	public ShardingStrategyConfig tableSharding;
+
 	/**
 	 * 分页优化模型
 	 */
 	public PageOptimize pageOptimize;
 
 	/**
-	 * -1:普通查询;  0:top;1:取随机记录
+	 * -1:普通查询; 0:top;1:取随机记录
 	 */
 	public int pickType = -1;
 
@@ -97,15 +104,5 @@ public class EntityQueryExtend implements Serializable {
 	 * 取记录数量
 	 */
 	public double pickSize;
-
-//	/**
-//	 * 实体类
-//	 */
-//	public Class entityClass;
-//
-//	/**
-//	 * 查询结果类型
-//	 */
-//	public Type resultType;
 
 }

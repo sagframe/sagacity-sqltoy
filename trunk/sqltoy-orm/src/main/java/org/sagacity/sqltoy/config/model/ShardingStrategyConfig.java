@@ -18,10 +18,24 @@ public class ShardingStrategyConfig implements Serializable {
 	 */
 	private static final long serialVersionUID = -1424263873061119413L;
 
+	public ShardingStrategyConfig(int type) {
+		this.type = type;
+	}
+
+	/**
+	 * 是分库还是分表:0、分库；1、分表
+	 */
+	private int type = 0;
+
+	/**
+	 * 表名
+	 */
+	private String[] tables;
+
 	/**
 	 * 策略
 	 */
-	private String name;
+	private String strategy;
 	/**
 	 * 字段
 	 */
@@ -45,8 +59,7 @@ public class ShardingStrategyConfig implements Serializable {
 	}
 
 	/**
-	 * @param fields
-	 *            the fields to set
+	 * @param fields the fields to set
 	 */
 	public void setFields(String[] fields) {
 		this.fields = fields;
@@ -60,8 +73,7 @@ public class ShardingStrategyConfig implements Serializable {
 	}
 
 	/**
-	 * @param aliasNames
-	 *            the aliasNames to set
+	 * @param aliasNames the aliasNames to set
 	 */
 	public void setAliasNames(String[] aliasNames) {
 		this.aliasNames = aliasNames;
@@ -75,26 +87,34 @@ public class ShardingStrategyConfig implements Serializable {
 	}
 
 	/**
-	 * @param decisionType
-	 *            the decisionType to set
+	 * @param decisionType the decisionType to set
 	 */
 	public void setDecisionType(String decisionType) {
 		this.decisionType = decisionType;
 	}
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
+	public String getStrategy() {
+		return strategy;
 	}
 
-	/**
-	 * @param name
-	 *            the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
+	public void setStrategy(String strategy) {
+		this.strategy = strategy;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public String[] getTables() {
+		return tables;
+	}
+
+	public void setTables(String[] tables) {
+		this.tables = tables;
 	}
 
 }
