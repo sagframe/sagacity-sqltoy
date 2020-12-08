@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @project sagacity-sqltoy
- * @description 对象分库分表配置
+ * @description 对象分库分表配置模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:ShardingModel.java,Revision:v1.0,Date:2017年9月12日
  */

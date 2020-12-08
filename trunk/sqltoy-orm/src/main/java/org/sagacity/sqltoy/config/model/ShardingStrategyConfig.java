@@ -33,9 +33,10 @@ public class ShardingStrategyConfig implements Serializable {
 	private String[] tables;
 
 	/**
-	 * 策略
+	 * 策略名称
 	 */
 	private String strategy;
+	
 	/**
 	 * 字段
 	 */
@@ -47,7 +48,7 @@ public class ShardingStrategyConfig implements Serializable {
 	private String[] aliasNames;
 
 	/**
-	 * 决策类别
+	 * 决策类别，扩展预览属性，方便一个策略中提供多种sharding策略，从而可以选择指定策略
 	 */
 	private String decisionType;
 
