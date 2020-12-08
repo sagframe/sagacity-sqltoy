@@ -35,10 +35,10 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
+import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
-import org.sagacity.sqltoy.config.model.UnifySqlParams;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
@@ -444,7 +444,7 @@ public class DialectUtils {
 			result.getTranslateMap().putAll(extend.translates);
 		}
 		if (!isNamed && wrapNamed) {
-			UnifySqlParams sqlParams;
+			SqlParamsModel sqlParams;
 			// 将?形式的参数替换成:named形式参数
 			// 存在fast查询
 			if (result.isHasFast()) {
@@ -491,8 +491,8 @@ public class DialectUtils {
 	 * @param startIndex
 	 * @return
 	 */
-	public static UnifySqlParams convertParamsToNamed(String sql, int startIndex) {
-		UnifySqlParams sqlParam = new UnifySqlParams();
+	public static SqlParamsModel convertParamsToNamed(String sql, int startIndex) {
+		SqlParamsModel sqlParam = new SqlParamsModel();
 		if (sql == null || sql.trim().equals("")) {
 			return sqlParam;
 		}

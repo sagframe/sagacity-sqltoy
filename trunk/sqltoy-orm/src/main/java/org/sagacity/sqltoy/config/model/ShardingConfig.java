@@ -7,9 +7,9 @@ import java.io.Serializable;
 
 /**
  * @project sagacity-sqltoy
- * @description 对象分库分表配置模型
+ * @description 对象注解解析后对应的分库分表配置模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ShardingModel.java,Revision:v1.0,Date:2017年9月12日
+ * @version id:ShardingConfig.java,Revision:v1.0,Date:2017年9月12日
  */
 public class ShardingConfig implements Serializable {
 
@@ -51,8 +51,7 @@ public class ShardingConfig implements Serializable {
 	}
 
 	/**
-	 * @param shardingDBStrategy
-	 *            the shardingDBStrategy to set
+	 * @param shardingDBStrategy the shardingDBStrategy to set
 	 */
 	public void setShardingDBStrategy(ShardingStrategyConfig shardingDBStrategy) {
 		this.shardingDBStrategy = shardingDBStrategy;
@@ -66,8 +65,7 @@ public class ShardingConfig implements Serializable {
 	}
 
 	/**
-	 * @param shardingTableStrategy
-	 *            the shardingTableStrategy to set
+	 * @param shardingTableStrategy the shardingTableStrategy to set
 	 */
 	public void setShardingTableStrategy(ShardingStrategyConfig shardingTableStrategy) {
 		this.shardingTableStrategy = shardingTableStrategy;
@@ -81,8 +79,7 @@ public class ShardingConfig implements Serializable {
 	}
 
 	/**
-	 * @param maxWaitSeconds
-	 *            the maxWaitSeconds to set
+	 * @param maxWaitSeconds the maxWaitSeconds to set
 	 */
 	public void setMaxWaitSeconds(int maxWaitSeconds) {
 		this.maxWaitSeconds = maxWaitSeconds;
@@ -96,8 +93,7 @@ public class ShardingConfig implements Serializable {
 	}
 
 	/**
-	 * @param maxConcurrents
-	 *            the maxConcurrents to set
+	 * @param maxConcurrents the maxConcurrents to set
 	 */
 	public void setMaxConcurrents(int maxConcurrents) {
 		this.maxConcurrents = maxConcurrents;

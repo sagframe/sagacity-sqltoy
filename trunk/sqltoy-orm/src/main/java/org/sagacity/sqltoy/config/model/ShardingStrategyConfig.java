@@ -23,7 +23,7 @@ public class ShardingStrategyConfig implements Serializable {
 	}
 
 	/**
-	 * 是分库还是分表:0、分库；1、分表
+	 * 是分库还是分表:0、分库；1、分表 目前属于冗余属性
 	 */
 	private int type = 0;
 
@@ -36,7 +36,7 @@ public class ShardingStrategyConfig implements Serializable {
 	 * 策略名称
 	 */
 	private String strategy;
-	
+
 	/**
 	 * 字段
 	 */
