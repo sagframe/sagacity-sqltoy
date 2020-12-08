@@ -242,18 +242,16 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
+				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
+						.concat(entity.tableName()));
 
 				// 解析自定义注解
 				parseCustomAnnotation(entityMeta, entityClass);
-				// 解析sharding策略
-				parseSharding(entityMeta, entityClass);
 
 				// 主键约束(for postgresql)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-						.concat(entity.tableName()));
 
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
@@ -327,6 +325,9 @@ public class EntityManager {
 
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
+
+				// 解析sharding策略
+				parseSharding(entityMeta, entityClass);
 			}
 		} catch (Exception e) {
 			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
@@ -388,7 +389,7 @@ public class EntityManager {
 		String strategy = shardingDB.name();
 		// 分库策略
 		if (StringUtil.isNotBlank(strategy)) {
-			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			ShardingStrategyConfig config = new ShardingStrategyConfig(0);
 			config.setFields(shardingDB.fields());
 			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
 			String[] aliasNames = new String[shardingDB.fields().length];
@@ -396,17 +397,16 @@ public class EntityManager {
 			if (shardingDB.aliasNames() != null) {
 				System.arraycopy(shardingDB.aliasNames(), 0, aliasNames, 0, shardingDB.aliasNames().length);
 			}
-
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
-			config.setName(strategy);
+			config.setStrategy(strategy);
 			shardingConfig.setShardingDBStrategy(config);
 		}
 		// 分表策略
 		Strategy shardingTable = sharding.table();
 		strategy = shardingTable.name();
 		if (StringUtil.isNotBlank(strategy)) {
-			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			ShardingStrategyConfig config = new ShardingStrategyConfig(1);
 			config.setFields(shardingTable.fields());
 			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
 			String[] aliasNames = new String[shardingTable.fields().length];
@@ -414,10 +414,10 @@ public class EntityManager {
 			if (shardingTable.aliasNames() != null) {
 				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-
+			config.setTables(new String[] { entityMeta.getSchemaTable() });
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
-			config.setName(strategy);
+			config.setStrategy(strategy);
 			shardingConfig.setShardingTableStrategy(config);
 		}
 		// 必须有一个策略是存在的
