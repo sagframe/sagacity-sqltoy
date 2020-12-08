@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
@@ -424,7 +425,8 @@ public class DialectUtils {
 			isNamed = true;
 		}
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
-		if ((isNamed || !wrapNamed) && sameDialect && null == sqlToyConfig.getTablesShardings()) {
+		if ((isNamed || !wrapNamed) && sameDialect
+				&& (sqlToyConfig.getTableShardings().isEmpty() && extend.tableShardings.isEmpty())) {
 			// 没有自定义缓存翻译直接返回
 			if (extend.translates.isEmpty()) {
 				return sqlToyConfig;
@@ -470,8 +472,13 @@ public class DialectUtils {
 			result.setCountSql(sqlParams.getSql());
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
+		// 以queryExecutor自定义的分表策略覆盖sql xml中定义的
+		List<ShardingStrategyConfig> tableShardings = sqlToyConfig.getTableShardings();
+		if (!extend.tableShardings.isEmpty()) {
+			tableShardings = extend.tableShardings;
+		}
 		// 替换sharding table
-		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, dialect,
+		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
 				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
 		return result;
 	}
@@ -2117,7 +2124,7 @@ public class DialectUtils {
 		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
 		}
-		//update操作强制更新字段优先
+		// update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
@@ -2170,7 +2177,7 @@ public class DialectUtils {
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return prepHandler;
 		}
-		//update操作强制更新字段优先
+		// update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {

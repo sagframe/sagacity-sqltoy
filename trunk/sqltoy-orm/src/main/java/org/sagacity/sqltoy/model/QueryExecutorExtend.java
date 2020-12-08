@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -144,8 +145,11 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public String countSql;
 
-	// 分库分表策略配置
-	// public ShardingConfig shardingConfig = new ShardingConfig();
+	// 分库策略配置
+	public ShardingStrategyConfig dbSharding;
+
+	// 分表策略配置
+	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
 	 * @param sqlToyConfig
@@ -172,7 +176,11 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getTableShardingParams();
+		if (tableShardings.isEmpty()) {
+			return sqlToyConfig.getTableShardingParams();
+		} else {
+			return getTableShardingParams();
+		}
 	}
 
 	/**
@@ -186,7 +194,14 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getDataSourceShardingParams();
+		String[] fields = null;
+		if (sqlToyConfig.getDataSourceSharding() != null) {
+			fields = sqlToyConfig.getDataSourceSharding().getFields();
+		}
+		if (dbSharding != null) {
+			fields = dbSharding.getFields();
+		}
+		return fields;
 	}
 
 	/**
@@ -232,8 +247,13 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
-					reflectPropertyHandler);
+			if (!tableShardings.isEmpty()) {
+				return BeanUtil.reflectBeanToAry(entity, getTableShardingParams(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getTableShardingParams() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}
@@ -246,8 +266,14 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceShardingParams(), null,
-					reflectPropertyHandler);
+			// 后续手工设定的优先于xml中原有配置
+			if (dbSharding != null) {
+				return BeanUtil.reflectBeanToAry(entity, dbSharding.getFields(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getDataSourceSharding() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}
@@ -297,4 +323,22 @@ public class QueryExecutorExtend implements Serializable {
 		}
 	}
 
+	private String[] getTableShardingParams() {
+		if (tableShardings.isEmpty()) {
+			return null;
+		}
+		List<String> params = new ArrayList<String>();
+		for (ShardingStrategyConfig shardingConnfig : tableShardings) {
+			for (String field : shardingConnfig.getFields()) {
+				if (!params.contains(field)) {
+					params.add(field);
+				}
+			}
+		}
+		if (params.isEmpty())
+			return null;
+		String[] result = new String[params.size()];
+		params.toArray(result);
+		return result;
+	}
 }

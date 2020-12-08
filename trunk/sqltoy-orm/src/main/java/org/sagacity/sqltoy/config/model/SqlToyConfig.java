@@ -61,28 +61,19 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private String dataSource;
 
 	/**
-	 * 基于dataSource的sharding策略
+	 * 分库策略
 	 */
-	private String dataSourceShardingStragety = null;
+	private ShardingStrategyConfig dataSourceSharding;
 
 	/**
-	 * 基于dataSource的sharding参数
+	 * 分表策略
 	 */
-	private String[] dataSourceShardingParams = null;
-
-	private String[] dataSourceShardingParamsAlias = null;
+	private List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
-	 * 自定义策略辨别值
+	 * 分表对应参数合集
 	 */
-	private String dataSourceShardingStrategyValue = null;
-
 	private String[] tableShardingParams = null;
-
-	/**
-	 * 基于表的sharding配置
-	 */
-	private List<QueryShardingModel> tablesShardings = null;
 
 	/**
 	 * 对列进行拼接方式定义
@@ -183,7 +174,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 */
 	private int fastWithIndex = -1;
 	// <page-optimize alive-max="100" alive-seconds="90"/>
-	
+
 	/**
 	 * 分页优化器
 	 */
@@ -365,48 +356,6 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @return the dataSourceShardingStragety
-	 */
-	public String getDataSourceShardingStragety() {
-		return dataSourceShardingStragety;
-	}
-
-	/**
-	 * @param dataSourceShardingStragety the dataSourceShardingStragety to set
-	 */
-	public void setDataSourceShardingStragety(String dataSourceShardingStragety) {
-		this.dataSourceShardingStragety = dataSourceShardingStragety;
-	}
-
-	/**
-	 * @return the dataSourceShardingParams
-	 */
-	public String[] getDataSourceShardingParams() {
-		return dataSourceShardingParams;
-	}
-
-	/**
-	 * @param dataSourceShardingParams the dataSourceShardingParams to set
-	 */
-	public void setDataSourceShardingParams(String[] dataSourceShardingParams) {
-		this.dataSourceShardingParams = dataSourceShardingParams;
-	}
-
-	/**
-	 * @return the tablesShardings
-	 */
-	public List<QueryShardingModel> getTablesShardings() {
-		return tablesShardings;
-	}
-
-	/**
-	 * @param tablesShardings the tablesShardings to set
-	 */
-	public void setTablesShardings(List<QueryShardingModel> tablesShardings) {
-		this.tablesShardings = tablesShardings;
-	}
-
-	/**
 	 * @return the hasWith
 	 */
 	public boolean isHasWith() {
@@ -529,34 +478,6 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	}
 
 	/**
-	 * @param dataSourceShardingParamsAlias the dataSourceShardingParamsAlias to set
-	 */
-	public void setDataSourceShardingParamsAlias(String[] dataSourceShardingParamsAlias) {
-		this.dataSourceShardingParamsAlias = dataSourceShardingParamsAlias;
-	}
-
-	/**
-	 * @return the dataSourceShardingParamsAlias
-	 */
-	public String[] getDataSourceShardingParamsAlias() {
-		return dataSourceShardingParamsAlias;
-	}
-
-	/**
-	 * @return the tableShardingParams
-	 */
-	public String[] getTableShardingParams() {
-		return tableShardingParams;
-	}
-
-	/**
-	 * @param tableShardingParams the tableShardingParams to set
-	 */
-	public void setTableShardingParams(String[] tableShardingParams) {
-		this.tableShardingParams = tableShardingParams;
-	}
-
-	/**
 	 * @return the dataSource
 	 */
 	public String getDataSource() {
@@ -568,14 +489,6 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 */
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
-	}
-
-	public String getDataSourceShardingStrategyValue() {
-		return dataSourceShardingStrategyValue;
-	}
-
-	public void setDataSourceShardingStrategyValue(String dataSourceShardingStrategyValue) {
-		this.dataSourceShardingStrategyValue = dataSourceShardingStrategyValue;
 	}
 
 	/**
@@ -727,11 +640,36 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public PageOptimize getPageOptimize() {
 		return pageOptimize;
 	}
-	
+
 	/**
 	 * @param pageOptimize the pageOptimize to set
 	 */
 	public void setPageOptimize(PageOptimize pageOptimize) {
 		this.pageOptimize = pageOptimize;
 	}
+
+	public ShardingStrategyConfig getDataSourceSharding() {
+		return dataSourceSharding;
+	}
+
+	public void setDataSourceSharding(ShardingStrategyConfig dataSourceSharding) {
+		this.dataSourceSharding = dataSourceSharding;
+	}
+
+	public List<ShardingStrategyConfig> getTableShardings() {
+		return tableShardings;
+	}
+
+	public void setTableShardings(List<ShardingStrategyConfig> tableShardings) {
+		this.tableShardings = tableShardings;
+	}
+
+	public String[] getTableShardingParams() {
+		return tableShardingParams;
+	}
+
+	public void setTableShardingParams(String[] tableShardingParams) {
+		this.tableShardingParams = tableShardingParams;
+	}
+
 }

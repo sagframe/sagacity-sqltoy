@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.callback.SelectFields;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -240,6 +241,36 @@ public class EntityQuery implements Serializable {
 		}
 		innerModel.pickType = 1;
 		innerModel.pickSize = randomSize;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分库策略
+	 * @param strategy
+	 * @param paramNames
+	 * @return
+	 */
+	public EntityQuery dbSharding(String strategy, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(0);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.dbSharding = sharding;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * @param strategy
+	 * @param paramNames 分表策略依赖的参数
+	 * @return
+	 */
+	public EntityQuery tableSharding(String strategy, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(1);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.tableSharding = sharding;
 		return this;
 	}
 

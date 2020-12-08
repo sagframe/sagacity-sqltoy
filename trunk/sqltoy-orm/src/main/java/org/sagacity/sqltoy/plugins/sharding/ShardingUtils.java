@@ -17,7 +17,6 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.QueryShardingModel;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -76,10 +75,10 @@ public class ShardingUtils {
 		// 分库策略处理
 		if (shardingConfig.getShardingDBStrategy() != null) {
 			strategyConfig = shardingConfig.getShardingDBStrategy();
-			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getName());
+			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
 				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName() + " Sharding DB Strategy:"
-						+ strategyConfig.getName() + " 未定义,请检查!");
+						+ strategyConfig.getStrategy() + " 未定义,请检查!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
@@ -96,10 +95,10 @@ public class ShardingUtils {
 		// 分表策略
 		if (shardingConfig.getShardingTableStrategy() != null) {
 			strategyConfig = shardingConfig.getShardingTableStrategy();
-			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getName());
+			shardingStrategy = sqlToyContext.getShardingStrategy(strategyConfig.getStrategy());
 			if (shardingStrategy == null) {
 				throw new IllegalArgumentException("POJO 对象:" + entity.getClass().getName()
-						+ " Sharding Table Strategy:" + strategyConfig.getName() + " 未定义,请检查!");
+						+ " Sharding Table Strategy:" + strategyConfig.getStrategy() + " 未定义,请检查!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
@@ -146,10 +145,10 @@ public class ShardingUtils {
 		ShardingStrategyConfig dbConfig = shardingConfig.getShardingDBStrategy();
 		if (dbConfig != null) {
 			hasDB = true;
-			dbStrategy = sqlToyContext.getShardingStrategy(dbConfig.getName());
+			dbStrategy = sqlToyContext.getShardingStrategy(dbConfig.getStrategy());
 			if (dbStrategy == null) {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
-						+ dbConfig.getName() + " 未定义,请检查!");
+						+ dbConfig.getStrategy() + " 未定义,请检查!");
 			}
 			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null, false, 0);
 		}
@@ -160,10 +159,10 @@ public class ShardingUtils {
 		List<Object[]> shardingTableValues = null;
 		if (tableConfig != null) {
 			hasTable = true;
-			tableStrategy = sqlToyContext.getShardingStrategy(tableConfig.getName());
+			tableStrategy = sqlToyContext.getShardingStrategy(tableConfig.getStrategy());
 			if (tableStrategy == null) {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
-						+ tableConfig.getName() + " 未定义,请检查!");
+						+ tableConfig.getStrategy() + " 未定义,请检查!");
 			}
 			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null, false,
 					0);
@@ -241,15 +240,22 @@ public class ShardingUtils {
 		// 获取sharding DataSource
 		// 优先以直接指定的dataSource为基准
 		DataSource shardingDataSource = dataSource;
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		ShardingStrategyConfig shardingConfig = null;
+		if (null != sqlToyConfig.getDataSourceSharding()) {
+			shardingConfig = sqlToyConfig.getDataSourceSharding();
+		}
+		if (null != extend.dbSharding) {
+			shardingConfig = extend.dbSharding;
+		}
 		// 如果没有sharding策略，则返回dataSource，否则以sharding的结果dataSource为基准
-		if (null == sqlToyConfig || null == sqlToyConfig.getDataSourceShardingStragety()) {
+		if (null == shardingConfig) {
 			return shardingDataSource;
 		}
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String[] paramNames = extend.getDataSourceShardingParamsName(sqlToyConfig);
 		Object[] paramValues = extend.getDataSourceShardingParamsValue(sqlToyConfig);
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
-		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, valueMap);
+		DataSource result = getShardingDataSource(sqlToyContext, sqlToyConfig, shardingConfig, valueMap);
 		if (result != null) {
 			return result;
 		}
@@ -260,31 +266,31 @@ public class ShardingUtils {
 	 * @todo 根据数据获取sharding对应的DataSource
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
+	 * @param shardingConfig
 	 * @param valueMap
 	 * @return
 	 */
 	private static DataSource getShardingDataSource(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			IgnoreCaseLinkedMap<String, Object> valueMap) {
-		if (sqlToyConfig.getDataSourceShardingStragety() == null) {
+			ShardingStrategyConfig shardingConfig, IgnoreCaseLinkedMap<String, Object> valueMap) {
+		if (shardingConfig == null) {
 			return null;
 		}
-		ShardingStrategy shardingStrategy = sqlToyContext
-				.getShardingStrategy(sqlToyConfig.getDataSourceShardingStragety());
+		ShardingStrategy shardingStrategy = sqlToyContext.getShardingStrategy(shardingConfig.getStrategy());
 		if (shardingStrategy == null) {
 			return null;
 		}
+
 		IgnoreCaseLinkedMap<String, Object> realDataMap = null;
-		if (sqlToyConfig.getDataSourceShardingParams() != null) {
+		if (shardingConfig.getFields() != null) {
 			realDataMap = new IgnoreCaseLinkedMap<String, Object>();
-			for (int i = 0, n = sqlToyConfig.getDataSourceShardingParams().length; i < n; i++) {
-				realDataMap.put(sqlToyConfig.getDataSourceShardingParamsAlias()[i],
-						valueMap.get(sqlToyConfig.getDataSourceShardingParams()[i]));
+			for (int i = 0, n = shardingConfig.getFields().length; i < n; i++) {
+				realDataMap.put(shardingConfig.getAliasNames()[i], valueMap.get(shardingConfig.getFields()[i]));
 			}
 		} else {
 			realDataMap = valueMap;
 		}
 		ShardingDBModel shardingDBModel = shardingStrategy.getShardingDB(sqlToyContext, null, sqlToyConfig.getId(),
-				sqlToyConfig.getDataSourceShardingStrategyValue(), realDataMap);
+				shardingConfig.getDecisionType(), realDataMap);
 		if (shardingDBModel.getDataSource() != null) {
 			return shardingDBModel.getDataSource();
 		}
@@ -295,15 +301,17 @@ public class ShardingUtils {
 	 * @todo 根据查询条件变更sql后同时修改sqltoyConfig(clone后的对象，不会冲掉原配置)
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
+	 * @param tableShardings
+	 * @param dialect
 	 * @param paramNames
 	 * @param paramValues
 	 */
 	public static void replaceShardingSqlToyConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			String dialect, String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null) {
+			List<ShardingStrategyConfig> tableShardings, String dialect, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return;
 		}
-		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
+		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, tableShardings, paramNames,
 				paramValues);
 		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return;
@@ -338,17 +346,17 @@ public class ShardingUtils {
 	 * @todo 替换实际sql中需要查询的表名称(for executeSql方法使用,见DialectFactory.executeSql)
 	 * @param sqlToyContext
 	 * @param sql
-	 * @param sqlToyConfig
+	 * @param tableShardings
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
 	 */
-	public static String replaceShardingTables(SqlToyContext sqlToyContext, String sql, SqlToyConfig sqlToyConfig,
-			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null) {
+	public static String replaceShardingTables(SqlToyContext sqlToyContext, String sql,
+			List<ShardingStrategyConfig> tableShardings, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return sql;
 		}
-		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, sqlToyConfig, paramNames,
+		HashMap<String, String> shardingTableMap = getShardingTables(sqlToyContext, tableShardings, paramNames,
 				paramValues);
 		if (shardingTableMap == null || shardingTableMap.isEmpty()) {
 			return sql;
@@ -371,14 +379,14 @@ public class ShardingUtils {
 	/**
 	 * @todo 获取sharding对应的表
 	 * @param sqlToyContext
-	 * @param sqlToyConfig
+	 * @param tableShardings
 	 * @param paramNames
 	 * @param paramValues
 	 * @return
 	 */
-	private static HashMap<String, String> getShardingTables(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			String[] paramNames, Object[] paramValues) {
-		if (sqlToyConfig.getTablesShardings() == null) {
+	private static HashMap<String, String> getShardingTables(SqlToyContext sqlToyContext,
+			List<ShardingStrategyConfig> tableShardings, String[] paramNames, Object[] paramValues) {
+		if (tableShardings == null || tableShardings.isEmpty()) {
 			return null;
 		}
 		IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(paramNames, paramValues);
@@ -388,14 +396,14 @@ public class ShardingUtils {
 		String shardingTable;
 		ShardingStrategy shardingStrategy;
 		IgnoreCaseLinkedMap<String, Object> realDataMap = null;
-		for (QueryShardingModel shardingModel : sqlToyConfig.getTablesShardings()) {
+		for (ShardingStrategyConfig shardingModel : tableShardings) {
 			shardingStrategy = sqlToyContext.getShardingStrategy(shardingModel.getStrategy());
 			if (shardingStrategy != null) {
 				tables = shardingModel.getTables();
-				if (shardingModel.getParams() != null) {
+				if (shardingModel.getFields() != null) {
 					realDataMap = new IgnoreCaseLinkedMap<String, Object>();
-					for (int i = 0, n = shardingModel.getParams().length; i < n; i++) {
-						realDataMap.put(shardingModel.getParamsAlias()[i], valueMap.get(shardingModel.getParams()[i]));
+					for (int i = 0, n = shardingModel.getFields().length; i < n; i++) {
+						realDataMap.put(shardingModel.getAliasNames()[i], valueMap.get(shardingModel.getFields()[i]));
 					}
 				} else {
 					realDataMap = valueMap;
@@ -404,7 +412,7 @@ public class ShardingUtils {
 				for (int i = 0; i < tables.length; i++) {
 					table = tables[i];
 					shardingTable = shardingStrategy.getShardingTable(sqlToyContext, null, table,
-							shardingModel.getStrategyValue(), realDataMap);
+							shardingModel.getDecisionType(), realDataMap);
 					if (null != shardingTable && !shardingTable.equalsIgnoreCase(table)) {
 						tableMap.put(table, shardingTable);
 					}
