@@ -26,9 +26,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.3 发版日期: 2020-12-03
-* findEntity 支持无条件查询
-* sql查询或executeSql对象传参时，sql中的参数变量支持:xxxx.xxxx 多层子对象属性提取
+# 最新版本号: 4.17.5 发版日期: 2020-12-09
+* 支持QueryExecutor、EntityQuery中定义分库分表
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
