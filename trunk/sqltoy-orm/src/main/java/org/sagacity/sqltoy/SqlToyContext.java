@@ -541,6 +541,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.DM;
 		} else if (tmp.startsWith(Dialect.TIDB)) {
 			this.dialect = Dialect.TIDB;
+		} else if (tmp.startsWith(Dialect.KINGBASE)) {
+			this.dialect = Dialect.KINGBASE;
 		} else {
 			this.dialect = dialect;
 		}
