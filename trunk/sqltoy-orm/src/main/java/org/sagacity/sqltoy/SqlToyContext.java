@@ -197,6 +197,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private Integer scriptCheckIntervalSeconds;
 
+	/**
+	 * 提供自定义类型处理器,一般针对json等类型
+	 */
 	private TypeHandler typeHandler;
 
 	/**
