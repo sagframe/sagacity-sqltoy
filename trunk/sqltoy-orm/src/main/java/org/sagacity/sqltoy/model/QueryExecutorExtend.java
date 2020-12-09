@@ -176,6 +176,8 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
+		
+		//没有额外指定分表策略，优先使用sql xml中定义的策略
 		if (tableShardings.isEmpty()) {
 			return sqlToyConfig.getTableShardingParams();
 		} else {
@@ -323,6 +325,10 @@ public class QueryExecutorExtend implements Serializable {
 		}
 	}
 
+	/**
+	 * @TODO 获取额外指定的分表策略中所涉及的字段信息
+	 * @return
+	 */
 	private String[] getTableShardingParams() {
 		if (tableShardings.isEmpty()) {
 			return null;

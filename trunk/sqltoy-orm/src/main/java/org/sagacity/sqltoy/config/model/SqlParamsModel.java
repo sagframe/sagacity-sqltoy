@@ -29,6 +29,11 @@ public class SqlParamsModel implements Serializable {
 	private String[] paramsName;
 
 	/**
+	 * 参数数量
+	 */
+	private int paramCnt = 0;
+
+	/**
 	 * @return the sql
 	 */
 	public String getSql() {
@@ -36,8 +41,7 @@ public class SqlParamsModel implements Serializable {
 	}
 
 	/**
-	 * @param sql
-	 *            the sql to set
+	 * @param sql the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -51,11 +55,18 @@ public class SqlParamsModel implements Serializable {
 	}
 
 	/**
-	 * @param paramsName
-	 *            the paramsName to set
+	 * @param paramsName the paramsName to set
 	 */
 	public void setParamsName(String[] paramsName) {
 		this.paramsName = paramsName;
+	}
+
+	public int getParamCnt() {
+		return paramCnt;
+	}
+
+	public void setParamCnt(int paramCnt) {
+		this.paramCnt = paramCnt;
 	}
 
 }
