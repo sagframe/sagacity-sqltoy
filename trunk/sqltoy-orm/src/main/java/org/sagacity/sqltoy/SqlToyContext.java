@@ -267,11 +267,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
-
-		//
-//		if (typeHandler == null) {
-//			typeHandler = new FastJsonTypeHandler();
-//		}
 		logger.debug("sqltoy init complete!");
 	}
 
