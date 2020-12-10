@@ -1,6 +1,3 @@
-# 致谢
-* 感谢中化集团领导和同事对sqltoy开源的大力支持，共同为中国的开源事业添砖加瓦！
-
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
