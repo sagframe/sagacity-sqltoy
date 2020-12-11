@@ -193,7 +193,9 @@ public class SqlUtil {
 
 	/**
 	 * @todo 自动进行类型转换,设置sql中的参数条件的值
+	 * @param typeHandler
 	 * @param conn
+	 * @param dbType
 	 * @param pst
 	 * @param params
 	 * @param paramsType
@@ -224,6 +226,7 @@ public class SqlUtil {
 
 	/**
 	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
+	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
 	 * @param pst
@@ -263,6 +266,7 @@ public class SqlUtil {
 	 * clob bug的支持(druid 1.1.10 已经修复) update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
 	 * 
 	 * @todo 设置sql中的参数条件的值
+	 * @param typeHandler
 	 * @param conn
 	 * @param pst
 	 * @param paramValue
@@ -386,6 +390,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
+	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
 	 * @param ignoreAllEmptySet
@@ -641,6 +646,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo <b>获取单条记录</b>
+	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
 	 * @param voClass
@@ -667,6 +673,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo <b>sql 查询并返回List集合结果</b>
+	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
 	 * @param voClass
@@ -699,6 +706,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据
+	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
 	 * @param rowCallbackHandler
@@ -789,6 +797,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param batchSize
@@ -890,6 +899,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
+	 * @param typeHandler
 	 * @param treeTableModel
 	 * @param conn
 	 * @param dbType
@@ -1027,6 +1037,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
+	 * @param typeHandler
 	 * @param updateLevelAndRoute
 	 * @param nextNodeQueryStr
 	 * @param treeTableModel
@@ -1242,6 +1253,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 执行Sql语句完成修改操作
+	 * @param typeHandler
 	 * @param executeSql
 	 * @param params
 	 * @param paramsType

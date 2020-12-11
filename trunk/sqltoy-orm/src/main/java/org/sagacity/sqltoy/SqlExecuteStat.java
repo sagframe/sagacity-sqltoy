@@ -36,11 +36,6 @@ public class SqlExecuteStat {
 	private final static Logger logger = LoggerFactory.getLogger(SqlExecuteStat.class);
 
 	/**
-	 * 输出sql的策略(error/debug 两种)
-	 */
-	private static String printSqlStrategy = "error";
-
-	/**
 	 * 是否调试阶段
 	 */
 	private static boolean debug = false;
@@ -139,23 +134,23 @@ public class SqlExecuteStat {
 	 * @param sqlTrace
 	 */
 	private static void printLogs(SqlExecuteTrace sqlTrace) {
-		boolean printLog = false;
+		boolean errorLog = false;
 		String reportStatus = "成功!";
 		if (sqlTrace.isOverTime()) {
-			printLog = true;
+			errorLog = true;
 			reportStatus = "执行耗时超阀值!";
 		}
 		if (sqlTrace.isError()) {
-			printLog = true;
+			errorLog = true;
 			reportStatus = "发生异常错误!";
 		}
 
-		if (!printLog) {
+		if (!errorLog) {
 			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
-			if (!(debug || printSqlStrategy.equals("debug"))) {
+			if (!debug) {
 				return;
 			}
 		}
@@ -231,13 +226,6 @@ public class SqlExecuteStat {
 		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
-	}
-
-	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
-	 */
-	public static void setPrintSqlStrategy(String printSqlStrategy) {
-		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**

@@ -158,8 +158,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean debug = false;
 
 	/**
-	 * debug\error
+	 * debug\error 此参数废弃,减少容易混淆的概念，目前作用等同于debug
 	 */
+	@Deprecated
 	private String printSqlStrategy = "error";
 
 	/**
@@ -268,7 +269,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化sql执行统计的基本参数
 		 */
 		SqlExecuteStat.setDebug(this.debug);
-		SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
+		//SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
 	}
