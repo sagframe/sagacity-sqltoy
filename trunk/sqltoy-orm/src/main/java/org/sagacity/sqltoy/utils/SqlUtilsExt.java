@@ -37,6 +37,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param fieldsType
@@ -133,6 +134,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @TODO 针对sqlserver进行特殊化处理(主要针对Timestamp类型的兼容)
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param fieldsType
@@ -248,6 +250,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @todo 自动进行类型转换,设置sql中的参数条件的值
+	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
 	 * @param pst
