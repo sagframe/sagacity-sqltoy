@@ -28,11 +28,8 @@ public class ParallelConfig implements Serializable {
 	 */
 	private Integer maxThreads = 10;
 
-	/**
-	 * 
-	 */
-	public ParallelConfig() {
-
+	public static ParallelConfig create() {
+		return new ParallelConfig();
 	}
 
 	/**
