@@ -49,6 +49,7 @@ import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -1517,7 +1518,7 @@ public class SqlToyDaoSupport {
 		}
 		if (innerModel.tableSharding != null) {
 			ShardingStrategyConfig shardingConfig = innerModel.tableSharding;
-			//补充表名称
+			// 补充表名称
 			shardingConfig.setTables(new String[] { entityMeta.getSchemaTable() });
 			List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 			tableShardings.add(shardingConfig);
@@ -1745,19 +1746,25 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds) {
+			Object[] paramValues, ParallelConfig parallelConfig) {
 		if (parallQueryList == null || parallQueryList.isEmpty()) {
 			return null;
 		}
-		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
-		// 并行线程数量(默认最大十个)
-		int threadSize = parallQueryList.size();
-		if (threadSize > 10) {
-			threadSize = 10;
+		ParallelConfig parallConfig = parallelConfig;
+		if (parallConfig == null) {
+			parallConfig = new ParallelConfig();
 		}
+		// 并行线程数量(默认最大十个)
+		if (parallConfig.getMaxThreads() == null) {
+			parallConfig.maxThreads(10);
+			if (parallQueryList.size() < parallConfig.getMaxThreads()) {
+				parallConfig.maxThreads(parallQueryList.size());
+			}
+		}
+		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
 		ExecutorService pool = null;
 		try {
-			pool = Executors.newFixedThreadPool(threadSize);
+			pool = Executors.newFixedThreadPool(parallConfig.getMaxThreads());
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallQueryResult> future;
@@ -1778,8 +1785,8 @@ public class SqlToyDaoSupport {
 			}
 			pool.shutdown();
 			// 设置最大等待时长(最大不能超过10个小时)
-			if (maxWaitSeconds != null && maxWaitSeconds > 0) {
-				pool.awaitTermination((maxWaitSeconds > 36000) ? 36000 : maxWaitSeconds, TimeUnit.SECONDS);
+			if (parallConfig.getMaxWaitSeconds() != null) {
+				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;
