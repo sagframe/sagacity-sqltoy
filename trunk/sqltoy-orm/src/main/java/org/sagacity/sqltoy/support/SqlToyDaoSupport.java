@@ -1732,9 +1732,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
-			Integer maxWaitSeconds) {
+			ParallelConfig parallelConfig) {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
+		return parallQuery(parallQueryList, model.getNames(), model.getValues(), parallelConfig);
 	}
 
 	/**

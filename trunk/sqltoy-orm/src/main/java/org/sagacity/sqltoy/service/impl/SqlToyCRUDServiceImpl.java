@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.service.impl;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -451,6 +452,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
 		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
 	}
 
 	/*
