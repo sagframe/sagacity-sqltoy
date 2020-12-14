@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
@@ -340,9 +341,9 @@ public interface SqlToyCRUDService {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param maxWaitSeconds
+	 * @param parallelConfig
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds);
+			Object[] paramValues, ParallelConfig parallelConfig);
 }
