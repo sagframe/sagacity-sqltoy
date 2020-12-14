@@ -834,6 +834,14 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
 
+	/**
+	 * @TODO 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @param parallelConfig
+	 * @return
+	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 

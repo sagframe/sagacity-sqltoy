@@ -348,6 +348,14 @@ public interface SqlToyCRUDService {
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig);
 
+	/**
+	 * @TODO 基于map传参的并行查询
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @param parallelConfig
+	 * @return
+	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 }
