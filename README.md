@@ -23,8 +23,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.5 发版日期: 2020-12-09
-* 支持QueryExecutor、EntityQuery中定义分库分表
+# 最新版本号: 4.17.6 发版日期: 2020-12-15
+* 支持greenplum olap数据库
+* 并行查询支持自行定义并行数量和最大等待时长
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
