@@ -43,7 +43,9 @@ public class ParallelConfig implements Serializable {
 	 * @param maxWaitSeconds the maxWaitSeconds to set
 	 */
 	public ParallelConfig maxWaitSeconds(Integer maxWaitSeconds) {
-		this.maxWaitSeconds = maxWaitSeconds;
+		if (maxWaitSeconds != null && maxWaitSeconds > 0) {
+			this.maxWaitSeconds = maxWaitSeconds;
+		}
 		return this;
 	}
 
@@ -58,7 +60,9 @@ public class ParallelConfig implements Serializable {
 	 * @param maxThreads the maxThreads to set
 	 */
 	public ParallelConfig maxThreads(Integer maxThreads) {
-		this.maxThreads = maxThreads;
+		if (maxThreads != null && maxThreads > 0) {
+			this.maxThreads = maxThreads;
+		}
 		return this;
 	}
 
