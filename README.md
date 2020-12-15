@@ -34,7 +34,7 @@
    * oracle 从oracle11g到19c
    * db2 9.5+,建议从10.5 开始
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
-   * postgresql 支持9.5 以及以上版本
+   * postgresql(greenplum) 支持9.5 以及以上版本
    * sqlserver 支持2008到2019版本，建议使用2012或以上版本
    * sqlite
    * DM达梦数据库
