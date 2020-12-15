@@ -269,7 +269,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化sql执行统计的基本参数
 		 */
 		SqlExecuteStat.setDebug(this.debug);
-		//SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
+		// SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
 	}
@@ -523,6 +523,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		} else if (tmp.startsWith(Dialect.ORACLE)) {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
+			this.dialect = Dialect.POSTGRESQL;
+		} else if (tmp.startsWith(Dialect.GREENPLUM)) {
 			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {
 			this.dialect = Dialect.DB2;

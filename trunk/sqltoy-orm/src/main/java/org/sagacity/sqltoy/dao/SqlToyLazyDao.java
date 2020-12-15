@@ -39,6 +39,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -818,11 +819,11 @@ public interface SqlToyLazyDao {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param maxWaitSeconds
+	 * @param parallelConfig
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds);
+			Object[] paramValues, ParallelConfig parallelConfig);
 
 	/**
 	 * @TODO 提供基于Map传参的并行查询
@@ -832,6 +833,17 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
+
+	/**
+	 * @TODO 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @param parallelConfig
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig);
 
 	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
 
