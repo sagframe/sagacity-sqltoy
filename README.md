@@ -31,7 +31,7 @@
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
-   * oracle 从oracle11g到19c
+   * oracle 11g+
    * db2 9.5+,建议从10.5 开始
    * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
    * postgresql(greenplum) 支持9.5 以及以上版本
