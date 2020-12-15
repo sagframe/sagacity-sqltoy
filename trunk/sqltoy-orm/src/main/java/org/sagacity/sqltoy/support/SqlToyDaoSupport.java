@@ -1757,14 +1757,15 @@ public class SqlToyDaoSupport {
 		// 并行线程数量(默认最大十个)
 		if (parallConfig.getMaxThreads() == null) {
 			parallConfig.maxThreads(10);
-			if (parallQueryList.size() < parallConfig.getMaxThreads()) {
-				parallConfig.maxThreads(parallQueryList.size());
-			}
+		}
+		int thread = parallConfig.getMaxThreads();
+		if (parallQueryList.size() < thread) {
+			thread = parallQueryList.size();
 		}
 		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
 		ExecutorService pool = null;
 		try {
-			pool = Executors.newFixedThreadPool(parallConfig.getMaxThreads());
+			pool = Executors.newFixedThreadPool(thread);
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallQueryResult> future;
