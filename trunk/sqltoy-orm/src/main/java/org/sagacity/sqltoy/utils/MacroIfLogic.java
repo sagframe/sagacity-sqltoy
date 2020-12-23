@@ -14,6 +14,9 @@ import java.util.List;
  *              性质的逻辑判断,返回true或false,适用于sql和mongo等所有查询语句中使用
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
  * @version id:MacroIfLogic.java,Revision:v1.0,Date:2017年12月9日
+ * @modify {Date:2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性}
+ * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
+ * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
  */
 public class MacroIfLogic {
 
@@ -69,7 +72,7 @@ public class MacroIfLogic {
 		// 2020-08-25 增加include场景
 		// 比较符号(等于用==,最后用=进行容错处理),<>符号前面已经统一规范成!=
 		String[] compareStr = { "!=", "==", ">=", "<=", ">", "<", "=", " include ", " in ", " out " };
-		// 增加对应compareStr的切割表达式
+		// 增加对应compareStr的切割表达式(2020-10-21 修改为正则表达式，修复split错误)
 		String[] splitReg = { "\\!\\=", "\\=\\=", "\\>\\=", "\\<\\=", "\\>", "\\<", "\\=", "\\s+include\\s+",
 				"\\s+in\\s+", "\\s+out\\s+" };
 		String splitStr = "==";
@@ -104,7 +107,7 @@ public class MacroIfLogic {
 				compareParam = params[0].trim().toLowerCase();
 				// update 2018-3-29,去除空格增强容错性
 				compareValue = params[1].trim();
-				// 计算单个比较的结果(update 2020-0-24 增加数组长度的提取)
+				// 计算单个比较的结果(update 2020-09-24 增加数组长度的提取)
 				if (compareParam.startsWith("size(") || compareParam.startsWith("length(")) {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
 							compareType, compareValue);
@@ -112,6 +115,7 @@ public class MacroIfLogic {
 					expressResult[i] = compare(value, compareType, compareValue);
 				}
 			}
+			
 			// 只支持&& 和||
 			// 与运算
 			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {
