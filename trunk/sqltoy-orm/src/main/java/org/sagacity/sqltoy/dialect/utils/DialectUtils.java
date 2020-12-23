@@ -928,7 +928,7 @@ public class DialectUtils {
 		Serializable result = null;
 		if (rows != null && rows.size() > 0) {
 			rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
-					ResultUtils.humpFieldNames(queryResult.getLabelNames()),
+					ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
 					BeanUtil.getEntityClass(entity.getClass()));
 			result = (Serializable) rows.get(0);
 		}

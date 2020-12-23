@@ -1169,13 +1169,22 @@ public class ResultUtils {
 	 * @param labelNames
 	 * @return
 	 */
-	public static String[] humpFieldNames(String[] labelNames) {
+	public static String[] humpFieldNames(String[] labelNames, HashMap<String, String> colFieldMap) {
 		if (labelNames == null) {
 			return null;
 		}
 		String[] result = new String[labelNames.length];
-		for (int i = 0, n = labelNames.length; i < n; i++) {
-			result[i] = StringUtil.toHumpStr(labelNames[i], false);
+		if (colFieldMap == null) {
+			for (int i = 0, n = labelNames.length; i < n; i++) {
+				result[i] = StringUtil.toHumpStr(labelNames[i], false);
+			}
+		} else {
+			for (int i = 0, n = labelNames.length; i < n; i++) {
+				result[i] = colFieldMap.get(labelNames[i].toLowerCase());
+				if (result[i] == null) {
+					result[i] = StringUtil.toHumpStr(labelNames[i], false);
+				}
+			}
 		}
 		return result;
 	}
@@ -1200,7 +1209,7 @@ public class ResultUtils {
 			}
 		}
 		if (hump) {
-			return humpFieldNames(labelNames);
+			return humpFieldNames(labelNames, null);
 		}
 		return labelNames;
 	}

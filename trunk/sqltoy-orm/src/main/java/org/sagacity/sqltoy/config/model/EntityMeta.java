@@ -92,6 +92,11 @@ public class EntityMeta implements Serializable {
 	private HashMap<String, FieldMeta> fieldsMeta = new HashMap<String, FieldMeta>();
 
 	/**
+	 * 记录columName对应fieldName
+	 */
+	private HashMap<String, String> columnFieldMap = new HashMap<String, String>();
+
+	/**
 	 * 字段对应的顺序
 	 */
 	private HashMap<String, Integer> fieldIndexs = new HashMap<String, Integer>();
@@ -285,6 +290,7 @@ public class EntityMeta implements Serializable {
 
 	public void addFieldMeta(FieldMeta fieldMeta) {
 		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(), fieldMeta);
+		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
 	}
 
 	/**
@@ -776,4 +782,7 @@ public class EntityMeta implements Serializable {
 		this.allColumnNames = allColumnNames;
 	}
 
+	public HashMap<String, String> getColumnFieldMap() {
+		return columnFieldMap;
+	}
 }
