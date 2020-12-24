@@ -505,6 +505,7 @@ public class EntityManager {
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
+		// 内部包含了构造表字段名称跟vo属性名称的对照
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);

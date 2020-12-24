@@ -72,7 +72,7 @@ public class BeanPropsWrapper {
 	 */
 	public Collection mappingSet(Collection dataSet) throws Exception {
 		if (dataSet != null && !dataSet.isEmpty()) {
-			BeanUtil.batchSetProperties(null, dataSet, names, values, false);
+			BeanUtil.batchSetProperties(dataSet, names, values, false);
 		}
 		return dataSet;
 	}
@@ -108,7 +108,7 @@ public class BeanPropsWrapper {
 				: serializable;
 		List voList = new ArrayList();
 		voList.add(bean);
-		BeanUtil.batchSetProperties(null, voList, names, values, false);
+		BeanUtil.batchSetProperties(voList, names, values, false);
 		return bean;
 	}
 }

@@ -394,11 +394,12 @@ public class SqlUtil {
 	 * @param rs
 	 * @param voClass
 	 * @param ignoreAllEmptySet
+	 * @param columnFieldMap
 	 * @return
 	 * @throws Exception
 	 */
 	private static List reflectResultToValueObject(TypeHandler typeHandler, ResultSet rs, Class voClass,
-			boolean ignoreAllEmptySet) throws Exception {
+			boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -415,9 +416,18 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
+
+		// update 2020-12-24 增加映射对象时属性映射关系提取
+		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
-			fields[i] = columnNames[i].replaceAll("_", "").toLowerCase();
+			fields[i] = columnNames[i].replaceAll("\\_", "").toLowerCase();
+			// 存在pojo中属性跟数据库字段名称有对照映射关系的
+			if (hasMap) {
+				if (columnFieldMap.containsKey(fields[i])) {
+					fields[i] = columnFieldMap.get(fields[i]);
+				}
+			}
 		}
 		// 匹配对应的set方法
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
@@ -654,14 +664,16 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
 	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet) throws Exception {
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
+			throws Exception {
 		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, conn, dbType,
-				ignoreAllEmptySet);
+				ignoreAllEmptySet, colFieldMap);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -681,12 +693,14 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet) throws Exception {
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
+			throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
@@ -694,7 +708,8 @@ public class SqlUtil {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet));
+				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet,
+						colFieldMap));
 			}
 		});
 		// 为null返回一个空集合
@@ -712,11 +727,13 @@ public class SqlUtil {
 	 * @param rowCallbackHandler
 	 * @param startColIndex
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
 	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
-			RowCallbackHandler rowCallbackHandler, int startColIndex, boolean ignoreAllEmptySet) throws Exception {
+			RowCallbackHandler rowCallbackHandler, int startColIndex, boolean ignoreAllEmptySet,
+			final HashMap<String, String> colFieldMap) throws Exception {
 		// 记录行记数器
 		int index = 0;
 		// 提取数据预警阈值
@@ -732,7 +749,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet);
+			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -934,7 +951,7 @@ public class SqlUtil {
 				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false);
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false, null);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -966,10 +983,10 @@ public class SqlUtil {
 					firstNextNodeQuery.append(" and ").append(treeTableModel.getConditions());
 				}
 				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
-						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false);
+						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false, null);
 			} else {
 				ids = findByJdbcQuery(typeHandler, nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false);
+						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false, null);
 			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
@@ -1127,7 +1144,7 @@ public class SqlUtil {
 
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
-					null, conn, dbType, false);
+					null, conn, dbType, false, null);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
