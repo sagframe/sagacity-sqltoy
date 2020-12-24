@@ -939,14 +939,17 @@ public class DialectUtils {
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
 			List pkRefDetails;
+			EntityMeta mappedMeta;
 			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
 				// 判定是否要加载
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
 							oneToMany.getMappedFields(), pkValues);
 					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
+					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false);
+							sqlToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							mappedMeta.getColumnFieldMap());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
 						BeanUtil.setProperty(sqlToyContext.getTypeHandler(), result, oneToMany.getProperty(),
 								pkRefDetails);
@@ -1012,7 +1015,7 @@ public class DialectUtils {
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false);
+				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false, entityMeta.getColumnFieldMap());
 		// 存在主表对应子表
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
@@ -1038,7 +1041,8 @@ public class DialectUtils {
 							idValues);
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
-							subToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false);
+							subToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							mappedMeta.getColumnFieldMap());
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
 					BeanUtil.invokeMethod(entities.get(0),
 							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
@@ -1857,7 +1861,7 @@ public class DialectUtils {
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
 			SqlExecuteStat.showSql("唯一性验证", queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), queryStr, paramValues, null, null,
-					conn, dbType, false);
+					conn, dbType, false, null);
 			if (result.size() == 0) {
 				return true;
 			}

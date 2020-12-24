@@ -421,8 +421,7 @@ public class DialectFactory {
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, changedCols));
 							}
@@ -604,8 +603,7 @@ public class DialectFactory {
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, changedCols));
 							}
@@ -731,10 +729,11 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-											queryResult.getRows(),
-											ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-											(Class) extend.resultType, changedCols));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													ResultUtils.humpFieldNames(queryExecutor,
+															queryResult.getLabelNames()),
+													(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -808,8 +807,7 @@ public class DialectFactory {
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, changedCols));
 							}
@@ -871,8 +869,7 @@ public class DialectFactory {
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, changedCols));
 							}
@@ -1526,8 +1523,7 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
@@ -1570,8 +1566,7 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
@@ -1613,8 +1608,7 @@ public class DialectFactory {
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
@@ -1685,8 +1679,7 @@ public class DialectFactory {
 							// }
 							// 映射成对象
 							if (resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext.getTypeHandler(),
-										queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
 										resultType, changedCols));
 							}

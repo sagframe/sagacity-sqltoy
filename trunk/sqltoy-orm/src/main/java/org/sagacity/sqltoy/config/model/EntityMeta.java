@@ -290,7 +290,10 @@ public class EntityMeta implements Serializable {
 
 	public void addFieldMeta(FieldMeta fieldMeta) {
 		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(), fieldMeta);
+		//数据库字段名称对应vo对象属性名称
 		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
+		//字段名称去除下划线
+		columnFieldMap.put(fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase(), fieldMeta.getFieldName());
 	}
 
 	/**

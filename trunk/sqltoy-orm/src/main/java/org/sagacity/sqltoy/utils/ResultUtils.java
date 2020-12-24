@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
@@ -44,7 +45,6 @@ import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
-import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -1000,7 +1000,7 @@ public class ResultUtils {
 								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
 						List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 								pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn,
-								dbType, sqlToyConfig.isIgnoreEmpty());
+								dbType, sqlToyConfig.isIgnoreEmpty(), null);
 						// 行转列返回
 						return CollectionUtil.convertColToRow(pivotCategory, null);
 					}
@@ -1116,7 +1116,7 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List wrapQueryResult(TypeHandler typeHandler, List queryResultRows, String[] labelNames,
+	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
 			Class resultType, boolean changedCols) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
@@ -1160,8 +1160,27 @@ public class ResultUtils {
 			}
 			return result;
 		}
+		EntityMeta entityMeta = null;
+		if (sqlToyContext.isEntity(resultType)) {
+			entityMeta = sqlToyContext.getEntityMeta(resultType);
+		}
+
 		// 封装成VO对象形式
-		return BeanUtil.reflectListToBean(typeHandler, queryResultRows, labelNames, resultType);
+		return BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
+				convertRealProps(labelNames, (entityMeta == null) ? null : entityMeta.getColumnFieldMap()), resultType);
+	}
+
+	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
+		if (colFieldMap != null && !colFieldMap.isEmpty()) {
+			String key;
+			for (int i = 0; i < labelNames.length; i++) {
+				key = labelNames[i].toLowerCase();
+				if (colFieldMap.containsKey(key)) {
+					labelNames[i] = colFieldMap.get(key);
+				}
+			}
+		}
+		return labelNames;
 	}
 
 	/**
