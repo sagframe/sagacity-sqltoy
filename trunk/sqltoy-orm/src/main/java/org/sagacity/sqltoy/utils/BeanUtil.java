@@ -1307,10 +1307,6 @@ public class BeanUtil {
 				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
 	}
 
-//	public static void setProperty(Object bean, String property, Object value) throws Exception {
-//		setProperty(null, property, value);
-//	}
-
 	/**
 	 * @TODO 代替PropertyUtil 和BeanUtils的setProperty方法
 	 * @param bean
