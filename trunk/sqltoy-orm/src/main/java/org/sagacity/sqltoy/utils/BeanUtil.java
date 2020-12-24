@@ -898,11 +898,13 @@ public class BeanUtil {
 
 	/**
 	 * @todo 将二维数组映射到对象集合中
+	 * @param typeHandler
 	 * @param datas
 	 * @param indexs
 	 * @param properties
 	 * @param voClass
 	 * @return
+	 * @throws Exception
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
 			Class voClass) throws Exception {
@@ -911,13 +913,13 @@ public class BeanUtil {
 
 	/**
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * @param typeHandler
 	 * @param datas
 	 * @param indexs
 	 * @param properties
 	 * @param voClass
 	 * @param autoConvertType
 	 * @return
-	 * @throws Exception
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
 			Class voClass, boolean autoConvertType) {
