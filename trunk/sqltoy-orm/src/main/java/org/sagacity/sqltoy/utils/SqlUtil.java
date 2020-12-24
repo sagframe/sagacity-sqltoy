@@ -416,16 +416,16 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
-		
-		//update 2020-12-24 增加映射对象时属性映射关系提取
+
+		// update 2020-12-24 增加映射对象时属性映射关系提取
 		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
 			fields[i] = columnNames[i].replaceAll("\\_", "").toLowerCase();
-			//存在pojo中属性跟数据库字段名称有对照映射关系的
+			// 存在pojo中属性跟数据库字段名称有对照映射关系的
 			if (hasMap) {
-				if (columnFieldMap.containsKey(fields[i].toLowerCase())) {
-					fields[i] = columnFieldMap.get(fields[i].toLowerCase());
+				if (columnFieldMap.containsKey(fields[i])) {
+					fields[i] = columnFieldMap.get(fields[i]);
 				}
 			}
 		}
