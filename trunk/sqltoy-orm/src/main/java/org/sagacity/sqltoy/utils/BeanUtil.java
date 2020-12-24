@@ -336,8 +336,9 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static int compare(Object target, Object compared) {
-		if (null == target && null == compared)
+		if (null == target && null == compared) {
 			return 0;
+		}
 		if (null == target) {
 			return -1;
 		}
@@ -1034,9 +1035,9 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
-			Object[] values, boolean autoConvertType) {
-		batchSetProperties(typeHandler, voList, properties, values, autoConvertType, true);
+	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
+			boolean autoConvertType) {
+		batchSetProperties(voList, properties, values, autoConvertType, true);
 	}
 
 	/**
@@ -1048,8 +1049,8 @@ public class BeanUtil {
 	 * @param forceUpdate     强制更新
 	 * @throws Exception
 	 */
-	public static void batchSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
-			Object[] values, boolean autoConvertType, boolean forceUpdate) {
+	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
+			boolean autoConvertType, boolean forceUpdate) {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1090,8 +1091,7 @@ public class BeanUtil {
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
-									autoConvertType
-											? convertType(typeHandler, values[i], methodTypes[i], genericTypes[i])
+									autoConvertType ? convertType(null, values[i], methodTypes[i], genericTypes[i])
 											: values[i]);
 						}
 					}
@@ -1113,13 +1113,13 @@ public class BeanUtil {
 	 * @param autoConvertType
 	 * @throws Exception
 	 */
-	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
-			List<Object[]> values, int[] index, boolean autoConvertType) throws Exception {
-		mappingSetProperties(typeHandler, voList, properties, values, index, autoConvertType, true);
+	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
+			boolean autoConvertType) throws Exception {
+		mappingSetProperties(voList, properties, values, index, autoConvertType, true);
 	}
 
-	public static void mappingSetProperties(TypeHandler typeHandler, Collection voList, String[] properties,
-			List<Object[]> values, int[] index, boolean autoConvertType, boolean forceUpdate) throws Exception {
+	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
+			boolean autoConvertType, boolean forceUpdate) throws Exception {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1167,8 +1167,7 @@ public class BeanUtil {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
 							realMethods[i].invoke(bean,
 									autoConvertType
-											? convertType(typeHandler, rowData[index[i]], methodTypes[i],
-													genericTypes[i])
+											? convertType(null, rowData[index[i]], methodTypes[i], genericTypes[i])
 											: rowData[index[i]]);
 						}
 					}
@@ -1306,6 +1305,10 @@ public class BeanUtil {
 				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
 	}
 
+//	public static void setProperty(Object bean, String property, Object value) throws Exception {
+//		setProperty(null, property, value);
+//	}
+
 	/**
 	 * @TODO 代替PropertyUtil 和BeanUtils的setProperty方法
 	 * @param bean
@@ -1313,8 +1316,7 @@ public class BeanUtil {
 	 * @param value
 	 * @throws Exception
 	 */
-	public static void setProperty(TypeHandler typeHandler, Object bean, String property, Object value)
-			throws Exception {
+	public static void setProperty(Object bean, String property, Object value) throws Exception {
 		String key = bean.getClass().getName().concat(":set").concat(property);
 		// 利用缓存提升方法匹配效率
 		Method method = setMethods.get(key);
@@ -1334,7 +1336,7 @@ public class BeanUtil {
 				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
 			}
 		}
-		method.invoke(bean, convertType(typeHandler, value, type, genericType));
+		method.invoke(bean, convertType(null, value, type, genericType));
 	}
 
 	/**

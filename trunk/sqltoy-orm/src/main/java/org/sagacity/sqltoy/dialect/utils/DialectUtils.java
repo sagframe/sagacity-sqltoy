@@ -573,15 +573,14 @@ public class DialectUtils {
 							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
 							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtil.setProperty(null, entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtil.setProperty(null, entities.get(i), entityMeta.getBusinessIdField(),
-							rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 			}
 		}
@@ -648,15 +647,14 @@ public class DialectUtils {
 							entityMeta.getBizIdRelatedColumns(), relatedColValue, null, idJdbcType, idLength,
 							entityMeta.getBizIdSequenceSize());
 					// 回写主键值
-					BeanUtil.setProperty(null, entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getIdArray()[0], rowData[pkIndex]);
 				}
 				if (hasBizId && StringUtil.isBlank(rowData[bizIdColIndex])) {
 					rowData[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(null, entities.get(i), entityMeta.getBusinessIdField(),
-							rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 			}
 		}
@@ -949,7 +947,7 @@ public class DialectUtils {
 							sqlToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
-						BeanUtil.setProperty(null, result, oneToMany.getProperty(), pkRefDetails);
+						BeanUtil.setProperty(result, oneToMany.getProperty(), pkRefDetails);
 					}
 				}
 			}
@@ -1120,7 +1118,7 @@ public class DialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtil.setProperty(null, entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 		SqlExecuteStat.showSql("执行单记录插入", insertSql, null);
@@ -1175,7 +1173,7 @@ public class DialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtil.setProperty(null, entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判定是否有级联子表数据保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -1280,15 +1278,13 @@ public class DialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(null, entities.get(i), entityMeta.getBusinessIdField(),
-							rowData[bizIdColIndex]);
+					BeanUtil.setProperty(entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(), entities, entityMeta.getIdArray(), idSet,
-						new int[] { 0 }, true);
+				BeanUtil.mappingSetProperties(entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
 
