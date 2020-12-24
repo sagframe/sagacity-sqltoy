@@ -583,7 +583,7 @@ public class SqlServerDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(null, entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -635,7 +635,7 @@ public class SqlServerDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(null, entity, entityMeta.getIdArray()[0], result);
 		}
 		// 是否有子表进行级联保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -755,13 +755,14 @@ public class SqlServerDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(null, entities.get(i), entityMeta.getBusinessIdField(),
+							rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(),entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+				BeanUtil.mappingSetProperties(null, entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
@@ -900,7 +901,8 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyContext.getTypeHandler(),sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

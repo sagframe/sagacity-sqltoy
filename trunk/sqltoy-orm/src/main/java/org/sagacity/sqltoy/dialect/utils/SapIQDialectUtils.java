@@ -106,7 +106,7 @@ public class SapIQDialectUtils {
 						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 						bizIdLength, entityMeta.getBizIdSequenceSize());
 				// 回写业务主键值
-				BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+				BeanUtil.setProperty(null, entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
 			}
 		}
 
@@ -150,7 +150,7 @@ public class SapIQDialectUtils {
 		}
 		// 回置到entity 主键值
 		if (needUpdatePk || isIdentity || isSequence) {
-			BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entity, entityMeta.getIdArray()[0], result);
+			BeanUtil.setProperty(null, entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判断是否有子表级联保存
 		if (!entityMeta.getOneToManys().isEmpty()) {
@@ -271,13 +271,15 @@ public class SapIQDialectUtils {
 							signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
 							bizIdLength, entityMeta.getBizIdSequenceSize());
 					// 回写业务主键值
-					BeanUtil.setProperty(sqlToyContext.getTypeHandler(),entities.get(i), entityMeta.getBusinessIdField(), rowData[bizIdColIndex]);
+					BeanUtil.setProperty(null, entities.get(i), entityMeta.getBusinessIdField(),
+							rowData[bizIdColIndex]);
 				}
 				idSet.add(new Object[] { rowData[pkIndex] });
 			}
 			// 批量反向设置最终得到的主键值
 			if (!isAssigned) {
-				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(),entities, entityMeta.getIdArray(), idSet, new int[] { 0 }, true);
+				BeanUtil.mappingSetProperties(sqlToyContext.getTypeHandler(), entities, entityMeta.getIdArray(), idSet,
+						new int[] { 0 }, true);
 			}
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);

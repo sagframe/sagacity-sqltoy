@@ -542,8 +542,8 @@ public class ShardingUtils {
 							}
 						}
 					}
-
-					BeanUtil.setProperty(sqlToyContext.getTypeHandler(), entities.get(i), pks[0],
+					//回写主键值
+					BeanUtil.setProperty(null, entities.get(i), pks[0],
 							idGenerator.getId(table, signature, entityMeta.getBizIdRelatedColumns(), relatedColValue,
 									null, idType, idLength, sequenceSize));
 				}
