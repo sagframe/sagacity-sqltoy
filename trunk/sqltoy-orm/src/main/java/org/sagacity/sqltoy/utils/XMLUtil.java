@@ -159,8 +159,7 @@ public class XMLUtil {
 	}
 
 	/**
-	 * 读取xml文件
-	 * 
+	 * @todo 读取xml文件
 	 * @param xmlFile
 	 * @param charset
 	 * @param isValidator
