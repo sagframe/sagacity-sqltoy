@@ -270,11 +270,6 @@ public class FileUtil {
 		return null;
 	}
 
-//	@Deprecated
-//	public static byte[] readAsByteArray(File file) {
-//		return readAsBytes(file);
-//	}
-
 	/**
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
@@ -934,8 +929,6 @@ public class FileUtil {
 
 	/**
 	 * @todo <b>跳转路径</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-18 下午04:38:57
 	 * @param basePath
 	 * @param skipFile
 	 * @return
