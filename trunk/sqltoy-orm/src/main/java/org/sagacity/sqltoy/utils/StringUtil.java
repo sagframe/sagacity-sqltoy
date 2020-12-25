@@ -958,9 +958,4 @@ public class StringUtil {
 		}
 		return result.toString();
 	}
-
-//	public static void main(String[] args) {
-//		String prefix="A_";
-//		System.err.println("A_STATUS".substring(prefix.length()));
-//	}
 }
