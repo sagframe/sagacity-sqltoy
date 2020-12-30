@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  *              <li>提供随机数获取方法，包括给定范围的数据取出不重复的数字</li>
  *              <li>提供字符串表达式函数的执行</li>
  *              <li>提供金额、数字的大小写互转功能</li>
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:Oct 18, 2007 9:19:50 AM
  */
 public class NumberUtil {

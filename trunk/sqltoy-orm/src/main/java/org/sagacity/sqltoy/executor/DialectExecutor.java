@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 数据库方言并行执行器
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日
  */
 public class DialectExecutor implements Callable<ShardingResult> {

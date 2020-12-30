@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020-5-15
  */
 public class EntityQuery implements Serializable {

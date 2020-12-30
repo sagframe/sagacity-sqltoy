@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 提供sql执行超时统计和基本的sql输出功能
- * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年6月12日
  * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
  * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}

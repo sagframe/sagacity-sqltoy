@@ -26,7 +26,7 @@ import org.springframework.context.ApplicationContextAware;
 /**
  * @project sagacity-sqltoy4.0
  * @description 提供默认的数据库sharding策略
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date: 2017年1月3日
  */
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {

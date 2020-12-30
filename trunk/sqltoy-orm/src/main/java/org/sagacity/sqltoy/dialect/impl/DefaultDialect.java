@@ -30,7 +30,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 /**
  * @project sagacity-sqltoy
  * @description 提供一个不能匹配数据库类型的实现，确保通用查询功能可以使用
- * @author zhongxuchen@hotmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020-9-2
  * @modify 2020-9-2,修改说明
  */

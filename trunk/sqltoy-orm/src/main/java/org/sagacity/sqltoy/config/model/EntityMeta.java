@@ -14,8 +14,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description sqltoy entity实体对象信息
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:EntityMeta.java,Revision:v1.0,Date:2012-6-1 下午4:28:29
+ * @author zhongxuchen
+ * @version v1.0,Date:2012-6-1 下午4:28:29
  */
 @SuppressWarnings({ "rawtypes" })
 public class EntityMeta implements Serializable {

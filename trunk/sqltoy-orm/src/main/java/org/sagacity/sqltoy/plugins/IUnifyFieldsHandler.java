@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseSet;
 /**
  * @project sagacity-sqltoy4.0
  * @description 统一字段赋值处理
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年1月17日
  * @modify {Date:2019-09-15,增加了forceUpdateFields方法}
  */

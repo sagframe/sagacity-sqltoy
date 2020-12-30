@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020-8-8
  * @modify data:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
  */

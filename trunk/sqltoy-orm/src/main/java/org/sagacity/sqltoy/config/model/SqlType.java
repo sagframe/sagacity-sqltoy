@@ -6,8 +6,8 @@ package org.sagacity.sqltoy.config.model;
 /**
  * @project sqltoy-orm
  * @description sql类型(区分查询、插入、修改、删除)
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlType.java,Revision:v1.0,Date:2015年3月21日
+ * @author zhongxuchen
+ * @version v1.0,Date:2015年3月21日
  */
 public enum SqlType {
 	search("search"),

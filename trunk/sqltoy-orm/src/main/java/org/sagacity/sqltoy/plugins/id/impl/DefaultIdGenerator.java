@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 /**
  * @project sqltoy-orm
  * @description 格式:13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2012-6-4 上午10:12:48
  */
 public class DefaultIdGenerator implements IdGenerator {

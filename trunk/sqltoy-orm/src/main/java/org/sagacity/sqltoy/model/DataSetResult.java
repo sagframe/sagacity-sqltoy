@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
 /**
  * @project sagacity-sqltoy4.0
  * @description 提供一个基础的数据集对象模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2016年3月8日
  */
 @SuppressWarnings("rawtypes")

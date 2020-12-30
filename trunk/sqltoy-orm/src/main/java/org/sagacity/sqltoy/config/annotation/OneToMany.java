@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 /**
  * @project sqltoy-orm
  * @description 主键被其他表关联的机制
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2012-7-30
  */
 @Retention(RetentionPolicy.RUNTIME)

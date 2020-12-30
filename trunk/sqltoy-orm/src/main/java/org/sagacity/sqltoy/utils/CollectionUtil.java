@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 数组集合的公用方法
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-10-22
  * @modify Date:2011-8-11 {修复了pivotList设置旋转数据的初始值错误}
  */

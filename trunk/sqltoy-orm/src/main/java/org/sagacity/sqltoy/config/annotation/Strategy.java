@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 /**
  * @project sagacity-sqltoy4.0
  * @description 分库分表的策略配置
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年11月5日
  */
 @Retention(RetentionPolicy.RUNTIME)

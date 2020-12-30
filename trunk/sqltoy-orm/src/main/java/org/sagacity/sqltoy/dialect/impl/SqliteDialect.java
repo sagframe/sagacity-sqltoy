@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sqltoy-orm
  * @description 基于sqlite数据库方言的各类操作实现
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-8-29
  * @modify Date:2020-3-12 完成完整验证测试
  */

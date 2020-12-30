@@ -19,7 +19,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sagacity-sqltoy4.2
  * @description 宏处理工具
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年5月25日
  */
 public class MacroUtils {

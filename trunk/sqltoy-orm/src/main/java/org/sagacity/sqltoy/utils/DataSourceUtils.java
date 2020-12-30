@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description 提供统一的dataSource管理
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
  * @modify data:2020-06-10
  *         剔除sqlserver2008,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持

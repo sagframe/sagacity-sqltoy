@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 /**
  * @project sqltoy-orm
  * @description 唯一性验证查询模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年3月16日
  */
 public class UniqueExecutor implements Serializable {

@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 基于postgresql9.5+版本的方言实现,9.5开始insert into [ON CONFLICT DO
  *              NOTHING/UPDATE]功能生效
- * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年8月10日
  * @modify Date:2019-3-12
  *         修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug

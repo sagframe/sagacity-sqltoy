@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sqltoy-orm
  * @description 提供不同数据库length函数的转换(主要是length和len之间的互换)
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年10月19日
  */
 public class Length extends IFunction {

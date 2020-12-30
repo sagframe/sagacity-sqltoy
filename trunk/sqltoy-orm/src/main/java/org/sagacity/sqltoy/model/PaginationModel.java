@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @project sagacity-sqltoy4.0
  * @description 分页数据模型
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2011-2-25
  */
 public class PaginationModel<T> implements Serializable {

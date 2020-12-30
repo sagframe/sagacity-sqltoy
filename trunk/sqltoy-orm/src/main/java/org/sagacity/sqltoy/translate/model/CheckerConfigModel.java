@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @project sagacity-sqltoy4.2
  * @description 自动检测任务配置模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
  */
 public class CheckerConfigModel implements Serializable {

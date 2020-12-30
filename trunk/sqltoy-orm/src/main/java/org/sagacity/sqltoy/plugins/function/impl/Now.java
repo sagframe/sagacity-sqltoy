@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sqltoy-orm
  * @description 不同数据库当前系统时间获取方式
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-3-25
  */
 public class Now extends IFunction {
