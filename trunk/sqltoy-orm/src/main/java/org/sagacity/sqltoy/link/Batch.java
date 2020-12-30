@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy
  * @description 批量执行
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Batch.java,Revision:v1.0,Date:2017年10月24日
+ * @version v1.0,Date:2017年10月24日
  */
 public class Batch extends BaseLink {
 

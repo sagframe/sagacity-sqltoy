@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -59,7 +60,7 @@ import org.springframework.context.ApplicationContextAware;
  * @project sagacity-sqltoy4.0
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
  * @author chenrf <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlToyContext.java,Revision:v1.0,Date:2009-12-11 下午09:48:15
+ * @version v1.0,Date:2009-12-11 下午09:48:15
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
@@ -157,8 +158,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean debug = false;
 
 	/**
-	 * debug\error
+	 * debug\error 此参数废弃,减少容易混淆的概念，目前作用等同于debug
 	 */
+	@Deprecated
 	private String printSqlStrategy = "error";
 
 	/**
@@ -195,6 +197,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * sql脚本检测间隔时长(默认为3秒)
 	 */
 	private Integer scriptCheckIntervalSeconds;
+
+	/**
+	 * 提供自定义类型处理器,一般针对json等类型
+	 */
+	private TypeHandler typeHandler;
 
 	/**
 	 * @param workerId the workerId to set
@@ -262,7 +269,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化sql执行统计的基本参数
 		 */
 		SqlExecuteStat.setDebug(this.debug);
-		SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
+		// SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
 	}
@@ -517,6 +524,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.ORACLE;
 		} else if (tmp.startsWith(Dialect.POSTGRESQL)) {
 			this.dialect = Dialect.POSTGRESQL;
+		} else if (tmp.startsWith(Dialect.GREENPLUM)) {
+			this.dialect = Dialect.POSTGRESQL;
 		} else if (tmp.startsWith(Dialect.DB2)) {
 			this.dialect = Dialect.DB2;
 		} else if (tmp.startsWith(Dialect.SQLSERVER)) {
@@ -535,6 +544,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.DM;
 		} else if (tmp.startsWith(Dialect.TIDB)) {
 			this.dialect = Dialect.TIDB;
+		} else if (tmp.startsWith(Dialect.KINGBASE)) {
+			this.dialect = Dialect.KINGBASE;
 		} else {
 			this.dialect = dialect;
 		}
@@ -664,15 +675,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * 提供给SqlToyDaoSupport等获取数据源
-	 * 
+	 * @TODO 提供给SqlToyDaoSupport等获取数据源
 	 * @return
 	 */
-	public DataSource obtainDataSource() {
+	public DataSource obtainDataSource(String sqlDataSource) {
 		if (obtainDataSource == null) {
 			return defaultDataSource;
 		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource);
+		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
 	}
 
 	/**
@@ -770,6 +780,20 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setReservedWords(String reservedWords) {
 		this.reservedWords = reservedWords;
+	}
+
+	/**
+	 * @return the typeHandler
+	 */
+	public TypeHandler getTypeHandler() {
+		return typeHandler;
+	}
+
+	/**
+	 * @param typeHandler the typeHandler to set
+	 */
+	public void setTypeHandler(TypeHandler typeHandler) {
+		this.typeHandler = typeHandler;
 	}
 
 	public void destroy() {

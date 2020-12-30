@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -48,4 +49,29 @@ public class CollectionUtilTest {
 			System.err.println(e.getMessage());
 		}
 	}
+
+	@Test
+	public void testPivotList() {
+		try {
+			Object[][] values = { { "5月", "香蕉", 2000 } };
+
+			List dataList = CollectionUtil.arrayToDeepList(values);
+			// 参照列，如按年份进行旋转
+			Integer[] categoryCols = new Integer[] { 1 };
+
+			// 旋转列，如按年份进行旋转，则旋转列为：年份下面的合格数量、不合格数量等子分类数据
+			Integer[] pivotCols = new Integer[] { 2 };
+			// 分组主键列（以哪几列为基准）
+			Integer[] groupCols = new Integer[] { 0 };
+			List categoryList = new ArrayList();
+			categoryList.add("香蕉");
+			// update 2016-12-13 提取category后进行了排序
+			List result = CollectionUtil.pivotList(dataList, categoryList, null, groupCols, categoryCols, pivotCols[0],
+					pivotCols[pivotCols.length - 1], null);
+			System.err.println(JSON.toJSONString(result));
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
 }

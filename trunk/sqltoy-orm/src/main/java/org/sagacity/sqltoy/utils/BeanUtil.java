@@ -10,8 +10,11 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.0
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:BeanUtil.java,Revision:v1.0,Date:2008-11-10
+ * @version v1.0,Date:2008-11-10
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
@@ -74,7 +78,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchSetMethods(Class voClass, String[] props) {
+	public static Method[] matchSetMethods(Class voClass, String... props) {
 		int indexSize = props.length;
 		Method[] result = new Method[indexSize];
 		Method[] methods = voClass.getMethods();
@@ -137,7 +141,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static Method[] matchGetMethods(Class voClass, String[] props) {
+	public static Method[] matchGetMethods(Class voClass, String... props) {
 		Method[] methods = voClass.getMethods();
 		List<Method> realMeth = new ArrayList<Method>();
 		String name;
@@ -198,7 +202,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @return
 	 */
-	public static Integer[] matchMethodsType(Class voClass, String[] properties) {
+	public static Integer[] matchMethodsType(Class voClass, String... properties) {
 		if (properties == null || properties.length == 0) {
 			return null;
 		}
@@ -332,8 +336,9 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static int compare(Object target, Object compared) {
-		if (null == target && null == compared)
+		if (null == target && null == compared) {
 			return 0;
+		}
 		if (null == target) {
 			return -1;
 		}
@@ -358,16 +363,24 @@ public class BeanUtil {
 		}
 	}
 
+	public static Object convertType(Object value, String typeName) throws Exception {
+		return convertType(null, value, typeName, null);
+	}
+
 	/**
 	 * @todo 类型转换
-	 * @param paramValue
-	 * @param typeName   小写
+	 * @param typeHandler
+	 * @param value
+	 * @param typeOriginName
+	 * @param genericType    泛型类型
 	 * @return
+	 * @throws Exception
 	 */
-	public static Object convertType(Object value, String typeName) throws Exception {
+	public static Object convertType(TypeHandler typeHandler, Object value, String typeOriginName, Class genericType)
+			throws Exception {
 		Object paramValue = value;
 		// 转换为小写
-		typeName = typeName.toLowerCase();
+		String typeName = typeOriginName.toLowerCase();
 		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
 		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
 			paramValue = CollectionUtil.convertArray(paramValue)[0];
@@ -385,6 +398,13 @@ public class BeanUtil {
 		// value值的类型跟目标类型一致，直接返回
 		if (value.getClass().getName().toLowerCase().equals(typeName)) {
 			return value;
+		}
+		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
+		if (typeHandler != null) {
+			Object result = typeHandler.toJavaType(typeOriginName, genericType, paramValue);
+			if (result != null) {
+				return result;
+			}
 		}
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
@@ -570,6 +590,11 @@ public class BeanUtil {
 			}
 			return valueStr.toCharArray();
 		}
+		// 数组类型
+		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
+			return convertArray(((Array) paramValue).getArray(), typeName);
+		}
+
 		return paramValue;
 	}
 
@@ -702,6 +727,8 @@ public class BeanUtil {
 	}
 
 	/**
+	 * update 2020-12-2 支持多层对象反射取值
+	 * 
 	 * @todo 反射出单个对象中的属性并以对象数组返回
 	 * @param serializable
 	 * @param properties
@@ -715,13 +742,55 @@ public class BeanUtil {
 		if (null == serializable || null == properties || properties.length == 0) {
 			return null;
 		}
-		List datas = new ArrayList();
-		datas.add(serializable);
-		List result = reflectBeansToInnerAry(datas, properties, defaultValues, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty()) {
-			return (Object[]) result.get(0);
+		int methodLength = properties.length;
+		Object[] result = new Object[methodLength];
+		// 判断是否存在属性值处理反调
+		boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
+		// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
+		if (hasHandler) {
+			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
+			for (int i = 0; i < methodLength; i++) {
+				propertyIndexMap.put(properties[i].toLowerCase(), i);
+			}
+			reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 		}
-		return null;
+		String[] fields;
+		try {
+			// 通过反射提取属性getMethod返回的数据值
+			for (int i = 0; i < methodLength; i++) {
+				if (properties[i] != null) {
+					// 支持xxxx.xxx 子对象属性提取
+					fields = properties[i].split("\\.");
+					Object value = serializable;
+					for (String field : fields) {
+						value = getProperty(value, field.trim());
+						if (value == null) {
+							break;
+						}
+					}
+					result[i] = value;
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+		// 默认值
+		if (defaultValues != null) {
+			int end = (defaultValues.length > methodLength) ? methodLength : defaultValues.length;
+			for (int i = 0; i < end; i++) {
+				if (result[i] == null) {
+					result[i] = defaultValues[i];
+				}
+			}
+		}
+		// 反调对数据值进行加工处理
+		if (hasHandler) {
+			reflectPropertyHandler.setRowIndex(0);
+			reflectPropertyHandler.setRowData(result);
+			reflectPropertyHandler.process();
+			return reflectPropertyHandler.getRowData();
+		}
+		return result;
 	}
 
 	/**
@@ -816,7 +885,7 @@ public class BeanUtil {
 		return resultList;
 	}
 
-	public static List reflectListToBean(List datas, String[] properties, Class voClass) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, String[] properties, Class voClass) {
 		int[] indexs = null;
 		if (properties != null && properties.length > 0) {
 			indexs = new int[properties.length];
@@ -824,34 +893,36 @@ public class BeanUtil {
 				indexs[i] = i;
 			}
 		}
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
 	 * @todo 将二维数组映射到对象集合中
+	 * @param typeHandler
 	 * @param datas
 	 * @param indexs
 	 * @param properties
 	 * @param voClass
 	 * @return
+	 * @throws Exception
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass)
-			throws Exception {
-		return reflectListToBean(datas, indexs, properties, voClass, true);
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass) throws Exception {
+		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
 	/**
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * @param typeHandler
 	 * @param datas
 	 * @param indexs
 	 * @param properties
 	 * @param voClass
 	 * @param autoConvertType
 	 * @return
-	 * @throws Exception
 	 */
-	public static List reflectListToBean(List datas, int[] indexs, String[] properties, Class voClass,
-			boolean autoConvertType) {
+	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
+			Class voClass, boolean autoConvertType) {
 		if (null == datas || datas.isEmpty()) {
 			return null;
 		}
@@ -874,14 +945,20 @@ public class BeanUtil {
 			List rowList;
 			int indexSize = indexs.length;
 			Method[] realMethods = matchSetMethods(voClass, properties);
-			String[] methodTypesLow = new String[indexSize];
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			// 自动适配属性的数据类型
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
 						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
-						methodTypesLow[i] = methodTypes[i].toLowerCase();
+						types = realMethods[i].getGenericParameterTypes();
+						if (types.length > 0) {
+							if (types[0] instanceof ParameterizedType) {
+								genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+							}
+						}
 					}
 				}
 			}
@@ -911,7 +988,10 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType
+														? convertType(typeHandler, cellData, methodTypes[i],
+																genericTypes[i])
+														: cellData);
 									}
 								}
 							}
@@ -928,7 +1008,10 @@ public class BeanUtil {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
-												autoConvertType ? convertType(cellData, methodTypesLow[i]) : cellData);
+												autoConvertType
+														? convertType(typeHandler, cellData, methodTypes[i],
+																genericTypes[i])
+														: cellData);
 									}
 								}
 							}
@@ -981,6 +1064,8 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			Iterator iter = voList.iterator();
 			Object bean;
 			boolean inited = false;
@@ -992,7 +1077,14 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									types = realMethods[i].getGenericParameterTypes();
+									if (types.length > 0) {
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
+									}
 								}
 							}
 						}
@@ -1001,7 +1093,8 @@ public class BeanUtil {
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || values[i] != null)) {
 							realMethods[i].invoke(bean,
-									autoConvertType ? convertType(values[i], methodTypes[i]) : values[i]);
+									autoConvertType ? convertType(null, values[i], methodTypes[i], genericTypes[i])
+											: values[i]);
 						}
 					}
 				}
@@ -1040,6 +1133,8 @@ public class BeanUtil {
 			int indexSize = properties.length;
 			Method[] realMethods = null;
 			String[] methodTypes = new String[indexSize];
+			Class[] genericTypes = new Class[indexSize];
+			Type[] types;
 			Iterator iter = voList.iterator();
 			Object bean;
 			boolean inited = false;
@@ -1057,7 +1152,14 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName().toLowerCase();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									types = realMethods[i].getGenericParameterTypes();
+									if (types.length > 0) {
+										if (types[0] instanceof ParameterizedType) {
+											genericTypes[i] = (Class) ((ParameterizedType) types[0])
+													.getActualTypeArguments()[0];
+										}
+									}
 								}
 							}
 						}
@@ -1065,8 +1167,10 @@ public class BeanUtil {
 					}
 					for (int i = 0; i < indexSize; i++) {
 						if (realMethods[i] != null && (forceUpdate || rowData[index[i]] != null)) {
-							realMethods[i].invoke(bean, autoConvertType ? convertType(rowData[index[i]], methodTypes[i])
-									: rowData[index[i]]);
+							realMethods[i].invoke(bean,
+									autoConvertType
+											? convertType(null, rowData[index[i]], methodTypes[i], genericTypes[i])
+											: rowData[index[i]]);
 						}
 					}
 				}
@@ -1088,12 +1192,12 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass)
-			throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass) throws Exception {
 		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
-			return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, true);
+			return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, true);
 		}
-		return mappingBeanSet(fromBeans, fromProps, targetProps, newClass, false);
+		return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, false);
 	}
 
 	/**
@@ -1106,11 +1210,11 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List mappingBeanSet(List fromBeans, String[] fromProps, String[] targetProps, Class newClass,
-			boolean autoMapping) throws Exception {
+	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
+			Class newClass, boolean autoMapping) throws Exception {
 		if (autoMapping == false) {
 			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
-			return reflectListToBean(result, targetProps == null ? fromProps : targetProps, newClass);
+			return reflectListToBean(typeHandler, result, targetProps == null ? fromProps : targetProps, newClass);
 		}
 		// 获取set方法
 		String[] properties = matchSetMethodNames(newClass);
@@ -1133,7 +1237,7 @@ public class BeanUtil {
 			getProperties = properties;
 		}
 		List result = reflectBeansToList(fromBeans, getProperties);
-		return reflectListToBean(result, properties, newClass);
+		return reflectListToBean(typeHandler, result, properties, newClass);
 	}
 
 	public static String[] matchSetMethodNames(Class voClass) {
@@ -1216,11 +1320,21 @@ public class BeanUtil {
 		Method method = setMethods.get(key);
 		if (method == null) {
 			method = matchSetMethods(bean.getClass(), new String[] { property })[0];
+			if (method == null) {
+				throw new Exception(bean.getClass().getName() + " 没有对应的:" + property);
+			}
 			setMethods.put(key, method);
 		}
 		// 将数据类型进行转换再赋值
-		String type = method.getParameterTypes()[0].getTypeName().toLowerCase();
-		method.invoke(bean, convertType(value, type));
+		String type = method.getParameterTypes()[0].getTypeName();
+		Type[] types = method.getGenericParameterTypes();
+		Class genericType = null;
+		if (types.length > 0) {
+			if (types[0] instanceof ParameterizedType) {
+				genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+			}
+		}
+		method.invoke(bean, convertType(null, value, type, genericType));
 	}
 
 	/**
@@ -1236,6 +1350,9 @@ public class BeanUtil {
 		Method method = getMethods.get(key);
 		if (method == null) {
 			method = matchGetMethods(bean.getClass(), new String[] { property })[0];
+			if (method == null) {
+				return null;
+			}
 			getMethods.put(key, method);
 		}
 		return method.invoke(bean);
@@ -1249,20 +1366,27 @@ public class BeanUtil {
 	 * @param ids
 	 * @return
 	 */
-	public static <T extends Serializable> List<T> wrapEntities(EntityMeta entityMeta, Class<T> voClass,
-			Object... ids) {
+	public static <T extends Serializable> List<T> wrapEntities(TypeHandler typeHandler, EntityMeta entityMeta,
+			Class<T> voClass, Object... ids) {
 		List<T> entities = new ArrayList<T>();
 		Set<Object> repeat = new HashSet<Object>();
 		try {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
-			String typeName = method.getParameterTypes()[0].getName().toLowerCase();
+			String typeName = method.getParameterTypes()[0].getName();
+			Type[] types = method.getGenericParameterTypes();
+			Class genericType = null;
+			if (types.length > 0) {
+				if (types[0] instanceof ParameterizedType) {
+					genericType = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+				}
+			}
 			T bean;
 			for (Object id : ids) {
 				// 去除重复
 				if (!repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, BeanUtil.convertType(id, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}
@@ -1300,5 +1424,87 @@ public class BeanUtil {
 			return realEntityClass;
 		}
 		return entityClass;
+	}
+
+	/**
+	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
+	 * @param values
+	 * @param type
+	 * @return
+	 */
+	private static Object convertArray(Object values, String type) {
+		// 类型完全一致
+		if (type == null || type.equals(values.getClass().getTypeName())) {
+			return values;
+		}
+		Object[] array;
+		int index = 0;
+		if (type.contains("integer") && !(values instanceof Integer[])) {
+			array = (Object[]) values;
+			Integer[] result = new Integer[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("long") && !(values instanceof Long[])) {
+			array = (Object[]) values;
+			Long[] result = new Long[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).longValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("bigdecimal") && !(values instanceof BigDecimal[])) {
+			array = (Object[]) values;
+			BigDecimal[] result = new BigDecimal[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString());
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("double") && !(values instanceof Double[])) {
+			array = (Object[]) values;
+			Double[] result = new Double[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).doubleValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("float") && !(values instanceof Float[])) {
+			array = (Object[]) values;
+			Float[] result = new Float[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).floatValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		if (type.contains("int") && !(values instanceof int[])) {
+			array = (Object[]) values;
+			int[] result = new int[array.length];
+			for (Object obj : array) {
+				if (obj != null) {
+					result[index] = new BigDecimal(obj.toString()).intValue();
+				}
+				index++;
+			}
+			return result;
+		}
+		return values;
 	}
 }

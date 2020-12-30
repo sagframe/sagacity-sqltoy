@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -28,7 +29,7 @@ import org.sagacity.sqltoy.utils.ParamFilterUtils;
  * @project sqltoy-orm
  * @description 针对QueryExecutor构造一个存放参数的内部类，避免QueryExecutor使用时带出大量的get方法
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:QueryExecutorExtend.java,Revision:v1.0,Date:2020-8-1
+ * @version v1.0,Date:2020-8-1
  */
 public class QueryExecutorExtend implements Serializable {
 
@@ -139,8 +140,16 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public LockMode lockMode = null;
 
-	// 分库分表策略配置
-	// public ShardingConfig shardingConfig = new ShardingConfig();
+	/**
+	 * 自定义countSql
+	 */
+	public String countSql;
+
+	// 分库策略配置
+	public ShardingStrategyConfig dbSharding;
+
+	// 分表策略配置
+	public List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 
 	/**
 	 * @param sqlToyConfig
@@ -167,7 +176,13 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getTableShardingParams();
+		
+		//没有额外指定分表策略，优先使用sql xml中定义的策略
+		if (tableShardings.isEmpty()) {
+			return sqlToyConfig.getTableShardingParams();
+		} else {
+			return getTableShardingParams();
+		}
 	}
 
 	/**
@@ -181,7 +196,14 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		return sqlToyConfig.getDataSourceShardingParams();
+		String[] fields = null;
+		if (sqlToyConfig.getDataSourceSharding() != null) {
+			fields = sqlToyConfig.getDataSourceSharding().getFields();
+		}
+		if (dbSharding != null) {
+			fields = dbSharding.getFields();
+		}
+		return fields;
 	}
 
 	/**
@@ -227,8 +249,13 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
-					reflectPropertyHandler);
+			if (!tableShardings.isEmpty()) {
+				return BeanUtil.reflectBeanToAry(entity, getTableShardingParams(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getTableShardingParams() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}
@@ -241,8 +268,14 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	public Object[] getDataSourceShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
-			return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceShardingParams(), null,
-					reflectPropertyHandler);
+			// 后续手工设定的优先于xml中原有配置
+			if (dbSharding != null) {
+				return BeanUtil.reflectBeanToAry(entity, dbSharding.getFields(), null, reflectPropertyHandler);
+			}
+			if (sqlToyConfig.getDataSourceSharding() != null) {
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
+						reflectPropertyHandler);
+			}
 		}
 		return shardingParamsValue;
 	}
@@ -257,12 +290,12 @@ public class QueryExecutorExtend implements Serializable {
 		}
 		// 只有使用cache-arg 场景下需要校正参数
 		if (paramsName != null && paramsValue != null) {
-			//遗漏掉的参数名称
+			// 遗漏掉的参数名称
 			List<String> omitParams = new ArrayList<String>();
 			boolean exist = false;
 			for (String comp : sqlToyConfig.getCacheArgNames()) {
 				exist = false;
-				//判断cacheArgs参数是否在传递的参数中
+				// 判断cacheArgs参数是否在传递的参数中
 				for (String param : paramsName) {
 					if (param.toLowerCase().equals(comp)) {
 						exist = true;
@@ -292,4 +325,26 @@ public class QueryExecutorExtend implements Serializable {
 		}
 	}
 
+	/**
+	 * @TODO 获取额外指定的分表策略中所涉及的字段信息
+	 * @return
+	 */
+	private String[] getTableShardingParams() {
+		if (tableShardings.isEmpty()) {
+			return null;
+		}
+		List<String> params = new ArrayList<String>();
+		for (ShardingStrategyConfig shardingConnfig : tableShardings) {
+			for (String field : shardingConnfig.getFields()) {
+				if (!params.contains(field)) {
+					params.add(field);
+				}
+			}
+		}
+		if (params.isEmpty())
+			return null;
+		String[] result = new String[params.size()];
+		params.toArray(result);
+		return result;
+	}
 }

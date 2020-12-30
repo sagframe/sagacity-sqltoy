@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * @project sagacity-sqltoy
  * @description 字符串处理常用功能
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:StringUtil.java,Revision:v1.0,Date:Oct 19, 2007 10:09:42 AM
+ * @version v1.0,Date:Oct 19, 2007 10:09:42 AM
  * @modify {Date:2020-01-14,优化splitExcludeSymMark 方法,增加对\' 和 \" 符号的排除}
  * @modify {Date:2020-05-18,完整修复splitExcludeSymMark bug}
  */
@@ -412,6 +412,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean matches(String source, Pattern p) {
+		if (isBlank(source)) {
+			return false;
+		}
 		return p.matcher(source).find();
 	}
 

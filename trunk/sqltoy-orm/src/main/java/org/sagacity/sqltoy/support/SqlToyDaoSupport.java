@@ -29,7 +29,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.QueryShardingModel;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -49,11 +49,13 @@ import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -75,7 +77,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
  * @publish Copyright@2009 版权归陈仁飞,反对任何不尊重版权的抄袭，如引用请注明出处。
- * @version id:SqlToyDaoSupport.java,Revision:v4.0,Date:2012-6-1
+ * @version v4.0,Date:2012-6-1
  * @modify Date:2012-8-8 {增强对象级联查询、删除、保存操作机制,不支持2层以上级联}
  * @modify Date:2012-8-23 {新增loadAll(List entities) 方法，可以批量通过主键取回详细信息}
  * @modify Date:2014-12-17 {1、增加sharding功能,改进saveOrUpdate功能，2、采用merge
@@ -132,7 +134,7 @@ public class SqlToyDaoSupport {
 			result = this.dataSource;
 		}
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(null);
 		}
 		return result;
 	}
@@ -156,7 +158,7 @@ public class SqlToyDaoSupport {
 		}
 		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource();
+			result = sqlToyContext.obtainDataSource(sqltoyConfig.getDataSource());
 		}
 		return result;
 	}
@@ -222,6 +224,20 @@ public class SqlToyDaoSupport {
 	 */
 	protected Long getCountBySql(final String sqlOrNamedQuery, final String[] paramsNamed, final Object[] paramsValue) {
 		return getCountByQuery(new QueryExecutor(sqlOrNamedQuery, paramsNamed, paramsValue));
+	}
+
+	/**
+	 * @TODO 通过entity对象来组织count查询语句
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	protected Long getCountByEntityQuery(Class entityClass, EntityQuery entityQuery) {
+		if (null == entityClass) {
+			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
+		}
+		return (Long) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				true);
 	}
 
 	/**
@@ -386,7 +402,7 @@ public class SqlToyDaoSupport {
 		if (entityMeta == null || entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
 			throw new IllegalArgumentException("voClass must is entity with @SqlToyEntity and must has primary key!");
 		}
-		List<T> entities = BeanUtil.wrapEntities(entityMeta, voClass, ids);
+		List<T> entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, voClass, ids);
 		return dialectFactory.loadAll(sqlToyContext, entities, null, lockMode, this.getDataSource(null));
 	}
 
@@ -517,7 +533,7 @@ public class SqlToyDaoSupport {
 			final Boolean autoCommit, final DataSource dataSource) {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
 				getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, autoCommit,
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, null, autoCommit,
 				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
@@ -1336,10 +1352,11 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		if (null == entityClass || null == entityQuery || StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityList entityClass、where、value 值不能为空!");
+		if (null == entityClass) {
+			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, entityQuery);
+		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				false);
 	}
 
 	/**
@@ -1353,21 +1370,24 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
-		if (null == entityClass || null == paginationModel || null == entityQuery
-				|| StringUtil.isBlank(entityQuery.getInnerModel().values)) {
-			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel、where、value 值不能为空!");
+		if (null == entityClass || null == paginationModel) {
+			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel值不能为空!");
 		}
-		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel, entityQuery);
+		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel,
+				(entityQuery == null) ? EntityQuery.create() : entityQuery, false);
 	}
 
-	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery) {
-		String where;
+	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
+			boolean isCount) {
+		String where = "";
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 
 		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
 		if (StringUtil.isBlank(innerModel.where)) {
-			where = SqlUtil.wrapWhere(entityMeta);
+			if (innerModel.values != null && innerModel.values.length > 0) {
+				where = SqlUtil.wrapWhere(entityMeta);
+			}
 		} else {
 			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		}
@@ -1382,8 +1402,12 @@ public class SqlToyDaoSupport {
 				extend = iter.next().getExtend();
 				// 将java模式的字段名称转化为数据库字段名称
 				keyColumn = entityMeta.getColumnName(extend.keyColumn);
-				translateFields = translateFields.concat(",").concat((keyColumn == null) ? extend.keyColumn : keyColumn)
-						.concat(" as ").concat(extend.column);
+				if (keyColumn == null) {
+					keyColumn = extend.keyColumn;
+				}
+				// 保留字处理
+				keyColumn = ReservedWordsUtil.convertWord(keyColumn, null);
+				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
 
@@ -1397,10 +1421,15 @@ public class SqlToyDaoSupport {
 				// 去除重复字段
 				if (!cols.contains(field)) {
 					colName = entityMeta.getColumnName(field);
+					if (colName == null) {
+						colName = field;
+					}
+					// 保留字处理
+					colName = ReservedWordsUtil.convertWord(colName, null);
 					if (index > 0) {
 						fields = fields.concat(",");
 					}
-					fields = fields.concat(colName == null ? field : colName);
+					fields = fields.concat(colName);
 					index++;
 					cols.add(field);
 				}
@@ -1410,7 +1439,10 @@ public class SqlToyDaoSupport {
 		}
 
 		String sql = "select ".concat(fields).concat(translateFields).concat(" from ")
-				.concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+				.concat(entityMeta.getSchemaTable());
+		if (StringUtil.isNotBlank(where)) {
+			sql = sql.concat(" where ").concat(where);
+		}
 		// 处理order by 排序
 		if (!innerModel.orderBy.isEmpty()) {
 			sql = sql.concat(" order by ");
@@ -1437,10 +1469,12 @@ public class SqlToyDaoSupport {
 		}
 		QueryExecutor queryExecutor;
 		Class resultType = entityClass;
-		// :named 模式
+		// :named 模式(named模式参数值必须存在)
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
-			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]).resultType(resultType)
-					.dataSource(getDataSource(innerModel.dataSource));
+			queryExecutor = new QueryExecutor(sql,
+					(innerModel.values == null || innerModel.values.length == 0) ? null
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource));
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource));
@@ -1468,41 +1502,57 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 分库分表策略
 		if (entityMeta.getShardingConfig() != null) {
-			// dataSource sharding
-			ShardingStrategyConfig shardingStrategy = entityMeta.getShardingConfig().getShardingDBStrategy();
-			if (shardingStrategy != null) {
-				sqlToyConfig.setDataSourceShardingStragety(shardingStrategy.getName());
-				sqlToyConfig.setDataSourceShardingParams(shardingStrategy.getFields());
-				sqlToyConfig.setDataSourceShardingParamsAlias(shardingStrategy.getAliasNames());
+			// db sharding
+			if (entityMeta.getShardingConfig().getShardingDBStrategy() != null) {
+				queryExecutor.getInnerModel().dbSharding = entityMeta.getShardingConfig().getShardingDBStrategy();
 			}
 			// table sharding
-			shardingStrategy = entityMeta.getShardingConfig().getShardingTableStrategy();
-			if (shardingStrategy != null) {
-				sqlToyConfig.setTableShardingParams(shardingStrategy.getFields());
-				List<QueryShardingModel> queryShardings = new ArrayList<QueryShardingModel>();
-				QueryShardingModel model = new QueryShardingModel();
-				model.setParams(shardingStrategy.getFields());
-				model.setParamsAlias(shardingStrategy.getAliasNames());
-				model.setStrategy(shardingStrategy.getName());
-				model.setTables(new String[] { entityMeta.getSchemaTable() });
-				queryShardings.add(model);
-				sqlToyConfig.setTablesShardings(queryShardings);
+			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
+				List<ShardingStrategyConfig> shardingConfig = new ArrayList<ShardingStrategyConfig>();
+				shardingConfig.add(entityMeta.getShardingConfig().getShardingTableStrategy());
+				queryExecutor.getInnerModel().tableShardings = shardingConfig;
 			}
+		}
+		if (innerModel.dbSharding != null) {
+			queryExecutor.getInnerModel().dbSharding = innerModel.dbSharding;
+		}
+		if (innerModel.tableSharding != null) {
+			ShardingStrategyConfig shardingConfig = innerModel.tableSharding;
+			// 补充表名称
+			shardingConfig.setTables(new String[] { entityMeta.getSchemaTable() });
+			List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
+			tableShardings.add(shardingConfig);
+			queryExecutor.getInnerModel().tableShardings = tableShardings;
+		}
+		DataSource realDataSource = getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig);
+		// 取count数量
+		if (isCount) {
+			return dialectFactory.getCountBySql(sqlToyContext, queryExecutor, sqlToyConfig, realDataSource);
 		}
 		// 非分页
 		if (paginationModel == null) {
-			return dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode,
-					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
+			// 取top
+			if (innerModel.pickType == 0) {
+				return dialectFactory
+						.findTop(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize, realDataSource)
+						.getRows();
+			} // 取随机记录
+			else if (innerModel.pickType == 1) {
+				return dialectFactory.getRandomResult(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.pickSize,
+						realDataSource).getRows();
+			} else {
+				return dialectFactory
+						.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, innerModel.lockMode, realDataSource)
+						.getRows();
+			}
 		}
 		// 跳过总记录数形式的分页
 		if (paginationModel.getSkipQueryCount()) {
 			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
-					paginationModel.getPageNo(), paginationModel.getPageSize(),
-					getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getPageResult();
+					paginationModel.getPageNo(), paginationModel.getPageSize(), realDataSource).getPageResult();
 		}
 		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, paginationModel.getPageNo(),
-				paginationModel.getPageSize(), getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig))
-				.getPageResult();
+				paginationModel.getPageSize(), realDataSource).getPageResult();
 	}
 
 	/**
@@ -1541,14 +1591,52 @@ public class SqlToyDaoSupport {
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
-		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		Entry<String, Object> entry;
+
+		// 对统一更新字段做处理
+		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
+		if (unifyHandler != null) {
+			Map<String, Object> updateFields = unifyHandler.updateUnifyFields();
+			if (updateFields != null && !updateFields.isEmpty()) {
+				Iterator<Entry<String, Object>> updateIter = updateFields.entrySet().iterator();
+				while (updateIter.hasNext()) {
+					entry = updateIter.next();
+					// 是数据库表的字段
+					if (entityMeta.getColumnName(entry.getKey()) != null) {
+						// 是否已经主动update
+						if (innerModel.updateValues.containsKey(entry.getKey())) {
+							// 判断是否存在强制更新
+							if (unifyHandler.forceUpdateFields() != null
+									&& unifyHandler.forceUpdateFields().contains(entry.getKey())) {
+								innerModel.updateValues.put(entry.getKey(), entry.getValue());
+							}
+						} else {
+							innerModel.updateValues.put(entry.getKey(), entry.getValue());
+						}
+					}
+				}
+			}
+		}
+
+		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		String columnName;
 		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
+		Integer[] paramsTypes = new Integer[realValues.length];
+		for (int i = 0; i < paramsTypes.length; i++) {
+			paramsTypes[i] = java.sql.Types.OTHER;
+		}
 		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
 		int index = 0;
+		FieldMeta fieldMeta;
 		while (iter.hasNext()) {
 			entry = iter.next();
+			fieldMeta = entityMeta.getFieldMeta(entry.getKey());
+			if (fieldMeta != null) {
+				columnName = fieldMeta.getColumnName();
+				paramsTypes[index] = fieldMeta.getType();
+			} else {
+				columnName = entry.getKey();
+			}
 			// entry.getKey() is field
 			columnName = entityMeta.getColumnName(entry.getKey());
 			if (columnName == null) {
@@ -1556,6 +1644,7 @@ public class SqlToyDaoSupport {
 			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
+
 			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
@@ -1564,7 +1653,10 @@ public class SqlToyDaoSupport {
 			index++;
 		}
 		sql.append(" where ").append(where);
-		return executeSql(sql.toString(), null, realValues, false, getDataSource(innerModel.dataSource));
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql.toString(), SqlType.update,
+				getDialect(innerModel.dataSource));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, realValues, paramsTypes, false,
+				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -1640,9 +1732,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
-			Integer maxWaitSeconds) {
+			ParallelConfig parallelConfig) {
 		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return parallQuery(parallQueryList, model.getNames(), model.getValues(), null);
+		return parallQuery(parallQueryList, model.getNames(), model.getValues(), parallelConfig);
 	}
 
 	/**
@@ -1650,23 +1742,30 @@ public class SqlToyDaoSupport {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param maxWaitSeconds
+	 * @param parallelConfig
 	 * @return
 	 */
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds) {
+			Object[] paramValues, ParallelConfig parallelConfig) {
 		if (parallQueryList == null || parallQueryList.isEmpty()) {
 			return null;
 		}
-		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
-		// 并行线程数量(默认最大十个)
-		int threadSize = parallQueryList.size();
-		if (threadSize > 10) {
-			threadSize = 10;
+		ParallelConfig parallConfig = parallelConfig;
+		if (parallConfig == null) {
+			parallConfig = new ParallelConfig();
 		}
+		// 并行线程数量(默认最大十个)
+		if (parallConfig.getMaxThreads() == null) {
+			parallConfig.maxThreads(10);
+		}
+		int thread = parallConfig.getMaxThreads();
+		if (parallQueryList.size() < thread) {
+			thread = parallQueryList.size();
+		}
+		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
 		ExecutorService pool = null;
 		try {
-			pool = Executors.newFixedThreadPool(threadSize);
+			pool = Executors.newFixedThreadPool(thread);
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallQueryResult> future;
@@ -1674,14 +1773,21 @@ public class SqlToyDaoSupport {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search, getDialect(query.getExtend().dataSource));
-				future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
-						paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				// 自定义条件参数
+				if (query.getExtend().selfCondition) {
+					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+							query.getExtend().names, query.getExtend().values,
+							getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				} else {
+					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
+							paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+				}
 				futureResult.add(future);
 			}
 			pool.shutdown();
 			// 设置最大等待时长(最大不能超过10个小时)
-			if (maxWaitSeconds != null && maxWaitSeconds > 0) {
-				pool.awaitTermination((maxWaitSeconds > 36000) ? 36000 : maxWaitSeconds, TimeUnit.SECONDS);
+			if (parallConfig.getMaxWaitSeconds() != null) {
+				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;

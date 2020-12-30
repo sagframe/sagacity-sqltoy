@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description db2 10.x版本支持limit offset分页机制
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DB2Dialect.java,Revision:v1.0,Date:2015年2月28日
+ * @version v1.0,Date:2015年2月28日
  */
 @SuppressWarnings({ "rawtypes" })
 public class DB2Dialect implements Dialect {

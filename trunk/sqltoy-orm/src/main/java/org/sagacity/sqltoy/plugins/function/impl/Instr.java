@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description 针对不同数据库字符串indexOf 函数的不同用法转换
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Instr.java,Revision:v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-3-21
  */
 public class Instr extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position)\\(");

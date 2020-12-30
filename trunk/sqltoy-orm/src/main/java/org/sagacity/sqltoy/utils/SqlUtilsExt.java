@@ -15,6 +15,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对org.sagacity.sqltoy.utils.SqlUtil类的扩展(来自org.sagacity.core.
  *              utils.SqlUtil),提供更有针对性的操作,提升性能
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlUtilsExt.java,Revision:v1.0,Date:2015年4月22日
+ * @version v1.0,Date:2015年4月22日
  */
 public class SqlUtilsExt {
 	/**
@@ -36,6 +37,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param fieldsType
@@ -48,7 +50,7 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas,
+	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final List<Object[]> rowDatas,
 			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
 			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
 			throws Exception {
@@ -90,7 +92,7 @@ public class SqlUtilsExt {
 						} else {
 							cellValue = rowData[j];
 						}
-						SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, j + 1);
+						SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, j + 1);
 					}
 					meter++;
 					// 批量
@@ -132,6 +134,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @TODO 针对sqlserver进行特殊化处理(主要针对Timestamp类型的兼容)
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param fieldsType
@@ -144,10 +147,10 @@ public class SqlUtilsExt {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateBySqlServer(final String updateSql, final List<Object[]> rowDatas,
-			final Integer[] fieldsType, final String[] fieldsDefaultValue, final Boolean[] fieldsNullable,
-			final int batchSize, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	public static Long batchUpdateBySqlServer(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final Integer[] fieldsType, final String[] fieldsDefaultValue,
+			final Boolean[] fieldsNullable, final int batchSize, final Boolean autoCommit, final Connection conn,
+			final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.warn("batchUpdateByJdbc批量插入或修改数据库操作数据为空!");
 			return 0L;
@@ -193,7 +196,7 @@ public class SqlUtilsExt {
 									cellValue = rowData[j];
 
 								}
-								SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, index + 1);
+								SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, index + 1);
 								index++;
 							}
 						}
@@ -204,7 +207,7 @@ public class SqlUtilsExt {
 							} else {
 								cellValue = rowData[j];
 							}
-							SqlUtil.setParamValue(conn, dbType, pst, cellValue, -1, j + 1);
+							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, -1, j + 1);
 						}
 					}
 					meter++;
@@ -247,6 +250,7 @@ public class SqlUtilsExt {
 
 	/**
 	 * @todo 自动进行类型转换,设置sql中的参数条件的值
+	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
 	 * @param pst
@@ -255,8 +259,8 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
-			final EntityMeta entityMeta) throws SQLException, IOException {
+	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {
 			Object cellValue;
 			int fieldType;
@@ -264,7 +268,7 @@ public class SqlUtilsExt {
 				fieldType = entityMeta.getFieldsTypeArray()[i];
 				cellValue = getDefaultValue(params[i], entityMeta.getFieldsDefaultValue()[i], fieldType,
 						entityMeta.getFieldsNullable()[i]);
-				SqlUtil.setParamValue(conn, dbType, pst, cellValue, fieldType, 1 + i);
+				SqlUtil.setParamValue(typeHandler, conn, dbType, pst, cellValue, fieldType, 1 + i);
 			}
 		}
 	}

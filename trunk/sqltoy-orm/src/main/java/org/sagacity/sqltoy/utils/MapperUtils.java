@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供针对sqltoy的DTO到POJO、POJO到DTO的映射工具
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:MapperUtils.java,Revision:v1.0,Date:2020-8-8
+ * @version v1.0,Date:2020-8-8
  * @modify data:2020-09-04 支持VO<->VO,DTO<->DTO,VO<->DTO 的互转
  */
 public class MapperUtils {
@@ -285,13 +285,11 @@ public class MapperUtils {
 	private static List reflectListToBean(List datas, Class voClass, Method[] realMethods) throws Exception {
 		List result = new ArrayList();
 		int indexSize = realMethods.length;
-		String[] methodTypesLow = new String[indexSize];
 		String[] methodTypes = new String[indexSize];
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
 				methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
-				methodTypesLow[i] = methodTypes[i].toLowerCase();
 			}
 		}
 		int size;
@@ -309,7 +307,7 @@ public class MapperUtils {
 						if (cellData.getClass().getName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
-							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypesLow[j]));
+							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypes[j]));
 						}
 					}
 				}

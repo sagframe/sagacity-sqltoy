@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,13 +13,14 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 
 /**
  * @project sqltoy-orm
  * @description 针对EntityQuery构造一个存放参数的内部类，避免EntityQuery使用时带出大量的get方法
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:EntityQueryExtend.java,Revision:v1.0,Date:2020-8-1
+ * @version v1.0,Date:2020-8-1
  */
 public class EntityQueryExtend implements Serializable {
 
@@ -84,19 +84,25 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public LinkedHashMap<String, SecureMask> secureMask = new LinkedHashMap<String, SecureMask>();
 
+	// 分库策略配置
+	public ShardingStrategyConfig dbSharding;
+
+	// 分表策略配置
+	public ShardingStrategyConfig tableSharding;
+
 	/**
 	 * 分页优化模型
 	 */
 	public PageOptimize pageOptimize;
 
 	/**
-	 * 实体类
+	 * -1:普通查询; 0:top;1:取随机记录
 	 */
-	public Class entityClass;
+	public int pickType = -1;
 
 	/**
-	 * 查询结果类型
+	 * 取记录数量
 	 */
-	public Type resultType;
+	public double pickSize;
 
 }

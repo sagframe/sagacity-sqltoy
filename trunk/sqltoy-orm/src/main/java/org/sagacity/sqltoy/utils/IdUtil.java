@@ -14,7 +14,7 @@ import java.util.UUID;
  * @project sagacity-sqltoy
  * @description 封装各种生成唯一性ID算法的工具类
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:IdUtil.java,Revision:v1.0,Date:2012-4-7
+ * @version v1.0,Date:2012-4-7
  */
 public class IdUtil {
 	// 纳秒id的ip截取位数

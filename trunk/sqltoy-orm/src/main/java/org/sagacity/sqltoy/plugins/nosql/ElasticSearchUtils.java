@@ -32,7 +32,7 @@ import com.alibaba.fastjson.JSONObject;
  * @project sagacity-sqltoy4.1
  * @description 提供es执行过程处理的工具方法
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ElasticSearchUtils.java,Revision:v1.0,Date:2018年1月8日
+ * @version v1.0,Date:2018年1月8日
  */
 public class ElasticSearchUtils {
 	/**
@@ -91,11 +91,11 @@ public class ElasticSearchUtils {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
+		boolean changedCols = ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
 
 		// 将结果数据映射到具体对象类型中
-		resultSet.setRows(ResultUtils.wrapQueryResult(resultSet.getRows(),
-				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass));
+		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols));
 		return resultSet;
 	}
 

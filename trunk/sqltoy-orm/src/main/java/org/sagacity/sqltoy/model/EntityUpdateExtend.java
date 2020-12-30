@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 
 import javax.sql.DataSource;
 
@@ -40,6 +39,6 @@ public class EntityUpdateExtend implements Serializable {
 	/**
 	 * update 的字段名称和对应的值
 	 */
-	public LinkedHashMap<String, Object> updateValues = new LinkedHashMap<String, Object>();
+	public IgnoreCaseLinkedMap<String, Object> updateValues = new IgnoreCaseLinkedMap<String, Object>();
 
 }

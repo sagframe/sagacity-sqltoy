@@ -42,7 +42,7 @@ public class OneToManyModel implements Serializable {
 	 * 是否自动加载
 	 */
 	private boolean load;
-	
+
 	/**
 	 * 是否级联删除
 	 */
@@ -76,8 +76,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param property
-	 *            the property to set
+	 * @param property the property to set
 	 */
 	public void setProperty(String property) {
 		this.property = property;
@@ -91,8 +90,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param mappedTable
-	 *            the mappedTable to set
+	 * @param mappedTable the mappedTable to set
 	 */
 	public void setMappedTable(String mappedTable) {
 		this.mappedTable = mappedTable;
@@ -106,8 +104,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param mappedColumn
-	 *            the mappedColumn to set
+	 * @param mappedColumn the mappedColumn to set
 	 */
 	public void setMappedColumns(String[] mappedColumns) {
 		this.mappedColumns = mappedColumns;
@@ -121,8 +118,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param mappedType
-	 *            the mappedType to set
+	 * @param mappedType the mappedType to set
 	 */
 	public void setMappedType(Class mappedType) {
 		this.mappedType = mappedType;
@@ -136,8 +132,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param load
-	 *            the load to set
+	 * @param load the load to set
 	 */
 	public void setLoad(boolean load) {
 		this.load = load;
@@ -151,8 +146,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param loadSubTableSql
-	 *            the loadSubTableSql to set
+	 * @param loadSubTableSql the loadSubTableSql to set
 	 */
 	public void setLoadSubTableSql(String loadSubTableSql) {
 		this.loadSubTableSql = loadSubTableSql;
@@ -166,13 +160,11 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param deleteSubTableSql
-	 *            the deleteSubTableSql to set
+	 * @param deleteSubTableSql the deleteSubTableSql to set
 	 */
 	public void setDeleteSubTableSql(String deleteSubTableSql) {
 		this.deleteSubTableSql = deleteSubTableSql;
 	}
-
 
 	/**
 	 * @return the cascadeUpdateSql
@@ -182,8 +174,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param cascadeUpdateSql
-	 *            the cascadeUpdateSql to set
+	 * @param cascadeUpdateSql the cascadeUpdateSql to set
 	 */
 	public void setCascadeUpdateSql(String cascadeUpdateSql) {
 		this.cascadeUpdateSql = cascadeUpdateSql;
@@ -197,8 +188,7 @@ public class OneToManyModel implements Serializable {
 	}
 
 	/**
-	 * @param mappedFields
-	 *            the mappedFields to set
+	 * @param mappedFields the mappedFields to set
 	 */
 	public void setMappedFields(String[] mappedFields) {
 		this.mappedFields = mappedFields;

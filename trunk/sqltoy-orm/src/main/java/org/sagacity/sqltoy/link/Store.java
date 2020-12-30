@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.model.StoreResult;
  * @project sagacity-sqltoy
  * @description 存储过程操作
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Store.java,Revision:v1.0,Date:2017年10月9日
+ * @version v1.0,Date:2017年10月9日
  */
 public class Store extends BaseLink {
 

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description sql查询参数过滤
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ParamFilterUtils.java,Revision:v1.0,Date:2013-3-23
+ * @version v1.0,Date:2013-3-23
  * @modify Date:2020-7-15 {增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边}
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -755,8 +755,34 @@ public class ParamFilterUtils {
 			}
 		}
 		// 存在日期加减
-		if (paramFilterModel.getIncrementDays() != 0) {
-			result = DateUtil.addDay(result, paramFilterModel.getIncrementDays());
+		if (paramFilterModel.getIncrementTime() != 0) {
+			switch (paramFilterModel.getTimeUnit()) {
+			//天优先
+			case DAYS: {
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			case SECONDS: {
+				result = DateUtil.addSecond(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			case MILLISECONDS: {
+				result = DateUtil.addMilliSecond(result, paramFilterModel.getIncrementTime().longValue());
+				break;
+			}
+			case MINUTES: {
+				result = DateUtil.addSecond(result, 60 * paramFilterModel.getIncrementTime());
+				break;
+			}
+			case HOURS: {
+				result = DateUtil.addSecond(result, 3600 * paramFilterModel.getIncrementTime());
+				break;
+			}
+			default: {
+				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
+				break;
+			}
+			}
 		}
 		if (realFmt != null) {
 			result = DateUtil.parse(result, realFmt);
@@ -1108,7 +1134,8 @@ public class ParamFilterUtils {
 			paramFilter.setFormat(filter.getDateType());
 			paramFilter.setValues(filter.getValue());
 			// 加减天数
-			paramFilter.setIncrementDays(Double.valueOf(filter.getIncrease()));
+			paramFilter.setIncrementTime(Double.valueOf(filter.getIncrease()));
+			paramFilter.setTimeUnit(filter.getTimeUnit());
 			result.add(paramFilter);
 		}
 		return result;

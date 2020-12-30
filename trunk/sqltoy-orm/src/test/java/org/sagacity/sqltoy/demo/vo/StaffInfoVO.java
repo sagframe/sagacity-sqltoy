@@ -62,6 +62,8 @@ public class StaffInfoVO implements Serializable {
 	private LocalDateTime updateTime;
 
 	private Integer status;
+	
+	private DataRange dataRange;
 
 	public StaffInfoVO() {
 	}
@@ -365,4 +367,13 @@ public class StaffInfoVO implements Serializable {
 		this.status = status;
 	}
 
+	public DataRange getDataRange() {
+		return dataRange;
+	}
+
+	public void setDataRange(DataRange dataRange) {
+		this.dataRange = dataRange;
+	}
+
+	
 }

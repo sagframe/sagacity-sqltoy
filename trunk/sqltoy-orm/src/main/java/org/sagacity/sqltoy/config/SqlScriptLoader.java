@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 解析sql配置文件，并放入缓存
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlScriptLoader.java,Revision:v1.0,Date:2009-12-13
+ * @version v1.0,Date:2009-12-13
  * @modify Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
  * @modify Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql
  * @modify Date:2019-09-15 增加代码中编写的sql缓存机制,避免每次动态解析从而提升性能
@@ -95,6 +96,17 @@ public class SqlScriptLoader {
 	 * @param scriptCheckIntervalSeconds
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds) {
+		// 增加路径验证提示,最易配错导致无法加载sql文件
+		if (StringUtil.isNotBlank(sqlResourcesDir)
+				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
+			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir
+					+ " 不正确!\n"
+					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*通配符(注意是路径!)----*/\n"
+					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
+					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
+					+ "/*- 3、绝对路径模式:spring.sqltoy.sqlResourcesDir=/home/web/project/sql\n"
+					+ "/*------------------------------------------------------------------------------*/");
+		}
 		if (initialized) {
 			return;
 		}
@@ -217,6 +229,14 @@ public class SqlScriptLoader {
 			}
 			if (result == null) {
 				result = sqlCache.get(sqlKey);
+				if (result == null) {
+					throw new DataAccessException("\n发生错误:sqlId=[" + sqlKey + "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n"
+							+ "/*----------------------错误可能的原因如下---------------------*/\n"
+							+ "/* 1、检查: spring.sqltoy.sqlResourcesDir配置,如配错会导致sql文件没有被加载;\n"
+							+ "/* 2、sql.xml文件没有被编译到classes目录下面;请检查maven的编译配置                        \n"
+							+ "/* 3、sqlId对应的文件内部错误!版本合并或书写错误会导致单个文件解析错误                          \n"
+							+ "/* ------------------------------------------------------------*/");
+				}
 			}
 		} else {
 			result = codeSqlCache.get(sqlKey);

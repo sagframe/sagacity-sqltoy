@@ -6,11 +6,13 @@ package org.sagacity.sqltoy.service;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
@@ -19,7 +21,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @description 通过SqlToy提供通用的增删改查操作Service接口,从而减少针对一些非常
  *              简单的操作自行编写service实现，减少了代码开发量
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlToyCRUDService.java,Revision:v1.0,Date:2012-7-16
+ * @version v1.0,Date:2012-7-16
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */
 @SuppressWarnings("rawtypes")
@@ -340,9 +342,20 @@ public interface SqlToyCRUDService {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param maxWaitSeconds
+	 * @param parallelConfig
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds);
+			Object[] paramValues, ParallelConfig parallelConfig);
+
+	/**
+	 * @TODO 基于map传参的并行查询
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @param parallelConfig
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig);
 }

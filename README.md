@@ -1,13 +1,8 @@
-# 致谢
-* sqltoy是中国中化集团化销电子商务公司发起的开源项目
-* sqltoy的开源是中化公司践行科学发展观、响应央企要带头做创新主体的时代呼声的产物！
-* 感谢中化集团领导和同事对sqltoy开源的大力支持，共同为中国的开源事业添砖加瓦！
-
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.16使用手册.doc
+## 请见:docs/睿智平台SqlToy4.17使用手册.doc
 
 # 范例演示项目
 ## 快速上手主要功能项目
@@ -28,11 +23,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.16.10 发版日期: 2020-11-10
-* 支持kingbase数据库
-* 优化postgresql 依据pk constraint 进行插入约束改为on conflict (pkFields) do nothing 模式
-* 其他的一些代码和注释优化
-
+# 最新版本号: 4.17.6 发版日期: 2020-12-15
+* 支持greenplum olap数据库
+* 并行查询支持自行定义并行数量和最大等待时长
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -40,8 +33,8 @@
    支持以下数据库:
    * oracle 从oracle11g到19c
    * db2 9.5+,建议从10.5 开始
-   * mysql 支持5.6、5.7、8.0 版本
-   * postgresql 支持9.5 以及以上版本
+   * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
+   * postgresql(greenplum) 支持9.5 以及以上版本
    * sqlserver 支持2008到2019版本，建议使用2012或以上版本
    * sqlite
    * DM达梦数据库
@@ -57,7 +50,7 @@
 ## 1.2 sqltoy-orm 发展轨迹
 * 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
-* 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了hibernate 基于对象的crud功能，形成了完整的sqltoy-orm框架。
+* 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了hibernate 基于对象的crud功能(并优化了其不足)，形成了完整的sqltoy-orm框架。
 * 2014~2017年, 因需要面对拉卡拉十亿级别的数据规模，对sqltoy进行了大幅重构，实现了底层结构的合理化，并在拉卡拉CRM和日均千万级累计达几十亿级别的数据平台上得到了强化和检验。
 * 2018~至今,  在ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
@@ -90,7 +83,7 @@
 </sql>
 ```
 
-* mybatis同样的功能的写法(请思考:看起来清晰吗?需求变更调整方便吗?如何快速在dbeaver客户端和放入xml文件转换?)!
+* mybatis同样的功能的写法(很显然基于事实的对比，mybatis的写法不清晰也不便于维护)!
 
 ```
 <select id="show_case" resultMap="BaseResultMap">
@@ -542,34 +535,10 @@ spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 			]]>
 			</sql>
 		</sql-translate>
-
-		<!-- 员工ID和姓名的缓存 -->
-		<sql-translate cache="staffIdName"
-			datasource="dataSource">
-			<sql>
-			<![CDATA[
-				select STAFF_ID,STAFF_NAME,STATUS
-				from SQLTOY_STAFF_INFO
-			]]>
-			</sql>
-		</sql-translate>
 	</cache-translates>
 
 	<!-- 缓存刷新检测,可以提供多个基于sql、service、rest服务检测 -->
 	<cache-update-checkers>
-		<!-- 基于sql的缓存更新检测 -->
-
-		<!-- 增量更新，检测到变化直接更新缓存 -->
-		<sql-increment-checker cache="staffIdName"
-			check-frequency="30" datasource="dataSource">
-			<sql><![CDATA[
-			--#not_debug#--
-			select STAFF_ID,STAFF_NAME,STATUS
-			from SQLTOY_STAFF_INFO
-	        where UPDATE_TIME >=:lastUpdateTime
-			]]></sql>
-		</sql-increment-checker>
-
 		<!-- 增量更新，带有内部分类的查询结果第一列是分类 -->
 		<sql-increment-checker cache="dictKeyName"
 			check-frequency="15" has-inside-group="true" datasource="dataSource">
@@ -615,105 +584,9 @@ public class CrudCaseServiceTest {
  }
 ```
 
-# 4. sqltoy sql关键说明
-## 4.1 sqltoy sql最简单规则#[] 对称符号
-* #[] 等于if(中间语句参数是否有null)? true: 剔除#[] 整块代码，false：拿掉#[ 和 ] ,将中间的sql作为执行的一部分。
-* #[] 支持嵌套，如#[t.status=:status  #[and t.createDate>=:createDate]] 会先从内而外执行if(null)逻辑
-* 利用filters条件值预处理实现判断null的统一,下面是sqltoy完整提供的条件过滤器和其他函数
-  不要被大段的说明吓一跳，99%都用不上，正常filters里面只会用到eq 和 to-date 
+# 4. sqltoy关键代码说明
 
-```xml
-<sql id="show_case">
-	<!-- 通过filters里面的逻辑将查询条件转为null，部分逻辑则对参数进行二次转换
-	     默认条件参数为空白、空集合、空数组都转为null
-             parmas 表示可以用逗号写多个参数，param 表示只支持单个参数
-	-->	
-	<filters>
-		<!-- 等于，如机构类别前端传负一就转为null不参与条件过滤 -->
-		<eq params="organType" value="-1" />
-		<!-- 条件值在某个区间则转为null -->
-		<between params="" start-value="0" end-value="9999" />
-
-		<!-- 将参数条件值转换为日期格式,format可以是yyyy-MM-dd这种自定义格式也可以是:
-		 first_day:月的第一天;last_day:月的最后一天,first_year_day:年的第一天,last_year_day年的最后一天 -->
-		<to-date params="" format="yyyyMMdd" increment-days="1" />
-		<!-- 将参数转为数字 --> 
-		<to-number params="" data-type="decimal" />
-		<!-- 将前端传过来的字符串切割成数组 -->
-		<split data-type="string" params="staffAuthOrgs" split-sign=","/>
-		<!-- 小于等于 -->
-		<lte params="" value=""  />
-		<!-- 小于 -->
-		<lt  params=""  value="" />
-		<!-- 大于等于 -->
-		<gte params="" value=""  />
-		<!-- 大于 -->
-		<gt params="" value=""  />
-		<!-- 字符替换,默认根据正则表达进行全部替换，is-first为true时只替换首个 -->
-		<replace params="" regex="" value="" is-first="false" />
-		<!-- 首要参数，即当某个参数不为null时，excludes是指被排除之外的参数全部为null -->
-		<primary param="orderId" excludes="organIds" />
-		<!-- 排他性参数,当某个参数是xxx值时,将其他参数设置为特定值  -->
-		<exclusive param="" compare-type="eq" compare-values=""
-			set-params="" set-value="" />
-		<!-- 通过缓存进行文字模糊匹配获取精确的代码值参与精确查询 -->	
-		<cache-arg cache-name="" cache-type="" param="" cache-mapping-indexes="" alias-name=""/>
-		<!-- 将数组转化成in 的参数条件并增加单引号 -->
-		<to-in-arg params=""/>
-	</filters>
-		
-	<!-- 缓存翻译,可以多个，uncached-template 是针对未能匹配时显示的补充,${value} 表示显示key值,可以key=[${value}未定义 这种写法 -->
-	<translate cache="dictKeyName" cache-type="POST_TYPE" columns="POST_TYPE"
-		cache-indexs="1" uncached-template=""/>
-
-	<!-- 安全掩码:tel\姓名\地址\卡号 -->
-	<!--最简单用法: <secure-mask columns="" type="tel"/> -->
-	<secure-mask columns="" type="name" head-size="3" tail-size="4"
-		mask-code="*****" mask-rate="50" />
-	<!-- 分库策略 -->
-	<sharding-datasource strategy="" />
-	<!-- 分表策略 -->
-	<sharding-table tables="" strategy="" params="" />
-	<!-- 分页优化,缓存相同查询条件的分页总记录数量, alive-max:表示相同的一个sql保留100个不同条件查询 alive-seconds:相同的查询条件分页总记录数保留时长(单位秒) -->
-	<page-optimize alive-max="100" alive-seconds="600" />
-	<!-- 日期格式化 -->
-	<date-format columns="" format="yyyy-MM-dd HH:mm:ss"/>
-	<!-- 数字格式 -->
-        <number-format columns="" format=""/>
-	<value>
-	<![CDATA[
-	select t1.*,t2.ORGAN_NAME from 
-	@fast(select * from sys_staff_info t
-		  where #[t.sexType=:sexType]
-			#[and t.JOIN_DATE>:beginDate]
-			#[and t.STAFF_NAME like :staffName]
-			-- 是否虚拟员工@if()做逻辑判断
-			#[@if(:isVirtual==true||:isVirtual==0) and t.IS_VIRTUAL=1]
-			) t1,sys_organ_info t2
-        where t1.ORGAN_ID=t2.ORGAN_ID
-	]]>	
-	</value>
-
-	<!-- 为极致分页提供自定义写sql -->
-	<count-sql><![CDATA[]]></count-sql>
-	<!-- 汇总和求平均，通过算法实现复杂的sql，同时可以变成数据库无关 -->
-	<summary columns="" radix-size="2" reverse="false" sum-site="left">
-		<global sum-label="" label-column="" />
-		<group sum-label="" label-column="" group-column="" />
-	</summary>
-	<!-- 拼接某列,mysql中等同于group_concat\oracle 中的WMSYS.WM_CONCAT功能 -->
-	<link sign="," column="" />
-	<!-- 行转列 (跟unpivot互斥)，算法实现数据库无关 -->
-	<pivot category-columns="" group-columns="" start-column="" end-column=""
-		default-value="0" />
-	<!-- 列转行 -->
-	<unpivot columns="" values-as-column="" />
-</sql>
-```
-
-# 5. sqltoy关键代码说明
-
-## 5.1 sqltoy-orm 主要分以下几个部分：
+## 4.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
   - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
   - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
@@ -725,7 +598,7 @@ public class CrudCaseServiceTest {
   - ShardingStragety:分库分表策略管理器，4.x版本之后策略管理器并不需要显式定义，只有通过spring定义，sqltoy会在使用时动态管理。
   
 
-## 5.2 快速阅读理解sqltoy:
+## 4.2 快速阅读理解sqltoy:
 
   - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。

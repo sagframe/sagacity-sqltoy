@@ -1,8 +1,11 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.sql.DataSource;
+
+import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -48,6 +51,32 @@ public class ParallQuery implements Serializable {
 	 */
 	public ParallQuery pageModel(PaginationModel pageModel) {
 		extend.pageModel = pageModel;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置独立的条件参数
+	 * @param names
+	 * @return
+	 */
+	public ParallQuery names(String... names) {
+		extend.names = names;
+		extend.selfCondition = true;
+		return this;
+	}
+
+	public ParallQuery values(Object... values) {
+		extend.values = values;
+		extend.selfCondition = true;
+		return this;
+	}
+
+	//map传参
+	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		extend.names = model.getNames();
+		extend.values = model.getValues();
+		extend.selfCondition = true;
 		return this;
 	}
 

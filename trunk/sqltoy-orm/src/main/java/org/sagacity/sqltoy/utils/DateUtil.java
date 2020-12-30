@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.0
  * @description 日期处理支持类，提供日常工作中的所有日期的操作处理
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:DateUtil.java,Revision:v1.0,Date:2008-12-14
+ * @version v1.0,Date:2008-12-14
  * @modify data:2012-8-27 {对日期的格式化增加了locale功能}
  * @modify data:2015-8-8
  *         {针对parseString功能进行了优化,可以对英文的日期和中文日期进行解析转化为日期格式,同时优化了格式判断的逻辑
@@ -361,6 +361,9 @@ public class DateUtil {
 	public static String formatDate(Object dt, String fmt, String locale) {
 		if (dt == null) {
 			return null;
+		}
+		if (fmt == null) {
+			throw new IllegalArgumentException("格式化日期指定的format 为null,请正确输入参数!");
 		}
 		String fmtUpper = fmt.toUpperCase();
 		if (fmtUpper.equals("YY")) {

@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @project sagacity-sqltoy4.0
  * @description 提供一个基础的数据集对象模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DataSetResult.java,Revision:v1.0,Date:2016年3月8日
+ * @version v1.0,Date:2016年3月8日
  */
 @SuppressWarnings("rawtypes")
 public class DataSetResult<T> implements Serializable {
@@ -38,6 +38,11 @@ public class DataSetResult<T> implements Serializable {
 	 * 总记录数量
 	 */
 	private Long recordCount = 0L;
+	
+	/**
+	 * 执行总时长,毫秒
+	 */
+	private Long executeTime = -1L;
 
 	/**
 	 * @return the labelNames
@@ -115,4 +120,17 @@ public class DataSetResult<T> implements Serializable {
 		this.recordCount = recordCount;
 	}
 
+	/**
+	 * @return the executeTime
+	 */
+	public Long getExecuteTime() {
+		return executeTime;
+	}
+
+	/**
+	 * @param executeTime the executeTime to set
+	 */
+	public void setExecuteTime(Long executeTime) {
+		this.executeTime = executeTime;
+	}
 }

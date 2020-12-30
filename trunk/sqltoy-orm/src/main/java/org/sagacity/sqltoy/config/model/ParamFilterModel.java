@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @project sqltoy-orm
@@ -135,9 +136,14 @@ public class ParamFilterModel implements Serializable {
 	private Set<String> excludes = new HashSet<String>();
 
 	/**
-	 * 增加的天数
+	 * 增加的时间
 	 */
-	private Double incrementDays = 0d;
+	private Double incrementTime = 0d;
+
+	/**
+	 * 增减时间的单位
+	 */
+	private TimeUnit timeUnit = TimeUnit.DAYS;
 
 	/**
 	 * 最大匹配数量为500
@@ -218,17 +224,31 @@ public class ParamFilterModel implements Serializable {
 	}
 
 	/**
-	 * @return the incrementDays
+	 * @return the incrementTime
 	 */
-	public Double getIncrementDays() {
-		return incrementDays;
+	public Double getIncrementTime() {
+		return incrementTime;
 	}
 
 	/**
-	 * @param incrementDays the incrementDays to set
+	 * @param incrementTime the incrementTime to set
 	 */
-	public void setIncrementDays(Double incrementDays) {
-		this.incrementDays = incrementDays;
+	public void setIncrementTime(Double incrementTime) {
+		this.incrementTime = incrementTime;
+	}
+
+	/**
+	 * @return the timeUnit
+	 */
+	public TimeUnit getTimeUnit() {
+		return this.timeUnit;
+	}
+
+	/**
+	 * @param incrementUnit the incrementUnit to set
+	 */
+	public void setTimeUnit(TimeUnit timeUnit) {
+		this.timeUnit = timeUnit;
 	}
 
 	/**

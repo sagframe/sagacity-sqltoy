@@ -3,7 +3,6 @@ package org.sagacity.sqltoy.configure;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
@@ -11,11 +10,14 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
+import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -31,16 +33,25 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(SqlToyContextProperties.class)
 public class SqltoyAutoConfiguration {
-	@Resource
+	@Autowired
 	private ApplicationContext applicationContext;
 
 	@Autowired
-	SqlToyContextProperties properties;
+	private SqlToyContextProperties properties;
+
+	// 增加一个辅助校验,避免不少新用户将spring.sqltoy开头写成sqltoy.开头
+	@Value("${sqltoy.sqlResourcesDir:}")
+	private String sqlResourcesDir;
 
 	// 构建sqltoy上下文,并指定初始化方法和销毁方法
 	@Bean(name = "sqlToyContext", initMethod = "initialize", destroyMethod = "destroy")
 	@ConditionalOnMissingBean
 	SqlToyContext sqlToyContext() throws Exception {
+		// 用辅助配置来校验是否配置错误
+		if (StringUtil.isBlank(properties.getSqlResourcesDir()) && StringUtil.isNotBlank(sqlResourcesDir)) {
+			throw new IllegalArgumentException(
+					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
+		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
@@ -174,6 +185,32 @@ public class SqltoyAutoConfiguration {
 			else if (obtainDataSource.contains(".")) {
 				sqlToyContext.setObtainDataSource(
 						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义缓存实现管理器
+		String translateCacheManager = properties.getTranslateCacheManager();
+		if (StringUtil.isNotBlank(translateCacheManager)) {
+			// 缓存管理器的bean名称
+			if (applicationContext.containsBean(translateCacheManager)) {
+				sqlToyContext.setTranslateCacheManager(
+						(TranslateCacheManager) applicationContext.getBean(translateCacheManager));
+			} // 包名和类名称
+			else if (translateCacheManager.contains(".")) {
+				sqlToyContext.setTranslateCacheManager((TranslateCacheManager) Class.forName(translateCacheManager)
+						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义typeHandler
+		String typeHandler = properties.getTypeHandler();
+		if (StringUtil.isNotBlank(typeHandler)) {
+			if (applicationContext.containsBean(typeHandler)) {
+				sqlToyContext.setTypeHandler((TypeHandler) applicationContext.getBean(typeHandler));
+			} // 包名和类名称
+			else if (typeHandler.contains(".")) {
+				sqlToyContext.setTypeHandler(
+						(TypeHandler) Class.forName(typeHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

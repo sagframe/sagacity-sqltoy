@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
  * @project sagacity-sqltoy4.0
  * @description 提供分页优化缓存实现，记录相同查询条件的总记录数,采用FIFO算法保留符合活跃时间和记录规模
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:PageOptimizeUtils.java,Revision:v1.0,Date:2016年11月24日
+ * @version v1.0,Date:2016年11月24日
  * @modify 2020-8-4 修改原本只支持xml中必须有id的sql才能缓存的策略,便于今后直接从代码中实现分页优化功能
  * @modify 2020-8-13 修改失效策略，在登记时只控制aliveMax，在获取时判定aliveSeconds清除过期的
  */

@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * @description Sybase IQ数据库blob 长度过长的需要设置(set option
  *              public.ENABLE_LOB_VARIABLES='ON') url上需要指定参数：&textsize=204801024
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-8-29
+ * @version v1.0,Date:2013-8-29
  * @modify Date:2013-8-29 {填写修改说明}
  */
 @SuppressWarnings({ "rawtypes" })
@@ -124,7 +124,8 @@ public class SybaseIQDialect implements Dialect {
 					extend.getParamsName(sqlToyConfig), extend.getParamsValue(sqlToyContext, sqlToyConfig));
 
 			// 执行sql将记录插入临时表
-			SqlUtil.executeSql(queryParam.getSql(), queryParam.getParamsValue(), null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(), null,
+					conn, dbType, true);
 			hasCreateTmp = true;
 			StringBuilder sql = new StringBuilder();
 			sql.append("select ");
@@ -168,7 +169,8 @@ public class SybaseIQDialect implements Dialect {
 		} finally {
 			// 删除临时表
 			if (hasCreateTmp) {
-				SqlUtil.executeSql("drop table ".concat(tmpTable), null, null, conn, dbType, true);
+				SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "drop table ".concat(tmpTable), null, null, conn,
+						dbType, true);
 			}
 		}
 		return queryResult;
@@ -318,7 +320,7 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null,
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null,
 					conn, dbType, true);
 		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
@@ -330,7 +332,7 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -353,7 +355,7 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'",
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'",
 					null, null, conn, dbType, true);
 		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -365,7 +367,7 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql("SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -492,7 +494,7 @@ public class SybaseIQDialect implements Dialect {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(),sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

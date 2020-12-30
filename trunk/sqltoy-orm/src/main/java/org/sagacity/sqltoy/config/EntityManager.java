@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 通过注解解析实体对象,得到其跟数据库表的对应关系,并形成相应表增删改查的语句
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:EntityManager.java,Revision:v1.0,Date:2012-6-1
+ * @version v1.0,Date:2012-6-1
  * @modify {Date:2017-10-13,分解之前的parseEntityMeta大方法,进行代码优化}
  * @modify {Date:2018-1-22,增加业务主键配置策略}
  * @modify {Date:2018-9-6,优化增强业务主键配置策略}
@@ -69,20 +70,20 @@ public class EntityManager {
 		 */
 		private static final long serialVersionUID = 3964534243191167226L;
 		{
-			//13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
+			// 13位当前毫秒+6位纳秒+3位主机ID 构成的22位不重复的ID
 			put("default", "DefaultIdGenerator");
-			//32位uuid
+			// 32位uuid
 			put("uuid", "UUIDGenerator");
 			put("redis", "RedisIdGenerator");
-			//26位
+			// 26位
 			put("nanotime", "NanoTimeIdGenerator");
-			//16位雪花算法
+			// 16位雪花算法
 			put("snowflake", "SnowflakeIdGenerator");
-			//default的命名容错
+			// default的命名容错
 			put("defaultidgenerator", "DefaultIdGenerator");
 			put("defaultgenerator", "DefaultIdGenerator");
 			put("nanotimeidgenerator", "NanoTimeIdGenerator");
-			//雪花算法命名容错
+			// 雪花算法命名容错
 			put("snowflakeidgenerator", "SnowflakeIdGenerator");
 			put("uuidgenerator", "UUIDGenerator");
 			put("redisidgenerator", "RedisIdGenerator");
@@ -241,18 +242,16 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
+				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
+						.concat(entity.tableName()));
 
 				// 解析自定义注解
 				parseCustomAnnotation(entityMeta, entityClass);
-				// 解析sharding策略
-				parseSharding(entityMeta, entityClass);
 
 				// 主键约束(for postgresql)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-						.concat(entity.tableName()));
 
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
@@ -326,6 +325,9 @@ public class EntityManager {
 
 				// 设置字段类型和默认值
 				parseFieldTypeAndDefault(entityMeta);
+
+				// 解析sharding策略
+				parseSharding(entityMeta, entityClass);
 			}
 		} catch (Exception e) {
 			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
@@ -387,7 +389,7 @@ public class EntityManager {
 		String strategy = shardingDB.name();
 		// 分库策略
 		if (StringUtil.isNotBlank(strategy)) {
-			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			ShardingStrategyConfig config = new ShardingStrategyConfig(0);
 			config.setFields(shardingDB.fields());
 			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
 			String[] aliasNames = new String[shardingDB.fields().length];
@@ -395,17 +397,16 @@ public class EntityManager {
 			if (shardingDB.aliasNames() != null) {
 				System.arraycopy(shardingDB.aliasNames(), 0, aliasNames, 0, shardingDB.aliasNames().length);
 			}
-
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
-			config.setName(strategy);
+			config.setStrategy(strategy);
 			shardingConfig.setShardingDBStrategy(config);
 		}
 		// 分表策略
 		Strategy shardingTable = sharding.table();
 		strategy = shardingTable.name();
 		if (StringUtil.isNotBlank(strategy)) {
-			ShardingStrategyConfig config = new ShardingStrategyConfig();
+			ShardingStrategyConfig config = new ShardingStrategyConfig(1);
 			config.setFields(shardingTable.fields());
 			// 别名,如果没有设置则将fields作为默认别名,别名的目的在于共用sharding策略中的参数名称
 			String[] aliasNames = new String[shardingTable.fields().length];
@@ -413,10 +414,10 @@ public class EntityManager {
 			if (shardingTable.aliasNames() != null) {
 				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-
+			config.setTables(new String[] { entityMeta.getSchemaTable() });
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
-			config.setName(strategy);
+			config.setStrategy(strategy);
 			shardingConfig.setShardingTableStrategy(config);
 		}
 		// 必须有一个策略是存在的
@@ -504,6 +505,7 @@ public class EntityManager {
 		fieldMeta.setAutoIncrement(column.autoIncrement());
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase());
+		// 内部包含了构造表字段名称跟vo属性名称的对照
 		entityMeta.addFieldMeta(fieldMeta);
 		// 判断字段是否为主键
 		Id id = field.getAnnotation(Id.class);
@@ -629,12 +631,10 @@ public class EntityManager {
 		// 主表字段名称
 		String masterField;
 		for (int i = 0; i < idSize; i++) {
-			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
 			masterField = oneToMany.fields()[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (masterField.equalsIgnoreCase(idFieldName)) {
-					// mappedFields[j] = var;
 					mappedFields[j] = oneToMany.mappedFields()[i];
 					mappedColumns[j] = oneToMany.mappedColumns()[i];
 					break;
@@ -675,23 +675,32 @@ public class EntityManager {
 		// 自动加载
 		if (StringUtil.isNotBlank(oneToMany.load())) {
 			String loadLow = oneToMany.load().toLowerCase();
-			// 是否是:xxx形式的参数条件
+			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
 			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
-			if (isNamedSql && !StringUtil.matches(oneToMany.load(), "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
-				// 自定义加载sql
+			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
+				// 自定义加载完整sql
 				if (!loadLow.equals("default") && !loadLow.equals("true")) {
 					oneToManyModel.setLoadSubTableSql(oneToMany.load());
 				}
 			} else {
+				String loadSql = SqlUtil.convertFieldsToColumns(subTableMeta, oneToMany.load());
 				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
-					oneToManyModel.setLoadSubTableSql(oneToMany.load());
+					oneToManyModel.setLoadSubTableSql(loadSql);
 				} else {
-					oneToManyModel.setLoadSubTableSql(
-							"select ".concat(subTableMeta.getAllColumnNames()).concat(" from ").concat(subSchemaTable)
-									.concat(subWhereSql).concat(" and ").concat(oneToMany.load()));
+					oneToManyModel
+							.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
+									.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(loadSql));
 				}
 			}
+		}
+
+		// update 2020-11-20 增加子表级联order by
+		String orderBy = oneToMany.orderBy();
+		if (StringUtil.isNotBlank(orderBy)) {
+			// 对属性名称进行替换，替换为实际表字段名称
+			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
+			oneToManyModel.setLoadSubTableSql(oneToManyModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
 
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定

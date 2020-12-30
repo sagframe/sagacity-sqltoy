@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description 将其它类型数据转换成字符串
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ToChar.java,Revision:v1.0,Date:2013-1-2
+ * @version v1.0,Date:2013-1-2
  */
 public class ToChar extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_char\\(");

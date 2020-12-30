@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -42,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 提供基于sqlserver这种广泛应用的数据库通用的逻辑处理,避免大量重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlServerDialectUtils.java,Revision:v1.0,Date:2014年12月26日
+ * @version v1.0,Date:2014年12月26日
  * @modify Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })
@@ -603,7 +604,8 @@ public class SqlServerDialectUtils {
 					for (int i = 0, n = paramValues.length; i < n; i++) {
 						// sqlserver timestamp类型的字段无需赋值
 						if (!paramsType[i].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, dbType, pst, paramValues[i], paramsType[i], index + 1);
+							SqlUtil.setParamValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues[i],
+									paramsType[i], index + 1);
 							index++;
 						}
 					}
@@ -763,8 +765,8 @@ public class SqlServerDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("mssql批量保存", insertSql, null);
-		return batchUpdateByJdbc(insertSql, paramValues, sqlToyContext.getBatchSize(), entityMeta.getFieldsTypeArray(),
-				autoCommit, conn, dbType);
+		return batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues, sqlToyContext.getBatchSize(),
+				entityMeta.getFieldsTypeArray(), autoCommit, conn, dbType);
 	}
 
 	/**
@@ -779,9 +781,9 @@ public class SqlServerDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Long batchUpdateByJdbc(final String updateSql, final List<Object[]> rowDatas, final int batchSize,
-			final Integer[] updateTypes, final Boolean autoCommit, final Connection conn, final Integer dbType)
-			throws Exception {
+	private static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql,
+			final List<Object[]> rowDatas, final int batchSize, final Integer[] updateTypes, final Boolean autoCommit,
+			final Connection conn, final Integer dbType) throws Exception {
 		if (rowDatas == null) {
 			logger.error("batchUpdateByJdbc:{} 传递的数据为空!", updateSql);
 			return 0L;
@@ -810,7 +812,8 @@ public class SqlServerDialectUtils {
 					for (int j = 0, n = rowData.length; j < n; j++) {
 						// 类型为timestamp 则跳过
 						if (!updateTypes[j].equals(java.sql.Types.TIMESTAMP)) {
-							SqlUtil.setParamValue(conn, dbType, pst, rowData[j], updateTypes[j], pstIndex + 1);
+							SqlUtil.setParamValue(typeHandler, conn, dbType, pst, rowData[j], updateTypes[j],
+									pstIndex + 1);
 							pstIndex++;
 						}
 					}
@@ -897,7 +900,8 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

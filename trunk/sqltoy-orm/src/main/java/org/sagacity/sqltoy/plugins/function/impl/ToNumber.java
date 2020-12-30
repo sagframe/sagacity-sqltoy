@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
  * @project sqltoy-orm
  * @description 数字转换
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ToNumber.java,Revision:v1.0,Date:2013-1-2
+ * @version v1.0,Date:2013-1-2
  */
 public class ToNumber extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_number\\(");

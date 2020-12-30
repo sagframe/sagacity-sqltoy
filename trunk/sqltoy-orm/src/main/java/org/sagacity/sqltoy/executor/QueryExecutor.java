@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 构造统一的查询条件模型
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:QueryExecutor.java,Revision:v1.0,Date:2012-9-3
+ * @version v1.0,Date:2012-9-3
  */
 public class QueryExecutor implements Serializable {
 	/**
@@ -159,6 +160,38 @@ public class QueryExecutor implements Serializable {
 			logger.warn("请关注:查询语句sql={} 指定的resultType=null,将以ArrayList作为默认类型返回!", innerModel.sql);
 		}
 		innerModel.resultType = resultType;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分库策略
+	 * @param strategy
+	 * @param paramNames
+	 * @return
+	 */
+	public QueryExecutor dbSharding(String strategy, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(0);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.dbSharding = sharding;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * @param strategy
+	 * @param tables
+	 * @param paramNames 分表策略依赖的参数
+	 * @return
+	 */
+	public QueryExecutor tableSharding(String strategy, String[] tables, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(1);
+		sharding.setTables(tables);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.tableShardings.add(sharding);
 		return this;
 	}
 

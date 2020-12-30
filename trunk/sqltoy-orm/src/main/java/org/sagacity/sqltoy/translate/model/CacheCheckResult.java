@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @project sagacity-sqltoy4.2
  * @description 缓存刷新结果模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:CacheCheckResult.java,Revision:v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018年3月8日
  */
 public class CacheCheckResult implements Serializable {
 

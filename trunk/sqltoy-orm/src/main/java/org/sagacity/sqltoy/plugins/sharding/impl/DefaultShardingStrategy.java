@@ -27,7 +27,7 @@ import org.springframework.context.ApplicationContextAware;
  * @project sagacity-sqltoy4.0
  * @description 提供默认的数据库sharding策略
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DefaultShardingStrategy.java,Revision:v1.0,Date: 2017年1月3日
+ * @version v1.0,Date: 2017年1月3日
  */
 public class DefaultShardingStrategy implements ShardingStrategy, ApplicationContextAware {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultShardingStrategy.class);
@@ -131,6 +131,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			}
 		}
 		if (bizDate == null) {
+			logger.error("分表操作对应的参数值为null,导致无法分表,请检查参数配置!");
 			return null;
 		}
 		// 间隔多少天

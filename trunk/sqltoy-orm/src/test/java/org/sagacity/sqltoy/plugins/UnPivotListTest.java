@@ -43,4 +43,53 @@ public class UnPivotListTest {
 			System.out.println(JSON.toJSONString(result.get(i)));
 		}
 	}
+
+	@Test
+	public void testUnpivotMiddle() {
+		// |------- 1月-------|------- 2月 ------|------ 3月--------|
+		// |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |
+		Object[][] values = { { "5月", "香蕉", 2000, 20000, "好" }, { "5月", "苹果", 1900, 38999, "好" },
+				{ "4月", "香蕉", 1800, 21000, "好" }, { "4月", "苹果", 1800, 400000, "好" }, };
+		List result = CollectionUtil.arrayToDeepList(values);
+		UnpivotModel unpivotModel = new UnpivotModel();
+		unpivotModel.setColumnsToRows(new String[] { "quantity:数量,AMT:金额" });
+		unpivotModel.setNewColumnsLabels(new String[] { "indexName", "indexValue" });
+		DataSetResult resultModel = new DataSetResult();
+		resultModel.setLabelNames(new String[] { "month", "fruitName", "quantity", "AMT", "greet" });
+		resultModel.setLabelTypes(new String[] { "string", "string", "decimal", "decimal", "string" });
+		LabelIndexModel labelIndexMap = new LabelIndexModel();
+		labelIndexMap.put("month", 0);
+		labelIndexMap.put("fruitname", 1);
+		labelIndexMap.put("quantity", 2);
+		labelIndexMap.put("amt", 3);
+
+		List value = UnpivotList.process(unpivotModel, resultModel, labelIndexMap, result);
+		for (int i = 0; i < value.size(); i++) {
+			System.out.println(JSON.toJSONString(result.get(i)));
+		}
+	}
+
+	@Test
+	public void testUnpivotSingle() {
+		// |------- 1月-------|------- 2月 ------|------ 3月--------|
+		// |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |交易笔 | 金额 | 收入 |
+		Object[][] values = { { "5月", "香蕉", 2000, 20000 } };
+		List result = CollectionUtil.arrayToDeepList(values);
+		UnpivotModel unpivotModel = new UnpivotModel();
+		unpivotModel.setColumnsToRows(new String[] { "quantity:数量,AMT:金额" });
+		unpivotModel.setNewColumnsLabels(new String[] { "indexName", "indexValue" });
+		DataSetResult resultModel = new DataSetResult();
+		resultModel.setLabelNames(new String[] { "month", "fruitName", "quantity", "AMT" });
+		resultModel.setLabelTypes(new String[] { "string", "string", "decimal", "decimal" });
+		LabelIndexModel labelIndexMap = new LabelIndexModel();
+		labelIndexMap.put("month", 0);
+		labelIndexMap.put("fruitname", 1);
+		labelIndexMap.put("quantity", 2);
+		labelIndexMap.put("amt", 3);
+
+		List value = UnpivotList.process(unpivotModel, resultModel, labelIndexMap, result);
+		for (int i = 0; i < value.size(); i++) {
+			System.out.println(JSON.toJSONString(result.get(i)));
+		}
+	}
 }

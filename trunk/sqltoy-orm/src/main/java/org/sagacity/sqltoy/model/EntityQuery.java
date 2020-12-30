@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.callback.SelectFields;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
+import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -15,7 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @description 提供给代码中进行查询使用，一般适用于接口服务内部逻辑处理以单表为主体(不用于页面展示)
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:EntityQuery.java,Revision:v1.0,Date:2020-5-15
+ * @version v1.0,Date:2020-5-15
  */
 public class EntityQuery implements Serializable {
 
@@ -212,6 +213,64 @@ public class EntityQuery implements Serializable {
 		if (pageOptimize != null) {
 			innerModel.pageOptimize = pageOptimize;
 		}
+		return this;
+	}
+
+	/**
+	 * @TODO 取top记录
+	 * @param topSize
+	 * @return
+	 */
+	public EntityQuery top(double topSize) {
+		if (topSize <= 0) {
+			throw new IllegalArgumentException("topSize 值必须要大于0!");
+		}
+		innerModel.pickType = 0;
+		innerModel.pickSize = topSize;
+		return this;
+	}
+
+	/**
+	 * @TODO 取随机记录
+	 * @param randomSize
+	 * @return
+	 */
+	public EntityQuery random(double randomSize) {
+		if (randomSize <= 0) {
+			throw new IllegalArgumentException("randomSize 值必须要大于0!");
+		}
+		innerModel.pickType = 1;
+		innerModel.pickSize = randomSize;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分库策略
+	 * @param strategy
+	 * @param paramNames
+	 * @return
+	 */
+	public EntityQuery dbSharding(String strategy, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(0);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.dbSharding = sharding;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置分表策略,再复杂场景则推荐用xml的sql中定义
+	 * @param strategy
+	 * @param paramNames 分表策略依赖的参数
+	 * @return
+	 */
+	public EntityQuery tableSharding(String strategy, String... paramNames) {
+		ShardingStrategyConfig sharding = new ShardingStrategyConfig(1);
+		sharding.setStrategy(strategy);
+		sharding.setFields(paramNames);
+		sharding.setAliasNames(paramNames);
+		innerModel.tableSharding = sharding;
 		return this;
 	}
 

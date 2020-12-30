@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.0
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlExecuteStat.java,Revision:v1.0,Date:2015年6月12日
+ * @version v1.0,Date:2015年6月12日
  * @modify {Date:2020-06-15,改进sql日志输出,将条件参数带入到sql中输出，便于开发调试}
  * @modify {Date:2020-08-12,为日志输出增加统一uid,便于辨别同一组执行语句}
  */
@@ -34,11 +34,6 @@ public class SqlExecuteStat {
 	 * 定义日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(SqlExecuteStat.class);
-
-	/**
-	 * 输出sql的策略(error/debug 两种)
-	 */
-	private static String printSqlStrategy = "error";
 
 	/**
 	 * 是否调试阶段
@@ -139,23 +134,23 @@ public class SqlExecuteStat {
 	 * @param sqlTrace
 	 */
 	private static void printLogs(SqlExecuteTrace sqlTrace) {
-		boolean printLog = false;
+		boolean errorLog = false;
 		String reportStatus = "成功!";
 		if (sqlTrace.isOverTime()) {
-			printLog = true;
+			errorLog = true;
 			reportStatus = "执行耗时超阀值!";
 		}
 		if (sqlTrace.isError()) {
-			printLog = true;
+			errorLog = true;
 			reportStatus = "发生异常错误!";
 		}
 
-		if (!printLog) {
+		if (!errorLog) {
 			// sql中已经标记了#not_debug# 表示无需输出日志(一般针对缓存检测、缓存加载等,避免这些影响业务日志)
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
-			if (!(debug || printSqlStrategy.equals("debug"))) {
+			if (!debug) {
 				return;
 			}
 		}
@@ -185,7 +180,7 @@ public class SqlExecuteStat {
 			args = log.getArgs();
 			if (logType == 0) {
 				result.append("\n/*|---- 过程: " + step + "," + topic + "----------------");
-				//区别一些批量写和更新操作，参数较多不便于输出
+				// 区别一些批量写和更新操作，参数较多不便于输出
 				if (optType.startsWith("save") || optType.startsWith("deleteAll")
 						|| optType.startsWith("batchUpdate")) {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
@@ -231,13 +226,6 @@ public class SqlExecuteStat {
 		destroyLog();
 		threadLocal.remove();
 		threadLocal.set(null);
-	}
-
-	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
-	 */
-	public static void setPrintSqlStrategy(String printSqlStrategy) {
-		SqlExecuteStat.printSqlStrategy = printSqlStrategy.toLowerCase();
 	}
 
 	/**
@@ -368,5 +356,17 @@ public class SqlExecuteStat {
 			}
 		}
 		return "" + className + "." + method + "[代码第:" + lineNumber + " 行]";
+	}
+
+	/**
+	 * @TODO 获取执行总时长
+	 * @return
+	 */
+	public static Long getExecuteTime() {
+		SqlExecuteTrace sqlTrace = threadLocal.get();
+		if (sqlTrace != null) {
+			return sqlTrace.getExecuteTime();
+		}
+		return -1L;
 	}
 }

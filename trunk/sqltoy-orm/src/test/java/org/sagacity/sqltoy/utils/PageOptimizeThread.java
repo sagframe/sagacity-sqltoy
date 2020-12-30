@@ -24,7 +24,6 @@ public class PageOptimizeThread extends Thread {
 
 	@Override
 	public void run() {
-
 		while (true) {
 			// 验证超量则需要随机记录>aliveMax,验证超时尽量将量控制在aliveMax边缘
 			String key = "key_" + NumberUtil.getRandomNum(1, 250);

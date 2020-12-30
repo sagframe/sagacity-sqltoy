@@ -31,7 +31,7 @@ import org.w3c.dom.NodeList;
  * @project sagacity-sqltoy4.2
  * @description 用于解析缓存翻译的配置
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:TranslateConfigParse.java,Revision:v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018年3月8日
  */
 public class TranslateConfigParse {
 	/**

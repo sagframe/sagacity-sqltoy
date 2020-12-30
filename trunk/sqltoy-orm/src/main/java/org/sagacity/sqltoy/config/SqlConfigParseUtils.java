@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提供sqlToy 针对sql语句以及查询条件加工处理的通用函数(sqltoy中最关键的sql加工)
  * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlConfigParseUtils.java,Revision:v1.0,Date:2009-12-14
+ * @version v1.0,Date:2009-12-14
  * @modify {Date:2010-6-10, 修改replaceNull函数}
  * @modify {Date:2011-6-4, 修改了因sql中存在":"符号导致的错误}
  * @modify {Date:2011-12-11, 优化了StringMatch方式，将Pattern放在外面定义，避免每次重复定义消耗性能}
@@ -137,6 +137,9 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	public static boolean hasNamedParam(String sql) {
+		if (sql == null) {
+			return false;
+		}
 		return StringUtil.matches(sql, SqlToyConstants.SQL_NAMED_PATTERN);
 	}
 
@@ -180,12 +183,19 @@ public class SqlConfigParseUtils {
 	 *       where #[t1.status=?] #[and t1.auditTime=?]
 	 * @param queryStr
 	 * @param paramsNamed
-	 * @param paramsValue
+	 * @param paramsArg
 	 * @return
 	 */
-	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsValue) {
-		if (null == paramsValue || paramsValue.length == 0) {
-			return new SqlToyResult(queryStr, paramsValue);
+	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
+		Object[] paramsValue = paramsArg;
+		if (paramsNamed != null && paramsNamed.length > 0) {
+			// 构造全是null的条件值，将全部条件去除
+			if (null == paramsArg || paramsArg.length == 0) {
+				paramsValue = new Object[paramsNamed.length];
+			}
+		} // 无参数别名也无条件值
+		else if (null == paramsArg || paramsArg.length == 0) {
+			return new SqlToyResult(queryStr, paramsArg);
 		}
 		SqlToyResult sqlToyResult = new SqlToyResult();
 		// 是否:paramName 形式的参数模式
@@ -195,7 +205,7 @@ public class SqlConfigParseUtils {
 		String questionMark = "#sqltoy_qsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
-			// update 2020-09-23 处理sql中的循环
+			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
 			sql = processLoop(sql, paramsNamed, paramsValue);
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
@@ -764,6 +774,7 @@ public class SqlConfigParseUtils {
 		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
+		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
 		originalSql = ReservedWordsUtil.convertSql(originalSql, DataSourceUtils.getDBType(dialect));
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql));

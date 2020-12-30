@@ -10,7 +10,7 @@ import java.util.List;
  * @project sagacity-sqltoy
  * @description 反射对象提取数据时，提供对数据的判断和修改(已经很少使用)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ReflectPropertyHandler.java,Revision:v1.0,Date:2012-7-14
+ * @version v1.0,Date:2012-7-14
  */
 @SuppressWarnings("rawtypes")
 public abstract class ReflectPropertyHandler {
@@ -94,8 +94,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * 取回
-	 * 
+	 * @TODO 取回结果
 	 * @return
 	 */
 	public Object[] getRowData() {
@@ -103,8 +102,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * 反射过程中调用，提供交互数据
-	 * 
+	 * @TODO 反射过程中调用，提供交互数据
 	 * @param rowData
 	 */
 	public void setRowData(Object[] rowData) {
@@ -120,8 +118,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * @param rowList
-	 *            the rowList to set
+	 * @param rowList the rowList to set
 	 */
 	public void setRowList(List rowList) {
 		this.isArray = false;

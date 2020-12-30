@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @project sqltoy-orm
  * @description 主键被其他表关联的机制
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:OneToMany.java,Revision:v1.0,Date:2012-7-30
+ * @version v1.0,Date:2012-7-30
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -51,6 +51,13 @@ public @interface OneToMany {
 	 * @return
 	 */
 	boolean delete() default true;
+
+	/**
+	 * 排序
+	 * 
+	 * @return
+	 */
+	String orderBy() default "";
 
 	/**
 	 * 定制级联修改保存对子表的操作语句

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-core
  * @description 文件处理工具类
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:FileUtil.java,Revision:v1.0,Date:2008-11-7
+ * @version v1.0,Date:2008-11-7
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class FileUtil {
@@ -269,11 +269,6 @@ public class FileUtil {
 		}
 		return null;
 	}
-
-//	@Deprecated
-//	public static byte[] readAsByteArray(File file) {
-//		return readAsBytes(file);
-//	}
 
 	/**
 	 * @TODO 读取文件到二进制数组中
@@ -934,8 +929,6 @@ public class FileUtil {
 
 	/**
 	 * @todo <b>跳转路径</b>
-	 * @author zhongxuchen
-	 * @date 2011-8-18 下午04:38:57
 	 * @param basePath
 	 * @param skipFile
 	 * @return

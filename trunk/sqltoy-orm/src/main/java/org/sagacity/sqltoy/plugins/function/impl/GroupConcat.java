@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sqltoy-orm
  * @description 转换group_concat 分组拼接函数 在不同数据库中的实现
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:GroupConcat.java,Revision:v1.0,Date:2019-10-21
+ * @version v1.0,Date:2019-10-21
  */
 public class GroupConcat extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(group_concat|string_agg)\\(");

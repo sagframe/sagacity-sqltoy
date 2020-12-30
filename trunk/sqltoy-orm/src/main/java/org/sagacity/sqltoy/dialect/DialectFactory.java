@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
+ * @version v1.0,Date:2014年12月11日
  * @modify data:2020-06-05 增加dm(达梦)数据库支持
  * @modify data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  */
@@ -254,8 +254,8 @@ public class DialectFactory {
 							// 做sql签名
 							realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
 							SqlExecuteStat.showSql("批量sql执行", realSql, null);
-							this.setResult(SqlUtil.batchUpdateByJdbc(realSql, values, batchSize, insertCallhandler,
-									fieldTypes, autoCommit, conn, dbType));
+							this.setResult(SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), realSql, values,
+									batchSize, insertCallhandler, fieldTypes, autoCommit, conn, dbType));
 						}
 					});
 			// 输出执行结果更新记录量日志
@@ -281,8 +281,8 @@ public class DialectFactory {
 	 * @return
 	 */
 	public Long executeSql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String[] paramsNamed, final Object[] paramsValue, final Boolean autoCommit,
-			final DataSource dataSource) {
+			final String[] paramsNamed, final Object[] paramsValue, final Integer[] paramsTypes,
+			final Boolean autoCommit, final DataSource dataSource) {
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql", sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
@@ -294,11 +294,11 @@ public class DialectFactory {
 									paramsNamed, paramsValue);
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
-									sqlToyConfig, paramsNamed, paramsValue);
+									sqlToyConfig.getTableShardings(), paramsNamed, paramsValue);
 							// 做sql签名
 							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
-							this.setResult(SqlUtil.executeSql(executeSql, queryParam.getParamsValue(), null, conn,
-									dbType, autoCommit));
+							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
+									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit));
 						}
 					});
 			SqlExecuteStat.debug("执行结果", "受影响记录数量:{} 条!", updateTotalCnt);
@@ -362,9 +362,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("getRandomResult operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -415,18 +416,21 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+							boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									extend);
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, changedCols));
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -535,7 +539,8 @@ public class DialectFactory {
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							this.setResult(SqlUtil.wrapTreeTableRoute(treeModel, conn, dbType));
+							this.setResult(SqlUtil.wrapTreeTableRoute(sqlToyContext.getTypeHandler(), treeModel, conn,
+									dbType));
 						}
 					});
 		} catch (Exception e) {
@@ -575,9 +580,10 @@ public class DialectFactory {
 					+ "}>= limit:{" + limitSize + "}!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -592,19 +598,22 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+							boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									extend);
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, changedCols));
 							}
 							queryResult.setSkipQueryCount(true);
 							SqlExecuteStat.debug("查询结果", "分页查询出记录数量:{}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -630,9 +639,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findPage operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -650,6 +660,7 @@ public class DialectFactory {
 									queryExecutor, pageOptimize);
 							// 需要进行分页查询优化
 							if (null != pageQueryKey) {
+								// if()
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize,
 										pageQueryKey);
@@ -713,13 +724,16 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
+										pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
-											ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-											(Class) extend.resultType));
+									queryResult
+											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+													ResultUtils.humpFieldNames(queryExecutor,
+															queryResult.getLabelNames()),
+													(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -728,6 +742,8 @@ public class DialectFactory {
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -753,9 +769,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findTop operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -785,18 +802,21 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+							boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									extend);
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, changedCols));
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -822,9 +842,10 @@ public class DialectFactory {
 			throw new IllegalArgumentException("findByQuery operate sql is null!");
 		}
 		try {
+			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -843,18 +864,21 @@ public class DialectFactory {
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
 							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-							ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
+							boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									extend);
 							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, changedCols));
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1480,10 +1504,11 @@ public class DialectFactory {
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final UpdateRowHandler updateRowHandler, final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1498,14 +1523,16 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1519,10 +1546,11 @@ public class DialectFactory {
 			final SqlToyConfig sqlToyConfig, final Integer topSize, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1538,14 +1566,16 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1559,10 +1589,11 @@ public class DialectFactory {
 			final SqlToyConfig sqlToyConfig, final Integer random, final UpdateRowHandler updateRowHandler,
 			final DataSource dataSource) {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		extend.optimizeArgs(sqlToyConfig);
 		try {
+			Long startTime = System.currentTimeMillis();
+			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
-			return (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
@@ -1577,14 +1608,16 @@ public class DialectFactory {
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType));
+										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);
@@ -1607,8 +1640,9 @@ public class DialectFactory {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Class resultType,
 			final DataSource dataSource) {
 		try {
+			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
-			return (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String dialectSql = sqlToyConfig.getSql(dialect);
@@ -1640,18 +1674,21 @@ public class DialectFactory {
 									inParamsValue);
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet, null);
+							boolean changedCols = ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet,
+									null);
 							// }
 							// 映射成对象
 							if (resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(queryResult.getRows(),
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										resultType));
+										resultType, changedCols));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
 						}
 					});
+			result.setExecuteTime(System.currentTimeMillis() - startTime);
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);

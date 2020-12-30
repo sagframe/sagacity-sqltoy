@@ -1,7 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import org.junit.jupiter.api.Test;
-import org.sagacity.sqltoy.config.model.UnifySqlParams;
+import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 
 /**
@@ -15,7 +15,7 @@ public class DialectUtilsTest {
 	@Test
 	public void testConvertQuesToNamed() {
 		String sql = "select *,' and ? ' from table where a=' ? ' and b in(?,?,?) and c like ? and d>? and m<\"?\") or a>?";
-		UnifySqlParams unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
+		SqlParamsModel unifySqlParams = DialectUtils.convertParamsToNamed(sql, 0);
 		System.err.println(unifySqlParams.getSql());
 		System.err.println("paramCnt=" + unifySqlParams.getParamCnt());
 		for (String s : unifySqlParams.getParamsName()) {

@@ -17,12 +17,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
@@ -55,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-4-18
+ * @version v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
  * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}
  */
@@ -996,9 +998,9 @@ public class ResultUtils {
 						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 								extend.getParamsName(pivotSqlConfig),
 								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
-						List pivotCategory = SqlUtil.findByJdbcQuery(pivotSqlToyResult.getSql(),
-								pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
-								sqlToyConfig.isIgnoreEmpty());
+						List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
+								pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn,
+								dbType, sqlToyConfig.isIgnoreEmpty(), null);
 						// 行转列返回
 						return CollectionUtil.convertColToRow(pivotCategory, null);
 					}
@@ -1015,14 +1017,15 @@ public class ResultUtils {
 	 * @param pivotCategorySet
 	 * @param extend
 	 */
-	public static void calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
+	public static boolean calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
 		List items = dataSetResult.getRows();
 		// 数据为空直接跳出处理
 		if (items == null || items.isEmpty()) {
-			return;
+			return false;
 		}
 
+		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
 		List resultProcessors = sqlToyConfig.getResultProcessor();
@@ -1059,14 +1062,17 @@ public class ResultUtils {
 				// 数据旋转
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
+					changedCols = true;
 				} else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
+					changedCols = true;
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ColsChainRelativeModel) {
 					// 列数据环比
 					ColsChainRelative.process((ColsChainRelativeModel) processor, labelIndexMap, items);
+					changedCols = true;
 				} else if (processor instanceof RowsChainRelativeModel) {
 					// 行数据环比
 					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
@@ -1077,6 +1083,7 @@ public class ResultUtils {
 			}
 			dataSetResult.setRows(items);
 		}
+		return changedCols;
 	}
 
 	/**
@@ -1109,7 +1116,8 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List wrapQueryResult(List queryResultRows, String[] labelNames, Class resultType) throws Exception {
+	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
+			Class resultType, boolean changedCols) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
@@ -1118,6 +1126,11 @@ public class ResultUtils {
 		// 返回数组类型
 		if (Array.class.equals(resultType)) {
 			return CollectionUtil.innerListToArray(queryResultRows);
+		}
+		// 已经存在pivot、unpivot、列环比计算等
+		if (changedCols) {
+			logger.warn("查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作不支持转map或VO对象!");
+			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作，因此不支持转map或VO对象!");
 		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
@@ -1147,8 +1160,27 @@ public class ResultUtils {
 			}
 			return result;
 		}
+		EntityMeta entityMeta = null;
+		if (sqlToyContext.isEntity(resultType)) {
+			entityMeta = sqlToyContext.getEntityMeta(resultType);
+		}
+
 		// 封装成VO对象形式
-		return BeanUtil.reflectListToBean(queryResultRows, labelNames, resultType);
+		return BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
+				convertRealProps(labelNames, (entityMeta == null) ? null : entityMeta.getColumnFieldMap()), resultType);
+	}
+
+	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
+		if (colFieldMap != null && !colFieldMap.isEmpty()) {
+			String key;
+			for (int i = 0; i < labelNames.length; i++) {
+				key = labelNames[i].toLowerCase();
+				if (colFieldMap.containsKey(key)) {
+					labelNames[i] = colFieldMap.get(key);
+				}
+			}
+		}
+		return labelNames;
 	}
 
 	/**
@@ -1156,13 +1188,22 @@ public class ResultUtils {
 	 * @param labelNames
 	 * @return
 	 */
-	public static String[] humpFieldNames(String[] labelNames) {
+	public static String[] humpFieldNames(String[] labelNames, HashMap<String, String> colFieldMap) {
 		if (labelNames == null) {
 			return null;
 		}
 		String[] result = new String[labelNames.length];
-		for (int i = 0, n = labelNames.length; i < n; i++) {
-			result[i] = StringUtil.toHumpStr(labelNames[i], false);
+		if (colFieldMap == null) {
+			for (int i = 0, n = labelNames.length; i < n; i++) {
+				result[i] = StringUtil.toHumpStr(labelNames[i], false);
+			}
+		} else {
+			for (int i = 0, n = labelNames.length; i < n; i++) {
+				result[i] = colFieldMap.get(labelNames[i].toLowerCase());
+				if (result[i] == null) {
+					result[i] = StringUtil.toHumpStr(labelNames[i], false);
+				}
+			}
 		}
 		return result;
 	}
@@ -1176,12 +1217,18 @@ public class ResultUtils {
 	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
 		Type resultType = queryExecutor.getInnerModel().resultType;
 		boolean hump = true;
-		if (null != resultType && (resultType.equals(HashMap.class) || resultType.equals(Map.class)
-				|| resultType.equals(LinkedHashMap.class)) && !queryExecutor.getInnerModel().humpMapLabel) {
-			hump = false;
+		if (null != resultType) {
+			Class superClass = ((Class) resultType).getSuperclass();
+			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
+					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
+					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
+					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
+					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
+				hump = false;
+			}
 		}
 		if (hump) {
-			return humpFieldNames(labelNames);
+			return humpFieldNames(labelNames, null);
 		}
 		return labelNames;
 	}

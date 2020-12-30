@@ -14,5 +14,13 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
  */
 @FunctionalInterface
 public interface UniqueSqlHandler {
+	/**
+	 * @TODO 获得unique top 记录sql
+	 * @param entityMeta
+	 * @param paramNames
+	 * @param tableName
+	 * @param topSize
+	 * @return
+	 */
 	public String process(EntityMeta entityMeta, String[] paramNames, String tableName, int topSize);
 }

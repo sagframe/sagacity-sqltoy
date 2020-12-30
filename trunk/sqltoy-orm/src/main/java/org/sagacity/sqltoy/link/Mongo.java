@@ -38,7 +38,7 @@ import com.mongodb.client.AggregateIterable;
  * @project sagacity-sqltoy4.1
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Mongo.java,Revision:v1.0,Date:2018年1月1日
+ * @version v1.0,Date:2018年1月1日
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  */
 public class Mongo extends BaseLink {
@@ -389,8 +389,9 @@ public class Mongo extends BaseLink {
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
-		ResultUtils.calculate(sqlToyConfig, dataSetResult, null, null);
-		return ResultUtils.wrapQueryResult(resultSet, StringUtil.humpFieldNames(translateFields), resultClass);
+		boolean changedCols = ResultUtils.calculate(sqlToyConfig, dataSetResult, null, null);
+		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
+				resultClass, changedCols);
 	}
 
 	/**

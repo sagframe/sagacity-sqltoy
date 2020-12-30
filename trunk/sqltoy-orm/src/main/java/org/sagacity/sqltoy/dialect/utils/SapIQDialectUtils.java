@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 针对sybase iq数据库提供特定的辅助工具类，针对分页等进行特殊处理
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SapIQDialectUtils.java,Revision:v1.0,Date:2015年4月26日
+ * @version v1.0,Date:2015年4月26日
  */
 @SuppressWarnings({ "rawtypes" })
 public class SapIQDialectUtils {
@@ -123,9 +123,11 @@ public class SapIQDialectUtils {
 				pst = conn.prepareStatement(realInsertSql);
 				// 存在默认值
 				if (entityMeta.isHasDefaultValue()) {
-					SqlUtilsExt.setParamsValue(conn, dbType, pst, paramValues, entityMeta);
+					SqlUtilsExt.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues,
+							entityMeta);
 				} else {
-					SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType,
+							0);
 				}
 				ResultSet keyResult = null;
 				if (isSequence || isIdentity) {
@@ -279,7 +281,8 @@ public class SapIQDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
-				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, null, conn, dbType);
+		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, null, conn, dbType);
 	}
 }

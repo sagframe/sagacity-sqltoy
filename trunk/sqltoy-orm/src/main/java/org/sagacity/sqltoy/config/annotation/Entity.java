@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @project sqltoy-orm
  * @description 标志sqltoy实体对象
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:Entity.java,Revision:v1.0,Date:2012-5-25 
+ * @version v1.0,Date:2012-5-25
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

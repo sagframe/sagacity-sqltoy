@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sagacity-sqltoy
  * @description 用来处理sql中的数据库保留字
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ReservedWordsUtil.java,Revision:v1.0,Date:2020-05-06
+ * @version v1.0,Date:2020-05-06
  */
 public class ReservedWordsUtil {
 	private static HashSet<String> reservedWords = new HashSet<String>();
@@ -85,6 +85,9 @@ public class ReservedWordsUtil {
 		}
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
+//			//避免重复增加
+//			if (column.startsWith("[") && column.endsWith("]"))
+//				return column;
 			return "[".concat(column).concat("]");
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {

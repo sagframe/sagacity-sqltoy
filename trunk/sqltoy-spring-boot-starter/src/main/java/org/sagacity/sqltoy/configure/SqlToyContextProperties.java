@@ -114,6 +114,16 @@ public class SqlToyContextProperties implements Serializable {
 	private String obtainDataSource;
 
 	/**
+	 * 缓存管理器
+	 */
+	private String translateCacheManager;
+
+	/**
+	 * 字段类型转换器
+	 */
+	private String typeHandler;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -321,4 +331,34 @@ public class SqlToyContextProperties implements Serializable {
 	public void setObtainDataSource(String obtainDataSource) {
 		this.obtainDataSource = obtainDataSource;
 	}
+
+	/**
+	 * @return the translateCacheManager
+	 */
+	public String getTranslateCacheManager() {
+		return translateCacheManager;
+	}
+
+	/**
+	 * @param translateCacheManager the translateCacheManager to set
+	 */
+	public void setTranslateCacheManager(String translateCacheManager) {
+		this.translateCacheManager = translateCacheManager;
+	}
+
+	/**
+	 * @return the typeHandler
+	 */
+	public String getTypeHandler() {
+		return typeHandler;
+	}
+
+	/**
+	 * @param typeHandler the typeHandler to set
+	 */
+	public void setTypeHandler(String typeHandler) {
+		this.typeHandler = typeHandler;
+	}
+
+	
 }

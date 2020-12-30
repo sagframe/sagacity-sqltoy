@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.service.impl;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -15,6 +16,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -32,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @project sqltoy-orm
  * @description 提供默认的增删改查业务逻辑封装
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlToyCRUDServiceImpl.java,Revision:v1.0,Date:2012-7-16
+ * @version v1.0,Date:2012-7-16
  */
 @SuppressWarnings({ "rawtypes" })
 @Service("sqlToyCRUDService")
@@ -448,8 +450,15 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds) {
-		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, maxWaitSeconds);
+			Object[] paramValues, ParallelConfig parallelConfig) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramNames, paramValues, parallelConfig);
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig) {
+		return sqlToyLazyDao.parallQuery(parallQueryList, paramsMap, parallelConfig);
 	}
 
 	/*

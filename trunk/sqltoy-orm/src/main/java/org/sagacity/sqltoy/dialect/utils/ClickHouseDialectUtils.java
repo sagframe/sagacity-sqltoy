@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 提供click数据库通用的操作功能实现,为不同版本提供支持
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ClickHouseDialectUtils.java,Revision:v1.0,Date:2020年1月20日
+ * @version v1.0,Date:2020年1月20日
  */
 public class ClickHouseDialectUtils {
 	/**
@@ -126,7 +126,7 @@ public class ClickHouseDialectUtils {
 				} else {
 					pst = conn.prepareStatement(insertSql);
 				}
-				SqlUtil.setParamsValue(conn, dbType, pst, paramValues, paramsType, 0);
+				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
 				ResultSet keyResult = null;
 				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
 					keyResult = pst.executeQuery();
@@ -249,9 +249,9 @@ public class ClickHouseDialectUtils {
 			}
 		}
 		SqlExecuteStat.showSql("批量保存[" + paramValues.size() + "]条记录", insertSql, null);
-		return SqlUtilsExt.batchUpdateByJdbc(insertSql, paramValues, entityMeta.getFieldsTypeArray(),
-				entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(), batchSize, autoCommit, conn,
-				dbType);
+		return SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), insertSql, paramValues,
+				entityMeta.getFieldsTypeArray(), entityMeta.getFieldsDefaultValue(), entityMeta.getFieldsNullable(),
+				batchSize, autoCommit, conn, dbType);
 	}
 
 	/**
@@ -292,7 +292,8 @@ public class ClickHouseDialectUtils {
 
 		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
-		return SqlUtil.executeSql(deleteSql, idValues, parameterTypes, conn, dbType, null);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,
+				null);
 	}
 
 	/**
@@ -371,8 +372,8 @@ public class ClickHouseDialectUtils {
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
 				idValues);
-		return SqlUtil.executeSql(sqlToyResult.getSql(), sqlToyResult.getParamsValue(), paramTypes, conn, dbType,
-				autoCommit);
+		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
+				paramTypes, conn, dbType, autoCommit);
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

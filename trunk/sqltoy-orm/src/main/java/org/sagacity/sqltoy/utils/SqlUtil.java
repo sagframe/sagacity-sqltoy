@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
@@ -43,6 +45,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 数据库sql相关的处理工具
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlUtil.java,Revision:v1.3,Date:Apr 14, 2009 11:52:31 PM
+ * @version v1.3,Date:Apr 14, 2009 11:52:31 PM
  * @modify Date:2011-8-18
  *         {移植BaseDaoSupport中分页移植到SqlUtil中，将数据库表、外键、主键等库和表信息移植到DBUtil中 }
  * @modify Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select
@@ -190,36 +193,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 自动进行类型转换,设置sql中的参数条件的值
-	 * @param conn
-	 * @param pst
-	 * @param params
-	 * @param paramsType
-	 * @param fromIndex
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	public static void setParamsValue(Connection conn, final Integer dbType, PreparedStatement pst, Object[] params,
-			Integer[] paramsType, int fromIndex) throws SQLException, IOException {
-		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
-		// 一般情况fromIndex 都是0
-		if (null != params && params.length > 0) {
-			int n = params.length;
-			int startIndex = fromIndex + 1;
-			if (null == paramsType || paramsType.length == 0) {
-				// paramsType=-1 表示按照参数值来判断类型
-				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
-				}
-			} else {
-				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + i);
-				}
-			}
-		}
-	}
-
-	/**
-	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
+	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
 	 * @param pst
@@ -229,8 +203,9 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private static void setSqlServerParamsValue(Connection conn, final Integer dbType, PreparedStatement pst,
-			Object[] params, Integer[] paramsType, int fromIndex) throws SQLException, IOException {
+	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
+			throws SQLException, IOException {
 		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
 		// 一般情况fromIndex 都是0
 		if (null != params && params.length > 0) {
@@ -239,13 +214,46 @@ public class SqlUtil {
 			if (null == paramsType || paramsType.length == 0) {
 				// paramsType=-1 表示按照参数值来判断类型
 				for (int i = 0; i < n; i++) {
-					setParamValue(conn, dbType, pst, params[i], -1, startIndex + i);
+					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
+				}
+			} else {
+				for (int i = 0; i < n; i++) {
+					setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + i);
+				}
+			}
+		}
+	}
+
+	/**
+	 * @TODO 针对sqlserver提供特殊处理(避免干扰其他代码)
+	 * @param typeHandler
+	 * @param conn
+	 * @param dbType
+	 * @param pst
+	 * @param params
+	 * @param paramsType
+	 * @param fromIndex
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	private static void setSqlServerParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object[] params, Integer[] paramsType, int fromIndex)
+			throws SQLException, IOException {
+		// fromIndex 针对存储过程调用存在从1开始,如:{?=call xxStore()}
+		// 一般情况fromIndex 都是0
+		if (null != params && params.length > 0) {
+			int n = params.length;
+			int startIndex = fromIndex + 1;
+			if (null == paramsType || paramsType.length == 0) {
+				// paramsType=-1 表示按照参数值来判断类型
+				for (int i = 0; i < n; i++) {
+					setParamValue(typeHandler, conn, dbType, pst, params[i], -1, startIndex + i);
 				}
 			} else {
 				int meter = 0;
 				for (int i = 0; i < n; i++) {
 					if (paramsType[i] != java.sql.Types.TIMESTAMP) {
-						setParamValue(conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
+						setParamValue(typeHandler, conn, dbType, pst, params[i], paramsType[i], startIndex + meter);
 						meter++;
 					}
 				}
@@ -258,6 +266,7 @@ public class SqlUtil {
 	 * clob bug的支持(druid 1.1.10 已经修复) update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
 	 * 
 	 * @todo 设置sql中的参数条件的值
+	 * @param typeHandler
 	 * @param conn
 	 * @param pst
 	 * @param paramValue
@@ -266,12 +275,16 @@ public class SqlUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static void setParamValue(Connection conn, final Integer dbType, PreparedStatement pst, Object paramValue,
-			int jdbcType, int paramIndex) throws SQLException, IOException {
+	public static void setParamValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
+			PreparedStatement pst, Object paramValue, int jdbcType, int paramIndex) throws SQLException, IOException {
 		// jdbc部分数据库赋null值时必须要指定数据类型
-		String tmpStr;
 		if (null == paramValue) {
-			if (jdbcType != -1) {
+			if (jdbcType != java.sql.Types.NULL) {
+				if (typeHandler != null) {
+					if (typeHandler.setNull(pst, paramIndex, jdbcType)) {
+						return;
+					}
+				}
 				// postgresql bytea类型需要统一处理成BINARY
 				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
@@ -281,101 +294,112 @@ public class SqlUtil {
 			} else {
 				pst.setNull(paramIndex, java.sql.Types.NULL);
 			}
-		} else {
-			if (paramValue instanceof java.lang.String) {
-				tmpStr = (String) paramValue;
-				if (jdbcType == java.sql.Types.CLOB) {
-					Clob clob = conn.createClob();
-					clob.setString(1, tmpStr);
-					pst.setClob(paramIndex, clob);
-				} else if (jdbcType == java.sql.Types.NCLOB) {
-					NClob nclob = conn.createNClob();
-					nclob.setString(1, tmpStr);
-					pst.setNClob(paramIndex, nclob);
-				} else {
-					pst.setString(paramIndex, tmpStr);
-				}
-			} else if (paramValue instanceof java.lang.Integer) {
-				pst.setInt(paramIndex, ((Integer) paramValue));
-			} else if (paramValue instanceof java.time.LocalDateTime) {
-				pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
-			} else if (paramValue instanceof BigDecimal) {
-				pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
-			} else if (paramValue instanceof java.time.LocalDate) {
-				pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
-			} else if (paramValue instanceof java.util.Date) {
-				if (dbType == DBType.CLICKHOUSE) {
-					pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
-				} else {
-					pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
-				}
-			} else if (paramValue instanceof java.math.BigInteger) {
-				pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
-			} else if (paramValue instanceof java.sql.Timestamp) {
-				pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
-			} else if (paramValue instanceof java.lang.Double) {
-				pst.setDouble(paramIndex, ((Double) paramValue));
-			} else if (paramValue instanceof java.lang.Long) {
-				pst.setLong(paramIndex, ((Long) paramValue));
-			} else if (paramValue instanceof java.sql.Clob) {
-				tmpStr = clobToString((java.sql.Clob) paramValue);
+			return;
+		}
+		// 自定义类型处理器，完成setValue处理
+		if (typeHandler != null) {
+			if (typeHandler.setValue(pst, paramIndex, jdbcType, paramValue)) {
+				return;
+			}
+		}
+		String tmpStr;
+		if (paramValue instanceof java.lang.String) {
+			tmpStr = (String) paramValue;
+			if (jdbcType == java.sql.Types.CLOB) {
+				Clob clob = conn.createClob();
+				clob.setString(1, tmpStr);
+				pst.setClob(paramIndex, clob);
+			} else if (jdbcType == java.sql.Types.NCLOB) {
+				NClob nclob = conn.createNClob();
+				nclob.setString(1, tmpStr);
+				pst.setNClob(paramIndex, nclob);
+			} else {
 				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof byte[]) {
-				if (jdbcType == java.sql.Types.BLOB) {
-					Blob blob = null;
-					try {
-						blob = conn.createBlob();
-						OutputStream out = blob.setBinaryStream(1);
-						out.write((byte[]) paramValue);
-						out.flush();
-						out.close();
-						pst.setBlob(paramIndex, blob);
-					} catch (Exception e) {
-						pst.setBytes(paramIndex, (byte[]) paramValue);
-					}
-				} else {
+			}
+		} else if (paramValue instanceof java.lang.Integer) {
+			pst.setInt(paramIndex, ((Integer) paramValue));
+		} else if (paramValue instanceof java.time.LocalDateTime) {
+			pst.setTimestamp(paramIndex, Timestamp.valueOf((LocalDateTime) paramValue));
+		} else if (paramValue instanceof BigDecimal) {
+			pst.setBigDecimal(paramIndex, (BigDecimal) paramValue);
+		} else if (paramValue instanceof java.time.LocalDate) {
+			pst.setDate(paramIndex, java.sql.Date.valueOf((LocalDate) paramValue));
+		} else if (paramValue instanceof java.util.Date) {
+			if (dbType == DBType.CLICKHOUSE) {
+				pst.setDate(paramIndex, new java.sql.Date(((java.util.Date) paramValue).getTime()));
+			} else {
+				pst.setTimestamp(paramIndex, new Timestamp(((java.util.Date) paramValue).getTime()));
+			}
+		} else if (paramValue instanceof java.math.BigInteger) {
+			pst.setBigDecimal(paramIndex, new BigDecimal(((BigInteger) paramValue)));
+		} else if (paramValue instanceof java.sql.Timestamp) {
+			pst.setTimestamp(paramIndex, (java.sql.Timestamp) paramValue);
+		} else if (paramValue instanceof java.lang.Double) {
+			pst.setDouble(paramIndex, ((Double) paramValue));
+		} else if (paramValue instanceof java.lang.Long) {
+			pst.setLong(paramIndex, ((Long) paramValue));
+		} else if (paramValue instanceof java.sql.Clob) {
+			tmpStr = clobToString((java.sql.Clob) paramValue);
+			pst.setString(paramIndex, tmpStr);
+		} else if (paramValue instanceof byte[]) {
+			if (jdbcType == java.sql.Types.BLOB) {
+				Blob blob = null;
+				try {
+					blob = conn.createBlob();
+					OutputStream out = blob.setBinaryStream(1);
+					out.write((byte[]) paramValue);
+					out.flush();
+					out.close();
+					pst.setBlob(paramIndex, blob);
+				} catch (Exception e) {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
 				}
-			} else if (paramValue instanceof java.lang.Float) {
-				pst.setFloat(paramIndex, ((Float) paramValue));
-			} else if (paramValue instanceof java.sql.Blob) {
-				Blob tmp = (java.sql.Blob) paramValue;
-				pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
-			} else if (paramValue instanceof java.sql.Date) {
-				pst.setDate(paramIndex, (java.sql.Date) paramValue);
-			} else if (paramValue instanceof java.lang.Boolean) {
-				pst.setBoolean(paramIndex, (Boolean) paramValue);
-			} else if (paramValue instanceof java.time.LocalTime) {
-				pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
-			} else if (paramValue instanceof java.sql.Time) {
-				pst.setTime(paramIndex, (java.sql.Time) paramValue);
-			} else if (paramValue instanceof java.lang.Character) {
-				tmpStr = ((Character) paramValue).toString();
-				pst.setString(paramIndex, tmpStr);
-			} else if (paramValue instanceof java.lang.Short) {
-				pst.setShort(paramIndex, (java.lang.Short) paramValue);
-			} else if (paramValue instanceof java.lang.Byte) {
-				pst.setByte(paramIndex, (Byte) paramValue);
 			} else {
-				if (jdbcType != -1) {
-					pst.setObject(paramIndex, paramValue, jdbcType);
-				} else {
-					pst.setObject(paramIndex, paramValue);
-				}
+				pst.setBytes(paramIndex, (byte[]) paramValue);
+			}
+		} else if (paramValue instanceof java.lang.Float) {
+			pst.setFloat(paramIndex, ((Float) paramValue));
+		} else if (paramValue instanceof java.sql.Blob) {
+			Blob tmp = (java.sql.Blob) paramValue;
+			pst.setBytes(paramIndex, tmp.getBytes(0, Long.valueOf(tmp.length()).intValue()));
+		} else if (paramValue instanceof java.sql.Date) {
+			pst.setDate(paramIndex, (java.sql.Date) paramValue);
+		} else if (paramValue instanceof java.lang.Boolean) {
+			pst.setBoolean(paramIndex, (Boolean) paramValue);
+		} else if (paramValue instanceof java.time.LocalTime) {
+			pst.setTime(paramIndex, java.sql.Time.valueOf((LocalTime) paramValue));
+		} else if (paramValue instanceof java.sql.Time) {
+			pst.setTime(paramIndex, (java.sql.Time) paramValue);
+		} else if (paramValue instanceof java.lang.Character) {
+			tmpStr = ((Character) paramValue).toString();
+			pst.setString(paramIndex, tmpStr);
+		} else if (paramValue instanceof java.lang.Short) {
+			pst.setShort(paramIndex, (java.lang.Short) paramValue);
+		} else if (paramValue instanceof java.lang.Byte) {
+			pst.setByte(paramIndex, (Byte) paramValue);
+		} else if (paramValue instanceof Object[]) {
+			pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
+		} else {
+			if (jdbcType != java.sql.Types.NULL) {
+				pst.setObject(paramIndex, paramValue, jdbcType);
+			} else {
+				pst.setObject(paramIndex, paramValue);
 			}
 		}
 	}
 
 	/**
 	 * @todo <b>提供数据查询结果集转java对象的反射处理，以java VO集合形式返回</b>
+	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
 	 * @param ignoreAllEmptySet
+	 * @param columnFieldMap
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(ResultSet rs, Class voClass, boolean ignoreAllEmptySet)
-			throws Exception {
+	private static List reflectResultToValueObject(TypeHandler typeHandler, ResultSet rs, Class voClass,
+			boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -392,24 +416,42 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
+
+		// update 2020-12-24 增加映射对象时属性映射关系提取
+		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
-			fields[i] = columnNames[i].replaceAll("_", "").toLowerCase();
+			fields[i] = columnNames[i].replaceAll("\\_", "").toLowerCase();
+			// 存在pojo中属性跟数据库字段名称有对照映射关系的
+			if (hasMap) {
+				if (columnFieldMap.containsKey(fields[i])) {
+					fields[i] = columnFieldMap.get(fields[i]);
+				}
+			}
 		}
 		// 匹配对应的set方法
 		Method[] setMethods = BeanUtil.matchSetMethods(voClass, fields);
 		// set方法对应参数的类型,并全部转为小写
 		String[] propTypes = new String[setMethods.length];
+		Class[] genericTypes = new Class[setMethods.length];
+		Type[] types;
 		for (int i = 0; i < propTypes.length; i++) {
 			if (setMethods[i] != null) {
-				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName().toLowerCase();
+				propTypes[i] = setMethods[i].getParameterTypes()[0].getTypeName();
+				types = setMethods[i].getGenericParameterTypes();
+				if (types.length > 0) {
+					if (types[0] instanceof ParameterizedType) {
+						genericTypes[i] = (Class) ((ParameterizedType) types[0]).getActualTypeArguments()[0];
+					}
+				}
 			}
 		}
 		int index = 0;
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(rs, columnNames, setMethods, propTypes, voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
+					voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -437,17 +479,20 @@ public class SqlUtil {
 
 	/**
 	 * @todo 提供数据查询结果集转java对象的反射处理，以java VO集合形式返回
+	 * @param typeHandler
 	 * @param rs
 	 * @param columnLabels
 	 * @param setMethods
 	 * @param propTypes
+	 * @param genericTypes
 	 * @param voClass
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(ResultSet rs, String[] columnLabels, Method[] setMethods,
-			String[] propTypes, Class voClass, boolean ignoreAllEmptySet) throws Exception {
+	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
+			Method[] setMethods, String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet)
+			throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -462,7 +507,7 @@ public class SqlUtil {
 				fieldValue = rs.getObject(columnLabels[i]);
 				if (null != fieldValue) {
 					allNull = false;
-					method.invoke(bean, BeanUtil.convertType(fieldValue, typeName));
+					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName, genericTypes[i]));
 				}
 			}
 		}
@@ -611,6 +656,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo <b>获取单条记录</b>
+	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
 	 * @param voClass
@@ -618,13 +664,16 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object loadByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
-			final boolean ignoreAllEmptySet) throws Exception {
-		List result = findByJdbcQuery(queryStr, params, voClass, rowCallbackHandler, conn, dbType, ignoreAllEmptySet);
+	public static Object loadByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
+			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
+			throws Exception {
+		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, conn, dbType,
+				ignoreAllEmptySet, colFieldMap);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -636,6 +685,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo <b>sql 查询并返回List集合结果</b>
+	 * @param typeHandler
 	 * @param queryStr
 	 * @param params
 	 * @param voClass
@@ -643,20 +693,23 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
-	public static List findByJdbcQuery(final String queryStr, final Object[] params, final Class voClass,
-			final RowCallbackHandler rowCallbackHandler, final Connection conn, final Integer dbType,
-			final boolean ignoreAllEmptySet) throws Exception {
+	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
+			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
+			throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				setParamsValue(conn, dbType, pst, params, null, 0);
+				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(processResultSet(rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet));
+				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet,
+						colFieldMap));
 			}
 		});
 		// 为null返回一个空集合
@@ -668,16 +721,19 @@ public class SqlUtil {
 
 	/**
 	 * @todo 处理sql查询时的结果集,当没有反调或voClass反射处理时以数组方式返回resultSet的数据
+	 * @param typeHandler
 	 * @param rs
 	 * @param voClass
 	 * @param rowCallbackHandler
 	 * @param startColIndex
 	 * @param ignoreAllEmptySet
+	 * @param colFieldMap
 	 * @return
 	 * @throws Exception
 	 */
-	public static List processResultSet(ResultSet rs, Class voClass, RowCallbackHandler rowCallbackHandler,
-			int startColIndex, boolean ignoreAllEmptySet) throws Exception {
+	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
+			RowCallbackHandler rowCallbackHandler, int startColIndex, boolean ignoreAllEmptySet,
+			final HashMap<String, String> colFieldMap) throws Exception {
 		// 记录行记数器
 		int index = 0;
 		// 提取数据预警阈值
@@ -693,7 +749,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(rs, voClass, ignoreAllEmptySet);
+			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -758,6 +814,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用，一般采用hibernate 方式插入
+	 * @param typeHandler
 	 * @param updateSql
 	 * @param rowDatas
 	 * @param batchSize
@@ -769,9 +826,9 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long batchUpdateByJdbc(final String updateSql, final Collection rowDatas, final int batchSize,
-			final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes, final Boolean autoCommit,
-			final Connection conn, final Integer dbType) throws Exception {
+	public static Long batchUpdateByJdbc(TypeHandler typeHandler, final String updateSql, final Collection rowDatas,
+			final int batchSize, final InsertRowCallbackHandler insertCallhandler, final Integer[] updateTypes,
+			final Boolean autoCommit, final Connection conn, final Integer dbType) throws Exception {
 		if (rowDatas == null || rowDatas.isEmpty()) {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return 0L;
@@ -809,14 +866,14 @@ public class SqlUtil {
 						if (rowData.getClass().isArray()) {
 							Object[] tmp = CollectionUtil.convertArray(rowData);
 							for (int i = 0; i < tmp.length; i++) {
-								setParamValue(conn, dbType, pst, tmp[i], updateTypes == null ? -1 : updateTypes[i],
-										i + 1);
+								setParamValue(typeHandler, conn, dbType, pst, tmp[i],
+										updateTypes == null ? -1 : updateTypes[i], i + 1);
 							}
 						} else if (rowData instanceof Collection) {
 							Collection tmp = (Collection) rowData;
 							int tmpIndex = 0;
 							for (Iterator tmpIter = tmp.iterator(); tmpIter.hasNext();) {
-								setParamValue(conn, dbType, pst, tmpIter.next(),
+								setParamValue(typeHandler, conn, dbType, pst, tmpIter.next(),
 										updateTypes == null ? -1 : updateTypes[tmpIndex], tmpIndex + 1);
 								tmpIndex++;
 							}
@@ -859,14 +916,15 @@ public class SqlUtil {
 
 	/**
 	 * @todo 计算树形结构表中的:节点层级、节点对应所有上级节点的路径、是否叶子节点
+	 * @param typeHandler
 	 * @param treeTableModel
 	 * @param conn
 	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean wrapTreeTableRoute(final TreeTableModel treeTableModel, Connection conn, final Integer dbType)
-			throws Exception {
+	public static boolean wrapTreeTableRoute(TypeHandler typeHandler, final TreeTableModel treeTableModel,
+			Connection conn, final Integer dbType) throws Exception {
 		if (StringUtil.isBlank(treeTableModel.getTableName()) || StringUtil.isBlank(treeTableModel.getIdField())
 				|| StringUtil.isBlank(treeTableModel.getPidField())) {
 			logger.error("请设置树形表的table名称、id字段名称、pid字段名称!");
@@ -888,12 +946,12 @@ public class SqlUtil {
 					.concat(treeTableModel.getNodeRouteField()).concat(" from ").concat(treeTableModel.getTableName())
 					.concat(" where ").concat(treeTableModel.getIdField()).concat("=").concat(flag)
 					.concat(treeTableModel.getRootId().toString()).concat(flag);
-			//附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
+			// 附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(idInfoSql, null, null, null, conn, dbType, false);
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false, null);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -905,7 +963,7 @@ public class SqlUtil {
 					.append(" set ").append(treeTableModel.getNodeLevelField()).append("=?,")
 					.append(treeTableModel.getNodeRouteField()).append("=? ").append(" where ")
 					.append(treeTableModel.getIdField()).append("=?");
-			//附加条件
+			// 附加条件
 			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 				nextNodeQueryStr.append(" and ").append(treeTableModel.getConditions());
 				updateLevelAndRoute.append(" and ").append(treeTableModel.getConditions());
@@ -924,15 +982,15 @@ public class SqlUtil {
 				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
 					firstNextNodeQuery.append(" and ").append(treeTableModel.getConditions());
 				}
-				ids = findByJdbcQuery(firstNextNodeQuery.toString(), new Object[] { treeTableModel.getIdValue() }, null,
-						null, conn, dbType, false);
+				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
+						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false, null);
 			} else {
-				ids = findByJdbcQuery(nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false);
+				ids = findByJdbcQuery(typeHandler, nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
+						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false, null);
 			}
 			if (ids != null && !ids.isEmpty()) {
-				processNextLevel(updateLevelAndRoute.toString(), nextNodeQueryStr.toString(), treeTableModel, pidsMap,
-						ids, nodeLevel + 1, conn, dbType);
+				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
+						treeTableModel, pidsMap, ids, nodeLevel + 1, conn, dbType);
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
@@ -946,7 +1004,7 @@ public class SqlUtil {
 				updateLeafSql.append(" where ").append(treeTableModel.getConditions());
 			}
 			// 先将所有节点设置为叶子
-			executeSql(updateLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, true);
 
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
@@ -989,13 +1047,14 @@ public class SqlUtil {
 					updateTrunkLeafSql.append(" and ").append(treeTableModel.getConditions());
 				}
 			}
-			executeSql(updateTrunkLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, true);
 		}
 		return true;
 	}
 
 	/**
 	 * @todo TreeTableRoute中处理下一层级的递归方法，逐层计算下一级节点的节点层次和路径
+	 * @param typeHandler
 	 * @param updateLevelAndRoute
 	 * @param nextNodeQueryStr
 	 * @param treeTableModel
@@ -1006,11 +1065,11 @@ public class SqlUtil {
 	 * @param dbType
 	 * @throws Exception
 	 */
-	private static void processNextLevel(final String updateLevelAndRoute, final String nextNodeQueryStr,
-			final TreeTableModel treeTableModel, final HashMap pidsMap, List ids, final int nodeLevel, Connection conn,
-			final int dbType) throws Exception {
+	private static void processNextLevel(TypeHandler typeHandler, final String updateLevelAndRoute,
+			final String nextNodeQueryStr, final TreeTableModel treeTableModel, final HashMap pidsMap, List ids,
+			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
-		batchUpdateByJdbc(updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
+		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
 			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
@@ -1084,11 +1143,11 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 
 			// 获取下一层节点
-			nextIds = findByJdbcQuery(nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null, null, conn,
-					dbType, false);
+			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
+					null, conn, dbType, false, null);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
-				processNextLevel(updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
+				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
 						CollectionUtil.hashList(subIds, 0, 1, true), nextIds, nodeLevel + 1, conn, dbType);
 			}
 			if (exist) {
@@ -1211,6 +1270,7 @@ public class SqlUtil {
 
 	/**
 	 * @todo 执行Sql语句完成修改操作
+	 * @param typeHandler
 	 * @param executeSql
 	 * @param params
 	 * @param paramsType
@@ -1220,8 +1280,9 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long executeSql(final String executeSql, final Object[] params, final Integer[] paramsType,
-			final Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
+	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
+			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit)
+			throws Exception {
 		SqlExecuteStat.showSql("execute sql=", executeSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
@@ -1236,9 +1297,9 @@ public class SqlUtil {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
-					setSqlServerParamsValue(conn, dbType, pst, params, paramsType, 0);
+					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
 				} else {
-					setParamsValue(conn, dbType, pst, params, paramsType, 0);
+					setParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
 				}
 				pst.executeUpdate();
 				// 返回update的记录数量
@@ -1364,6 +1425,8 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
+		if (StringUtil.isBlank(sql))
+			return sql;
 		String key = entityMeta.getTableName() + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {

@@ -39,6 +39,7 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
+import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -95,6 +96,14 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
+
+	/**
+	 * @TODO 通过POJO产生count语句
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public Long getCount(Class entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @todo 存储过程调用
@@ -314,21 +323,21 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
-	 * @param resultType
+	 * @param entityClass
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> List<T> findEntity(Class<T> resultType, EntityQuery entityQuery);
+	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @TODO 单表分页查询
 	 * @param <T>
-	 * @param resultType
+	 * @param entityClass
 	 * @param paginationModel
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> PaginationModel<T> findEntity(Class<T> resultType, final PaginationModel paginationModel,
+	public <T> PaginationModel<T> findEntity(Class<T> entityClass, final PaginationModel paginationModel,
 			EntityQuery entityQuery);
 
 	/**
@@ -438,7 +447,8 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed 如果sql是select * from table where xxx=?
 	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
-	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class,Array.class
+	 *                    返回List<Object[])
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue,
@@ -809,11 +819,11 @@ public interface SqlToyLazyDao {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param maxWaitSeconds
+	 * @param parallelConfig
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
-			Object[] paramValues, Integer maxWaitSeconds);
+			Object[] paramValues, ParallelConfig parallelConfig);
 
 	/**
 	 * @TODO 提供基于Map传参的并行查询
@@ -823,6 +833,17 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap);
+
+	/**
+	 * @TODO 提供基于Map传参的并行查询,并提供并行线程数、最大等待时长等参数设置
+	 * @param <T>
+	 * @param parallQueryList
+	 * @param paramsMap
+	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @return
+	 */
+	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
+			ParallelConfig parallelConfig);
 
 	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
 

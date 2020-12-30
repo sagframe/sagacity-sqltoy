@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * @description 基于postgresql9.5+版本的方言实现,9.5开始insert into [ON CONFLICT DO
  *              NOTHING/UPDATE]功能生效
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:PostgreSqlDialect.java,Revision:v1.0,Date:2015年8月10日
+ * @version v1.0,Date:2015年8月10日
  * @modify Date:2019-3-12
  *         修复saveOrUpdate的缺陷,改为先update后saveIgnore，因为其跟mysql一样存在bug
  * @modify Date:2020-06-12 修复10+版本对identity主键生成的策略
@@ -324,7 +324,6 @@ public class PostgreSqlDialect implements Dialect {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.lang.String[],
 	 * java.sql.Connection, java.lang.Boolean)
 	 */
-	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
@@ -341,6 +340,28 @@ public class PostgreSqlDialect implements Dialect {
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
 	}
+
+//	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+//			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
+//			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+//			throws Exception {
+//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+//		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
+//				new GenerateSqlHandler() {
+//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+//						PKStrategy pkStrategy = entityMeta.getIdStrategy();
+//						String sequence = "nextval('" + entityMeta.getSequence() + "')";
+//						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
+//						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
+//							// 伪造成sequence模式
+//							pkStrategy = PKStrategy.SEQUENCE;
+//							sequence = "DEFAULT";
+//						}
+//						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
+//								sequence, forceUpdateFields, tableName);
+//					}
+//				}, reflectPropertyHandler, conn, dbType, autoCommit);
+//	}
 
 	/*
 	 * (non-Javadoc)

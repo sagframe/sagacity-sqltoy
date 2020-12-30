@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
@@ -36,7 +38,7 @@ import com.alibaba.fastjson.JSONObject;
  * @project sagacity-sqltoy4.2
  * @description 缓存刷新检测接口定义
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:TranslateFactory.java,Revision:v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018年3月8日
  */
 public class TranslateFactory {
 	/**
@@ -94,12 +96,12 @@ public class TranslateFactory {
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
-		return DialectFactory.getInstance()
-				.findByQuery(sqlToyContext,
-						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
-								new Object[] { new Date(preCheckTime.getTime()) }),
-						sqlToyConfig, null, StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource()
-								: sqlToyContext.getDataSourceBean(dataSourceName))
+		return DialectFactory.getInstance().findByQuery(sqlToyContext,
+				new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
+						new Object[] { new Date(preCheckTime.getTime()) }),
+				sqlToyConfig, null,
+				StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource())
+						: sqlToyContext.getDataSourceBean(dataSourceName))
 				.getRows();
 	}
 
@@ -296,10 +298,14 @@ public class TranslateFactory {
 			queryExecutor = new QueryExecutor(cacheModel.getSql(), sqlToyConfig.getParamsName(),
 					new Object[] { cacheType.trim() });
 		}
-		return DialectFactory.getInstance()
-				.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
-						StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource()
-								: sqlToyContext.getDataSourceBean(dataSourceName))
+		DataSource dataSource = null;
+		if (StringUtil.isNotBlank(dataSourceName)) {
+			dataSource = sqlToyContext.getDataSourceBean(dataSourceName);
+		}
+		if (null == dataSource) {
+			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
+		}
+		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
 				.getRows();
 	}
 
