@@ -19,6 +19,7 @@ public abstract class PreparedStatementResultHandler {
 	private Object result;
 
 	/**
+	 * @TODO 执行pst
 	 * @param rowData
 	 * @param pst
 	 * @param rs

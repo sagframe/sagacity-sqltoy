@@ -8,5 +8,9 @@ package org.sagacity.sqltoy.callback;
  * @modify 2020-10-15,修改说明
  */
 public abstract class SelectFields {
+	/**
+	 * @TODO 获取最终查询字段
+	 * @return
+	 */
 	public abstract String[] getSelectFields();
 }

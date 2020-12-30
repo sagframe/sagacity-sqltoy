@@ -94,8 +94,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * 取回
-	 * 
+	 * @TODO 取回结果
 	 * @return
 	 */
 	public Object[] getRowData() {
@@ -103,8 +102,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * 反射过程中调用，提供交互数据
-	 * 
+	 * @TODO 反射过程中调用，提供交互数据
 	 * @param rowData
 	 */
 	public void setRowData(Object[] rowData) {
@@ -120,8 +118,7 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
-	 * @param rowList
-	 *            the rowList to set
+	 * @param rowList the rowList to set
 	 */
 	public void setRowList(List rowList) {
 		this.isArray = false;
