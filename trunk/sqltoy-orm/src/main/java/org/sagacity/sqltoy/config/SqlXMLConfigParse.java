@@ -1049,11 +1049,7 @@ public class SqlXMLConfigParse {
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {
-						if (uncachedTemplate.trim().equals("")) {
-							translateModel.setUncached(null);
-						} else {
-							translateModel.setUncached(uncachedTemplate);
-						}
+						translateModel.setUncached(uncachedTemplate);
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
