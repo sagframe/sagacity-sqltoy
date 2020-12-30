@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
  * @project sqltoy-orm
  * @description 转换to_date函数
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ToDate.java,Revision:v1.0,Date:2013-1-2
+ * @version v1.0,Date:2013-1-2
  */
 public class ToDate extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_date\\(");

@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description 不同数据库substr函数的转化
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Substring.java,Revision:v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-3-21
  */
 public class SubStr extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");

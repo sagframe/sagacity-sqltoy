@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @project sqltoy-orm
  * @description sqltoy entity 对象字段注解定义
  * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:Column.java,Revision:v1.0,Date:2012-5-25 
+ * @version v1.0,Date:2012-5-25
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -35,7 +35,7 @@ public @interface Column {
 	// 小数位长度
 	int scale() default 0;
 
-	//是否是关键词(目前没有使用)
+	// 是否是关键词(目前没有使用)
 	boolean keyword() default false;
 
 	// 默认值

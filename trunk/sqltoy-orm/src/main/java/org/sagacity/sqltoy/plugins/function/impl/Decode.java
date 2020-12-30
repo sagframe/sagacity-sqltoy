@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @project sqltoy-orm
  * @description oracle decode函数
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Decode.java,Revision:v1.0,Date:2013-1-2
+ * @version v1.0,Date:2013-1-2
  */
 public class Decode extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wdecode\\(");

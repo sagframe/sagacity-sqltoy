@@ -37,7 +37,7 @@ import com.alibaba.fastjson.JSONObject;
  * @project sagacity-sqltoy4.1
  * @description elasticSearch的插件
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ElasticSearchPlugin.java,Revision:v1.0,Date:2018年1月3日
+ * @version v1.0,Date:2018年1月3日
  */
 public class ElasticSearchPlugin {
 	/**

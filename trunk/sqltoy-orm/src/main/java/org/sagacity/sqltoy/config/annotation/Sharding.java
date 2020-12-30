@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @project sagacity-sqltoy4.0
  * @description 数据库分库分表注解
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Sharding.java,Revision:v1.0,Date:2017年11月5日
+ * @version v1.0,Date:2017年11月5日
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
