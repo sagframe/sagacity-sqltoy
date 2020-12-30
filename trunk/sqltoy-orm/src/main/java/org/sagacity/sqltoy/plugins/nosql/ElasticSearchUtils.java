@@ -31,7 +31,7 @@ import com.alibaba.fastjson.JSONObject;
 /**
  * @project sagacity-sqltoy4.1
  * @description 提供es执行过程处理的工具方法
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年1月8日
  */
 public class ElasticSearchUtils {

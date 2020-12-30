@@ -28,7 +28,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 /**
  * @project sqltoy-orm
  * @description clickhouse 19.x版本,clickhouse 不支持update,更多面向查询
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020年1月20日
  */
 public class ClickHouseDialect implements Dialect {

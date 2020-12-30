@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @project sagacity-sqltoy
  * @description 便于在代码中为查询设置参数值过滤
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
  * @modify 2020年7月30日,修改说明
  */

@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 /**
  * @project sagacity-sqltoy
  * @description 数据库preparedStatement处理反调抽象类,用来处理result
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2009-3-20
  */
 public abstract class PreparedStatementResultHandler {

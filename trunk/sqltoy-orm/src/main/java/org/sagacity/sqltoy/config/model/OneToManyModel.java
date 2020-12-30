@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description OneToMany数据库主子表级联关系配置
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:OneToManyModel.java,Revision:v1.0,Date:2012-9-5
+ * @author zhongxuchen
+ * @version v1.0,Date:2012-9-5
  */
 @SuppressWarnings("rawtypes")
 public class OneToManyModel implements Serializable {

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @project sagacity-sqltoy4.0
  * @description 批量数据操作分组分库分表模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日
  */
 public class ShardingGroupModel implements Serializable {

@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContext;
 /**
  * @project sqltoy-orm
  * @description 提供默认获取数据源的策略(单一数据源直接返回)
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020年7月11日
  */
 public class DefaultObtainDataSource implements ObtainDataSource {

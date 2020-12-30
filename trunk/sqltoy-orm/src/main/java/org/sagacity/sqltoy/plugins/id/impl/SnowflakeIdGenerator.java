@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 /**
  * @project sagacity-sqltoy3.2
  * @description 基于twitter的分布式自增ID生成策略
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年3月21日
  */
 public class SnowflakeIdGenerator implements IdGenerator {

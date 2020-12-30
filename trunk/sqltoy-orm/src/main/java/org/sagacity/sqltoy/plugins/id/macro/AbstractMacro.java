@@ -8,7 +8,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 /**
  * @project sqltoy-orm
  * @description 提供抽象的宏处理类
- * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年6月23日
  */
 public abstract class AbstractMacro {

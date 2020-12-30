@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @project sagacity-sqltoy4.0
  * @description 用来批量设置集合中对象的属性值(jdk8 流式操作之后该类意义已经不大)
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2012-8-17
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })

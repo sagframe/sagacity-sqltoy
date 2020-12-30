@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.model.ParallQueryResult;
 /**
  * @project sagacity-sqltoy
  * @description 并行查询执行器
- * @author zhongxuchen@hotmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020-8-25
  * @modify 2020-8-25,修改说明
  */

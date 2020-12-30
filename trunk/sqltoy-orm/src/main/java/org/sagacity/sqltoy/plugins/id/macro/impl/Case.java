@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 /**
  * @project sagacity-sqltoy4.2
  * @description 进行类似oracle decode 数据枚举判断
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年5月25日
  */
 public class Case extends AbstractMacro {

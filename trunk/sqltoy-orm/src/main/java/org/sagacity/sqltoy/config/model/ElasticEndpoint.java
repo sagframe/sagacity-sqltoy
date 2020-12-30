@@ -25,8 +25,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sagacity-sqltoy4.0
  * @description es配置
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ElasticConfig.java,Revision:v1.0,Date:2018年2月5日
+ * @author zhongxuchen
+ * @version v1.0,Date:2018年2月5日
  */
 public class ElasticEndpoint implements Serializable {
 

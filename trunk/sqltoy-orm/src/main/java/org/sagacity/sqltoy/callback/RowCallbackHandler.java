@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @project sagacity-sqltoy
  * @description 行结果集反调处理接口，提供给开发者自行对行进行处理(已经极少使用)
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-12-9
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })

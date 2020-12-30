@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sagacity-sqltoy
  * @description 将原本DialectUtils中的部分功能抽离出来,从而避免DialectUtils跟一些类之间的互相调用
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
  * @modify 2020年7月30日,修改说明
  */

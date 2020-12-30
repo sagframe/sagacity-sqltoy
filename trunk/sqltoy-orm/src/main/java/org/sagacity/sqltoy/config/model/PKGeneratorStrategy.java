@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description 数据库主键生成策略
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:PKGeneratorStrategy.java,Revision:v1.0,Date:2012-6-7 下午2:43:26
+ * @author zhongxuchen
+ * @version v1.0,Date:2012-6-7 下午2:43:26
  */
 public class PKGeneratorStrategy implements Serializable {
 	/**

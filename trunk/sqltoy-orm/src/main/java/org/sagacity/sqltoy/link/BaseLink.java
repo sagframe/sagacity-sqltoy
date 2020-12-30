@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sagacity-sqltoy
  * @description 基础操作类
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
 public abstract class BaseLink implements Serializable {

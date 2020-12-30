@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.model.ShardingDBModel;
 /**
  * @project sqltoy-orm
  * @description sharding 策略接口
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年3月17日
  */
 public interface ShardingStrategy {

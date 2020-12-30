@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sqltoy-orm
  * @description 数据库判断空的处理逻辑函数转换
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-4-12
  * @modify Date:2013-4-12 {填写修改说明}
  */

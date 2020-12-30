@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.executor.UniqueExecutor;
 /**
  * @project sagacity-sqltoy
  * @description 唯一性验证操作
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
 public class Unique extends BaseLink {

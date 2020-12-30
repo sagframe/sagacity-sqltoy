@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 分页优化配置
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020-8-4
  * @modify 2020-8-4,修改说明
  */

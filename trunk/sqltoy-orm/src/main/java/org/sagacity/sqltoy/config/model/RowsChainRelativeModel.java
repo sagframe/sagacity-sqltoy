@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 集合行与行之间环比计算
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ColsChainRelativeModel.java,Revision:v1.0,Date:2020年3月24日
+ * @author zhongxuchen
+ * @version v1.0,Date:2020年3月24日
  */
 public class RowsChainRelativeModel implements Serializable {
 	/**

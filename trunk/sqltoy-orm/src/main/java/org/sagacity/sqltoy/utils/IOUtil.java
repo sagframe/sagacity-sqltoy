@@ -18,7 +18,7 @@ import java.util.Iterator;
 /**
  * @project sagacity-core
  * @description 输入输出IO工具类
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-12-14
  */
 @SuppressWarnings("rawtypes")

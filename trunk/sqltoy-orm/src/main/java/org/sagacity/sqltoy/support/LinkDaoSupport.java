@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 /**
  * @project sagacity-sqltoy
  * @description 全部采用链式编程模式,将不同类型的操作区分开，同时保持support代码的简洁和可读性
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
 public class LinkDaoSupport {

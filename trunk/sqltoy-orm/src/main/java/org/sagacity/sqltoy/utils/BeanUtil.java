@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 类处理通用工具,提供反射处理
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-11-10
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
