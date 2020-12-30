@@ -11,8 +11,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description sqltoy sql.xml中定义的翻译器参数模型
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-4-8
+ * @author zhongxuchen
+ * @version v1.0,Date:2013-4-8
  * @modify Date:2013-4-8 {填写修改说明}
  */
 public class Translate implements Serializable {

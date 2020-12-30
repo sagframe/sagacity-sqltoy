@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy4.1
  * @description 基于mongo或elasticSearch的配置
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:NoSqlConfigModel.java,Revision:v1.0,Date:2018年1月3日
+ * @author zhongxuchen
+ * @version v1.0,Date:2018年1月3日
  */
 public class NoSqlConfigModel implements Serializable {
 

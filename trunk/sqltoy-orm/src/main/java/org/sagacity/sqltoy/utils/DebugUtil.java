@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * @project sagacity-sqltoy
  * @description 用于debug提供输出工具以及执行时间统计
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2010-8-18
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description sql查询参数过滤
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-3-23
  * @modify Date:2020-7-15 {增加l-like,r-like为参数单边补充%从而不破坏索引,默认是两边}
  */

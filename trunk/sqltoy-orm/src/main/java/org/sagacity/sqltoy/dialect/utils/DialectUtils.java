@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sqltoy-orm
  * @description 提供一些不同数据库都通用的逻辑处理,避免在各个数据库工具类中写重复代码
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2014年12月26日
  * @modify {Date:2017-2-24,优化count sql处理逻辑,排除统计型查询导致的问题,本质统计性查询不应该用分页方式查询}
  * @modify {Date:2018-1-6,优化对数据库表字段默认值的处理,提供统一的处理方法}

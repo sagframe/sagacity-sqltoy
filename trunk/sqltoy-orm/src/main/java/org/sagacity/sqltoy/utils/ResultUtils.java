@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
  * @modify Date:2020-05-29 {将脱敏和格式化转到calculate中,便于elastic和mongo查询提供同样的功能}

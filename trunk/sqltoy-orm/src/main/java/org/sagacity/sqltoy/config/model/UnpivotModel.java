@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 列传行配置模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:UnpivotModel.java,Revision:v1.0,Date:2015年12月20日
+ * @author zhongxuchen
+ * @version v1.0,Date:2015年12月20日
  */
 public class UnpivotModel implements Serializable {
 

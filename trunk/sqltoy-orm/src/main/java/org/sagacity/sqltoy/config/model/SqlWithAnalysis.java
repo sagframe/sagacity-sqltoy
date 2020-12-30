@@ -15,8 +15,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description Sql语句中存在with的分析,只支持单个with 但支持多个as
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-6-20
+ * @author zhongxuchen
+ * @version v1.0,Date:2013-6-20
  * @modify Date:2019-7-22 优化with as 语法解析格式 ,其格式包含:with xx as (); with xx as xx
  *         () ; with xxx(p1,p2) as () 三种形态
  * @modify Date:2020-1-16 支持mysql8.0.19 开始的with recursive cte as

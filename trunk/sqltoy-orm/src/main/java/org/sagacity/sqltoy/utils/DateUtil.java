@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.0
  * @description 日期处理支持类，提供日常工作中的所有日期的操作处理
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-12-14
  * @modify data:2012-8-27 {对日期的格式化增加了locale功能}
  * @modify data:2015-8-8

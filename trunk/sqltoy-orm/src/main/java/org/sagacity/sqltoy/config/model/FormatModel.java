@@ -9,8 +9,8 @@ import java.math.RoundingMode;
 /**
  * @project sagacity-sqltoy4.2
  * @description 格式化参数模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:FormatModel.java,Revision:v1.0,Date:2018年6月26日
+ * @author zhongxuchen
+ * @version v1.0,Date:2018年6月26日
  */
 public class FormatModel implements Serializable {
 

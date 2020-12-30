@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy4.2
  * @description 时间区间模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年3月12日
  */
 public class TimeSection implements Serializable {

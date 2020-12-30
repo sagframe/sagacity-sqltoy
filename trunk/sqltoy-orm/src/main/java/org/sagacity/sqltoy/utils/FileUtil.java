@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-core
  * @description 文件处理工具类
- * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2008-11-7
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })

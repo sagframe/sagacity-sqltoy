@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy4.0
  * @description 存储过程返回结果集
- * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2009-12-25
  */
 public class StoreResult<T> extends DataSetResult<T> implements Serializable {

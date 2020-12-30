@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy4.2
  * @description 基于缓存条件筛选的配置模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:CacheFilterModel.java,Revision:v1.0,Date:2019年1月13日
+ * @author zhongxuchen
+ * @version v1.0,Date:2019年1月13日
  */
 public class CacheFilterModel implements Serializable {
 	

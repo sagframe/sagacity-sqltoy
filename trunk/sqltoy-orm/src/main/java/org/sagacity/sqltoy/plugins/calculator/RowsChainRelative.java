@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description 对集合数据以行与行之间的比较(环比计算)
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
 public class RowsChainRelative {

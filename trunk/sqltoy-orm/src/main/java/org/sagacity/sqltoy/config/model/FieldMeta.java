@@ -10,8 +10,8 @@ import org.sagacity.sqltoy.SqlToyConstants;
 /**
  * @project sqltoy-orm
  * @description 数据库表字段的描述信息
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:FieldMeta.java,Revision:v1.0,Date:2012-6-1 下午5:09:48
+ * @author zhongxuchen
+ * @version v1.0,Date:2012-6-1 下午5:09:48
  */
 public class FieldMeta implements Serializable {
 	/**

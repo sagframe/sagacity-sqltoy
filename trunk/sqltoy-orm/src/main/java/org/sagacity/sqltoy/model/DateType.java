@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.model;
 /**
  * @project sagacity-sqltoy
  * @description 用于ParamFilters中的日期处理
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020年7月30日
  * @modify 2020年7月30日,修改说明
  */

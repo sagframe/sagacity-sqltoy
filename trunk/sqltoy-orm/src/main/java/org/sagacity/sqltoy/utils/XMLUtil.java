@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 /**
  * @project sagacity-sqltoy
  * @description xml处理的工具类,提供xml对应schema validator等功能
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2009-4-27
  */
 public class XMLUtil {

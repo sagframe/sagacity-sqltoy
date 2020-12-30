@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 /**
  * @project sqltoy-orm
  * @description 对集合进行分组汇总计算
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
 public class GroupSummary {

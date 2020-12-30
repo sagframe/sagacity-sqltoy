@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.model.TreeTableModel;
 /**
  * @project sagacity-sqltoy
  * @description 树形表封装操作
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
 public class TreeTable extends BaseLink {

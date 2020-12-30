@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sqltoy-orm
  * @description 针对mysql数据库字符连接函数concat在其它数据库中的函数转换
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-3-21
  */
 public class Concat extends IFunction {

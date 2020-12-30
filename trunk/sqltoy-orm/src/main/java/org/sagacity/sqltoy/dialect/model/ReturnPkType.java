@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.dialect.model;
 /**
  * @project sqltoy-orm
  * @description 主键返回策略
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年3月19日
  */
 public enum ReturnPkType {

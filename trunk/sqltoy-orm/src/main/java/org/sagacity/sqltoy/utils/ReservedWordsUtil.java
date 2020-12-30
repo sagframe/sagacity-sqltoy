@@ -9,7 +9,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sagacity-sqltoy
  * @description 用来处理sql中的数据库保留字
- * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2020-05-06
  */
 public class ReservedWordsUtil {

@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description sql和解析参数后的模型,用于存放sql和sql中的参数名称数值
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlParamsModel.java,Revision:v1.0,Date:2015年1月9日
+ * @author zhongxuchen
+ * @version v1.0,Date:2015年1月9日
  */
 public class SqlParamsModel implements Serializable {
 

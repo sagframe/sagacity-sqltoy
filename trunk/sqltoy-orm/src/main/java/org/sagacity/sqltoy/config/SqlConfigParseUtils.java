@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description 提供sqlToy 针对sql语句以及查询条件加工处理的通用函数(sqltoy中最关键的sql加工)
- * @author chenrf <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2009-12-14
  * @modify {Date:2010-6-10, 修改replaceNull函数}
  * @modify {Date:2011-6-4, 修改了因sql中存在":"符号导致的错误}

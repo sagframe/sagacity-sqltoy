@@ -49,8 +49,8 @@ import org.springframework.stereotype.Repository;
 /**
  * @project sqltoy-orm
  * @description SqlToyLazyDao提供的通用Dao逻辑实现
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlToyLazyDaoImpl.java,Revision:v1.0,Date:2012-7-15
+ * @author zhongxuchen
+ * @version v1.0,Date:2012-7-15
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")

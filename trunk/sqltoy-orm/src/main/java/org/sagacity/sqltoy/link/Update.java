@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 /**
  * @project sagacity-sqltoy
  * @description 数据修改操作
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月9日
  */
 public class Update extends BaseLink {

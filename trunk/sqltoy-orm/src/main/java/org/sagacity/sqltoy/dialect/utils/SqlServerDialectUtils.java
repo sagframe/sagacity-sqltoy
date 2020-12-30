@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sqltoy-orm
  * @description 提供基于sqlserver这种广泛应用的数据库通用的逻辑处理,避免大量重复代码
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2014年12月26日
  * @modify Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */

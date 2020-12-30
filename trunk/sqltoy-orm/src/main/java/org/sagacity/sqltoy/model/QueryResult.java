@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy4.0
  * @description 所有查询的结果形态模型
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2014年12月14日
  */
 public class QueryResult<T> extends DataSetResult<T> implements Serializable {

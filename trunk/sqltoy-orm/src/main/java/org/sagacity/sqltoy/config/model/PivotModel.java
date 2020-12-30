@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description 旋转定义模型
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-5-17
+ * @author zhongxuchen
+ * @version v1.0,Date:2013-5-17
  * @modify Date:2013-5-17 {填写修改说明}
  */
 public class PivotModel implements Serializable {

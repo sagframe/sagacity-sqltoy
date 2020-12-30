@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 /**
  * @project sagacity-sqltoy
  * @description DTO(或VO)和POJO 属性映射关系模型,便于放入缓存快速提取
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020年8月8日
  * @modify 2020年8月8日,修改说明
  */

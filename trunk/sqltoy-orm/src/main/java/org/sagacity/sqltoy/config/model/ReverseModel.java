@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 集合反转
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ReverseModel.java,Revision:v1.0,Date:2020年3月24日
+ * @author zhongxuchen
+ * @version v1.0,Date:2020年3月24日
  */
 public class ReverseModel implements Serializable {
 

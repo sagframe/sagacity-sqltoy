@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * @project sagacity-sqltoy
  * @description 日期格式化
- * @author zhong
+ * @author zhongxuchen
  * @version v1.0, Date:2019年9月9日
  * @modify 2019年9月9日,修改说明
  */

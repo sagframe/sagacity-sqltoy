@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
- * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-5-17
+ * @author zhongxuchen
+ * @version v1.0,Date:2013-5-17
  * @modify Date:2013-5-17 {填写修改说明}
  */
 public class SummaryModel implements Serializable {

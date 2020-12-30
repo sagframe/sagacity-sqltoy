@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.model.SaveMode;
 /**
  * @project sagacity-sqltoy
  * @description 提供一个集成SqlToyDaoSupport的功能，同时也提供linkDaoSupport的功能的合集
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2017年10月30日
  */
 public class BaseDaoSupport extends SqlToyDaoSupport {

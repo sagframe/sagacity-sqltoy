@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 集合列与列环比计算(一般跟pivot行转列结合使用)
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ColsChainRelativeModel.java,Revision:v1.0,Date:2020年3月24日
+ * @author zhongxuchen
+ * @version v1.0,Date:2020年3月24日
  */
 public class ColsChainRelativeModel implements Serializable {
 

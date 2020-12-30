@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description 解析sql配置文件，并放入缓存
- * @author chenrenfei <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2009-12-13
  * @modify Date:2013-6-14 {修改了sql文件搜寻机制，兼容jar目录下面的查询}
  * @modify Date:2019-08-25 增加独立的文件变更检测程序用于重新加载sql

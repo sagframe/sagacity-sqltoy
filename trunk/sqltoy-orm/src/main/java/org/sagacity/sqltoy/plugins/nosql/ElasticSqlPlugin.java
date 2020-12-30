@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy4.1
  * @description elasticsearch-sql 或elasticsearch6.3.x 版本支持xpack sql查询
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2018年1月3日
  */
 public class ElasticSqlPlugin {

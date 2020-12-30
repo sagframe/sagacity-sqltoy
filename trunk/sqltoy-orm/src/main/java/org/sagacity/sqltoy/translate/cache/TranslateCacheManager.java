@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 /**
  * @project sagacity-sqltoy4.0
  * @description translate 翻译缓存管理接口定义，为基于其他缓存框架的实现提供接口规范
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2013-4-14
  */
 public abstract class TranslateCacheManager {

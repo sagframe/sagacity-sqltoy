@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 用于存放map转换后的named和values数据模型
- * @author zhongxuchen@hotmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020-9-10
  * @modify 2020-9-10,修改说明
  */

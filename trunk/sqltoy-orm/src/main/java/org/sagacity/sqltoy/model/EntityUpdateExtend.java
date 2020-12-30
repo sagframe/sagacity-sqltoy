@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 /**
  * @project sagacity-sqltoy
  * @description EntityUpdate内部扩展类，便于隐藏属性避免暴露过多get方法
- * @author zhongxuchen@gmail.com
+ * @author zhongxuchen
  * @version v1.0, Date:2020-8-7
  * @modify 2020-8-7,修改说明
  */

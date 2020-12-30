@@ -21,7 +21,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
 /**
  * @project sqltoy-orm
  * @description 提供db2数据库通用的操作功能实现,为不同版本提供支持
- * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2015年2月28日
  */
 public class DB2DialectUtils {

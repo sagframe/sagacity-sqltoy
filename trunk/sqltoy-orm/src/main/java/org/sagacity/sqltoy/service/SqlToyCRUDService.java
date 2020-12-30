@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @project sqltoy-orm
  * @description 通过SqlToy提供通用的增删改查操作Service接口,从而减少针对一些非常
  *              简单的操作自行编写service实现，减少了代码开发量
- * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
+ * @author zhongxuchen
  * @version v1.0,Date:2012-7-16
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  */

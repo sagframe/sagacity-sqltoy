@@ -8,8 +8,8 @@ import java.io.Serializable;
 /**
  * @project sqltoy-orm
  * @description 通过sqlToy工具处理后查询条件以及sql语句的最终结果
- * @author chenrf <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:SqlToyResult.java,Revision:v1.0,Date:2009-12-13 下午03:16:59
+ * @author zhongxuchen
+ * @version v1.0,Date:2009-12-13 下午03:16:59
  */
 public class SqlToyResult implements Serializable {
 	/**
