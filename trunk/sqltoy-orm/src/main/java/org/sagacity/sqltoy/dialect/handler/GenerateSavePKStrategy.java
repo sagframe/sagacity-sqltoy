@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
  * @project sagacity-sqltoy4.0
  * @description 定义产生主键策略的抽象类,用于反调方式进行自定义灵活实现
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:GenerateSavePKStrategy.java,Revision:v1.0,Date:2015年3月19日
+ * @version v1.0,Date:2015年3月19日
  */
 public abstract class GenerateSavePKStrategy {
 	/**

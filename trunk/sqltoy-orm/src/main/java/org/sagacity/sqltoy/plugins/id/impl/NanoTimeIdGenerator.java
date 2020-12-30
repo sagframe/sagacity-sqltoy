@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.utils.SqlUtil;
  * @project sagacity-sqltoy
  * @description 产生26位顺序id;15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:NanoTimeIdGenerator.java,Revision:v1.0,Date:2017年9月27日
+ * @version v1.0,Date:2017年9月27日
  */
 public class NanoTimeIdGenerator implements IdGenerator {
 	private static IdGenerator me = new NanoTimeIdGenerator();

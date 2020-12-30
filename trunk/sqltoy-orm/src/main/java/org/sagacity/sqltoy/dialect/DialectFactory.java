@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:DialectFactory.java,Revision:v1.0,Date:2014年12月11日
+ * @version v1.0,Date:2014年12月11日
  * @modify data:2020-06-05 增加dm(达梦)数据库支持
  * @modify data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
  */

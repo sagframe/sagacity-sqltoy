@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description oracle12c+以及更高版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-8-29
+ * @version v1.0,Date:2013-8-29
  * @modify Date:2017-5-22 修复分页和top在order by 情况下的bug
  */
 @SuppressWarnings({ "rawtypes" })

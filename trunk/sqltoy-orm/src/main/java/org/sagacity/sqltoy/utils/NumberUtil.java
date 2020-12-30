@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  *              <li>提供字符串表达式函数的执行</li>
  *              <li>提供金额、数字的大小写互转功能</li>
  * @author zhongxuchen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:NumberUtil.java,Revision:v1.0,Date:Oct 18, 2007 9:19:50 AM
+ * @version v1.0,Date:Oct 18, 2007 9:19:50 AM
  */
 public class NumberUtil {
 	/**

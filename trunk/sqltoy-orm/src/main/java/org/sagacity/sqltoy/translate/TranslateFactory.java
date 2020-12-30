@@ -38,7 +38,7 @@ import com.alibaba.fastjson.JSONObject;
  * @project sagacity-sqltoy4.2
  * @description 缓存刷新检测接口定义
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:TranslateFactory.java,Revision:v1.0,Date:2018年3月8日
+ * @version v1.0,Date:2018年3月8日
  */
 public class TranslateFactory {
 	/**

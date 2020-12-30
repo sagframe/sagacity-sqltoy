@@ -13,7 +13,7 @@ import java.util.List;
  * @description 提供针对sql中 @if(:paramName1>=value1 && :paramName2!=value2)
  *              性质的逻辑判断,返回true或false,适用于sql和mongo等所有查询语句中使用
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MacroIfLogic.java,Revision:v1.0,Date:2017年12月9日
+ * @version v1.0,Date:2017年12月9日
  * @modify {Date:2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性}
  * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
  * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}

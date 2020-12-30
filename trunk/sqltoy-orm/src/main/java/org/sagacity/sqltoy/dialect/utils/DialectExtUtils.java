@@ -388,7 +388,6 @@ public class DialectExtUtils {
 			}
 			sql.append(" ) DO NOTHING ");
 		}
-
 		return sql.toString();
 	}
 }

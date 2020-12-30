@@ -23,7 +23,7 @@ import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
  * @project sagacity-sqltoy4.1
  * @description 提供基于elasticSearch的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Elastic.java,Revision:v1.0,Date:2018年1月1日
+ * @version v1.0,Date:2018年1月1日
  */
 public class Elastic extends BaseLink {
 	/**

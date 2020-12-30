@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy4.1
  * @description 提供针对mongodb、elasticSearch集成的处理函数和逻辑
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MongoElasticUtils.java,Revision:v1.0,Date:2017年3月10日
+ * @version v1.0,Date:2017年3月10日
  */
 public class MongoElasticUtils {
 	/**

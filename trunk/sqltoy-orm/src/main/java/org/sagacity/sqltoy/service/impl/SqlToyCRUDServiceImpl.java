@@ -34,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @project sqltoy-orm
  * @description 提供默认的增删改查业务逻辑封装
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlToyCRUDServiceImpl.java,Revision:v1.0,Date:2012-7-16
+ * @version v1.0,Date:2012-7-16
  */
 @SuppressWarnings({ "rawtypes" })
 @Service("sqlToyCRUDService")

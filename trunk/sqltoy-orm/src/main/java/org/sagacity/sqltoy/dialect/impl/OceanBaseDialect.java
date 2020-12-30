@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 提供适配OceanBaseDialect数据库方言的实现(类似于oracle12+)
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:OceanBaseDialect.java,Revision:v1.0,Date:2020-6-9
+ * @version v1.0,Date:2020-6-9
  * @modify {Date:2020-6-9,初始创建}
  */
 public class OceanBaseDialect implements Dialect {

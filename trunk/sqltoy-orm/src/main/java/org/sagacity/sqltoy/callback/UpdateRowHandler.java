@@ -9,7 +9,7 @@ import java.sql.ResultSet;
  * @project sagacity-sqltoy
  * @description 提供对lock记录的结果集合进行修改的的反调方式,用于updateFetch
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:UpdateRowHandler.java,Revision:v1.0,Date:2015年4月4日
+ * @version v1.0,Date:2015年4月4日
  */
 @FunctionalInterface
 public interface UpdateRowHandler {

@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @project sqltoy-orm
  * @description 注解方式提供分页查询的sql语句或sql id
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:PaginationSql.java,Revision:v1.0,Date:2012-8-24
+ * @version v1.0,Date:2012-8-24
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

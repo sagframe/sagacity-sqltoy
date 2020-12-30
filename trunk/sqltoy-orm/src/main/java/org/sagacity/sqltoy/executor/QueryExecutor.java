@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description 构造统一的查询条件模型
  * @author renfei.chen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:QueryExecutor.java,Revision:v1.0,Date:2012-9-3
+ * @version v1.0,Date:2012-9-3
  */
 public class QueryExecutor implements Serializable {
 	/**

@@ -31,7 +31,7 @@ import oracle.jdbc.OracleTypes;
  * @project sqltoy-orm
  * @description 提供基于oracle广泛应用的数据库的一些通用的逻辑处理,避免大量重复代码
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:OracleDialectUtils.java,Revision:v1.0,Date:2014年12月26日
+ * @version v1.0,Date:2014年12月26日
  */
 @SuppressWarnings("rawtypes")
 public class OracleDialectUtils {

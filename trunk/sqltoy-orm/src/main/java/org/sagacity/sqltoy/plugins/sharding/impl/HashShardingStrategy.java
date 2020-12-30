@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
  * @project sagacity-sqltoy4.0
  * @description hash取模形式的分库策略
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:HashShardingStrategy.java,Revision:v1.0,Date:2017年11月1日
+ * @version v1.0,Date:2017年11月1日
  */
 public class HashShardingStrategy implements ShardingStrategy {
 

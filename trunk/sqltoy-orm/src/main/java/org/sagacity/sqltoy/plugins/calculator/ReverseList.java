@@ -9,7 +9,7 @@ import org.sagacity.sqltoy.model.LabelIndexModel;
  * @project sqltoy-orm
  * @description 对集合数据进行反转
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ReverseList.java,Revision:v1.0,Date:2020-3-25
+ * @version v1.0,Date:2020-3-25
  */
 public class ReverseList {
 	/**

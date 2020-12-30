@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description oracle11g以及以下版本数据库的各类分页、取随机数、saveOrUpdate,lock机制实现
  * @author zhongxuchen <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:Oracle11gDialect.java,Revision:v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-3-21
  */
 @SuppressWarnings({ "rawtypes" })
 public class Oracle11gDialect implements Dialect {

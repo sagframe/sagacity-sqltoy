@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 通过注解解析实体对象,得到其跟数据库表的对应关系,并形成相应表增删改查的语句
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:EntityManager.java,Revision:v1.0,Date:2012-6-1
+ * @version v1.0,Date:2012-6-1
  * @modify {Date:2017-10-13,分解之前的parseEntityMeta大方法,进行代码优化}
  * @modify {Date:2018-1-22,增加业务主键配置策略}
  * @modify {Date:2018-9-6,优化增强业务主键配置策略}
