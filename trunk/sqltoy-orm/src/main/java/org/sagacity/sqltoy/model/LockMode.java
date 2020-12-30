@@ -4,7 +4,7 @@ package org.sagacity.sqltoy.model;
  * @project sqltoy-orm
  * @description 定义数据库记录锁的类型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:LockMode.java,Revision:v1.0,Date:2015年3月5日
+ * @version v1.0,Date:2015年3月5日
  */
 public enum LockMode {
 	UPGRADE(1),

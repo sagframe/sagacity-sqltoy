@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * @description Sybase IQ数据库blob 长度过长的需要设置(set option
  *              public.ENABLE_LOB_VARIABLES='ON') url上需要指定参数：&textsize=204801024
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-8-29
+ * @version v1.0,Date:2013-8-29
  * @modify Date:2013-8-29 {填写修改说明}
  */
 @SuppressWarnings({ "rawtypes" })

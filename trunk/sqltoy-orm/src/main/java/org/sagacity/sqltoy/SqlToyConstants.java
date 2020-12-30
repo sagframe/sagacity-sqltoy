@@ -21,7 +21,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sagacity-sqltoy4.0
  * @description sqlToy的基础常量参数定义
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlToyConstants.java,Revision:v1.0,Date:2014年12月26日
+ * @version v1.0,Date:2014年12月26日
  */
 public class SqlToyConstants {
 	/**

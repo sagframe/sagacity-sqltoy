@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 扫描classes目录以及jar包中的class文件；以及扫描sql.xml文件
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:ScanEntityAndSqlResource.java,Revision:v1.0,Date:2012-6-10
+ * @version v1.0,Date:2012-6-10
  * @modify {Date:2017-10-28,修改getResourceUrls方法,返回枚举数组,修复maven做单元测试时只检测testClass路径的问题}
  * @modify {Date:2019-09-23,剔除根据方言剔除非本方言sql文件的逻辑,实践证明这个功能价值很低}
  * @modify {Date:2020-03-13,调整sql加载策略,jar包中的优先加载,classes下面的加载顺序在jar后面,便于增量发版覆盖}

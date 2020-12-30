@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @project sqltoy-orm
  * @description sqlserver2012以及更新版本的数据库操作实现
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlServerDialect.java,Revision:v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-3-21
  * @modify Date:2020-2-5 废弃对sqlserver2008 的支持,最低版本为2012版
  */
 @SuppressWarnings({ "rawtypes" })

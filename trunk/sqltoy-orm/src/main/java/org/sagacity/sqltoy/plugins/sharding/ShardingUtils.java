@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 提取sharding表和DataSource
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ShardingUtils.java,Revision:v1.0,Date:2014年12月7日
+ * @version v1.0,Date:2014年12月7日
  * @modify Date:2016-9-7 {修复matchReplace方法,解决因表名大小写未匹配无法替换表名错误}
  */
 @SuppressWarnings("rawtypes")

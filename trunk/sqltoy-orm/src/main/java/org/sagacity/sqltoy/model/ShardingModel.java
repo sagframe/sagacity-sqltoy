@@ -11,7 +11,7 @@ import javax.sql.DataSource;
  * @project sagacity-sqltoy4.0
  * @description 单一分库分表模型
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:ShardingModel.java,Revision:v1.0,Date:2017年11月6日
+ * @version v1.0,Date:2017年11月6日
  */
 public class ShardingModel implements Serializable {
 	/**

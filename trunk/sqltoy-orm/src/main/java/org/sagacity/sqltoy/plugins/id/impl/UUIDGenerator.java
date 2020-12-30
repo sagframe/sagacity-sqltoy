@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.IdUtil;
  * @project sqltoy-orm
  * @description 产生32位UUID字符串
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version id:UUIDGenerator.java,Revision:v1.0,Date:2012-6-4
+ * @version v1.0,Date:2012-6-4
  */
 public class UUIDGenerator implements IdGenerator {
 	private static IdGenerator me = new UUIDGenerator();

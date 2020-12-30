@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *              临时表不能在一次查询中多次引用,报reopen table 错误,因此mysql 中没有很好的机制来兼容with as语法)
  *              mysql8.x版本开始已经支持with as语法。
  * @author zhongxu <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MySqlDialect.java,Revision:v1.0,Date:2013-3-21
+ * @version v1.0,Date:2013-3-21
  * @modify {Date:2018-5-19,修改saveOrUpdate为先update后saveIgnore，因为mysql on
  *         duplicate key update 非空字段修改报错}
  */

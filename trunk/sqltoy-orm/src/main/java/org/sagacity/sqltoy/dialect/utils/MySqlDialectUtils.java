@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sqltoy-orm
  * @description mysql数据库各类操作的统一函数实现（便于今后mysql版本以及变种数据库统一使用，减少主体代码重复量）
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:MySqlDialectUtils.java,Revision:v1.0,Date:2015年2月13日
+ * @version v1.0,Date:2015年2月13日
  */
 public class MySqlDialectUtils {
 	/**

@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @project sqltoy-orm
  * @description 翻译配置模型
  * @author renfei.chen <a href="mailto:zhongxuchen@hotmail.com">联系作者</a>
- * @version Revision:v1.0,Date:2013-4-8
+ * @version v1.0,Date:2013-4-8
  * @modify Date:2020-3-8=10 修改heap\offheap\diskSize的默认策略
  */
 public class TranslateConfigModel implements Serializable {

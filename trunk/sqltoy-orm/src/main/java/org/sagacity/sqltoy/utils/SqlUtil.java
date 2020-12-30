@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * @project sagacity-sqltoy
  * @description 数据库sql相关的处理工具
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlUtil.java,Revision:v1.3,Date:Apr 14, 2009 11:52:31 PM
+ * @version v1.3,Date:Apr 14, 2009 11:52:31 PM
  * @modify Date:2011-8-18
  *         {移植BaseDaoSupport中分页移植到SqlUtil中，将数据库表、外键、主键等库和表信息移植到DBUtil中 }
  * @modify Date:2011-8-22 {修复getJdbcRecordCount中因group分组查询导致的错误， 如select

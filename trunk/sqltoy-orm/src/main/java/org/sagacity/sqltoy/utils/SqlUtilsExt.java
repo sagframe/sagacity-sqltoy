@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供针对org.sagacity.sqltoy.utils.SqlUtil类的扩展(来自org.sagacity.core.
  *              utils.SqlUtil),提供更有针对性的操作,提升性能
  * @author chenrenfei <a href="mailto:zhongxuchen@gmail.com">联系作者</a>
- * @version id:SqlUtilsExt.java,Revision:v1.0,Date:2015年4月22日
+ * @version v1.0,Date:2015年4月22日
  */
 public class SqlUtilsExt {
 	/**
