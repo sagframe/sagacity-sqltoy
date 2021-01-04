@@ -108,6 +108,8 @@ public class BeanUtil {
 				matched = false;
 				for (int j = 0; j < realMeth.size(); j++) {
 					method = realMeth.get(j);
+					//放弃兼容属性名称有下划线模式
+					//name=method.getName().replaceAll("\\_", "").toLowerCase();
 					name = method.getName().toLowerCase();
 					// setXXX完全匹配
 					if (prop.equals(name)) {
@@ -169,6 +171,8 @@ public class BeanUtil {
 				matched = false;
 				for (int j = 0; j < realMeth.size(); j++) {
 					method = realMeth.get(j);
+					//放弃兼容属性名称有下划线模式
+					//name=method.getName().replaceAll("\\_", "").toLowerCase();
 					name = method.getName().toLowerCase();
 					// get完全匹配
 					if (name.equals("get".concat(prop))) {
