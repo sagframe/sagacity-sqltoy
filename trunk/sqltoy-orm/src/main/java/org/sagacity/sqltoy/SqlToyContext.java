@@ -37,7 +37,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-//------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------------------*/
+//------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
 //  (很多框架没有悟到这一点，且没有发现条件参数95%以上为null或为空白就表示不参与条件检索,少量特殊情况
 //   只需稍做处理即可规整，所以总是摆脱不了if(param!=null)形态的显式逻辑判断),此特点是开发sqltoy的起点!
@@ -55,7 +55,7 @@ import org.springframework.context.ApplicationContextAware;
 //    可以深入对比update/updateAll、saveOrUpdate/saveOrUpdateAll内部差异
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//-------------------------------------------------------------------------------------*/
+//------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy4.0
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
@@ -269,7 +269,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		 * 初始化sql执行统计的基本参数
 		 */
 		SqlExecuteStat.setDebug(this.debug);
-		// SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
 	}
