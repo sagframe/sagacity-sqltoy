@@ -1049,7 +1049,8 @@ public class SqlXMLConfigParse {
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {
-						translateModel.setUncached(uncachedTemplate);
+						// 统一未匹配中的通配符号为${value}
+						translateModel.setUncached(uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {

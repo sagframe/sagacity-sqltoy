@@ -44,4 +44,11 @@ public class StringUtilsTest {
 		assertArrayEquals(result, new String[] { "a", "\"\"\",\"", "a" });
 	}
 
+	@Test
+	public void testRegex() {
+		String temp = "{key}";
+		String result=temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
+		System.err.println(result);
+		System.err.println(result.replace("${value}", "chenren"));
+	}
 }
