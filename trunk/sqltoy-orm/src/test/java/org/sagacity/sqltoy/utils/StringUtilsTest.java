@@ -46,7 +46,7 @@ public class StringUtilsTest {
 
 	@Test
 	public void testRegex() {
-		String temp = "{key}";
+		String temp = "{Key}";
 		String result=temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
 		System.err.println(result);
 		System.err.println(result.replace("${value}", "chenren"));
