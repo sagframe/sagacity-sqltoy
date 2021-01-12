@@ -593,14 +593,24 @@ public interface SqlToyLazyDao {
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> voClass, final double randomCount);
 
+	/**
+	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
+	 * @param sqlOrNamedSql
+	 * @param dataSet
+	 * @return
+	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
 
 	/**
 	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
+	 *       <p>
+	 *       <li>1、VO传参模式，即:batchUpdate(sql,List<VO> dataSet),sql中用:paramName</li>
+	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
+	 *       </p>
 	 * @param sqlOrNamedSql
 	 * @param dataSet
 	 * @param insertCallhandler (一般为null)
-	 * @param autoCommit   (一般为null)
+	 * @param autoCommit        (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
