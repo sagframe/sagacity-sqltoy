@@ -599,8 +599,8 @@ public interface SqlToyLazyDao {
 	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param insertCallhandler 可以为null
-	 * @param autoCommit   可以为null
+	 * @param insertCallhandler (一般为null)
+	 * @param autoCommit   (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
