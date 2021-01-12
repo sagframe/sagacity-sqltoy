@@ -593,12 +593,14 @@ public interface SqlToyLazyDao {
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> voClass, final double randomCount);
 
+	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
+
 	/**
-	 * @todo 批量集合通过sql进行修改操作
+	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param insertCallhandler
-	 * @param autoCommit
+	 * @param insertCallhandler 可以为null
+	 * @param autoCommit   可以为null
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
@@ -839,7 +841,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param parallQueryList
 	 * @param paramsMap
-	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
