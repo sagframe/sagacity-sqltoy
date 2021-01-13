@@ -56,7 +56,7 @@ public class OracleDialectUtils {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		loadSql = lockSql(loadSql, lockMode);
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -101,8 +101,8 @@ public class OracleDialectUtils {
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		// 是否锁记录
-		String realSql = lockSql(loadSql.toString(), lockMode);
-		return DialectUtils.loadAll(sqlToyContext, realSql, entities, cascadeTypes, conn, dbType);
+		loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
+		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
 	/**
@@ -220,17 +220,15 @@ public class OracleDialectUtils {
 		});
 	}
 
-	public static String lockSql(String sql, LockMode lockMode) {
-		if (lockMode == null) {
-			return sql;
-		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return sql.concat(" for update nowait ");
+	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
 		}
 		if (lockMode == LockMode.UPGRADE) {
-			return sql.concat(" for update  ");
+			return " for update ";
 		}
-		return sql;
+		return " for update nowait ";
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

@@ -102,14 +102,7 @@ public class DB2Dialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = loadSql + " for update with rs";
-				break;
-			}
-		}
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -150,14 +143,7 @@ public class DB2Dialect implements Dialect {
 			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(" for update with rs ");
-				break;
-			}
-		}
+		loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
 		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
@@ -355,13 +341,7 @@ public class DB2Dialect implements Dialect {
 		String realSql;
 		// db2 锁记录
 		if (lockMode != null) {
-			realSql = sql;
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				realSql = realSql.concat(" for update with rs");
-				break;
-			}
+			realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		} else {
 			realSql = appendWithUR(sql);
 		}
@@ -499,11 +479,7 @@ public class DB2Dialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode) throws Exception {
-		String realSql = sql;
-		// 判断是否已经包含for update
-		if (!SqlUtil.hasLock(sql, dbType)) {
-			realSql = sql + " for update with rs";
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -571,5 +547,16 @@ public class DB2Dialect implements Dialect {
 			return false;
 		}
 		return true;
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+//		if (lockMode == null || lockMode == LockMode.UPGRADE) {
+//			return " for update ";
+//		}
+		return " for update with rs ";
 	}
 }

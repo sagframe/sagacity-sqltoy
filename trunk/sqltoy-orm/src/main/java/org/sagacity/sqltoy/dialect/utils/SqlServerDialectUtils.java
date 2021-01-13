@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -929,7 +930,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		// 锁为null直接返回
-		if (lockMode == null) {
+		if (lockMode == null || SqlUtil.hasLock(loadSql, DBType.SQLSERVER)) {
 			return loadSql;
 		}
 		int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
