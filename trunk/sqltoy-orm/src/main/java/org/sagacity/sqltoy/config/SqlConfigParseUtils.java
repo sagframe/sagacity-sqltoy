@@ -568,6 +568,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * @update 2021-1-13 兼容性拆分单值数组适配like
 	 * @TODO 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
 	 */
