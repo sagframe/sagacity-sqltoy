@@ -586,7 +586,8 @@ public class SqlConfigParseUtils {
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 			obj = sqlToyResult.getParamsValue()[paramCnt];
 			if (obj != null) {
-				//单值数组拆解兼容
+				likeParamValue = null;
+				// 单值数组拆解兼容
 				if (obj instanceof Object[] && ((Object[]) obj).length == 1) {
 					likeParamValue = (String) ((Object[]) obj)[0];
 					sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
