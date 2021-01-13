@@ -509,19 +509,10 @@ public class ParamFilterUtils {
 		if (StringUtil.isBlank(paramValue)) {
 			return null;
 		}
-		String likeStr;
-		// 兼容单值集合
-		if ((paramValue instanceof Object[]) && ((Object[]) paramValue).length == 1) {
-			likeStr = (String) ((Object[]) paramValue)[0];
-		} else if ((paramValue instanceof Collection) && ((Collection) paramValue).size() == 1) {
-			likeStr = (String) ((Collection) paramValue).iterator().next();
-		} else {
-			likeStr = paramValue.toString();
-		}
 		if (isLeft) {
-			return "%".concat(likeStr);
+			return "%".concat(paramValue.toString());
 		}
-		return likeStr.concat("%");
+		return paramValue.toString().concat("%");
 	}
 
 	/**
@@ -766,7 +757,7 @@ public class ParamFilterUtils {
 		// 存在日期加减
 		if (paramFilterModel.getIncrementTime() != 0) {
 			switch (paramFilterModel.getTimeUnit()) {
-			// 天优先
+			//天优先
 			case DAYS: {
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
 				break;

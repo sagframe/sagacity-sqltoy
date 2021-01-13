@@ -568,7 +568,6 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2021-1-13 兼容性拆分单值数组适配like
 	 * @TODO 加工处理like 部分，给参数值增加%符号
 	 * @param sqlToyResult
 	 */
@@ -581,35 +580,15 @@ public class SqlConfigParseUtils {
 		int index = 0;
 		String likeParamValue;
 		int paramCnt = 0;
-		Object obj;
 		while (m.find()) {
 			index = m.start();
 			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
-			obj = sqlToyResult.getParamsValue()[paramCnt];
-			if (obj != null) {
-				likeParamValue = null;
-				// 单值数组拆解兼容
-				if ((obj instanceof Object[]) && ((Object[]) obj).length == 1) {
-					likeParamValue = (String) ((Object[]) obj)[0];
-					sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
-				} else if ((obj instanceof Collection) && ((Collection) obj).size() == 1) {
-					likeParamValue = (String) ((Collection) obj).iterator().next();
-					sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
-				} else {
-					likeParamValue = (String) obj;
-				}
-				// 不存在%符号时，前后增加%
-				if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
-					sqlToyResult.getParamsValue()[paramCnt] = "%".concat(likeParamValue).concat("%");
-				}
+			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
+			// 不存在%符号时，前后增加%
+			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
+				likeParamValue = "%".concat(likeParamValue).concat("%");
+				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
 			}
-
-//			likeParamValue = (String) sqlToyResult.getParamsValue()[paramCnt];
-//			// 不存在%符号时，前后增加%
-//			if (null != likeParamValue && likeParamValue.indexOf("%") == -1) {
-//				likeParamValue = "%".concat(likeParamValue).concat("%");
-//				sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
-//			}
 		}
 	}
 
