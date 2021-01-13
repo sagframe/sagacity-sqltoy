@@ -588,11 +588,11 @@ public class SqlConfigParseUtils {
 			if (obj != null) {
 				likeParamValue = null;
 				// 单值数组拆解兼容
-				if (obj instanceof Object[] && ((Object[]) obj).length == 1) {
+				if ((obj instanceof Object[]) && ((Object[]) obj).length == 1) {
 					likeParamValue = (String) ((Object[]) obj)[0];
 					sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
-				} else if (obj instanceof Collection && ((Collection) obj).size() == 1) {
-					likeParamValue = (String) (((Collection) obj).iterator().next());
+				} else if ((obj instanceof Collection) && ((Collection) obj).size() == 1) {
+					likeParamValue = (String) ((Collection) obj).iterator().next();
 					sqlToyResult.getParamsValue()[paramCnt] = likeParamValue;
 				} else {
 					likeParamValue = (String) obj;
