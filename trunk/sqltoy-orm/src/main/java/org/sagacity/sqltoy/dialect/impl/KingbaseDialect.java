@@ -501,9 +501,12 @@ public class KingbaseDialect implements Dialect {
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
 		}
-		if (lockMode == LockMode.UPGRADE) {
-			return " for update ";
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
 		}
-		return " for update nowait ";
+		if (lockMode == LockMode.UPGRADE_SKIP_LOCK) {
+			return " for update skip locked";
+		}
+		return " for update ";
 	}
 }

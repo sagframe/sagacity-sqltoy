@@ -16,7 +16,7 @@ public enum LockMode {
 	 */
 	UPGRADE_NOWAIT(2),
 
-	UPGRADE_SKIPLOCK(3);
+	UPGRADE_SKIP_LOCK(3);
 
 	private final int level;
 
