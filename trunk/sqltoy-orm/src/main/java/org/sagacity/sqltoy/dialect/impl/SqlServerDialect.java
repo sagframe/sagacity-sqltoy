@@ -443,7 +443,7 @@ public class SqlServerDialect implements Dialect {
 		String realSql = sql;
 		// 判断是否已经包含锁语法
 		if (!SqlUtil.hasLock(sql, dbType)) {
-			realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
+			realSql = SqlServerDialectUtils.lockSql(sql, null, lockMode);
 		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);

@@ -36,7 +36,6 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,12 +197,7 @@ public class MySqlDialect implements Dialect {
 			throws Exception {
 		String realSql = sql;
 		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				realSql = realSql.concat(getLockSql(sql, dbType));
-				break;
-			}
+			realSql = realSql.concat(getLockSql(sql, dbType, lockMode));
 		}
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
@@ -301,12 +295,7 @@ public class MySqlDialect implements Dialect {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
 		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = loadSql.concat(getLockSql(loadSql, dbType));
-				break;
-			}
+			loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		}
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -347,12 +336,7 @@ public class MySqlDialect implements Dialect {
 			loadSql.append(" in (:").append(field).append(") ");
 		}
 		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(getLockSql(loadSql.toString(), dbType));
-				break;
-			}
+			loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
 		}
 		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
@@ -482,7 +466,7 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode) throws Exception {
-		String realSql = sql.concat(getLockSql(sql, dbType));
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -499,7 +483,7 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " limit " + topSize + getLockSql(sql, dbType);
+		String realSql = sql + " limit " + topSize + getLockSql(sql, dbType, LockMode.UPGRADE);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -517,7 +501,7 @@ public class MySqlDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by rand() limit " + random + getLockSql(sql, dbType);
+		String realSql = sql + " order by rand() limit " + random + getLockSql(sql, dbType, LockMode.UPGRADE);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -535,13 +519,16 @@ public class MySqlDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
-	private String getLockSql(String sql, Integer dbType) {
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
 		// 判断是否已经包含for update
 		if (SqlUtil.hasLock(sql, dbType)) {
 			return "";
 		}
-		if (dbType.equals(DBType.MYSQL57)) {
+		if (lockMode == null || lockMode == LockMode.UPGRADE) {
 			return " for update ";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
 		}
 		return " for update skip locked ";
 	}

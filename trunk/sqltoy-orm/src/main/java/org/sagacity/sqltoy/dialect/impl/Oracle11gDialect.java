@@ -32,7 +32,6 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.SqlUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -461,7 +460,11 @@ public class Oracle11gDialect implements Dialect {
 		String realSql = sql;
 		// 判断是否已经包含for update
 		if (!SqlUtil.hasLock(sql, dbType)) {
-			realSql = sql + " for update nowait";
+			if (lockMode == null || lockMode == LockMode.UPGRADE) {
+				realSql = sql + " for update";
+			} else {
+				realSql = sql + " for update nowait";
+			}
 		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);

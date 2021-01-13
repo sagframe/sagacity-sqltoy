@@ -461,7 +461,11 @@ public class OracleDialect implements Dialect {
 		String realSql = sql;
 		// 判断是否已经包含for update
 		if (!SqlUtil.hasLock(sql, dbType)) {
-			realSql = sql + " for update nowait";
+			if (lockMode == null || lockMode == LockMode.UPGRADE) {
+				realSql = sql + " for update";
+			} else {
+				realSql = sql + " for update nowait";
+			}
 		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);

@@ -14,7 +14,9 @@ public enum LockMode {
 	 * <tt>select for update nowait</tt>. The semantics of this lock mode, once
 	 * obtained, are the same as <tt>UPGRADE</tt>.
 	 */
-	UPGRADE_NOWAIT(2);
+	UPGRADE_NOWAIT(2),
+
+	UPGRADE_SKIPLOCK(3);
 
 	private final int level;
 
