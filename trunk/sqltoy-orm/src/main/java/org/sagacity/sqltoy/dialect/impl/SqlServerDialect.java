@@ -56,7 +56,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	//private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
+	// private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
 
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
@@ -103,7 +103,7 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String realSql = sqlToyConfig.getSql(dialect);
-		//存在@fast() 快速分页
+		// 存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
@@ -440,7 +440,11 @@ public class SqlServerDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode) throws Exception {
-		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
+		String realSql = sql;
+		// 判断是否已经包含锁语法
+		if (!SqlUtil.hasLock(sql, dbType)) {
+			realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
+		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}

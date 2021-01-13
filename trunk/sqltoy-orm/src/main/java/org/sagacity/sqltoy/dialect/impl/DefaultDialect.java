@@ -26,6 +26,8 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -118,7 +120,7 @@ public class DefaultDialect implements Dialect {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				realSql = realSql.concat(getLockSql(dbType));
+				realSql = realSql.concat(getLockSql(sql, dbType));
 				break;
 			}
 		}
@@ -143,7 +145,7 @@ public class DefaultDialect implements Dialect {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql = loadSql.concat(getLockSql(dbType));
+				loadSql = loadSql.concat(getLockSql(loadSql, dbType));
 				break;
 			}
 		}
@@ -182,7 +184,7 @@ public class DefaultDialect implements Dialect {
 			switch (lockMode) {
 			case UPGRADE_NOWAIT:
 			case UPGRADE:
-				loadSql.append(getLockSql(dbType));
+				loadSql.append(getLockSql(loadSql.toString(), dbType));
 				break;
 			}
 		}
@@ -258,7 +260,7 @@ public class DefaultDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
 			final LockMode lockMode) throws Exception {
-		String realSql = sql.concat(getLockSql(dbType));
+		String realSql = sql.concat(getLockSql(sql, dbType));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -286,7 +288,11 @@ public class DefaultDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
-	private String getLockSql(Integer dbType) {
+	private String getLockSql(String sql, Integer dbType) {
+		// 判断是否已经包含for update
+		if (SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
 		return " for update ";
 	}
 }

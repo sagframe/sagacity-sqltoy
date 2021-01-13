@@ -32,6 +32,8 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -473,7 +475,11 @@ public class TidbDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode) throws Exception {
-		String realSql = sql.concat(getLockSql(dbType));
+		String realSql = sql;
+		// 判断是否已经包含for update
+		if (!SqlUtil.hasLock(sql, dbType)) {
+			realSql = sql.concat(getLockSql(dbType));
+		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}

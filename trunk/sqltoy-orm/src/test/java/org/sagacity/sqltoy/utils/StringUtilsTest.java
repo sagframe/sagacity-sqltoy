@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @author zhongxuchen
@@ -47,8 +48,18 @@ public class StringUtilsTest {
 	@Test
 	public void testRegex() {
 		String temp = "{Key}";
-		String result=temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
+		String result = temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
 		System.err.println(result);
 		System.err.println(result.replace("${value}", "chenren"));
+	}
+
+	@Test
+	public void testMatchForUpdate() {
+		String sql = "selec * from table ";
+		System.err.println(SqlUtil.hasLock(sql.concat(" "), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.SQLSERVER));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.SQLSERVER));
 	}
 }

@@ -28,6 +28,8 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -430,7 +432,11 @@ public class PostgreSqlDialect implements Dialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode) throws Exception {
-		String realSql = sql + " for update nowait";
+		String realSql = sql;
+		// 判断是否已经包含for update
+		if (!SqlUtil.hasLock(sql, dbType)) {
+			realSql = sql + " for update nowait";
+		}
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);
 	}
