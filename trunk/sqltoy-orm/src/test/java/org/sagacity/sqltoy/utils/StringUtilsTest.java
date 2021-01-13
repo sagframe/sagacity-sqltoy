@@ -61,5 +61,13 @@ public class StringUtilsTest {
 		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.SQLSERVER));
 		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.MYSQL));
 		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.SQLSERVER));
+		String sql1 = "select * from table with ";
+		String regex = "(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock)?\\,?\\s*(rowlock|xlock|updlock|holdlock)\\s*\\)";
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock)"), regex));
 	}
 }
