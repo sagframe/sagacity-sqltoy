@@ -332,12 +332,13 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param lockMode
 	 * @return
 	 * @throws Exception
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
+			final Integer dbType, final String dialect, final LockMode lockMode) throws Exception;
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,

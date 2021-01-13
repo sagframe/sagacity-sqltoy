@@ -1520,8 +1520,8 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									updateRowHandler, conn, dbType, dialect);
-
+									updateRowHandler, conn, dbType, dialect,
+									(extend.lockMode == null) ? LockMode.UPGRADE_NOWAIT : extend.lockMode);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),

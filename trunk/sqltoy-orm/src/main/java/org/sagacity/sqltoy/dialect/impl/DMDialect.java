@@ -437,7 +437,7 @@ public class DMDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		String realSql = sql.concat(" for update nowait");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);

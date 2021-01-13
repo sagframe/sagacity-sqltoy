@@ -256,8 +256,8 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
+			final LockMode lockMode) throws Exception {
 		String realSql = sql.concat(getLockSql(dbType));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);

@@ -403,7 +403,7 @@ public class GuassDBDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		String realSql = sql + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);

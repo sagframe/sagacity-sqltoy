@@ -264,8 +264,8 @@ public class OceanBaseDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual",
-								NVL_FUNCTION, sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
+						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", NVL_FUNCTION,
+								sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
@@ -442,7 +442,7 @@ public class OceanBaseDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		String realSql = sql.concat(" for update nowait");
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
