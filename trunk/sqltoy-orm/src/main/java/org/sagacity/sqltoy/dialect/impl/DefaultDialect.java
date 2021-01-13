@@ -273,7 +273,7 @@ public class DefaultDialect implements Dialect {
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
 			return " for update nowait ";
 		}
-		if (lockMode == LockMode.UPGRADE_SKIP_LOCK) {
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
 			return " for update skip locked";
 		}
 		return " for update ";
