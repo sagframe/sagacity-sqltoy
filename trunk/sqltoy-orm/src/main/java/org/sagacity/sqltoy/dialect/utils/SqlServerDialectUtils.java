@@ -969,10 +969,14 @@ public class SqlServerDialectUtils {
 			}
 		}
 		switch (lockMode) {
-		case UPGRADE_NOWAIT:
 		case UPGRADE:
 			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
 					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
+			break;
+		case UPGRADE_NOWAIT:
+		case UPGRADE_SKIPLOCK:
+			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
+					.concat(" with (rowlock readpast) ").concat((regex.endsWith(",") ? "," : ""))));
 			break;
 		}
 		return loadSql;

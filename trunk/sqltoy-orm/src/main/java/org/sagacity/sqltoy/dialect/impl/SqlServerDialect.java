@@ -319,9 +319,12 @@ public class SqlServerDialect implements Dialect {
 		loadSql.append(entityMeta.getSchemaTable(tableName));
 		if (lockMode != null) {
 			switch (lockMode) {
-			case UPGRADE_NOWAIT:
 			case UPGRADE:
 				loadSql.append(" with (rowlock xlock) ");
+				break;
+			case UPGRADE_NOWAIT:
+			case UPGRADE_SKIPLOCK:
+				loadSql.append(" with (rowlock readpast) ");
 				break;
 			}
 		}
