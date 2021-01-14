@@ -1553,4 +1553,21 @@ public class SqlUtil {
 		}
 		return sql;
 	}
+
+	public static boolean hasLock(String sql, Integer dbType) {
+		if (sql == null) {
+			return false;
+		}
+		if (StringUtil.matches(sql, "(?i)\\s+for\\s+update")) {
+			return true;
+		}
+		// sqlserver
+		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
+			if (StringUtil.matches(sql,
+					"(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)?\\,?\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)\\s*\\)")) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

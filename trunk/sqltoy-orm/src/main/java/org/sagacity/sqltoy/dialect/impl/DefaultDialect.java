@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -113,15 +114,7 @@ public class DefaultDialect implements Dialect {
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, Connection conn, LockMode lockMode,
 			Integer dbType, String dialect, int fetchSize, int maxRows) throws Exception {
-		String realSql = sql;
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				realSql = realSql.concat(getLockSql(dbType));
-				break;
-			}
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -139,14 +132,7 @@ public class DefaultDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = loadSql.concat(getLockSql(dbType));
-				break;
-			}
-		}
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -178,14 +164,7 @@ public class DefaultDialect implements Dialect {
 			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(getLockSql(dbType));
-				break;
-			}
-		}
+		loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
 		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
@@ -256,9 +235,9 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect)
-			throws Exception {
-		String realSql = sql.concat(getLockSql(dbType));
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
+			final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -286,7 +265,17 @@ public class DefaultDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
-	private String getLockSql(Integer dbType) {
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
 		return " for update ";
 	}
 }

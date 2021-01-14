@@ -594,11 +594,23 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass, final double randomCount);
 
 	/**
-	 * @todo 批量集合通过sql进行修改操作
+	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param insertCallhandler
-	 * @param autoCommit
+	 * @return
+	 */
+	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
+
+	/**
+	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
+	 *       <p>
+	 *       <li>1、VO传参模式，即:batchUpdate(sql,List<VO> dataSet),sql中用:paramName</li>
+	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
+	 *       </p>
+	 * @param sqlOrNamedSql
+	 * @param dataSet
+	 * @param insertCallhandler (一般为null)
+	 * @param autoCommit        (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
@@ -839,13 +851,13 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param parallQueryList
 	 * @param paramsMap
-	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
-	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
+	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，根据情况使用 ---- */
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合

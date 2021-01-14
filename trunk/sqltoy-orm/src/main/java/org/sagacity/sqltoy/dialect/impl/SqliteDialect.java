@@ -445,7 +445,7 @@ public class SqliteDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}

@@ -56,7 +56,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	//private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
+	// private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
 
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
@@ -103,7 +103,7 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String realSql = sqlToyConfig.getSql(dialect);
-		//存在@fast() 快速分页
+		// 存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
 			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
@@ -192,11 +192,7 @@ public class SqlServerDialect implements Dialect {
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String realSql = sql;
-		// 组织锁表语句
-		if (lockMode != null) {
-			realSql = SqlServerDialectUtils.lockSql(realSql, null, lockMode);
-		}
+		String realSql = SqlServerDialectUtils.lockSql(sql, null, lockMode);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -292,9 +288,7 @@ public class SqlServerDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName), lockMode);
-		}
+		loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName), lockMode);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -325,9 +319,12 @@ public class SqlServerDialect implements Dialect {
 		loadSql.append(entityMeta.getSchemaTable(tableName));
 		if (lockMode != null) {
 			switch (lockMode) {
-			case UPGRADE_NOWAIT:
 			case UPGRADE:
 				loadSql.append(" with (rowlock xlock) ");
+				break;
+			case UPGRADE_NOWAIT:
+			case UPGRADE_SKIPLOCK:
+				loadSql.append(" with (rowlock readpast) ");
 				break;
 			}
 		}
@@ -439,8 +436,8 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = SqlServerDialectUtils.lockSql(sql, null, (lockMode == null) ? LockMode.UPGRADE : lockMode);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}

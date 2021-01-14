@@ -320,8 +320,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null,
-					conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
+					dbType, true);
 		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
@@ -332,7 +333,8 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
+					conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -355,8 +357,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'",
-					null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'", null, null,
+					conn, dbType, true);
 		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -367,7 +370,8 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
+					conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -494,7 +498,8 @@ public class SybaseIQDialect implements Dialect {
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
 							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyContext.getTypeHandler(),sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -565,7 +570,7 @@ public class SybaseIQDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}

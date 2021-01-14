@@ -915,7 +915,9 @@ public class ResultUtils {
 				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
 				fieldStr = extend.keyTemplate.replace("{}", fieldStr);
 			}
+			//根据key获取缓存值
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
+			//未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				if (extend.uncached != null) {
 					fieldValue = extend.uncached.replace("${value}", fieldStr);

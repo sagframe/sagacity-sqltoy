@@ -25,6 +25,7 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,18 +116,7 @@ public class GuassDBDialect implements Dialect {
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final Connection conn, final LockMode lockMode,
 			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql;
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT: {
-				realSql = realSql + " for update nowait ";
-				break;
-			}
-			case UPGRADE:
-				realSql = realSql + " for update ";
-				break;
-			}
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -160,16 +150,7 @@ public class GuassDBDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-				loadSql = loadSql + " for update nowait";
-				break;
-			case UPGRADE:
-				loadSql = loadSql + " for update";
-				break;
-			}
-		}
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -208,16 +189,7 @@ public class GuassDBDialect implements Dialect {
 			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 			loadSql.append(" in (:").append(field).append(") ");
 		}
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-				loadSql.append(" for update nowait ");
-				break;
-			case UPGRADE:
-				loadSql.append(" for update ");
-				break;
-			}
-		}
+		loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
 		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
 	}
 
@@ -403,8 +375,8 @@ public class GuassDBDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = sql + " for update nowait";
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -455,6 +427,20 @@ public class GuassDBDialect implements Dialect {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
+		return " for update ";
 	}
 
 }

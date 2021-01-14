@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -929,7 +930,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		// 锁为null直接返回
-		if (lockMode == null) {
+		if (lockMode == null || SqlUtil.hasLock(loadSql, DBType.SQLSERVER)) {
 			return loadSql;
 		}
 		int fromIndex = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]", loadSql, 0);
@@ -968,10 +969,14 @@ public class SqlServerDialectUtils {
 			}
 		}
 		switch (lockMode) {
-		case UPGRADE_NOWAIT:
 		case UPGRADE:
 			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
 					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
+			break;
+		case UPGRADE_NOWAIT:
+		case UPGRADE_SKIPLOCK:
+			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
+					.concat(" with (rowlock readpast) ").concat((regex.endsWith(",") ? "," : ""))));
 			break;
 		}
 		return loadSql;

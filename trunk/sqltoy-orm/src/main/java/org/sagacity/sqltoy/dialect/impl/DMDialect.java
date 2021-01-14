@@ -174,18 +174,7 @@ public class DMDialect implements Dialect {
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String realSql = sql;
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT: {
-				realSql = realSql.concat(" for update nowait ");
-				break;
-			}
-			case UPGRADE:
-				realSql = realSql.concat(" for update ");
-				break;
-			}
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -437,8 +426,8 @@ public class DMDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = sql.concat(" for update nowait");
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -492,5 +481,19 @@ public class DMDialect implements Dialect {
 			final String dialect) throws Exception {
 		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
 				dbType);
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
+		return " for update ";
 	}
 }

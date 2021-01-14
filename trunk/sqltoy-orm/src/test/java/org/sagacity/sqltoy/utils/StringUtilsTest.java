@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @author zhongxuchen
@@ -44,4 +45,29 @@ public class StringUtilsTest {
 		assertArrayEquals(result, new String[] { "a", "\"\"\",\"", "a" });
 	}
 
+	@Test
+	public void testRegex() {
+		String temp = "{Key}";
+		String result = temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
+		System.err.println(result);
+		System.err.println(result.replace("${value}", "chenren"));
+	}
+
+	@Test
+	public void testMatchForUpdate() {
+		String sql = "selec * from table ";
+		System.err.println(SqlUtil.hasLock(sql.concat(" "), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.SQLSERVER));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.SQLSERVER));
+		String sql1 = "select * from table with ";
+		String regex = "(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock)?\\,?\\s*(rowlock|xlock|updlock|holdlock)\\s*\\)";
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock)"), regex));
+	}
 }

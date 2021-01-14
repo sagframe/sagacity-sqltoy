@@ -278,8 +278,8 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
+			final LockMode lockMode) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

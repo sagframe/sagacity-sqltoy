@@ -297,6 +297,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.batchUpdate(sqlOrNamedSql, dataSet, null, insertCallhandler, autoCommit);
 	}
 
+	@Override
+	public Long batchUpdate(String sqlOrNamedSql, List dataSet) {
+		return super.batchUpdate(sqlOrNamedSql, dataSet, null, null);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
