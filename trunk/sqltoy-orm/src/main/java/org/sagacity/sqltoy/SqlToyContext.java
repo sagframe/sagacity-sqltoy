@@ -131,6 +131,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String defaultElastic = "default";
 
 	/**
+	 * 缓存类型，默认ehcache
+	 */
+	private String cacheType = "ehcache";
+
+	/**
 	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
 	 */
 	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
@@ -793,6 +798,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setTypeHandler(TypeHandler typeHandler) {
 		this.typeHandler = typeHandler;
+	}
+
+	/**
+	 * @param cacheType the cacheType to set
+	 */
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
 	}
 
 	public void destroy() {

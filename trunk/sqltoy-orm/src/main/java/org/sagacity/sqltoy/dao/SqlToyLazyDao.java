@@ -171,7 +171,7 @@ public interface SqlToyLazyDao {
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	/**
-	 * @todo 深度修改
+	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
 	 */
 	public Long updateDeeply(Serializable serializableVO);
