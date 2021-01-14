@@ -49,7 +49,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	protected static CacheManager cacheManager;
 
 	@Override
-	public HashMap<String, Object[]> getCache(String cacheName, String cacheKey) {
+	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
 		if (cacheManager == null) {
 			return null;
 		}
@@ -57,7 +57,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cache == null) {
 			return null;
 		}
-		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheKey) ? cacheKey : cacheName);
+		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
 		if (cacheValue != null) {
 			return (HashMap<String, Object[]>) cacheValue;
 		}
@@ -115,18 +115,18 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 * String, java.lang.String)
 	 */
 	@Override
-	public void clear(String cacheName, String cacheKey) {
+	public void clear(String cacheName, String cacheType) {
+		if (cacheManager == null) {
+			return;
+		}
 		synchronized (cacheName) {
-			if (cacheManager == null) {
-				return;
-			}
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
-				if (StringUtil.isBlank(cacheKey)) {
+				if (StringUtil.isBlank(cacheType)) {
 					cache.clear();
 				} else {
-					cache.remove(cacheKey);
+					cache.remove(cacheType);
 				}
 			}
 		}
