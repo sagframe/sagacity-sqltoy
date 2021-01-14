@@ -7,15 +7,15 @@ package org.sagacity.sqltoy.model;
  * @version v1.0,Date:2015年3月5日
  */
 public enum LockMode {
+	// 锁记录且等待之前的事务完成
+	// updateFetch默认使用upgrade
 	UPGRADE(1),
 
-	/**
-	 * Attempt to obtain an upgrade lock, using an Oracle-style
-	 * <tt>select for update nowait</tt>. The semantics of this lock mode, once
-	 * obtained, are the same as <tt>UPGRADE</tt>.
-	 */
+	// 有其它事务锁记录则抛出异常
 	UPGRADE_NOWAIT(2),
 
+	// 跳过被其它事务锁的记录
+	// 如单号1、2、3，其中2被其它事务锁住，则查询结果只包含1、3
 	UPGRADE_SKIPLOCK(3);
 
 	private final int level;
