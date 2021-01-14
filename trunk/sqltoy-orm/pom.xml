@@ -13,7 +13,7 @@
 		<spring-framework.version>5.3.3</spring-framework.version>
 		<spring-data-redis.version>2.4.2</spring-data-redis.version>
 		<spring-data-mongo.version>3.1.2</spring-data-mongo.version>
-		<ojdbc.version>19.8.0.0</ojdbc.version>
+		<ojdbc.version>19.9.0.0</ojdbc.version>
 		<ehcache.version>3.9.0</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.13</httpclient-core.version>

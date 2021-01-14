@@ -7,6 +7,8 @@ import java.util.HashMap;
 
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -16,9 +18,17 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
  * @modify 2021-1-14,修改说明
  */
 public class TranslateCaffeineManager extends TranslateCacheManager {
+	/**
+	 * 定义全局日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(TranslateCaffeineManager.class);
+	// CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+
+	// protected static Cache<String, DataObject> cache;
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
+		// Caffeine.from(cacheName)
 		return null;
 	}
 
@@ -35,6 +45,10 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 
 	@Override
 	public boolean init() {
+//		if (cacheManager != null) {
+//			return true;
+//		}
+//		cacheManager = new CaffeineCacheManager();
 		return false;
 	}
 
