@@ -1564,7 +1564,7 @@ public class SqlUtil {
 		// sqlserver
 		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
 			if (StringUtil.matches(sql,
-					"(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock)?\\,?\\s*(rowlock|xlock|updlock|holdlock)\\s*\\)")) {
+					"(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock|nolock)?\\,?\\s*(rowlock|xlock|updlock|holdlock|nolock)\\s*\\)")) {
 				return true;
 			}
 		}
