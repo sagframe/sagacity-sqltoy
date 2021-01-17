@@ -85,7 +85,7 @@ public class SqlConfigParseUtilsTest {
 	
 	@Test
 	public void testSynSign() throws Exception {
-		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id and name like :name] #[and status=:status]";
+		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));

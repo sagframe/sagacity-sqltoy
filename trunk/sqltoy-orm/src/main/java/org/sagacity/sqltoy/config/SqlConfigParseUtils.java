@@ -71,7 +71,7 @@ public class SqlConfigParseUtils {
 	 * sql伪指令开始标记,#[]符号等于 null==?判断
 	 */
 	public final static String SQL_PSEUDO_START_MARK = "#[";
-	//2021-01-17 改进对称位置寻找策略,兼容sql中存在[] 符号
+	// 2021-01-17 改进对称位置寻找策略,兼容sql中存在[] 符号
 	public final static String SQL_PSEUDO_SYM_START_MARK = "[";
 	public final static int SQL_PSEUDO_START_MARK_LENGTH = SQL_PSEUDO_START_MARK.length();
 
@@ -392,9 +392,11 @@ public class SqlConfigParseUtils {
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
-			//update 2021-01-17 按照[] 找对称位置，兼容sql中存在[]场景
+			// update 2021-01-17 按照[] 找对称位置，兼容sql中存在[]场景
 			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
-					beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH);
+					beginMarkIndex);
+//			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
+//					beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH);
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
