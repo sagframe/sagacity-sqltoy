@@ -41,6 +41,7 @@ public class MongoElasticUtils {
 	 * sql伪指令开始标记,#[]符号等于 null==?判断
 	 */
 	private final static String SQL_PSEUDO_START_MARK = "#[";
+	public final static String SQL_PSEUDO_SYM_START_MARK = "[";
 	private final static String MQL_PSEUDO_START_MARK = "<#>";
 
 	/**
@@ -152,7 +153,13 @@ public class MongoElasticUtils {
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
-			endMarkIndex = StringUtil.getSymMarkIndex(startMark, endMark, queryStr, beginMarkIndex + startMarkLength);
+			//update 2021-01-17 兼容sql中存在[和]符号场景 
+			if (startMark.equals(SQL_PSEUDO_START_MARK)) {
+				endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, endMark, queryStr, beginMarkIndex);
+			} else {
+				endMarkIndex = StringUtil.getSymMarkIndex(startMark, endMark, queryStr,
+						beginMarkIndex + startMarkLength);
+			}
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
