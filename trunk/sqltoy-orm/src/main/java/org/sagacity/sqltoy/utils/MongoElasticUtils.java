@@ -153,7 +153,7 @@ public class MongoElasticUtils {
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
-			//update 2021-01-17 兼容sql中存在[和]符号场景 
+			//update 2021-01-17 兼容sql中存在"["和"]"符号场景 
 			if (startMark.equals(SQL_PSEUDO_START_MARK)) {
 				endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, endMark, queryStr, beginMarkIndex);
 			} else {

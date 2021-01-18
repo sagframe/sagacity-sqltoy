@@ -392,7 +392,7 @@ public class SqlConfigParseUtils {
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
-			// update 2021-01-17 按照[] 找对称位置，兼容sql中存在[]场景
+			// update 2021-01-17 按照"["和"]" 找对称位置，兼容sql中存在[]场景
 			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
 					beginMarkIndex);
 //			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
