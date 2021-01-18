@@ -23,8 +23,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.11 发版日期: 2021-01-14
-* 强化并发事务锁操作、细化锁类型，增加updateBatch(sql,List dataSet) 方法简化调用
+# 最新版本号: 4.17.12 发版日期: 2021-01-18
+* 兼容sql中存在"["和"]" 对称符号,参见：clickhouse 的arrayStringConcat(arr[, separator])
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
