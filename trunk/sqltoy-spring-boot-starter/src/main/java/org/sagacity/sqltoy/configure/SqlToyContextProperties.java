@@ -124,6 +124,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String typeHandler;
 
 	/**
+	 * 缓存类型，默认ehcache(备用)
+	 */
+	private String cacheType = "ehcache";
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -360,5 +365,18 @@ public class SqlToyContextProperties implements Serializable {
 		this.typeHandler = typeHandler;
 	}
 
-	
+	/**
+	 * @return the cacheType
+	 */
+	public String getCacheType() {
+		return cacheType;
+	}
+
+	/**
+	 * @param cacheType the cacheType to set
+	 */
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
+	}
+
 }

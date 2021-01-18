@@ -130,7 +130,9 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
 		sqlToyContext.setDialectConfig(properties.getDialectConfig());
-
+		
+		//update 2021-01-18 设置缓存类别,默认ehcache
+		sqlToyContext.setCacheType(properties.getCacheType());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
