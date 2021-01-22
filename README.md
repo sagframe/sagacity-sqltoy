@@ -29,7 +29,7 @@
 ## 功能完备和强化
 * 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
 * 分页支持并行查询设置，进一步提升查询性能，结合快速分页、分页优化现有特点基础上实现极致的分页特性
-* elasticsearch原生sql分页支持
+* elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
 ## 规划5.0版本
 
 # 1. 前言
