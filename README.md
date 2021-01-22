@@ -26,11 +26,11 @@
 # 最新版本号: 4.17.12 发版日期: 2021-01-18
 * 兼容sql中存在"["和"]" 对称符号,参见：clickhouse 的arrayStringConcat(arr[, separator])
 # 未来规划
-## 功能完备和强化
-* 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
-* 分页支持并行查询设置，进一步提升查询性能，结合快速分页、分页优化现有特点基础上实现极致的分页特性
-* elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
-## 规划5.0版本
+## 1. 功能完备和强化
+* 1.1 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
+* 1.2 分页支持并行查询设置，进一步提升查询性能，结合快速分页、分页优化现有特点基础上实现极致的分页特性
+* 1.3 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
+## 2. 规划5.0版本
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
