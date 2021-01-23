@@ -378,6 +378,11 @@ public class SqlXMLConfigParse {
 			if (pageOptimize.hasAttribute("alive-seconds")) {
 				optimize.aliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
 			}
+			// 是否支持并行查询
+			if (pageOptimize.hasAttribute("parallel")) {
+				optimize.setParallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
+			}
+
 			sqlToyConfig.setPageOptimize(optimize);
 		}
 
@@ -1050,7 +1055,8 @@ public class SqlXMLConfigParse {
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {
 						// 统一未匹配中的通配符号为${value}
-						translateModel.setUncached(uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						translateModel.setUncached(
+								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
