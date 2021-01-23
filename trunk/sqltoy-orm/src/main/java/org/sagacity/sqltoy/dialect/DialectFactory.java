@@ -642,6 +642,7 @@ public class DialectFactory {
 			Long startTime = System.currentTimeMillis();
 			extend.optimizeArgs(sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
+
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
@@ -654,6 +655,14 @@ public class DialectFactory {
 							if (pageOptimize == null) {
 								pageOptimize = realSqlToyConfig.getPageOptimize();
 							}
+							// 分页并行执行取count和结果
+							if (pageOptimize != null && pageOptimize.isParallel()) {
+								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, pageOptimize,
+										conn, dbType, dialect);
+								this.setResult(queryResult);
+								return;
+							}
+
 							Long recordCnt = null;
 							// 通过查询条件构造唯一的key
 							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
@@ -750,6 +759,12 @@ public class DialectFactory {
 		} finally {
 			SqlExecuteStat.destroy();
 		}
+	}
+
+	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
+			final SqlToyConfig sqlToyConfig, PageOptimize pageOptimize, Connection conn, Integer dbType,
+			String dialect) {
+		return null;
 	}
 
 	/**
