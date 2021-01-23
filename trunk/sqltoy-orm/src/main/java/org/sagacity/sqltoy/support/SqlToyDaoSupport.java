@@ -1178,7 +1178,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 产生ID(可以指定增量范围)
 	 * @param signature
-	 * @param increment
+	 * @param increment 默认设置为1
 	 * @return
 	 */
 	protected long generateBizId(String signature, int increment) {

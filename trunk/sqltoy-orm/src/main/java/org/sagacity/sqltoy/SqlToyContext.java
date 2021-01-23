@@ -25,6 +25,7 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
+import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
@@ -250,10 +251,12 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
 
-		/**
-		 * 初始化翻译器
-		 */
-		translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
+		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
+		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
+			translateManager.initialize(this, new TranslateCaffeineManager(), delayCheckSeconds);
+		} else {
+			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
+		}
 
 		/**
 		 * 初始化脚本加载器
