@@ -50,9 +50,10 @@ public class PageOptimize implements Serializable {
 			this.aliveMax = 10000;
 		}
 		// 最小100
-		else if (aliveMax < 100) {
-			this.aliveMax = 100;
-		} else {
+//		else if (aliveMax < 100) {
+//			this.aliveMax = 100;
+//		} 
+		else {
 			this.aliveMax = aliveMax;
 		}
 		return this;

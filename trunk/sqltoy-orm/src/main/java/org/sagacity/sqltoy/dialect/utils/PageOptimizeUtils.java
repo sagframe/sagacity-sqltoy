@@ -43,7 +43,7 @@ public class PageOptimizeUtils {
 	public static String generateOptimizeKey(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, PageOptimize pageOptimize) throws Exception {
 		// 没有开放分页优化或sql id为null都不执行优化操作
-		if (pageOptimize == null) {
+		if (pageOptimize == null || pageOptimize.getAliveMax() <= 1 || pageOptimize.getAliveSeconds() < 1) {
 			return null;
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
