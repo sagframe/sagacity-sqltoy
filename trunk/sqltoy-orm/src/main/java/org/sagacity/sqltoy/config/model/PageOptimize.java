@@ -20,6 +20,11 @@ public class PageOptimize implements Serializable {
 	private static final long serialVersionUID = -4202934471963179375L;
 
 	/**
+	 * 开启并行查询
+	 */
+	private boolean parallel = false;
+
+	/**
 	 * 1000个不同条件查询
 	 */
 	private int aliveMax = 1000;
@@ -58,6 +63,14 @@ public class PageOptimize implements Serializable {
 	 */
 	public int getAliveSeconds() {
 		return aliveSeconds;
+	}
+
+	public boolean isParallel() {
+		return parallel;
+	}
+
+	public void setParallel(boolean parallel) {
+		this.parallel = parallel;
 	}
 
 	/**

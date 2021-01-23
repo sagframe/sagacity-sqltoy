@@ -941,6 +941,13 @@
 
 	<!-- 分页优化 -->
 	<xsd:complexType name="sqltoyPageOptimizeType">
+		<!-- 并行查询 -->
+		<xsd:attribute name="parallel" type="xsd:boolean"
+			default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[是否并行执行count和结果查询,达到效率提升]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<!-- 保留多少个不同查询 -->
 		<xsd:attribute name="alive-max"
 			type="xsd:nonNegativeInteger" default="100">
