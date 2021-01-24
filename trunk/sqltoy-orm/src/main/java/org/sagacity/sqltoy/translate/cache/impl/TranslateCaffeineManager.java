@@ -40,9 +40,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cache == null) {
 			return null;
 		}
-		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
-		if (cacheValue != null) {
-			return (HashMap<String, Object[]>) cacheValue;
+		Cache.ValueWrapper wrapper = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
+		if (wrapper != null) {
+			return (HashMap<String, Object[]>) wrapper.get();
 		}
 		return null;
 	}
@@ -62,7 +62,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 				if (cacheConfig.getKeepAlive() > 0) {
 					caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
 				}
-				// cacheManager.setCaffeine(caffeine);
+				//cacheManager.setCaffeine(caffeine);
 				cacheManager.registerCustomCache(cacheName, caffeine.build());
 			}
 			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
