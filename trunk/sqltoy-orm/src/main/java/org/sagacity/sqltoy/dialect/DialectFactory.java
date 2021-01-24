@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
@@ -31,7 +29,6 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.impl.ClickHouseDialect;
 import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
@@ -51,12 +48,9 @@ import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.ParallQuery;
-import org.sagacity.sqltoy.model.ParallQueryResult;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.ShardingModel;
@@ -666,92 +660,90 @@ public class DialectFactory {
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
 										pageNo, pageSize, pageOptimize, conn, dbType, dialect);
-								this.setResult(queryResult);
-								return;
-							}
-
-							Long recordCnt = null;
-							// 通过查询条件构造唯一的key
-							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
-									queryExecutor, pageOptimize);
-							// 需要进行分页查询优化
-							if (null != pageQueryKey) {
-								// if()
-								// 从缓存中提取总记录数
-								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
-										pageQueryKey);
-								// 缓存中没有则重新查询
-								if (null == recordCnt) {
+							} else {
+								Long recordCnt = null;
+								// 通过查询条件构造唯一的key
+								String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
+										queryExecutor, pageOptimize);
+								// 需要进行分页查询优化
+								if (null != pageQueryKey) {
+									// if()
+									// 从缓存中提取总记录数
+									recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
+											pageQueryKey);
+									// 缓存中没有则重新查询
+									if (null == recordCnt) {
+										recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
+												dbType, dialect);
+										// 将总记录数登记到缓存
+										PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize,
+												pageQueryKey, recordCnt);
+									} else {
+										SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
+									}
+								} else {
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
-									// 将总记录数登记到缓存
-									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt);
-								} else {
-									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
 								}
-							} else {
-								recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
-										dialect);
-							}
-							// pageNo=-1时的提取数据量限制
-							int limitSize = sqlToyContext.getPageFetchSizeLimit();
-							// pageNo=-1时,总记录数超出限制则返回空集合
-							boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
-							if (recordCnt == 0 || illegal) {
-								queryResult = new QueryResult();
-								queryResult.setPageNo(pageNo);
-								queryResult.setPageSize(pageSize);
-								queryResult.setRecordCount(0L);
-								if (illegal) {
-									logger.warn(
-											"非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}",
-											recordCnt, limitSize, sqlToyConfig.getIdOrSql());
-								} else {
-									SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
-								}
-							} else {
-								// 合法的全记录提取,设置页号为1按记录数
-								if (pageNo == -1) {
-									// 通过参数处理最终的sql和参数值
-									SqlToyResult queryParam = SqlConfigParseUtils.processSql(
-											realSqlToyConfig.getSql(dialect), extend.getParamsName(realSqlToyConfig),
-											extend.getParamsValue(sqlToyContext, realSqlToyConfig));
-									queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
-											realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-											extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize,
-											extend.maxRows);
-									long totalRecord = (queryResult.getRows() == null) ? 0
-											: queryResult.getRows().size();
-									queryResult.setPageNo(1L);
-									queryResult.setPageSize(Long.valueOf(totalRecord).intValue());
-									queryResult.setRecordCount(totalRecord);
-								} else {
-									// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
-									long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
-									queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-											realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn, dbType,
-											dialect);
-									queryResult.setPageNo(realStartPage);
+								// pageNo=-1时的提取数据量限制
+								int limitSize = sqlToyContext.getPageFetchSizeLimit();
+								// pageNo=-1时,总记录数超出限制则返回空集合
+								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
+								if (recordCnt == 0 || illegal) {
+									queryResult = new QueryResult();
+									queryResult.setPageNo(pageNo);
 									queryResult.setPageSize(pageSize);
-									queryResult.setRecordCount(recordCnt);
-								}
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, dbType, dialect);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRecordCount(0L);
+									if (illegal) {
+										logger.warn(
+												"非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}",
+												recordCnt, limitSize, sqlToyConfig.getIdOrSql());
+									} else {
+										SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
+									}
+								} else {
+									// 合法的全记录提取,设置页号为1按记录数
+									if (pageNo == -1) {
+										// 通过参数处理最终的sql和参数值
+										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
+												realSqlToyConfig.getSql(dialect),
+												extend.getParamsName(realSqlToyConfig),
+												extend.getParamsValue(sqlToyContext, realSqlToyConfig));
+										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
+												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+												extend.rowCallbackHandler, conn, null, dbType, dialect,
+												extend.fetchSize, extend.maxRows);
+										long totalRecord = (queryResult.getRows() == null) ? 0
+												: queryResult.getRows().size();
+										queryResult.setPageNo(1L);
+										queryResult.setPageSize(Long.valueOf(totalRecord).intValue());
+										queryResult.setRecordCount(totalRecord);
+									} else {
+										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
+										long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
+										queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
+												realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn, dbType,
+												dialect);
+										queryResult.setPageNo(realStartPage);
+										queryResult.setPageSize(pageSize);
+										queryResult.setRecordCount(recordCnt);
+									}
 								}
 							}
+							// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
+							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
+									queryExecutor, conn, dbType, dialect);
+							// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
+							boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet,
+									extend);
+							// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
+							// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
+							if (extend.resultType != null) {
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+										(Class) extend.resultType, changedCols));
+							}
+
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
 									((QueryResult) queryResult).getRows().size());
@@ -770,25 +762,63 @@ public class DialectFactory {
 
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
-			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect) {
-		QueryResult queryResult = null;
+			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect)
+			throws Exception {
+		final QueryResult queryResult = new QueryResult();
 		Long recordCnt = null;
-
-		//List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
+		// 通过查询条件构造唯一的key
+		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
+				pageOptimize);
+		if (null != pageQueryKey) {
+			// if()
+			// 从缓存中提取总记录数
+			recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey);
+			if (recordCnt != null) {
+				long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
+				QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
+						queryExecutor, realStartPage, pageSize, conn, dbType, dialect);
+				queryResult.setRows(result.getRows());
+				queryResult.setLabelNames(result.getLabelNames());
+				queryResult.setLabelTypes(result.getLabelTypes());
+				queryResult.setPageNo(realStartPage);
+				queryResult.setPageSize(pageSize);
+				queryResult.setRecordCount(recordCnt);
+				return queryResult;
+			}
+		}
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(2);
-			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
+			// 查询总记录数量
 			pool.submit(new Runnable() {
-
 				@Override
 				public void run() {
-					// TODO Auto-generated method stub
-
+					try {
+						queryResult.setRecordCount(
+								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			// 获取记录
+			pool.submit(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
+								queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+						queryResult.setRows(result.getRows());
+						queryResult.setLabelNames(result.getLabelNames());
+						queryResult.setLabelTypes(result.getLabelTypes());
+						queryResult.setPageNo(pageNo);
+						queryResult.setPageSize(pageSize);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			});
 			pool.shutdown();
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
@@ -797,66 +827,6 @@ public class DialectFactory {
 				pool.shutdownNow();
 			}
 		}
-
-		// 通过查询条件构造唯一的key
-		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
-				pageOptimize);
-		// 需要进行分页查询优化
-		if (null != pageQueryKey) {
-			// if()
-			// 从缓存中提取总记录数
-			recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey);
-			// 缓存中没有则重新查询
-			if (null == recordCnt) {
-				recordCnt = getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect);
-				// 将总记录数登记到缓存
-				PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey, recordCnt);
-			} else {
-				SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
-			}
-		} else {
-			recordCnt = getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect);
-		}
-		// pageNo=-1时的提取数据量限制
-		int limitSize = sqlToyContext.getPageFetchSizeLimit();
-		// pageNo=-1时,总记录数超出限制则返回空集合
-		boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
-		if (recordCnt == 0 || illegal) {
-			queryResult = new QueryResult();
-			queryResult.setPageNo(pageNo);
-			queryResult.setPageSize(pageSize);
-			queryResult.setRecordCount(0L);
-			if (illegal) {
-				logger.warn("非法分页查询,提取记录总数为:{}>{}上限(可设置sqlToyContext中的pageFetchSizeLimit进行调整),sql={}", recordCnt,
-						limitSize, sqlToyConfig.getIdOrSql());
-			} else {
-				SqlExecuteStat.debug("过程提示", "提取count数为:0,sql={}", sqlToyConfig.getIdOrSql());
-			}
-		} else {
-
-			// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
-			long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
-			queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, realSqlToyConfig, queryExecutor,
-					realStartPage, pageSize, conn, dbType, dialect);
-			queryResult.setPageNo(realStartPage);
-			queryResult.setPageSize(pageSize);
-			queryResult.setRecordCount(recordCnt);
-
-			// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-			List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
-					dbType, dialect);
-			// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-			boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult, pivotCategorySet, extend);
-			// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
-			// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-			if (extend.resultType != null) {
-				queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-						ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-						(Class) extend.resultType, changedCols));
-			}
-		}
-		SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!", ((QueryResult) queryResult).getRecordCount(),
-				((QueryResult) queryResult).getRows().size());
 		return queryResult;
 	}
 
