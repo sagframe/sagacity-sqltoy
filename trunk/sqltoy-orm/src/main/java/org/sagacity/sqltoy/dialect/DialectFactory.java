@@ -773,45 +773,22 @@ public class DialectFactory {
 			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect) {
 		QueryResult queryResult = null;
 		Long recordCnt = null;
-		
-		List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
+
+		//List<QueryResult<T>> results = new ArrayList<QueryResult<T>>();
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(2);
 			List<Future<ParallQueryResult>> futureResult = new ArrayList<Future<ParallQueryResult>>();
-			SqlToyConfig sqlToyConfig;
-			Future<ParallQueryResult> future;
-			for (ParallQuery query : parallQueryList) {
-				sqlToyConfig = sqlToyContext.getSqlToyConfig(
-						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
-						SqlType.search, getDialect(query.getExtend().dataSource));
-				// 自定义条件参数
-				if (query.getExtend().selfCondition) {
-					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
-							query.getExtend().names, query.getExtend().values,
-							getDataSource(query.getExtend().dataSource, sqlToyConfig)));
-				} else {
-					future = pool.submit(new ParallQueryExecutor(sqlToyContext, dialectFactory, sqlToyConfig, query,
-							paramNames, paramValues, getDataSource(query.getExtend().dataSource, sqlToyConfig)));
+			pool.submit(new Runnable() {
+
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+
 				}
-				futureResult.add(future);
-			}
+			});
 			pool.shutdown();
-			// 设置最大等待时长(最大不能超过10个小时)
-			if (parallConfig.getMaxWaitSeconds() != null) {
-				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
-			}
-			ParallQueryResult item;
-			int index = 0;
-			for (Future<ParallQueryResult> result : futureResult) {
-				index++;
-				item = result.get();
-				// 存在执行异常则整体抛出
-				if (item != null && !item.isSuccess()) {
-					throw new DataAccessException("第:{} 个sql执行异常:{}!", index, item.getMessage());
-				}
-				results.add(item.getResult());
-			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
@@ -820,7 +797,7 @@ public class DialectFactory {
 				pool.shutdownNow();
 			}
 		}
-		
+
 		// 通过查询条件构造唯一的key
 		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
 				pageOptimize);
