@@ -770,9 +770,9 @@ public class DialectFactory {
 		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
 				pageOptimize);
 		if (null != pageQueryKey) {
-			// if()
 			// 从缓存中提取总记录数
 			recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey);
+			//缓存中存在总记录，则直接获取数据集合
 			if (recordCnt != null) {
 				long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
 				QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
