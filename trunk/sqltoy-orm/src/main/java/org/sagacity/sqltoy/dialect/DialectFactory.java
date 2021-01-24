@@ -772,8 +772,9 @@ public class DialectFactory {
 		if (null != pageQueryKey) {
 			// 从缓存中提取总记录数
 			recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey);
-			//缓存中存在总记录，则直接获取数据集合
+			// 缓存中存在总记录，则直接获取数据集合
 			if (recordCnt != null) {
+				SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
 				long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
 				QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
 						queryExecutor, realStartPage, pageSize, conn, dbType, dialect);
@@ -786,6 +787,7 @@ public class DialectFactory {
 				return queryResult;
 			}
 		}
+		SqlExecuteStat.debug("过程提示", "分页查询启动并行查询count和rows!");
 		ExecutorService pool = null;
 		try {
 			pool = Executors.newFixedThreadPool(2);
