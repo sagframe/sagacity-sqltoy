@@ -760,6 +760,21 @@ public class DialectFactory {
 		}
 	}
 
+	/**
+	 * @TODO 并行分页查询，同时执行count和rows记录查询
+	 * @param sqlToyContext
+	 * @param queryExecutor
+	 * @param sqlToyConfig
+	 * @param extend
+	 * @param pageNo
+	 * @param pageSize
+	 * @param pageOptimize
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
 	private QueryResult parallelPage(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
 			final SqlToyConfig sqlToyConfig, final QueryExecutorExtend extend, final long pageNo,
 			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect)
