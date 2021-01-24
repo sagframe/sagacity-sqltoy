@@ -819,6 +819,21 @@ public class DialectFactory {
 				}
 			});
 			pool.shutdown();
+			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
+			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + queryResult.getRows().size();
+			// 总记录数小于实际查询记录数量
+			if (queryResult.getRecordCount() < minCount) {
+				queryResult.setRecordCount(minCount);
+			}
+			// 总记录数量大于实际记录数量
+			if (queryResult.getRows().size() < queryResult.getPageSize() && queryResult.getRecordCount() > minCount) {
+				queryResult.setRecordCount(minCount);
+			}
+			if (null != pageQueryKey) {
+				// 将总记录数登记到缓存
+				PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey,
+						queryResult.getRecordCount());
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
