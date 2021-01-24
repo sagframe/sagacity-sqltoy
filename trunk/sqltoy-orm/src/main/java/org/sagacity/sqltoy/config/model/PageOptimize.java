@@ -75,8 +75,9 @@ public class PageOptimize implements Serializable {
 		return parallel;
 	}
 
-	public void setParallel(boolean parallel) {
+	public PageOptimize parallel(boolean parallel) {
 		this.parallel = parallel;
+		return this;
 	}
 
 	/**
@@ -100,10 +101,9 @@ public class PageOptimize implements Serializable {
 		return parallelMaxWaitSeconds;
 	}
 
-	public void setParallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
+	public PageOptimize parallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
 		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
+		return this;
 	}
-	
-	
 
 }

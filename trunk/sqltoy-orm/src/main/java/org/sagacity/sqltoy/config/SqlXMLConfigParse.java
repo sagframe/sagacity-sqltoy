@@ -380,7 +380,12 @@ public class SqlXMLConfigParse {
 			}
 			// 是否支持并行查询
 			if (pageOptimize.hasAttribute("parallel")) {
-				optimize.setParallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
+				optimize.parallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
+			}
+
+			// 最大并行等待时长(秒)
+			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
+				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
 			}
 
 			sqlToyConfig.setPageOptimize(optimize);
