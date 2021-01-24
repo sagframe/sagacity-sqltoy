@@ -948,6 +948,13 @@
 				<xsd:documentation><![CDATA[是否并行执行count和结果查询,达到效率提升]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<!-- 并行查询最大等待时长(秒) -->
+		<xsd:attribute name="parallel-maxwait-seconds"
+			type="xsd:long">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[并行查询最大等待时长(秒),避免执行时间过长]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<!-- 保留多少个不同查询 -->
 		<xsd:attribute name="alive-max"
 			type="xsd:nonNegativeInteger" default="100">
