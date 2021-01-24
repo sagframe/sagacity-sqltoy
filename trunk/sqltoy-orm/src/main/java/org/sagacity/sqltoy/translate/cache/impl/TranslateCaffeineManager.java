@@ -57,12 +57,12 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			Cache cache = cacheManager.getCache(cacheName);
 			// 缓存没有配置,自动创建缓存
 			if (cache == null) {
-				Caffeine caffeine = Caffeine.newBuilder()
-						.maximumSize((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap());
+				Caffeine caffeine = Caffeine.newBuilder();
+				// .maximumSize((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap());
 				if (cacheConfig.getKeepAlive() > 0) {
 					caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
 				}
-				cacheManager.setCaffeine(caffeine);
+				// cacheManager.setCaffeine(caffeine);
 				cacheManager.registerCustomCache(cacheName, caffeine.build());
 			}
 			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
@@ -113,7 +113,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 
 	@Override
 	public void destroy() {
-		cacheManager = null;
+		if (cacheManager != null) {
+			cacheManager = null;
+		}
 	}
 
 }

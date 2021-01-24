@@ -132,7 +132,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String defaultElastic = "default";
 
 	/**
-	 * 缓存类型，默认ehcache
+	 * 缓存类型，默认ehcache(可选:caffeine)
 	 */
 	private String cacheType = "ehcache";
 
