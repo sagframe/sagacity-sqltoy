@@ -35,6 +35,11 @@ public class PageOptimize implements Serializable {
 	private int aliveSeconds = 90;
 
 	/**
+	 * 最大2个小时
+	 */
+	private long parallelMaxWaitSeconds = 7200;
+
+	/**
 	 * @return the aliveMax
 	 */
 	public int getAliveMax() {
@@ -90,5 +95,15 @@ public class PageOptimize implements Serializable {
 		}
 		return this;
 	}
+
+	public long getParallelMaxWaitSeconds() {
+		return parallelMaxWaitSeconds;
+	}
+
+	public void setParallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
+		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
+	}
+	
+	
 
 }
