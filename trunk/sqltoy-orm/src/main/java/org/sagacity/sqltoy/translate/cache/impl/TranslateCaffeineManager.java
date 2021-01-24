@@ -55,6 +55,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		}
 		synchronized (cacheName) {
 			Cache cache = cacheManager.getCache(cacheName);
+			//Caffeine cache==null实际走不到这一步，其会自动创建
 			// 缓存没有配置,自动创建缓存
 			if (cache == null) {
 				Caffeine caffeine = Caffeine.newBuilder();
