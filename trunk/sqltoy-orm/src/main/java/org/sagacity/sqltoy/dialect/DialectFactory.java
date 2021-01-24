@@ -780,6 +780,8 @@ public class DialectFactory {
 			final Integer pageSize, PageOptimize pageOptimize, Connection conn, Integer dbType, String dialect)
 			throws Exception {
 		final QueryResult queryResult = new QueryResult();
+		queryResult.setPageNo(pageNo);
+		queryResult.setPageSize(pageSize);
 		Long recordCnt = null;
 		// 通过查询条件构造唯一的key
 		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -797,7 +799,6 @@ public class DialectFactory {
 				queryResult.setLabelNames(result.getLabelNames());
 				queryResult.setLabelTypes(result.getLabelTypes());
 				queryResult.setPageNo(realStartPage);
-				queryResult.setPageSize(pageSize);
 				queryResult.setRecordCount(recordCnt);
 				return queryResult;
 			}
@@ -828,22 +829,21 @@ public class DialectFactory {
 						queryResult.setRows(result.getRows());
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
-						queryResult.setPageNo(pageNo);
-						queryResult.setPageSize(pageSize);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 			});
 			pool.shutdown();
+			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
-			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + queryResult.getRows().size();
+			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
 			// 总记录数小于实际查询记录数量
 			if (queryResult.getRecordCount() < minCount) {
 				queryResult.setRecordCount(minCount);
 			}
 			// 总记录数量大于实际记录数量
-			if (queryResult.getRows().size() < queryResult.getPageSize() && queryResult.getRecordCount() > minCount) {
+			if (rowSize < queryResult.getPageSize() && queryResult.getRecordCount() > minCount) {
 				queryResult.setRecordCount(minCount);
 			}
 			if (null != pageQueryKey) {
