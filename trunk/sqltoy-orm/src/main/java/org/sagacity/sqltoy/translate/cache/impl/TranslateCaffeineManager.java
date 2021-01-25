@@ -19,7 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 /**
  * @project sagacity-sqltoy
  * @description 提供基于Caffeine缓存实现
- * @author zhongxuchen
+ * @author jbakwd@163.com
  * @version v1.0, Date:2021-1-14
  * @modify 2021-1-14,修改说明
  */
