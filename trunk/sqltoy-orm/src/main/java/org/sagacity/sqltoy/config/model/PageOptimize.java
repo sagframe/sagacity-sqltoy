@@ -39,7 +39,7 @@ public class PageOptimize implements Serializable {
 	/**
 	 * 默认值为1800秒
 	 */
-	private long parallelMaxWaitSeconds = SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
+	private long parallelMaxWaitSeconds = 1800;
 
 	/**
 	 * @return the aliveMax
@@ -99,9 +99,7 @@ public class PageOptimize implements Serializable {
 	}
 
 	public PageOptimize parallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
-		if (parallelMaxWaitSeconds > 1) {
-			this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
-		}
+		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
 		return this;
 	}
 

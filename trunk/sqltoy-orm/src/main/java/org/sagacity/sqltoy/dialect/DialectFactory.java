@@ -818,7 +818,11 @@ public class DialectFactory {
 			});
 			pool.shutdown();
 			// 设置最大等待时长(秒)
-			pool.awaitTermination(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);
+			if (pageOptimize.getParallelMaxWaitSeconds() > 0) {
+				pool.awaitTermination(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);
+			} else {
+				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+			}
 			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
 			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
