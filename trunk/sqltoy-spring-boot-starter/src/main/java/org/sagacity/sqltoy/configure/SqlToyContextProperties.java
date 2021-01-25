@@ -124,7 +124,7 @@ public class SqlToyContextProperties implements Serializable {
 	private String typeHandler;
 
 	/**
-	 * 缓存类型，默认ehcache(备用)
+	 * 缓存类型，默认ehcache，可选caffeine
 	 */
 	private String cacheType = "ehcache";
 
