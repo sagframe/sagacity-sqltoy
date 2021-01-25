@@ -29,8 +29,7 @@
 # 未来规划
 ## 1. 功能完备和强化
 * 1.1 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
-* 1.2 分页支持并行查询设置，进一步提升查询性能，结合快速分页、分页优化现有特点基础上实现极致的分页特性
-* 1.3 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
+* 1.2 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
 ## 2. 规划5.0版本
 * 2.1 支持非spring环境
 * 2.2 规范api接口,让调用过程更加优雅，完善文档和演示范例
