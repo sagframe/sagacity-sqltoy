@@ -1177,9 +1177,9 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生ID(可以指定增量范围)
-	 * @param signature
-	 * @param increment 默认设置为1
+	 * @todo 产生ID(可以指定增量范围，当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * @param signature 唯一标识符号
+	 * @param increment 唯一标识符号，默认设置为1
 	 * @return
 	 */
 	protected long generateBizId(String signature, int increment) {
