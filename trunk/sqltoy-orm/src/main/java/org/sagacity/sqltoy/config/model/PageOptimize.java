@@ -84,8 +84,8 @@ public class PageOptimize implements Serializable {
 	 * @param aliveSeconds the aliveSeconds to set
 	 */
 	public PageOptimize aliveSeconds(int aliveSeconds) {
-		// 最小保持30秒
-		if (aliveSeconds < 30) {
+		// 最小保持30秒(小于等于1表示关闭缓存分页优化)
+		if (aliveSeconds < 30 && aliveSeconds > 0) {
 			this.aliveSeconds = 30;
 		}
 		// 不超过24小时
