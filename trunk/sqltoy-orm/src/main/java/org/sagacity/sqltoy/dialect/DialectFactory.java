@@ -813,6 +813,8 @@ public class DialectFactory {
 								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
 					} catch (Exception e) {
 						e.printStackTrace();
+						queryResult.setSuccess(false);
+						queryResult.setMessage("查询总记录数异常:" + e.getMessage());
 					}
 				}
 			});
@@ -828,6 +830,8 @@ public class DialectFactory {
 						queryResult.setLabelTypes(result.getLabelTypes());
 					} catch (Exception e) {
 						e.printStackTrace();
+						queryResult.setSuccess(false);
+						queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
 					}
 				}
 			});
@@ -837,6 +841,10 @@ public class DialectFactory {
 				pool.awaitTermination(pageOptimize.getParallelMaxWaitSeconds(), TimeUnit.SECONDS);
 			} else {
 				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
+			}
+			// 发生异常
+			if (!queryResult.isSuccess()) {
+				throw new DataAccessException("并行查询执行错误:" + queryResult.getMessage());
 			}
 			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
