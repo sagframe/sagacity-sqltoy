@@ -657,34 +657,36 @@ public class DialectFactory {
 							if (pageOptimize == null) {
 								pageOptimize = realSqlToyConfig.getPageOptimize();
 							}
-							// 分页并行执行取count和结果
-							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1) {
+							Long recordCnt = null;
+							// 通过查询条件构造唯一的key
+							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
+									queryExecutor, pageOptimize);
+							// 需要进行分页查询优化
+							if (null != pageQueryKey) {
+								// 从缓存中提取总记录数
+								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
+										pageQueryKey);
+							}
+							// 并行且缓存中无总记录数量，执行并行处理
+							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
+									&& recordCnt != null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
 										pageNo, pageSize, pageOptimize, conn, dbType, dialect);
-							} else {
-								Long recordCnt = null;
-								// 通过查询条件构造唯一的key
-								String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
-										queryExecutor, pageOptimize);
-								// 需要进行分页查询优化
+								recordCnt = queryResult.getRecordCount();
+								// 将总记录数登记到缓存
 								if (null != pageQueryKey) {
-									// if()
-									// 从缓存中提取总记录数
-									recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
-											pageQueryKey);
-									// 缓存中没有则重新查询
-									if (null == recordCnt) {
-										recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
-												dbType, dialect);
-										// 将总记录数登记到缓存
-										PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize,
-												pageQueryKey, recordCnt);
-									} else {
-										SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
-									}
-								} else {
+									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
+											recordCnt);
+								}
+							} else {
+								if (recordCnt == null) {
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
+								}
+								if (null != pageQueryKey) {
+									// 将总记录数登记到缓存
+									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
+											recordCnt);
 								}
 								// pageNo=-1时的提取数据量限制
 								int limitSize = sqlToyContext.getPageFetchSizeLimit();
@@ -783,27 +785,6 @@ public class DialectFactory {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
-		Long recordCnt = null;
-		// 通过查询条件构造唯一的key
-		String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
-				pageOptimize);
-		if (null != pageQueryKey) {
-			// 从缓存中提取总记录数
-			recordCnt = PageOptimizeUtils.getPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey);
-			// 缓存中存在总记录，则直接获取数据集合
-			if (recordCnt != null) {
-				SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
-				long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
-				QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
-						queryExecutor, realStartPage, pageSize, conn, dbType, dialect);
-				queryResult.setRows(result.getRows());
-				queryResult.setLabelNames(result.getLabelNames());
-				queryResult.setLabelTypes(result.getLabelTypes());
-				queryResult.setPageNo(realStartPage);
-				queryResult.setRecordCount(recordCnt);
-				return queryResult;
-			}
-		}
 		SqlExecuteStat.debug("过程提示", "分页查询启动并行查询count和rows!");
 		ExecutorService pool = null;
 		try {
@@ -842,17 +823,12 @@ public class DialectFactory {
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
 			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
 			// 总记录数小于实际查询记录数量
-			if (queryResult.getRecordCount() < minCount) {
+			if (queryResult.getRecordCount() < minCount && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
 			}
 			// 总记录数量大于实际记录数量
-			if (rowSize < queryResult.getPageSize() && queryResult.getRecordCount() > minCount) {
+			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
-			}
-			if (null != pageQueryKey) {
-				// 将总记录数登记到缓存
-				PageOptimizeUtils.registPageTotalCount(sqlToyConfig, pageOptimize, pageQueryKey,
-						queryResult.getRecordCount());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

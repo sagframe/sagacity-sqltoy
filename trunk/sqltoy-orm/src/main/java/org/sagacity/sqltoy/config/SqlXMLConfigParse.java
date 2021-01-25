@@ -386,7 +386,6 @@ public class SqlXMLConfigParse {
 			// 最大并行等待时长(秒)
 			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
 				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
-
 			}
 			sqlToyConfig.setPageOptimize(optimize);
 		}
