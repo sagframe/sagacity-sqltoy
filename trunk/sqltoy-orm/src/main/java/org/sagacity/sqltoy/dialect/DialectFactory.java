@@ -852,7 +852,7 @@ public class DialectFactory {
 			// 修正实际结果跟count的差异,比如:pageNo=3,rows=9,count=27,则需要将count调整为29
 			long minCount = (queryResult.getPageNo() - 1) * queryResult.getPageSize() + rowSize;
 			// 总记录数小于实际查询记录数量
-			if (queryResult.getRecordCount() < minCount && minCount >= 0) {
+			if (queryResult.getRecordCount() < minCount && minCount >= 0 && rowSize <= queryResult.getPageSize()) {
 				queryResult.setRecordCount(minCount);
 			}
 			// 总记录数量大于实际记录数量
