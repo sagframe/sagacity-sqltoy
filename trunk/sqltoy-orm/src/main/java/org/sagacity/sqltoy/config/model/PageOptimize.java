@@ -5,8 +5,6 @@ package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
-import org.sagacity.sqltoy.SqlToyConstants;
-
 /**
  * @project sagacity-sqltoy
  * @description 分页优化配置
