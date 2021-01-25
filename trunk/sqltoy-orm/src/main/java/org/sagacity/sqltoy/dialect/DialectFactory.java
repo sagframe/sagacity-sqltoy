@@ -666,25 +666,29 @@ public class DialectFactory {
 								// 从缓存中提取总记录数
 								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
 										pageQueryKey);
+								if (recordCnt != null) {
+									SqlExecuteStat.debug("过程提示", "分页优化条件命中,从缓存中获得总记录数:{}!!", recordCnt);
+								}
 							}
 							// 并行且缓存中无总记录数量，执行并行处理
 							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
-									&& recordCnt != null) {
+									&& recordCnt == null) {
 								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
 										pageNo, pageSize, pageOptimize, conn, dbType, dialect);
 								recordCnt = queryResult.getRecordCount();
-								// 将总记录数登记到缓存
+								// 将并行后得到的总记录数登记到缓存
 								if (null != pageQueryKey) {
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
 											recordCnt);
 								}
 							} else {
+								//非并行且分页缓存未命中，执行count查询
 								if (recordCnt == null) {
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
 								}
+								// 将总记录数登记到缓存
 								if (null != pageQueryKey) {
-									// 将总记录数登记到缓存
 									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
 											recordCnt);
 								}
