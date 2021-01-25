@@ -365,12 +365,13 @@ public class SqlXMLConfigParse {
 		}
 
 		// 解析分页优化器
-		// <page-optimize alive-max="100" alive-seconds="90"/>
+		// <page-optimize parallel="true" alive-max="100" alive-seconds="90"
+		// parallel-maxwait-seconds="600"/>
 		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
 			PageOptimize optimize = new PageOptimize();
 			Element pageOptimize = (Element) nodeList.item(0);
-			// sqlToyConfig.setPageOptimize(true);
+			// 保留不同条件的count缓存记录量
 			if (pageOptimize.hasAttribute("alive-max")) {
 				optimize.aliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
 			}
@@ -382,7 +383,6 @@ public class SqlXMLConfigParse {
 			if (pageOptimize.hasAttribute("parallel")) {
 				optimize.parallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
 			}
-
 			// 最大并行等待时长(秒)
 			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
 				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
