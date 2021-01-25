@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -1788,7 +1789,7 @@ public class SqlToyDaoSupport {
 			if (parallConfig.getMaxWaitSeconds() != null) {
 				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
 			} else {
-				pool.awaitTermination(7200, TimeUnit.SECONDS);
+				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;

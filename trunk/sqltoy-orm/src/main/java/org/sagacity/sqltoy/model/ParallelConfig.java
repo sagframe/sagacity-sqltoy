@@ -19,9 +19,9 @@ public class ParallelConfig implements Serializable {
 	private static final long serialVersionUID = 5130763135305535186L;
 
 	/**
-	 * 最大等待时长(秒),默认2个小时
+	 * 最大等待时长(秒),默认30分钟
 	 */
-	private Integer maxWaitSeconds;
+	private Integer maxWaitSeconds = 1800;
 
 	/**
 	 * 最大并行数量

@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sagacity-sqltoy
  * @description 分页优化配置
@@ -35,9 +37,9 @@ public class PageOptimize implements Serializable {
 	private int aliveSeconds = 90;
 
 	/**
-	 * 最大2个小时
+	 * 默认值为1800秒
 	 */
-	private long parallelMaxWaitSeconds = 7200;
+	private long parallelMaxWaitSeconds = SqlToyConstants.PARALLEL_MAXWAIT_SECONDS;
 
 	/**
 	 * @return the aliveMax
@@ -53,12 +55,7 @@ public class PageOptimize implements Serializable {
 		// 最大不超过10000
 		if (aliveMax > 10000) {
 			this.aliveMax = 10000;
-		}
-		// 最小100
-//		else if (aliveMax < 100) {
-//			this.aliveMax = 100;
-//		} 
-		else {
+		} else {
 			this.aliveMax = aliveMax;
 		}
 		return this;
@@ -102,7 +99,9 @@ public class PageOptimize implements Serializable {
 	}
 
 	public PageOptimize parallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
-		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
+		if (parallelMaxWaitSeconds > 1) {
+			this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
+		}
 		return this;
 	}
 
