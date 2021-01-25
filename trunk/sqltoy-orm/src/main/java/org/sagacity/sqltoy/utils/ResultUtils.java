@@ -915,9 +915,9 @@ public class ResultUtils {
 				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
 				fieldStr = extend.keyTemplate.replace("{}", fieldStr);
 			}
-			//根据key获取缓存值
+			// 根据key获取缓存值
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
-			//未匹配到
+			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				if (extend.uncached != null) {
 					fieldValue = extend.uncached.replace("${value}", fieldStr);
@@ -1121,7 +1121,7 @@ public class ResultUtils {
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
 			Class resultType, boolean changedCols) throws Exception {
 		// 类型为null就默认返回二维List
-		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
+		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
 		}
