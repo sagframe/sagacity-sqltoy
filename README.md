@@ -23,8 +23,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.12 发版日期: 2021-01-18
-* 兼容sql中存在"["和"]" 对称符号,参见：clickhouse 的arrayStringConcat(arr[, separator])
+# 最新版本号: 4.17.13 发版日期: 2021-01-25
+* 分页支持总记录数和单页数据并行查询，提升效率，结合之前的快速分页、分页优化，sqltoy的分页基本提供了极致优化
+
 # 未来规划
 ## 1. 功能完备和强化
 * 1.1 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
@@ -168,8 +169,9 @@ where t.ORDER_ID=?
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
 	<!-- 分页优化器,通过缓存实现查询条件一致的情况下在一定时间周期内缓存总记录数量，从而无需每次查询总记录数量 -->
+	<!-- parallel:是否并行查询总记录数和单页数据，当alive-max=1 时关闭缓存优化 -->
 	<!-- alive-max:最大存放多少个不同查询条件的总记录量; alive-seconds:查询条件记录量存活时长(比如120秒,超过阀值则重新查询) -->
-	<page-optimize alive-max="100" alive-seconds="120" />
+	<page-optimize parallel="true" alive-max="100" alive-seconds="120" />
 	<value>
 		<![CDATA[
 		select t1.*,t2.ORGAN_NAME 
