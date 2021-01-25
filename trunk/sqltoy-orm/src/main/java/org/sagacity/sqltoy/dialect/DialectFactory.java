@@ -789,7 +789,6 @@ public class DialectFactory {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
-
 		ExecutorService pool = null;
 		try {
 			SqlExecuteStat.debug("过程提示", "分页查询开始并行查询count总记录数和单页记录数据!");
