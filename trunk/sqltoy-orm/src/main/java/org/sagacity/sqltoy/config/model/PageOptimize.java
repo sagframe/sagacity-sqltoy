@@ -20,6 +20,11 @@ public class PageOptimize implements Serializable {
 	private static final long serialVersionUID = -4202934471963179375L;
 
 	/**
+	 * 开启并行查询
+	 */
+	private boolean parallel = false;
+
+	/**
 	 * 1000个不同条件查询
 	 */
 	private int aliveMax = 1000;
@@ -28,6 +33,11 @@ public class PageOptimize implements Serializable {
 	 * 1.5分钟
 	 */
 	private int aliveSeconds = 90;
+
+	/**
+	 * 默认值为1800秒
+	 */
+	private long parallelMaxWaitSeconds = 1800;
 
 	/**
 	 * @return the aliveMax
@@ -43,10 +53,6 @@ public class PageOptimize implements Serializable {
 		// 最大不超过10000
 		if (aliveMax > 10000) {
 			this.aliveMax = 10000;
-		}
-		// 最小100
-		else if (aliveMax < 100) {
-			this.aliveMax = 100;
 		} else {
 			this.aliveMax = aliveMax;
 		}
@@ -58,6 +64,20 @@ public class PageOptimize implements Serializable {
 	 */
 	public int getAliveSeconds() {
 		return aliveSeconds;
+	}
+
+	public boolean isParallel() {
+		return parallel;
+	}
+
+	/**
+	 * @TODO 设置并行，即同时查询count和单页记录
+	 * @param parallel
+	 * @return
+	 */
+	public PageOptimize parallel(boolean parallel) {
+		this.parallel = parallel;
+		return this;
 	}
 
 	/**
@@ -74,6 +94,20 @@ public class PageOptimize implements Serializable {
 		} else {
 			this.aliveSeconds = aliveSeconds;
 		}
+		return this;
+	}
+
+	public long getParallelMaxWaitSeconds() {
+		return parallelMaxWaitSeconds;
+	}
+
+	/**
+	 * @TODO 设置并行最大等待时长(可以不用设置)
+	 * @param parallelMaxWaitSeconds
+	 * @return
+	 */
+	public PageOptimize parallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
+		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
 		return this;
 	}
 

@@ -167,6 +167,7 @@ public class RedisIdGenerator implements IdGenerator {
 		if (increment > 1) {
 			return counter.addAndGet(increment);
 		}
+		// 默认每次加1
 		return counter.incrementAndGet();
 	}
 

@@ -101,7 +101,7 @@ public class DateUtil {
 		/**
 		 * 日期时间(日期点号分割)
 		 */
-		public final static String DATATIME_DOT = "yyyy.MM.dd HH:mm:ss";
+		public final static String DATETIME_DOT = "yyyy.MM.dd HH:mm:ss";
 
 		/**
 		 * 日期时间(日期反斜杠)

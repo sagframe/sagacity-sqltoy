@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -1176,9 +1177,9 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生ID(可以指定增量范围)
-	 * @param signature
-	 * @param increment
+	 * @todo 产生ID(可以指定增量范围，当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * @param signature 唯一标识符号
+	 * @param increment 唯一标识符号，默认设置为1
 	 * @return
 	 */
 	protected long generateBizId(String signature, int increment) {
@@ -1784,9 +1785,11 @@ public class SqlToyDaoSupport {
 				futureResult.add(future);
 			}
 			pool.shutdown();
-			// 设置最大等待时长(最大不能超过10个小时)
+			// 设置最大等待时长
 			if (parallConfig.getMaxWaitSeconds() != null) {
 				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
+			} else {
+				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;

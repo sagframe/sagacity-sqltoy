@@ -122,6 +122,11 @@ public class SqlToyConstants {
 	public static int SQL_IN_MAX = 999;
 
 	/**
+	 * 并行默认最大等待时长
+	 */
+	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
+
+	/**
 	 * 字符串中内嵌参数的匹配模式
 	 */
 	public final static Pattern paramPattern = Pattern

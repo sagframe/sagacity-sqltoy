@@ -19,7 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 /**
  * @project sagacity-sqltoy
  * @description 提供基于Caffeine缓存实现
- * @author zhongxuchen
+ * @author jbakwd@163.com
  * @version v1.0, Date:2021-1-14
  * @modify 2021-1-14,修改说明
  */
@@ -40,9 +40,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cache == null) {
 			return null;
 		}
-		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
-		if (cacheValue != null) {
-			return (HashMap<String, Object[]>) cacheValue;
+		Cache.ValueWrapper wrapper = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
+		if (wrapper != null) {
+			return (HashMap<String, Object[]>) wrapper.get();
 		}
 		return null;
 	}
@@ -55,15 +55,16 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		}
 		synchronized (cacheName) {
 			Cache cache = cacheManager.getCache(cacheName);
-			// 缓存没有配置,自动创建缓存(不建议使用)
+			//Caffeine cache==null实际走不到这一步，其会自动创建
+			// 缓存没有配置,自动创建缓存
 			if (cache == null) {
 				Caffeine caffeine = Caffeine.newBuilder();
+				// .maximumSize((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap());
 				if (cacheConfig.getKeepAlive() > 0) {
 					caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
 				}
-				// cacheManager.setcsetCaffeine(caffeine);
-				// cacheManager.registerCustomCache(cacheName, new CaffeineCache(cacheName,
-				// caffeine.build()));
+				//cacheManager.setCaffeine(caffeine);
+				cacheManager.registerCustomCache(cacheName, caffeine.build());
 			}
 			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
 			if (cacheValue == null) {
@@ -113,7 +114,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 
 	@Override
 	public void destroy() {
-		cacheManager = null;
+		if (cacheManager != null) {
+			cacheManager = null;
+		}
 	}
 
 }

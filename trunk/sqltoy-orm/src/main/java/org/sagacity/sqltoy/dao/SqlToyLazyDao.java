@@ -712,9 +712,9 @@ public interface SqlToyLazyDao {
 	public DataSource getDataSource();
 
 	/**
-	 * @todo 获取业务ID
-	 * @param signature
-	 * @param increment
+	 * @todo 获取业务ID(当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * @param signature 唯一标识符号
+	 * @param increment 增量
 	 * @return
 	 */
 	public long generateBizId(String signature, int increment);

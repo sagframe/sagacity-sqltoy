@@ -365,18 +365,27 @@ public class SqlXMLConfigParse {
 		}
 
 		// 解析分页优化器
-		// <page-optimize alive-max="100" alive-seconds="90"/>
+		// <page-optimize parallel="true" alive-max="100" alive-seconds="90"
+		// parallel-maxwait-seconds="600"/>
 		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
 			PageOptimize optimize = new PageOptimize();
 			Element pageOptimize = (Element) nodeList.item(0);
-			// sqlToyConfig.setPageOptimize(true);
+			// 保留不同条件的count缓存记录量
 			if (pageOptimize.hasAttribute("alive-max")) {
 				optimize.aliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
 			}
 			// 不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.hasAttribute("alive-seconds")) {
 				optimize.aliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
+			}
+			// 是否支持并行查询
+			if (pageOptimize.hasAttribute("parallel")) {
+				optimize.parallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
+			}
+			// 最大并行等待时长(秒)
+			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
+				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
 			}
 			sqlToyConfig.setPageOptimize(optimize);
 		}
@@ -1050,7 +1059,8 @@ public class SqlXMLConfigParse {
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {
 						// 统一未匹配中的通配符号为${value}
-						translateModel.setUncached(uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
+						translateModel.setUncached(
+								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
