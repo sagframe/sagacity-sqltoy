@@ -75,8 +75,9 @@ import org.slf4j.LoggerFactory;
  * @description 为不同类型数据库提供不同方言实现类的factory,避免各个数据库发展变更形成相互影响
  * @author zhongxuchen
  * @version v1.0,Date:2014年12月11日
- * @modify data:2020-06-05 增加dm(达梦)数据库支持
- * @modify data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
+ * @update data:2020-06-05 增加dm(达梦)数据库支持
+ * @update data:2020-06-10 增加tidb、guassdb、oceanbase支持,规整sqlserver的版本(默认仅支持2012+)
+ * @update data:2021-01-25 分页支持并行查询
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class DialectFactory {
@@ -779,6 +780,7 @@ public class DialectFactory {
 	}
 
 	/**
+	 * @update data:2021-01-25 分页支持并行查询
 	 * @TODO 并行分页查询，同时执行count和rows记录查询
 	 * @param sqlToyContext
 	 * @param queryExecutor
