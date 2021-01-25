@@ -70,6 +70,11 @@ public class PageOptimize implements Serializable {
 		return parallel;
 	}
 
+	/**
+	 * @TODO 设置并行，即同时查询count和单页记录
+	 * @param parallel
+	 * @return
+	 */
 	public PageOptimize parallel(boolean parallel) {
 		this.parallel = parallel;
 		return this;
@@ -96,6 +101,11 @@ public class PageOptimize implements Serializable {
 		return parallelMaxWaitSeconds;
 	}
 
+	/**
+	 * @TODO 设置并行最大等待时长(可以不用设置)
+	 * @param parallelMaxWaitSeconds
+	 * @return
+	 */
 	public PageOptimize parallelMaxWaitSeconds(long parallelMaxWaitSeconds) {
 		this.parallelMaxWaitSeconds = parallelMaxWaitSeconds;
 		return this;
