@@ -682,7 +682,7 @@ public class DialectFactory {
 											recordCnt);
 								}
 							} else {
-								//非并行且分页缓存未命中，执行count查询
+								// 非并行且分页缓存未命中，执行count查询
 								if (recordCnt == null) {
 									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
@@ -789,9 +789,10 @@ public class DialectFactory {
 		final QueryResult queryResult = new QueryResult();
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
-		SqlExecuteStat.debug("过程提示", "分页查询启动并行查询count和rows!");
+
 		ExecutorService pool = null;
 		try {
+			SqlExecuteStat.debug("过程提示", "分页查询开始并行查询count总记录数和单页记录数据!");
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
 			pool.submit(new Runnable() {
