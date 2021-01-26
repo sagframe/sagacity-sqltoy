@@ -115,6 +115,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			return true;
 		}
 		cacheManager = new CaffeineCacheManager();
+		logger.debug("已经启动caffeine 缓存管理器--------------------------------------");
 		return true;
 	}
 
@@ -124,5 +125,4 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			cacheManager = null;
 		}
 	}
-
 }

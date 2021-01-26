@@ -190,6 +190,7 @@ public class CacheUpdateWatcher extends Thread {
 			try {
 				logger.debug("检测到缓存:{} 发生{}条记录更新!", cacheName, results.size());
 				HashMap<String, Object[]> cacheData;
+				int count = 0;
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
 					cacheData = translateCacheManager.getCache(cacheName, null);
@@ -201,6 +202,7 @@ public class CacheUpdateWatcher extends Thread {
 						// key不能为null
 						if (result.getItem()[0] != null) {
 							cacheData.put(result.getItem()[0].toString(), result.getItem());
+							count++;
 						}
 					}
 				} // 内部存在分组的缓存(如数据字典)
@@ -211,10 +213,15 @@ public class CacheUpdateWatcher extends Thread {
 							// 为null则等待首次调用加载
 							if (cacheData != null) {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
+								count++;
+							} else {
+								logger.warn("增量缓存更新cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确!", cacheName,
+										result.getCacheType());
 							}
 						}
 					}
 				}
+				logger.debug("缓存实际完成:{} 条记录更新!", count);
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());
