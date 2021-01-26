@@ -5,6 +5,7 @@ package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -19,9 +20,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 /**
  * @project sagacity-sqltoy
  * @description 提供基于Caffeine缓存实现
- * @author jbakwd@163.com
- * @version v1.0, Date:2021-1-14
- * @modify 2021-1-14,修改说明
+ * @author 740202157@qq.com
+ * @version v1.0, Date:2021-1-25
+ * @modify 2021-1-25,修改说明
  */
 public class TranslateCaffeineManager extends TranslateCacheManager {
 	/**
@@ -30,6 +31,9 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateCaffeineManager.class);
 
 	protected static CaffeineCacheManager cacheManager;
+
+	// 用于判断是否创建过缓存
+	private HashSet<String> cacheNameSet = new HashSet<String>();
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
@@ -54,18 +58,20 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			return;
 		}
 		synchronized (cacheName) {
-			Cache cache = cacheManager.getCache(cacheName);
-			//Caffeine cache==null实际走不到这一步，其会自动创建
-			// 缓存没有配置,自动创建缓存
-			if (cache == null) {
+			// 判断是否创建过缓存，没有创建过统一创建再取出
+			if (!cacheNameSet.contains(cacheName)) {
 				Caffeine caffeine = Caffeine.newBuilder();
-				// .maximumSize((cacheConfig.getHeap() < 1) ? 1000 : cacheConfig.getHeap());
+				// 如heap设置为负数表示不限制大小,当>=1 && <100时统一设置为1000
+				if (cacheConfig.getHeap() > 0) {
+					caffeine.maximumSize(cacheConfig.getHeap() < 100 ? 1000 : cacheConfig.getHeap());
+				}
 				if (cacheConfig.getKeepAlive() > 0) {
 					caffeine.expireAfterWrite(Duration.ofSeconds(cacheConfig.getKeepAlive()));
 				}
-				//cacheManager.setCaffeine(caffeine);
 				cacheManager.registerCustomCache(cacheName, caffeine.build());
+				cacheNameSet.add(cacheName);
 			}
+			Cache cache = cacheManager.getCache(cacheName);
 			// 清除缓存(一般不会执行,即缓存值被设置为null表示清除缓存)
 			if (cacheValue == null) {
 				if (StringUtil.isBlank(cacheType)) {
@@ -109,6 +115,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			return true;
 		}
 		cacheManager = new CaffeineCacheManager();
+		logger.debug("已经启动caffeine 缓存管理器--------------------------------------");
 		return true;
 	}
 
@@ -118,5 +125,4 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			cacheManager = null;
 		}
 	}
-
 }

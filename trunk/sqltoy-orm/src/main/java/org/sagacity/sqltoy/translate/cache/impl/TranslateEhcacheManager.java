@@ -142,6 +142,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager != null) {
 			return true;
 		}
+		logger.debug("启动ehcache 缓存管理器--------------------------------------");
 		// 未定义持久化文件,则由ehcache自行默认创建
 		if (StringUtil.isBlank(diskStorePath)) {
 			cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
@@ -183,5 +184,4 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			cacheManager = null;
 		}
 	}
-
 }
