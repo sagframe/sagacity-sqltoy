@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，SqlToy ORM框架不允许任何形式的抄袭
- */
 package org.sagacity.sqltoy;
 
 import java.util.Arrays;
