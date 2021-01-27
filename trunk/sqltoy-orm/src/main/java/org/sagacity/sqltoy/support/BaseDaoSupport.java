@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.support;
 
 import org.sagacity.sqltoy.link.Batch;
