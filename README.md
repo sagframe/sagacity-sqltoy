@@ -23,17 +23,12 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.13 发版日期: 2021-01-25
-* 分页支持总记录数和单页数据并行查询，提升效率，结合之前的快速分页、分页优化，sqltoy的分页基本提供了极致优化
+# 最新版本号: 4.17.15 发版日期: 2021-01-27
+* 支持caffeine缓存用于缓存翻译,通过spring.sqltoy.cacheType=caffeine 设置
 
 # 未来规划
 ## 1. 功能完备和强化
-* 1.1 缓存翻译使用的缓存框架增加caffeine的支持选择(目前默认是ehcache)
-* 1.2 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
-## 2. 规划5.0版本
-* 2.1 支持非spring环境
-* 2.2 规范api接口,让调用过程更加优雅，完善文档和演示范例
-* 2.3 优化内部多种方言实现的机制,强化不同方言相同实现方式的代码重用
+* 1.1 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
