@@ -488,7 +488,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)
+	 * <p>
+	 * <li>1、第一步调用解析，注意是单个sqlId的片段</li>
+	 * <li>2、根据业务情况，调整id,sqlToyConfig.setId(),注意:这步并非必要,当报表平台时,报表里面多个sql,每个id在本报表范围内唯一，当很多个报表时会冲突，所以需要整合rptId+sqlId</li>
+	 * <li>3、putSqlToyConfig(SqlToyConfig sqlToyConfig) 放入交由sqltoy统一管理</li>
+	 * </p>
+	 * 
+	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)，
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
