@@ -488,7 +488,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)
+	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)，
+	 *       解析完后需要用putSqlToyConfig(SqlToyConfig sqlToyConfig) 放入交由sqltoy统一管理
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
