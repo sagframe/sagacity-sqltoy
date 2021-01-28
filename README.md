@@ -30,6 +30,10 @@
 ## 1. 功能完备和强化
 * 1.1 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
 
+# 合作与开放
+* 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列
+* sqltoy希望可以捐赠给开源组织和企业,希望共同发展成拥有中国智慧面向更广泛用户的ORM框架
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
