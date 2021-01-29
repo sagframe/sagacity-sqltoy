@@ -69,6 +69,7 @@ public class BeanUtil {
 	 * <li>update 2019-09-05 优化匹配方式，修复setIsXXX的错误</li>
 	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
 	 * </p>
+	 * 
 	 * @todo 获取指定名称的方法集
 	 * @param voClass
 	 * @param props
@@ -1494,7 +1495,9 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (type.contains("int") && !(values instanceof int[])) {
+		// update 2021-01-29 修复integer中包含int导致类型匹配错误
+		//if (type.contains("int") && !(values instanceof int[])) 
+		if ((type.contains("int") && !type.contains("integer")) && !(values instanceof int[])) {
 			array = (Object[]) values;
 			int[] result = new int[array.length];
 			for (Object obj : array) {
