@@ -23,8 +23,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.17.16 发版日期: 2021-01-29
-* 修复sqlserver 在使用@fast()快速分页时，智能判断是否存在order by时忽视了@fast()场景，额外增加了order by newid()
+# 最新版本号: 4.17.17 发版日期: 2021-01-30
+* 优化postgresql数组类型的支持
 
 # 未来规划
 ## 1. 功能完备和强化
