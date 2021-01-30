@@ -1430,12 +1430,12 @@ public class BeanUtil {
 	/**
 	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
 	 * @param values
-	 * @param type
+	 * @param type   (已经小写)
 	 * @return
 	 */
 	private static Object convertArray(Object values, String type) {
 		// 类型完全一致
-		if (type == null || type.equalsIgnoreCase(values.getClass().getTypeName())) {
+		if (type == null || type.equals(values.getClass().getTypeName().toLowerCase())) {
 			return values;
 		}
 		Object[] array;
@@ -1496,7 +1496,7 @@ public class BeanUtil {
 			return result;
 		}
 		// update 2021-01-29 修复integer中包含int导致类型匹配错误
-		//if (type.contains("int") && !(values instanceof int[])) 
+		// if (type.contains("int") && !(values instanceof int[]))
 		if ((type.contains("int") && !type.contains("integer")) && !(values instanceof int[])) {
 			array = (Object[]) values;
 			int[] result = new int[array.length];
