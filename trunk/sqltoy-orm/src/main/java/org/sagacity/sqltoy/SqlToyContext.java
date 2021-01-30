@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
+import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -510,6 +511,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public synchronized void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		scriptLoader.putSqlToyConfig(sqlToyConfig);
+	}
+
+	/**
+	 * @TODO 开放sql文件动态交由开发者挂载
+	 * @param sqlFile
+	 * @throws Exception
+	 */
+	public synchronized void parseSqlFile(Object sqlFile) throws Exception {
+		scriptLoader.parseSqlFile(sqlFile);
 	}
 
 	/**
