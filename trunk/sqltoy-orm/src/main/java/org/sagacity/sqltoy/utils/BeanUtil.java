@@ -69,6 +69,7 @@ public class BeanUtil {
 	 * <li>update 2019-09-05 优化匹配方式，修复setIsXXX的错误</li>
 	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
 	 * </p>
+	 * 
 	 * @todo 获取指定名称的方法集
 	 * @param voClass
 	 * @param props
@@ -396,7 +397,7 @@ public class BeanUtil {
 			return null;
 		}
 		// value值的类型跟目标类型一致，直接返回
-		if (value.getClass().getName().toLowerCase().equals(typeName)) {
+		if (value.getClass().getTypeName().toLowerCase().equals(typeName)) {
 			return value;
 		}
 		// 针对非常规类型转换，将jdbc获取的字段结果转为java对象属性对应的类型
@@ -448,7 +449,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
 			}
-			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return oracleTimeStampConvert(paramValue);
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
@@ -463,7 +464,7 @@ public class BeanUtil {
 			if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
 			}
-			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.util.Date(oracleDateConvert(paramValue).getTime());
 			}
 			return DateUtil.parseString(valueStr);
@@ -552,7 +553,7 @@ public class BeanUtil {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
@@ -568,7 +569,7 @@ public class BeanUtil {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
 			return DateUtil.parseString(valueStr);
@@ -952,7 +953,7 @@ public class BeanUtil {
 			if (autoConvertType) {
 				for (int i = 0; i < indexSize; i++) {
 					if (null != realMethods[i]) {
-						methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+						methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
 						types = realMethods[i].getGenericParameterTypes();
 						if (types.length > 0) {
 							if (types[0] instanceof ParameterizedType) {
@@ -984,7 +985,7 @@ public class BeanUtil {
 								if (realMethods[i] != null && cellData != null) {
 									propertyName = realMethods[i].getName();
 									// 类型相同
-									if (cellData.getClass().getName().equals(methodTypes[i])) {
+									if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
@@ -1004,7 +1005,7 @@ public class BeanUtil {
 								cellData = rowList.get(indexs[i]);
 								if (realMethods[i] != null && cellData != null) {
 									propertyName = realMethods[i].getName();
-									if (cellData.getClass().getName().equals(methodTypes[i])) {
+									if (cellData.getClass().getTypeName().equals(methodTypes[i])) {
 										realMethods[i].invoke(bean, cellData);
 									} else {
 										realMethods[i].invoke(bean,
@@ -1077,7 +1078,7 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1152,7 +1153,7 @@ public class BeanUtil {
 						if (autoConvertType) {
 							for (int i = 0; i < indexSize; i++) {
 								if (realMethods[i] != null) {
-									methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+									methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
 									types = realMethods[i].getGenericParameterTypes();
 									if (types.length > 0) {
 										if (types[0] instanceof ParameterizedType) {
@@ -1373,7 +1374,7 @@ public class BeanUtil {
 		try {
 			// 获取主键的set方法
 			Method method = BeanUtil.matchSetMethods(voClass, entityMeta.getIdArray())[0];
-			String typeName = method.getParameterTypes()[0].getName();
+			String typeName = method.getParameterTypes()[0].getTypeName();
 			Type[] types = method.getGenericParameterTypes();
 			Class genericType = null;
 			if (types.length > 0) {
@@ -1429,12 +1430,12 @@ public class BeanUtil {
 	/**
 	 * @TODO 对常规类型进行转换，超出部分由自定义类型处理器完成(或配置类型完全一致)
 	 * @param values
-	 * @param type
+	 * @param type   (已经小写)
 	 * @return
 	 */
 	private static Object convertArray(Object values, String type) {
 		// 类型完全一致
-		if (type == null || type.equals(values.getClass().getTypeName())) {
+		if (type == null || type.equals(values.getClass().getTypeName().toLowerCase())) {
 			return values;
 		}
 		Object[] array;
@@ -1494,7 +1495,9 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		if (type.contains("int") && !(values instanceof int[])) {
+		// update 2021-01-29 修复integer中包含int导致类型匹配错误
+		// if (type.contains("int") && !(values instanceof int[]))
+		if ((type.contains("int") && !type.contains("integer")) && !(values instanceof int[])) {
 			array = (Object[]) values;
 			int[] result = new int[array.length];
 			for (Object obj : array) {
