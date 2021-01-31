@@ -37,32 +37,35 @@ public class ElasticEndpoint implements Serializable {
 
 	private RestClient restClient;
 
-	/**
-	 * 默认版本为6.3
-	 * 
-	 * @param url
-	 */
 	public ElasticEndpoint(String url) {
 		this.url = url;
-		this.version = "6.3";
-		this.majorVersion = 6;
-		this.minorVersion = 3;
 	}
 
-	public ElasticEndpoint(String url, String version) {
+	public ElasticEndpoint(String url, String sqlPath) {
 		this.url = url;
-		this.version = StringUtil.isBlank(version) ? "6.3" : version;
-		String[] vers = this.version.trim().split("\\.");
-		this.majorVersion = Integer.parseInt(vers[0]);
-		if (vers.length > 1) {
-			this.minorVersion = Integer.parseInt(vers[1]);
+		if (StringUtil.isNotBlank(sqlPath)) {
+			if (sqlPath.startsWith("/")) {
+				this.sqlPath = sqlPath.substring(1);
+			} else {
+				this.sqlPath = sqlPath;
+			}
+
+			String sqlLowPath = this.sqlPath.toLowerCase();
+			// elasticsearch原生sql路径为_sql
+			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
+				this.isNativeSql = true;
+			} else {
+				this.isNativeSql = false;
+			}
 		}
 	}
 
-	/**
-	 * 请求路径(默认为根路径)
-	 */
-	private String path = "/";
+	// 6.3+原生: _xpack/sql
+	// 7.x 原生:_sql
+	// elasticsearch-sql7.4 /_sql
+	// elasticsearch-sql7.5+ /_nlpcn/sql
+	// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
+	private String sqlPath = "_sql";
 
 	/**
 	 * 配置名称
@@ -110,37 +113,29 @@ public class ElasticEndpoint implements Serializable {
 	private int socketTimeout = 180000;
 
 	/**
-	 * 版本
+	 * 是否原生sql
 	 */
-	private String version;
+	private boolean isNativeSql = true;
 
-	/**
-	 * 主版本
-	 */
-	private int majorVersion = 6;
-
-	/**
-	 * 次版本
-	 */
-	private int minorVersion = 0;
-
-	/**
-	 * _xpack sql(6.3.x 版本开始支持sql)
-	 */
-	private boolean nativeSql = false;
-
-	/**
-	 * @return the path
-	 */
-	public String getPath() {
-		return path;
+	public String getSqlPath() {
+		return sqlPath;
 	}
 
-	/**
-	 * @param path the path to set
-	 */
-	public void setPath(String path) {
-		this.path = path;
+	public void setSqlPath(String sqlPath) {
+		if (StringUtil.isNotBlank(sqlPath)) {
+			if (sqlPath.startsWith("/")) {
+				this.sqlPath = sqlPath.substring(1);
+			} else {
+				this.sqlPath = sqlPath;
+			}
+			String sqlLowPath = this.sqlPath.toLowerCase();
+			// elasticsearch原生sql路径为_sql
+			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
+				this.isNativeSql = true;
+			} else {
+				this.isNativeSql = false;
+			}
+		}
 	}
 
 	/**
@@ -276,12 +271,17 @@ public class ElasticEndpoint implements Serializable {
 		return restClient;
 	}
 
+	public boolean isNativeSql() {
+		return isNativeSql;
+	}
+
 	/**
 	 * @param restClient the restClient to set
 	 */
 	public void initRestClient() {
-		if (StringUtil.isBlank(this.getUrl()))
+		if (StringUtil.isBlank(this.getUrl())) {
 			return;
+		}
 		if (restClient == null) {
 			// 替换全角字符
 			String[] urls = this.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
@@ -333,51 +333,4 @@ public class ElasticEndpoint implements Serializable {
 		}
 	}
 
-	/**
-	 * @return the nativeSql
-	 */
-	public boolean isNativeSql() {
-		return nativeSql;
-	}
-
-	/**
-	 * @param nativeSql the nativeSql to set
-	 */
-	public void setNativeSql(boolean nativeSql) {
-		this.nativeSql = nativeSql;
-	}
-
-	/**
-	 * @return the version
-	 */
-	public String getVersion() {
-		return version;
-	}
-
-	/**
-	 * @return the majorVersion
-	 */
-	public int getMajorVersion() {
-		return majorVersion;
-	}
-
-	/**
-	 * @return the minorVersion
-	 */
-	public int getMinorVersion() {
-		return minorVersion;
-	}
-
-	public static void main(String args[]) {
-		String urlStr = "http://192.168.56.1:9200";
-		try {
-			URL url = new java.net.URL(urlStr);
-			System.err.println("protocol=" + url.getProtocol());
-			System.err.println("host=" + url.getHost());
-			System.err.println("port=" + url.getPort());
-			System.err.println("path=" + url.getPath());
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-	}
 }

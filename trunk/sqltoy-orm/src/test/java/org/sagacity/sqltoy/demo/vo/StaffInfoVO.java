@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.demo.vo;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
 
@@ -64,6 +65,8 @@ public class StaffInfoVO implements Serializable {
 	private Integer status;
 	
 	private DataRange dataRange;
+	
+	private HashMap params;
 
 	public StaffInfoVO() {
 	}
@@ -373,6 +376,14 @@ public class StaffInfoVO implements Serializable {
 
 	public void setDataRange(DataRange dataRange) {
 		this.dataRange = dataRange;
+	}
+
+	public HashMap getParams() {
+		return params;
+	}
+
+	public void setParams(HashMap params) {
+		this.params = params;
 	}
 
 	

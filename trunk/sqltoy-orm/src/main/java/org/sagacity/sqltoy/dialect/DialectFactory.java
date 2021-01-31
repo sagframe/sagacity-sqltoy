@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.ShardingModel;
+import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
@@ -802,18 +803,26 @@ public class DialectFactory {
 		ExecutorService pool = null;
 		try {
 			SqlExecuteStat.debug("过程提示", "分页查询开始并行查询count总记录数和单页记录数据!");
+			final SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 			pool = Executors.newFixedThreadPool(2);
 			// 查询总记录数量
 			pool.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {
+						// 规避新的线程日志无法采集
+						SqlExecuteStat.mergeTrace(sqlTrace);
+						Long startTime = System.currentTimeMillis();
 						queryResult.setRecordCount(
 								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
+						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
 						queryResult.setMessage("查询总记录数异常:" + e.getMessage());
+					} finally {
+						SqlExecuteStat.destroyNotLog();
 					}
 				}
 			});
@@ -822,15 +831,21 @@ public class DialectFactory {
 				@Override
 				public void run() {
 					try {
+						SqlExecuteStat.mergeTrace(sqlTrace);
+						Long startTime = System.currentTimeMillis();
 						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
 								queryExecutor, pageNo, pageSize, conn, dbType, dialect);
 						queryResult.setRows(result.getRows());
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
+						SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
+						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
 						queryResult.setMessage("查询单页记录数据异常:" + e.getMessage());
+					} finally {
+						SqlExecuteStat.destroyNotLog();
 					}
 				}
 			});
