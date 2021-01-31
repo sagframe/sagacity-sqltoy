@@ -53,9 +53,9 @@ public class ElasticEndpoint implements Serializable {
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
-				this.isNativeSql = true;
+				this.nativeSql = true;
 			} else {
-				this.isNativeSql = false;
+				this.nativeSql = false;
 			}
 		}
 	}
@@ -115,7 +115,7 @@ public class ElasticEndpoint implements Serializable {
 	/**
 	 * 是否原生sql
 	 */
-	private boolean isNativeSql = true;
+	private boolean nativeSql = true;
 
 	public String getSqlPath() {
 		return sqlPath;
@@ -131,9 +131,9 @@ public class ElasticEndpoint implements Serializable {
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
 			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
-				this.isNativeSql = true;
+				this.nativeSql = true;
 			} else {
-				this.isNativeSql = false;
+				this.nativeSql = false;
 			}
 		}
 	}
@@ -270,9 +270,9 @@ public class ElasticEndpoint implements Serializable {
 	public RestClient getRestClient() {
 		return restClient;
 	}
-
+	
 	public boolean isNativeSql() {
-		return isNativeSql;
+		return nativeSql;
 	}
 
 	/**
