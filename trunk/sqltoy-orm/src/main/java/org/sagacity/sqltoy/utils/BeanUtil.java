@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -764,7 +765,12 @@ public class BeanUtil {
 					fields = properties[i].split("\\.");
 					Object value = serializable;
 					for (String field : fields) {
-						value = getProperty(value, field.trim());
+						//支持map类型 update 2021-01-31
+						if (value instanceof Map) {
+							value = ((Map) value).get(field.trim());
+						} else {
+							value = getProperty(value, field.trim());
+						}
 						if (value == null) {
 							break;
 						}
