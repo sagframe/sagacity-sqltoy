@@ -37,11 +37,6 @@ public class ElasticEndpoint implements Serializable {
 
 	private RestClient restClient;
 
-	/**
-	 * 默认版本为6.3
-	 * 
-	 * @param url
-	 */
 	public ElasticEndpoint(String url) {
 		this.url = url;
 	}
@@ -57,7 +52,7 @@ public class ElasticEndpoint implements Serializable {
 
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (sqlLowPath.startsWith("_sql") || sqlLowPath.contains("_xpack/sql")) {
+			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
 				this.isNativeSql = true;
 			} else {
 				this.isNativeSql = false;
@@ -135,7 +130,7 @@ public class ElasticEndpoint implements Serializable {
 			}
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (sqlLowPath.startsWith("_sql") || sqlLowPath.contains("_xpack/sql")) {
+			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
 				this.isNativeSql = true;
 			} else {
 				this.isNativeSql = false;
