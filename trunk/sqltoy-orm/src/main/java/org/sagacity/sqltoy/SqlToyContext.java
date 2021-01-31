@@ -9,7 +9,6 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.EntityManager;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
-import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
