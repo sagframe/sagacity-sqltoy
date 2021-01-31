@@ -54,8 +54,10 @@ public class ElasticEndpoint implements Serializable {
 			} else {
 				this.sqlPath = sqlPath;
 			}
+
+			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (this.sqlPath.toLowerCase().startsWith("_sql")) {
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.contains("_xpack/sql")) {
 				this.isNativeSql = true;
 			} else {
 				this.isNativeSql = false;
@@ -63,10 +65,11 @@ public class ElasticEndpoint implements Serializable {
 		}
 	}
 
-	/**
-	 * elastic sql插件对应路径(原生:_sql;elasticsearch-sql:_nlpcn/sql(>=7.5 &&
-	 * <=7.9.3),7.5之前:_xpack/sql);_opendistro/_sql
-	 */
+	// 6.3+原生: _xpack/sql
+	// 7.x 原生:_sql
+	// elasticsearch-sql7.4 /_sql
+	// elasticsearch-sql7.5+ /_nlpcn/sql
+	// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 	private String sqlPath = "_sql";
 
 	/**
@@ -130,8 +133,9 @@ public class ElasticEndpoint implements Serializable {
 			} else {
 				this.sqlPath = sqlPath;
 			}
+			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (this.sqlPath.toLowerCase().startsWith("_sql")) {
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.contains("_xpack/sql")) {
 				this.isNativeSql = true;
 			} else {
 				this.isNativeSql = false;
