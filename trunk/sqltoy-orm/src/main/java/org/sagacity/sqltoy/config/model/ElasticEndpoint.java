@@ -60,9 +60,9 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * 请求路径(默认为根路径)
+	 * elastic sql插件对应路径(原生:_sql\elasticsearch-sql:_nlpcn/sql(7.5+),7.5之前:_xpack/sql)
 	 */
-	private String path = "/";
+	private String sqlPath;
 
 	/**
 	 * 配置名称
@@ -129,18 +129,12 @@ public class ElasticEndpoint implements Serializable {
 	 */
 	private boolean nativeSql = false;
 
-	/**
-	 * @return the path
-	 */
-	public String getPath() {
-		return path;
+	public String getSqlPath() {
+		return sqlPath;
 	}
 
-	/**
-	 * @param path the path to set
-	 */
-	public void setPath(String path) {
-		this.path = path;
+	public void setSqlPath(String sqlPath) {
+		this.sqlPath = sqlPath;
 	}
 
 	/**

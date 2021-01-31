@@ -231,6 +231,7 @@ public class HttpClientUtils {
 		String url = esConfig.getUrl();
 		String nativePath = "_xpack/sql";
 		String sqlPluginPath = "_sql";
+		String sqlPath=esConfig.getSqlPath();
 		if (esConfig.getMajorVersion() >= 7) {
 			nativePath = "_sql";
 			if (esConfig.getMajorVersion() > 7 || esConfig.getMinorVersion() >= 5) {
@@ -243,8 +244,9 @@ public class HttpClientUtils {
 			// 7.x /_sql
 			// elasticsearch-sql7.4 /_sql
 			// elasticsearch-sql7.5+ /_nlpcn/sql
+			// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 			if (esConfig.isNativeSql()) {
-				// 判断url中是否已经包含相应路径
+				// 判断url中是否已经包含_sql
 				if (!url.toLowerCase().contains(nativePath)) {
 					url = url.concat(url.endsWith("/") ? nativePath : "/".concat(nativePath));
 				}
