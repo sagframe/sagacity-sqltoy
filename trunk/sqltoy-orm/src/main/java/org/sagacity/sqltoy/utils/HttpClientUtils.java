@@ -229,8 +229,6 @@ public class HttpClientUtils {
 	 */
 	private static String wrapUrl(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
 		String url = esConfig.getUrl();
-		// String nativePath = "_xpack/sql";
-		// String sqlPluginPath = "_sql";
 		String sqlPath = esConfig.getSqlPath();
 		if (StringUtil.isBlank(sqlPath)) {
 			sqlPath = "_sql";
@@ -242,7 +240,7 @@ public class HttpClientUtils {
 		// elasticsearch-sql7.5+ /_nlpcn/sql
 		// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 		if (nosqlConfig.isSqlMode()) {
-			if (!url.contains(sqlPath)) {
+			if (!url.toLowerCase().contains(sqlPath)) {
 				url = url.concat(url.endsWith("/") ? "" : "/").concat(sqlPath);
 			}
 		} else {

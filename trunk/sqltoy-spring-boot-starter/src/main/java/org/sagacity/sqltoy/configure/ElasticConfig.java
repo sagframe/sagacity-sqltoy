@@ -31,14 +31,9 @@ public class ElasticConfig implements Serializable {
 	private String password;
 
 	/**
-	 * es版本
-	 */
-	private String version;
-
-	/**
 	 * 相对路径
 	 */
-	private String path;
+	private String sqlPath;
 
 	private String keyStore;
 
@@ -85,20 +80,12 @@ public class ElasticConfig implements Serializable {
 		this.password = password;
 	}
 
-	public String getVersion() {
-		return version;
+	public String getSqlPath() {
+		return sqlPath;
 	}
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public void setPath(String path) {
-		this.path = path;
+	public void setSqlPath(String sqlPath) {
+		this.sqlPath = sqlPath;
 	}
 
 	public String getKeyStore() {

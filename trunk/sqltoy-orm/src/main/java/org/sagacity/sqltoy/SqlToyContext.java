@@ -716,14 +716,9 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(defaultElastic)) {
 			defaultElastic = elasticEndpointList.get(0).getId();
 		}
-		boolean nativeSql = Boolean
-				.parseBoolean(SqlToyConstants.getKeyValue("sqltoy.elasticsearch.native.sql", "false"));
 		for (ElasticEndpoint config : elasticEndpointList) {
 			// 初始化restClient
 			config.initRestClient();
-			if (!config.isNativeSql()) {
-				config.setNativeSql(nativeSql);
-			}
 			elasticEndpoints.put(config.getId().toLowerCase(), config);
 		}
 	}

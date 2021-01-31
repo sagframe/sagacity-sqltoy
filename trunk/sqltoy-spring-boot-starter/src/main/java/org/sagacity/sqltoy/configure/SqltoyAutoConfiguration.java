@@ -130,8 +130,8 @@ public class SqltoyAutoConfiguration {
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
 		sqlToyContext.setDialectConfig(properties.getDialectConfig());
-		
-		//update 2021-01-18 设置缓存类别,默认ehcache
+
+		// update 2021-01-18 设置缓存类别,默认ehcache
 		sqlToyContext.setCacheType(properties.getCacheType());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
@@ -147,7 +147,7 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDefaultElastic(es.getDefaultId());
 			List<ElasticEndpoint> endpoints = new ArrayList<ElasticEndpoint>();
 			for (ElasticConfig esconfig : es.getEndpoints()) {
-				ElasticEndpoint ep = new ElasticEndpoint(esconfig.getUrl(), esconfig.getVersion());
+				ElasticEndpoint ep = new ElasticEndpoint(esconfig.getUrl(), esconfig.getSqlPath());
 				ep.setId(esconfig.getId());
 				if (esconfig.getCharset() != null) {
 					ep.setCharset(esconfig.getCharset());
@@ -163,7 +163,6 @@ public class SqltoyAutoConfiguration {
 				}
 				ep.setUsername(esconfig.getUsername());
 				ep.setPassword(esconfig.getPassword());
-				ep.setPath(esconfig.getPath());
 				ep.setKeyStore(esconfig.getKeyStore());
 				endpoints.add(ep);
 			}
