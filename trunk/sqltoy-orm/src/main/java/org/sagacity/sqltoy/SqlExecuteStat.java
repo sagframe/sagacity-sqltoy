@@ -228,6 +228,11 @@ public class SqlExecuteStat {
 		threadLocal.set(null);
 	}
 
+	public static void destroyNotLog() {
+		threadLocal.remove();
+		threadLocal.set(null);
+	}
+
 	/**
 	 * @param debug the debug to set
 	 */
@@ -368,5 +373,13 @@ public class SqlExecuteStat {
 			return sqlTrace.getExecuteTime();
 		}
 		return -1L;
+	}
+
+	public static SqlExecuteTrace get() {
+		return threadLocal.get();
+	}
+
+	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
+		threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
 	}
 }

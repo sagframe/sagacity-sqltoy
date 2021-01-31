@@ -176,4 +176,9 @@ public class SqlExecuteTrace implements Serializable {
 		this.overTime = overTime;
 	}
 
+	public void addLogs(List<SqlExecuteLog> sqlExecuteLogs) {
+		if (sqlExecuteLogs != null && !sqlExecuteLogs.isEmpty()) {
+			executeLogs.addAll(sqlExecuteLogs);
+		}
+	}
 }
