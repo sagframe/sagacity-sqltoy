@@ -60,9 +60,10 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * elastic sql插件对应路径(原生:_sql\elasticsearch-sql:_nlpcn/sql(7.5+),7.5之前:_xpack/sql)
+	 * elastic
+	 * sql插件对应路径(原生:_sql;elasticsearch-sql:_nlpcn/sql(>=7.5 && <=7.9.3),7.5之前:_xpack/sql);_opendistro/_sql
 	 */
-	private String sqlPath;
+	private String sqlPath = "_sql";
 
 	/**
 	 * 配置名称
@@ -112,21 +113,25 @@ public class ElasticEndpoint implements Serializable {
 	/**
 	 * 版本
 	 */
+	@Deprecated
 	private String version;
 
 	/**
 	 * 主版本
 	 */
+	@Deprecated
 	private int majorVersion = 6;
 
 	/**
 	 * 次版本
 	 */
+	@Deprecated
 	private int minorVersion = 0;
 
 	/**
 	 * _xpack sql(6.3.x 版本开始支持sql)
 	 */
+	@Deprecated
 	private boolean nativeSql = false;
 
 	public String getSqlPath() {
@@ -134,7 +139,11 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	public void setSqlPath(String sqlPath) {
-		this.sqlPath = sqlPath;
+		if (sqlPath.startsWith("/")) {
+			this.sqlPath = sqlPath.substring(1);
+		} else {
+			this.sqlPath = sqlPath;
+		}
 	}
 
 	/**
@@ -362,16 +371,16 @@ public class ElasticEndpoint implements Serializable {
 		return minorVersion;
 	}
 
-	public static void main(String args[]) {
-		String urlStr = "http://192.168.56.1:9200";
-		try {
-			URL url = new java.net.URL(urlStr);
-			System.err.println("protocol=" + url.getProtocol());
-			System.err.println("host=" + url.getHost());
-			System.err.println("port=" + url.getPort());
-			System.err.println("path=" + url.getPath());
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-	}
+//	public static void main(String args[]) {
+//		String urlStr = "http://192.168.56.1:9200";
+//		try {
+//			URL url = new java.net.URL(urlStr);
+//			System.err.println("protocol=" + url.getProtocol());
+//			System.err.println("host=" + url.getHost());
+//			System.err.println("port=" + url.getPort());
+//			System.err.println("path=" + url.getPath());
+//		} catch (MalformedURLException e) {
+//			e.printStackTrace();
+//		}
+//	}
 }

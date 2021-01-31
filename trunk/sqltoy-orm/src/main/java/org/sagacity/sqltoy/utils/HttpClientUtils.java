@@ -229,31 +229,21 @@ public class HttpClientUtils {
 	 */
 	private static String wrapUrl(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
 		String url = esConfig.getUrl();
-		String nativePath = "_xpack/sql";
-		String sqlPluginPath = "_sql";
-		String sqlPath=esConfig.getSqlPath();
-		if (esConfig.getMajorVersion() >= 7) {
-			nativePath = "_sql";
-			if (esConfig.getMajorVersion() > 7 || esConfig.getMinorVersion() >= 5) {
-				sqlPluginPath = "_nlpcn/sql";
-			}
+		// String nativePath = "_xpack/sql";
+		// String sqlPluginPath = "_sql";
+		String sqlPath = esConfig.getSqlPath();
+		if (StringUtil.isBlank(sqlPath)) {
+			sqlPath = "_sql";
 		}
+		// elasticsearch6.3.x 通过xpack支持sql查询
+		// 6.3 /_xpack/sql
+		// 7.x /_sql
+		// elasticsearch-sql7.4 /_sql
+		// elasticsearch-sql7.5+ /_nlpcn/sql
+		// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 		if (nosqlConfig.isSqlMode()) {
-			// elasticsearch6.3.x 通过xpack支持sql查询
-			// 6.3 /_xpack/sql
-			// 7.x /_sql
-			// elasticsearch-sql7.4 /_sql
-			// elasticsearch-sql7.5+ /_nlpcn/sql
-			// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
-			if (esConfig.isNativeSql()) {
-				// 判断url中是否已经包含_sql
-				if (!url.toLowerCase().contains(nativePath)) {
-					url = url.concat(url.endsWith("/") ? nativePath : "/".concat(nativePath));
-				}
-			} else {
-				if (!url.toLowerCase().contains(sqlPluginPath)) {
-					url = url.concat(url.endsWith("/") ? sqlPluginPath : "/".concat(sqlPluginPath));
-				}
+			if (!url.contains(sqlPath)) {
+				url = url.concat(url.endsWith("/") ? "" : "/").concat(sqlPath);
 			}
 		} else {
 			if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
