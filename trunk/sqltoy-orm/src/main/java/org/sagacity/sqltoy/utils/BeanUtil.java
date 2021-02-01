@@ -769,9 +769,13 @@ public class BeanUtil {
 					for (String field : fields) {
 						// 支持map类型 update 2021-01-31
 						if (value instanceof Map) {
-							// 将map转为key不区分大小写map,避免sql中的参数名称存在大小写不一致场景
-							map = new IgnoreKeyCaseMap();
-							map.putAll((Map) value);
+							if (value instanceof IgnoreKeyCaseMap) {
+								map = (IgnoreKeyCaseMap) value;
+							} else {
+								// 将map转为key不区分大小写map,避免sql中的参数名称存在大小写不一致场景
+								map = new IgnoreKeyCaseMap();
+								map.putAll((Map) value);
+							}
 							value = map.get(field.trim());
 							// value=((Map) value).get(field.trim());
 						} else {
