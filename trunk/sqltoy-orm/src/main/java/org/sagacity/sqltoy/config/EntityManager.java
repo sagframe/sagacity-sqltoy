@@ -137,7 +137,7 @@ public class EntityManager {
 		if (entitysMetaMap.contains(className)) {
 			return true;
 		}
-		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false);
 		if (entityMeta != null) {
 			return true;
 		}
@@ -161,7 +161,7 @@ public class EntityManager {
 		// update 2017-11-27
 		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
-			entityMeta = parseEntityMeta(sqlToyContext, entityClass);
+			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true);
 			if (entityMeta == null) {
 				throw new IllegalArgumentException("您传入的对象:[".concat(className)
 						.concat(" ]不是一个@SqlToyEntity实体POJO对象,sqltoy实体对象必须使用 @SqlToyEntity/@Entity/@Id 等注解来标识!"));
@@ -200,7 +200,7 @@ public class EntityManager {
 		}
 		// 解析entity对象的注解并放入缓存
 		for (Class entityClass : entities) {
-			parseEntityMeta(sqlToyContext, entityClass);
+			parseEntityMeta(sqlToyContext, entityClass, true);
 		}
 	}
 
@@ -208,9 +208,10 @@ public class EntityManager {
 	 * @todo <b>解析sqltoy entity对象获取其跟数据库相关的配置信息</b>
 	 * @param sqlToyContext
 	 * @param entityClass
+	 * @param notEntityWarn 当不是entity实体bean时是否进行日志提示
 	 * @return
 	 */
-	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass) {
+	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn) {
 		if (entityClass == null) {
 			return null;
 		}
@@ -336,7 +337,9 @@ public class EntityManager {
 		if (entityMeta != null) {
 			entitysMetaMap.put(className, entityMeta);
 		} else {
-			logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+			if (isWarn) {
+				logger.warn("SqlToy Entity:{}没有使用@Entity注解表明是一个实体类,请检查!", className);
+			}
 		}
 		return entityMeta;
 	}

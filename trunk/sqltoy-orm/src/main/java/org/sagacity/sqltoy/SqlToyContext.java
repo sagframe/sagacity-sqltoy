@@ -483,6 +483,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	/**
+	 * @TODO 判断是否是实体bean
+	 * @param entityClass
+	 * @return
+	 */
 	public boolean isEntity(Class<?> entityClass) {
 		return entityManager.isEntity(this, entityClass);
 	}
