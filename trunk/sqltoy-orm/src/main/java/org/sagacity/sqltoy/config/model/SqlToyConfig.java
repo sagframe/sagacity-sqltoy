@@ -6,7 +6,9 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -575,20 +577,27 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
 			return this.paramsName;
 		}
-		List<String> tmp = new ArrayList<String>();
+		Set<String> keys = new HashSet<String>();
+		List<String> params = new ArrayList<String>();
+		String key;
 		if (this.paramsName != null && this.paramsName.length > 0) {
 			for (String item : this.paramsName) {
-				if (!tmp.contains(item.toLowerCase())) {
-					tmp.add(item.toLowerCase());
+				key = item.toLowerCase();
+				if (!keys.contains(key)) {
+					keys.add(key);
+					params.add(item);
 				}
 			}
 		}
+		//增加cacheArgs中存在的参数名称
 		for (String item : this.cacheArgNames) {
-			if (!tmp.contains(item.toLowerCase())) {
-				tmp.add(item.toLowerCase());
+			key = item.toLowerCase();
+			if (!keys.contains(key)) {
+				keys.add(key);
+				params.add(item);
 			}
 		}
-		return tmp.toArray(new String[tmp.size()]);
+		return params.toArray(new String[params.size()]);
 	}
 
 	/**

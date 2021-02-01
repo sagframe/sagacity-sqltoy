@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -758,6 +759,7 @@ public class BeanUtil {
 		}
 		String[] fields;
 		try {
+			IgnoreKeyCaseMap map;
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
@@ -765,9 +767,13 @@ public class BeanUtil {
 					fields = properties[i].split("\\.");
 					Object value = serializable;
 					for (String field : fields) {
-						//支持map类型 update 2021-01-31
+						// 支持map类型 update 2021-01-31
 						if (value instanceof Map) {
-							value = ((Map) value).get(field.trim());
+							// 将map转为key不区分大小写map,避免sql中的参数名称存在大小写不一致场景
+							map = new IgnoreKeyCaseMap();
+							map.putAll((Map) value);
+							value = map.get(field.trim());
+							// value=((Map) value).get(field.trim());
 						} else {
 							value = getProperty(value, field.trim());
 						}
