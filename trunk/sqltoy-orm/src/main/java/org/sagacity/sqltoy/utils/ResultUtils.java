@@ -1112,9 +1112,11 @@ public class ResultUtils {
 
 	/**
 	 * @todo 根据查询结果的类型，构造相应对象集合(增加map形式的结果返回机制)
+	 * @param sqlToyContext
 	 * @param queryResultRows
 	 * @param labelNames
 	 * @param resultType
+	 * @param changedCols
 	 * @return
 	 * @throws Exception
 	 */
