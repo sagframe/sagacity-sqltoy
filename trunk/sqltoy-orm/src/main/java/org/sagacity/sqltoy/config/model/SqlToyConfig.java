@@ -432,8 +432,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	public boolean isNamedParam() {
-		if (this.paramsName != null && this.paramsName.length > 0)
+		if (this.paramsName != null && this.paramsName.length > 0) {
 			return true;
+		}
 		return false;
 	}
 
@@ -563,9 +564,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @param name
 	 */
 	public void addCacheArgParam(String name) {
-		String param = name.toLowerCase();
-		if (!this.cacheArgNames.contains(param)) {
-			this.cacheArgNames.add(param);
+		String nameLow = name.toLowerCase();
+		boolean exists = false;
+		for (String argName : cacheArgNames) {
+			if (argName.toLowerCase().equals(nameLow)) {
+				exists = true;
+				break;
+			}
+		}
+		if (!exists) {
+			this.cacheArgNames.add(name);
 		}
 	}
 
@@ -589,7 +597,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 				}
 			}
 		}
-		//增加cacheArgs中存在的参数名称
+		// 增加cacheArgs中存在的参数名称
 		for (String item : this.cacheArgNames) {
 			key = item.toLowerCase();
 			if (!keys.contains(key)) {
