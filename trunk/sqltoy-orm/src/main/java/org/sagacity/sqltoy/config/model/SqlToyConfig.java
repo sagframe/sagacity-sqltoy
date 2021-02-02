@@ -6,7 +6,9 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
@@ -430,8 +432,9 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @return
 	 */
 	public boolean isNamedParam() {
-		if (this.paramsName != null && this.paramsName.length > 0)
+		if (this.paramsName != null && this.paramsName.length > 0) {
 			return true;
+		}
 		return false;
 	}
 
@@ -561,9 +564,16 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @param name
 	 */
 	public void addCacheArgParam(String name) {
-		String param = name.toLowerCase();
-		if (!this.cacheArgNames.contains(param)) {
-			this.cacheArgNames.add(param);
+		String nameLow = name.toLowerCase();
+		boolean exists = false;
+		for (String argName : cacheArgNames) {
+			if (argName.toLowerCase().equals(nameLow)) {
+				exists = true;
+				break;
+			}
+		}
+		if (!exists) {
+			this.cacheArgNames.add(name);
 		}
 	}
 
@@ -575,20 +585,27 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		if (cacheArgNames == null || cacheArgNames.isEmpty()) {
 			return this.paramsName;
 		}
-		List<String> tmp = new ArrayList<String>();
+		Set<String> keys = new HashSet<String>();
+		List<String> params = new ArrayList<String>();
+		String key;
 		if (this.paramsName != null && this.paramsName.length > 0) {
 			for (String item : this.paramsName) {
-				if (!tmp.contains(item.toLowerCase())) {
-					tmp.add(item.toLowerCase());
+				key = item.toLowerCase();
+				if (!keys.contains(key)) {
+					keys.add(key);
+					params.add(item);
 				}
 			}
 		}
+		// 增加cacheArgs中存在的参数名称
 		for (String item : this.cacheArgNames) {
-			if (!tmp.contains(item.toLowerCase())) {
-				tmp.add(item.toLowerCase());
+			key = item.toLowerCase();
+			if (!keys.contains(key)) {
+				keys.add(key);
+				params.add(item);
 			}
 		}
-		return tmp.toArray(new String[tmp.size()]);
+		return params.toArray(new String[params.size()]);
 	}
 
 	/**

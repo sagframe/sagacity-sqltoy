@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -757,6 +758,10 @@ public class BeanUtil {
 			reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 		}
 		String[] fields;
+		Iterator<?> iter;
+		Map.Entry<String, Object> entry;
+		boolean isMap = false;
+		String fieldLow;
 		try {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
@@ -765,9 +770,26 @@ public class BeanUtil {
 					fields = properties[i].split("\\.");
 					Object value = serializable;
 					for (String field : fields) {
-						//支持map类型 update 2021-01-31
+						// 支持map类型 update 2021-01-31
 						if (value instanceof Map) {
-							value = ((Map) value).get(field.trim());
+							if (value instanceof IgnoreKeyCaseMap) {
+								value = ((IgnoreKeyCaseMap) value).get(field.trim());
+							} else {
+								iter = ((Map) value).entrySet().iterator();
+								isMap = false;
+								fieldLow = field.trim().toLowerCase();
+								while (iter.hasNext()) {
+									entry = (Map.Entry<String, Object>) iter.next();
+									if (entry.getKey().toLowerCase().equals(fieldLow)) {
+										value = entry.getValue();
+										isMap = true;
+										break;
+									}
+								}
+								if (!isMap) {
+									value = null;
+								}
+							}
 						} else {
 							value = getProperty(value, field.trim());
 						}

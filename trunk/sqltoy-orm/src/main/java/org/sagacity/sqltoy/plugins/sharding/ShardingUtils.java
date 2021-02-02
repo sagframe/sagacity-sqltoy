@@ -325,7 +325,8 @@ public class ShardingUtils {
 			entry = (Map.Entry) iter.next();
 			sqlTable = (String) entry.getKey();
 			targetTable = (String) entry.getValue();
-			if (targetTable != null && !targetTable.trim().equals("") && !sqlTable.equals(targetTable)) {
+			// 替换成实际表名
+			if (targetTable != null && !targetTable.trim().equals("") && !sqlTable.equalsIgnoreCase(targetTable)) {
 				sqlToyConfig.setCountSql(matchReplace(sqlToyConfig.getCountSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setSql(matchReplace(sqlToyConfig.getSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setFastSql(matchReplace(sqlToyConfig.getFastSql(dialect), sqlTable, targetTable));

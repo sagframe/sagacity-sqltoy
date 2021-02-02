@@ -52,7 +52,7 @@ public class ElasticEndpoint implements Serializable {
 
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
 			} else {
 				this.nativeSql = false;
@@ -130,7 +130,7 @@ public class ElasticEndpoint implements Serializable {
 			}
 			String sqlLowPath = this.sqlPath.toLowerCase();
 			// elasticsearch原生sql路径为_sql
-			if (sqlLowPath.equals("_sql") || sqlLowPath.equals("_xpack/sql")) {
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
 				this.nativeSql = true;
 			} else {
 				this.nativeSql = false;
@@ -270,7 +270,7 @@ public class ElasticEndpoint implements Serializable {
 	public RestClient getRestClient() {
 		return restClient;
 	}
-	
+
 	public boolean isNativeSql() {
 		return nativeSql;
 	}
@@ -287,8 +287,9 @@ public class ElasticEndpoint implements Serializable {
 			String[] urls = this.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
 			// 当为单一地址时使用httpclient直接调用
-			if (urls.length < 2)
+			if (urls.length < 2) {
 				return;
+			}
 			List<HttpHost> hosts = new ArrayList<HttpHost>();
 			for (String urlStr : urls) {
 				try {
