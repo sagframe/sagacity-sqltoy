@@ -758,8 +758,11 @@ public class BeanUtil {
 			reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 		}
 		String[] fields;
+		Iterator<?> iter;
+		Map.Entry<String, Object> entry;
+		boolean isMap = false;
+		String fieldLow;
 		try {
-			IgnoreKeyCaseMap map;
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
@@ -770,14 +773,23 @@ public class BeanUtil {
 						// 支持map类型 update 2021-01-31
 						if (value instanceof Map) {
 							if (value instanceof IgnoreKeyCaseMap) {
-								map = (IgnoreKeyCaseMap) value;
+								value = ((IgnoreKeyCaseMap) value).get(field.trim());
 							} else {
-								// 将map转为key不区分大小写map,避免sql中的参数名称存在大小写不一致场景
-								map = new IgnoreKeyCaseMap();
-								map.putAll((Map) value);
+								iter = ((Map) value).entrySet().iterator();
+								isMap = false;
+								fieldLow = field.trim().toLowerCase();
+								while (iter.hasNext()) {
+									entry = (Map.Entry<String, Object>) iter.next();
+									if (entry.getKey().toLowerCase().equals(fieldLow)) {
+										value = entry.getValue();
+										isMap = true;
+										break;
+									}
+								}
+								if (!isMap) {
+									value = null;
+								}
 							}
-							value = map.get(field.trim());
-							// value=((Map) value).get(field.trim());
 						} else {
 							value = getProperty(value, field.trim());
 						}
