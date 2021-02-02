@@ -287,8 +287,9 @@ public class ElasticEndpoint implements Serializable {
 			String[] urls = this.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
 			// 当为单一地址时使用httpclient直接调用
-			if (urls.length < 2)
+			if (urls.length < 2) {
 				return;
+			}
 			List<HttpHost> hosts = new ArrayList<HttpHost>();
 			for (String urlStr : urls) {
 				try {
