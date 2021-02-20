@@ -71,7 +71,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
  * @author zhongxuchen
  * @version v4.0,Date:2012-6-1
