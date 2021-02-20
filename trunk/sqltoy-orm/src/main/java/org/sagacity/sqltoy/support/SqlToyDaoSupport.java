@@ -57,7 +57,7 @@ import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.BeanPropsWrapper;
+import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -1147,8 +1147,8 @@ public class SqlToyDaoSupport {
 	 * @param names
 	 * @return
 	 */
-	protected BeanPropsWrapper wrapBeanProps(String... names) {
-		return new BeanPropsWrapper(names);
+	protected BeanWrapper wrapBeanProps(String... names) {
+		return BeanWrapper.create().names(names);
 	}
 
 	/**

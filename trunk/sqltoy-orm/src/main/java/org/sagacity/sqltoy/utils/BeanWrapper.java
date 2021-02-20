@@ -16,7 +16,7 @@ import java.util.List;
  * @version v1.0,Date:2012-8-17
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class BeanPropsWrapper {
+public class BeanWrapper {
 
 	/**
 	 * 集合中对象属性名称
@@ -28,12 +28,17 @@ public class BeanPropsWrapper {
 	 */
 	private Object[] values;
 
+	public static BeanWrapper create() {
+		return new BeanWrapper();
+	}
+
 	/**
 	 * @todo 构造函数传递需要设置的参数名称
 	 * @param names
 	 */
-	public BeanPropsWrapper(String... names) {
+	public BeanWrapper names(String... names) {
 		this.names = names;
+		return this;
 	}
 
 	/**
@@ -59,7 +64,7 @@ public class BeanPropsWrapper {
 	 * @param paramsValue
 	 * @return
 	 */
-	public BeanPropsWrapper values(Object... paramsValue) {
+	public BeanWrapper values(Object... paramsValue) {
 		this.values = paramsValue;
 		return this;
 	}
