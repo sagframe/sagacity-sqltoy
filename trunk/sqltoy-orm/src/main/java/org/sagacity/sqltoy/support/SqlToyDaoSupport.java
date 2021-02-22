@@ -654,6 +654,11 @@ public class SqlToyDaoSupport {
 		return (List<T>) findByQuery(query).getRows();
 	}
 
+	/**
+	 * @TODO 以queryExecutor 封装sql、条件、数据库源等进行集合查询
+	 * @param queryExecutor (可动态设置数据源)
+	 * @return
+	 */
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
@@ -666,7 +671,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param paginationModel
-	 * @param queryExecutor
+	 * @param queryExecutor (可动态设置数据源)
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
@@ -735,6 +740,12 @@ public class SqlToyDaoSupport {
 		return (List<T>) findTopByQuery(new QueryExecutor(sql, entity), topSize).getRows();
 	}
 
+	/**
+	 * @TODO 以queryExecutor封装sql、条件参数、数据源等进行取top集合查询
+	 * @param queryExecutor (可动态设置数据源)
+	 * @param topSize
+	 * @return
+	 */
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
@@ -745,7 +756,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
 	 *       如randomCount=0.05 总记录数为100,则随机取出5条记录
-	 * @param queryExecutor
+	 * @param queryExecutor (可动态设置数据源)
 	 * @param randomCount
 	 * @return
 	 */
