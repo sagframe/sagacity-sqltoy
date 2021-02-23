@@ -305,6 +305,10 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GREENPLUM) != -1) {
 				return Dialect.POSTGRESQL;
 			}
+			//elasticsearch
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
+				return Dialect.ES;
+			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
