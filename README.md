@@ -23,10 +23,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.0 发版日期: 2021-02-02
-* 完善了es不同sql插件的支持
-* 优化vo中含map时传参，兼容key大小写
-* 优化后台日志提示
+# 最新版本号: 4.18.2 发版日期: 2021-02-23
+* elasticsearch 支持restclient模式ssl方法
+* elasticsearch 优化jdbc模式访问(es不支持/* sqlId */ 注释以及分页count(1) 需调整为count(*) )
 
 # 合作与开放
 * 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列
