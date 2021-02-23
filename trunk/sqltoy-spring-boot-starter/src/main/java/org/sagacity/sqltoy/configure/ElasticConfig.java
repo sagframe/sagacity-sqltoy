@@ -26,16 +26,45 @@ public class ElasticConfig implements Serializable {
 	 */
 	private String url;
 
+	/**
+	 * 用户名
+	 */
 	private String username;
 
+	/**
+	 * 密码
+	 */
 	private String password;
 
 	/**
 	 * 相对路径
 	 */
 	private String sqlPath;
+	
+	/**
+	 * 是否禁止抢占式身份认证
+	 */
+	private boolean authCaching=true;
 
+	/**
+	 * 证书类型
+	 */
+	private String keyStoreType;
+
+	/**
+	 * 证书文件
+	 */
 	private String keyStore;
+
+	/**
+	 * 证书秘钥
+	 */
+	private String keyStorePass;
+
+	/**
+	 * 证书是否自签名
+	 */
+	private boolean keyStoreSelfSign = true;
 
 	private Integer requestTimeout;
 
@@ -88,12 +117,60 @@ public class ElasticConfig implements Serializable {
 		this.sqlPath = sqlPath;
 	}
 
+	/**
+	 * @return the keyStoreType
+	 */
+	public String getKeyStoreType() {
+		return keyStoreType;
+	}
+
+	/**
+	 * @param keyStoreType the keyStoreType to set
+	 */
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
+	}
+
+	/**
+	 * @return the keyStore
+	 */
 	public String getKeyStore() {
 		return keyStore;
 	}
 
+	/**
+	 * @param keyStore the keyStore to set
+	 */
 	public void setKeyStore(String keyStore) {
 		this.keyStore = keyStore;
+	}
+
+	/**
+	 * @return the keyStorePass
+	 */
+	public String getKeyStorePass() {
+		return keyStorePass;
+	}
+
+	/**
+	 * @param keyStorePass the keyStorePass to set
+	 */
+	public void setKeyStorePass(String keyStorePass) {
+		this.keyStorePass = keyStorePass;
+	}
+
+	/**
+	 * @return the keyStoreSelfSign
+	 */
+	public boolean isKeyStoreSelfSign() {
+		return keyStoreSelfSign;
+	}
+
+	/**
+	 * @param keyStoreSelfSign the keyStoreSelfSign to set
+	 */
+	public void setKeyStoreSelfSign(boolean keyStoreSelfSign) {
+		this.keyStoreSelfSign = keyStoreSelfSign;
 	}
 
 	public Integer getRequestTimeout() {
@@ -126,6 +203,20 @@ public class ElasticConfig implements Serializable {
 
 	public void setCharset(String charset) {
 		this.charset = charset;
+	}
+
+	/**
+	 * @return the authCaching
+	 */
+	public boolean isAuthCaching() {
+		return authCaching;
+	}
+
+	/**
+	 * @param authCaching the authCaching to set
+	 */
+	public void setAuthCaching(boolean authCaching) {
+		this.authCaching = authCaching;
 	}
 
 }
