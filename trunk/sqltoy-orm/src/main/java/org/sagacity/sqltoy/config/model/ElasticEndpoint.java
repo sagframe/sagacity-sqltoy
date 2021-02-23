@@ -3,11 +3,11 @@
  */
 package org.sagacity.sqltoy.config.model;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +22,11 @@ import org.apache.http.config.ConnectionConfig;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -93,19 +95,29 @@ public class ElasticEndpoint implements Serializable {
 	private String password;
 
 	/**
-	 * 证书文件
+	 * 是否禁止抢占式身份认证
 	 */
-	private String truststoreFile;
+	private boolean authCaching = true;
 
 	/**
 	 * 证书类型
 	 */
-	private String truststoreType;
+	private String keyStoreType;
+
+	/**
+	 * 证书文件
+	 */
+	private String keyStore;
 
 	/**
 	 * 证书秘钥
 	 */
-	private String truststorePassword = "";
+	private String keyStorePass;
+
+	/**
+	 * 证书是否自签名
+	 */
+	private boolean keyStoreSelfSign = true;
 
 	/**
 	 * 编码格式
@@ -277,45 +289,73 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @return the truststoreFile
+	 * @return the keyStoreType
 	 */
-	public String getTruststoreFile() {
-		return truststoreFile;
+	public String getKeyStoreType() {
+		return keyStoreType;
 	}
 
 	/**
-	 * @param truststoreFile the truststoreFile to set
+	 * @param keyStoreType the keyStoreType to set
 	 */
-	public void setTruststoreFile(String truststoreFile) {
-		this.truststoreFile = truststoreFile;
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
 	}
 
 	/**
-	 * @return the truststorePassword
+	 * @return the keyStore
 	 */
-	public String getTruststorePassword() {
-		return truststorePassword;
+	public String getKeyStore() {
+		return keyStore;
 	}
 
 	/**
-	 * @param truststorePassword the truststorePassword to set
+	 * @param keyStore the keyStore to set
 	 */
-	public void setTruststorePassword(String truststorePassword) {
-		this.truststorePassword = truststorePassword;
+	public void setKeyStore(String keyStore) {
+		this.keyStore = keyStore;
 	}
 
 	/**
-	 * @return the truststoreType
+	 * @return the keyStorePass
 	 */
-	public String getTruststoreType() {
-		return truststoreType;
+	public String getKeyStorePass() {
+		return keyStorePass;
 	}
 
 	/**
-	 * @param truststoreType the truststoreType to set
+	 * @param keyStorePass the keyStorePass to set
 	 */
-	public void setTruststoreType(String truststoreType) {
-		this.truststoreType = truststoreType;
+	public void setKeyStorePass(String keyStorePass) {
+		this.keyStorePass = keyStorePass;
+	}
+
+	/**
+	 * @return the keyStoreSelfSign
+	 */
+	public boolean isKeyStoreSelfSign() {
+		return keyStoreSelfSign;
+	}
+
+	/**
+	 * @param keyStoreSelfSign the keyStoreSelfSign to set
+	 */
+	public void setKeyStoreSelfSign(boolean keyStoreSelfSign) {
+		this.keyStoreSelfSign = keyStoreSelfSign;
+	}
+
+	/**
+	 * @return the authCaching
+	 */
+	public boolean isAuthCaching() {
+		return authCaching;
+	}
+
+	/**
+	 * @param authCaching the authCaching to set
+	 */
+	public void setAuthCaching(boolean authCaching) {
+		this.authCaching = authCaching;
 	}
 
 	/**
@@ -355,6 +395,7 @@ public class ElasticEndpoint implements Serializable {
 				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
 						&& StringUtil.isNotBlank(getPassword())) ? true : false;
+				final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 				// 凭据提供器
 				if (hasCrede) {
 					credsProvider.setCredentials(AuthScope.ANY,
@@ -362,30 +403,41 @@ public class ElasticEndpoint implements Serializable {
 							new UsernamePasswordCredentials(getUsername(), getPassword()));
 				}
 
-				boolean trustSelfSigned = true;
-				SSLContext sslContext = null;
-				if (StringUtil.isNotBlank(truststoreFile)) {
-					if (StringUtil.isNotBlank(this.truststorePassword)) {
-						char[] truststorePassword = this.truststorePassword.toCharArray();
-						sslContext = SSLContexts.custom().loadTrustMaterial(new File(truststoreFile),
-								truststorePassword, trustSelfSigned ? new TrustSelfSignedStrategy() : null).build();
-					} else {
-						sslContext = SSLContexts.custom().loadTrustMaterial(new File(truststoreFile),
-								truststorePassword, trustSelfSigned ? new TrustSelfSignedStrategy() : null).build();
+				SSLContextBuilder sslBuilder = null;
+				try {
+					if (hasSsl) {
+						KeyStore truststore = KeyStore
+								.getInstance((keyStoreType == null) ? KeyStore.getDefaultType() : keyStoreType);
+						truststore.load(FileUtil.getFileInputStream(keyStore), keyStorePass.toCharArray());
+						sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
+								keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
 					}
-				}
-				builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-					@Override
-					public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-						httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
-								.setDefaultRequestConfig(requestConfig);
-						if (hasCrede) {
-							httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+					final SSLContext sslContext = (sslBuilder == null) ? null : sslBuilder.build();
+					final boolean disableAuthCaching = !authCaching;
+					builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+						@Override
+						public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+							httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
+									.setDefaultRequestConfig(requestConfig);
+							// 禁用抢占式身份验证
+							if (disableAuthCaching) {
+								httpClientBuilder.disableAuthCaching();
+							}
+							// 用户名密码
+							if (hasCrede) {
+								httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+							}
+							// 证书
+							if (hasSsl) {
+								httpClientBuilder.setSSLContext(sslContext);
+							}
+							return httpClientBuilder;
 						}
-						return httpClientBuilder;
-					}
-				});
-				restClient = builder.build();
+					});
+					restClient = builder.build();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

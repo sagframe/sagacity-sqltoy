@@ -1113,10 +1113,11 @@ public class DialectFactory {
 				countSql.append(" select sum(row_count) from (");
 				int sql_from_index;
 				int unionSqlSize = unionSqls.length;
+				String countPart = dbType.equals(DBType.ES) ? " count(*) " : " count(1) ";
 				for (int i = 0; i < unionSqlSize; i++) {
 					sql_from_index = StringUtil.getSymMarkMatchIndex("(?i)select\\s+", "(?i)\\s+from[\\(\\s+]",
 							unionSqls[i], 0);
-					countSql.append(" select count(1) row_count ")
+					countSql.append(" select ").append(countPart).append(" row_count ")
 							.append((sql_from_index != -1 ? unionSqls[i].substring(sql_from_index) : unionSqls[i]));
 					if (i < unionSqlSize - 1) {
 						countSql.append(" union all ");

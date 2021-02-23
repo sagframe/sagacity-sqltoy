@@ -26,8 +26,14 @@ public class ElasticConfig implements Serializable {
 	 */
 	private String url;
 
+	/**
+	 * 用户名
+	 */
 	private String username;
 
+	/**
+	 * 密码
+	 */
 	private String password;
 
 	/**
@@ -36,19 +42,29 @@ public class ElasticConfig implements Serializable {
 	private String sqlPath;
 	
 	/**
+	 * 是否禁止抢占式身份认证
+	 */
+	private boolean authCaching=true;
+
+	/**
 	 * 证书类型
 	 */
-	private String truststoreType;
+	private String keyStoreType;
 
 	/**
 	 * 证书文件
 	 */
-	private String truststoreFile;
+	private String keyStore;
 
 	/**
 	 * 证书秘钥
 	 */
-	private String truststorePassword;
+	private String keyStorePass;
+
+	/**
+	 * 证书是否自签名
+	 */
+	private boolean keyStoreSelfSign = true;
 
 	private Integer requestTimeout;
 
@@ -102,31 +118,59 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @return the truststoreFile
+	 * @return the keyStoreType
 	 */
-	public String getTruststoreFile() {
-		return truststoreFile;
+	public String getKeyStoreType() {
+		return keyStoreType;
 	}
 
 	/**
-	 * @param truststoreFile the truststoreFile to set
+	 * @param keyStoreType the keyStoreType to set
 	 */
-	public void setTruststoreFile(String truststoreFile) {
-		this.truststoreFile = truststoreFile;
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
 	}
 
 	/**
-	 * @return the truststorePassword
+	 * @return the keyStore
 	 */
-	public String getTruststorePassword() {
-		return truststorePassword;
+	public String getKeyStore() {
+		return keyStore;
 	}
 
 	/**
-	 * @param truststorePassword the truststorePassword to set
+	 * @param keyStore the keyStore to set
 	 */
-	public void setTruststorePassword(String truststorePassword) {
-		this.truststorePassword = truststorePassword;
+	public void setKeyStore(String keyStore) {
+		this.keyStore = keyStore;
+	}
+
+	/**
+	 * @return the keyStorePass
+	 */
+	public String getKeyStorePass() {
+		return keyStorePass;
+	}
+
+	/**
+	 * @param keyStorePass the keyStorePass to set
+	 */
+	public void setKeyStorePass(String keyStorePass) {
+		this.keyStorePass = keyStorePass;
+	}
+
+	/**
+	 * @return the keyStoreSelfSign
+	 */
+	public boolean isKeyStoreSelfSign() {
+		return keyStoreSelfSign;
+	}
+
+	/**
+	 * @param keyStoreSelfSign the keyStoreSelfSign to set
+	 */
+	public void setKeyStoreSelfSign(boolean keyStoreSelfSign) {
+		this.keyStoreSelfSign = keyStoreSelfSign;
 	}
 
 	public Integer getRequestTimeout() {
@@ -162,17 +206,17 @@ public class ElasticConfig implements Serializable {
 	}
 
 	/**
-	 * @return the truststoreType
+	 * @return the authCaching
 	 */
-	public String getTruststoreType() {
-		return truststoreType;
+	public boolean isAuthCaching() {
+		return authCaching;
 	}
 
 	/**
-	 * @param truststoreType the truststoreType to set
+	 * @param authCaching the authCaching to set
 	 */
-	public void setTruststoreType(String truststoreType) {
-		this.truststoreType = truststoreType;
+	public void setAuthCaching(boolean authCaching) {
+		this.authCaching = authCaching;
 	}
 
 }

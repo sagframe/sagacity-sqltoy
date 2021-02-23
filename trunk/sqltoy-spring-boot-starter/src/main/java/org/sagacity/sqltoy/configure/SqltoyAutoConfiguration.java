@@ -161,11 +161,13 @@ public class SqltoyAutoConfiguration {
 				if (esconfig.getSocketTimeout() != null) {
 					ep.setSocketTimeout(esconfig.getSocketTimeout());
 				}
+				ep.setAuthCaching(esconfig.isAuthCaching());
 				ep.setUsername(esconfig.getUsername());
 				ep.setPassword(esconfig.getPassword());
-				ep.setTruststoreFile(esconfig.getTruststoreFile());
-				ep.setTruststoreType(esconfig.getTruststoreType());
-				ep.setTruststorePassword(esconfig.getTruststorePassword());
+				ep.setKeyStore(esconfig.getKeyStore());
+				ep.setKeyStorePass(esconfig.getKeyStorePass());
+				ep.setKeyStoreSelfSign(esconfig.isKeyStoreSelfSign());
+				ep.setKeyStoreType(esconfig.getKeyStoreType());
 				endpoints.add(ep);
 			}
 			// 这里已经完成了当没有设置默认节点时将第一个节点作为默认节点
