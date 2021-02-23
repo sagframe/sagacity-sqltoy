@@ -3,6 +3,7 @@
  */
 package org.sagacity.sqltoy.config.model;
 
+import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,14 +11,18 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -90,7 +95,17 @@ public class ElasticEndpoint implements Serializable {
 	/**
 	 * 证书文件
 	 */
-	private String keyStore;
+	private String truststoreFile;
+
+	/**
+	 * 证书类型
+	 */
+	private String truststoreType;
+
+	/**
+	 * 证书秘钥
+	 */
+	private String truststorePassword = "";
 
 	/**
 	 * 编码格式
@@ -181,20 +196,6 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * @return the keyStore
-	 */
-	public String getKeyStore() {
-		return keyStore;
-	}
-
-	/**
-	 * @param keyStore the keyStore to set
-	 */
-	public void setKeyStore(String keyStore) {
-		this.keyStore = keyStore;
-	}
-
-	/**
 	 * @return the id
 	 */
 	public String getId() {
@@ -276,6 +277,48 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
+	 * @return the truststoreFile
+	 */
+	public String getTruststoreFile() {
+		return truststoreFile;
+	}
+
+	/**
+	 * @param truststoreFile the truststoreFile to set
+	 */
+	public void setTruststoreFile(String truststoreFile) {
+		this.truststoreFile = truststoreFile;
+	}
+
+	/**
+	 * @return the truststorePassword
+	 */
+	public String getTruststorePassword() {
+		return truststorePassword;
+	}
+
+	/**
+	 * @param truststorePassword the truststorePassword to set
+	 */
+	public void setTruststorePassword(String truststorePassword) {
+		this.truststorePassword = truststorePassword;
+	}
+
+	/**
+	 * @return the truststoreType
+	 */
+	public String getTruststoreType() {
+		return truststoreType;
+	}
+
+	/**
+	 * @param truststoreType the truststoreType to set
+	 */
+	public void setTruststoreType(String truststoreType) {
+		this.truststoreType = truststoreType;
+	}
+
+	/**
 	 * @param restClient the restClient to set
 	 */
 	public void initRestClient() {
@@ -317,6 +360,19 @@ public class ElasticEndpoint implements Serializable {
 					credsProvider.setCredentials(AuthScope.ANY,
 							// 认证用户名和密码
 							new UsernamePasswordCredentials(getUsername(), getPassword()));
+				}
+
+				boolean trustSelfSigned = true;
+				SSLContext sslContext = null;
+				if (StringUtil.isNotBlank(truststoreFile)) {
+					if (StringUtil.isNotBlank(this.truststorePassword)) {
+						char[] truststorePassword = this.truststorePassword.toCharArray();
+						sslContext = SSLContexts.custom().loadTrustMaterial(new File(truststoreFile),
+								truststorePassword, trustSelfSigned ? new TrustSelfSignedStrategy() : null).build();
+					} else {
+						sslContext = SSLContexts.custom().loadTrustMaterial(new File(truststoreFile),
+								truststorePassword, trustSelfSigned ? new TrustSelfSignedStrategy() : null).build();
+					}
 				}
 				builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
 					@Override

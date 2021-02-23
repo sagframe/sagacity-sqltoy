@@ -34,8 +34,21 @@ public class ElasticConfig implements Serializable {
 	 * 相对路径
 	 */
 	private String sqlPath;
+	
+	/**
+	 * 证书类型
+	 */
+	private String truststoreType;
 
-	private String keyStore;
+	/**
+	 * 证书文件
+	 */
+	private String truststoreFile;
+
+	/**
+	 * 证书秘钥
+	 */
+	private String truststorePassword;
 
 	private Integer requestTimeout;
 
@@ -88,12 +101,32 @@ public class ElasticConfig implements Serializable {
 		this.sqlPath = sqlPath;
 	}
 
-	public String getKeyStore() {
-		return keyStore;
+	/**
+	 * @return the truststoreFile
+	 */
+	public String getTruststoreFile() {
+		return truststoreFile;
 	}
 
-	public void setKeyStore(String keyStore) {
-		this.keyStore = keyStore;
+	/**
+	 * @param truststoreFile the truststoreFile to set
+	 */
+	public void setTruststoreFile(String truststoreFile) {
+		this.truststoreFile = truststoreFile;
+	}
+
+	/**
+	 * @return the truststorePassword
+	 */
+	public String getTruststorePassword() {
+		return truststorePassword;
+	}
+
+	/**
+	 * @param truststorePassword the truststorePassword to set
+	 */
+	public void setTruststorePassword(String truststorePassword) {
+		this.truststorePassword = truststorePassword;
 	}
 
 	public Integer getRequestTimeout() {
@@ -126,6 +159,20 @@ public class ElasticConfig implements Serializable {
 
 	public void setCharset(String charset) {
 		this.charset = charset;
+	}
+
+	/**
+	 * @return the truststoreType
+	 */
+	public String getTruststoreType() {
+		return truststoreType;
+	}
+
+	/**
+	 * @param truststoreType the truststoreType to set
+	 */
+	public void setTruststoreType(String truststoreType) {
+		this.truststoreType = truststoreType;
 	}
 
 }

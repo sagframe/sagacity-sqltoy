@@ -163,7 +163,9 @@ public class SqltoyAutoConfiguration {
 				}
 				ep.setUsername(esconfig.getUsername());
 				ep.setPassword(esconfig.getPassword());
-				ep.setKeyStore(esconfig.getKeyStore());
+				ep.setTruststoreFile(esconfig.getTruststoreFile());
+				ep.setTruststoreType(esconfig.getTruststoreType());
+				ep.setTruststorePassword(esconfig.getTruststorePassword());
 				endpoints.add(ep);
 			}
 			// 这里已经完成了当没有设置默认节点时将第一个节点作为默认节点
