@@ -305,7 +305,7 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GREENPLUM) != -1) {
 				return Dialect.POSTGRESQL;
 			}
-			//elasticsearch
+			// elasticsearch
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
 			}
@@ -406,6 +406,8 @@ public class DataSourceUtils {
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
+			} else if (dbDialect.equals(Dialect.ES)) {
+				dbType = DBType.ES;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}

@@ -406,9 +406,10 @@ public class ElasticEndpoint implements Serializable {
 				SSLContextBuilder sslBuilder = null;
 				try {
 					if (hasSsl) {
-						KeyStore truststore = KeyStore
-								.getInstance((keyStoreType == null) ? KeyStore.getDefaultType() : keyStoreType);
-						truststore.load(FileUtil.getFileInputStream(keyStore), keyStorePass.toCharArray());
+						KeyStore truststore = KeyStore.getInstance(
+								StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
+						truststore.load(FileUtil.getFileInputStream(keyStore),
+								(keyStorePass == null) ? null : keyStorePass.toCharArray());
 						sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
 								keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
 					}
