@@ -300,6 +300,11 @@ public class DialectUtils {
 		if (isLastSql) {
 			lastCountSql = sql;
 		} else {
+			String countPart = " count(1) ";
+			//es count(1) 不起作用
+			if (dbType.equals(DBType.ES)) {
+				countPart = " count(*) ";
+			}
 			String query_tmp = sql;
 			String withSql = "";
 			// with as分析器(避免每次做with 检测,提升效率)
@@ -353,15 +358,17 @@ public class DialectUtils {
 				selectFields = clearSymSelectFromSql(selectFields);
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
-					countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
+					countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
+							.append(") sag_count_tmpTable ");
 				} else {
 					// 截取from后的部分
-					countQueryStr.append("select count(1) ")
+					countQueryStr.append("select ").append(countPart)
 							.append((sql_from_index != -1 ? query_tmp.substring(sql_from_index) : query_tmp));
 				}
 			} // 包含distinct 或包含union则直接将查询作为子表(普通做法)
 			else {
-				countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
+				countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
+						.append(") sag_count_tmpTable ");
 			}
 
 			paramCnt = getParamsCount(countQueryStr.toString());

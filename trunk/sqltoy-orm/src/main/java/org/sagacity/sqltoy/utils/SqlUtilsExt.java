@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -319,7 +320,8 @@ public class SqlUtilsExt {
 	public static String signSql(String sql, Integer dbType, SqlToyConfig sqlToyConfig) {
 		// 判断是否打开sql签名,提供开发者通过SqlToyContext
 		// dialectProperties设置:sqltoy.open.sqlsign=false 来关闭
-		if (!SqlToyConstants.openSqlSign()) {
+		// elasticsearch类型 不支持
+		if (!SqlToyConstants.openSqlSign() || dbType.equals(DBType.ES)) {
 			return sql;
 		}
 		// 目前几乎所有数据库都支持/* xxx */ 形式的注释
