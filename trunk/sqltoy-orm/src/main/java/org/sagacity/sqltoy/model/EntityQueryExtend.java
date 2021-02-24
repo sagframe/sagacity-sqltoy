@@ -79,6 +79,8 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
 
+	public List<CacheMatchFilter> cacheMatchFilters = new ArrayList<CacheMatchFilter>();
+
 	/**
 	 * 对字段进行安全脱敏
 	 */

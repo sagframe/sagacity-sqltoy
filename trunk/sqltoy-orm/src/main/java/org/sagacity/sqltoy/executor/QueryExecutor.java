@@ -17,6 +17,8 @@ import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
+import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.NamedValuesModel;
@@ -100,6 +102,20 @@ public class QueryExecutor implements Serializable {
 				}
 				innerModel.paramFilters.add(filter);
 			}
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 设置通过缓存匹配名称获得key 的集合用于sql 中的in 过滤
+	 * @param paramName
+	 * @param cacheMatchFilter
+	 * @return
+	 */
+	public QueryExecutor cacheMatchFilter(String paramName, CacheMatchFilter cacheMatchFilter) {
+		if (cacheMatchFilter != null && StringUtil.isNotBlank(paramName)) {
+			cacheMatchFilter.getCacheFilterArgs().param = paramName;
+			innerModel.cacheMatchFilters.add(cacheMatchFilter);
 		}
 		return this;
 	}

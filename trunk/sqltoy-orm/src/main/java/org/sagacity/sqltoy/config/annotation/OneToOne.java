@@ -9,28 +9,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @project sqltoy-orm
- * @description 主键被其他表关联的机制
+ * @project sagacity-sqltoy
+ * @description 提供one to one 的关联
  * @author zhongxuchen
- * @version v1.0,Date:2012-7-30
+ * @version v1.0, Date:2021-2-24
+ * @modify 2021-2-24,修改说明
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface OneToMany {
+public @interface OneToOne {
 	/**
 	 * 主表列名(many column)
 	 * 
 	 * @return
 	 */
 	String[] fields();
-
-	/**
-	 * 关联表的字段(many column)
-	 * 
-	 * @return
-	 */
-	@Deprecated
-	String[] mappedColumns();
 
 	/**
 	 * 关联表对应对象的属性
@@ -54,13 +47,6 @@ public @interface OneToMany {
 	boolean delete() default true;
 
 	/**
-	 * 排序
-	 * 
-	 * @return
-	 */
-	String orderBy() default "";
-
-	/**
 	 * 定制级联修改保存对子表的操作语句
 	 * 
 	 * @return
@@ -72,7 +58,5 @@ public @interface OneToMany {
 	 * 
 	 * @return
 	 */
-	@Deprecated
 	String mappedTable();
-
 }
