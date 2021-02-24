@@ -18,7 +18,6 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.NamedValuesModel;
