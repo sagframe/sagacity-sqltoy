@@ -212,6 +212,7 @@ public class ParamFilterUtils {
 			// 循环缓存进行匹配,匹配上将key值放入数组
 			Iterator<Object[]> iter = cacheDataMap.values().iterator();
 			Object[] cacheRow;
+			int cacheKeyIndex = paramFilterModel.getCacheKeyIndex();
 			boolean skip = false;
 			// 将条件参数值转小写进行统一比较
 			String lowMatchStr = paramValue.toLowerCase();
@@ -244,7 +245,7 @@ public class ParamFilterUtils {
 						if (cacheRow[matchIndex] != null
 								&& cacheRow[matchIndex].toString().toLowerCase().contains(lowMatchStr)) {
 							// 第0列为key
-							matchKeys.add(cacheRow[0]);
+							matchKeys.add(cacheRow[cacheKeyIndex]);
 							matchCnt++;
 							break;
 						}
@@ -757,7 +758,7 @@ public class ParamFilterUtils {
 		// 存在日期加减
 		if (paramFilterModel.getIncrementTime() != 0) {
 			switch (paramFilterModel.getTimeUnit()) {
-			//天优先
+			// 天优先
 			case DAYS: {
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
 				break;

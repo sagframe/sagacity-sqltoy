@@ -865,6 +865,9 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-type")) {
 				filterModel.setCacheType(filter.getAttribute("cache-type"));
 			}
+			if (filter.hasAttribute("cache-key-index")) {
+				filterModel.setCacheKeyIndex(Integer.parseInt(filter.getAttribute("cache-key-index")));
+			}
 			if (filter.hasAttribute("cache-mapping-max")) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.getAttribute("cache-mapping-max")));
 				// sql in a参数量不能超过1000

@@ -819,6 +819,11 @@
 						use="required" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
+					<xsd:attribute name="cache-key-index" type="xsd:integer" default="0">
+					<xsd:annotation>
+							<xsd:documentation><![CDATA[取缓存中第几列作为key,默认为0]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
 					<xsd:attribute name="cache-type" type="xsd:string" />
 					<xsd:attribute name="cache-mapping-indexes"
 						type="xsd:string" default="1">
