@@ -1266,7 +1266,7 @@ public class SqlToyDaoSupport {
 	 * @param cacheName
 	 * @param cacheType
 	 * @param matchName
-	 * @param matchIndexes
+	 * @param matchIndexes 默认为1,表示名称列，通过名称匹配key
 	 * @return
 	 */
 	protected String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
