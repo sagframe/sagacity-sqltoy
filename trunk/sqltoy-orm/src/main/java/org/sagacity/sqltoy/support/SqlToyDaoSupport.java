@@ -38,6 +38,8 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
+import org.sagacity.sqltoy.model.CacheMatchExtend;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
@@ -671,7 +673,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param paginationModel
-	 * @param queryExecutor (可动态设置数据源)
+	 * @param queryExecutor   (可动态设置数据源)
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
@@ -1257,43 +1259,37 @@ public class SqlToyDaoSupport {
 		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
-	protected String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
-		return cacheMatchKeys(cacheName, null, matchRegex, matchIndexes);
-	}
-
 	/**
 	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
-	 * @param cacheName
-	 * @param cacheType
-	 * @param matchName
-	 * @param matchIndexes 默认为1,表示名称列，通过名称匹配key
+	 * @param matchRegex 如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
-	protected String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
-		if (StringUtil.isBlank(cacheName) || StringUtil.isBlank(matchRegex)) {
+	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		if (cacheMatchFilter == null || StringUtil.isBlank(cacheMatchFilter.getCacheFilterArgs().cacheName)
+				|| StringUtil.isBlank(matchRegex)) {
 			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchName值!");
 		}
-		int[] nameIndexes = { 1 };
-		if (matchIndexes != null && matchIndexes.length > 0) {
-			nameIndexes = matchIndexes;
-		}
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(cacheName,
-				cacheType);
+		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
+		int[] nameIndexes = extendArgs.matchIndexs;
+		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
+				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
 		Collection<Object[]> values = cacheDatas.values();
 		List<String> keySet = new ArrayList<String>();
 		String lowName = matchRegex.toLowerCase();
 		int meter = 0;
+		int cacheKeyIndex = extendArgs.cacheKeyIndex;
 		for (Object[] row : values) {
 			for (int index : nameIndexes) {
 				// 字符包含
 				if (row[index] != null && row[index].toString().toLowerCase().contains(lowName)) {
 					meter++;
-					keySet.add(row[0].toString());
+					keySet.add(row[cacheKeyIndex].toString());
 					break;
 				}
 			}
 			// 不超过1000个(作为in条件值有限制)
-			if (meter == 1000) {
+			if (meter == extendArgs.matchSize) {
 				break;
 			}
 		}
