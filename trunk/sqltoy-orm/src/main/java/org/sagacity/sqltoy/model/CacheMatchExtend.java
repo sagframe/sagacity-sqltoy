@@ -22,7 +22,7 @@ public class CacheMatchExtend implements Serializable {
 	/**
 	 * 参数名称
 	 */
-	public String param;
+	//public String param;
 
 	/**
 	 * 缓存名称

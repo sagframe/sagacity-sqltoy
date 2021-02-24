@@ -1261,8 +1261,9 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
-	 * @param matchRegex 如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
-	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param matchRegex       如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
 	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {

@@ -199,20 +199,6 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	/**
-	 * @TODO 设置通过缓存匹配名称获得key 的集合用于sql 中的in 过滤
-	 * @param paramName
-	 * @param cacheMatchFilter
-	 * @return
-	 */
-	public EntityQuery cacheMatchFilter(String paramName, CacheMatchFilter cacheMatchFilter) {
-		if (cacheMatchFilter != null && StringUtil.isNotBlank(paramName)) {
-			cacheMatchFilter.getCacheFilterArgs().param = paramName;
-			innerModel.cacheMatchFilters.add(cacheMatchFilter);
-		}
-		return this;
-	}
-
 	public EntityQuery dataSource(DataSource dataSource) {
 		innerModel.dataSource = dataSource;
 		return this;
