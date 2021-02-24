@@ -647,8 +647,6 @@ public class EntityManager {
 		String[] mappedColumns = new String[idSize];
 		String[] mappedFields = new String[idSize];
 		// 按照主键顺序排列外键顺序
-		// 原则上可以:oneToManyModel.setMappedColumns(oneToMany.mappedColumns())
-		// 直接复制,考虑主键顺序可能会被人为调整
 		String idFieldName;
 		// 主表字段名称
 		String masterField;
@@ -774,6 +772,10 @@ public class EntityManager {
 		oneToOneModel.setMappedType(mappedType);
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToOneModel.getMappedType());
+		// 子表的schema.table
+		String subSchemaTable = subTableMeta.getSchemaTable();
+		oneToOneModel.setMappedTable(subSchemaTable);
+		oneToOneModel.setProperty(field.getName());
 		String[] fields = oneToOne.fields();
 		if (fields == null) {
 			if (idSize == 1) {
@@ -803,35 +805,26 @@ public class EntityManager {
 
 		oneToOneModel.setMappedColumns(mappedColumns);
 		oneToOneModel.setMappedFields(mappedFields);
-		// 子表的schema.table
-		String subSchemaTable = subTableMeta.getSchemaTable();
-		oneToOneModel.setMappedTable(subSchemaTable);
-		oneToOneModel.setProperty(field.getName());
-
 		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
 		oneToOneModel.setDelete(oneToOne.delete());
 		oneToOneModel.setUpdate(oneToOne.update());
 
 		// 子表外键查询条件
 		String subWhereSql = " where ";
+		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
+		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
 		for (int i = 0; i < idSize; i++) {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
+				subDeleteSql = subDeleteSql.concat(" and ");
 			}
 			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=:")
 					.concat(mappedFields[i]);
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
 		}
 
 		oneToOneModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
-		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
-		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-		for (int i = 0; i < idList.size(); i++) {
-			if (i > 0) {
-				subDeleteSql = subDeleteSql.concat(" and ");
-			}
-			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
-		}
 		oneToOneModel.setDeleteSubTableSql(subDeleteSql);
 		entityMeta.addOneToOne(oneToOneModel);
 	}
