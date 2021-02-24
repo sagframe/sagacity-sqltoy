@@ -674,21 +674,25 @@ public class EntityManager {
 
 		// 子表外键查询条件
 		String subWhereSql = " where ";
+		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
+		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
 		for (int i = 0; i < idSize; i++) {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
+				subDeleteSql = subDeleteSql.concat(" and ");
 			}
 			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=:")
 					.concat(mappedFields[i]);
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
 		}
-		boolean matchedWhere = false;
-		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
-		oneToManyModel.setLoad(true);
 
 		// update 2019-12-09 将select * 转变为select 完整字段
 		oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
-		// 自动加载
+		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
+
+		boolean matchedWhere = false;
+		// 自定义load sql
 		if (StringUtil.isNotBlank(oneToMany.load())) {
 			String loadLow = oneToMany.load().toLowerCase();
 			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
@@ -718,16 +722,6 @@ public class EntityManager {
 			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
 			oneToManyModel.setLoadSubTableSql(oneToManyModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
-
-		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
-		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-		for (int i = 0; i < idList.size(); i++) {
-			if (i > 0) {
-				subDeleteSql = subDeleteSql.concat(" and ");
-			}
-			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
-		}
-		oneToManyModel.setDeleteSubTableSql(subDeleteSql);
 
 		// 深度级联修改
 		if (StringUtil.isNotBlank(oneToMany.update())) {

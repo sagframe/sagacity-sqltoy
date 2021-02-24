@@ -39,11 +39,6 @@ public class OneToManyModel implements Serializable {
 	private String[] mappedFields;
 
 	/**
-	 * 是否自动加载
-	 */
-	private boolean load;
-
-	/**
 	 * 是否级联删除
 	 */
 	private boolean delete;
@@ -122,20 +117,6 @@ public class OneToManyModel implements Serializable {
 	 */
 	public void setMappedType(Class mappedType) {
 		this.mappedType = mappedType;
-	}
-
-	/**
-	 * @return the load
-	 */
-	public boolean isLoad() {
-		return load;
-	}
-
-	/**
-	 * @param load the load to set
-	 */
-	public void setLoad(boolean load) {
-		this.load = load;
 	}
 
 	/**
