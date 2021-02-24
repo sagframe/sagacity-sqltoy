@@ -33,30 +33,16 @@ public @interface OneToOne {
 	String[] mappedFields();
 
 	/**
-	 * 加载自定义sql
-	 * 
-	 * @return
-	 */
-	String load() default "";
-
-	/**
 	 * 是否级联删除
 	 * 
 	 * @return
 	 */
-	boolean delete() default true;
+	boolean delete() default false;
 
 	/**
-	 * 定制级联修改保存对子表的操作语句
+	 * 是否级联修改
 	 * 
 	 * @return
 	 */
-	String update() default "";
-
-	/**
-	 * 关联的表
-	 * 
-	 * @return
-	 */
-	String mappedTable();
+	boolean update() default false;
 }

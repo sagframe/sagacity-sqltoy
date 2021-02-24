@@ -187,6 +187,11 @@ public class EntityMeta implements Serializable {
 	private List<OneToManyModel> oneToManys = new ArrayList<OneToManyModel>();
 
 	/**
+	 * 主键被关联的子表信息
+	 */
+	private List<OneToOneModel> oneToOnes = new ArrayList<OneToOneModel>();
+
+	/**
 	 * 级联对象
 	 */
 	private Class[] cascadeTypes;
@@ -290,9 +295,9 @@ public class EntityMeta implements Serializable {
 
 	public void addFieldMeta(FieldMeta fieldMeta) {
 		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(), fieldMeta);
-		//数据库字段名称对应vo对象属性名称
+		// 数据库字段名称对应vo对象属性名称
 		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
-		//字段名称去除下划线
+		// 字段名称去除下划线
 		columnFieldMap.put(fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase(), fieldMeta.getFieldName());
 	}
 
@@ -476,6 +481,10 @@ public class EntityMeta implements Serializable {
 
 	public void addOneToMany(OneToManyModel oneToManyModel) {
 		this.oneToManys.add(oneToManyModel);
+	}
+
+	public void addOneToOne(OneToOneModel oneToOneModel) {
+		this.oneToOnes.add(oneToOneModel);
 	}
 
 	/**

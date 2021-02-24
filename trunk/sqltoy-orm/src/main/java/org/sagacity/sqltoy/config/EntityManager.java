@@ -20,12 +20,14 @@ import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.ListSql;
 import org.sagacity.sqltoy.config.annotation.LoadSql;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
+import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.PaginationSql;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.OneToManyModel;
+import org.sagacity.sqltoy.config.model.OneToOneModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -277,6 +279,9 @@ public class EntityManager {
 							loadNamedWhereSql, loadArgWhereSql);
 					// oneToMany解析
 					parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
+
+					// oneToOne解析
+					parseOneToOne(sqlToyContext, entityMeta, entity, field, idList);
 				}
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
@@ -619,12 +624,26 @@ public class EntityManager {
 		}
 		// 主键字段数量
 		int idSize = idList.size();
-		if (idSize != oneToMany.mappedColumns().length) {
+		Class mappedType = (Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+		if (idSize != oneToMany.mappedFields().length) {
 			logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
-					oneToMany.mappedTable(), oneToMany.mappedColumns().length);
+					mappedType.getTypeName(), oneToMany.mappedFields().length);
 			return;
 		}
 		OneToManyModel oneToManyModel = new OneToManyModel();
+		oneToManyModel.setMappedType(mappedType);
+		// 获取子表的信息(存在递归调用)
+		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToManyModel.getMappedType());
+		String[] fields = oneToMany.fields();
+		if (fields == null) {
+			if (idSize == 1) {
+				fields = entityMeta.getIdArray();
+			} else {
+				logger.error("主表:{}的主键字段数量:{}>1 时OneToMany必须要设置fields 和 mappedFields!", entityMeta.getTableName(),
+						idSize);
+				return;
+			}
+		}
 		String[] mappedColumns = new String[idSize];
 		String[] mappedFields = new String[idSize];
 		// 按照主键顺序排列外键顺序
@@ -634,12 +653,12 @@ public class EntityManager {
 		// 主表字段名称
 		String masterField;
 		for (int i = 0; i < idSize; i++) {
-			masterField = oneToMany.fields()[i];
+			masterField = fields[i];
 			for (int j = 0; j < idSize; j++) {
 				idFieldName = idList.get(j);
 				if (masterField.equalsIgnoreCase(idFieldName)) {
 					mappedFields[j] = oneToMany.mappedFields()[i];
-					mappedColumns[j] = oneToMany.mappedColumns()[i];
+					mappedColumns[j] = subTableMeta.getColumnName(oneToMany.mappedFields()[i]);
 					break;
 				}
 			}
@@ -648,11 +667,9 @@ public class EntityManager {
 		oneToManyModel.setMappedColumns(mappedColumns);
 		oneToManyModel.setMappedFields(mappedFields);
 		// 子表的schema.table
-		String subSchemaTable = (StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-				.concat(oneToMany.mappedTable());
+		String subSchemaTable = subTableMeta.getSchemaTable();
 		oneToManyModel.setMappedTable(subSchemaTable);
 		oneToManyModel.setProperty(field.getName());
-		oneToManyModel.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 
 		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
 		oneToManyModel.setDelete(oneToMany.delete());
@@ -670,8 +687,6 @@ public class EntityManager {
 		// 默认load为true，由程序员通过程序指定哪些子表是否需要加载
 		oneToManyModel.setLoad(true);
 
-		// 获取子表的信息(存在递归调用)
-		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToManyModel.getMappedType());
 		// update 2019-12-09 将select * 转变为select 完整字段
 		oneToManyModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
@@ -730,6 +745,95 @@ public class EntityManager {
 			}
 		}
 		entityMeta.addOneToMany(oneToManyModel);
+	}
+
+	/**
+	 * @todo 解析主键关联的子表信息配置(外键关联)OneToOne
+	 * @param sqlToyContext
+	 * @param entityMeta
+	 * @param entity
+	 * @param field
+	 * @param idList
+	 */
+	private void parseOneToOne(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
+			List<String> idList) {
+		// 主表关联多子表记录
+		OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+		if (oneToOne == null) {
+			return;
+		}
+		// 主键字段数量
+		int idSize = idList.size();
+		Class mappedType = field.getType();
+		if (idSize != oneToOne.mappedFields().length) {
+			logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
+					mappedType.getTypeName(), oneToOne.mappedFields().length);
+			return;
+		}
+		OneToOneModel oneToOneModel = new OneToOneModel();
+		oneToOneModel.setMappedType(mappedType);
+		// 获取子表的信息(存在递归调用)
+		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, oneToOneModel.getMappedType());
+		String[] fields = oneToOne.fields();
+		if (fields == null) {
+			if (idSize == 1) {
+				fields = entityMeta.getIdArray();
+			} else {
+				logger.error("主表:{}的主键字段数量:{}>1 时OneToOne必须要设置fields 和 mappedFields!", entityMeta.getTableName(),
+						idSize);
+				return;
+			}
+		}
+		String[] mappedColumns = new String[idSize];
+		String[] mappedFields = new String[idSize];
+		String idFieldName;
+		// 主表字段名称
+		String masterField;
+		for (int i = 0; i < idSize; i++) {
+			masterField = fields[i];
+			for (int j = 0; j < idSize; j++) {
+				idFieldName = idList.get(j);
+				if (masterField.equalsIgnoreCase(idFieldName)) {
+					mappedFields[j] = oneToOne.mappedFields()[i];
+					mappedColumns[j] = subTableMeta.getColumnName(oneToOne.mappedFields()[i]);
+					break;
+				}
+			}
+		}
+
+		oneToOneModel.setMappedColumns(mappedColumns);
+		oneToOneModel.setMappedFields(mappedFields);
+		// 子表的schema.table
+		String subSchemaTable = subTableMeta.getSchemaTable();
+		oneToOneModel.setMappedTable(subSchemaTable);
+		oneToOneModel.setProperty(field.getName());
+
+		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
+		oneToOneModel.setDelete(oneToOne.delete());
+		oneToOneModel.setUpdate(oneToOne.update());
+
+		// 子表外键查询条件
+		String subWhereSql = " where ";
+		for (int i = 0; i < idSize; i++) {
+			if (i > 0) {
+				subWhereSql = subWhereSql.concat(" and ");
+			}
+			subWhereSql = subWhereSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=:")
+					.concat(mappedFields[i]);
+		}
+
+		oneToOneModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
+				.concat(subSchemaTable).concat(subWhereSql));
+		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
+		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
+		for (int i = 0; i < idList.size(); i++) {
+			if (i > 0) {
+				subDeleteSql = subDeleteSql.concat(" and ");
+			}
+			subDeleteSql = subDeleteSql.concat(ReservedWordsUtil.convertWord(mappedColumns[i], null)).concat("=?");
+		}
+		oneToOneModel.setDeleteSubTableSql(subDeleteSql);
+		entityMeta.addOneToOne(oneToOneModel);
 	}
 
 	/**
