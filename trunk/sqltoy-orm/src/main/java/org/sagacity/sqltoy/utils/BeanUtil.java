@@ -630,6 +630,13 @@ public class BeanUtil {
 		return reflectBeansToList(datas, props, null, false, 0);
 	}
 
+	/**
+	 * @TODO 此方法仅限于sqltoy loadAll级联特殊场景使用
+	 * @param datas
+	 * @param props
+	 * @return
+	 * @throws Exception
+	 */
 	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
 		List result = reflectBeansToList(datas, props, null, false, 0);
 		if (result == null || result.isEmpty()) {
