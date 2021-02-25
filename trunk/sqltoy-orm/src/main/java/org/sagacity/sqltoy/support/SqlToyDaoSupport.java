@@ -1277,13 +1277,13 @@ public class SqlToyDaoSupport {
 				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
 		Collection<Object[]> values = cacheDatas.values();
 		List<String> keySet = new ArrayList<String>();
-		String lowName = matchRegex.toLowerCase();
+		String[] lowName = matchRegex.trim().toLowerCase().split("\\s+");
 		int meter = 0;
 		int cacheKeyIndex = extendArgs.cacheKeyIndex;
 		for (Object[] row : values) {
 			for (int index : nameIndexes) {
 				// 字符包含
-				if (row[index] != null && row[index].toString().toLowerCase().contains(lowName)) {
+				if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
 					meter++;
 					keySet.add(row[cacheKeyIndex].toString());
 					break;

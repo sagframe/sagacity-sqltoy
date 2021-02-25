@@ -955,4 +955,21 @@ public class StringUtil {
 		}
 		return result.toString();
 	}
+
+	/**
+	 * @TODO 提供类似于sql中的like功能
+	 * @param source
+	 * @param keywords
+	 * @return
+	 */
+	public static boolean like(String source, String[] keywords) {
+		int index = 0;
+		for (String keyword : keywords) {
+			index = source.indexOf(keyword, index);
+			if (index == -1) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

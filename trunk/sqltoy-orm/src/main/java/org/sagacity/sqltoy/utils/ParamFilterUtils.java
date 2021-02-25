@@ -215,7 +215,7 @@ public class ParamFilterUtils {
 			int cacheKeyIndex = paramFilterModel.getCacheKeyIndex();
 			boolean skip = false;
 			// 将条件参数值转小写进行统一比较
-			String lowMatchStr = paramValue.toLowerCase();
+			String[] lowMatchStr = paramValue.trim().toLowerCase().split("\\s+");
 			boolean hasEqual = false;
 			while (iter.hasNext()) {
 				cacheRow = iter.next();
@@ -243,7 +243,7 @@ public class ParamFilterUtils {
 					for (int matchIndex : matchIndexes) {
 						// 匹配检索,全部转成小写比较
 						if (cacheRow[matchIndex] != null
-								&& cacheRow[matchIndex].toString().toLowerCase().contains(lowMatchStr)) {
+								&& StringUtil.like(cacheRow[matchIndex].toString().toLowerCase(), lowMatchStr)) {
 							// 第0列为key
 							matchKeys.add(cacheRow[cacheKeyIndex]);
 							matchCnt++;
