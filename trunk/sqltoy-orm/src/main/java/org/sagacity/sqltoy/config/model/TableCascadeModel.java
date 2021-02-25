@@ -51,12 +51,7 @@ public class TableCascadeModel implements Serializable {
 	/**
 	 * 是否级联删除
 	 */
-	private boolean delete;
-
-	/**
-	 * 是否级联更新
-	 */
-	private boolean update;
+	private boolean delete=false;
 
 	/**
 	 * 对应子表对象的类型
@@ -216,20 +211,6 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setCascadeType(int cascadeType) {
 		this.cascadeType = cascadeType;
-	}
-
-	/**
-	 * @return the update
-	 */
-	public boolean isUpdate() {
-		return update;
-	}
-
-	/**
-	 * @param update the update to set
-	 */
-	public void setUpdate(boolean update) {
-		this.update = update;
 	}
 
 	/**
