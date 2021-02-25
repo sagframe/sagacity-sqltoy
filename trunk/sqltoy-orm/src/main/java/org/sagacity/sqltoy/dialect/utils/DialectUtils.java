@@ -996,7 +996,7 @@ public class DialectUtils {
 		// 主键值
 		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
 		int idSize = entityMeta.getIdArray().length;
-		// 构造内部的listz(如果复合主键，形成{p1v1,p1v2,p1v3},{p2v1,p2v2,p2v3}) 格式，然后一次查询出结果
+		// 构造内部的list(如果复合主键，形成{p1v1,p1v2,p1v3},{p2v1,p2v2,p2v3}) 格式，然后一次查询出结果
 		List[] idValues = new List[idSize];
 		for (int i = 0; i < idSize; i++) {
 			idValues[i] = new ArrayList();

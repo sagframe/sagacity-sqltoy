@@ -635,8 +635,22 @@ public class BeanUtil {
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
-		List[] ary = new List[result.size()];
-		result.toArray(ary);
+		int propSize=props.length;
+		List[] ary = new List[propSize];
+		for (int i = 0; i < propSize; i++) {
+			ary[i] = new ArrayList();
+		}
+		Object value;
+		List rowList;
+		for (int i = 0, n = result.size(); i < n; i++) {
+			rowList = (List) result.get(i);
+			for (int j = 0; j < propSize; j++) {
+				value = rowList.get(j);
+				if (!ary[j].contains(value)) {
+					ary[j].add(value);
+				}
+			}
+		}
 		return ary;
 	}
 
