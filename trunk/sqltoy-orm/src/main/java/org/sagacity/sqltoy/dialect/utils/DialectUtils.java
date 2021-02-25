@@ -1837,7 +1837,7 @@ public class DialectUtils {
 					}
 					SqlExecuteStat.showSql("级联删除子表记录", cascadeModel.getDeleteSubTableSql(), null);
 					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),
-							mainFieldValues, parameterTypes, null, null, sqlToyContext.getBatchSize(), null, conn,
+							mainFieldValues, subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn,
 							dbType);
 				}
 			}
