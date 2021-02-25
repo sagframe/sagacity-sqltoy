@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -639,10 +639,10 @@ public class SqlServerDialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 是否有子表进行级联保存
-		if (!entityMeta.getOneToManys().isEmpty()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
 			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				final String[] mappedFields = oneToMany.getMappedFields();
 				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -878,7 +878,7 @@ public class SqlServerDialectUtils {
 				dbType, tableName);
 
 		// 级联修改
-		if (cascade && !entityMeta.getOneToManys().isEmpty()) {
+		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
@@ -888,7 +888,7 @@ public class SqlServerDialectUtils {
 			List subTableData;
 			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			String[] forceUpdateProps = null;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(oneToMany.getMappedType());
 				subTableData = (List) BeanUtil.invokeMethod(entity,

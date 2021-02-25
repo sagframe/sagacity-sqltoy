@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -475,7 +475,7 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, NVL_FUNCTION, forceUpdateFields, conn,
 				dbType, tableName);
 		// 级联保存
-		if (cascade && null != entityMeta.getOneToManys() && !entityMeta.getOneToManys().isEmpty()) {
+		if (cascade && null != entityMeta.getCascadeModels()&& !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
@@ -485,7 +485,7 @@ public class SybaseIQDialect implements Dialect {
 			List subTableData;
 			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			String[] forceUpdateProps = null;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(oneToMany.getMappedType());
 				subTableData = (List) BeanUtil.invokeMethod(entity,

@@ -184,12 +184,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 主键被关联的子表信息
 	 */
-	private List<OneToManyModel> oneToManys = new ArrayList<OneToManyModel>();
-
-	/**
-	 * 主键被关联的子表信息
-	 */
-	private List<OneToOneModel> oneToOnes = new ArrayList<OneToOneModel>();
+	private List<TableCascadeModel> cascadeModels = new ArrayList<TableCascadeModel>();
 
 	/**
 	 * 级联对象
@@ -475,16 +470,12 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the oneToManys
 	 */
-	public List<OneToManyModel> getOneToManys() {
-		return oneToManys;
+	public List<TableCascadeModel> getCascadeModels() {
+		return cascadeModels;
 	}
 
-	public void addOneToMany(OneToManyModel oneToManyModel) {
-		this.oneToManys.add(oneToManyModel);
-	}
-
-	public void addOneToOne(OneToOneModel oneToOneModel) {
-		this.oneToOnes.add(oneToOneModel);
+	public void addCascade(TableCascadeModel oneToManyModel) {
+		this.cascadeModels.add(oneToManyModel);
 	}
 
 	/**

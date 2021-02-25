@@ -12,11 +12,16 @@ import java.io.Serializable;
  * @version v1.0,Date:2012-9-5
  */
 @SuppressWarnings("rawtypes")
-public class OneToManyModel implements Serializable {
+public class TableCascadeModel implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1309393602795660950L;
+	
+	/**
+	 * 1:oneToMany;2:oneToOne
+	 */
+	private int cascadeType=1;
 
 	/**
 	 * 对应vo中的List集合属性
@@ -42,6 +47,11 @@ public class OneToManyModel implements Serializable {
 	 * 是否级联删除
 	 */
 	private boolean delete;
+	
+	/**
+	 * 是否级联更新
+	 */
+	private boolean update;
 
 	/**
 	 * 对应子表对象的类型
@@ -187,6 +197,34 @@ public class OneToManyModel implements Serializable {
 	 */
 	public void setDelete(boolean delete) {
 		this.delete = delete;
+	}
+
+	/**
+	 * @return the cascadeType
+	 */
+	public int getCascadeType() {
+		return cascadeType;
+	}
+
+	/**
+	 * @param cascadeType the cascadeType to set
+	 */
+	public void setCascadeType(int cascadeType) {
+		this.cascadeType = cascadeType;
+	}
+
+	/**
+	 * @return the update
+	 */
+	public boolean isUpdate() {
+		return update;
+	}
+
+	/**
+	 * @param update the update to set
+	 */
+	public void setUpdate(boolean update) {
+		this.update = update;
 	}
 
 }

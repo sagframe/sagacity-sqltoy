@@ -32,7 +32,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
@@ -940,10 +940,10 @@ public class DialectUtils {
 		}
 
 		// 存在主表对应子表
-		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
+		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			List pkRefDetails;
 			EntityMeta mappedMeta;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				// 判定是否要加载
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
@@ -1019,12 +1019,12 @@ public class DialectUtils {
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false, entityMeta.getColumnFieldMap());
 		// 存在主表对应子表
-		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
+		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
 			List items;
 			SqlToyResult subToyResult;
 			EntityMeta mappedMeta;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				if (cascadeTypes.contains(oneToMany.getMappedType())) {
 					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 					// 清空buffer
@@ -1183,13 +1183,13 @@ public class DialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判定是否有级联子表数据保存
-		if (!entityMeta.getOneToManys().isEmpty()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
 			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			EntityMeta subTableEntityMeta;
 			String insertSubTableSql;
 			SavePKStrategy savePkStrategy;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				final String[] mappedFields = oneToMany.getMappedFields();
 				subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 				logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
@@ -1383,7 +1383,7 @@ public class DialectUtils {
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
 		// 不存在级联操作
-		if (!cascade || entityMeta.getOneToManys() == null || entityMeta.getOneToManys().isEmpty()) {
+		if (!cascade || entityMeta.getCascadeModels() == null || entityMeta.getCascadeModels().isEmpty()) {
 			return updateCnt;
 		}
 		// 级联保存
@@ -1400,7 +1400,7 @@ public class DialectUtils {
 		String[] forceUpdateProps = null;
 		EntityMeta subTableEntityMeta;
 		// 对子表进行级联处理
-		for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+		for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 			subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
 			forceUpdateProps = (subTableForceUpdateProps == null) ? null
 					: subTableForceUpdateProps.get(oneToMany.getMappedType());
@@ -1742,8 +1742,8 @@ public class DialectUtils {
 					+ " delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), oneToMany.getDeleteSubTableSql(), idValues,
@@ -1795,8 +1795,8 @@ public class DialectUtils {
 			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 		}
 		// 级联批量删除子表数据
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (oneToMany.isDelete()) {
 					SqlExecuteStat.showSql("级联删除子表记录", oneToMany.getDeleteSubTableSql(), null);

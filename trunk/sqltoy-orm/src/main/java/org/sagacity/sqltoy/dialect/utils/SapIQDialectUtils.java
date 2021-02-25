@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -153,10 +153,10 @@ public class SapIQDialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判断是否有子表级联保存
-		if (!entityMeta.getOneToManys().isEmpty()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
 			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
 				final String[] mappedFields = oneToMany.getMappedFields();
 				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
 				if (subTableData != null && !subTableData.isEmpty()) {
