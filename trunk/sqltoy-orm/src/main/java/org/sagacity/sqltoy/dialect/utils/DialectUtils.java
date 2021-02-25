@@ -1048,10 +1048,8 @@ public class DialectUtils {
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
 							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
-					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
-					BeanUtil.invokeMethod1(entities.get(0),
-							"mapping" + StringUtil.firstToUpperCase(cascadeModel.getProperty()),
-							new Object[] { entitySet, items });
+					// 将item的值分配映射到main主表对象上
+					BeanUtil.loadAllMapping(entitySet, items, cascadeModel);
 				}
 			}
 		}

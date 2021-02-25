@@ -1547,23 +1547,25 @@ public class BeanUtil {
 	 * @param idProps
 	 * @param cascadeModel
 	 */
-	public static void batchMapping(List mainEntities, List itemEntities, String[] idProps,
-			TableCascadeModel cascadeModel) throws Exception {
+	public static void loadAllMapping(List mainEntities, List itemEntities, TableCascadeModel cascadeModel)
+			throws Exception {
 		if (mainEntities == null || mainEntities.isEmpty() || itemEntities == null || itemEntities.isEmpty()) {
 			return;
 		}
 		boolean isOneToMany = (cascadeModel.getCascadeType() == 1);
 		Object mainEntity;
-		Object[] idValues;
+		String[] mainProps = cascadeModel.getFields();
+		Object[] mainValues;
 		Object[] mappedFieldValues;
+		String property = cascadeModel.getProperty();
 		Object itemEntity;
 		String[] mappedFields = cascadeModel.getMappedFields();
 		List itemList = null;
-		int idSize = idProps.length;
+		int fieldLength = mainProps.length;
 		boolean isEqual = true;
 		for (int i = 0; i < mainEntities.size(); i++) {
 			mainEntity = mainEntities.get(i);
-			idValues = reflectBeanToAry(mainEntity, idProps, null, null);
+			mainValues = reflectBeanToAry(mainEntity, mainProps, null, null);
 			if (isOneToMany) {
 				itemList = new ArrayList();
 			}
@@ -1571,8 +1573,8 @@ public class BeanUtil {
 				itemEntity = itemEntities.get(j);
 				mappedFieldValues = reflectBeanToAry(itemEntity, mappedFields, null, null);
 				isEqual = true;
-				for (int k = 0; k < idSize; k++) {
-					if (!idValues[k].equals(mappedFieldValues[k])) {
+				for (int k = 0; k < fieldLength; k++) {
+					if (!mainValues[k].equals(mappedFieldValues[k])) {
 						isEqual = false;
 						break;
 					}
@@ -1580,15 +1582,16 @@ public class BeanUtil {
 				if (isEqual) {
 					if (isOneToMany) {
 						itemList.add(itemEntity);
-					} else {
-						setProperty(mainEntity, cascadeModel.getProperty(), itemEntity);
+					} // oneToOne 直接赋值
+					else {
+						setProperty(mainEntity, property, itemEntity);
 					}
 					itemEntities.remove(j);
 					j--;
 				}
 			}
 			if (!itemList.isEmpty()) {
-				setProperty(mainEntity, cascadeModel.getProperty(), itemList);
+				setProperty(mainEntity, property, itemList);
 			}
 		}
 	}
