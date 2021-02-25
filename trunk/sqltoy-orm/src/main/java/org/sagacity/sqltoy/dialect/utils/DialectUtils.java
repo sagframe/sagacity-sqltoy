@@ -301,7 +301,7 @@ public class DialectUtils {
 			lastCountSql = sql;
 		} else {
 			String countPart = " count(1) ";
-			//es count(1) 不起作用
+			// es count(1) 不起作用
 			if (dbType.equals(DBType.ES)) {
 				countPart = " count(*) ";
 			}
@@ -943,18 +943,23 @@ public class DialectUtils {
 		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			List pkRefDetails;
 			EntityMeta mappedMeta;
-			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				// 判定是否要加载
-				if (cascadeTypes.contains(oneToMany.getMappedType())) {
-					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
-							oneToMany.getMappedFields(), pkValues);
+				if (cascadeTypes.contains(cascadeModel.getMappedType())) {
+					sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getLoadSubTableSql(),
+							cascadeModel.getMappedFields(), pkValues);
 					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
-						BeanUtil.setProperty(result, oneToMany.getProperty(), pkRefDetails);
+						// oneToMany
+						if (cascadeModel.getCascadeType() == 1) {
+							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails);
+						} else {
+							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails.get(0));
+						}
 					}
 				}
 			}
@@ -1046,7 +1051,7 @@ public class DialectUtils {
 							subToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
-					BeanUtil.invokeMethod(entities.get(0),
+					BeanUtil.invokeMethod1(entities.get(0),
 							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
 							new Object[] { entitySet, items });
 				}

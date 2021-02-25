@@ -156,9 +156,15 @@ public class SapIQDialectUtils {
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
 			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
-				final String[] mappedFields = oneToMany.getMappedFields();
-				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final String[] mappedFields = cascadeModel.getMappedFields();
+				// oneToMany
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				} else {
+					subTableData = new ArrayList();
+					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
+				}
 				if (subTableData != null && !subTableData.isEmpty()) {
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
 						public void process() {

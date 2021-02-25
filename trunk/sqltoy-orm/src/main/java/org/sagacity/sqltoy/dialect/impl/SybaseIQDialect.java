@@ -475,7 +475,7 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, NVL_FUNCTION, forceUpdateFields, conn,
 				dbType, tableName);
 		// 级联保存
-		if (cascade && null != entityMeta.getCascadeModels()&& !entityMeta.getCascadeModels().isEmpty()) {
+		if (cascade && null != entityMeta.getCascadeModels() && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
@@ -485,18 +485,24 @@ public class SybaseIQDialect implements Dialect {
 			List subTableData;
 			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			String[] forceUpdateProps = null;
-			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
-						: subTableForceUpdateProps.get(oneToMany.getMappedType());
-				subTableData = (List) BeanUtil.invokeMethod(entity,
-						"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
-				final String[] mappedFields = oneToMany.getMappedFields();
+						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.invokeMethod(entity,
+							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null);
+				} else {
+					subTableData = new ArrayList();
+					subTableData.add(BeanUtil.invokeMethod(entity,
+							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null));
+				}
+				final String[] mappedFields = cascadeModel.getMappedFields();
 				/**
 				 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 				 */
-				if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
-						|| typeMap.containsKey(oneToMany.getMappedType()))) {
-					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
+				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
+						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, IdValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null);
