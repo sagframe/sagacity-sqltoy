@@ -881,7 +881,6 @@ public class SqlServerDialectUtils {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, "isnull", forceUpdateFields, conn,
 				dbType, tableName);
-
 		// 级联修改
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();

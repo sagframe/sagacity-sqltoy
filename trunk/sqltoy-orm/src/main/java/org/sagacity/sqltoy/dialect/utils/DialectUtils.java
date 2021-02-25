@@ -1041,12 +1041,12 @@ public class DialectUtils {
 							.append(cascadeModel.getMappedTable()).append(" where ");
 					String orderCols = "";
 					boolean hasOrder = StringUtil.isNotBlank(cascadeModel.getOrderBy());
-					for (int i = 0; i < cascadeModel.getFields().length; i++) {
+					for (int i = 0; i < cascadeModel.getMappedFields().length; i++) {
 						if (i > 0) {
 							subTableSql.append(" and ");
 						}
 						subTableSql.append(cascadeModel.getMappedColumns()[i]);
-						subTableSql.append(" in (:" + cascadeModel.getFields()[i] + ") ");
+						subTableSql.append(" in (:" + cascadeModel.getMappedFields()[i] + ") ");
 						if (hasOrder) {
 							orderCols = orderCols.concat(cascadeModel.getMappedColumns()[i]).concat(",");
 						}
@@ -1054,8 +1054,8 @@ public class DialectUtils {
 					if (hasOrder) {
 						subTableSql.append(" order by ").append(orderCols).append(cascadeModel.getOrderBy());
 					}
-					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), entityMeta.getIdArray(),
-							mainValues);
+					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(),
+							cascadeModel.getMappedFields(), mainValues);
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
 							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
@@ -1825,16 +1825,16 @@ public class DialectUtils {
 		}
 		// 级联批量删除子表数据
 		if (!entityMeta.getCascadeModels().isEmpty()) {
-			EntityMeta subMeta;
+			EntityMeta subTableMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (cascadeModel.isDelete()) {
-					subMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+					subTableMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					List<Object[]> mainFieldValues = BeanUtil.reflectBeansToInnerAry(entities, cascadeModel.getFields(),
 							null, null, false, 0);
 					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
 					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
-						subTableFieldType[i] = subMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
+						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
 					SqlExecuteStat.showSql("级联删除子表记录", cascadeModel.getDeleteSubTableSql(), null);
 					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),

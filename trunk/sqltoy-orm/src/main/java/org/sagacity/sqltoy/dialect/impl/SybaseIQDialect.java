@@ -485,6 +485,7 @@ public class SybaseIQDialect implements Dialect {
 			List subTableData;
 			String[] forceUpdateProps = null;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final String[] mappedFields = cascadeModel.getMappedFields();
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
@@ -494,10 +495,8 @@ public class SybaseIQDialect implements Dialect {
 					subTableData = new ArrayList();
 					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
 				}
-				final String[] mappedFields = cascadeModel.getMappedFields();
-				/**
-				 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-				 */
+
+				// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
