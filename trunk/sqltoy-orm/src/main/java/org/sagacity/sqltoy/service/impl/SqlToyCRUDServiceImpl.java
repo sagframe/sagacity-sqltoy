@@ -253,7 +253,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
-
+	
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes) {
+		return sqlToyLazyDao.loadAllCascade(entities, cascadeTypes);
+	}
+	
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {

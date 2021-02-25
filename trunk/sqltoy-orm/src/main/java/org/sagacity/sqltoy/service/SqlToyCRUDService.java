@@ -184,6 +184,14 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
+	
+	/**
+	 * @todo 选择性的加载子表信息
+	 * @param entities
+	 * @param cascadeTypes
+	 * @return
+	 */
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
 
 	/**
 	 * @TODO 根据id集合批量加载对象
