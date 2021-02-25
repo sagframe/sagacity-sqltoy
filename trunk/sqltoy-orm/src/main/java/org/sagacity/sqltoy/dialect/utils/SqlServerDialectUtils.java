@@ -894,9 +894,7 @@ public class SqlServerDialectUtils {
 				subTableData = (List) BeanUtil.invokeMethod(entity,
 						"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
 				final String[] mappedFields = oneToMany.getMappedFields();
-				/**
-				 * 针对存量子表数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-				 */
+				// 针对存量子表数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 				if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(oneToMany.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
