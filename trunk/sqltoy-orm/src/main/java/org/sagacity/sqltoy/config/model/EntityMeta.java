@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
@@ -474,8 +475,22 @@ public class EntityMeta implements Serializable {
 		return cascadeModels;
 	}
 
-	public void addCascade(TableCascadeModel oneToManyModel) {
-		this.cascadeModels.add(oneToManyModel);
+	/**
+	 * @TODO 增加级联关系
+	 * @param cascadeModel
+	 */
+	public void addCascade(TableCascadeModel cascadeModel) {
+		Iterator<TableCascadeModel> iter = cascadeModels.iterator();
+		TableCascadeModel iterModel;
+		// 删除已经存在的子表关联
+		while (iter.hasNext()) {
+			iterModel = iter.next();
+			if (iterModel.getMappedType().equals(cascadeModel.getCascadeType())) {
+				iter.remove();
+				break;
+			}
+		}
+		this.cascadeModels.add(cascadeModel);
 	}
 
 	/**

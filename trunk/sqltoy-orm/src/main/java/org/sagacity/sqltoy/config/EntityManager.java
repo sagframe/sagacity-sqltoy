@@ -298,6 +298,15 @@ public class EntityManager {
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
 
+				// 检测VO上自定义的级联注解
+				if (hasAbstractVO) {
+					for (Field field : entityClass.getDeclaredFields()) {
+						// oneToMany解析
+						parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
+						// oneToOne解析
+						parseOneToOne(sqlToyContext, entityMeta, entity, field, idList);
+					}
+				}
 				// 设置级联关联对象类型
 				if (!entityMeta.getCascadeModels().isEmpty()) {
 					Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
@@ -708,9 +717,8 @@ public class EntityManager {
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
 				} else {
-					cascadeModel
-							.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
-									.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(loadSql));
+					cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
+							.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(loadSql));
 				}
 			}
 		}
@@ -763,7 +771,7 @@ public class EntityManager {
 			return;
 		}
 		TableCascadeModel cascadeModel = new TableCascadeModel();
-		//oneToOne
+		// oneToOne
 		cascadeModel.setCascadeType(2);
 		cascadeModel.setMappedType(mappedType);
 		// 获取子表的信息(存在递归调用)
