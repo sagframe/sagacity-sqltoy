@@ -67,9 +67,10 @@ public class SapIQDialectUtils {
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null,
-				null);
+				handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -155,8 +156,8 @@ public class SapIQDialectUtils {
 		// 判断是否有子表级联保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
-			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				// oneToMany
 				if (cascadeModel.getCascadeType() == 1) {
@@ -169,7 +170,7 @@ public class SapIQDialectUtils {
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], idValues[i]);
+								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
 						}
 					}, openIdentity, conn, dbType, null);

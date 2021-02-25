@@ -51,7 +51,7 @@ public class TableCascadeModel implements Serializable {
 	/**
 	 * 是否级联删除
 	 */
-	private boolean delete=false;
+	private boolean delete = false;
 
 	/**
 	 * 对应子表对象的类型
@@ -72,6 +72,11 @@ public class TableCascadeModel implements Serializable {
 	 * 级联修改子表的sql
 	 */
 	private String cascadeUpdateSql;
+
+	/**
+	 * 排序
+	 */
+	private String orderBy;
 
 	/**
 	 * @return the property
@@ -225,6 +230,20 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setFields(String[] fields) {
 		this.fields = fields;
+	}
+
+	/**
+	 * @return the orderBy
+	 */
+	public String getOrderBy() {
+		return orderBy;
+	}
+
+	/**
+	 * @param orderBy the orderBy to set
+	 */
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
 	}
 
 }

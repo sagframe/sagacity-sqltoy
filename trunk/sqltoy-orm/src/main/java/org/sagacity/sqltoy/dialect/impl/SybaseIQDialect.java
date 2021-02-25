@@ -475,7 +475,7 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, NVL_FUNCTION, forceUpdateFields, conn,
 				dbType, tableName);
 		// 级联保存
-		if (cascade && null != entityMeta.getCascadeModels() && !entityMeta.getCascadeModels().isEmpty()) {
+		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
@@ -483,18 +483,16 @@ public class SybaseIQDialect implements Dialect {
 				}
 			// 级联子表数据
 			List subTableData;
-			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			String[] forceUpdateProps = null;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
-					subTableData = (List) BeanUtil.invokeMethod(entity,
-							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null);
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
 					subTableData = new ArrayList();
-					subTableData.add(BeanUtil.invokeMethod(entity,
-							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null));
+					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
 				}
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				/**
@@ -503,7 +501,7 @@ public class SybaseIQDialect implements Dialect {
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, IdValues);
+							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
@@ -514,7 +512,7 @@ public class SybaseIQDialect implements Dialect {
 							new ReflectPropertyHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], IdValues[i]);
+										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}
 								}
 							}, forceUpdateProps, conn, dbType, dialect, null, null);

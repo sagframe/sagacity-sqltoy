@@ -274,7 +274,7 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException("delete table:" + entityMeta.getSchemaTable(tableName)
 					+ " no primary key,please check table design!");
 		}
-		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		Integer[] parameterTypes = new Integer[idValues.length];
 		boolean validator = true;
 		// 判断主键值是否为空

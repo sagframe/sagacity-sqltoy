@@ -85,9 +85,6 @@ public class ReservedWordsUtil {
 		}
 		// 默认加上[]符合便于后面根据不同数据库类型进行替换,而其他符号则难以替换
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
-//			//避免重复增加
-//			if (column.startsWith("[") && column.endsWith("]"))
-//				return column;
 			return "[".concat(column).concat("]");
 		}
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {

@@ -637,7 +637,8 @@ public class EntityManager {
 			fields = oneToMany.fields();
 			mappedFields = oneToMany.mappedFields();
 			cascadeModel.setCascadeType(1);
-			cascadeModel.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+			cascadeModel
+					.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 			load = oneToMany.load();
 			orderBy = oneToMany.orderBy();
 			update = oneToMany.update();
@@ -649,7 +650,7 @@ public class EntityManager {
 			load = oneToOne.load();
 			update = oneToOne.update();
 		}
-		
+
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
 		if (fields == null && idList.size() == 1) {
@@ -662,7 +663,8 @@ public class EntityManager {
 		String[] mappedColumns = new String[fields.length];
 		// 主表字段名称
 		for (int i = 0; i < fields.length; i++) {
-			mappedColumns[i] = subTableMeta.getColumnName(mappedFields[i]);
+			//提取子表属性对应的数据库字段名称，并进行关键词处理
+			mappedColumns[i] = ReservedWordsUtil.convertWord(subTableMeta.getColumnName(mappedFields[i]), null);
 		}
 		cascadeModel.setFields(fields);
 		cascadeModel.setMappedColumns(mappedColumns);
@@ -679,15 +681,13 @@ public class EntityManager {
 		String subWhereSql = " where ";
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
 		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-		String columName;
 		for (int i = 0; i < fields.length; i++) {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 				subDeleteSql = subDeleteSql.concat(" and ");
 			}
-			columName = ReservedWordsUtil.convertWord(mappedColumns[i], null);
-			subWhereSql = subWhereSql.concat(columName).concat("=:").concat(mappedFields[i]);
-			subDeleteSql = subDeleteSql.concat(columName).concat("=?");
+			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
+			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
 		}
 		cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
@@ -720,6 +720,7 @@ public class EntityManager {
 		if (StringUtil.isNotBlank(orderBy)) {
 			// 对属性名称进行替换，替换为实际表字段名称
 			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
+			cascadeModel.setOrderBy(orderBy);
 			cascadeModel.setLoadSubTableSql(cascadeModel.getLoadSubTableSql().concat(" order by ").concat(orderBy));
 		}
 

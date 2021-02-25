@@ -1072,7 +1072,7 @@ public class SqlToyDaoSupport {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
 			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
-					sqlToyConfig.getParamsName(), null, null);
+					sqlToyConfig.getParamsName());
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
 					getDataSource(innerModel.dataSource));
 		}
@@ -1212,7 +1212,7 @@ public class SqlToyDaoSupport {
 		}
 		String businessIdType = entityMeta.getColumnJavaType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray());
 		// 提取关联属性的值
 		Object[] relatedColValue = null;
 		if (relatedColumn != null) {
@@ -1582,7 +1582,7 @@ public class SqlToyDaoSupport {
 				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO对象!");
 			}
 			String[] paramName = SqlConfigParseUtils.getSqlParamsName(where, false);
-			values = BeanUtil.reflectBeanToAry(values[0], paramName, null, null);
+			values = BeanUtil.reflectBeanToAry(values[0], paramName);
 			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(where, paramName, values);
 			where = sqlToyResult.getSql();
 			values = sqlToyResult.getParamsValue();

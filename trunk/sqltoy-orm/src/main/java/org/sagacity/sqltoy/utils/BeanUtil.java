@@ -627,7 +627,17 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static List reflectBeansToList(List datas, String[] props) throws Exception {
-		return reflectBeansToList(datas, props, null, false, 1);
+		return reflectBeansToList(datas, props, null, false, 0);
+	}
+
+	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
+		List result = reflectBeansToList(datas, props, null, false, 0);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		List[] ary = new List[result.size()];
+		result.toArray(ary);
+		return ary;
 	}
 
 	public static List reflectBeanToList(Object data, String[] properties) throws Exception {
@@ -728,6 +738,10 @@ public class BeanUtil {
 			throw e;
 		}
 		return resultList;
+	}
+
+	public static Object[] reflectBeanToAry(Object serializable, String[] properties) {
+		return reflectBeanToAry(serializable, properties, null, null);
 	}
 
 	/**

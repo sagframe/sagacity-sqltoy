@@ -641,8 +641,8 @@ public class SqlServerDialectUtils {
 		// 是否有子表进行级联保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData;
-			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
@@ -654,7 +654,7 @@ public class SqlServerDialectUtils {
 					saveAll(sqlToyContext, subTableData, new ReflectPropertyHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], idValues[i]);
+								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
 						}
 					}, conn, dbType, null, null);
@@ -891,25 +891,23 @@ public class SqlServerDialectUtils {
 				}
 			// 级联子表数据
 			List subTableData;
-			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
 			String[] forceUpdateProps = null;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
-					subTableData = (List) BeanUtil.invokeMethod(entity,
-							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null);
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
 					subTableData = new ArrayList();
-					subTableData.add(BeanUtil.invokeMethod(entity,
-							"get".concat(StringUtil.firstToUpperCase(cascadeModel.getProperty())), null));
+					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
 				}
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				// 针对存量子表数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, IdValues);
+							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
@@ -920,7 +918,7 @@ public class SqlServerDialectUtils {
 							new ReflectPropertyHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], IdValues[i]);
+										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}
 								}
 							}, forceUpdateProps, conn, dbType, null, null);
