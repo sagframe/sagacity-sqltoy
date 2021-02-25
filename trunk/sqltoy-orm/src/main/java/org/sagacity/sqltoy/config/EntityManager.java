@@ -653,7 +653,7 @@ public class EntityManager {
 
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
-		if (fields == null && idList.size() == 1) {
+		if ((fields == null || fields.length == 0) && idList.size() == 1) {
 			fields = entityMeta.getIdArray();
 		}
 		if (fields == null || fields.length != mappedFields.length) {
@@ -663,7 +663,7 @@ public class EntityManager {
 		String[] mappedColumns = new String[fields.length];
 		// 主表字段名称
 		for (int i = 0; i < fields.length; i++) {
-			//提取子表属性对应的数据库字段名称，并进行关键词处理
+			// 提取子表属性对应的数据库字段名称，并进行关键词处理
 			mappedColumns[i] = ReservedWordsUtil.convertWord(subTableMeta.getColumnName(mappedFields[i]), null);
 		}
 		cascadeModel.setFields(fields);

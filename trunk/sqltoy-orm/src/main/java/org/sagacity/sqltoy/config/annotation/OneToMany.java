@@ -22,7 +22,7 @@ public @interface OneToMany {
 	 * 
 	 * @return
 	 */
-	String[] fields();
+	String[] fields() default {};
 
 	/**
 	 * 关联表的字段(many column)

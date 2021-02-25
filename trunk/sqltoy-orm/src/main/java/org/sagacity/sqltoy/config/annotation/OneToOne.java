@@ -23,7 +23,7 @@ public @interface OneToOne {
 	 * 
 	 * @return
 	 */
-	String[] fields();
+	String[] fields() default {};
 
 	/**
 	 * 关联表对应对象的属性
