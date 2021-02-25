@@ -51,7 +51,7 @@ public @interface OneToMany {
 	 * 
 	 * @return
 	 */
-	boolean delete() default true;
+	boolean delete() default false;
 
 	/**
 	 * 排序
