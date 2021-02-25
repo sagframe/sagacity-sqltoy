@@ -1037,8 +1037,7 @@ public class DialectUtils {
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
 					// 构造查询语句,update 2019-12-09 使用完整字段
-					subTableSql.append("select ").append(mappedMeta.getAllColumnNames()).append(" from ")
-							.append(cascadeModel.getMappedTable()).append(" where ");
+					subTableSql.append(mappedMeta.getLoadAllSql()).append(" where ");
 					String orderCols = "";
 					boolean hasOrder = StringUtil.isNotBlank(cascadeModel.getOrderBy());
 					for (int i = 0; i < cascadeModel.getMappedFields().length; i++) {

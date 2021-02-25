@@ -686,7 +686,7 @@ public class EntityManager {
 		cascadeModel.setMappedFields(mappedFields);
 		// 子表的schema.table
 		String subSchemaTable = subTableMeta.getSchemaTable();
-		cascadeModel.setMappedTable(subTableMeta.getSchemaTable());
+		cascadeModel.setMappedTable(subSchemaTable);
 		cascadeModel.setProperty(field.getName());
 
 		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
