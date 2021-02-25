@@ -30,7 +30,7 @@ public @interface OneToMany {
 	 * @return
 	 */
 	@Deprecated
-	String[] mappedColumns();
+	String[] mappedColumns() default {};
 
 	/**
 	 * 关联表对应对象的属性
@@ -73,6 +73,6 @@ public @interface OneToMany {
 	 * @return
 	 */
 	@Deprecated
-	String mappedTable();
+	String mappedTable() default "";
 
 }
