@@ -276,9 +276,8 @@ public class EntityManager {
 					// 解析对象字段属性跟数据库表字段的对应关系
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
 							loadNamedWhereSql, loadArgWhereSql);
-					// oneToMany和oneToOne解析
-					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
 				}
+
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
 				for (int i = 0; i < allColumnNames.size(); i++) {
@@ -294,22 +293,6 @@ public class EntityManager {
 
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
-
-				// 检测VO上自定义的级联注解
-				if (hasAbstractVO) {
-					for (Field field : entityClass.getDeclaredFields()) {
-						// oneToMany和oneToOne解析
-						parseCascade(sqlToyContext, entityMeta, entity, field, idList);
-					}
-				}
-				// 设置级联关联对象类型
-				if (!entityMeta.getCascadeModels().isEmpty()) {
-					Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
-					for (int i = 0; i < entityMeta.getCascadeModels().size(); i++) {
-						cascadeTypes[i] = entityMeta.getCascadeModels().get(i).getMappedType();
-					}
-					entityMeta.setCascadeTypes(cascadeTypes);
-				}
 
 				// 排除主键外的字段
 				if (rejectIdFieldList.size() > 0) {
@@ -337,6 +320,26 @@ public class EntityManager {
 
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
+
+				// oneToMany和oneToOne解析
+				for (Field field : allFields) {
+					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
+				}
+				// 检测VO上自定义的级联注解
+				if (hasAbstractVO) {
+					for (Field field : entityClass.getDeclaredFields()) {
+						// oneToMany和oneToOne解析
+						parseCascade(sqlToyContext, entityMeta, entity, field, idList);
+					}
+				}
+				// 设置级联关联对象类型
+				if (!entityMeta.getCascadeModels().isEmpty()) {
+					Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
+					for (int i = 0; i < entityMeta.getCascadeModels().size(); i++) {
+						cascadeTypes[i] = entityMeta.getCascadeModels().get(i).getMappedType();
+					}
+					entityMeta.setCascadeTypes(cascadeTypes);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("Sqltoy 解析Entity对象:[{}]发生错误,请检查对象注解是否正确!", className);
@@ -657,12 +660,24 @@ public class EntityManager {
 			fields = entityMeta.getIdArray();
 		}
 		if (fields == null || fields.length != mappedFields.length) {
-			logger.error("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!", entityMeta.getTableName(),
-					subTableMeta.getTableName());
+			throw new RuntimeException(StringUtil.fillArgs("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!",
+					entityMeta.getTableName(), subTableMeta.getTableName()));
 		}
 		String[] mappedColumns = new String[fields.length];
+		// 剔除下划线,避免手工维护时将属性名称写成数据库字段名称
+		fields = StringUtil.humpFieldNames(fields);
+		mappedFields = StringUtil.humpFieldNames(fields);
 		// 主表字段名称
 		for (int i = 0; i < fields.length; i++) {
+			// 检查属性名称配置是否正确
+			if (entityMeta.getFieldMeta(fields[i]) == null) {
+				throw new RuntimeException(
+						StringUtil.fillArgs("表级联配置对应主表:{}的field属性:{} 并不存在,请检查!", entityMeta.getTableName(), fields[i]));
+			}
+			if (subTableMeta.getFieldMeta(mappedFields[i]) == null) {
+				throw new RuntimeException(StringUtil.fillArgs("表级联配置对应子表:{}的field属性:{} 并不存在,请检查!",
+						subTableMeta.getTableName(), mappedFields[i]));
+			}
 			// 提取子表属性对应的数据库字段名称，并进行关键词处理
 			mappedColumns[i] = ReservedWordsUtil.convertWord(subTableMeta.getColumnName(mappedFields[i]), null);
 		}
@@ -689,8 +704,7 @@ public class EntityManager {
 			subWhereSql = subWhereSql.concat(mappedColumns[i]).concat("=:").concat(mappedFields[i]);
 			subDeleteSql = subDeleteSql.concat(mappedColumns[i]).concat("=?");
 		}
-		cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
-				.concat(subSchemaTable).concat(subWhereSql));
+		cascadeModel.setLoadSubTableSql(subTableMeta.getLoadAllSql().concat(subWhereSql));
 		cascadeModel.setDeleteSubTableSql(subDeleteSql);
 
 		boolean matchedWhere = false;
@@ -710,8 +724,8 @@ public class EntityManager {
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
 				} else {
-					cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
-							.concat(subSchemaTable).concat(subWhereSql).concat(" and ").concat(loadSql));
+					cascadeModel.setLoadSubTableSql(
+							subTableMeta.getLoadAllSql().concat(subWhereSql).concat(" and ").concat(loadSql));
 				}
 			}
 		}

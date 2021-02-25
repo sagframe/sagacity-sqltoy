@@ -76,6 +76,9 @@ public class ReservedWordsUtil {
 	 * @return
 	 */
 	public static String convertWord(String column, Integer dbType) {
+		if (column == null) {
+			return null;
+		}
 		// 非保留字
 		if (reservedWords.isEmpty()) {
 			return column;
