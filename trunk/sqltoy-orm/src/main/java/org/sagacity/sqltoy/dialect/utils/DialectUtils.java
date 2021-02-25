@@ -1029,30 +1029,30 @@ public class DialectUtils {
 			List items;
 			SqlToyResult subToyResult;
 			EntityMeta mappedMeta;
-			for (TableCascadeModel oneToMany : entityMeta.getCascadeModels()) {
-				if (cascadeTypes.contains(oneToMany.getMappedType())) {
-					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				if (cascadeTypes.contains(cascadeModel.getMappedType())) {
+					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
 					// 构造查询语句,update 2019-12-09 使用完整字段
 					subTableSql.append("select ").append(mappedMeta.getAllColumnNames()).append(" from ")
-							.append(oneToMany.getMappedTable()).append(" where ");
+							.append(cascadeModel.getMappedTable()).append(" where ");
 					for (int i = 0; i < idSize; i++) {
 						if (i > 0) {
 							subTableSql.append(" and ");
 						}
-						subTableSql.append(oneToMany.getMappedColumns()[i]);
+						subTableSql.append(cascadeModel.getMappedColumns()[i]);
 						subTableSql.append(" in (:" + entityMeta.getIdArray()[i] + ") ");
 					}
 					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), entityMeta.getIdArray(),
 							idValues);
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
-							subToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
 					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
 					BeanUtil.invokeMethod1(entities.get(0),
-							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
+							"mapping" + StringUtil.firstToUpperCase(cascadeModel.getProperty()),
 							new Object[] { entitySet, items });
 				}
 			}
