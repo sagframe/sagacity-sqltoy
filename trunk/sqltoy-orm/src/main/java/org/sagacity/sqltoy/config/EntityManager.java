@@ -276,11 +276,8 @@ public class EntityManager {
 					// 解析对象字段属性跟数据库表字段的对应关系
 					parseFieldMeta(sqlToyContext, entityMeta, field, rejectIdFieldList, allColumnNames,
 							loadNamedWhereSql, loadArgWhereSql);
-					// oneToMany解析
-					parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
-
-					// oneToOne解析
-					parseOneToOne(sqlToyContext, entityMeta, entity, field, idList);
+					// oneToMany和oneToOne解析
+					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
 				}
 				// 设置数据库表所有字段信息
 				StringBuilder allColNames = new StringBuilder();
@@ -301,10 +298,8 @@ public class EntityManager {
 				// 检测VO上自定义的级联注解
 				if (hasAbstractVO) {
 					for (Field field : entityClass.getDeclaredFields()) {
-						// oneToMany解析
-						parseOneToMany(sqlToyContext, entityMeta, entity, field, idList);
-						// oneToOne解析
-						parseOneToOne(sqlToyContext, entityMeta, entity, field, idList);
+						// oneToMany和oneToOne解析
+						parseCascade(sqlToyContext, entityMeta, entity, field, idList);
 					}
 				}
 				// 设置级联关联对象类型
@@ -623,59 +618,58 @@ public class EntityManager {
 	 * @param field
 	 * @param idList
 	 */
-	private void parseOneToMany(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
+	private void parseCascade(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
 			List<String> idList) {
 		// 主表关联多子表记录
 		OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-		if (oneToMany == null) {
-			return;
-		}
-		// 主键字段数量
-		int idSize = idList.size();
-		Class mappedType = (Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-		if (idSize != oneToMany.mappedFields().length) {
-			logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
-					mappedType.getTypeName(), oneToMany.mappedFields().length);
+		OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+		if (oneToMany == null && oneToOne == null) {
 			return;
 		}
 		TableCascadeModel cascadeModel = new TableCascadeModel();
-		cascadeModel.setCascadeType(1);
-		cascadeModel.setMappedType(mappedType);
+		String[] fields;
+		String[] mappedFields;
+		String load = null;
+		String orderBy = null;
+		String update = null;
+		// oneToMany
+		if (oneToMany != null) {
+			fields = oneToMany.fields();
+			mappedFields = oneToMany.mappedFields();
+			cascadeModel.setCascadeType(1);
+			cascadeModel.setMappedType((Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+			load = oneToMany.load();
+			orderBy = oneToMany.orderBy();
+			update = oneToMany.update();
+		} else {
+			fields = oneToOne.fields();
+			mappedFields = oneToOne.mappedFields();
+			cascadeModel.setCascadeType(2);
+			cascadeModel.setMappedType(field.getType());
+			load = oneToOne.load();
+			update = oneToOne.update();
+		}
+		
 		// 获取子表的信息(存在递归调用)
 		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
-		String[] fields = oneToMany.fields();
-		if (fields == null) {
-			if (idSize == 1) {
-				fields = entityMeta.getIdArray();
-			} else {
-				logger.error("主表:{}的主键字段数量:{}>1 时OneToMany必须要设置fields 和 mappedFields!", entityMeta.getTableName(),
-						idSize);
-				return;
-			}
+		if (fields == null && idList.size() == 1) {
+			fields = entityMeta.getIdArray();
 		}
-		String[] mappedColumns = new String[idSize];
-		String[] mappedFields = new String[idSize];
-		// 按照主键顺序排列外键顺序
-		String idFieldName;
+		if (fields == null || fields.length != mappedFields.length) {
+			logger.error("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!", entityMeta.getTableName(),
+					subTableMeta.getTableName());
+		}
+		String[] mappedColumns = new String[fields.length];
 		// 主表字段名称
-		String masterField;
-		for (int i = 0; i < idSize; i++) {
-			masterField = fields[i];
-			for (int j = 0; j < idSize; j++) {
-				idFieldName = idList.get(j);
-				if (masterField.equalsIgnoreCase(idFieldName)) {
-					mappedFields[j] = oneToMany.mappedFields()[i];
-					mappedColumns[j] = subTableMeta.getColumnName(oneToMany.mappedFields()[i]);
-					break;
-				}
-			}
+		for (int i = 0; i < fields.length; i++) {
+			mappedColumns[i] = subTableMeta.getColumnName(mappedFields[i]);
 		}
-
+		cascadeModel.setFields(fields);
 		cascadeModel.setMappedColumns(mappedColumns);
 		cascadeModel.setMappedFields(mappedFields);
 		// 子表的schema.table
 		String subSchemaTable = subTableMeta.getSchemaTable();
-		cascadeModel.setMappedTable(subSchemaTable);
+		cascadeModel.setMappedTable(subTableMeta.getSchemaTable());
 		cascadeModel.setProperty(field.getName());
 
 		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
@@ -686,7 +680,7 @@ public class EntityManager {
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
 		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
 		String columName;
-		for (int i = 0; i < idSize; i++) {
+		for (int i = 0; i < fields.length; i++) {
 			if (i > 0) {
 				subWhereSql = subWhereSql.concat(" and ");
 				subDeleteSql = subDeleteSql.concat(" and ");
@@ -695,25 +689,23 @@ public class EntityManager {
 			subWhereSql = subWhereSql.concat(columName).concat("=:").concat(mappedFields[i]);
 			subDeleteSql = subDeleteSql.concat(columName).concat("=?");
 		}
-
-		// update 2019-12-09 将select * 转变为select 完整字段
 		cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
 				.concat(subSchemaTable).concat(subWhereSql));
 		cascadeModel.setDeleteSubTableSql(subDeleteSql);
 
 		boolean matchedWhere = false;
 		// 自定义load sql
-		if (StringUtil.isNotBlank(oneToMany.load())) {
-			String loadLow = oneToMany.load().toLowerCase();
+		if (StringUtil.isNotBlank(load)) {
+			String loadLow = load.toLowerCase();
 			// 是否是:xxx形式的引入主键条件(原则上不允许这么操作)
-			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(oneToMany.load());
+			boolean isNamedSql = SqlConfigParseUtils.isNamedQuery(load);
 			if (isNamedSql && !StringUtil.matches(loadLow, "(\\>|\\<)|(\\=)|(\\<\\>)|(\\>\\=|\\<\\=)")) {
 				// 自定义加载完整sql
 				if (!loadLow.equals("default") && !loadLow.equals("true")) {
-					cascadeModel.setLoadSubTableSql(oneToMany.load());
+					cascadeModel.setLoadSubTableSql(load);
 				}
 			} else {
-				String loadSql = SqlUtil.convertFieldsToColumns(subTableMeta, oneToMany.load());
+				String loadSql = SqlUtil.convertFieldsToColumns(subTableMeta, load);
 				matchedWhere = StringUtil.matches(loadLow, "\\s+where\\s+");
 				if (matchedWhere) {
 					cascadeModel.setLoadSubTableSql(loadSql);
@@ -725,7 +717,6 @@ public class EntityManager {
 		}
 
 		// update 2020-11-20 增加子表级联order by
-		String orderBy = oneToMany.orderBy();
 		if (StringUtil.isNotBlank(orderBy)) {
 			// 对属性名称进行替换，替换为实际表字段名称
 			orderBy = SqlUtil.convertFieldsToColumns(subTableMeta, orderBy);
@@ -733,105 +724,18 @@ public class EntityManager {
 		}
 
 		// 深度级联修改
-		if (StringUtil.isNotBlank(oneToMany.update())) {
-			String updateLow = oneToMany.update().toLowerCase();
+		if (StringUtil.isNotBlank(update)) {
+			String updateLow = update;
 			// 表示先删除子表
 			if (updateLow.equals("delete")) {
 				cascadeModel.setCascadeUpdateSql("delete from ".concat(subSchemaTable).concat(subWhereSql));
 			} else {
 				// 修改数据(如设置记录状态为失效)
 				matchedWhere = StringUtil.matches(updateLow, "\\s+where\\s+");
-				cascadeModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ")
-						.concat(oneToMany.update()).concat(matchedWhere ? "" : subWhereSql));
+				cascadeModel.setCascadeUpdateSql("update ".concat(subSchemaTable).concat(" set ").concat(update)
+						.concat(matchedWhere ? "" : subWhereSql));
 			}
 		}
-		entityMeta.addCascade(cascadeModel);
-	}
-
-	/**
-	 * @todo 解析主键关联的子表信息配置(外键关联)OneToOne
-	 * @param sqlToyContext
-	 * @param entityMeta
-	 * @param entity
-	 * @param field
-	 * @param idList
-	 */
-	private void parseOneToOne(SqlToyContext sqlToyContext, EntityMeta entityMeta, Entity entity, Field field,
-			List<String> idList) {
-		// 主表关联多子表记录
-		OneToOne oneToOne = field.getAnnotation(OneToOne.class);
-		if (oneToOne == null) {
-			return;
-		}
-		// 主键字段数量
-		int idSize = idList.size();
-		Class mappedType = field.getType();
-		if (idSize != oneToOne.mappedFields().length) {
-			logger.error("主表:{}的主键字段数量:{}与子表:{}的外键关联字段数量:{}不等,请检查!", entityMeta.getTableName(), idSize,
-					mappedType.getTypeName(), oneToOne.mappedFields().length);
-			return;
-		}
-		TableCascadeModel cascadeModel = new TableCascadeModel();
-		// oneToOne
-		cascadeModel.setCascadeType(2);
-		cascadeModel.setMappedType(mappedType);
-		// 获取子表的信息(存在递归调用)
-		EntityMeta subTableMeta = getEntityMeta(sqlToyContext, cascadeModel.getMappedType());
-		// 子表的schema.table
-		String subSchemaTable = subTableMeta.getSchemaTable();
-		cascadeModel.setMappedTable(subSchemaTable);
-		cascadeModel.setProperty(field.getName());
-		String[] fields = oneToOne.fields();
-		if (fields == null) {
-			if (idSize == 1) {
-				fields = entityMeta.getIdArray();
-			} else {
-				logger.error("主表:{}的主键字段数量:{}>1 时OneToOne必须要设置fields 和 mappedFields!", entityMeta.getTableName(),
-						idSize);
-				return;
-			}
-		}
-		String[] mappedColumns = new String[idSize];
-		String[] mappedFields = new String[idSize];
-		String idFieldName;
-		// 主表字段名称
-		String masterField;
-		for (int i = 0; i < idSize; i++) {
-			masterField = fields[i];
-			for (int j = 0; j < idSize; j++) {
-				idFieldName = idList.get(j);
-				if (masterField.equalsIgnoreCase(idFieldName)) {
-					mappedFields[j] = oneToOne.mappedFields()[i];
-					mappedColumns[j] = subTableMeta.getColumnName(oneToOne.mappedFields()[i]);
-					break;
-				}
-			}
-		}
-
-		cascadeModel.setMappedColumns(mappedColumns);
-		cascadeModel.setMappedFields(mappedFields);
-		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
-		cascadeModel.setDelete(oneToOne.delete());
-		cascadeModel.setUpdate(oneToOne.update());
-
-		// 子表外键查询条件
-		String subWhereSql = " where ";
-		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
-		String subDeleteSql = "delete from ".concat(subSchemaTable).concat(" where ");
-		String columnName;
-		for (int i = 0; i < idSize; i++) {
-			if (i > 0) {
-				subWhereSql = subWhereSql.concat(" and ");
-				subDeleteSql = subDeleteSql.concat(" and ");
-			}
-			columnName = ReservedWordsUtil.convertWord(mappedColumns[i], null);
-			subWhereSql = subWhereSql.concat(columnName).concat("=:").concat(mappedFields[i]);
-			subDeleteSql = subDeleteSql.concat(columnName).concat("=?");
-		}
-
-		cascadeModel.setLoadSubTableSql("select ".concat(subTableMeta.getAllColumnNames()).concat(" from ")
-				.concat(subSchemaTable).concat(subWhereSql));
-		cascadeModel.setDeleteSubTableSql(subDeleteSql);
 		entityMeta.addCascade(cascadeModel);
 	}
 

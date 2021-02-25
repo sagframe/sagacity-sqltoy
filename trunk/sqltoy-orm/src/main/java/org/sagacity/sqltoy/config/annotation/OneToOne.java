@@ -40,9 +40,16 @@ public @interface OneToOne {
 	boolean delete() default false;
 
 	/**
-	 * 是否级联修改
+	 * 加载自定义sql
 	 * 
 	 * @return
 	 */
-	boolean update() default false;
+	String load() default "";
+
+	/**
+	 * 定制级联修改保存对子表的操作语句
+	 * 
+	 * @return
+	 */
+	String update() default "";
 }

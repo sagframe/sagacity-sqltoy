@@ -1018,9 +1018,7 @@ public class DialectUtils {
 			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), idValues);
-
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false, entityMeta.getColumnFieldMap());
 		// 存在主表对应子表

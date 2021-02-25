@@ -17,11 +17,11 @@ public class TableCascadeModel implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1309393602795660950L;
-	
+
 	/**
 	 * 1:oneToMany;2:oneToOne
 	 */
-	private int cascadeType=1;
+	private int cascadeType = 1;
 
 	/**
 	 * 对应vo中的List集合属性
@@ -32,6 +32,11 @@ public class TableCascadeModel implements Serializable {
 	 * 主键关联的表
 	 */
 	private String mappedTable;
+
+	/**
+	 * 主表字段
+	 */
+	private String[] fields;
 
 	/**
 	 * 主键关联表对应的外键字段
@@ -47,7 +52,7 @@ public class TableCascadeModel implements Serializable {
 	 * 是否级联删除
 	 */
 	private boolean delete;
-	
+
 	/**
 	 * 是否级联更新
 	 */
@@ -225,6 +230,20 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setUpdate(boolean update) {
 		this.update = update;
+	}
+
+	/**
+	 * @return the fields
+	 */
+	public String[] getFields() {
+		return fields;
+	}
+
+	/**
+	 * @param fields the fields to set
+	 */
+	public void setFields(String[] fields) {
+		this.fields = fields;
 	}
 
 }
