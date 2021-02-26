@@ -77,6 +77,11 @@ public class TableCascadeModel implements Serializable {
 	 * 排序
 	 */
 	private String orderBy;
+	
+	/**
+	 * load级联加载的扩展条件
+	 */
+	private String loadExtCondition;
 
 	/**
 	 * @return the property
@@ -244,6 +249,20 @@ public class TableCascadeModel implements Serializable {
 	 */
 	public void setOrderBy(String orderBy) {
 		this.orderBy = orderBy;
+	}
+
+	/**
+	 * @return the loadExtCondition
+	 */
+	public String getLoadExtCondition() {
+		return loadExtCondition;
+	}
+
+	/**
+	 * @param loadExtCondition the loadExtCondition to set
+	 */
+	public void setLoadExtCondition(String loadExtCondition) {
+		this.loadExtCondition = loadExtCondition;
 	}
 
 }

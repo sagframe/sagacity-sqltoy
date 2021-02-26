@@ -1050,6 +1050,10 @@ public class DialectUtils {
 							orderCols = orderCols.concat(cascadeModel.getMappedColumns()[i]).concat(",");
 						}
 					}
+					//自定义扩展条件
+					if (cascadeModel.getLoadExtCondition() != null) {
+						subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
+					}
 					if (hasOrder) {
 						subTableSql.append(" order by ").append(orderCols).append(cascadeModel.getOrderBy());
 					}

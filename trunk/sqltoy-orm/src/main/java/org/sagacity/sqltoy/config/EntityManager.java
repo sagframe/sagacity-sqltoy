@@ -724,6 +724,7 @@ public class EntityManager {
 				} else {
 					cascadeModel.setLoadSubTableSql(
 							subTableMeta.getLoadAllSql().concat(subWhereSql).concat(" and ").concat(loadSql));
+					cascadeModel.setLoadExtCondition(loadSql);
 				}
 			}
 		}

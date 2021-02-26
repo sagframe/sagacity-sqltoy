@@ -17,61 +17,29 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface OneToMany {
-	/**
-	 * 主表列名(many column)
-	 * 
-	 * @return
-	 */
+	// 主表列名(many column)
 	String[] fields() default {};
 
-	/**
-	 * 关联表的字段(many column)
-	 * 
-	 * @return
-	 */
+	// 关联表对应对象的属性
+	String[] mappedFields();
+
+	// 加载自定义sql
+	String load() default "";
+
+	// 是否级联删除
+	boolean delete() default false;
+
+	// 排序
+	String orderBy() default "";
+
+	// 定制级联修改保存对子表的操作语句
+	String update() default "";
+
+	// 关联表的字段(many column)
 	@Deprecated
 	String[] mappedColumns() default {};
 
-	/**
-	 * 关联表对应对象的属性
-	 * 
-	 * @return
-	 */
-	String[] mappedFields();
-
-	/**
-	 * 加载自定义sql
-	 * 
-	 * @return
-	 */
-	String load() default "";
-
-	/**
-	 * 是否级联删除
-	 * 
-	 * @return
-	 */
-	boolean delete() default false;
-
-	/**
-	 * 排序
-	 * 
-	 * @return
-	 */
-	String orderBy() default "";
-
-	/**
-	 * 定制级联修改保存对子表的操作语句
-	 * 
-	 * @return
-	 */
-	String update() default "";
-
-	/**
-	 * 关联的表
-	 * 
-	 * @return
-	 */
+	// 关联的表
 	@Deprecated
 	String mappedTable() default "";
 
