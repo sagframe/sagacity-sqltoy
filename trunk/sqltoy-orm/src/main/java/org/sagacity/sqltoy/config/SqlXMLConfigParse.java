@@ -1325,7 +1325,6 @@ public class SqlXMLConfigParse {
 				}
 			}
 		}
-
 		// 加入sqlToyConfig
 		sqlToyConfig.setResultProcessor(resultProcessor);
 	}
