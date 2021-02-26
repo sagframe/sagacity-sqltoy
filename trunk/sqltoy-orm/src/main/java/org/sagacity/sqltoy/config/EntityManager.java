@@ -749,7 +749,12 @@ public class EntityManager {
 						.concat(matchedWhere ? "" : subWhereSql));
 			}
 		}
-		entityMeta.addCascade(cascadeModel);
+		// 是否完成了覆盖
+		boolean isRepeat = entityMeta.addCascade(cascadeModel);
+		if (isRepeat) {
+			logger.warn("表:{} 级联操作子表:{} 出现重复关联,后续:{}关联类型覆盖前面的关联", entityMeta.getTableName(),
+					subTableMeta.getTableName(), (cascadeModel.getCascadeType() == 1) ? "oneToMany" : "oneToOne");
+		}
 	}
 
 	/**

@@ -479,18 +479,21 @@ public class EntityMeta implements Serializable {
 	 * @TODO 增加级联关系
 	 * @param cascadeModel
 	 */
-	public void addCascade(TableCascadeModel cascadeModel) {
+	public boolean addCascade(TableCascadeModel cascadeModel) {
 		Iterator<TableCascadeModel> iter = cascadeModels.iterator();
 		TableCascadeModel iterModel;
+		boolean isRepeat=false;
 		// 删除已经存在的子表关联
 		while (iter.hasNext()) {
 			iterModel = iter.next();
 			if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
 				iter.remove();
+				isRepeat=true;
 				break;
 			}
 		}
 		this.cascadeModels.add(cascadeModel);
+		return isRepeat;
 	}
 
 	/**
