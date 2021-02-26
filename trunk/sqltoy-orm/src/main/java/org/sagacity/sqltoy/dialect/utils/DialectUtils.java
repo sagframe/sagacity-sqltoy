@@ -1204,7 +1204,6 @@ public class DialectUtils {
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				final Object[] mainValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
-				logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
@@ -1215,6 +1214,8 @@ public class DialectUtils {
 					}
 				}
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联保存", null);
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
 					savePkStrategy = generateSavePKStrategy.generate(subTableEntityMeta);
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
@@ -1226,6 +1227,8 @@ public class DialectUtils {
 									}
 								}
 							}, conn, dbType, null);
+				} else {
+					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}
 		}
@@ -1438,6 +1441,7 @@ public class DialectUtils {
 			// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 			if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 					|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+				SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 						mappedFields, mainFieldValues);
@@ -1446,6 +1450,8 @@ public class DialectUtils {
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", realTable, subTableEntityMeta.getTableName());
+				SqlExecuteStat.debug("执行子表级联更新操作", null);
 				// 将外键值通过反调赋到相关属性上
 				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
 					public void process() {
@@ -1484,6 +1490,8 @@ public class DialectUtils {
 							// 设置关联外键字段的属性值(来自主表的主键)
 							reflectPropsHandler, conn, dbType, null);
 				}
+			} else {
+				logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", realTable, subTableEntityMeta.getTableName());
 			}
 		}
 		return updateCnt;
@@ -1780,6 +1788,7 @@ public class DialectUtils {
 					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
 						subTableFieldType[i] = subMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
+					SqlExecuteStat.debug("执行级联删除操作", null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),
 							mainFieldValues, subTableFieldType, conn, dbType, null);
 				}

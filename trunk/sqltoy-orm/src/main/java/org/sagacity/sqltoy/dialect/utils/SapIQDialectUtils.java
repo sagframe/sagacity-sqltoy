@@ -155,10 +155,12 @@ public class SapIQDialectUtils {
 		}
 		// 判断是否有子表级联保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
-			List subTableData=null;
+			List subTableData = null;
+			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
+				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				// oneToMany
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
@@ -170,6 +172,8 @@ public class SapIQDialectUtils {
 					}
 				}
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
@@ -177,6 +181,8 @@ public class SapIQDialectUtils {
 							}
 						}
 					}, openIdentity, conn, dbType, null);
+				}else {
+					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}
 		}

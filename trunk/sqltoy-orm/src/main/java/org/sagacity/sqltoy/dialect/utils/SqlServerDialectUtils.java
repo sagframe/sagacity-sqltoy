@@ -641,9 +641,11 @@ public class SqlServerDialectUtils {
 		// 是否有子表进行级联保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			List subTableData = null;
+			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
+				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
@@ -654,6 +656,8 @@ public class SqlServerDialectUtils {
 					}
 				}
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, new ReflectPropertyHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
@@ -661,6 +665,8 @@ public class SqlServerDialectUtils {
 							}
 						}
 					}, conn, dbType, null, null);
+				} else {
+					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}
 		}
@@ -894,8 +900,10 @@ public class SqlServerDialectUtils {
 			// 级联子表数据
 			List subTableData = null;
 			String[] forceUpdateProps = null;
+			EntityMeta subTableEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
 						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
 				if (cascadeModel.getCascadeType() == 1) {
@@ -911,6 +919,7 @@ public class SqlServerDialectUtils {
 				// 针对存量子表数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
@@ -918,6 +927,8 @@ public class SqlServerDialectUtils {
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联更新操作", null);
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
@@ -927,6 +938,8 @@ public class SqlServerDialectUtils {
 									}
 								}
 							}, forceUpdateProps, conn, dbType, null, null);
+				} else {
+					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subTableEntityMeta.getTableName());
 				}
 			}
 		}

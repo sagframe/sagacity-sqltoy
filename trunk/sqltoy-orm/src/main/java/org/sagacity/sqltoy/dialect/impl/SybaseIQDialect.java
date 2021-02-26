@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -482,9 +483,11 @@ public class SybaseIQDialect implements Dialect {
 					typeMap.put(type, "");
 				}
 			// 级联子表数据
-			List subTableData=null;
+			List subTableData = null;
 			String[] forceUpdateProps = null;
+			EntityMeta subEntityMeta;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				subEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
@@ -504,11 +507,14 @@ public class SybaseIQDialect implements Dialect {
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues);
+					SqlExecuteStat.debug("对存量数据进行级联修改", null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
+					SqlExecuteStat.debug("执行子表级联更新操作", null);
+					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subEntityMeta.getTableName());
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
@@ -518,6 +524,8 @@ public class SybaseIQDialect implements Dialect {
 									}
 								}
 							}, forceUpdateProps, conn, dbType, dialect, null, null);
+				} else {
+					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subEntityMeta.getTableName());
 				}
 			}
 		}
