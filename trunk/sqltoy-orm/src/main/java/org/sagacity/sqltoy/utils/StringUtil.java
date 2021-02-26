@@ -969,6 +969,8 @@ public class StringUtil {
 			if (index == -1) {
 				return false;
 			}
+			//位置从前一个匹配字符的尾部开始
+			index=index+keyword.length();
 		}
 		return true;
 	}

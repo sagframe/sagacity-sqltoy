@@ -70,4 +70,13 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches(sql1.concat("(holdlock updlock)"), regex));
 		System.err.println(StringUtil.matches(sql1.concat("(holdlock)"), regex));
 	}
+	
+	@Test
+	public void testLike() {
+		String sql = "支持保留字处理，对象操作自动增加保留字符号，跨数据库sql自动适配";
+		
+		System.err.println(StringUtil.like(sql, "保留  操作  ，跨数库".split("\\s+")));
+		System.err.println(StringUtil.like(sql, "保留  操作  ， 数据库".split("\\s+")));
+	
+	}
 }
