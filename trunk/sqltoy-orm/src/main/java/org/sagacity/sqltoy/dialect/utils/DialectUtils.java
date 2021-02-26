@@ -1050,8 +1050,8 @@ public class DialectUtils {
 							orderCols = orderCols.concat(cascadeModel.getMappedColumns()[i]).concat(",");
 						}
 					}
-					//自定义扩展条件
-					if (cascadeModel.getLoadExtCondition() != null) {
+					// 自定义扩展条件
+					if (StringUtil.isNotBlank(cascadeModel.getLoadExtCondition())) {
 						subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
 					}
 					if (hasOrder) {
