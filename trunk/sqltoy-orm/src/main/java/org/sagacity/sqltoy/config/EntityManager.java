@@ -645,6 +645,8 @@ public class EntityManager {
 			load = oneToMany.load();
 			orderBy = oneToMany.orderBy();
 			update = oneToMany.update();
+			// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
+			cascadeModel.setDelete(oneToMany.delete());
 		} else {
 			fields = oneToOne.fields();
 			mappedFields = oneToOne.mappedFields();
@@ -652,6 +654,7 @@ public class EntityManager {
 			cascadeModel.setMappedType(field.getType());
 			load = oneToOne.load();
 			update = oneToOne.update();
+			cascadeModel.setDelete(oneToOne.delete());
 		}
 
 		// 获取子表的信息(存在递归调用)
@@ -688,10 +691,6 @@ public class EntityManager {
 		String subSchemaTable = subTableMeta.getSchemaTable();
 		cascadeModel.setMappedTable(subSchemaTable);
 		cascadeModel.setProperty(field.getName());
-
-		// 是否交由sqltoy进行级联删除,数据库本身存在自动级联机制
-		cascadeModel.setDelete(oneToMany.delete());
-
 		// 子表外键查询条件
 		String subWhereSql = " where ";
 		// 级联删除，自动组装sql不允许外部修改，所以用?作为条件，顺序在对象加载时约定
@@ -706,7 +705,6 @@ public class EntityManager {
 		}
 		cascadeModel.setLoadSubTableSql(subTableMeta.getLoadAllSql().concat(subWhereSql));
 		cascadeModel.setDeleteSubTableSql(subDeleteSql);
-
 		boolean matchedWhere = false;
 		// 自定义load sql
 		if (StringUtil.isNotBlank(load)) {

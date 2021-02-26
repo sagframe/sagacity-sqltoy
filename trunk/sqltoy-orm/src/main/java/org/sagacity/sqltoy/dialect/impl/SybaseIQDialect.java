@@ -482,7 +482,7 @@ public class SybaseIQDialect implements Dialect {
 					typeMap.put(type, "");
 				}
 			// 级联子表数据
-			List subTableData;
+			List subTableData=null;
 			String[] forceUpdateProps = null;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final String[] mappedFields = cascadeModel.getMappedFields();
@@ -493,7 +493,10 @@ public class SybaseIQDialect implements Dialect {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
 					subTableData = new ArrayList();
-					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
 				}
 
 				// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用

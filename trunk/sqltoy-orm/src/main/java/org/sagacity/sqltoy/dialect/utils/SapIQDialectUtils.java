@@ -155,7 +155,7 @@ public class SapIQDialectUtils {
 		}
 		// 判断是否有子表级联保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
-			List subTableData;
+			List subTableData=null;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				final String[] mappedFields = cascadeModel.getMappedFields();
@@ -164,7 +164,10 @@ public class SapIQDialectUtils {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
 					subTableData = new ArrayList();
-					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
 				}
 				if (subTableData != null && !subTableData.isEmpty()) {
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {

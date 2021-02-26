@@ -1196,7 +1196,7 @@ public class DialectUtils {
 		}
 		// 判定是否有级联子表数据保存
 		if (!entityMeta.getCascadeModels().isEmpty()) {
-			List subTableData;
+			List subTableData = null;
 			EntityMeta subTableEntityMeta;
 			String insertSubTableSql;
 			SavePKStrategy savePkStrategy;
@@ -1209,7 +1209,10 @@ public class DialectUtils {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
 					subTableData = new ArrayList();
-					subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
 				}
 				if (subTableData != null && !subTableData.isEmpty()) {
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
@@ -1412,7 +1415,7 @@ public class DialectUtils {
 			}
 		}
 		// 级联子表数据
-		List subTableData;
+		List subTableData = null;
 		String[] forceUpdateProps = null;
 		EntityMeta subTableEntityMeta;
 		// 对子表进行级联处理
@@ -1425,7 +1428,10 @@ public class DialectUtils {
 				subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 			} else {
 				subTableData = new ArrayList();
-				subTableData.add(BeanUtil.getProperty(entity, cascadeModel.getProperty()));
+				Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				if (item != null) {
+					subTableData.add(item);
+				}
 			}
 			final String[] mappedFields = cascadeModel.getMappedFields();
 
