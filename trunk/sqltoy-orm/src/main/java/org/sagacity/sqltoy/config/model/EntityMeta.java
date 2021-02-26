@@ -485,7 +485,7 @@ public class EntityMeta implements Serializable {
 		// 删除已经存在的子表关联
 		while (iter.hasNext()) {
 			iterModel = iter.next();
-			if (iterModel.getMappedType().equals(cascadeModel.getCascadeType())) {
+			if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
 				iter.remove();
 				break;
 			}
