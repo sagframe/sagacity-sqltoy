@@ -666,7 +666,7 @@ public class EntityManager {
 		String[] mappedColumns = new String[fields.length];
 		// 剔除下划线,避免手工维护时将属性名称写成数据库字段名称
 		fields = StringUtil.humpFieldNames(fields);
-		mappedFields = StringUtil.humpFieldNames(fields);
+		mappedFields = StringUtil.humpFieldNames(mappedFields);
 		// 主表字段名称
 		for (int i = 0; i < fields.length; i++) {
 			// 检查属性名称配置是否正确
