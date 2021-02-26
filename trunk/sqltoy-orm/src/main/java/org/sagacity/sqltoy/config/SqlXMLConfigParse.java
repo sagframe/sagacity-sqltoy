@@ -531,7 +531,7 @@ public class SqlXMLConfigParse {
 			if (tmp == null) {
 				tmp = getAttrValue(elt, "column");
 			}
-			String[] columns = tmp.toLowerCase().split("\\,");
+			String[] columns = trimParams(tmp.toLowerCase().split("\\,"));
 			String type = getAttrValue(elt, "type").toLowerCase();
 			String maskCode = getAttrValue(elt, "mask-code");
 			String headSize = getAttrValue(elt, "head-size");
@@ -649,7 +649,7 @@ public class SqlXMLConfigParse {
 			elt = (Element) shardingTables.item(i);
 			if (elt.hasAttribute("tables") && elt.hasAttribute("strategy")) {
 				ShardingStrategyConfig shardingModel = new ShardingStrategyConfig(1);
-				shardingModel.setTables(elt.getAttribute("tables").split("\\,"));
+				shardingModel.setTables(trimParams(elt.getAttribute("tables").split("\\,")));
 				String[] fields;
 				if (elt.hasAttribute("params")) {
 					fields = elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
@@ -864,6 +864,9 @@ public class SqlXMLConfigParse {
 			filterModel.setCacheName(filter.getAttribute("cache-name"));
 			if (filter.hasAttribute("cache-type")) {
 				filterModel.setCacheType(filter.getAttribute("cache-type"));
+			}
+			if (filter.hasAttribute("cache-key-index")) {
+				filterModel.setCacheKeyIndex(Integer.parseInt(filter.getAttribute("cache-key-index")));
 			}
 			if (filter.hasAttribute("cache-mapping-max")) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.getAttribute("cache-mapping-max")));
@@ -1129,7 +1132,7 @@ public class SqlXMLConfigParse {
 			Element df;
 			for (int i = 0; i < dfElts.getLength(); i++) {
 				df = (Element) dfElts.item(i);
-				String[] columns = df.getAttribute("columns").toLowerCase().split("\\,");
+				String[] columns = trimParams(df.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
@@ -1144,7 +1147,7 @@ public class SqlXMLConfigParse {
 			Element nf;
 			for (int i = 0; i < nfElts.getLength(); i++) {
 				nf = (Element) nfElts.item(i);
-				String[] columns = nf.getAttribute("columns").toLowerCase().split("\\,");
+				String[] columns = trimParams(nf.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
@@ -1322,7 +1325,6 @@ public class SqlXMLConfigParse {
 				}
 			}
 		}
-
 		// 加入sqlToyConfig
 		sqlToyConfig.setResultProcessor(resultProcessor);
 	}
