@@ -660,7 +660,7 @@ public class EntityManager {
 			fields = entityMeta.getIdArray();
 		}
 		if (fields == null || fields.length != mappedFields.length) {
-			throw new RuntimeException(StringUtil.fillArgs("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!",
+			throw new IllegalArgumentException(StringUtil.fillArgs("主表:{}的fields 跟子表:{} mappedFields 长度不一致,请检查!",
 					entityMeta.getTableName(), subTableMeta.getTableName()));
 		}
 		String[] mappedColumns = new String[fields.length];
@@ -671,11 +671,11 @@ public class EntityManager {
 		for (int i = 0; i < fields.length; i++) {
 			// 检查属性名称配置是否正确
 			if (entityMeta.getFieldMeta(fields[i]) == null) {
-				throw new RuntimeException(
+				throw new IllegalArgumentException(
 						StringUtil.fillArgs("表级联配置对应主表:{}的field属性:{} 并不存在,请检查!", entityMeta.getTableName(), fields[i]));
 			}
 			if (subTableMeta.getFieldMeta(mappedFields[i]) == null) {
-				throw new RuntimeException(StringUtil.fillArgs("表级联配置对应子表:{}的field属性:{} 并不存在,请检查!",
+				throw new IllegalArgumentException(StringUtil.fillArgs("表级联配置对应子表:{}的field属性:{} 并不存在,请检查!",
 						subTableMeta.getTableName(), mappedFields[i]));
 			}
 			// 提取子表属性对应的数据库字段名称，并进行关键词处理
