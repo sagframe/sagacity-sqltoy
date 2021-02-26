@@ -23,9 +23,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.2 发版日期: 2021-02-23
-* elasticsearch 支持restclient模式ssl方法
-* elasticsearch 优化jdbc模式访问(es不支持/* sqlId */ 注释以及分页count(1) 需调整为count(*) )
+# 最新版本号: 4.18.3 发版日期: 2021-02-26
+* 级联操作进行优化，精简级联配置，增加OneToOne类型的支持
+* 修复xml定义sql中number-format和date-format多个参数换行没有trim的缺陷
+* 优化cache-arg 反向通过名称匹配key，将之前字符串包含变为类似数据库like模式，可以实现：中国 苏州 带空格的模式匹配
 
 # 合作与开放
 * 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列
