@@ -642,7 +642,7 @@ public class BeanUtil {
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
-		int propSize=props.length;
+		int propSize = props.length;
 		List[] ary = new List[propSize];
 		for (int i = 0; i < propSize; i++) {
 			ary[i] = new ArrayList();
@@ -1625,7 +1625,7 @@ public class BeanUtil {
 					j--;
 				}
 			}
-			if (!itemList.isEmpty()) {
+			if (isOneToMany && (itemList != null && !itemList.isEmpty())) {
 				setProperty(mainEntity, property, itemList);
 			}
 		}
