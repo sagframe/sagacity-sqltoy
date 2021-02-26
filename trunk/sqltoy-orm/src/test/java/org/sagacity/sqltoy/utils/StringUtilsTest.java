@@ -73,6 +73,11 @@ public class StringUtilsTest {
 	
 	@Test
 	public void testLike() {
+		String[] ary="   a   b  c d".trim().split("\\s+");
+		for(int i=0;i<ary.length;i++)
+		{
+			System.err.println("["+ary[i]+"]");
+		}
 		String sql = "支持保留字处理，对象操作自动增加保留字符号，跨数据库sql自动适配";
 		
 		System.err.println(StringUtil.like(sql, "保留  操作  ，跨数库".split("\\s+")));

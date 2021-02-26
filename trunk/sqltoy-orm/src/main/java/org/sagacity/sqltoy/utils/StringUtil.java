@@ -959,7 +959,7 @@ public class StringUtil {
 	/**
 	 * @TODO 提供类似于sql中的like功能
 	 * @param source
-	 * @param keywords
+	 * @param keywords 将匹配的字符用空格或者%进行切割并trim变成字符数组进行匹配
 	 * @return
 	 */
 	public static boolean like(String source, String[] keywords) {
@@ -969,9 +969,18 @@ public class StringUtil {
 			if (index == -1) {
 				return false;
 			}
-			//位置从前一个匹配字符的尾部开始
-			index=index+keyword.length();
+			// 位置从前一个匹配字符的尾部开始
+			index = index + keyword.length();
 		}
 		return true;
+	}
+
+	public static void arrayTrim(String[] params) {
+		if (params == null || params.length == 0) {
+			return;
+		}
+		for (int i = 0; i < params.length; i++) {
+			params[i] = params[i].trim();
+		}
 	}
 }
