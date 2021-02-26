@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
@@ -626,7 +627,38 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static List reflectBeansToList(List datas, String[] props) throws Exception {
-		return reflectBeansToList(datas, props, null, false, 1);
+		return reflectBeansToList(datas, props, null, false, 0);
+	}
+
+	/**
+	 * @TODO 此方法仅限于sqltoy loadAll级联特殊场景使用
+	 * @param datas
+	 * @param props
+	 * @return
+	 * @throws Exception
+	 */
+	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
+		List result = reflectBeansToList(datas, props, null, false, 0);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		int propSize = props.length;
+		List[] ary = new List[propSize];
+		for (int i = 0; i < propSize; i++) {
+			ary[i] = new ArrayList();
+		}
+		Object value;
+		List rowList;
+		for (int i = 0, n = result.size(); i < n; i++) {
+			rowList = (List) result.get(i);
+			for (int j = 0; j < propSize; j++) {
+				value = rowList.get(j);
+				if (!ary[j].contains(value)) {
+					ary[j].add(value);
+				}
+			}
+		}
+		return ary;
 	}
 
 	public static List reflectBeanToList(Object data, String[] properties) throws Exception {
@@ -727,6 +759,10 @@ public class BeanUtil {
 			throw e;
 		}
 		return resultList;
+	}
+
+	public static Object[] reflectBeanToAry(Object serializable, String[] properties) {
+		return reflectBeanToAry(serializable, properties, null, null);
 	}
 
 	/**
@@ -1537,5 +1573,61 @@ public class BeanUtil {
 			return result;
 		}
 		return values;
+	}
+
+	/**
+	 * @TODO 针对loadAll级联加载场景,子表通过主表id集合批量一次性完成加载的，所以子表集合包含了主表集合的全部关联信息
+	 * @param mainEntities
+	 * @param itemEntities
+	 * @param idProps
+	 * @param cascadeModel
+	 */
+	public static void loadAllMapping(List mainEntities, List itemEntities, TableCascadeModel cascadeModel)
+			throws Exception {
+		if (mainEntities == null || mainEntities.isEmpty() || itemEntities == null || itemEntities.isEmpty()) {
+			return;
+		}
+		boolean isOneToMany = (cascadeModel.getCascadeType() == 1);
+		Object mainEntity;
+		String[] mainProps = cascadeModel.getFields();
+		Object[] mainValues;
+		Object[] mappedFieldValues;
+		String property = cascadeModel.getProperty();
+		Object itemEntity;
+		String[] mappedFields = cascadeModel.getMappedFields();
+		List itemList = null;
+		int fieldLength = mainProps.length;
+		boolean isEqual = true;
+		for (int i = 0; i < mainEntities.size(); i++) {
+			mainEntity = mainEntities.get(i);
+			mainValues = reflectBeanToAry(mainEntity, mainProps, null, null);
+			if (isOneToMany) {
+				itemList = new ArrayList();
+			}
+			for (int j = 0; j < itemEntities.size(); j++) {
+				itemEntity = itemEntities.get(j);
+				mappedFieldValues = reflectBeanToAry(itemEntity, mappedFields, null, null);
+				isEqual = true;
+				for (int k = 0; k < fieldLength; k++) {
+					if (!mainValues[k].equals(mappedFieldValues[k])) {
+						isEqual = false;
+						break;
+					}
+				}
+				if (isEqual) {
+					if (isOneToMany) {
+						itemList.add(itemEntity);
+					} // oneToOne 直接赋值
+					else {
+						setProperty(mainEntity, property, itemEntity);
+					}
+					itemEntities.remove(j);
+					j--;
+				}
+			}
+			if (isOneToMany && (itemList != null && !itemList.isEmpty())) {
+				setProperty(mainEntity, property, itemList);
+			}
+		}
 	}
 }

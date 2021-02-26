@@ -114,7 +114,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
-
+	
 	/**
 	 * 对字段进行安全脱敏
 	 */

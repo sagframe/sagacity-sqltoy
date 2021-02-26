@@ -2,7 +2,7 @@
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.17使用手册.doc
+## 请见:docs/睿智平台SqlToy4.18 使用手册.doc
 
 # 范例演示项目
 ## 快速上手主要功能项目
@@ -23,14 +23,9 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.0 发版日期: 2021-02-02
-* 完善了es不同sql插件的支持
-* 优化vo中含map时传参，兼容key大小写
-* 优化后台日志提示
-
-# 未来规划
-## 1. 功能完备和强化
-* 1.1 elasticsearch原生sql分页支持(elasticsearch-sql插件已经停止更新)
+# 最新版本号: 4.18.2 发版日期: 2021-02-23
+* elasticsearch 支持restclient模式ssl方法
+* elasticsearch 优化jdbc模式访问(es不支持/* sqlId */ 注释以及分页count(1) 需调整为count(*) )
 
 # 合作与开放
 * 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列

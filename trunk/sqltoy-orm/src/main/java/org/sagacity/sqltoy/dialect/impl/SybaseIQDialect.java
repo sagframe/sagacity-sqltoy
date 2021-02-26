@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -17,12 +18,12 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
@@ -475,43 +476,56 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, NVL_FUNCTION, forceUpdateFields, conn,
 				dbType, tableName);
 		// 级联保存
-		if (cascade && null != entityMeta.getOneToManys() && !entityMeta.getOneToManys().isEmpty()) {
+		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
 					typeMap.put(type, "");
 				}
 			// 级联子表数据
-			List subTableData;
-			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+			List subTableData = null;
 			String[] forceUpdateProps = null;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			EntityMeta subEntityMeta;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				subEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+				final String[] mappedFields = cascadeModel.getMappedFields();
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
-						: subTableForceUpdateProps.get(oneToMany.getMappedType());
-				subTableData = (List) BeanUtil.invokeMethod(entity,
-						"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
-				final String[] mappedFields = oneToMany.getMappedFields();
-				/**
-				 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-				 */
-				if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
-						|| typeMap.containsKey(oneToMany.getMappedType()))) {
-					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
-							mappedFields, IdValues);
+						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				} else {
+					subTableData = new ArrayList();
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
+				}
+
+				// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
+				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
+						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
+							mappedFields, mainFieldValues);
+					SqlExecuteStat.debug("对存量数据进行级联修改", null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
+					SqlExecuteStat.debug("执行子表级联更新操作", null);
+					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subEntityMeta.getTableName());
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], IdValues[i]);
+										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}
 								}
 							}, forceUpdateProps, conn, dbType, dialect, null, null);
+				} else {
+					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subEntityMeta.getTableName());
 				}
 			}
 		}

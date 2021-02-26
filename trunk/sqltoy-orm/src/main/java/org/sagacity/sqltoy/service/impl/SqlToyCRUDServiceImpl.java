@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
@@ -252,7 +253,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
-
+	
+	@Override
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes) {
+		return sqlToyLazyDao.loadAllCascade(entities, cascadeTypes);
+	}
+	
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
@@ -519,13 +526,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
-	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
-		return sqlToyLazyDao.cacheMatchKeys(cacheName, matchRegex, matchIndexes);
-	}
-
-	@Override
-	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
-		return sqlToyLazyDao.cacheMatchKeys(cacheName, cacheType, matchRegex, matchIndexes);
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		return sqlToyLazyDao.cacheMatchKeys(matchRegex, cacheMatchFilter);
 	}
 
 	@Override

@@ -17,8 +17,8 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -67,9 +67,10 @@ public class SapIQDialectUtils {
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null,
-				null);
+				handler);
 		boolean needUpdatePk = false;
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -153,20 +154,35 @@ public class SapIQDialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判断是否有子表级联保存
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			List subTableData;
-			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-				final String[] mappedFields = oneToMany.getMappedFields();
-				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			List subTableData = null;
+			EntityMeta subTableEntityMeta;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				final String[] mappedFields = cascadeModel.getMappedFields();
+				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+				// oneToMany
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				} else {
+					subTableData = new ArrayList();
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
+				}
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
-								this.setValue(mappedFields[i], idValues[i]);
+								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
 						}
 					}, openIdentity, conn, dbType, null);
+				}else {
+					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}
 		}

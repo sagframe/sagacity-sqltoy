@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.link.Store;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -953,13 +954,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
-		return super.cacheMatchKeys(cacheName, null, matchRegex, matchIndexes);
-	}
-
-	@Override
-	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchName, int... matchIndexes) {
-		return super.cacheMatchKeys(cacheName, cacheType, matchName, matchIndexes);
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		return super.cacheMatchKeys(matchRegex, cacheMatchFilter);
 	}
 
 	@Override

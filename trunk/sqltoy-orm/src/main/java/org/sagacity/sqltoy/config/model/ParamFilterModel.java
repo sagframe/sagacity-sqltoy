@@ -111,6 +111,11 @@ public class ParamFilterModel implements Serializable {
 	private String cacheType;
 
 	/**
+	 * cache-arg 中取第几列的值作为key
+	 */
+	private int cacheKeyIndex = 0;
+
+	/**
 	 * 转化成新的笔名
 	 */
 	private String aliasName;
@@ -515,6 +520,20 @@ public class ParamFilterModel implements Serializable {
 	 */
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	/**
+	 * @return the cacheKeyIndex
+	 */
+	public int getCacheKeyIndex() {
+		return cacheKeyIndex;
+	}
+
+	/**
+	 * @param cacheKeyIndex the cacheKeyIndex to set
+	 */
+	public void setCacheKeyIndex(int cacheKeyIndex) {
+		this.cacheKeyIndex = cacheKeyIndex;
 	}
 
 }
