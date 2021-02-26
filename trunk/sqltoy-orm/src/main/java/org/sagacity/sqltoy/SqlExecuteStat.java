@@ -202,7 +202,8 @@ public class SqlExecuteStat {
 					}
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + topic + ":" + StringUtil.fillArgs(content, args));
+				result.append("\n/*|---- 过程: " + step + "," + topic
+						+ (content == null ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
