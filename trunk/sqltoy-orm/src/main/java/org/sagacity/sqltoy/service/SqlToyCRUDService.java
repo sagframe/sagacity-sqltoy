@@ -209,10 +209,8 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @return
 	 */
-	@Deprecated
 	public <T extends Serializable> List<T> findFrom(T entity);
 
-	@Deprecated
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
@@ -221,10 +219,8 @@ public interface SqlToyCRUDService {
 	 * @param entity
 	 * @return
 	 */
-	@Deprecated
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity);
 
-	@Deprecated
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler);
 
@@ -234,7 +230,6 @@ public interface SqlToyCRUDService {
 	 * @param topSize
 	 * @return
 	 */
-	@Deprecated
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize);
 
 	/**
@@ -243,7 +238,6 @@ public interface SqlToyCRUDService {
 	 * @param randomCount
 	 * @return
 	 */
-	@Deprecated
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount);
 
 	/**

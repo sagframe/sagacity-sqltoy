@@ -618,7 +618,6 @@ public class SqlToyDaoSupport {
 	 * @param entityClass
 	 * @return
 	 */
-	@Deprecated
 	protected <T extends Serializable> List<T> findAll(final Class<T> entityClass) {
 		EntityMeta entity = getEntityMeta(entityClass);
 		return (List<T>) findByQuery(new QueryExecutor(entity.getLoadAllSql()).resultType(entityClass)).getRows();
@@ -1359,7 +1358,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		if (null == entityClass) {
-			throw new IllegalArgumentException("findEntity操作参数entityClass值不能为空!");
+			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
 		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
 				false);
