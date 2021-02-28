@@ -28,10 +28,6 @@
 * 修复xml定义sql中number-format和date-format多个参数换行没有trim的缺陷
 * 优化cache-arg 反向通过名称匹配key，将之前字符串包含变为类似数据库like模式，可以实现：中国 苏州 带空格的模式匹配
 
-# 合作与开放
-* 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列
-* sqltoy希望可以捐赠给开源组织和企业,希望共同发展成拥有中国智慧面向更广泛用户的ORM框架
-
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
