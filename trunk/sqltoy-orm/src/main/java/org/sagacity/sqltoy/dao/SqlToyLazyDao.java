@@ -303,9 +303,8 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
-	// sqltoy的loadAll 性能是极为优化的
 	/**
-	 * @todo 根据集合中的主键获取实体的详细信息
+	 * @todo 根据集合中的主键获取实体的详细信息(sqltoy的loadAll 性能是极为优化的)
 	 * @param entities
 	 * @return
 	 */
@@ -315,10 +314,12 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 加载全表数据(不推荐使用)
+	 * @see findEntity(Class<T> entityClass, EntityQuery entityQuery) entityQuery 设置null达到同等效果
 	 * @param <T>
 	 * @param resultType
 	 * @return
 	 */
+	@Deprecated
 	public <T extends Serializable> List<T> findAll(Class<T> resultType);
 
 	/**
@@ -770,7 +771,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
 	 * @param matchRegex
-	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);

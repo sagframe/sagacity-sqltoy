@@ -344,6 +344,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable )
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -361,6 +362,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -380,6 +382,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .core.database.model.PaginationModel, java.io.Serializable)
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -398,6 +401,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
 			ReflectPropertyHandler reflectPropertyHandler) {
@@ -418,6 +422,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * Serializable, long)
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
@@ -435,6 +440,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * .io.Serializable, int)
 	 */
 	@Override
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());

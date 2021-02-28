@@ -928,6 +928,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
+	@Deprecated
 	public <T extends Serializable> List<T> findAll(Class<T> resultType) {
 		return super.findAll(resultType);
 	}
