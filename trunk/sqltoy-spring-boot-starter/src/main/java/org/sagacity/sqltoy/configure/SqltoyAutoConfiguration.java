@@ -136,9 +136,16 @@ public class SqltoyAutoConfiguration {
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
-			IUnifyFieldsHandler handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor()
-					.newInstance();
-			sqlToyContext.setUnifyFieldsHandler(handler);
+			try {
+				IUnifyFieldsHandler handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor()
+						.newInstance();
+				sqlToyContext.setUnifyFieldsHandler(handler);
+			} catch (ClassNotFoundException cne) {
+				System.err.println(unfiyHandler
+						+ " 类不存在,此类不是sqltoy框架自带，需要自行实现sqltoy框架中的IUnifyFieldsHandler接口,用于对创建人、创建时间、修改人、修改时间等公共字段赋值!此功能属于可选功能!");
+				cne.printStackTrace();
+				throw cne;
+			}
 		}
 
 		// 设置elastic连接
