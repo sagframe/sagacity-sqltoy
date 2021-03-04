@@ -208,6 +208,10 @@ public class ScanEntityAndSqlResource {
 			// 统一全角半角，用逗号分隔
 			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
+			JarFile jar;
+			Enumeration<JarEntry> entries;
+			JarEntry entry;
+			String sqlFile;
 			for (String dir : dirSet) {
 				realRes = dir.trim();
 				startClasspath = false;
@@ -223,11 +227,8 @@ public class ScanEntityAndSqlResource {
 							if (realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
-							JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
-							Enumeration<JarEntry> entries = jar.entries();
-							// 同样的进行循环迭代
-							JarEntry entry;
-							String sqlFile;
+							jar = ((JarURLConnection) url.openConnection()).getJarFile();
+							entries = jar.entries();
 							while (entries.hasMoreElements()) {
 								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
 								entry = entries.nextElement();
