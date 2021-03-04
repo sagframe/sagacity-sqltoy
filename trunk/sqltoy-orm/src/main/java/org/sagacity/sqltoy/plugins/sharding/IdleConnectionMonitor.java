@@ -58,12 +58,12 @@ public class IdleConnectionMonitor extends Thread {
 		} catch (InterruptedException e) {
 		}
 		boolean isRun = true;
+		DataSource dataSource = null;
+		Connection conn = null;
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		int i = 0;
 		while (isRun) {
-			DataSource dataSource = null;
-			Connection conn = null;
-			PreparedStatement pst = null;
-			ResultSet rs = null;
-			int i = 0;
 			for (Object[] dataBase : dataSourceWeightConfig) {
 				try {
 					dataSource = (DataSource) applicationContext.getBean(dataBase[0].toString());
@@ -103,7 +103,7 @@ public class IdleConnectionMonitor extends Thread {
 			}
 
 			try {
-				// 一秒钟监测一次是否有到时的检测任务
+				// 设置检测间隔
 				Thread.sleep(1000 * intervalSeconds);
 			} catch (InterruptedException e) {
 				logger.warn("datasource sharding 可用性检测监测将终止!{}", e.getMessage(), e);

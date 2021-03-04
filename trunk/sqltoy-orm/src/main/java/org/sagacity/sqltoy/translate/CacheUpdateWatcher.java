@@ -103,12 +103,15 @@ public class CacheUpdateWatcher extends Thread {
 		} catch (InterruptedException e) {
 		}
 		boolean isRun = true;
+		Long preCheck;
+		CheckerConfigModel checkerConfig;
+		long interval;
+		long nowInterval;
+		long nowMillis;
+		String checker;
+		LocalDateTime ldt;
+		int hourMinutes;
 		while (isRun) {
-			Long preCheck;
-			CheckerConfigModel checkerConfig;
-			long interval;
-			long nowInterval;
-			String checker;
 			// 多个检测任务
 			for (int i = 0; i < updateCheckers.size(); i++) {
 				checker = prefix + i;
@@ -116,12 +119,12 @@ public class CacheUpdateWatcher extends Thread {
 				// 上次检测时间
 				preCheck = lastCheckTime.get(checker);
 				// 当前检测时间
-				long nowMillis = System.currentTimeMillis();
+				nowMillis = System.currentTimeMillis();
 				// 当前的时间间隔
 				nowInterval = (nowMillis - preCheck.longValue()) / 1000;
-				LocalDateTime ldt = LocalDateTime.now();
+				ldt = LocalDateTime.now();
 				// 当前时间区间格式HHmm
-				int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
+				hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
 				interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
 				// 间隔大于设定阈值,执行检测
 				if (nowInterval >= interval) {
