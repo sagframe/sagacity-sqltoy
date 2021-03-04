@@ -393,7 +393,7 @@ public class SqlConfigParseUtils {
 		int ifStart;
 		int ifEnd;
 		Object paramValue;
-		//sql中是否存在is
+		// sql中是否存在is
 		boolean sqlhasIs;
 		String evalStr;
 		int logicParamCnt;
@@ -436,7 +436,8 @@ public class SqlConfigParseUtils {
 						}
 					} else {
 						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, ifStart).concat(markContentSql.substring(ifEnd + 1));
+						markContentSql = markContentSql.substring(0, ifStart)
+								.concat(markContentSql.substring(ifEnd + 1));
 						for (int k = 0; k < logicParamCnt; k++) {
 							paramValuesList.remove(preParamCnt);
 						}
@@ -554,7 +555,7 @@ public class SqlConfigParseUtils {
 		}
 	}
 
-	// update 2020-09-22 增加sql中的循环功能,避免极为特殊场景下不必要的争议
+	// update 2020-09-22 增加sql中的循环功能
 	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
 	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
 	// endDates[i])',or)]
@@ -606,12 +607,9 @@ public class SqlConfigParseUtils {
 	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
 	 * 
 	 * @TODO 处理sql 语句中的in 条件，功能有2类:
-	 *       <p>
-	 *       1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
-	 *       </p>
-	 *       <p>
-	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
-	 *       </p>
+	 *       <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
+	 *       <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
+	 *       数组长度决定</li>
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {
