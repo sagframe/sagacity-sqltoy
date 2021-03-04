@@ -798,42 +798,43 @@ public class BeanUtil {
 		Map.Entry<String, Object> entry;
 		boolean isMap = false;
 		String fieldLow;
+		Object fieldValue;
 		try {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
 					// 支持xxxx.xxx 子对象属性提取
 					fields = properties[i].split("\\.");
-					Object value = serializable;
+					fieldValue = serializable;
 					for (String field : fields) {
 						// 支持map类型 update 2021-01-31
-						if (value instanceof Map) {
-							if (value instanceof IgnoreKeyCaseMap) {
-								value = ((IgnoreKeyCaseMap) value).get(field.trim());
+						if (fieldValue instanceof Map) {
+							if (fieldValue instanceof IgnoreKeyCaseMap) {
+								fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
 							} else {
-								iter = ((Map) value).entrySet().iterator();
+								iter = ((Map) fieldValue).entrySet().iterator();
 								isMap = false;
 								fieldLow = field.trim().toLowerCase();
 								while (iter.hasNext()) {
 									entry = (Map.Entry<String, Object>) iter.next();
 									if (entry.getKey().toLowerCase().equals(fieldLow)) {
-										value = entry.getValue();
+										fieldValue = entry.getValue();
 										isMap = true;
 										break;
 									}
 								}
 								if (!isMap) {
-									value = null;
+									fieldValue = null;
 								}
 							}
 						} else {
-							value = getProperty(value, field.trim());
+							fieldValue = getProperty(fieldValue, field.trim());
 						}
-						if (value == null) {
+						if (fieldValue == null) {
 							break;
 						}
 					}
-					result[i] = value;
+					result[i] = fieldValue;
 				}
 			}
 		} catch (Exception e) {

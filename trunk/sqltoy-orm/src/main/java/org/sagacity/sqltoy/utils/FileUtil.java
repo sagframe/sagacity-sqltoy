@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-core
+ * @project sagacity-sqltoy
  * @description 文件处理工具类
  * @author zhongxuchen
  * @version v1.0,Date:2008-11-7

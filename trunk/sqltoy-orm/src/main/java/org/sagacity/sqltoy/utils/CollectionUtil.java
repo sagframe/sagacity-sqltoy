@@ -31,7 +31,7 @@ public class CollectionUtil {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(CollectionUtil.class);
 
-	//静态方法避免实例化和继承
+	// 静态方法避免实例化和继承
 	private CollectionUtil() {
 
 	}
@@ -463,8 +463,9 @@ public class CollectionUtil {
 						compareValue = "null";
 					}
 					pkColumnsEqual = pkColumnsEqual && BeanUtil.equalsIgnoreType(pkColValue, compareValue, false);
-					if (!pkColumnsEqual)
+					if (!pkColumnsEqual) {
 						break;
+					}
 				}
 			}
 
@@ -603,8 +604,9 @@ public class CollectionUtil {
 				if (data.getClass().isArray()) {
 					Object[] hashObj = convertArray(data);
 					List rowData;
-					if (isBean)
+					if (isBean) {
 						hashValues = BeanUtil.reflectBeansToList(arrayToList(hashObj), hashProperties);
+					}
 					for (int i = 0, n = hashObj.length; i < n; i++) {
 						if (isBean) {
 							result.put(keyToStr ? hashValues.get(i).get(0).toString() : hashValues.get(i).get(0),
@@ -732,9 +734,9 @@ public class CollectionUtil {
 	/**
 	 * @todo 分组合计
 	 * @param sumData
-	 * @param groupIndexs  {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
+	 * @param groupIndexs     {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
 	 * @param sumColumns
-	 * @param globalSumSite 存在全局汇总时，总计标题存放的列
+	 * @param globalSumSite   存在全局汇总时，总计标题存放的列
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
@@ -857,7 +859,7 @@ public class CollectionUtil {
 			}
 		}
 	}
-	
+
 	/**
 	 * @todo 逆向分组合计
 	 * @param sumData
@@ -867,7 +869,7 @@ public class CollectionUtil {
 	 * @param totalLabel
 	 * @param hasAverage
 	 * @param averageLabel
-	 * @param radixSize 小数位长度
+	 * @param radixSize     小数位长度
 	 * @param sumRecordSite
 	 */
 	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
@@ -1121,9 +1123,7 @@ public class CollectionUtil {
 			newResultRowCnt = colIndex.length;
 		}
 
-		/**
-		 * 构造结果集
-		 */
+		// 构造结果集
 		Object[][] resultAry = new Object[newResultRowCnt][data.size()];
 		Object[] rowAry = null;
 		List rowList = null;
