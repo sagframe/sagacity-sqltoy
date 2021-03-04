@@ -353,8 +353,9 @@ public class BeanUtil {
 		}
 
 		// 直接相等
-		if (target.equals(compared))
+		if (target.equals(compared)) {
 			return 0;
+		}
 		// 日期类型
 		if ((target instanceof Date || target instanceof LocalDate || target instanceof LocalTime
 				|| target instanceof LocalDateTime)
@@ -600,7 +601,6 @@ public class BeanUtil {
 		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
 			return convertArray(((Array) paramValue).getArray(), typeName);
 		}
-
 		return paramValue;
 	}
 
