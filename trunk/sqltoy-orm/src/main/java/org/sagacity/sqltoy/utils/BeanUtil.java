@@ -251,7 +251,7 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.BIGINT;
 					} else if (typeName.equals("blob")) {
 						fieldsType[i] = java.sql.Types.BLOB;
-					} else if (typeName.equals("[b")) {
+					} else if (typeName.equals("byte[]")) {
 						fieldsType[i] = java.sql.Types.BINARY;
 					} else if (typeName.equals("boolean")) {
 						fieldsType[i] = java.sql.Types.BOOLEAN;
@@ -269,6 +269,8 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.TIME;
 					} else if (typeName.equals("byte")) {
 						fieldsType[i] = java.sql.Types.TINYINT;
+					} else if (typeName.endsWith("[]")) {
+						fieldsType[i] = java.sql.Types.ARRAY;
 					} else {
 						fieldsType[i] = java.sql.Types.NULL;
 					}
@@ -1452,7 +1454,7 @@ public class BeanUtil {
 				// 去除重复
 				if (!repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, BeanUtil.convertType(typeHandler, id, typeName, genericType));
+					method.invoke(bean, convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}
