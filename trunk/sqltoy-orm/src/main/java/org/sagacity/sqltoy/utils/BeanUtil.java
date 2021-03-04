@@ -598,7 +598,7 @@ public class BeanUtil {
 			return valueStr.toCharArray();
 		}
 		// 数组类型
-		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
+		if ((typeName.contains("[]") || typeName.contains("[")) && (paramValue instanceof Array)) {
 			return convertArray(((Array) paramValue).getArray(), typeName);
 		}
 		return paramValue;
