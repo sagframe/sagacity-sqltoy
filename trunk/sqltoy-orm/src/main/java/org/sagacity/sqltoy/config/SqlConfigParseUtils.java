@@ -389,6 +389,14 @@ public class SqlConfigParseUtils {
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql, iMarkSql;
 		List paramValuesList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		boolean logicValue;
+		int ifStart;
+		int ifEnd;
+		Object paramValue;
+		//sql中是否存在is
+		boolean sqlhasIs;
+		String evalStr;
+		int logicParamCnt;
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
@@ -411,13 +419,13 @@ public class SqlConfigParseUtils {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
 				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
-				boolean logicValue = true;
-				int start = StringUtil.matchIndex(markContentSql, IF_PATTERN);
+				logicValue = true;
+				ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
 				// sql中存在逻辑判断
-				if (start > -1) {
-					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
-					int logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
+				if (ifStart > -1) {
+					ifEnd = StringUtil.getSymMarkIndex("(", ")", markContentSql, ifStart);
+					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
+					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
@@ -428,7 +436,7 @@ public class SqlConfigParseUtils {
 						}
 					} else {
 						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
+						markContentSql = markContentSql.substring(0, ifStart).concat(markContentSql.substring(ifEnd + 1));
 						for (int k = 0; k < logicParamCnt; k++) {
 							paramValuesList.remove(preParamCnt);
 						}
@@ -439,8 +447,6 @@ public class SqlConfigParseUtils {
 				if (logicValue) {
 					beginIndex = 0;
 					endIndex = 0;
-					Object value;
-					boolean sqlhasIs;
 					// 按顺序处理#[]中sql的参数
 					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
 						sqlhasIs = false;
@@ -458,14 +464,15 @@ public class SqlConfigParseUtils {
 						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
 							sqlhasIs = true;
 						}
-						value = paramValuesList.get(i);
+						paramValue = paramValuesList.get(i);
 						// 1、参数值为null且非is 条件sql语句
 						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
-						if ((null == value && !sqlhasIs)
-								|| (null != value && value.getClass().isArray()
-										&& CollectionUtil.convertArray(value).length == 0)
-								|| (null != value && (value instanceof Collection) && ((Collection) value).isEmpty())
-								|| (sqlhasIs && null != value && !(value instanceof java.lang.Boolean))) {
+						if ((null == paramValue && !sqlhasIs)
+								|| (null != paramValue && paramValue.getClass().isArray()
+										&& CollectionUtil.convertArray(paramValue).length == 0)
+								|| (null != paramValue && (paramValue instanceof Collection)
+										&& ((Collection) paramValue).isEmpty())
+								|| (sqlhasIs && null != paramValue && !(paramValue instanceof java.lang.Boolean))) {
 							// sql中剔除最后部分的#[]内容
 							markContentSql = BLANK;
 							for (int k = paramCnt; k > 0; k--) {
