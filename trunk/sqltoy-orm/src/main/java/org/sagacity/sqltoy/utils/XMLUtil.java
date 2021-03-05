@@ -112,10 +112,7 @@ public class XMLUtil {
 		File schemaLocation = new File(xsdFile);
 		try {
 			Schema schema = factory.newSchema(schemaLocation);
-			// Get a validator from the schema.
 			Validator validator = schema.newValidator();
-
-			// Parse the document you want to check.
 			Source source = new StreamSource(xmlFile);
 			// Check the document
 			validator.validate(source);
