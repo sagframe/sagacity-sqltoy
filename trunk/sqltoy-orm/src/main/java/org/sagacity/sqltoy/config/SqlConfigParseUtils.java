@@ -213,28 +213,22 @@ public class SqlConfigParseUtils {
 		} else {
 			sqlParam = processNamedParamsQuery(queryStr);
 		}
-
 		sqlToyResult.setSql(sqlParam.getSql());
-
 		// 参数和参数值进行匹配
 		sqlToyResult.setParamsValue(matchNamedParam(sqlParam.getParamsName(), paramsNamed, paramsValue));
-
 		// 剔除查询条件为null的sql语句和对应的参数
 		processNullConditions(sqlToyResult);
 		// 替换@blank(?)为空白,增强sql组织能力
 		processBlank(sqlToyResult);
 		// 替换@value(?) 为参数对应的数值
 		processValue(sqlToyResult);
-
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
-
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
 		processIn(sqlToyResult);
 		// 参数为null的处理策略(用null直接代替变量)
 		replaceNull(sqlToyResult, 0);
-
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
@@ -555,12 +549,13 @@ public class SqlConfigParseUtils {
 		}
 	}
 
-	// update 2020-09-22 增加sql中的循环功能
-	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
-	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
-	// endDates[i])',or)]
 	/**
-	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换
+	 * @update 2020-09-22 增加sql中的循环功能
+	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
+	 *       <li>loop(:loopAry,loopContent)</li>
+	 *       <li>loop(:loopArgs,loopContent,linkSign)</li>
+	 *       <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	 *       endDates[i])',or)]</li>
 	 * @param queryStr
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -604,8 +599,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
-	 * 
+	 * @update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
 	 * @TODO 处理sql 语句中的in 条件，功能有2类:
 	 *       <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
 	 *       <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
@@ -775,7 +769,6 @@ public class SqlConfigParseUtils {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(dialect);
 		// debug模式下面关闭sql打印
 		sqlToyConfig.setShowSql(!StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX));
-
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号
@@ -790,7 +783,6 @@ public class SqlConfigParseUtils {
 		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN)) {
 			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		}
-
 		// 只有在查询模式前提下才支持fastPage机制
 		if (sqlType.equals(SqlType.search)) {
 			// 判断是否有快速分页@fast 宏
@@ -808,7 +800,6 @@ public class SqlConfigParseUtils {
 				sqlToyConfig.setFastSql(fastSql);
 				sqlToyConfig.setFastPreSql(preSql);
 				sqlToyConfig.setFastTailSql(tailSql);
-
 				// 判断是否有快速分页
 				sqlToyConfig.setHasFast(true);
 			} else {
