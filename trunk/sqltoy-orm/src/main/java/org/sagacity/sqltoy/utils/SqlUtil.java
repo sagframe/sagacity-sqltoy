@@ -1511,11 +1511,11 @@ public class SqlUtil {
 		}
 		String sqlLow = sql.toLowerCase().trim();
 		// 包含了select 或with as模式开头直接返回
-		if (sqlLow.startsWith("select") || sqlLow.startsWith("with")) {
+		if (StringUtil.matches(sqlLow,"^(select|with)\\W")) {
 			return sql;
 		}
 		// 存储过程模式直接返回
-		if (StringUtil.matches(sqlLow, "^\\s*\\{?\\W*call\\W+")) {
+		if (StringUtil.matches(sqlLow, "^\\{?\\W*call\\W+")) {
 			return sql;
 		}
 
@@ -1529,12 +1529,12 @@ public class SqlUtil {
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select col1,col2,...
-		if (StringUtil.matches(sqlLow, "^\\s*from\\W")) {
+		if (StringUtil.matches(sqlLow, "^from\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
 		// 没有where和from(排除 select * from table),补齐select * from table where
-		if (!StringUtil.matches(sqlLow, "(from|where)\\W")) {
-			if (sqlLow.startsWith("and") || sqlLow.startsWith("or")) {
+		if (!StringUtil.matches(" ".concat(sqlLow), "\\W(from|where)\\W")) {
+			if (StringUtil.matches(sqlLow,"^(and|or)\\W")) {
 				return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable()).concat(" where 1=1 ").concat(sql);
 			}
@@ -1542,7 +1542,7 @@ public class SqlUtil {
 					.concat(" where ").concat(sql);
 		}
 		// where开头 补齐select * from
-		if (StringUtil.matches(sqlLow, "^\\s*where\\W")) {
+		if (StringUtil.matches(sqlLow, "^where\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
 					.concat(" ").concat(sql);
 		}

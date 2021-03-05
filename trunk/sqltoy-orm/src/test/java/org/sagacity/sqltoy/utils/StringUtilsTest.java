@@ -86,10 +86,13 @@ public class StringUtilsTest {
 	
 	@Test
 	public void testMatch() {
-		String sqlLow = "1from t where1 (1=1)";
+		String sqlLow = "from t where1 (1=1)";
+		String sql="select 1 from";
+		String sqlWith="with t as () * from";
 		System.err.println(StringUtil.matches(sqlLow,"^\\s*where\\W"));
-		System.err.println(StringUtil.matches(sqlLow,"^\\s*from\\W"));
-	
+		System.err.println(StringUtil.matches(sqlLow,"^from\\W"));
+		System.err.println(StringUtil.matches(sql,"^(select|with)\\W"));
+		System.err.println(StringUtil.matches(sqlWith,"^(select|with)\\W"));
 
 	}
 }
