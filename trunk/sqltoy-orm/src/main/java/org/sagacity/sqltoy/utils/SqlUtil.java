@@ -1529,7 +1529,7 @@ public class SqlUtil {
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select col1,col2,...
-		if (sqlLow.startsWith("from")) {
+		if (StringUtil.matches(sqlLow, "^\\s*from\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
 		// 没有where和from(排除 select * from table),补齐select * from table where
@@ -1542,13 +1542,19 @@ public class SqlUtil {
 					.concat(" where ").concat(sql);
 		}
 		// where开头 补齐select * from
-		if (sqlLow.startsWith("where")) {
+		if (StringUtil.matches(sqlLow, "^\\s*where\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
 					.concat(" ").concat(sql);
 		}
 		return sql;
 	}
 
+	/**
+	 * @todo 判断sql中是否存在lock锁
+	 * @param sql
+	 * @param dbType
+	 * @return
+	 */
 	public static boolean hasLock(String sql, Integer dbType) {
 		if (sql == null) {
 			return false;
