@@ -83,4 +83,13 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.like(sql, "保留  操作  ， 数据库".split("\\s+")));
 
 	}
+	
+	@Test
+	public void testMatch() {
+		String sqlLow = "1from t where1 (1=1)";
+		System.err.println(StringUtil.matches(sqlLow,"^\\s*where\\W"));
+		System.err.println(StringUtil.matches(sqlLow,"^\\s*from\\W"));
+	
+
+	}
 }
