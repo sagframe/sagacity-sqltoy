@@ -262,12 +262,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
-	 * clob bug的支持(druid 1.1.10 已经修复) update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
-	 * 
 	 * @todo 设置sql中的参数条件的值
 	 * @param typeHandler
 	 * @param conn
+	 * @param dbType
 	 * @param pst
 	 * @param paramValue
 	 * @param jdbcType
@@ -1116,12 +1114,10 @@ public class SqlUtil {
 				}
 			}
 		}, null, false, conn, dbType);
-
 		// 处理节点的下一层次
 		int size = ids.size();
 		int fromIndex = 0;
 		int toIndex = -1;
-
 		// 避免in()中的参数过多，每次500个
 		String inStrs;
 		List subIds = null;
@@ -1141,7 +1137,6 @@ public class SqlUtil {
 				subIds = ids.subList(fromIndex, toIndex + 1);
 			}
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
-
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
 					null, conn, dbType, false, null);
