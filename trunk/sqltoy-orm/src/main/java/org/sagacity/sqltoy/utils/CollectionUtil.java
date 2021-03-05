@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 数组集合的公用方法
  * @author zhongxuchen
  * @version v1.0,Date:2008-10-22
@@ -187,9 +187,7 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * 此方法不建议使用，请用Collections中的排序
-	 * 
-	 * @todo 对简单对象进行排序
+	 * @todo 对简单对象进行排序(此方法不建议使用，请用Collections中的排序)
 	 * @param aryData
 	 * @param descend
 	 */
