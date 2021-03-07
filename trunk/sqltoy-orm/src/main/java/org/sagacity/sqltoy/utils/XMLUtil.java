@@ -61,10 +61,7 @@ public class XMLUtil {
 		try {
 			Source xsdSource = new StreamSource(xsdStream);
 			Schema schema = factory.newSchema(xsdSource);
-			// Get a validator from the schema.
 			Validator validator = schema.newValidator();
-
-			// Parse the document you want to check.
 			Source xmlSource = new StreamSource(xmlStream);
 			// Check the document
 			validator.validate(xmlSource);
@@ -89,10 +86,7 @@ public class XMLUtil {
 		SchemaFactory factory = SchemaFactory.newInstance(XML_SCHEMA);
 		try {
 			Schema schema = factory.newSchema(xsdUrl);
-			// Get a validator from the schema.
 			Validator validator = schema.newValidator();
-
-			// Parse the document you want to check.
 			Source xmlSource = new StreamSource(new FileInputStream(xmlUrl.getFile()));
 			// Check the document
 			validator.validate(xmlSource);
@@ -118,10 +112,7 @@ public class XMLUtil {
 		File schemaLocation = new File(xsdFile);
 		try {
 			Schema schema = factory.newSchema(schemaLocation);
-			// Get a validator from the schema.
 			Validator validator = schema.newValidator();
-
-			// Parse the document you want to check.
 			Source source = new StreamSource(xmlFile);
 			// Check the document
 			validator.validate(source);
@@ -252,6 +243,7 @@ public class XMLUtil {
 
 		Method[] realMethods = BeanUtil.matchSetMethods(entity.getClass(), properties);
 		Method method;
+		String[] args;
 		Class argType;
 		String className;
 		for (int i = 0; i < properties.length; i++) {
@@ -265,7 +257,7 @@ public class XMLUtil {
 						className = className.substring(className.lastIndexOf(".") + 1);
 						if (argType.isArray()) {
 							// 替换全角为半角
-							String[] args = values[i].replaceAll("\\，", ",").split("\\,");
+							args = values[i].replaceAll("\\，", ",").split("\\,");
 							className = className.substring(0, className.indexOf("["));
 							if (className.equals("int")) {
 								int[] arrayData = new int[args.length];

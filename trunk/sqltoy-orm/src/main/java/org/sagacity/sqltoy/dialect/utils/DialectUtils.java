@@ -874,10 +874,11 @@ public class DialectUtils {
 					if (convertBlob && fieldMeta.getFieldType().equals("byte[]")) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-//						sql.append(" cast(");
-//						sql.append(nullFunction);
-//						sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
-//						sql.append(" as bytea)");
+						// sql.append(" cast(");
+						// sql.append(nullFunction);
+						// sql.append("(cast(? as
+						// varchar),").append("cast(").append(columnName).append(" as varchar))");
+						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");

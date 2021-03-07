@@ -128,8 +128,9 @@ public class DebugUtil {
 			orderTime.remove();
 		} else {
 			Long preTime = (Long) timeMap.get(transactionId);
-			if (preTime == null)
+			if (preTime == null) {
 				preTime = Long.valueOf(System.nanoTime());
+			}
 			totalTime = endTime - preTime;
 			timeMap.remove(transactionId);
 		}

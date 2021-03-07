@@ -459,10 +459,10 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如:
-	 * <p>
-	 * 1、new QueryExecutor(sql,entity).dataSource(dataSource) 2、new
+	 * <li>1、new QueryExecutor(sql,entity).dataSource(dataSource)</li>
+	 * <li>2、new
 	 * QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
-	 * </p>
+	 * </li>
 	 * 
 	 * @param queryExecutor
 	 * @return

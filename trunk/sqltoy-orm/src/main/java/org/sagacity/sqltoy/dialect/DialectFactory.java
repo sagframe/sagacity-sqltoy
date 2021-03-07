@@ -206,8 +206,9 @@ public class DialectFactory {
 		// 如果匹配不上使用默认dialect
 		default:
 			dialectSqlWrapper = new DefaultDialect();
-//			// 不支持
-//			throw new UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
+			// 不支持
+			// throw new
+			// UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
 		}
 		dialects.put(dbType, dialectSqlWrapper);
 		return dialectSqlWrapper;
@@ -760,7 +761,6 @@ public class DialectFactory {
 													(Class) extend.resultType, changedCols));
 								}
 							}
-
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
 									((QueryResult) queryResult).getRecordCount(),
 									((QueryResult) queryResult).getRows().size());
@@ -910,10 +910,10 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
 							Integer realTopSize;
+							// 小于1表示按比例提取
 							if (topSize < 1) {
 								Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 										dbType, dialect);
-
 								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
 								SqlExecuteStat.debug("过程提示", "按比例提取,总记录数:{}条,按比例top记录要取:{} 条!", totalCount,
 										realTopSize);
@@ -1797,10 +1797,9 @@ public class DialectFactory {
 							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
 							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
 							boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
-							/*
-							 * 将call xxxStore(?,?) 后的条件参数判断是否为null，如果是null则改为call xxxStore(null,?,null)
-							 * 避免设置类型错误
-							 */
+
+							// 将call xxxStore(?,?) 后的条件参数判断是否为null，如果是null则改为call xxxStore(null,?,null)
+							// 避免设置类型错误
 							SqlConfigParseUtils.replaceNull(sqlToyResult, isFirstResult ? 1 : 0);
 							// 针对不同数据库执行存储过程调用
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());

@@ -150,10 +150,17 @@ public class MongoElasticUtils {
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(paramValues);
+		boolean logicValue = true;
+		int start;
+		int end;
+		String evalStr;
+		int logicParamCnt;
+		Object paramValue;
+		boolean isNull;
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(startMark);
-			//update 2021-01-17 兼容sql中存在"["和"]"符号场景 
+			// update 2021-01-17 兼容sql中存在"["和"]"符号场景
 			if (startMark.equals(SQL_PSEUDO_START_MARK)) {
 				endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, endMark, queryStr, beginMarkIndex);
 			} else {
@@ -174,14 +181,13 @@ public class MongoElasticUtils {
 			} else {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, namedPattern);
-				boolean logicValue = true;
-				int start = markContentSql.toLowerCase().indexOf("@if(");
+				logicValue = true;
+				start = markContentSql.toLowerCase().indexOf("@if(");
 				// sql中存在逻辑判断
 				if (start > -1) {
-					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					String evalStr = BLANK
-							.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
-					int logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
+					end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
+					evalStr = BLANK.concat(markContentSql.substring(markContentSql.indexOf("(", start) + 1, end));
+					logicParamCnt = StringUtil.matchCnt(evalStr, namedPattern);
 					// update 2017-4-14 增加@if()简单逻辑判断
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
@@ -203,20 +209,19 @@ public class MongoElasticUtils {
 				if (logicValue) {
 					beginIndex = 0;
 					endIndex = 0;
-					Object value;
-					boolean isNull;
 					// 按顺序处理#[]中sql的参数
 					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
-						value = paramValuesList.get(i);
+						paramValue = paramValuesList.get(i);
 						beginIndex = endIndex;
 						endIndex = StringUtil.matchIndex(markContentSql.substring(beginIndex), namedPattern);
 						isNull = false;
-						if (null == value) {
+						if (null == paramValue) {
 							isNull = true;
-						} else if (null != value) {
-							if (value.getClass().isArray() && CollectionUtil.convertArray(value).length == 0) {
+						} else if (null != paramValue) {
+							if (paramValue.getClass().isArray()
+									&& CollectionUtil.convertArray(paramValue).length == 0) {
 								isNull = true;
-							} else if ((value instanceof Collection) && ((Collection) value).isEmpty()) {
+							} else if ((paramValue instanceof Collection) && ((Collection) paramValue).isEmpty()) {
 								isNull = true;
 							}
 						}
@@ -294,6 +299,8 @@ public class MongoElasticUtils {
 		int index = 0;
 		Object value;
 		boolean isAry = false;
+		Object[] ary = null;
+		int i;
 		while (m.find()) {
 			groupStr = m.group();
 			realMql.append(sql.substring(start, m.start()));
@@ -301,7 +308,6 @@ public class MongoElasticUtils {
 			method = groupStr.substring(1, groupStr.indexOf("(")).toLowerCase().trim();
 			value = paramValues[index];
 			if (method.equals("") || method.equals("param") || method.equals("value")) {
-				Object[] ary = null;
 				isAry = true;
 				if (value.getClass().isArray()) {
 					ary = CollectionUtil.convertArray(value);
@@ -314,7 +320,7 @@ public class MongoElasticUtils {
 				if (isAry) {
 					realMql.append("[");
 				}
-				int i = 0;
+				i = 0;
 				for (Object var : ary) {
 					if (i > 0) {
 						realMql.append(",");
@@ -359,12 +365,13 @@ public class MongoElasticUtils {
 		int start = 0;
 		int index = 0;
 		Object value;
+		Object[] ary = null;
+		int i;
 		while (m.find()) {
 			// m.start()+1 补偿\\W开始的字符,如 t.name=:name 保留下=号
 			realMql.append(sql.substring(start, m.start() + 1));
 			start = m.end();
 			value = paramValues[index];
-			Object[] ary = null;
 			if (value.getClass().isArray()) {
 				ary = CollectionUtil.convertArray(value);
 			} else if (value instanceof Collection) {
@@ -372,7 +379,7 @@ public class MongoElasticUtils {
 			} else {
 				ary = new Object[] { value };
 			}
-			int i = 0;
+			i = 0;
 			for (Object var : ary) {
 				if (i > 0) {
 					realMql.append(",");

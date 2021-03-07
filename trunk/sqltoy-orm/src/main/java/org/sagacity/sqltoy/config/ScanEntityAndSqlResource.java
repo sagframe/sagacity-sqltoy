@@ -45,6 +45,7 @@ public class ScanEntityAndSqlResource {
 	private static final String SQLTOY_SQL_FILE_SUFFIX = ".sql.xml";
 
 	private static final String CLASSPATH = "classpath:";
+	private static final String JAR = "jar";
 
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
@@ -192,7 +193,7 @@ public class ScanEntityAndSqlResource {
 	 * @todo 获取sqltoy配置的sql文件
 	 * @param resourceDir
 	 * @param mappingResources
-	 * @param dialect 方言过滤(目前已经废弃)
+	 * @param dialect          方言过滤(目前已经废弃)
 	 * @return
 	 * @throws Exception
 	 */
@@ -208,6 +209,10 @@ public class ScanEntityAndSqlResource {
 			// 统一全角半角，用逗号分隔
 			String[] dirSet = resourceDir.replaceAll("\\；", ",").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
+			JarFile jar;
+			Enumeration<JarEntry> entries;
+			JarEntry entry;
+			String sqlFile;
 			for (String dir : dirSet) {
 				realRes = dir.trim();
 				startClasspath = false;
@@ -219,15 +224,12 @@ public class ScanEntityAndSqlResource {
 				if (urls != null) {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
-						if (url.getProtocol().equals("jar")) {
+						if (url.getProtocol().equals(JAR)) {
 							if (realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
-							JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
-							Enumeration<JarEntry> entries = jar.entries();
-							// 同样的进行循环迭代
-							JarEntry entry;
-							String sqlFile;
+							jar = ((JarURLConnection) url.openConnection()).getJarFile();
+							entries = jar.entries();
 							while (entries.hasMoreElements()) {
 								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
 								entry = entries.nextElement();
@@ -265,7 +267,7 @@ public class ScanEntityAndSqlResource {
 								realRes = realRes.substring(1);
 							}
 
-							if (url.getProtocol().equals("jar")) {
+							if (url.getProtocol().equals(JAR)) {
 								if (!result.contains(realRes)) {
 									// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
 									result.add(0, realRes);

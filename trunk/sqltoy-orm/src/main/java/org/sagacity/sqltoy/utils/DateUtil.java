@@ -175,8 +175,9 @@ public class DateUtil {
 			SimpleDateFormat dateParser = null;
 			Iterator<String> formatIter = DEFAULT_PATTERNS.iterator();
 			Date result = null;
+			String format;
 			while (formatIter.hasNext()) {
-				String format = (String) formatIter.next();
+				format = (String) formatIter.next();
 				if (dateParser == null) {
 					dateParser = new SimpleDateFormat(format, Locale.US);
 				} else {

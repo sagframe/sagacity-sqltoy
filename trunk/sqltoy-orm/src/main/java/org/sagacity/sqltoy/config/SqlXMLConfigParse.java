@@ -114,15 +114,17 @@ public class SqlXMLConfigParse {
 		String fileName;
 		Object resource;
 		boolean isDebug = logger.isDebugEnabled();
+		Long lastModified;
+		Long preModified;
 		for (int i = 0; i < xmlFiles.size(); i++) {
 			resource = xmlFiles.get(i);
 			if (resource instanceof File) {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
 				synchronized (fileName) {
-					Long lastModified = Long.valueOf(sqlFile.lastModified());
+					lastModified = Long.valueOf(sqlFile.lastModified());
 					// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-					Long preModified = filesLastModifyMap.get(fileName);
+					preModified = filesLastModifyMap.get(fileName);
 					// 最后修改时间比上次修改时间大，重新加载sql文件
 					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
 						filesLastModifyMap.put(fileName, lastModified);

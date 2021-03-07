@@ -171,8 +171,6 @@ public class BeanUtil {
 				matched = false;
 				for (int j = 0; j < realMeth.size(); j++) {
 					method = realMeth.get(j);
-					// 放弃兼容属性名称有下划线模式
-					// name=method.getName().replaceAll("\\_", "").toLowerCase();
 					name = method.getName().toLowerCase();
 					// get完全匹配
 					if (name.equals("get".concat(prop))) {
@@ -251,7 +249,7 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.BIGINT;
 					} else if (typeName.equals("blob")) {
 						fieldsType[i] = java.sql.Types.BLOB;
-					} else if (typeName.equals("[b")) {
+					} else if (typeName.equals("byte[]")) {
 						fieldsType[i] = java.sql.Types.BINARY;
 					} else if (typeName.equals("boolean")) {
 						fieldsType[i] = java.sql.Types.BOOLEAN;
@@ -269,6 +267,8 @@ public class BeanUtil {
 						fieldsType[i] = java.sql.Types.TIME;
 					} else if (typeName.equals("byte")) {
 						fieldsType[i] = java.sql.Types.TINYINT;
+					} else if (typeName.endsWith("[]")) {
+						fieldsType[i] = java.sql.Types.ARRAY;
 					} else {
 						fieldsType[i] = java.sql.Types.NULL;
 					}
@@ -351,8 +351,9 @@ public class BeanUtil {
 		}
 
 		// 直接相等
-		if (target.equals(compared))
+		if (target.equals(compared)) {
 			return 0;
+		}
 		// 日期类型
 		if ((target instanceof Date || target instanceof LocalDate || target instanceof LocalTime
 				|| target instanceof LocalDateTime)
@@ -595,10 +596,9 @@ public class BeanUtil {
 			return valueStr.toCharArray();
 		}
 		// 数组类型
-		if (typeName.contains("[") || typeName.contains("[]") && paramValue instanceof Array) {
+		if ((typeName.contains("[]") || typeName.contains("[")) && (paramValue instanceof Array)) {
 			return convertArray(((Array) paramValue).getArray(), typeName);
 		}
-
 		return paramValue;
 	}
 
@@ -798,42 +798,43 @@ public class BeanUtil {
 		Map.Entry<String, Object> entry;
 		boolean isMap = false;
 		String fieldLow;
+		Object fieldValue;
 		try {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
 				if (properties[i] != null) {
 					// 支持xxxx.xxx 子对象属性提取
 					fields = properties[i].split("\\.");
-					Object value = serializable;
+					fieldValue = serializable;
 					for (String field : fields) {
 						// 支持map类型 update 2021-01-31
-						if (value instanceof Map) {
-							if (value instanceof IgnoreKeyCaseMap) {
-								value = ((IgnoreKeyCaseMap) value).get(field.trim());
+						if (fieldValue instanceof Map) {
+							if (fieldValue instanceof IgnoreKeyCaseMap) {
+								fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
 							} else {
-								iter = ((Map) value).entrySet().iterator();
+								iter = ((Map) fieldValue).entrySet().iterator();
 								isMap = false;
 								fieldLow = field.trim().toLowerCase();
 								while (iter.hasNext()) {
 									entry = (Map.Entry<String, Object>) iter.next();
 									if (entry.getKey().toLowerCase().equals(fieldLow)) {
-										value = entry.getValue();
+										fieldValue = entry.getValue();
 										isMap = true;
 										break;
 									}
 								}
 								if (!isMap) {
-									value = null;
+									fieldValue = null;
 								}
 							}
 						} else {
-							value = getProperty(value, field.trim());
+							fieldValue = getProperty(fieldValue, field.trim());
 						}
-						if (value == null) {
+						if (fieldValue == null) {
 							break;
 						}
 					}
-					result[i] = value;
+					result[i] = fieldValue;
 				}
 			}
 		} catch (Exception e) {
@@ -1451,7 +1452,7 @@ public class BeanUtil {
 				// 去除重复
 				if (!repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
-					method.invoke(bean, BeanUtil.convertType(typeHandler, id, typeName, genericType));
+					method.invoke(bean, convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);
 					repeat.add(id);
 				}

@@ -70,18 +70,29 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches(sql1.concat("(holdlock updlock)"), regex));
 		System.err.println(StringUtil.matches(sql1.concat("(holdlock)"), regex));
 	}
-	
+
 	@Test
 	public void testLike() {
-		String[] ary="   a   b  c d".trim().split("\\s+");
-		for(int i=0;i<ary.length;i++)
-		{
-			System.err.println("["+ary[i]+"]");
+		String[] ary = "   a   b  c d".trim().split("\\s+");
+		for (int i = 0; i < ary.length; i++) {
+			System.err.println("[" + ary[i] + "]");
 		}
 		String sql = "支持保留字处理，对象操作自动增加保留字符号，跨数据库sql自动适配";
-		
+		System.err.println(StringUtil.like(sql, "数据库".split("\\s+")));
 		System.err.println(StringUtil.like(sql, "保留  操作  ，跨数库".split("\\s+")));
 		System.err.println(StringUtil.like(sql, "保留  操作  ， 数据库".split("\\s+")));
+
+	}
 	
+	@Test
+	public void testMatch() {
+		String sqlLow = "from t where1 (1=1)";
+		String sql="select 1 from";
+		String sqlWith="with t as () * from";
+		System.err.println(StringUtil.matches(sqlLow,"^\\s*where\\W"));
+		System.err.println(StringUtil.matches(sqlLow,"^from\\W"));
+		System.err.println(StringUtil.matches(sql,"^(select|with)\\W"));
+		System.err.println(StringUtil.matches(sqlWith,"^(select|with)\\W"));
+
 	}
 }

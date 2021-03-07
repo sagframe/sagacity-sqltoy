@@ -1,34 +1,49 @@
-﻿# v4.13.11 2020-7-31
+﻿# v4.18.3 2021-2-26
+* 1、级联操作进行优化，精简级联配置，增加OneToOne类型的支持
+
+```java
+	// 可以自行定义oneToMany 和oneToOne
+	// fields:表示当前表字段(当单字段关联且是主键时可不填)
+	// mappedFields:表示对应关联表的字段
+	// delete:表示是否执行级联删除，考虑安全默认为false(有实际外键时quickvo生成会是true)
+	@OneToOne(fields = { "transDate", "transCode" }, mappedFields = { "transDate", "transId" }, delete = true)
+	private ComplexpkItemVO complexpkItemVO;
+```
+* 2、修复xml定义sql中number-format和date-format多个参数换行没有trim的缺陷
+* 3、优化cache-arg 反向通过名称匹配key，将之前字符串包含变为类似数据库like模式，可以实现：中国 苏州 带空格的模式匹配
+* 4、quickvo 进行级联优化适配升级，版本4.18.3
+
+# v4.13.11 2020-7-31
 * 1、修复EntityManager中对OneToMany解析bug(4.13.10 版本已经调整)。
 
 ```java
 for (int i = 0; i < idSize; i++) {
-			// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
-			var = oneToMany.fields()[i];
-			for (int j = 0; j < idSize; j++) {
-				idFieldName = idList.get(j);
-				if (var.equalsIgnoreCase(idFieldName)) {
-					// 原mappedFields[j] = var;
-					mappedFields[j] = oneToMany.mappedFields()[i];
-					mappedColumns[j] = oneToMany.mappedColumns()[i];
-					break;
-				}
-			}
+	// update 2020-7-30 修复取值错误,原:var = oneToMany.mappedFields()[i];
+	var = oneToMany.fields()[i];
+	for (int j = 0; j < idSize; j++) {
+		idFieldName = idList.get(j);
+		if (var.equalsIgnoreCase(idFieldName)) {
+			// 原mappedFields[j] = var;
+			mappedFields[j] = oneToMany.mappedFields()[i];
+			mappedColumns[j] = oneToMany.mappedColumns()[i];
+			break;
+		}
+	}
 }
 ```
 * 2、修复loadCascade时Class... cascadeTypes 模式传参判空处理错误，导致无法实际进行加载(4.13.7 版本修改导致)
 
 ```java
 protected <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
-		if (entity == null) {
-			return null;
-		}
-		Class[] cascades = cascadeTypes;
-		// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
-		if (cascades == null || cascades.length == 0) {
-			cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
-		}
-		return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
+	if (entity == null) {
+		return null;
+	}
+	Class[] cascades = cascadeTypes;
+	// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
+	if (cascades == null || cascades.length == 0) {
+		cascades = sqlToyContext.getEntityMeta(entity.getClass()).getCascadeTypes();
+	}
+	return dialectFactory.load(sqlToyContext, entity, cascades, lockMode, this.getDataSource(null));
 }
 ```
 

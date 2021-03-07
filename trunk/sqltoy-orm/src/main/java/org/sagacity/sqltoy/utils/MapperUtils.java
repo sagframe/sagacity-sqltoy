@@ -289,7 +289,7 @@ public class MapperUtils {
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
-				methodTypes[i] = realMethods[i].getParameterTypes()[0].getName();
+				methodTypes[i] = realMethods[i].getParameterTypes()[0].getTypeName();
 			}
 		}
 		int size;
@@ -304,7 +304,7 @@ public class MapperUtils {
 				for (int j = 0; j < size; j++) {
 					cellData = row.get(j);
 					if (cellData != null && realMethods[j] != null) {
-						if (cellData.getClass().getName().equals(methodTypes[j])) {
+						if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
 							realMethods[j].invoke(bean, cellData);
 						} else {
 							realMethods[j].invoke(bean, BeanUtil.convertType(cellData, methodTypes[j]));

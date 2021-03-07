@@ -23,13 +23,10 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.2 发版日期: 2021-02-23
-* elasticsearch 支持restclient模式ssl方法
-* elasticsearch 优化jdbc模式访问(es不支持/* sqlId */ 注释以及分页count(1) 需调整为count(*) )
-
-# 合作与开放
-* 欢迎开放者参与到sqltoy的开发和维护中来，可以加入QQ群提议加入sqltoy开发者行列
-* sqltoy希望可以捐赠给开源组织和企业,希望共同发展成拥有中国智慧面向更广泛用户的ORM框架
+# 最新版本号: 4.18.3 发版日期: 2021-02-26
+* 级联操作进行优化，精简级联配置，增加OneToOne类型的支持
+* 修复xml定义sql中number-format和date-format多个参数换行没有trim的缺陷
+* 优化cache-arg 反向通过名称匹配key，将之前字符串包含变为类似数据库like模式，可以实现：中国 苏州 带空格的模式匹配
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -59,7 +56,74 @@
 * 2018~至今,  在ERP复杂场景下得到了充分锤炼，sqltoy已经非常完善可靠，开始开源跟大家一起分享和共建！
 
 # 2. 快速特点说明
-## 2.1 极致朴素的sql编写方式(本质规律的发现和抽象)
+## 2.1 对象操作跟jpa类似并有针对性加强(包括级联)
+```java
+   StaffInfoVO staffInfo = new StaffInfoVO(); 
+   //保存
+   sqlToyLazyDao.save(staffInfo);
+   //删除
+   sqlToyLazyDao.delete(new StaffInfoVO("S2007"));
+
+   //public Long update(Serializable entity, String... forceUpdateProps);
+   // 这里对photo 属性进行强制修改，其他为null自动会跳过
+   sqlToyLazyDao.update(staffInfo, "photo");
+
+   //深度修改,不管是否null全部字段修改
+   sqlToyLazyDao.updateDeeply(staffInfo);
+
+   List<StaffInfoVO> staffList = new ArrayList<StaffInfoVO>();
+   StaffInfoVO staffInfo = new StaffInfoVO();
+   StaffInfoVO staffInfo1 = new StaffInfoVO();
+   staffList.add(staffInfo);
+   staffList.add(staffInfo1);
+   //批量保存或修改
+   sqlToyLazyDao.saveOrUpdateAll(staffList);
+   //批量保存
+   sqlToyLazyDao.saveAll(staffList);
+   ...............
+   sqlToyLazyDao.loadByIds(StaffInfoVO.class,"S2007")
+   //唯一性验证
+   sqlToyLazyDao.isUnique(staffInfo, "staffCode");
+```
+## 2.2 支持代码中对象查询
+* sqltoy 中统一的规则是代码中可以直接传sql也可以是对应xml文件中的sqlId
+```java
+/**
+ * @todo 通过对象传参数,简化paramName[],paramValue[] 模式传参
+ * @param <T>
+ * @param sqlOrNamedSql 可以是具体sql也可以是对应xml中的sqlId
+ * @param entity        通过对象传参数,并按对象类型返回结果
+ */
+ public <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity);
+```
+* 基于对象单表查询，并带缓存翻译
+```java  
+public PaginationModel<StaffInfoVO> findStaff(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
+     // sql可以直接在代码中编写,复杂sql建议在xml中定义
+     // 单表entity查询场景下sql字段可以写成java类的属性名称
+     return findEntity(StaffInfoVO.class, pageModel, EntityQuery.create()
+	.where("#[staffName like :staffName]#[and createTime>=:beginDate]#[and createTime<=:endDate]")
+	.values(staffInfoVO)
+	// 字典缓存必须要设置cacheType
+	// 单表对象查询需设置keyColumn构成select keyColumn as column模式
+	.translates(new Translate("dictKeyName").setColumn("sexTypeName").setCacheType("SEX_TYPE")
+         		.setKeyColumn("sexType"))
+	.translates(new Translate("organIdName").setColumn("organName").setKeyColumn("organId")));
+}
+```
+* 对象式查询后修改或删除
+```java
+//演示代码中非直接sql模式设置条件模式进行记录修改
+public Long updateByQuery() {
+     return sqlToyLazyDao.updateByQuery(StaffInfoVO.class,
+		EntityUpdate.create().set("createBy", "S0001")
+                     .where("staffName like ?").values("张"));
+}
+
+//代码中非直接sql模式设置条件模式进行记录删除
+sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("status=?").values(0));
+```
+## 2.2 极致朴素的sql编写方式(本质规律的发现和抽象)
 
 * sqltoy 的写法(一眼就看明白sql的本意,后面变更调整也非常便捷,copy到数据库客户端里稍做出来即可执行)
 * sqltoy条件组织原理很简单: 如 #[order_id=:orderId] 等于if(:orderId<>null) sql.append(order_id=:orderId);#[]内只要有一个参数为null即剔除
@@ -125,7 +189,7 @@
 </select>
 ```
 
-## 2.2 天然防止sql注入,执行过程:
+## 2.3 天然防止sql注入,执行过程:
 * 假设sql语句如下
 ```xml
 select 	*
@@ -149,8 +213,8 @@ where t.ORDER_ID=?
 ```
 * 然后通过: pst.set(index,value) 设置条件值，不存在将条件直接作为字符串拼接为sql的一部分
  
-## 2.3 最强大的分页查询
-### 2.3.1 分页特点说明
+## 2.4 最强大的分页查询
+### 2.4.1 分页特点说明
 * 1、快速分页:@fast() 实现先取单页数据然后再关联查询，极大提升速度。
 * 2、分页优化器:page-optimize 让分页查询由两次变成1.3~1.5次(用缓存实现相同查询条件的总记录数量在一定周期内无需重复查询)
 * 3、sqltoy的分页取总记录的过程不是简单的select count(1) from (原始sql)；而是智能判断是否变成:select count(1) from 'from后语句'，
@@ -160,7 +224,7 @@ where t.ORDER_ID=?
 这种复杂查询的分页的处理，sqltoy的count查询会是:with t1 as () select count(1) from table1,
 如果是:with t1 as @fast(select * from table1) select * from t1 ,count sql 就是：select count(1) from table1
 
-### 2.3.2 分页sql示例
+### 2.4.2 分页sql示例
 ```xml
 <!-- 快速分页和分页优化演示 -->
 <sql id="sqltoy_fastPage">
@@ -186,7 +250,7 @@ where t.ORDER_ID=?
 	<!-- <count-sql></count-sql> -->
 </sql>
 ```
-### 2.3.3 分页java代码调用
+### 2.4.3 分页java代码调用
 
 ```java
 /**
@@ -222,7 +286,7 @@ public void findPageByParams() {
 	
 ```
 
-## 2.4 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
+## 2.5 最巧妙的缓存应用，将多表关联查询尽量变成单表(看下面的sql,如果不用缓存翻译需要关联多少张表?sql要有多长?多难以维护?)
 * 1、 通过缓存翻译:<translate> 将代码转化为名称，避免关联查询，极大简化sql并提升查询效率 
 * 2、 通过缓存名称模糊匹配:<cache-arg> 获取精准的编码作为条件，避免关联like 模糊查询
 	
@@ -259,7 +323,7 @@ public void findPageByParams() {
 	</value>
 </sql>
 ```
-## 2.5 并行查询
+## 2.6 并行查询
 
 * 接口规范
 
@@ -290,7 +354,7 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 		
 ```
 
-## 2.6 最跨数据库
+## 2.7 最跨数据库
 * 1、提供类似hibernate性质的对象操作，自动生成相应数据库的方言。
 * 2、提供了最常用的:分页、取top、取随机记录等查询，避免了各自不同数据库不同的写法。
 * 3、提供了树形结构表的标准钻取查询方式，代替以往的递归查询，一种方式适配所有数据库。
@@ -315,7 +379,7 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 
 ```
   
-## 2.7 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
+## 2.8 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 
 ```xml
         <!-- 列转行测试 -->
@@ -350,7 +414,7 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 	</sql>
 ```
 
-## 2.8 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
+## 2.9 提供分组汇总求平均算法(用算法代替sql避免跨数据库语法不一致)
 ```xml
 	<!-- 汇总计算 (场景是sql先汇总，页面上还需要对已有汇总再汇总的情况,如果用sql实现在跨数据库的时候就存在问题)-->
 	<sql id="sys_summarySearch">
@@ -371,8 +435,8 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 		</summary>
 	</sql>
 ```
-## 2.9 分库分表
-### 2.9.1 查询分库分表（分库和分表策略可以同时使用）
+## 2.10 分库分表
+### 2.10.1 查询分库分表（分库和分表策略可以同时使用）
 ```xml
    sql参见quickstart项目:com/sqltoy/quickstart/sqltoy-quickstart.sql.xml 文件
    <!-- 演示分库 -->
@@ -405,7 +469,7 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
         
 ```
    
-### 2.9.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
+### 2.10.2 操作分库分表(vo对象由quickvo工具自动根据数据库生成，且自定义的注解不会被覆盖)
 
 @Sharding 在对象上通过注解来实现分库分表的策略配置
 
@@ -451,23 +515,23 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.10 五种非数据库相关主键生成策略
+## 2.11 五种非数据库相关主键生成策略
     主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
-### 2.10.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
-### 2.10.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
-### 2.10.3 uuid:32 位uuid
-### 2.10.4 SnowflakeId 雪花算法ID
-### 2.10.5 redisId  基于redis 来产生规则的ID主键
+### 2.11.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
+### 2.11.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
+### 2.11.3 uuid:32 位uuid
+### 2.11.4 SnowflakeId 雪花算法ID
+### 2.11.5 redisId  基于redis 来产生规则的ID主键
    根据对象属性值,产生规则有序的ID,比如:订单类型为采购:P  销售:S，贸易类型：I内贸;O 外贸;
    订单号生成规则为:1位订单类型+1位贸易类型+yyMMdd+3位流水(超过3位自动扩展)
    最终会生成单号为:SI191120001 
    
 
-## 2.11 elastic原生查询支持
-## 2.12 elasticsearch-sql 插件模式sql模式支持
-## 2.13 sql文件变更自动重载，方便开发和调试
-## 2.14 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
-## 2.15 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
+## 2.12 elastic原生查询支持
+## 2.13 elasticsearch-sql 插件模式sql模式支持
+## 2.14 sql文件变更自动重载，方便开发和调试
+## 2.15 公共字段统一赋值,针对创建人、创建时间、修改人、修改时间等
+## 2.16 提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单
 
 
 # 3.集成说明
