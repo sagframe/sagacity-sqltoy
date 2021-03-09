@@ -107,17 +107,21 @@ public class EntityQuery implements Serializable {
 	}
 
 	// 排序
-	public EntityQuery orderBy(String field) {
+	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
-		if (StringUtil.isNotBlank(field)) {
-			innerModel.orderBy.put(field, " ");
+		if (StringUtil.isNotBlank(fields)) {
+			for (String field : fields) {
+				innerModel.orderBy.put(field, " ");
+			}
 		}
 		return this;
 	}
 
-	public EntityQuery orderByDesc(String field) {
-		if (StringUtil.isNotBlank(field)) {
-			innerModel.orderBy.put(field, " desc ");
+	public EntityQuery orderByDesc(String... fields) {
+		if (StringUtil.isNotBlank(fields)) {
+			for (String field : fields) {
+				innerModel.orderBy.put(field, " desc ");
+			}
 		}
 		return this;
 	}
