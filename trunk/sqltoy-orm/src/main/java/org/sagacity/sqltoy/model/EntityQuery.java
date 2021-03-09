@@ -1,7 +1,9 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -40,15 +42,15 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery select(String... fields) {
-		// 支持"fieldA,fieldB" 这种模式编写
-		if (fields != null && fields.length == 1) {
-			String[] realFields = fields[0].split("\\,");
-			for (int i = 0; i < realFields.length; i++) {
-				realFields[i] = realFields[i].trim();
+		if (fields != null && fields.length > 0) {
+			// 支持"fieldA,fieldB" 这种模式编写
+			if (fields.length == 1) {
+				innerModel.fields = fields[0].split("\\,");
+				StringUtil.arrayTrim(innerModel.fields);
+			} else {
+				innerModel.fields = fields;
 			}
-			innerModel.fields = realFields;
-		} else {
-			innerModel.fields = fields;
+			innerModel.notSelectFields = null;
 		}
 		return this;
 	}
@@ -61,6 +63,31 @@ public class EntityQuery implements Serializable {
 	public EntityQuery select(SelectFields selectFields) {
 		if (selectFields != null) {
 			innerModel.fields = selectFields.getSelectFields();
+			innerModel.notSelectFields = null;
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 不查询哪些字段(排除的字段)
+	 * @param fields
+	 * @return
+	 */
+	public EntityQuery unselect(String... fields) {
+		if (fields != null && fields.length > 0) {
+			String[] realFields;
+			if (fields.length == 1) {
+				realFields = fields[0].split("\\,");
+			} else {
+				realFields = fields;
+			}
+			Set<String> notFields = new HashSet<String>();
+			for (String field : realFields) {
+				notFields.add(field.trim().replace("_", "").toLowerCase());
+			}
+			innerModel.notSelectFields = notFields;
+			// 不能共存
+			innerModel.fields = null;
 		}
 		return this;
 	}
@@ -107,17 +134,34 @@ public class EntityQuery implements Serializable {
 	}
 
 	// 排序
-	public EntityQuery orderBy(String field) {
+	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
-		if (StringUtil.isNotBlank(field)) {
-			innerModel.orderBy.put(field, " ");
+		if (fields != null && fields.length > 0) {
+			String[] realFields;
+			if (fields.length == 1) {
+				realFields = fields[0].split("\\,");
+			} else {
+				realFields = fields;
+			}
+			for (String field : realFields) {
+				innerModel.orderBy.put(field.trim(), " ");
+			}
 		}
 		return this;
 	}
 
-	public EntityQuery orderByDesc(String field) {
-		if (StringUtil.isNotBlank(field)) {
-			innerModel.orderBy.put(field, " desc ");
+	// 逆序
+	public EntityQuery orderByDesc(String... fields) {
+		if (fields != null && fields.length > 0) {
+			String[] realFields;
+			if (fields.length == 1) {
+				realFields = fields[0].split("\\,");
+			} else {
+				realFields = fields;
+			}
+			for (String field : realFields) {
+				innerModel.orderBy.put(field.trim(), " desc ");
+			}
 		}
 		return this;
 	}
