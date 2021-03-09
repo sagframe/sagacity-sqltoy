@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -48,6 +49,11 @@ public class EntityQueryExtend implements Serializable {
 	 * 查询哪些字段
 	 */
 	public String[] fields;
+	
+	/**
+	 * 不参与查询的字段
+	 */
+	public Set<String> notSelectFields;
 
 	/**
 	 * 数据源
