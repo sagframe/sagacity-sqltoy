@@ -136,7 +136,7 @@ public class EntityQuery implements Serializable {
 	// 排序
 	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
-		if (StringUtil.isNotBlank(fields)) {
+		if (fields != null && fields.length > 0) {
 			String[] realFields;
 			if (fields.length == 0) {
 				realFields = fields[0].split("\\,");
@@ -152,7 +152,7 @@ public class EntityQuery implements Serializable {
 
 	// 逆序
 	public EntityQuery orderByDesc(String... fields) {
-		if (StringUtil.isNotBlank(fields)) {
+		if (fields != null && fields.length > 0) {
 			String[] realFields;
 			if (fields.length == 0) {
 				realFields = fields[0].split("\\,");
