@@ -1415,14 +1415,31 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
+		
+		//将notSelect构造成select，形成统一处理机制
+		String[] selectFieldAry = null;
+		Set<String> notSelect = innerModel.notSelectFields;
+		if (notSelect != null) {
+			List<String> selectFields = new ArrayList<String>();
+			for (String field : entityMeta.getFieldsArray()) {
+				if (!notSelect.contains(field.toLowerCase())) {
+					selectFields.add(field);
+				}
+			}
+			if (selectFields.size() > 0) {
+				selectFieldAry = new String[selectFields.size()];
+				selectFields.toArray(selectFieldAry);
+			}
+		} else {
+			selectFieldAry = innerModel.fields;
+		}
 		// 指定的查询字段
 		String fields = "";
-		if (innerModel.fields != null && innerModel.fields.length > 0) {
+		if (selectFieldAry != null && selectFieldAry.length > 0) {
 			int index = 0;
 			String colName;
 			HashSet<String> cols = new HashSet<String>();
-			for (String field : innerModel.fields) {
+			for (String field : selectFieldAry) {
 				// 去除重复字段
 				if (!cols.contains(field)) {
 					colName = entityMeta.getColumnName(field);
