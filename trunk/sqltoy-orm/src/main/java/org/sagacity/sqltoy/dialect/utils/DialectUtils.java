@@ -2188,7 +2188,7 @@ public class DialectUtils {
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
-				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+				forceSet.add(field.toLowerCase().replace("_", ""));
 			}
 		}
 		// 强制修改字段赋值
@@ -2241,7 +2241,7 @@ public class DialectUtils {
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
-				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+				forceSet.add(field.toLowerCase().replace("_", ""));
 			}
 		}
 		// 强制修改字段赋值
