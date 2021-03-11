@@ -294,7 +294,11 @@ public class EntityMeta implements Serializable {
 		// 数据库字段名称对应vo对象属性名称
 		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
 		// 字段名称去除下划线
-		columnFieldMap.put(fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase(), fieldMeta.getFieldName());
+		String colName = fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase();
+		//避免:staffname 和 staff_name 形式的存在
+		if (!columnFieldMap.containsKey(colName)) {
+			columnFieldMap.put(colName, fieldMeta.getFieldName());
+		}
 	}
 
 	/**
@@ -482,13 +486,13 @@ public class EntityMeta implements Serializable {
 	public boolean addCascade(TableCascadeModel cascadeModel) {
 		Iterator<TableCascadeModel> iter = cascadeModels.iterator();
 		TableCascadeModel iterModel;
-		boolean isRepeat=false;
+		boolean isRepeat = false;
 		// 删除已经存在的子表关联
 		while (iter.hasNext()) {
 			iterModel = iter.next();
 			if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
 				iter.remove();
-				isRepeat=true;
+				isRepeat = true;
 				break;
 			}
 		}

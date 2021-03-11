@@ -1180,6 +1180,7 @@ public class ResultUtils {
 	/**
 	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
 	 * @param labelNames
+	 * @param colFieldMap
 	 * @return
 	 */
 	public static String[] humpFieldNames(String[] labelNames, HashMap<String, String> colFieldMap) {
