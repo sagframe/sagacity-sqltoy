@@ -426,7 +426,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult
 											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
+													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
 															queryResult.getLabelNames()),
 													(Class) extend.resultType, changedCols));
 								}
@@ -612,7 +612,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult
 											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
+													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
 															queryResult.getLabelNames()),
 													(Class) extend.resultType, changedCols));
 								}
@@ -756,7 +756,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult
 											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
+													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
 															queryResult.getLabelNames()),
 													(Class) extend.resultType, changedCols));
 								}
@@ -940,7 +940,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult
 											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
+													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
 															queryResult.getLabelNames()),
 													(Class) extend.resultType, changedCols));
 								}
@@ -1006,7 +1006,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult
 											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
+													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
 															queryResult.getLabelNames()),
 													(Class) extend.resultType, changedCols));
 								}
@@ -1662,8 +1662,9 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect,
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+								queryResult.setRows(ResultUtils.wrapQueryResult(
+										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
+												queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
@@ -1705,8 +1706,9 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+								queryResult.setRows(ResultUtils.wrapQueryResult(
+										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
+												queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
@@ -1747,8 +1749,9 @@ public class DialectFactory {
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+								queryResult.setRows(ResultUtils.wrapQueryResult(
+										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
+												queryExecutor, queryResult.getLabelNames()),
 										(Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
@@ -1818,7 +1821,8 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
+										ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
+												queryResult.getLabelNames()),
 										resultType, changedCols));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());

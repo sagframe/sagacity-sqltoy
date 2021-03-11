@@ -295,7 +295,8 @@ public class EntityMeta implements Serializable {
 		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
 		// 字段名称去除下划线
 		String colName = fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase();
-		//避免:staffname 和 staff_name 形式的存在
+		// 避免:staffname 和 staff_name 形式的存在
+		// columnFieldMap.put(colName, fieldMeta.getFieldName());
 		if (!columnFieldMap.containsKey(colName)) {
 			columnFieldMap.put(colName, fieldMeta.getFieldName());
 		}

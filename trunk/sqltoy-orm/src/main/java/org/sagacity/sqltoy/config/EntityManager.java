@@ -130,6 +130,9 @@ public class EntityManager {
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
+		if (voClass == null) {
+			return false;
+		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
 		if (unEntityMap.contains(className)) {
