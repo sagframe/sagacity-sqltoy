@@ -1100,11 +1100,12 @@ public class ResultUtils {
 	 * @param labelNames
 	 * @param resultType
 	 * @param changedCols
+	 * @param humpMapLabel
 	 * @return
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
-			Class resultType, boolean changedCols) throws Exception {
+			Class resultType, boolean changedCols, boolean humpMapLabel) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
@@ -1126,6 +1127,11 @@ public class ResultUtils {
 				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
 				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
 			int width = labelNames.length;
+			String[] realLabel = labelNames;
+			// 驼峰处理
+			if (humpMapLabel) {
+				realLabel = humpFieldNames(labelNames, null);
+			}
 			List result = new ArrayList();
 			List rowList;
 			boolean isMap = resultType.equals(Map.class);
@@ -1141,7 +1147,7 @@ public class ResultUtils {
 					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
 				}
 				for (int j = 0; j < width; j++) {
-					rowMap.put(labelNames[j], rowList.get(j));
+					rowMap.put(realLabel[j], rowList.get(j));
 				}
 				result.add(rowMap);
 			}

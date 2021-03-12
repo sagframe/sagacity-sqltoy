@@ -426,7 +426,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
@@ -610,7 +610,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							queryResult.setSkipQueryCount(true);
@@ -752,7 +752,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -934,7 +934,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
@@ -998,7 +998,7 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
@@ -1653,7 +1653,7 @@ public class DialectFactory {
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1695,7 +1695,7 @@ public class DialectFactory {
 
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1736,7 +1736,7 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1805,7 +1805,7 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), resultType, changedCols));
+										queryResult.getLabelNames(), resultType, changedCols, true));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
