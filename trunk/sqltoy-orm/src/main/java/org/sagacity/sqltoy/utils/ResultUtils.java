@@ -415,7 +415,6 @@ public class ResultUtils {
 			if (updateRowHandler != null) {
 				isUpdate = true;
 			}
-
 			// 循环通过java reflection将rs中的值映射到VO中
 			if (hasTranslate) {
 				while (rs.next()) {
@@ -505,11 +504,9 @@ public class ResultUtils {
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
-
 		// link 目前只支持单个字段运算
 		int columnSize = labelNames.length;
 		int index = 0;
-
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -522,7 +519,6 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-
 		int linkCols = linkModel.getColumns().length;
 		String[] linkColumns = linkModel.getColumns();
 		int[] linkIndexs = new int[linkCols];
@@ -553,7 +549,6 @@ public class ResultUtils {
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkCols];
 		String[] linkStrs = new String[linkCols];
-
 		TranslateExtend extend = null;
 		Object[] cacheValues;
 		List rowTemp;
@@ -672,7 +667,6 @@ public class ResultUtils {
 		}
 		// 参照列，如按年份进行旋转
 		Integer[] categoryCols = mappingLabelIndex(pivotModel.getCategoryCols(), labelIndexMap);
-
 		// 旋转列，如按年份进行旋转，则旋转列为：年份下面的合格数量、不合格数量等子分类数据
 		Integer[] pivotCols = mappingLabelIndex(pivotModel.getPivotCols(), labelIndexMap);
 		// 分组主键列（以哪几列为基准）
@@ -1153,14 +1147,13 @@ public class ResultUtils {
 			}
 			return result;
 		}
-		EntityMeta entityMeta = null;
+		HashMap<String, String> columnFieldMap = null;
 		if (sqlToyContext.isEntity(resultType)) {
-			entityMeta = sqlToyContext.getEntityMeta(resultType);
+			columnFieldMap = sqlToyContext.getEntityMeta(resultType).getColumnFieldMap();
 		}
-
 		// 封装成VO对象形式
 		return BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
-				convertRealProps(labelNames, (entityMeta == null) ? null : entityMeta.getColumnFieldMap()), resultType);
+				convertRealProps(labelNames, columnFieldMap), resultType);
 	}
 
 	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
@@ -1201,59 +1194,6 @@ public class ResultUtils {
 		}
 		return result;
 	}
-
-//	/**
-//	 * @TODO 将字段名称变成驼峰模式
-//	 * @param sqlToyContext
-//	 * @param queryExecutor
-//	 * @param labelNames
-//	 * @return
-//	 */
-//	public static String[] humpFieldNames(SqlToyContext sqlToyContext, QueryExecutor queryExecutor,
-//			String[] labelNames) {
-//		Type resultType = queryExecutor.getInnerModel().resultType;
-//		if (null != resultType) {
-//			Class superClass = ((Class) resultType).getSuperclass();
-//			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
-//					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
-//					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
-//					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-//					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
-//				return labelNames;
-//			}
-//		}
-//		String[] realLabels = new String[labelNames.length];
-//		// update 2021-3-11 规避:staffId 和 staff_id 这种因数据库表设计极端不规范场景引起的冲突
-//		if (resultType != null && sqlToyContext.isEntity((Class) resultType)) {
-//			HashMap<String, String> columnFieldMap = sqlToyContext.getEntityMeta((Class) resultType)
-//					.getColumnFieldMap();
-//			for (int i = 0; i < realLabels.length; i++) {
-//				realLabels[i] = labelNames[i];
-//				// 非pojo中对应的字段，进行驼峰处理，是pojo的字段留在后面映射处理
-//				if (!columnFieldMap.containsKey(realLabels[i].toLowerCase())) {
-//					realLabels[i] = StringUtil.toHumpStr(realLabels[i], false);
-//				}
-//			}
-//		} else {
-//			// 避免同时存在:create_time 和createtime 类型字段情况
-//			Set<String> simpleLabels = new HashSet<String>();
-//			for (String label : labelNames) {
-//				if (!label.contains("_")) {
-//					simpleLabels.add(label.toLowerCase());
-//				}
-//			}
-//			String label;
-//			for (int i = 0; i < realLabels.length; i++) {
-//				label = labelNames[i];
-//				if (label.contains("_") && simpleLabels.contains(label.replace("_", "").toLowerCase())) {
-//					realLabels[i] = StringUtil.toHumpStr(label, false, false);
-//				} else {
-//					realLabels[i] = StringUtil.toHumpStr(label, false, true);
-//				}
-//			}
-//		}
-//		return realLabels;
-//	}
 
 	/**
 	 * @todo 警告性日志记录,凡是单次获取超过一定规模数据的操作记录日志
