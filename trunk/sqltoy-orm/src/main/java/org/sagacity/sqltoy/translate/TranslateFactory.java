@@ -176,7 +176,7 @@ public class TranslateFactory {
 		} else if (result.get(0) instanceof List) {
 			cacheSet = CollectionUtil.innerListToArray(result);
 		} else if (checkerConfig.getProperties() != null && checkerConfig.getProperties().length > 0) {
-			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null, false, 0);
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null);
 		}
 		if (cacheSet == null) {
 			return null;
@@ -215,7 +215,7 @@ public class TranslateFactory {
 		} else if (result.get(0) instanceof Object[]) {
 			cacheSet = result;
 		} else if (checkerConfig.getProperties() != null && checkerConfig.getProperties().length > 0) {
-			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null, false, 0);
+			cacheSet = BeanUtil.reflectBeansToInnerAry(result, checkerConfig.getProperties(), null, null);
 		}
 		if (cacheSet == null) {
 			return null;
@@ -427,7 +427,7 @@ public class TranslateFactory {
 				} // 对象数组，利用反射提取属性值
 				else if (cacheModel.getProperties() != null && cacheModel.getProperties().length > 1) {
 					List<Object[]> dataSet = BeanUtil.reflectBeansToInnerAry(tempList, cacheModel.getProperties(), null,
-							null, false, 0);
+							null);
 					for (Object[] row : dataSet) {
 						result.put(row[cacheIndex].toString(), row);
 					}

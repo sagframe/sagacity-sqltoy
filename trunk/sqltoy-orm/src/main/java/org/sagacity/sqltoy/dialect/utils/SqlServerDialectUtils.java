@@ -728,7 +728,7 @@ public class SqlServerDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;

@@ -549,7 +549,7 @@ public class DialectUtils {
 		ReflectPropertyHandler handler = getSaveOrUpdateReflectHandler(sqlToyContext, entityMeta.getIdArray(),
 				reflectPropertyHandler, forceUpdateFields);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -618,7 +618,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1268,7 +1268,7 @@ public class DialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1696,7 +1696,7 @@ public class DialectUtils {
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler,
 				forceUpdateFields);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
@@ -1825,8 +1825,7 @@ public class DialectUtils {
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
 		}
-		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
-				0);
+		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
 		// 判断主键值是否存在空
 		Object[] idsValue;
 		for (int i = 0, n = idValues.size(); i < n; i++) {
@@ -1850,7 +1849,7 @@ public class DialectUtils {
 				if (cascadeModel.isDelete()) {
 					subTableMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					List<Object[]> mainFieldValues = BeanUtil.reflectBeansToInnerAry(entities, cascadeModel.getFields(),
-							null, null, false, 0);
+							null, null);
 					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
 					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
 						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);

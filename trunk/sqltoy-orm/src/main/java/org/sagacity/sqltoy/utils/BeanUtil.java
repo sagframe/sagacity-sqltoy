@@ -922,18 +922,14 @@ public class BeanUtil {
 	 * @param properties
 	 * @param defaultValues
 	 * @param reflectPropertyHandler
-	 * @param hasSequence
-	 * @param startSequence
 	 * @return
 	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) {
+			ReflectPropertyHandler reflectPropertyHandler) {
 		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
-		// 数据的长度
-		int maxLength = Integer.toString(dataSet.size()).length();
 		List<Object[]> resultList = new ArrayList<Object[]>();
 		try {
 			int methodLength = properties.length;
@@ -942,14 +938,14 @@ public class BeanUtil {
 			boolean inited = false;
 			Object rowObject = null;
 			Object[] params = new Object[] {};
-			int start = (hasSequence ? 1 : 0);
+			//int start = 0;
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -962,23 +958,19 @@ public class BeanUtil {
 						realMethods = matchGetMethods(rowObject.getClass(), properties);
 						inited = true;
 					}
-					Object[] dataAry = new Object[methodLength + start];
-					// 存在流水列
-					if (hasSequence) {
-						dataAry[0] = StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength);
-					}
+					Object[] dataAry = new Object[methodLength];
 					// 通过反射提取属性getMethod返回的数据值
 					for (int j = 0; j < methodLength; j++) {
 						if (null != realMethods[j]) {
-							dataAry[start + j] = realMethods[j].invoke(rowObject, params);
-							if (null == dataAry[start + j] && null != defaultValues) {
-								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+							dataAry[j] = realMethods[j].invoke(rowObject, params);
+							if (null == dataAry[j] && null != defaultValues) {
+								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];
 							}
 						} else {
 							if (defaultValues == null) {
-								dataAry[start + j] = null;
+								dataAry[j] = null;
 							} else {
-								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];
 							}
 						}
 					}
