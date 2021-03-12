@@ -255,24 +255,16 @@ public class SqlToyContext implements ApplicationContextAware {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
 
-		/**
-		 * 初始化脚本加载器
-		 */
+		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
 
-		/**
-		 * 初始化实体对象管理器
-		 */
+		// 初始化实体对象管理器
 		entityManager.initialize(this);
 
-		/**
-		 * 设置保留字
-		 */
+		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
 
-		/**
-		 * 初始化sql执行统计的基本参数
-		 */
+		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");

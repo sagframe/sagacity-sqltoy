@@ -424,11 +424,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
@@ -610,11 +608,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols));
 								}
 							}
 							queryResult.setSkipQueryCount(true);
@@ -754,11 +750,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -938,11 +932,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
@@ -1004,11 +996,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
@@ -1662,10 +1652,8 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect,
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(
-										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
-												queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+										queryResult.getLabelNames(), (Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1706,10 +1694,8 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(
-										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
-												queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+										queryResult.getLabelNames(), (Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1749,10 +1735,8 @@ public class DialectFactory {
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(
-										sqlToyContext, queryResult.getRows(), ResultUtils.humpFieldNames(sqlToyContext,
-												queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+										queryResult.getLabelNames(), (Class) extend.resultType, false));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1821,9 +1805,7 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(sqlToyContext, queryExecutor,
-												queryResult.getLabelNames()),
-										resultType, changedCols));
+										queryResult.getLabelNames(), resultType, changedCols));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);

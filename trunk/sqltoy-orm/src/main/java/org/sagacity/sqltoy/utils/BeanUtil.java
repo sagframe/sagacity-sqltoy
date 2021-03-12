@@ -37,13 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen
  * @version v1.0,Date:2008-11-10
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
+ * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -71,6 +72,7 @@ public class BeanUtil {
 	 * <p>
 	 * <li>update 2019-09-05 优化匹配方式，修复setIsXXX的错误</li>
 	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
+	 * <li>update 2021-03-12 支持property中含下划线跟对象属性进行匹配</li>
 	 * </p>
 	 * 
 	 * @todo 获取指定名称的方法集
@@ -102,24 +104,44 @@ public class BeanUtil {
 		boolean matched = false;
 		String name;
 		Class type;
+		String minProp;
+		Method underlinMethod;
+		int meter = 0;
+		boolean isBool;
+		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
 				prop = "set".concat(props[i].toLowerCase());
 				matched = false;
+				// 将属性名称剔除下划线
+				minProp = null;
+				if (prop.contains("_")) {
+					minProp = prop.replace("_", "");
+				}
+				meter = 0;
+				underlinMethod = null;
+				index = 0;
 				for (int j = 0; j < realMeth.size(); j++) {
+					isBool = false;
 					method = realMeth.get(j);
-					// 放弃兼容属性名称有下划线模式
-					// name=method.getName().replace("_", "").toLowerCase();
 					name = method.getName().toLowerCase();
-					// setXXX完全匹配
+					// setXXX完全匹配(优先匹配无下划线)
 					if (prop.equals(name)) {
 						matched = true;
 					} else {
 						// boolean 类型参数
 						type = method.getParameterTypes()[0];
-						if ((type.equals(Boolean.class) || type.equals(boolean.class)) && prop.startsWith("setis")
-								&& prop.replaceFirst("setis", "set").equals(name)) {
+						isBool = (type.equals(Boolean.class) || type.equals(boolean.class)) && prop.startsWith("setis");
+						if (isBool && prop.replaceFirst("setis", "set").equals(name)) {
 							matched = true;
+						}
+					}
+					// 匹配属性含下划线场景
+					if (!matched && minProp != null) {
+						if (minProp.equals(name) || (isBool && minProp.replaceFirst("setis", "set").equals(name))) {
+							meter++;
+							underlinMethod = method;
+							index = j;
 						}
 					}
 					if (matched) {
@@ -128,6 +150,12 @@ public class BeanUtil {
 						realMeth.remove(j);
 						break;
 					}
+				}
+				// 属性剔除下划线后存在唯一匹配
+				if (!matched && meter == 1) {
+					result[i] = underlinMethod;
+					result[i].setAccessible(true);
+					realMeth.remove(index);
 				}
 				if (realMeth.isEmpty()) {
 					break;
@@ -165,22 +193,45 @@ public class BeanUtil {
 		Method method;
 		boolean matched = false;
 		Class type;
+		String minProp;
+		Method underlinMethod;
+		int meter = 0;
+		boolean isBool;
+		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
 				prop = props[i].toLowerCase();
 				matched = false;
+				// 将属性名称剔除下划线
+				minProp = null;
+				if (prop.contains("_")) {
+					minProp = prop.replace("_", "");
+				}
+				meter = 0;
+				underlinMethod = null;
+				index = 0;
 				for (int j = 0; j < realMeth.size(); j++) {
+					isBool = false;
 					method = realMeth.get(j);
 					name = method.getName().toLowerCase();
 					// get完全匹配
 					if (name.equals("get".concat(prop))) {
 						matched = true;
-					} else if (name.startsWith("is")) {
+					} else {
 						// boolean型 is开头的方法
 						type = method.getReturnType();
-						if ((type.equals(Boolean.class) || type.equals(boolean.class))
-								&& (name.equals(prop) || name.equals("is".concat(prop)))) {
+						isBool = name.startsWith("is") && (type.equals(Boolean.class) || type.equals(boolean.class));
+						if (isBool && (name.equals(prop) || name.equals("is".concat(prop)))) {
 							matched = true;
+						}
+					}
+					// 匹配属性含下划线场景
+					if (!matched && minProp != null) {
+						if (name.equals("get".concat(minProp))
+								|| (isBool && (name.equals(minProp) || name.equals("is".concat(minProp))))) {
+							meter++;
+							underlinMethod = method;
+							index = j;
 						}
 					}
 					if (matched) {
@@ -189,6 +240,12 @@ public class BeanUtil {
 						realMeth.remove(j);
 						break;
 					}
+				}
+				// 属性剔除下划线后存在唯一匹配
+				if (!matched && meter == 1) {
+					result[i] = underlinMethod;
+					result[i].setAccessible(true);
+					realMeth.remove(index);
 				}
 				if (realMeth.isEmpty()) {
 					break;

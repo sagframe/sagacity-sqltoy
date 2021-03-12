@@ -4,18 +4,15 @@
 package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -1205,58 +1202,58 @@ public class ResultUtils {
 		return result;
 	}
 
-	/**
-	 * @TODO 将字段名称变成驼峰模式
-	 * @param sqlToyContext
-	 * @param queryExecutor
-	 * @param labelNames
-	 * @return
-	 */
-	public static String[] humpFieldNames(SqlToyContext sqlToyContext, QueryExecutor queryExecutor,
-			String[] labelNames) {
-		Type resultType = queryExecutor.getInnerModel().resultType;
-		if (null != resultType) {
-			Class superClass = ((Class) resultType).getSuperclass();
-			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
-					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
-					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
-					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
-				return labelNames;
-			}
-		}
-		String[] realLabels = new String[labelNames.length];
-		// update 2021-3-11 规避:staffId 和 staff_id 这种因数据库表设计极端不规范场景引起的冲突
-		if (resultType != null && sqlToyContext.isEntity((Class) resultType)) {
-			HashMap<String, String> columnFieldMap = sqlToyContext.getEntityMeta((Class) resultType)
-					.getColumnFieldMap();
-			for (int i = 0; i < realLabels.length; i++) {
-				realLabels[i] = labelNames[i];
-				// 非pojo中对应的字段，进行驼峰处理，是pojo的字段留在后面映射处理
-				if (!columnFieldMap.containsKey(realLabels[i].toLowerCase())) {
-					realLabels[i] = StringUtil.toHumpStr(realLabels[i], false);
-				}
-			}
-		} else {
-			// 避免同时存在:create_time 和createtime 类型字段情况
-			Set<String> simpleLabels = new HashSet<String>();
-			for (String label : labelNames) {
-				if (!label.contains("_")) {
-					simpleLabels.add(label.toLowerCase());
-				}
-			}
-			String label;
-			for (int i = 0; i < realLabels.length; i++) {
-				label = labelNames[i];
-				if (label.contains("_") && simpleLabels.contains(label.replace("_", "").toLowerCase())) {
-					realLabels[i] = StringUtil.toHumpStr(label, false, false);
-				} else {
-					realLabels[i] = StringUtil.toHumpStr(label, false, true);
-				}
-			}
-		}
-		return realLabels;
-	}
+//	/**
+//	 * @TODO 将字段名称变成驼峰模式
+//	 * @param sqlToyContext
+//	 * @param queryExecutor
+//	 * @param labelNames
+//	 * @return
+//	 */
+//	public static String[] humpFieldNames(SqlToyContext sqlToyContext, QueryExecutor queryExecutor,
+//			String[] labelNames) {
+//		Type resultType = queryExecutor.getInnerModel().resultType;
+//		if (null != resultType) {
+//			Class superClass = ((Class) resultType).getSuperclass();
+//			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
+//					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
+//					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
+//					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
+//					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
+//				return labelNames;
+//			}
+//		}
+//		String[] realLabels = new String[labelNames.length];
+//		// update 2021-3-11 规避:staffId 和 staff_id 这种因数据库表设计极端不规范场景引起的冲突
+//		if (resultType != null && sqlToyContext.isEntity((Class) resultType)) {
+//			HashMap<String, String> columnFieldMap = sqlToyContext.getEntityMeta((Class) resultType)
+//					.getColumnFieldMap();
+//			for (int i = 0; i < realLabels.length; i++) {
+//				realLabels[i] = labelNames[i];
+//				// 非pojo中对应的字段，进行驼峰处理，是pojo的字段留在后面映射处理
+//				if (!columnFieldMap.containsKey(realLabels[i].toLowerCase())) {
+//					realLabels[i] = StringUtil.toHumpStr(realLabels[i], false);
+//				}
+//			}
+//		} else {
+//			// 避免同时存在:create_time 和createtime 类型字段情况
+//			Set<String> simpleLabels = new HashSet<String>();
+//			for (String label : labelNames) {
+//				if (!label.contains("_")) {
+//					simpleLabels.add(label.toLowerCase());
+//				}
+//			}
+//			String label;
+//			for (int i = 0; i < realLabels.length; i++) {
+//				label = labelNames[i];
+//				if (label.contains("_") && simpleLabels.contains(label.replace("_", "").toLowerCase())) {
+//					realLabels[i] = StringUtil.toHumpStr(label, false, false);
+//				} else {
+//					realLabels[i] = StringUtil.toHumpStr(label, false, true);
+//				}
+//			}
+//		}
+//		return realLabels;
+//	}
 
 	/**
 	 * @todo 警告性日志记录,凡是单次获取超过一定规模数据的操作记录日志
