@@ -15,19 +15,6 @@ import org.sagacity.sqltoy.utils.NumberUtil;
 /**
  * @project sqltoy-orm
  * @description 对集合进行列转行处理
- *              <p>
- *              <sql id="qstart_unpivot_case">
- *              <value> 
- *              <![CDATA[ 
- *              select
- *              t.fruit_name,t.order_month,t.sale_count,t.sale_price,t.total_amt
- *              from sqltoy_fruit_order t order by t.order_month
- *              desc,t.fruit_name ]]> 
- *              </value> 
- *              <unpivot columns-to-rows="sale_count:销售量,sale_price:销售金额,total_amt:总销售额"
- *              new-columns-labels="indexName,indexValue" /> 
- *              </sql>
- *              </p>
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  */
