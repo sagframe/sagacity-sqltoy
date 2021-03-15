@@ -90,6 +90,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int delayCheckSeconds = 30;
 
 	/**
+	 * 分页页号超出总页时转第一页，否则返回空集合
+	 */
+	private boolean pageOverToFirst = true;
+
+	/**
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
@@ -814,6 +819,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+	}
+
+	public boolean isPageOverToFirst() {
+		return pageOverToFirst;
+	}
+
+	public void setPageOverToFirst(boolean pageOverToFirst) {
+		this.pageOverToFirst = pageOverToFirst;
 	}
 
 	public void destroy() {

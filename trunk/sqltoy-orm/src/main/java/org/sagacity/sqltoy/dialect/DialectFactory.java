@@ -730,11 +730,18 @@ public class DialectFactory {
 										queryResult.setRecordCount(totalRecord);
 									} else {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
-										long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
-										queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-												realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn, dbType,
-												dialect);
-										queryResult.setPageNo(realStartPage);
+										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
+										//允许页号超出总页数，结果返回空集合
+										if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
+											queryResult = new QueryResult();
+											queryResult.setPageNo(pageNo);
+										} else {
+											long realStartPage = isOverPage ? 1 : pageNo;
+											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
+													realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn,
+													dbType, dialect);
+											queryResult.setPageNo(realStartPage);
+										}
 										queryResult.setPageSize(pageSize);
 										queryResult.setRecordCount(recordCnt);
 									}
@@ -1653,7 +1660,8 @@ public class DialectFactory {
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1695,7 +1703,8 @@ public class DialectFactory {
 
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1736,7 +1745,8 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false, extend.humpMapLabel));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);

@@ -126,6 +126,8 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
+		// 分页页号超出总页时转第一页，否则返回空集合
+		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改

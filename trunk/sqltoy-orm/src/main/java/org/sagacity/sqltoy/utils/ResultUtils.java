@@ -1048,9 +1048,10 @@ public class ResultUtils {
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
 					changedCols = true;
-				} else if (processor instanceof UnpivotModel) {
+				} // 列转行
+				else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
-					changedCols = true;
+					//changedCols = true;
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
