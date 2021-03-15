@@ -42,7 +42,8 @@ public class UnpivotList {
 			} else {
 				unpivotCols[i] = labelIndexMap.get(colIndex);
 			}
-			indexColValues[i] = colsAndIndexValue[1].trim();
+			indexColValues[i] = (colsAndIndexValue.length > 1) ? colsAndIndexValue[1].trim()
+					: colsAndIndexValue[0].trim();
 			sortUnpivotCols[i] = unpivotCols[i];
 		}
 		// 判断select 中是否已经预留了旋转列label和value对应的字段，如果有则update相关列的数据

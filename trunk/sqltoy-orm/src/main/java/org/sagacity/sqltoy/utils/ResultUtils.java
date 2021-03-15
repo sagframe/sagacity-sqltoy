@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
-import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
@@ -1044,7 +1043,7 @@ public class ResultUtils {
 			Object processor;
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
-				// 数据旋转
+				// 数据旋转(行转列)
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
 					changedCols = true;
@@ -1063,7 +1062,7 @@ public class ResultUtils {
 					// 行数据环比
 					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ReverseModel) {
-					// 数据反顺
+					// 数据反序
 					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
 				}
 			}
