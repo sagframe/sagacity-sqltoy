@@ -249,7 +249,7 @@ public class DialectFactory {
 								// 替换sql中:name为?并提取参数名称归集成数组
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-										reflectPropertyHandler, false, 0);
+										reflectPropertyHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
 										sqlParamsModel.getParamsName());
 								realSql = sqlParamsModel.getSql();

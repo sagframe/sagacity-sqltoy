@@ -202,7 +202,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private DataSource defaultDataSource;
 
 	/**
-	 * sql脚本检测间隔时长(默认为3秒)
+	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒)
 	 */
 	private Integer scriptCheckIntervalSeconds;
 

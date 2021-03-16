@@ -684,7 +684,7 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static List reflectBeansToList(List datas, String[] props) throws Exception {
-		return reflectBeansToList(datas, props, null, false, 0);
+		return reflectBeansToList(datas, props, null);
 	}
 
 	/**
@@ -695,7 +695,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
-		List result = reflectBeansToList(datas, props, null, false, 0);
+		List result = reflectBeansToList(datas, props, null);
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -718,43 +718,19 @@ public class BeanUtil {
 		return ary;
 	}
 
-	public static List reflectBeanToList(Object data, String[] properties) throws Exception {
-		return reflectBeanToList(data, properties, null);
-	}
-
-	public static List reflectBeanToList(Object data, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
-		List datas = new ArrayList();
-		datas.add(data);
-		List result = reflectBeansToList(datas, properties, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty()) {
-			return (List) result.get(0);
-		}
-		return null;
-	}
-
-	public static List reflectBeansToList(List datas, String[] properties, boolean hasSequence, int startSequence)
-			throws Exception {
-		return reflectBeansToList(datas, properties, null, hasSequence, startSequence);
-	}
-
 	/**
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
 	 * @param datas
 	 * @param properties
 	 * @param reflectPropertyHandler
-	 * @param hasSequence
-	 * @param startSequence
 	 * @return
 	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
-		// 数据的长度
-		int maxLength = Integer.toString(datas.size()).length();
 		List resultList = new ArrayList();
 		try {
 			int methodLength = properties.length;
@@ -762,14 +738,13 @@ public class BeanUtil {
 			boolean inited = false;
 			Object rowObject = null;
 			Object[] params = new Object[] {};
-			int start = (hasSequence ? 1 : 0);
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -782,9 +757,6 @@ public class BeanUtil {
 						inited = true;
 					}
 					List dataList = new ArrayList();
-					if (hasSequence) {
-						dataList.add(StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength));
-					}
 					for (int j = 0; j < methodLength; j++) {
 						if (realMethods[j] != null) {
 							dataList.add(realMethods[j].invoke(rowObject, params));
@@ -938,7 +910,6 @@ public class BeanUtil {
 			boolean inited = false;
 			Object rowObject = null;
 			Object[] params = new Object[] {};
-			//int start = 0;
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
@@ -1298,63 +1269,6 @@ public class BeanUtil {
 		}
 	}
 
-	/**
-	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans   源对象数据集合
-	 * @param fromProps   源对象的属性
-	 * @param targetProps 目标对象的属性
-	 * @param newClass    目标对象类型
-	 * @return
-	 * @throws Exception
-	 */
-	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
-			Class newClass) throws Exception {
-		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
-			return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, true);
-		}
-		return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, false);
-	}
-
-	/**
-	 * @todo 完成两个结合数据的复制
-	 * @param fromBeans
-	 * @param fromProps
-	 * @param targetProps
-	 * @param newClass
-	 * @param autoMapping 是否自动匹配
-	 * @return
-	 * @throws Exception
-	 */
-	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
-			Class newClass, boolean autoMapping) throws Exception {
-		if (autoMapping == false) {
-			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
-			return reflectListToBean(typeHandler, result, targetProps == null ? fromProps : targetProps, newClass);
-		}
-		// 获取set方法
-		String[] properties = matchSetMethodNames(newClass);
-		String[] getProperties = new String[properties.length];
-		HashMap<String, Integer> matchIndex = new HashMap<String, Integer>();
-		if (targetProps != null && fromProps != null) {
-			for (int i = 0; i < targetProps.length; i++) {
-				matchIndex.put(targetProps[i].toLowerCase(), i);
-			}
-			Integer index;
-			for (int i = 0; i < properties.length; i++) {
-				index = matchIndex.get(properties[i].toLowerCase());
-				if (index == null || index >= fromProps.length) {
-					getProperties[i] = properties[i];
-				} else {
-					getProperties[i] = fromProps[index];
-				}
-			}
-		} else {
-			getProperties = properties;
-		}
-		List result = reflectBeansToList(fromBeans, getProperties);
-		return reflectListToBean(typeHandler, result, properties, newClass);
-	}
-
 	public static String[] matchSetMethodNames(Class voClass) {
 		return matchMethodNames(voClass, false);
 	}
@@ -1514,7 +1428,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 获取VO对应的Class
+	 * @TODO 获取VO对应的实际的entityClass
 	 * @param entityClass
 	 * @return
 	 */
