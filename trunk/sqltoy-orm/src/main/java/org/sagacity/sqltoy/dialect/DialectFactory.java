@@ -701,7 +701,11 @@ public class DialectFactory {
 								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
-									queryResult.setPageNo(pageNo);
+									if (recordCnt == 0 && sqlToyContext.isPageOverToFirst()) {
+										queryResult.setPageNo(1L);
+									} else {
+										queryResult.setPageNo(pageNo);
+									}
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(0L);
 									if (illegal) {
@@ -731,7 +735,7 @@ public class DialectFactory {
 									} else {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
 										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
-										//允许页号超出总页数，结果返回空集合
+										// 允许页号超出总页数，结果返回空集合
 										if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
 											queryResult = new QueryResult();
 											queryResult.setPageNo(pageNo);
@@ -871,6 +875,9 @@ public class DialectFactory {
 			// 总记录数量大于实际记录数量
 			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
+			}
+			if (queryResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
+				queryResult.setPageNo(1L);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

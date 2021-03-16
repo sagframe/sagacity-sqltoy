@@ -260,6 +260,9 @@ public class Mongo extends BaseLink {
 		BasicQuery query = new BasicQuery(mql);
 		result.setRecordCount(mongoTemplate.count(query, sqlToyConfig.getNoSqlConfigModel().getCollection()));
 		if (result.getRecordCount() == 0) {
+			if (sqlToyContext.isPageOverToFirst()) {
+				result.setPageNo(1L);
+			}
 			return result;
 		}
 		// 设置分页

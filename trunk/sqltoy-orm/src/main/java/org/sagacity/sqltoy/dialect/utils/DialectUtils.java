@@ -1209,6 +1209,7 @@ public class DialectUtils {
 				final String[] mappedFields = cascadeModel.getMappedFields();
 				final Object[] mainValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+				//oneToMany
 				if (cascadeModel.getCascadeType() == 1) {
 					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 				} else {
@@ -1432,6 +1433,7 @@ public class DialectUtils {
 			subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 			forceUpdateProps = (subTableForceUpdateProps == null) ? null
 					: subTableForceUpdateProps.get(cascadeModel.getMappedType());
+			//oneToMany
 			if (cascadeModel.getCascadeType() == 1) {
 				subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
 			} else {
