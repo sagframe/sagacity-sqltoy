@@ -20,8 +20,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 
 /**
  * @project sqltoy-orm
- * @description SqlToy3.0版本开始采用针对不同数据库单独进行特定封装处理，改变原先在一个方法中
- *              判断数据库并进行sql封装的模式，使得整个结构更加清晰
+ * @description 针对不同数据库进行功能封装实现，使得整个结构更加清晰更易维护
  * @author zhongxuchen
  * @version v1.0,Date:2013-8-29
  * @Modification Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}

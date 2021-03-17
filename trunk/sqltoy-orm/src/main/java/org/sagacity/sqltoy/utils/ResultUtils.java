@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
@@ -53,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
+ * @description 提供查询结果的缓存key-value提取以及结果分组link功能
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}

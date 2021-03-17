@@ -17,8 +17,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供统一的dataSource管理
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
- * @modify data:2020-06-10
- *         剔除sqlserver2008,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  */
 public class DataSourceUtils {
 	/**
