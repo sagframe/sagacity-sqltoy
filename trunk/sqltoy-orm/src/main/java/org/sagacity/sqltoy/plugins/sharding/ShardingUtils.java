@@ -150,7 +150,7 @@ public class ShardingUtils {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
 						+ dbConfig.getStrategy() + " 未定义,请检查!");
 			}
-			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null, false, 0);
+			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null);
 		}
 		// 分表
 		boolean hasTable = false;
@@ -164,8 +164,7 @@ public class ShardingUtils {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
 						+ tableConfig.getStrategy() + " 未定义,请检查!");
 			}
-			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null, false,
-					0);
+			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null);
 		}
 
 		Map<String, ShardingGroupModel> shardingGroupMaps = new HashMap<String, ShardingGroupModel>();
@@ -522,7 +521,7 @@ public class ShardingUtils {
 			// 标识符
 			String signature = entityMeta.getBizIdSignature();
 			Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();
-			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null, false, 0);
+			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null);
 			Object pkValue;
 			Object[] relatedColValue = null;
 			Object[] fullParamValues;

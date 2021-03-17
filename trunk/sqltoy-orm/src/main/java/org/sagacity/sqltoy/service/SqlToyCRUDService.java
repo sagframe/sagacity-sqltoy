@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;

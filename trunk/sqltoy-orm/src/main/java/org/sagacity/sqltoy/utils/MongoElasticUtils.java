@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.time.LocalDate;

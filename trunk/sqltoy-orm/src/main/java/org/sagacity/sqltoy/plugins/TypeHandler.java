@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.plugins;
 
 import java.sql.PreparedStatement;

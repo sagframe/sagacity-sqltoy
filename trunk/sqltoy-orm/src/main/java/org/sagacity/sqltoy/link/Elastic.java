@@ -59,6 +59,11 @@ public class Elastic extends BaseLink {
 	private Class<?> resultType;
 
 	/**
+	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
+	 */
+	private boolean humpMapLabel = true;
+
+	/**
 	 * @param sqlToyContext
 	 * @param dataSource
 	 */
@@ -88,6 +93,11 @@ public class Elastic extends BaseLink {
 
 	public Elastic resultType(Class<?> resultType) {
 		this.resultType = resultType;
+		return this;
+	}
+
+	public Elastic humpMapLabel(boolean humpMapLabel) {
+		this.humpMapLabel = humpMapLabel;
 		return this;
 	}
 
@@ -158,15 +168,21 @@ public class Elastic extends BaseLink {
 		if (noSqlConfig == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
+		PaginationModel pageResult = null;
 		try {
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
 				if (esConfig.isNativeSql()) {
 					throw new UnsupportedOperationException("elastic native sql pagination is not support!");
 				}
-				return ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			} else {
+				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			}
-			return ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
+			if (pageResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
+				pageResult.setPageNo(1L);
+			}
+			return pageResult;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -187,6 +203,7 @@ public class Elastic extends BaseLink {
 		if (resultType != null) {
 			queryExecutor.resultType(resultType);
 		}
+		queryExecutor.humpMapLabel(humpMapLabel);
 		return queryExecutor;
 	}
 }

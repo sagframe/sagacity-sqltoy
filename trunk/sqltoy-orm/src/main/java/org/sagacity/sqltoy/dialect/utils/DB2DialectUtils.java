@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dialect.utils;
 
 import java.sql.Connection;

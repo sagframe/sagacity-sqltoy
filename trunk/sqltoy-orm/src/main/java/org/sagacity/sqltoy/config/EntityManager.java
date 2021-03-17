@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.config;
 
 import java.lang.reflect.Field;
@@ -130,6 +127,9 @@ public class EntityManager {
 	 * @return
 	 */
 	public boolean isEntity(SqlToyContext sqlToyContext, Class voClass) {
+		if (voClass == null) {
+			return false;
+		}
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
 		if (unEntityMap.contains(className)) {

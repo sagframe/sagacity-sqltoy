@@ -96,6 +96,7 @@ public class StringUtilsTest {
 		String sequence="SEQ_${tableName}";
 		System.err.println(sequence.replaceFirst("(?i)\\$\\{tableName\\}", "staff_info"));
 		System.err.println(sequence.replaceFirst("(?i)\\$?\\{tableName\\}", "staff_info"));
+		System.err.println("A_B_C_D".replace("_", ""));
 
 	}
 }

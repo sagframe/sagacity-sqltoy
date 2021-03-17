@@ -194,7 +194,7 @@ public class ClickHouseDialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;

@@ -90,6 +90,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private int delayCheckSeconds = 30;
 
 	/**
+	 * 分页页号超出总页时转第一页，否则返回空集合
+	 */
+	private boolean pageOverToFirst = true;
+
+	/**
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
@@ -197,7 +202,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private DataSource defaultDataSource;
 
 	/**
-	 * sql脚本检测间隔时长(默认为3秒)
+	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒)
 	 */
 	private Integer scriptCheckIntervalSeconds;
 
@@ -255,24 +260,16 @@ public class SqlToyContext implements ApplicationContextAware {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
 
-		/**
-		 * 初始化脚本加载器
-		 */
+		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
 
-		/**
-		 * 初始化实体对象管理器
-		 */
+		// 初始化实体对象管理器
 		entityManager.initialize(this);
 
-		/**
-		 * 设置保留字
-		 */
+		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
 
-		/**
-		 * 初始化sql执行统计的基本参数
-		 */
+		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
@@ -822,6 +819,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+	}
+
+	public boolean isPageOverToFirst() {
+		return pageOverToFirst;
+	}
+
+	public void setPageOverToFirst(boolean pageOverToFirst) {
+		this.pageOverToFirst = pageOverToFirst;
 	}
 
 	public void destroy() {

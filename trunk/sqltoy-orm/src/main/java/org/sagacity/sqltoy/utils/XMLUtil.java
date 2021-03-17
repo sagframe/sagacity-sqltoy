@@ -1,24 +1,11 @@
 package org.sagacity.sqltoy.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.net.URL;
 
-import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
@@ -28,7 +15,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 /**
  * @project sagacity-sqltoy
@@ -45,105 +31,8 @@ public class XMLUtil {
 	// xml 忽视验证的特性
 	private final static String NO_VALIDATOR_FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
-	private final static String XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
 	private XMLUtil() {
-	}
-
-	/**
-	 * @todo xml文件合法性验证
-	 * @param xsdStream
-	 * @param xmlStream
-	 * @return
-	 */
-	public static boolean validate(InputStream xsdStream, InputStream xmlStream) {
-		SchemaFactory factory = SchemaFactory.newInstance(XML_SCHEMA);
-		try {
-			Source xsdSource = new StreamSource(xsdStream);
-			Schema schema = factory.newSchema(xsdSource);
-			Validator validator = schema.newValidator();
-			Source xmlSource = new StreamSource(xmlStream);
-			// Check the document
-			validator.validate(xmlSource);
-			return true;
-		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!{}", ioe.getMessage());
-			ioe.printStackTrace();
-		} catch (SAXException ex) {
-			logger.error("xml验证不合法:{}", ex.getMessage());
-			ex.printStackTrace();
-		}
-		return false;
-	}
-
-	/**
-	 * @todo xml文件合法性验证
-	 * @param xsdUrl
-	 * @param xmlUrl
-	 * @return
-	 */
-	public static boolean validate(URL xsdUrl, URL xmlUrl) {
-		SchemaFactory factory = SchemaFactory.newInstance(XML_SCHEMA);
-		try {
-			Schema schema = factory.newSchema(xsdUrl);
-			Validator validator = schema.newValidator();
-			Source xmlSource = new StreamSource(new FileInputStream(xmlUrl.getFile()));
-			// Check the document
-			validator.validate(xmlSource);
-			return true;
-		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!{}", ioe.getMessage());
-			ioe.printStackTrace();
-		} catch (SAXException ex) {
-			logger.error("xml验证不合法:{}", ex.getMessage());
-			ex.printStackTrace();
-		}
-		return false;
-	}
-
-	/**
-	 * @todo 验证xml文件对应的schema文件是否匹配
-	 * @param xsdFile
-	 * @param xmlFile
-	 * @return
-	 */
-	public static boolean validate(String xsdFile, String xmlFile) {
-		SchemaFactory factory = SchemaFactory.newInstance(XML_SCHEMA);
-		File schemaLocation = new File(xsdFile);
-		try {
-			Schema schema = factory.newSchema(schemaLocation);
-			Validator validator = schema.newValidator();
-			Source source = new StreamSource(xmlFile);
-			// Check the document
-			validator.validate(source);
-			return true;
-		} catch (IOException ioe) {
-			logger.error("文件IO读取失败!{}", ioe.getMessage());
-			ioe.printStackTrace();
-		} catch (SAXException ex) {
-			logger.error(xmlFile + " is not valid " + ex.getMessage());
-			ex.printStackTrace();
-		}
-		return false;
-	}
-
-	/**
-	 * @todo 获取qName对应的内容
-	 * @param xmlFile
-	 * @param xmlQuery
-	 * @param qName
-	 * @return
-	 * @throws Exception
-	 */
-	public static Object getXPathContent(File xmlFile, String xmlQuery, QName qName) throws Exception {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		factory.setNamespaceAware(true);
-		DocumentBuilder builder = factory.newDocumentBuilder();
-		Document doc = builder.parse(xmlFile);
-		XPathFactory pathFactory = XPathFactory.newInstance();
-		XPath xpath = pathFactory.newXPath();
-		XPathExpression pathExpression = xpath.compile(xmlQuery);
-		return pathExpression.evaluate(doc, qName);
 	}
 
 	/**
@@ -191,7 +80,7 @@ public class XMLUtil {
 	 */
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
-		if (keyValues == null) {
+		if (keyValues == null||keyValues.length==0) {
 			return result;
 		}
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {
@@ -309,14 +198,5 @@ public class XMLUtil {
 				}
 			}
 		}
-	}
-
-	/**
-	 * @todo 解析xml元素的属性映射到对象的属性中去
-	 * @param elt
-	 * @param entity
-	 */
-	public static void setAttributes(Element elt, Serializable entity) throws Exception {
-		setAttributes(elt, entity, null);
 	}
 }

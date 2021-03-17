@@ -1,6 +1,3 @@
-/**
- * @Copyright 2007 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;

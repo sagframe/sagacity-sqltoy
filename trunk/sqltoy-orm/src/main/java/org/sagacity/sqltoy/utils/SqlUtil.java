@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.io.Closeable;
@@ -414,17 +411,20 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
-
 		// update 2020-12-24 增加映射对象时属性映射关系提取
 		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
-			fields[i] = columnNames[i].replaceAll("\\_", "").toLowerCase();
+			fields[i] = columnNames[i].toLowerCase();
 			// 存在pojo中属性跟数据库字段名称有对照映射关系的
 			if (hasMap) {
 				if (columnFieldMap.containsKey(fields[i])) {
 					fields[i] = columnFieldMap.get(fields[i]);
+				} else {
+					fields[i] = fields[i].replace("_", "");
 				}
+			} else {
+				fields[i] = fields[i].replace("_", "");
 			}
 		}
 		// 匹配对应的set方法

@@ -84,10 +84,9 @@ public class MySqlDialect implements Dialect {
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		/*
-		 * select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
-		 * row_number 再排序方式性能稍好 同时也可以保证通用性
-		 */
+
+		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
+		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
@@ -305,32 +304,10 @@ public class MySqlDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length < 1) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		loadSql.append(getLockSql(loadSql.toString(), dbType, lockMode));
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+				(sql, dbTypeValue, lockedMode) -> {
+					return getLockSql(sql, dbTypeValue, lockedMode);
+				});
 	}
 
 	/*

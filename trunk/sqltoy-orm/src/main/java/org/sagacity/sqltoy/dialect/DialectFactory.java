@@ -249,7 +249,7 @@ public class DialectFactory {
 								// 替换sql中:name为?并提取参数名称归集成数组
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-										reflectPropertyHandler, false, 0);
+										reflectPropertyHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
 										sqlParamsModel.getParamsName());
 								realSql = sqlParamsModel.getSql();
@@ -424,11 +424,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
@@ -610,11 +608,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							queryResult.setSkipQueryCount(true);
@@ -705,7 +701,11 @@ public class DialectFactory {
 								boolean illegal = (pageNo == -1 && (limitSize != -1 && recordCnt > limitSize));
 								if (recordCnt == 0 || illegal) {
 									queryResult = new QueryResult();
-									queryResult.setPageNo(pageNo);
+									if (recordCnt == 0 && sqlToyContext.isPageOverToFirst()) {
+										queryResult.setPageNo(1L);
+									} else {
+										queryResult.setPageNo(pageNo);
+									}
 									queryResult.setPageSize(pageSize);
 									queryResult.setRecordCount(0L);
 									if (illegal) {
@@ -734,11 +734,18 @@ public class DialectFactory {
 										queryResult.setRecordCount(totalRecord);
 									} else {
 										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
-										long realStartPage = (pageNo * pageSize >= (recordCnt + pageSize)) ? 1 : pageNo;
-										queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-												realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn, dbType,
-												dialect);
-										queryResult.setPageNo(realStartPage);
+										boolean isOverPage = (pageNo * pageSize >= (recordCnt + pageSize));
+										// 允许页号超出总页数，结果返回空集合
+										if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
+											queryResult = new QueryResult();
+											queryResult.setPageNo(pageNo);
+										} else {
+											long realStartPage = isOverPage ? 1 : pageNo;
+											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
+													realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn,
+													dbType, dialect);
+											queryResult.setPageNo(realStartPage);
+										}
 										queryResult.setPageSize(pageSize);
 										queryResult.setRecordCount(recordCnt);
 									}
@@ -754,11 +761,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -871,6 +876,9 @@ public class DialectFactory {
 			if (rowSize < queryResult.getPageSize() && (queryResult.getRecordCount() > minCount) && minCount >= 0) {
 				queryResult.setRecordCount(minCount);
 			}
+			if (queryResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
+				queryResult.setPageNo(1L);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException("并行查询执行错误:" + e.getMessage(), e);
@@ -938,11 +946,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
@@ -1004,11 +1010,9 @@ public class DialectFactory {
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													ResultUtils.humpFieldNames(queryExecutor,
-															queryResult.getLabelNames()),
-													(Class) extend.resultType, changedCols));
+									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
+											queryResult.getRows(), queryResult.getLabelNames(),
+											(Class) extend.resultType, changedCols, extend.humpMapLabel));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
@@ -1663,8 +1667,8 @@ public class DialectFactory {
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1706,8 +1710,8 @@ public class DialectFactory {
 
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1748,8 +1752,8 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										(Class) extend.resultType, false));
+										queryResult.getLabelNames(), (Class) extend.resultType, false,
+										extend.humpMapLabel));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1818,8 +1822,7 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										ResultUtils.humpFieldNames(queryExecutor, queryResult.getLabelNames()),
-										resultType, changedCols));
+										queryResult.getLabelNames(), resultType, changedCols, true));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);

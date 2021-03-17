@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.config;
 
 import java.io.File;

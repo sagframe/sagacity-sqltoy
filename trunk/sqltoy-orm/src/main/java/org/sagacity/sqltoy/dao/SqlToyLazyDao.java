@@ -1,8 +1,3 @@
-/**
- * 提供一个默认的多功能Dao,在Service层统一提SqlToyLazyDao引入, 
- * 这样对于一般的增删改查等操作直接使用，从而避免对一些非常简单的操作也需要写一个Dao类
- * ,简化开发提升开发效率
- */
 package org.sagacity.sqltoy.dao;
 
 import java.io.Serializable;

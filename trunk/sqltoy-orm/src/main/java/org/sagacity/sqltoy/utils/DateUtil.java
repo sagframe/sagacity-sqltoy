@@ -1,6 +1,3 @@
-/**
- * @Copyright 2008 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
@@ -32,9 +29,7 @@ import org.slf4j.LoggerFactory;
  * @author zhongxuchen
  * @version v1.0,Date:2008-12-14
  * @modify data:2012-8-27 {对日期的格式化增加了locale功能}
- * @modify data:2015-8-8
- *         {针对parseString功能进行了优化,可以对英文的日期和中文日期进行解析转化为日期格式,同时优化了格式判断的逻辑
- *         ,避免不停的用正则表达式进行格式判断}
+ * @modify data:2015-8-8 对parseString功能进行了优化,对英文和中文日期进行解析,同时优化了格式判断的逻辑
  * @modify data:2019-10-11 支持LocalDate、LocalTime、LocalDateTime等新的日期类型
  */
 @SuppressWarnings({ "unused" })

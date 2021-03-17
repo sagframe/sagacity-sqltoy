@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate;
 
 import java.time.LocalDateTime;
@@ -180,7 +177,8 @@ public class CacheUpdateWatcher extends Thread {
 		if (!checkerConfig.isIncrement()) {
 			try {
 				for (CacheCheckResult result : results) {
-					logger.debug("检测到缓存:{} 类别:{} 发生更新!", result.getCacheName(), result.getCacheType());
+					logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", result.getCacheName(),
+							(result.getCacheType() == null) ? "无" : result.getCacheType());
 					translateCacheManager.clear(result.getCacheName(), result.getCacheType());
 				}
 			} catch (Exception e) {
@@ -191,7 +189,7 @@ public class CacheUpdateWatcher extends Thread {
 		else {
 			String cacheName = checkerConfig.getCache();
 			try {
-				logger.debug("检测到缓存:{} 发生{}条记录更新!", cacheName, results.size());
+				logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
 				HashMap<String, Object[]> cacheData;
 				int count = 0;
 				// 内部不存在分组的缓存
@@ -218,8 +216,8 @@ public class CacheUpdateWatcher extends Thread {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
 								count++;
 							} else {
-								logger.warn("增量缓存更新cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!", cacheName,
-										result.getCacheType());
+								logger.warn("增量缓存更新:cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!",
+										cacheName, result.getCacheType());
 							}
 						}
 					}
