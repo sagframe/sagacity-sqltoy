@@ -688,33 +688,30 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 此方法仅限于sqltoy loadAll级联特殊场景使用
+	 * @TODO 切取单列值并以数组返回,服务于loadAll方法
 	 * @param datas
 	 * @param props
 	 * @return
 	 * @throws Exception
 	 */
-	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
-		List result = reflectBeansToList(datas, props, null);
-		if (result == null || result.isEmpty()) {
+	public static Object[] sliceToArray(List datas, String props) throws Exception {
+		List sliceList = reflectBeansToList(datas, new String[] { props }, null);
+		if (sliceList == null || sliceList.isEmpty()) {
 			return null;
 		}
-		int propSize = props.length;
-		List[] ary = new List[propSize];
-		for (int i = 0; i < propSize; i++) {
-			ary[i] = new ArrayList();
-		}
-		Object value;
-		List rowList;
-		for (int i = 0, n = result.size(); i < n; i++) {
-			rowList = (List) result.get(i);
-			for (int j = 0; j < propSize; j++) {
-				value = rowList.get(j);
-				if (!ary[j].contains(value)) {
-					ary[j].add(value);
-				}
+		List result = new ArrayList();
+		List row;
+		for (int i = 0; i < sliceList.size(); i++) {
+			row = (List) sliceList.get(i);
+			if (row != null && row.get(0) != null) {
+				result.add(row.get(0));
 			}
 		}
+		if (result.isEmpty()) {
+			return null;
+		}
+		Object[] ary = new Object[result.size()];
+		result.toArray(ary);
 		return ary;
 	}
 

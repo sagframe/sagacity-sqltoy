@@ -174,30 +174,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
 			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
 	}
 
 	@Override

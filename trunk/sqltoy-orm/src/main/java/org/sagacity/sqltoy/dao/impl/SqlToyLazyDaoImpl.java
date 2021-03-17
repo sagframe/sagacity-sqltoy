@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.dao.impl;
 
 import java.io.Serializable;
