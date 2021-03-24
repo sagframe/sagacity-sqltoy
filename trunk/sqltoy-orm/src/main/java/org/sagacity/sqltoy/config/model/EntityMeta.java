@@ -295,7 +295,7 @@ public class EntityMeta implements Serializable {
 		String colName = fieldMeta.getColumnName().toLowerCase();
 		String fieldName = fieldMeta.getFieldName();
 		columnFieldMap.put(colName, fieldName);
-		//属性名称中不包含"_" 
+		// 属性名称中不包含"_"
 		if (!fieldName.contains("_")) {
 			columnFieldMap.put(colName.replace("_", ""), fieldName);
 		}
@@ -320,6 +320,20 @@ public class EntityMeta implements Serializable {
 	 */
 	public String[] getFieldsArray() {
 		return fieldsArray;
+	}
+
+	public String[] getFieldsNotPartitionKey() {
+		List<String> fields = new ArrayList<String>();
+		FieldMeta fieldMeta;
+		for (int i = 0; i < fieldsArray.length; i++) {
+			fieldMeta = fieldsMeta.get(fieldsArray[i].toLowerCase());
+			if (!fieldMeta.isPartitionKey()) {
+				fields.add(fieldsArray[i]);
+			}
+		}
+		String[] result = new String[fields.size()];
+		fields.toArray(result);
+		return result;
 	}
 
 	/**

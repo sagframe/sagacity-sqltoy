@@ -862,7 +862,7 @@ public class DialectUtils {
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 			// 排除sqlserver timestamp类型
-			if (!isMSsql || fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
+			if (!(isMSsql && fieldMeta.getType() == java.sql.Types.TIMESTAMP)) {
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (meter > 0) {
 					sql.append(",");
@@ -1184,7 +1184,7 @@ public class DialectUtils {
 		} else {
 			// 复合主键构造 (field1=? and field2=?)
 			String condition = " (";
-			for (int i = 0, n = idSize; i < n; i++) {
+			for (int i = 0; i < idSize; i++) {
 				field = entityMeta.getIdArray()[i];
 				colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
 				if (i > 0) {
@@ -2239,9 +2239,9 @@ public class DialectUtils {
 				callStat.execute();
 				rs = callStat.getResultSet();
 				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-//				while (callStat.getMoreResults()) {
-//					rs = callStat.getResultSet();
-//				}
+				// while (callStat.getMoreResults()) {
+				// rs = callStat.getResultSet();
+				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
