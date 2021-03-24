@@ -23,11 +23,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.7 发版日期: 2021-03-17
-* 兼容pojo或dto的属性名称含下划线的特殊场景，如：staff_name 和对应的getStaff_Name()
-* 分页页号越界时可统一配置是否从第一页开始:spring.sqltoy.pageOverToFirst默认为true
-* 列转行允许将结果映射到vo/pojo,map等类型上
-* 优化loadAll复合主键场景下的处理逻辑以及附带的级联加载逻辑
+# 最新版本号: 4.18.8 发版日期: 2021-03-24
+* 优化clickhouse和dorisdb支持，配套quickvo4.18.8更新
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
