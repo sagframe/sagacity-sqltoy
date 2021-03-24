@@ -1510,8 +1510,8 @@ public class SqlUtil {
 			return sql;
 		}
 		String sqlLow = sql.toLowerCase().trim();
-		// 包含了select 或with as、show 模式开头直接返回
-		if (StringUtil.matches(sqlLow, "^(select|with|show)\\W")) {
+		// 包含了select 或with as、show、desc 模式开头直接返回
+		if (StringUtil.matches(sqlLow, "^(select|with|show|desc)\\W")) {
 			return sql;
 		}
 		// 存储过程模式直接返回
