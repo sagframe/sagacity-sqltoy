@@ -37,13 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 类处理通用工具,提供反射处理
  * @author zhongxuchen
  * @version v1.0,Date:2008-11-10
  * @modify data:2019-09-05 优化匹配方式，修复setIsXXX的错误
  * @modify data:2020-06-23 优化convertType(Object, String) 方法
  * @modify data:2020-07-08 修复convertType(Object, String) 转Long类型时精度丢失问题
+ * @modify data:2021-03-12 支持property中含下划线跟对象方法进行匹配
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BeanUtil {
@@ -71,6 +72,7 @@ public class BeanUtil {
 	 * <p>
 	 * <li>update 2019-09-05 优化匹配方式，修复setIsXXX的错误</li>
 	 * <li>update 2020-04-09 支持setXXX()并返回对象本身,适配链式操作</li>
+	 * <li>update 2021-03-12 支持property中含下划线跟对象属性进行匹配</li>
 	 * </p>
 	 * 
 	 * @todo 获取指定名称的方法集
@@ -102,24 +104,44 @@ public class BeanUtil {
 		boolean matched = false;
 		String name;
 		Class type;
+		String minProp;
+		Method underlinMethod;
+		int meter = 0;
+		boolean isBool;
+		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
 				prop = "set".concat(props[i].toLowerCase());
 				matched = false;
+				// 将属性名称剔除下划线
+				minProp = null;
+				if (prop.contains("_")) {
+					minProp = prop.replace("_", "");
+				}
+				meter = 0;
+				underlinMethod = null;
+				index = 0;
 				for (int j = 0; j < realMeth.size(); j++) {
+					isBool = false;
 					method = realMeth.get(j);
-					// 放弃兼容属性名称有下划线模式
-					// name=method.getName().replaceAll("\\_", "").toLowerCase();
 					name = method.getName().toLowerCase();
-					// setXXX完全匹配
+					// setXXX完全匹配(优先匹配无下划线)
 					if (prop.equals(name)) {
 						matched = true;
 					} else {
 						// boolean 类型参数
 						type = method.getParameterTypes()[0];
-						if ((type.equals(Boolean.class) || type.equals(boolean.class)) && prop.startsWith("setis")
-								&& prop.replaceFirst("setis", "set").equals(name)) {
+						isBool = (type.equals(Boolean.class) || type.equals(boolean.class)) && prop.startsWith("setis");
+						if (isBool && prop.replaceFirst("setis", "set").equals(name)) {
 							matched = true;
+						}
+					}
+					// 匹配属性含下划线场景
+					if (!matched && minProp != null) {
+						if (minProp.equals(name) || (isBool && minProp.replaceFirst("setis", "set").equals(name))) {
+							meter++;
+							underlinMethod = method;
+							index = j;
 						}
 					}
 					if (matched) {
@@ -128,6 +150,12 @@ public class BeanUtil {
 						realMeth.remove(j);
 						break;
 					}
+				}
+				// 属性剔除下划线后存在唯一匹配
+				if (!matched && meter == 1) {
+					result[i] = underlinMethod;
+					result[i].setAccessible(true);
+					realMeth.remove(index);
 				}
 				if (realMeth.isEmpty()) {
 					break;
@@ -165,22 +193,45 @@ public class BeanUtil {
 		Method method;
 		boolean matched = false;
 		Class type;
+		String minProp;
+		Method underlinMethod;
+		int meter = 0;
+		boolean isBool;
+		int index;
 		for (int i = 0; i < indexSize; i++) {
 			if (props[i] != null) {
 				prop = props[i].toLowerCase();
 				matched = false;
+				// 将属性名称剔除下划线
+				minProp = null;
+				if (prop.contains("_")) {
+					minProp = prop.replace("_", "");
+				}
+				meter = 0;
+				underlinMethod = null;
+				index = 0;
 				for (int j = 0; j < realMeth.size(); j++) {
+					isBool = false;
 					method = realMeth.get(j);
 					name = method.getName().toLowerCase();
 					// get完全匹配
 					if (name.equals("get".concat(prop))) {
 						matched = true;
-					} else if (name.startsWith("is")) {
+					} else {
 						// boolean型 is开头的方法
 						type = method.getReturnType();
-						if ((type.equals(Boolean.class) || type.equals(boolean.class))
-								&& (name.equals(prop) || name.equals("is".concat(prop)))) {
+						isBool = name.startsWith("is") && (type.equals(Boolean.class) || type.equals(boolean.class));
+						if (isBool && (name.equals(prop) || name.equals("is".concat(prop)))) {
 							matched = true;
+						}
+					}
+					// 匹配属性含下划线场景
+					if (!matched && minProp != null) {
+						if (name.equals("get".concat(minProp))
+								|| (isBool && (name.equals(minProp) || name.equals("is".concat(minProp))))) {
+							meter++;
+							underlinMethod = method;
+							index = j;
 						}
 					}
 					if (matched) {
@@ -189,6 +240,12 @@ public class BeanUtil {
 						realMeth.remove(j);
 						break;
 					}
+				}
+				// 属性剔除下划线后存在唯一匹配
+				if (!matched && meter == 1) {
+					result[i] = underlinMethod;
+					result[i].setAccessible(true);
+					realMeth.remove(index);
 				}
 				if (realMeth.isEmpty()) {
 					break;
@@ -627,58 +684,35 @@ public class BeanUtil {
 	 * @return
 	 */
 	public static List reflectBeansToList(List datas, String[] props) throws Exception {
-		return reflectBeansToList(datas, props, null, false, 0);
+		return reflectBeansToList(datas, props, null);
 	}
 
 	/**
-	 * @TODO 此方法仅限于sqltoy loadAll级联特殊场景使用
+	 * @TODO 切取单列值并以数组返回,服务于loadAll方法
 	 * @param datas
 	 * @param props
 	 * @return
 	 * @throws Exception
 	 */
-	public static List[] reflectBeansToListAry(List datas, String[] props) throws Exception {
-		List result = reflectBeansToList(datas, props, null, false, 0);
-		if (result == null || result.isEmpty()) {
+	public static Object[] sliceToArray(List datas, String props) throws Exception {
+		List sliceList = reflectBeansToList(datas, new String[] { props }, null);
+		if (sliceList == null || sliceList.isEmpty()) {
 			return null;
 		}
-		int propSize = props.length;
-		List[] ary = new List[propSize];
-		for (int i = 0; i < propSize; i++) {
-			ary[i] = new ArrayList();
-		}
-		Object value;
-		List rowList;
-		for (int i = 0, n = result.size(); i < n; i++) {
-			rowList = (List) result.get(i);
-			for (int j = 0; j < propSize; j++) {
-				value = rowList.get(j);
-				if (!ary[j].contains(value)) {
-					ary[j].add(value);
-				}
+		List result = new ArrayList();
+		List row;
+		for (int i = 0; i < sliceList.size(); i++) {
+			row = (List) sliceList.get(i);
+			if (row != null && row.get(0) != null) {
+				result.add(row.get(0));
 			}
 		}
-		return ary;
-	}
-
-	public static List reflectBeanToList(Object data, String[] properties) throws Exception {
-		return reflectBeanToList(data, properties, null);
-	}
-
-	public static List reflectBeanToList(Object data, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
-		List datas = new ArrayList();
-		datas.add(data);
-		List result = reflectBeansToList(datas, properties, reflectPropertyHandler, false, 0);
-		if (null != result && !result.isEmpty()) {
-			return (List) result.get(0);
+		if (result.isEmpty()) {
+			return null;
 		}
-		return null;
-	}
-
-	public static List reflectBeansToList(List datas, String[] properties, boolean hasSequence, int startSequence)
-			throws Exception {
-		return reflectBeansToList(datas, properties, null, hasSequence, startSequence);
+		Object[] ary = new Object[result.size()];
+		result.toArray(ary);
+		return ary;
 	}
 
 	/**
@@ -686,18 +720,14 @@ public class BeanUtil {
 	 * @param datas
 	 * @param properties
 	 * @param reflectPropertyHandler
-	 * @param hasSequence
-	 * @param startSequence
 	 * @return
 	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) throws Exception {
+			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
-		// 数据的长度
-		int maxLength = Integer.toString(datas.size()).length();
 		List resultList = new ArrayList();
 		try {
 			int methodLength = properties.length;
@@ -705,14 +735,13 @@ public class BeanUtil {
 			boolean inited = false;
 			Object rowObject = null;
 			Object[] params = new Object[] {};
-			int start = (hasSequence ? 1 : 0);
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -725,9 +754,6 @@ public class BeanUtil {
 						inited = true;
 					}
 					List dataList = new ArrayList();
-					if (hasSequence) {
-						dataList.add(StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength));
-					}
 					for (int j = 0; j < methodLength; j++) {
 						if (realMethods[j] != null) {
 							dataList.add(realMethods[j].invoke(rowObject, params));
@@ -865,18 +891,14 @@ public class BeanUtil {
 	 * @param properties
 	 * @param defaultValues
 	 * @param reflectPropertyHandler
-	 * @param hasSequence
-	 * @param startSequence
 	 * @return
 	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler, boolean hasSequence, int startSequence) {
+			ReflectPropertyHandler reflectPropertyHandler) {
 		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
-		// 数据的长度
-		int maxLength = Integer.toString(dataSet.size()).length();
 		List<Object[]> resultList = new ArrayList<Object[]>();
 		try {
 			int methodLength = properties.length;
@@ -885,14 +907,13 @@ public class BeanUtil {
 			boolean inited = false;
 			Object rowObject = null;
 			Object[] params = new Object[] {};
-			int start = (hasSequence ? 1 : 0);
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
-					propertyIndexMap.put(properties[i].toLowerCase(), i + start);
+					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
 				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
 			}
@@ -905,23 +926,19 @@ public class BeanUtil {
 						realMethods = matchGetMethods(rowObject.getClass(), properties);
 						inited = true;
 					}
-					Object[] dataAry = new Object[methodLength + start];
-					// 存在流水列
-					if (hasSequence) {
-						dataAry[0] = StringUtil.addLeftZero2Len(Long.toString(startSequence + i), maxLength);
-					}
+					Object[] dataAry = new Object[methodLength];
 					// 通过反射提取属性getMethod返回的数据值
 					for (int j = 0; j < methodLength; j++) {
 						if (null != realMethods[j]) {
-							dataAry[start + j] = realMethods[j].invoke(rowObject, params);
-							if (null == dataAry[start + j] && null != defaultValues) {
-								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+							dataAry[j] = realMethods[j].invoke(rowObject, params);
+							if (null == dataAry[j] && null != defaultValues) {
+								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];
 							}
 						} else {
 							if (defaultValues == null) {
-								dataAry[start + j] = null;
+								dataAry[j] = null;
 							} else {
-								dataAry[start + j] = (j >= defaultValueLength) ? null : defaultValues[j];
+								dataAry[j] = (j >= defaultValueLength) ? null : defaultValues[j];
 							}
 						}
 					}
@@ -1249,63 +1266,6 @@ public class BeanUtil {
 		}
 	}
 
-	/**
-	 * @todo 通过源对象集合数据映射到新的对象以集合返回
-	 * @param fromBeans   源对象数据集合
-	 * @param fromProps   源对象的属性
-	 * @param targetProps 目标对象的属性
-	 * @param newClass    目标对象类型
-	 * @return
-	 * @throws Exception
-	 */
-	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
-			Class newClass) throws Exception {
-		if ((fromProps == null || fromProps.length == 0) && (targetProps == null || targetProps.length == 0)) {
-			return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, true);
-		}
-		return mappingBeanSet(typeHandler, fromBeans, fromProps, targetProps, newClass, false);
-	}
-
-	/**
-	 * @todo 完成两个结合数据的复制
-	 * @param fromBeans
-	 * @param fromProps
-	 * @param targetProps
-	 * @param newClass
-	 * @param autoMapping 是否自动匹配
-	 * @return
-	 * @throws Exception
-	 */
-	public static List mappingBeanSet(TypeHandler typeHandler, List fromBeans, String[] fromProps, String[] targetProps,
-			Class newClass, boolean autoMapping) throws Exception {
-		if (autoMapping == false) {
-			List result = reflectBeansToList(fromBeans, fromProps == null ? targetProps : fromProps);
-			return reflectListToBean(typeHandler, result, targetProps == null ? fromProps : targetProps, newClass);
-		}
-		// 获取set方法
-		String[] properties = matchSetMethodNames(newClass);
-		String[] getProperties = new String[properties.length];
-		HashMap<String, Integer> matchIndex = new HashMap<String, Integer>();
-		if (targetProps != null && fromProps != null) {
-			for (int i = 0; i < targetProps.length; i++) {
-				matchIndex.put(targetProps[i].toLowerCase(), i);
-			}
-			Integer index;
-			for (int i = 0; i < properties.length; i++) {
-				index = matchIndex.get(properties[i].toLowerCase());
-				if (index == null || index >= fromProps.length) {
-					getProperties[i] = properties[i];
-				} else {
-					getProperties[i] = fromProps[index];
-				}
-			}
-		} else {
-			getProperties = properties;
-		}
-		List result = reflectBeansToList(fromBeans, getProperties);
-		return reflectListToBean(typeHandler, result, properties, newClass);
-	}
-
 	public static String[] matchSetMethodNames(Class voClass) {
 		return matchMethodNames(voClass, false);
 	}
@@ -1465,7 +1425,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * @TODO 获取VO对应的Class
+	 * @TODO 获取VO对应的实际的entityClass
 	 * @param entityClass
 	 * @return
 	 */

@@ -23,10 +23,8 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.3 发版日期: 2021-02-26
-* 级联操作进行优化，精简级联配置，增加OneToOne类型的支持
-* 修复xml定义sql中number-format和date-format多个参数换行没有trim的缺陷
-* 优化cache-arg 反向通过名称匹配key，将之前字符串包含变为类似数据库like模式，可以实现：中国 苏州 带空格的模式匹配
+# 最新版本号: 4.18.8 发版日期: 2021-03-24
+* 优化clickhouse和dorisdb支持，配套quickvo4.18.8更新
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -41,6 +39,7 @@
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
+   * dorisdb
    * oceanBase
    * guassdb
    * tidb

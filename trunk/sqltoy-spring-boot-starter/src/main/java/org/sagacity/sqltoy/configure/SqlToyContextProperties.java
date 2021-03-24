@@ -89,6 +89,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String encoding;
 
 	/**
+	 * 分页页号超出总页时转第一页，否则返回空集合
+	 */
+	private boolean pageOverToFirst = true;
+	
+	/**
 	 * 统一字段处理器
 	 */
 	private String unifyFieldsHandler;
@@ -377,6 +382,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setCacheType(String cacheType) {
 		this.cacheType = cacheType;
+	}
+
+	public boolean isPageOverToFirst() {
+		return pageOverToFirst;
+	}
+
+	public void setPageOverToFirst(boolean pageOverToFirst) {
+		this.pageOverToFirst = pageOverToFirst;
 	}
 
 }

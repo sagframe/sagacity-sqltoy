@@ -22,8 +22,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 提供针对org.sagacity.sqltoy.utils.SqlUtil类的扩展(来自org.sagacity.core.
- *              utils.SqlUtil),提供更有针对性的操作,提升性能
+ * @description 提供针对SqlUtil类的扩展,提供更有针对性的操作,提升性能
  * @author zhongxuchen
  * @version v1.0,Date:2015年4月22日
  */

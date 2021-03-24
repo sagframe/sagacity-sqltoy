@@ -93,6 +93,10 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches(sqlLow,"^from\\W"));
 		System.err.println(StringUtil.matches(sql,"^(select|with)\\W"));
 		System.err.println(StringUtil.matches(sqlWith,"^(select|with)\\W"));
+		String sequence="SEQ_${tableName}";
+		System.err.println(sequence.replaceFirst("(?i)\\$\\{tableName\\}", "staff_info"));
+		System.err.println(sequence.replaceFirst("(?i)\\$?\\{tableName\\}", "staff_info"));
+		System.err.println("A_B_C_D".replace("_", ""));
 
 	}
 }

@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
@@ -15,10 +16,12 @@ import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -194,7 +197,7 @@ public class ClickHouseDialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -315,65 +318,160 @@ public class ClickHouseDialectUtils {
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String realTable = entityMeta.getSchemaTable(tableName);
-		if (null == entityMeta.getIdArray()) {
+		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length == 0) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + "没有主键,请检查表设计!");
 		}
-
-		// 主键值
-		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
 		int idSize = entityMeta.getIdArray().length;
-		int loopSize = pkValues.size();
-		// 构造内部的listz(如果复合主键，形成{p1v1,p1v2,p1v3},{p2v1,p2v2,p2v3}) 格式，然后一次查询出结果
-		List[] idValues = new List[idSize];
-		for (int i = 0; i < idSize; i++) {
-			idValues[i] = new ArrayList();
-		}
-		List rowList;
-		// 检查主键值,主键值必须不为null
-		Object value;
-		for (int i = 0, n = loopSize; i < n; i++) {
-			rowList = (List) pkValues.get(i);
-			for (int j = 0; j < idSize; j++) {
-				value = rowList.get(j);
-				// 验证主键值是否合法
-				if (StringUtil.isBlank(value)) {
-					throw new IllegalArgumentException(realTable + " loadAll method must assign value for pk,row:" + i
-							+ " pk field:" + entityMeta.getIdArray()[j]);
-				}
-				if (!idValues[j].contains(value)) {
-					idValues[j].add(value);
-				}
-			}
-		}
-		// 构造主键值对应的类型
-		Integer[] paramTypes = new Integer[idSize * loopSize];
-		Integer idType;
-		for (int i = 0; i < idSize; i++) {
-			idType = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
-			for (int j = 0; j < loopSize; j++) {
-				paramTypes[loopSize * i + j] = idType;
-			}
-		}
-
 		// 构造delete 语句(clickhouse 记录删除语法特殊)
 		StringBuilder deleteSql = new StringBuilder();
 		deleteSql.append("alter table ");
 		deleteSql.append(realTable);
 		deleteSql.append(" delete where ");
-
 		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				deleteSql.append(" and ");
+		SqlToyResult sqlToyResult = null;
+		String colName;
+		//单主键
+		if (idSize == 1) {
+			Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
+			if (idValues == null || idValues.length == 0) {
+				throw new IllegalArgumentException(
+						tableName + " deleteAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
 			}
-			deleteSql.append(entityMeta.getColumnName(field));
-			deleteSql.append(" in (:").append(field).append(") ");
+			field = entityMeta.getIdArray()[0];
+			colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+			deleteSql.append(colName);
+			deleteSql.append(" in (?) ");
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, new Object[] { idValues });
+		} else {
+			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
+			int dataSize = idValues.size();
+			Object[] rowData;
+			Object cellValue;
+			// 将条件构造成一个数组
+			Object[] realValues = new Object[idValues.size() * idSize];
+			int index = 0;
+			for (int i = 0; i < dataSize; i++) {
+				rowData = idValues.get(i);
+				for (int j = 0; j < idSize; j++) {
+					cellValue = rowData[j];
+					// 验证主键值是否合法
+					if (StringUtil.isBlank(cellValue)) {
+						throw new IllegalArgumentException(tableName + " deleteAll method must assign value for pk,row:"
+								+ i + " pk field:" + entityMeta.getIdArray()[j]);
+					}
+					realValues[index] = cellValue;
+					index++;
+				}
+			}
+			// 复合主键构造 (field1=? and field2=?)
+			String condition = " (";
+			for (int i = 0, n = idSize; i < n; i++) {
+				field = entityMeta.getIdArray()[i];
+				colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+				if (i > 0) {
+					condition = condition.concat(" and ");
+				}
+				condition = condition.concat(colName).concat("=?");
+			}
+			condition = condition.concat(")");
+			// 构造 (field1=? and field2=?) or (field1=? and field2=?)
+			for (int i = 0; i < dataSize; i++) {
+				if (i > 0) {
+					deleteSql.append(" or ");
+				}
+				deleteSql.append(condition);
+			}
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues);
 		}
-		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), entityMeta.getIdArray(),
-				idValues);
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-				paramTypes, conn, dbType, autoCommit);
+				null, conn, dbType, autoCommit);
+	}
+
+	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
+			String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName) throws Exception {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		String realTable = entityMeta.getSchemaTable(tableName);
+		// 无主键
+		if (entityMeta.getIdArray() == null) {
+			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
+		}
+		// 全部是主键则无需update
+		if (entityMeta.getRejectIdFieldArray() == null) {
+			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
+			return 0L;
+		}
+		// 构造全新的修改记录参数赋值反射(覆盖之前的)
+		ReflectPropertyHandler handler = DialectUtils.getUpdateReflectHandler(sqlToyContext, null, forceUpdateFields);
+		// 排除分区字段
+		String[] fields = entityMeta.getFieldsNotPartitionKey();
+		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, fields, null, handler);
+		// 判断主键是否为空
+		int end = fields.length;
+		int pkIndex = end - entityMeta.getIdArray().length;
+		for (int i = pkIndex; i < end; i++) {
+			if (StringUtil.isBlank(fieldsValues[i])) {
+				throw new IllegalArgumentException("通过对象对表:" + realTable + " 进行update操作,主键字段必须要赋值!");
+			}
+		}
+		// 构建update语句
+		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, tableName);
+		if (updateSql == null) {
+			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
+		}
+		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), updateSql, fieldsValues,
+				entityMeta.getFieldsTypeArray(), conn, dbType, null);
+		return updateCnt;
+	}
+
+	private static String generateUpdateSql(Integer dbType, EntityMeta entityMeta, String nullFunction,
+			String[] forceUpdateFields, String tableName) {
+		if (entityMeta.getIdArray() == null) {
+			return null;
+		}
+		StringBuilder sql = new StringBuilder(entityMeta.getFieldsArray().length * 30 + 30);
+		sql.append(" alter table  ");
+		sql.append(entityMeta.getSchemaTable(tableName));
+		sql.append(" update ");
+		String columnName;
+		// 需要被强制修改的字段
+		HashSet<String> fupc = new HashSet<String>();
+		if (forceUpdateFields != null) {
+			for (String field : forceUpdateFields) {
+				fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
+			}
+		}
+		FieldMeta fieldMeta;
+		int meter = 0;
+		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
+			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
+			// 排除分区字段
+			if (!fieldMeta.isPartitionKey()) {
+				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
+				if (meter > 0) {
+					sql.append(",");
+				}
+				sql.append(columnName);
+				sql.append("=");
+				if (fupc.contains(columnName)) {
+					sql.append("?");
+				} else {
+					sql.append(nullFunction);
+					sql.append("(?,").append(columnName).append(")");
+				}
+				meter++;
+			}
+		}
+		sql.append(" where ");
+		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
+			columnName = entityMeta.getColumnName(entityMeta.getIdArray()[i]);
+			columnName = ReservedWordsUtil.convertWord(columnName, dbType);
+			if (i > 0) {
+				sql.append(" and ");
+			}
+			sql.append(columnName);
+			sql.append("=?");
+		}
+		return sql.toString();
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

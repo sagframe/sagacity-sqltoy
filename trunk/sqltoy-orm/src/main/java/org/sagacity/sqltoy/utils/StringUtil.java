@@ -736,13 +736,18 @@ public class StringUtil {
 		return result;
 	}
 
+	public static String toHumpStr(String source, boolean firstIsUpperCase) {
+		return toHumpStr(source, firstIsUpperCase, true);
+	}
+
 	/**
 	 * @todo 将字符串转换成驼峰形式
 	 * @param source
 	 * @param firstIsUpperCase
+	 * @param removeDealine
 	 * @return
 	 */
-	public static String toHumpStr(String source, boolean firstIsUpperCase) {
+	public static String toHumpStr(String source, boolean firstIsUpperCase, boolean removeDealine) {
 		if (isBlank(source)) {
 			return source;
 		}
@@ -752,6 +757,9 @@ public class StringUtil {
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < humpAry.length; i++) {
 			cell = humpAry[i];
+			if (i > 0 && !removeDealine) {
+				result.append("_");
+			}
 			// 全大写或全小写
 			if (cell.toUpperCase().equals(cell)) {
 				result.append(firstToUpperOtherToLower(cell));

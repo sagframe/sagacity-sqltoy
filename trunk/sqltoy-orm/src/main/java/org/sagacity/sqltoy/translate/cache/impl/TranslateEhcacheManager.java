@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.time.Duration;
@@ -23,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存(开发者也可以根据自己喜好用其它框架实现)
+ * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-14
  */

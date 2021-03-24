@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.time.Duration;

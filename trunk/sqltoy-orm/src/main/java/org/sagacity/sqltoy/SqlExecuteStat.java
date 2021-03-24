@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy;
 
 import static java.lang.System.out;

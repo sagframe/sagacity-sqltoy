@@ -90,6 +90,11 @@ public class FieldMeta implements Serializable {
 	private boolean autoIncrement = false;
 
 	/**
+	 * 是否是分区字段
+	 */
+	private boolean partitionKey = false;
+
+	/**
 	 * @return the autoIncrement
 	 */
 	public boolean isAutoIncrement() {
@@ -260,6 +265,20 @@ public class FieldMeta implements Serializable {
 
 	public void setFieldType(String fieldType) {
 		this.fieldType = fieldType;
+	}
+
+	/**
+	 * @return the partitionKey
+	 */
+	public boolean isPartitionKey() {
+		return partitionKey;
+	}
+
+	/**
+	 * @param partitionKey the partitionKey to set
+	 */
+	public void setPartitionKey(boolean partitionKey) {
+		this.partitionKey = partitionKey;
 	}
 
 }
