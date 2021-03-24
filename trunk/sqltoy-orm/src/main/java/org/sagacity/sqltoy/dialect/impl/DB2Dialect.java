@@ -164,7 +164,7 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -532,9 +532,9 @@ public class DB2Dialect implements Dialect {
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
 			return "";
 		}
-//		if (lockMode == null || lockMode == LockMode.UPGRADE) {
-//			return " for update ";
-//		}
+		// if (lockMode == null || lockMode == LockMode.UPGRADE) {
+		// return " for update ";
+		// }
 		return " for update with rs ";
 	}
 }
