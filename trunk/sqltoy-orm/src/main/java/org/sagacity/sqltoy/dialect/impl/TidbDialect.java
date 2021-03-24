@@ -78,10 +78,9 @@ public class TidbDialect implements Dialect {
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
 			final String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		/*
-		 * select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
-		 * row_number 再排序方式性能稍好 同时也可以保证通用性
-		 */
+
+		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
+		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");

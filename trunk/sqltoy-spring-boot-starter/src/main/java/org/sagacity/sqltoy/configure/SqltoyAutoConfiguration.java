@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import static java.lang.System.err;
 
 /**
  * @description sqltoy 自动配置类
@@ -139,12 +140,26 @@ public class SqltoyAutoConfiguration {
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
 			try {
-				IUnifyFieldsHandler handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor()
-						.newInstance();
-				sqlToyContext.setUnifyFieldsHandler(handler);
+				IUnifyFieldsHandler handler = null;
+				// 类
+				if (unfiyHandler.contains(".")) {
+					handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor().newInstance();
+				} // spring bean名称
+				else if (applicationContext.containsBean(unfiyHandler)) {
+					handler = (IUnifyFieldsHandler) applicationContext.getBean(unfiyHandler);
+					if (handler == null) {
+						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
+					}
+				}
+				if (handler != null) {
+					sqlToyContext.setUnifyFieldsHandler(handler);
+				}
 			} catch (ClassNotFoundException cne) {
-				System.err.println(unfiyHandler
-						+ " 类不存在,此类不是sqltoy框架自带，需要自行实现sqltoy框架中的IUnifyFieldsHandler接口,用于对创建人、创建时间、修改人、修改时间等公共字段赋值!此功能属于可选功能!");
+				err.println("------------------- 错误提示 ------------------------------------------- ");
+				err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
+				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
+				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
+				err.println("------------------------------------------------");
 				cne.printStackTrace();
 				throw cne;
 			}
