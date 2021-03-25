@@ -691,7 +691,8 @@ public class SqlConfigParseUtils {
 		if (index >= 0) {
 			// where 后面拼接的条件语句是空白,增加1=1,避免最终只有一个where
 			if (tmp.equals("")) {
-				return preSql.concat(" 1=1 ");
+				//return preSql.concat(" 1=1 ");
+				return preSql.substring(0, index + 1).concat(" ");
 			}
 			// and 概率更高优先判断，剔除and 或 or
 			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
