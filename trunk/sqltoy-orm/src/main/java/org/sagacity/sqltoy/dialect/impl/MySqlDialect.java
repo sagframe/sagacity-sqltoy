@@ -227,7 +227,7 @@ public class MySqlDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
-	// 问为什么不用mysql的on duplicate key update特性?原本是用的这个，但其有bug，一切都是于原因的!
+	// mysql的on duplicate key update 针对非空字段先校验了insert导致无法走到update set xxx=ifnull(null,xxx)
 	/*
 	 * (non-Javadoc)
 	 * 
