@@ -153,7 +153,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param entity
-	 * @param paramsNamed group+uniqueField
+	 * @param paramsNamed group+uniqueField 对象属性名称(不是数据库表字段名称)
 	 * @return
 	 */
 	public boolean isUnique(Serializable entity, final String... paramsNamed);
