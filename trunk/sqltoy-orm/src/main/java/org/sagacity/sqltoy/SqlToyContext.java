@@ -253,6 +253,9 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
 
+		// 初始化脚本加载器
+		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
+
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
 			translateManager.initialize(this, new TranslateCaffeineManager(), delayCheckSeconds);
@@ -260,10 +263,7 @@ public class SqlToyContext implements ApplicationContextAware {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
 
-		// 初始化脚本加载器
-		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
-
-		// 初始化实体对象管理器
+		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
 
 		// 设置保留字
