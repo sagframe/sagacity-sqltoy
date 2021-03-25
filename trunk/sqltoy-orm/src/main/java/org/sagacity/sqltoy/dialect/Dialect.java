@@ -33,7 +33,7 @@ public interface Dialect {
 	 * @TODO 判断唯一性
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param paramsNamed
+	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
