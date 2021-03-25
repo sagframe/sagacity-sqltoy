@@ -105,7 +105,7 @@ public class SqlConfigParseUtils {
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
 	// where 1=1 结尾模式
-	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1$");
+	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1\\s*$");
 
 	public final static Pattern AND_START_PATTERN = Pattern.compile("(?i)^and\\W");
 	public final static Pattern OR_START_PATTERN = Pattern.compile("(?i)^or\\W");
