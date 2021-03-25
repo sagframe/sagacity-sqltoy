@@ -71,7 +71,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 判断对象属性在数据库中是否唯一
 	 * @param entity
-	 * @param paramsNamed
+	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
 	 * @return boolean true：唯一；false：不唯一
 	 */
 	public boolean isUnique(Serializable entity, String... paramsNamed);

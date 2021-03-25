@@ -194,7 +194,7 @@ public class SqlToyDaoSupport {
 	 *       String[]{"dictTypeCode","dictName"})，将会根据给定的2个参数
 	 *       通过VO取到相应的值，作为组合条件到dictDetailVO对应的表中查询记录是否存在
 	 * @param entity
-	 * @param paramsNamed
+	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
 	 * @return
 	 */
 	protected boolean isUnique(final Serializable entity, final String... paramsNamed) {
