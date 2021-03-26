@@ -73,6 +73,14 @@ public class SqlConfigParseUtilsTest {
 	}
 
 	@Test
+	public void testAllInnerNull() throws Exception {
+		String sql = "select * from (select * from table where #[id=:id and name like :name] #[and status=:status]) left join table2 on";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { null, null, null });
+		System.err.println(JSON.toJSONString(result));
+	}
+	
+	@Test
 	public void testAllNull() throws Exception {
 		String sql = "select * from table where #[id=:id and name like :name] #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },

@@ -1959,6 +1959,9 @@ public class DialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// 记录数量小于1000且无级联采用一次sql执行完成删除
+		// if (entities.size() < 1000 && entityMeta.getCascadeModels().isEmpty()) {
+		// }
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
