@@ -183,7 +183,7 @@ public class SqlExecuteStat {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
-					result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
+					result.append("\n/*|     模拟入参后sql: ").append(fitSqlParams(content, args));
 					result.append("\n/*|     sql参数: ");
 					if (args != null && args.length > 0) {
 						StringBuilder paramStr = new StringBuilder();

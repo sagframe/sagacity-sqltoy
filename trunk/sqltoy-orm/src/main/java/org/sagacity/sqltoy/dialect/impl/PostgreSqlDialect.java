@@ -248,7 +248,7 @@ public class PostgreSqlDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
-	// 问为什么不用postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性?原本是用的这个，但其有bug!
+	//postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性跟mysql一样存在bug
 	/*
 	 * (non-Javadoc)
 	 * 
