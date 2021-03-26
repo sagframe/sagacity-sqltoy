@@ -24,7 +24,7 @@
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 4.18.9 发版日期: 2021-03-26
-* 优化sql条件处理，剔除无条件时的 where 1=1
+* 优化sql条件处理，剔除无条件时多余的 where 1=1
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
