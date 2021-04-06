@@ -118,7 +118,8 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
 
-	public final static Pattern WHERE_CLOSE_PATTERN = Pattern.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
+			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -705,7 +706,7 @@ public class SqlConfigParseUtils {
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailSql.trim().startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} //where 后面跟order by、group by、left join、right join、full join、having、union
+				} // where 后面跟order by、group by、left join、right join、full join、having、union
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
@@ -723,6 +724,10 @@ public class SqlConfigParseUtils {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(3)).concat(" ");
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(2)).concat(" ");
+			} else if (tmp.startsWith(")")) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
+			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!markContentSql.trim().equals("")) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
 			}

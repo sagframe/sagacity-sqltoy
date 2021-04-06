@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -83,20 +85,28 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.like(sql, "保留  操作  ， 数据库".split("\\s+")));
 
 	}
-	
+
 	@Test
 	public void testMatch() {
 		String sqlLow = "from t where1 (1=1)";
-		String sql="select 1 from";
-		String sqlWith="with t as () * from";
-		System.err.println(StringUtil.matches(sqlLow,"^\\s*where\\W"));
-		System.err.println(StringUtil.matches(sqlLow,"^from\\W"));
-		System.err.println(StringUtil.matches(sql,"^(select|with)\\W"));
-		System.err.println(StringUtil.matches(sqlWith,"^(select|with)\\W"));
-		String sequence="SEQ_${tableName}";
+		String sql = "select 1 from";
+		String sqlWith = "with t as () * from";
+		System.err.println(StringUtil.matches(sqlLow, "^\\s*where\\W"));
+		System.err.println(StringUtil.matches(sqlLow, "^from\\W"));
+		System.err.println(StringUtil.matches(sql, "^(select|with)\\W"));
+		System.err.println(StringUtil.matches(sqlWith, "^(select|with)\\W"));
+		String sequence = "SEQ_${tableName}";
 		System.err.println(sequence.replaceFirst("(?i)\\$\\{tableName\\}", "staff_info"));
 		System.err.println(sequence.replaceFirst("(?i)\\$?\\{tableName\\}", "staff_info"));
 		System.err.println("A_B_C_D".replace("_", ""));
+
+	}
+
+	@Test
+	public void testWhereMatch() {
+		Pattern WHERE_CLOSE_PATTERN = Pattern
+				.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+		System.err.println(StringUtil.matches("inner join ", WHERE_CLOSE_PATTERN));
 
 	}
 }
