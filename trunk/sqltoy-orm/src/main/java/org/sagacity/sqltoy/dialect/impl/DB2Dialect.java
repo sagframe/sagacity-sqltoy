@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,14 +102,7 @@ public class DB2Dialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = loadSql + " for update with rs";
-				break;
-			}
-		}
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -123,41 +117,12 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
-			throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entityMeta.getEntityClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(" for update with rs ");
-				break;
-			}
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+			final LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
+			final String tableName) throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+				(sql, dbTypeValue, lockedMode) -> {
+					return getLockSql(sql, dbTypeValue, lockedMode);
+				});
 	}
 
 	/*
@@ -199,7 +164,7 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -354,13 +319,7 @@ public class DB2Dialect implements Dialect {
 		String realSql;
 		// db2 锁记录
 		if (lockMode != null) {
-			realSql = sql;
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				realSql = realSql.concat(" for update with rs");
-				break;
-			}
+			realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		} else {
 			realSql = appendWithUR(sql);
 		}
@@ -497,8 +456,8 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = sql + " for update with rs";
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -566,5 +525,16 @@ public class DB2Dialect implements Dialect {
 			return false;
 		}
 		return true;
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		// if (lockMode == null || lockMode == LockMode.UPGRADE) {
+		// return " for update ";
+		// }
+		return " for update with rs ";
 	}
 }

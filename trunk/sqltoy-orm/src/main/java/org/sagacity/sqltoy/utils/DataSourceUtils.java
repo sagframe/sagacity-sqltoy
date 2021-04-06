@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
@@ -20,8 +17,7 @@ import org.slf4j.LoggerFactory;
  * @description 提供统一的dataSource管理
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月3日
- * @modify data:2020-06-10
- *         剔除sqlserver2008,sap_hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
+ * @modify data:2020-06-10 剔除mssql2008,hana,增加tidb、guassdb、oceanbase、dm数据库方言的支持
  */
 public class DataSourceUtils {
 	/**
@@ -308,6 +304,10 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GREENPLUM) != -1) {
 				return Dialect.POSTGRESQL;
 			}
+			// elasticsearch
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
+				return Dialect.ES;
+			}
 			// sybase iq
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
@@ -405,6 +405,8 @@ public class DataSourceUtils {
 			} // sybase IQ
 			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
 				dbType = DBType.SYBASE_IQ;
+			} else if (dbDialect.equals(Dialect.ES)) {
+				dbType = DBType.ES;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
 		}

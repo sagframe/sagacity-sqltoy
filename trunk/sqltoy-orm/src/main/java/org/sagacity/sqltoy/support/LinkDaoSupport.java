@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.support;
 
 import java.sql.Connection;
@@ -22,7 +19,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.SaveMode;
-import org.sagacity.sqltoy.utils.BeanPropsWrapper;
+import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -168,8 +165,8 @@ public class LinkDaoSupport {
 	 * @param names
 	 * @return
 	 */
-	protected BeanPropsWrapper wrapBeanProps(String... names) {
-		return new BeanPropsWrapper(names);
+	protected BeanWrapper wrapBeanProps(String... names) {
+		return BeanWrapper.create().names(names);
 	}
 
 	/**

@@ -14,10 +14,15 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
+import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
+import org.sagacity.sqltoy.dialect.model.ReturnPkType;
+import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -26,6 +31,7 @@ import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -50,14 +56,47 @@ public class DefaultDialect implements Dialect {
 				});
 	}
 
+	/**
+	 * 以mysql 为蓝本实现
+	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, Integer dbType,
 			String dialect) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
+
+		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
+		// row_number 再排序方式性能稍好 同时也可以保证通用性
+		StringBuilder sql = new StringBuilder();
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+		}
+		sql.append("select sag_random_table1.* from (");
+		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
+		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
+			sql.append("select rand() as sag_row_number,sag_random_table.* from (");
+			sql.append(innerSql);
+			sql.append(") sag_random_table ");
+		} else {
+			sql.append(innerSql.replaceFirst("(?i)select", "select rand() as sag_row_number,"));
+		}
+		sql.append(" )  as sag_random_table1 ");
+		sql.append(" order by sag_random_table1.sag_row_number limit ");
+		sql.append(randomCount);
+
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+		}
+		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
+				sql.toString(), null, null);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
 	}
 
+	/**
+	 * 以mysql 为蓝本实现
+	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, Integer dbType, String dialect)
@@ -85,6 +124,9 @@ public class DefaultDialect implements Dialect {
 				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
 	}
 
+	/**
+	 * 以mysql为蓝本实现
+	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, Integer dbType, String dialect) throws Exception {
@@ -113,15 +155,7 @@ public class DefaultDialect implements Dialect {
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, Connection conn, LockMode lockMode,
 			Integer dbType, String dialect, int fetchSize, int maxRows) throws Exception {
-		String realSql = sql;
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				realSql = realSql.concat(getLockSql(dbType));
-				break;
-			}
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -139,14 +173,7 @@ public class DefaultDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql = loadSql.concat(getLockSql(dbType));
-				break;
-			}
-		}
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -154,62 +181,59 @@ public class DefaultDialect implements Dialect {
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
 			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length < 1) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(getLockSql(dbType));
-				break;
-			}
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+				(sql, dbTypeValue, lockedMode) -> {
+					return getLockSql(sql, dbTypeValue, lockedMode);
+				});
 	}
 
+	/**
+	 * 以mysql为蓝本实现
+	 */
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, Integer dbType,
 			String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
+				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.GENERATED_KEYS
+						: ReturnPkType.PREPARD_ID;
+		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
+				insertSql, entity, new GenerateSqlHandler() {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
+								isAssignPKValue(entityMeta.getIdStrategy()), null);
+					}
+				}, new GenerateSavePKStrategy() {
+					public SavePKStrategy generate(EntityMeta entityMeta) {
+						return new SavePKStrategy(entityMeta.getIdStrategy(),
+								isAssignPKValue(entityMeta.getIdStrategy()));
+					}
+				}, conn, dbType);
 	}
 
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
-			Class[] forceCascadeClass, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
+			Class[] emptyCascadeClasses, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			Integer dbType, String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		// 不支持级联
+		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, false, null,
+				emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}
 
 	@Override
@@ -239,7 +263,14 @@ public class DefaultDialect implements Dialect {
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
-		return null;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "insert ignore ");
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
 	}
 
 	@Override
@@ -256,9 +287,9 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect)
-			throws Exception {
-		String realSql = sql.concat(getLockSql(dbType));
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
+			final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -286,7 +317,31 @@ public class DefaultDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
 	}
 
-	private String getLockSql(Integer dbType) {
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
 		return " for update ";
+	}
+
+	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
+		}
+		// 目前不支持sequence模式
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return false;
+		}
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return true;
+		}
+		return true;
 	}
 }

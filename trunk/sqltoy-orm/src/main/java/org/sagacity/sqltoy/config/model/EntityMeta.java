@@ -6,6 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
@@ -15,7 +16,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @project sqltoy-orm
  * @description sqltoy entity实体对象信息
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-1 下午4:28:29
+ * @version v1.0,Date:2012-6-1
  */
 @SuppressWarnings({ "rawtypes" })
 public class EntityMeta implements Serializable {
@@ -184,7 +185,7 @@ public class EntityMeta implements Serializable {
 	/**
 	 * 主键被关联的子表信息
 	 */
-	private List<OneToManyModel> oneToManys = new ArrayList<OneToManyModel>();
+	private List<TableCascadeModel> cascadeModels = new ArrayList<TableCascadeModel>();
 
 	/**
 	 * 级联对象
@@ -290,10 +291,14 @@ public class EntityMeta implements Serializable {
 
 	public void addFieldMeta(FieldMeta fieldMeta) {
 		fieldsMeta.put(fieldMeta.getFieldName().toLowerCase(), fieldMeta);
-		//数据库字段名称对应vo对象属性名称
-		columnFieldMap.put(fieldMeta.getColumnName().toLowerCase(), fieldMeta.getFieldName());
-		//字段名称去除下划线
-		columnFieldMap.put(fieldMeta.getColumnName().replaceAll("\\_", "").toLowerCase(), fieldMeta.getFieldName());
+		// 数据库字段名称对应vo对象属性名称
+		String colName = fieldMeta.getColumnName().toLowerCase();
+		String fieldName = fieldMeta.getFieldName();
+		columnFieldMap.put(colName, fieldName);
+		// 属性名称中不包含"_"
+		if (!fieldName.contains("_")) {
+			columnFieldMap.put(colName.replace("_", ""), fieldName);
+		}
 	}
 
 	/**
@@ -317,19 +322,38 @@ public class EntityMeta implements Serializable {
 		return fieldsArray;
 	}
 
+	public String[] getFieldsNotPartitionKey() {
+		List<String> fields = new ArrayList<String>();
+		FieldMeta fieldMeta;
+		for (int i = 0; i < fieldsArray.length; i++) {
+			fieldMeta = fieldsMeta.get(fieldsArray[i].toLowerCase());
+			if (!fieldMeta.isPartitionKey()) {
+				fields.add(fieldsArray[i]);
+			}
+		}
+		String[] result = new String[fields.size()];
+		fields.toArray(result);
+		return result;
+	}
+
 	/**
 	 * @param fieldArray the fieldArray to set
 	 */
 	public void setFieldsArray(String[] fieldsArray) {
 		this.fieldsArray = fieldsArray;
 		for (int i = 0; i < fieldsArray.length; i++) {
-			fieldIndexs.put(fieldsArray[i].replaceAll("\\_", "").toLowerCase(), i);
+			fieldIndexs.put(fieldsArray[i].toLowerCase(), i);
 		}
 		if (this.bizIdRelatedColumns != null) {
 			this.bizIdRelatedColIndex = new Integer[bizIdRelatedColumns.length];
+			String colName;
 			for (int i = 0; i < bizIdRelatedColumns.length; i++) {
-				this.bizIdRelatedColIndex[i] = fieldIndexs
-						.get(bizIdRelatedColumns[i].replaceAll("\\_", "").toLowerCase());
+				colName = bizIdRelatedColumns[i].toLowerCase();
+				if (fieldIndexs.containsKey(colName)) {
+					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName);
+				} else {
+					this.bizIdRelatedColIndex[i] = fieldIndexs.get(colName.replace("_", ""));
+				}
 			}
 		}
 	}
@@ -349,7 +373,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public int getFieldIndex(String fieldName) {
-		return fieldIndexs.get(fieldName.replaceAll("\\_", "").toLowerCase());
+		return fieldIndexs.get(fieldName.toLowerCase());
 	}
 
 	/**
@@ -470,12 +494,29 @@ public class EntityMeta implements Serializable {
 	/**
 	 * @return the oneToManys
 	 */
-	public List<OneToManyModel> getOneToManys() {
-		return oneToManys;
+	public List<TableCascadeModel> getCascadeModels() {
+		return cascadeModels;
 	}
 
-	public void addOneToMany(OneToManyModel oneToManyModel) {
-		this.oneToManys.add(oneToManyModel);
+	/**
+	 * @TODO 增加级联关系
+	 * @param cascadeModel
+	 */
+	public boolean addCascade(TableCascadeModel cascadeModel) {
+		Iterator<TableCascadeModel> iter = cascadeModels.iterator();
+		TableCascadeModel iterModel;
+		boolean isRepeat = false;
+		// 删除已经存在的子表关联
+		while (iter.hasNext()) {
+			iterModel = iter.next();
+			if (iterModel.getMappedType().equals(cascadeModel.getMappedType())) {
+				iter.remove();
+				isRepeat = true;
+				break;
+			}
+		}
+		this.cascadeModels.add(cascadeModel);
+		return isRepeat;
 	}
 
 	/**

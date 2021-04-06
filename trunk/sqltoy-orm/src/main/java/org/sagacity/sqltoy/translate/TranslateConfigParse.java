@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate;
 
 import java.util.ArrayList;
@@ -92,6 +89,7 @@ public class TranslateConfigParse {
 							translateCacheModel.setKeepAlive(defaultConfig.getDefaultKeepAlive());
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
+							//非sqlId模式定义
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
 									sqlNode = elt.getElementsByTagName("sql");
@@ -162,7 +160,7 @@ public class TranslateConfigParse {
 									throw new IllegalArgumentException(nodeType + " must config with cache=\"xxx\"");
 								}
 							}
-							// sql模式
+							// sql模式且非sqlId模式定义
 							if (checherConfigModel.getType().equals("sql")) {
 								if (StringUtil.isBlank(checherConfigModel.getSql())) {
 									sqlId = (checherConfigModel.isIncrement() ? "s_trans_merge_chk_0" : "s_trans_chk_0")

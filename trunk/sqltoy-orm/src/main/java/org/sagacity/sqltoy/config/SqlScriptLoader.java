@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.config;
 
 import static java.lang.System.out;
@@ -99,8 +96,7 @@ public class SqlScriptLoader {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
-			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir
-					+ " 不正确!\n"
+			throw new IllegalArgumentException("\n您的配置:spring.sqltoy.sqlResourcesDir=" + sqlResourcesDir + " 不正确!\n"
 					+ "/*----正确格式只接受单个或逗号分隔的多个路径模式且不能有*通配符(注意是路径!)----*/\n"
 					+ "/*- 1、单路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm\n"
 					+ "/*- 2、多路径模式:spring.sqltoy.sqlResourcesDir=classpath:com/sagacity/crm,classpath:com/sagacity/hr\n"
@@ -266,6 +262,15 @@ public class SqlScriptLoader {
 	 */
 	public SqlToyConfig parseSqlSagment(Object sqlSegment) throws Exception {
 		return SqlXMLConfigParse.parseSagment(sqlSegment, this.encoding, this.dialect);
+	}
+
+	/**
+	 * @TODO 开放sql文件由开发者放入sqltoy统一解析管理
+	 * @param sqlFile
+	 * @throws Exception
+	 */
+	public void parseSqlFile(Object sqlFile) throws Exception {
+		SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding, dialect, true);
 	}
 
 	/**

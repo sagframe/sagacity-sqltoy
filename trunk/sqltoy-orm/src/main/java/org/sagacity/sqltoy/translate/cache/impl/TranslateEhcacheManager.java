@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate.cache.impl;
 
 import java.time.Duration;
@@ -23,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存(开发者也可以根据自己喜好用其它框架实现)
+ * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-14
  */
@@ -49,7 +46,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	protected static CacheManager cacheManager;
 
 	@Override
-	public HashMap<String, Object[]> getCache(String cacheName, String cacheKey) {
+	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
 		if (cacheManager == null) {
 			return null;
 		}
@@ -57,7 +54,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cache == null) {
 			return null;
 		}
-		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheKey) ? cacheKey : cacheName);
+		Object cacheValue = cache.get(StringUtil.isNotBlank(cacheType) ? cacheType : cacheName);
 		if (cacheValue != null) {
 			return (HashMap<String, Object[]>) cacheValue;
 		}
@@ -115,18 +112,18 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 * String, java.lang.String)
 	 */
 	@Override
-	public void clear(String cacheName, String cacheKey) {
+	public void clear(String cacheName, String cacheType) {
+		if (cacheManager == null) {
+			return;
+		}
 		synchronized (cacheName) {
-			if (cacheManager == null) {
-				return;
-			}
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
-				if (StringUtil.isBlank(cacheKey)) {
+				if (StringUtil.isBlank(cacheType)) {
 					cache.clear();
 				} else {
-					cache.remove(cacheKey);
+					cache.remove(cacheType);
 				}
 			}
 		}
@@ -142,6 +139,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager != null) {
 			return true;
 		}
+		logger.debug("启动ehcache 缓存管理器--------------------------------------");
 		// 未定义持久化文件,则由ehcache自行默认创建
 		if (StringUtil.isBlank(diskStorePath)) {
 			cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build(true);
@@ -183,5 +181,4 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 			cacheManager = null;
 		}
 	}
-
 }

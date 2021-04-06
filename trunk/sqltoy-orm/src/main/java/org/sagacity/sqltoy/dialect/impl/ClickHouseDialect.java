@@ -27,7 +27,7 @@ import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
- * @description clickhouse 19.x版本,clickhouse 不支持update,更多面向查询
+ * @description clickhouse 19.x版本,clickhouse 不支持updateAll,更多面向查询
  * @author zhongxuchen
  * @version v1.0,Date:2020年1月20日
  */
@@ -52,7 +52,6 @@ public class ClickHouseDialect implements Dialect {
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, Integer dbType,
 			String dialect) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-
 		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
 		// row_number 再排序方式性能稍好 同时也可以保证通用性
 		StringBuilder sql = new StringBuilder();
@@ -174,30 +173,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
 			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
 	}
 
 	@Override
@@ -228,15 +204,14 @@ public class ClickHouseDialect implements Dialect {
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
 			Class[] forceCascadeClass, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			Integer dbType, String dialect, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		return ClickHouseDialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, conn, dbType,
+				tableName);
 	}
 
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] forceUpdateFields,
 			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
@@ -278,8 +253,8 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
+			final LockMode lockMode) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

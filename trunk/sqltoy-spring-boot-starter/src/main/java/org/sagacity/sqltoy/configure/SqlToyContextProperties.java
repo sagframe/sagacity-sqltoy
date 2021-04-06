@@ -89,6 +89,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String encoding;
 
 	/**
+	 * 分页页号超出总页时转第一页，否则返回空集合
+	 */
+	private boolean pageOverToFirst = true;
+	
+	/**
 	 * 统一字段处理器
 	 */
 	private String unifyFieldsHandler;
@@ -122,6 +127,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 字段类型转换器
 	 */
 	private String typeHandler;
+
+	/**
+	 * 缓存类型，默认ehcache，可选caffeine
+	 */
+	private String cacheType = "ehcache";
 
 	/**
 	 * @return the sqlResourcesDir
@@ -360,5 +370,26 @@ public class SqlToyContextProperties implements Serializable {
 		this.typeHandler = typeHandler;
 	}
 
-	
+	/**
+	 * @return the cacheType
+	 */
+	public String getCacheType() {
+		return cacheType;
+	}
+
+	/**
+	 * @param cacheType the cacheType to set
+	 */
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
+	}
+
+	public boolean isPageOverToFirst() {
+		return pageOverToFirst;
+	}
+
+	public void setPageOverToFirst(boolean pageOverToFirst) {
+		this.pageOverToFirst = pageOverToFirst;
+	}
+
 }

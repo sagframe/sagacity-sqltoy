@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.io.Closeable;
@@ -262,12 +259,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2017-6-14 修复使用druid数据库dataSource时clob处理的错误 update 2019-7-5 剔除对druid
-	 * clob bug的支持(druid 1.1.10 已经修复) update 2020-4-1 调整设置顺序,将最常用的类型放于前面,提升命中效率
-	 * 
 	 * @todo 设置sql中的参数条件的值
 	 * @param typeHandler
 	 * @param conn
+	 * @param dbType
 	 * @param pst
 	 * @param paramValue
 	 * @param jdbcType
@@ -416,17 +411,20 @@ public class SqlUtil {
 		String[] columnNames = getColumnLabels(rs.getMetaData());
 		// 组织vo中对应的属性
 		String[] fields = new String[columnNames.length];
-
 		// update 2020-12-24 增加映射对象时属性映射关系提取
 		boolean hasMap = (columnFieldMap == null || columnFieldMap.isEmpty()) ? false : true;
 		// 剔除下划线
 		for (int i = 0; i < fields.length; i++) {
-			fields[i] = columnNames[i].replaceAll("\\_", "").toLowerCase();
+			fields[i] = columnNames[i].toLowerCase();
 			// 存在pojo中属性跟数据库字段名称有对照映射关系的
 			if (hasMap) {
 				if (columnFieldMap.containsKey(fields[i])) {
 					fields[i] = columnFieldMap.get(fields[i]);
+				} else {
+					fields[i] = fields[i].replace("_", "");
 				}
+			} else {
+				fields[i] = fields[i].replace("_", "");
 			}
 		}
 		// 匹配对应的set方法
@@ -1116,12 +1114,10 @@ public class SqlUtil {
 				}
 			}
 		}, null, false, conn, dbType);
-
 		// 处理节点的下一层次
 		int size = ids.size();
 		int fromIndex = 0;
 		int toIndex = -1;
-
 		// 避免in()中的参数过多，每次500个
 		String inStrs;
 		List subIds = null;
@@ -1141,7 +1137,6 @@ public class SqlUtil {
 				subIds = ids.subList(fromIndex, toIndex + 1);
 			}
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
-
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
 					null, conn, dbType, false, null);
@@ -1515,31 +1510,26 @@ public class SqlUtil {
 			return sql;
 		}
 		String sqlLow = sql.toLowerCase().trim();
-		// 包含了select 或with as模式开头直接返回
-		if (sqlLow.startsWith("select") || sqlLow.startsWith("with")) {
+		// 包含了select 或with as、show、desc 模式开头直接返回
+		if (StringUtil.matches(sqlLow, "^(select|with|show|desc)\\W")) {
 			return sql;
 		}
 		// 存储过程模式直接返回
-		if (StringUtil.matches(sqlLow, "^\\s*\\{?\\W*call\\W+")) {
+		if (StringUtil.matches(sqlLow, "^\\{?\\W*call\\W+")) {
 			return sql;
 		}
-
-		// show 命令
-		if (StringUtil.matches(" ".concat(sqlLow), "^\\Wshow\\W")) {
-			return sql;
-		}
-
+		// 非entity实体类型
 		if (!sqlToyContext.isEntity(entityClass)) {
 			return sql;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
 		// from 开头补齐select col1,col2,...
-		if (sqlLow.startsWith("from")) {
+		if (StringUtil.matches(sqlLow, "^from\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" ").concat(sql);
 		}
 		// 没有where和from(排除 select * from table),补齐select * from table where
-		if (!StringUtil.matches(sqlLow, "(from|where)\\W")) {
-			if (sqlLow.startsWith("and") || sqlLow.startsWith("or")) {
+		if (!StringUtil.matches(" ".concat(sqlLow), "\\W(from|where)\\W")) {
+			if (StringUtil.matches(sqlLow, "^(and|or)\\W")) {
 				return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable()).concat(" where 1=1 ").concat(sql);
 			}
@@ -1547,10 +1537,33 @@ public class SqlUtil {
 					.concat(" where ").concat(sql);
 		}
 		// where开头 补齐select * from
-		if (sqlLow.startsWith("where")) {
+		if (StringUtil.matches(sqlLow, "^where\\W")) {
 			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
 					.concat(" ").concat(sql);
 		}
 		return sql;
+	}
+
+	/**
+	 * @todo 判断sql中是否存在lock锁
+	 * @param sql
+	 * @param dbType
+	 * @return
+	 */
+	public static boolean hasLock(String sql, Integer dbType) {
+		if (sql == null) {
+			return false;
+		}
+		if (StringUtil.matches(sql, "(?i)\\s+for\\s+update")) {
+			return true;
+		}
+		// sqlserver
+		if (dbType != null && dbType.intValue() == DBType.SQLSERVER) {
+			if (StringUtil.matches(sql,
+					"(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)?\\,?\\s*(rowlock|xlock|updlock|holdlock|nolock|readpast)\\s*\\)")) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

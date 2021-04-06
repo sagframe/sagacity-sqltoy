@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy;
 
 import java.io.IOException;
@@ -120,6 +117,11 @@ public class SqlToyConstants {
 	 * sql in 里面参数最大值
 	 */
 	public static int SQL_IN_MAX = 999;
+
+	/**
+	 * 并行默认最大等待时长
+	 */
+	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
 
 	/**
 	 * 字符串中内嵌参数的匹配模式

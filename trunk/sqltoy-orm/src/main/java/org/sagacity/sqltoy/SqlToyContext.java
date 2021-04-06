@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，SqlToy ORM框架不允许任何形式的抄袭
- */
 package org.sagacity.sqltoy;
 
 import java.util.Arrays;
@@ -25,6 +22,7 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
+import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.IdUtil;
@@ -37,7 +35,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-//------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------------------*/
+//------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
 //  (很多框架没有悟到这一点，且没有发现条件参数95%以上为null或为空白就表示不参与条件检索,少量特殊情况
 //   只需稍做处理即可规整，所以总是摆脱不了if(param!=null)形态的显式逻辑判断),此特点是开发sqltoy的起点!
@@ -55,7 +53,7 @@ import org.springframework.context.ApplicationContextAware;
 //    可以深入对比update/updateAll、saveOrUpdate/saveOrUpdateAll内部差异
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//-------------------------------------------------------------------------------------*/
+//------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy4.0
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
@@ -90,6 +88,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 延时检测时长(避免应用一启动即进行检测,包含:缓存变更检测、sql文件变更检测)
 	 */
 	private int delayCheckSeconds = 30;
+
+	/**
+	 * 分页页号超出总页时转第一页，否则返回空集合
+	 */
+	private boolean pageOverToFirst = true;
 
 	/**
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
@@ -129,6 +132,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 默认为default
 	 */
 	private String defaultElastic = "default";
+
+	/**
+	 * 缓存类型，默认ehcache(可选:caffeine)
+	 */
+	private String cacheType = "ehcache";
 
 	/**
 	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
@@ -194,7 +202,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	private DataSource defaultDataSource;
 
 	/**
-	 * sql脚本检测间隔时长(默认为3秒)
+	 * sql脚本检测间隔时长(debug模式下默认3秒,非debug默认15秒)
 	 */
 	private Integer scriptCheckIntervalSeconds;
 
@@ -245,31 +253,24 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
 
-		/**
-		 * 初始化翻译器
-		 */
-		translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
-
-		/**
-		 * 初始化脚本加载器
-		 */
+		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
 
-		/**
-		 * 初始化实体对象管理器
-		 */
+		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
+		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
+			translateManager.initialize(this, new TranslateCaffeineManager(), delayCheckSeconds);
+		} else {
+			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
+		}
+
+		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
 
-		/**
-		 * 设置保留字
-		 */
+		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
 
-		/**
-		 * 初始化sql执行统计的基本参数
-		 */
+		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
-		// SqlExecuteStat.setPrintSqlStrategy(this.printSqlStrategy);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
 		logger.debug("sqltoy init complete!");
 	}
@@ -479,12 +480,23 @@ public class SqlToyContext implements ApplicationContextAware {
 		return entityManager.getEntityMeta(this, entityClass);
 	}
 
+	/**
+	 * @TODO 判断是否是实体bean
+	 * @param entityClass
+	 * @return
+	 */
 	public boolean isEntity(Class<?> entityClass) {
 		return entityManager.isEntity(this, entityClass);
 	}
 
 	/**
-	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)
+	 * <p>
+	 * <li>1、第一步调用解析，注意是单个sqlId的片段</li>
+	 * <li>2、根据业务情况，调整id,sqlToyConfig.setId(),注意:这步并非必要,当报表平台时,报表里面多个sql,每个id在本报表范围内唯一，当很多个报表时会冲突，所以需要整合rptId+sqlId</li>
+	 * <li>3、putSqlToyConfig(SqlToyConfig sqlToyConfig) 放入交由sqltoy统一管理</li>
+	 * </p>
+	 * 
+	 * @todo 提供可以动态增加解析sql片段配置的接口,完成SqltoyConfig模型的构造(用于第三方平台集成，如报表平台等)，
 	 * @param sqlSegment
 	 * @return
 	 * @throws Exception
@@ -500,6 +512,15 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public synchronized void putSqlToyConfig(SqlToyConfig sqlToyConfig) throws Exception {
 		scriptLoader.putSqlToyConfig(sqlToyConfig);
+	}
+
+	/**
+	 * @TODO 开放sql文件动态交由开发者挂载
+	 * @param sqlFile
+	 * @throws Exception
+	 */
+	public synchronized void parseSqlFile(Object sqlFile) throws Exception {
+		scriptLoader.parseSqlFile(sqlFile);
 	}
 
 	/**
@@ -546,6 +567,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.ES)) {
+			this.dialect = Dialect.ES;
 		} else {
 			this.dialect = dialect;
 		}
@@ -696,14 +719,9 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(defaultElastic)) {
 			defaultElastic = elasticEndpointList.get(0).getId();
 		}
-		boolean nativeSql = Boolean
-				.parseBoolean(SqlToyConstants.getKeyValue("sqltoy.elasticsearch.native.sql", "false"));
 		for (ElasticEndpoint config : elasticEndpointList) {
 			// 初始化restClient
 			config.initRestClient();
-			if (!config.isNativeSql()) {
-				config.setNativeSql(nativeSql);
-			}
 			elasticEndpoints.put(config.getId().toLowerCase(), config);
 		}
 	}
@@ -794,6 +812,21 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setTypeHandler(TypeHandler typeHandler) {
 		this.typeHandler = typeHandler;
+	}
+
+	/**
+	 * @param cacheType the cacheType to set
+	 */
+	public void setCacheType(String cacheType) {
+		this.cacheType = cacheType;
+	}
+
+	public boolean isPageOverToFirst() {
+		return pageOverToFirst;
+	}
+
+	public void setPageOverToFirst(boolean pageOverToFirst) {
+		this.pageOverToFirst = pageOverToFirst;
 	}
 
 	public void destroy() {

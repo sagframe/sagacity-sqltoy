@@ -1,8 +1,3 @@
-/**
- * 提供一个默认的多功能Dao,在Service层统一提SqlToyLazyDao引入, 
- * 这样对于一般的增删改查等操作直接使用，从而避免对一些非常简单的操作也需要写一个Dao类
- * ,简化开发提升开发效率
- */
 package org.sagacity.sqltoy.dao;
 
 import java.io.Serializable;
@@ -34,6 +29,7 @@ import org.sagacity.sqltoy.link.Store;
 import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -75,7 +71,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 判断对象属性在数据库中是否唯一
 	 * @param entity
-	 * @param paramsNamed
+	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
 	 * @return boolean true：唯一；false：不唯一
 	 */
 	public boolean isUnique(Serializable entity, String... paramsNamed);
@@ -171,7 +167,7 @@ public interface SqlToyLazyDao {
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	/**
-	 * @todo 深度修改
+	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
 	 */
 	public Long updateDeeply(Serializable serializableVO);
@@ -302,18 +298,24 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
-	// sqltoy的loadAll 性能是极为优化的
 	/**
-	 * @todo 根据集合中的主键获取实体的详细信息
+	 * @todo 根据集合中的主键获取实体的详细信息(底层是批量加载优化了性能,同时控制了in 1000个问题)
 	 * @param entities
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
+	/**
+	 * @todo 提供带锁记录的批量加载功能
+	 * @param <T>
+	 * @param entities
+	 * @param lockMode
+	 * @return
+	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities, final LockMode lockMode);
 
 	/**
-	 * @TODO 加载全表数据(不推荐使用)
+	 * @TODO 加载全表数据(不推荐使用,1、极少全表加载;2、易导致lazyDao接口功能过于宽泛)
 	 * @param <T>
 	 * @param resultType
 	 * @return
@@ -594,11 +596,23 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass, final double randomCount);
 
 	/**
-	 * @todo 批量集合通过sql进行修改操作
+	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param insertCallhandler
-	 * @param autoCommit
+	 * @return
+	 */
+	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
+
+	/**
+	 * @todo 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List,null,null)
+	 *       <p>
+	 *       <li>1、VO传参模式，即:batchUpdate(sql,List<VO> dataSet),sql中用:paramName</li>
+	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
+	 *       </p>
+	 * @param sqlOrNamedSql
+	 * @param dataSet
+	 * @param insertCallhandler (一般为null)
+	 * @param autoCommit        (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
@@ -700,9 +714,9 @@ public interface SqlToyLazyDao {
 	public DataSource getDataSource();
 
 	/**
-	 * @todo 获取业务ID
-	 * @param signature
-	 * @param increment
+	 * @todo 获取业务ID(当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * @param signature 唯一标识符号
+	 * @param increment 增量
 	 * @return
 	 */
 	public long generateBizId(String signature, int increment);
@@ -756,22 +770,12 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param cacheName
 	 * @param matchRegex
-	 * @param matchIndexes
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
-	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes);
-
-	/**
-	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param cacheName
-	 * @param cacheType
-	 * @param matchRegex
-	 * @param matchIndexes
-	 * @return
-	 */
-	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
 
 	/**
 	 * @TODO 实现VO和POJO之间属性值的复制
@@ -839,13 +843,13 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param parallQueryList
 	 * @param paramsMap
-	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
-	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，不推荐使用 ------------ */
+	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，根据情况使用 ---- */
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合

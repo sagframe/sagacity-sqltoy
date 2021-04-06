@@ -56,7 +56,7 @@ public class OracleDialectUtils {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		loadSql = lockSql(loadSql, lockMode);
+		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -75,34 +75,10 @@ public class OracleDialectUtils {
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		// 用in 的方式加载全量数据(在实际应用过程中应该注意in () 形式有1000个参数的限制)
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		// 是否锁记录
-		String realSql = lockSql(loadSql.toString(), lockMode);
-		return DialectUtils.loadAll(sqlToyContext, realSql, entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+				(sql, dbTypeValue, lockedMode) -> {
+					return getLockSql(sql, dbTypeValue, lockedMode);
+				});
 	}
 
 	/**
@@ -220,17 +196,18 @@ public class OracleDialectUtils {
 		});
 	}
 
-	public static String lockSql(String sql, LockMode lockMode) {
-		if (lockMode == null) {
-			return sql;
+	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return sql.concat(" for update nowait ");
+			return " for update nowait ";
 		}
-		if (lockMode == LockMode.UPGRADE) {
-			return sql.concat(" for update  ");
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
 		}
-		return sql;
+		return " for update ";
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

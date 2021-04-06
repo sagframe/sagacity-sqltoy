@@ -1,10 +1,6 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -24,7 +20,6 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
-import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
@@ -55,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 对SqlUtil类的扩展，提供查询结果的缓存key-value提取以及结果分组link功能
+ * @description 提供查询结果的缓存key-value提取以及结果分组link功能
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-18
  * @modify Date:2016-12-13 {对行转列分类参照集合进行了排序}
@@ -122,16 +117,6 @@ public class ResultUtils {
 			} catch (Exception e) {
 				throw e;
 			}
-			// 2020-05-29 移到calculate 计算方法中，兼容mongo、es 的处理
-			// 字段脱敏
-			// if (sqlToyConfig.getSecureMasks() != null && result.getRows() != null) {
-			// secureMask(result, sqlToyConfig, labelIndexMap);
-			// }
-			//
-			// 自动格式化
-			// if (sqlToyConfig.getFormatModels() != null && result.getRows() != null) {
-			// formatColumn(result, sqlToyConfig, labelIndexMap);
-			// }
 		}
 		// 填充记录数
 		if (result.getRows() != null) {
@@ -426,7 +411,6 @@ public class ResultUtils {
 			if (updateRowHandler != null) {
 				isUpdate = true;
 			}
-
 			// 循环通过java reflection将rs中的值映射到VO中
 			if (hasTranslate) {
 				while (rs.next()) {
@@ -516,11 +500,9 @@ public class ResultUtils {
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
-
 		// link 目前只支持单个字段运算
 		int columnSize = labelNames.length;
 		int index = 0;
-
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -533,7 +515,6 @@ public class ResultUtils {
 		if (maxThresholds > 1 && maxThresholds <= warnThresholds) {
 			maxThresholds = warnThresholds;
 		}
-
 		int linkCols = linkModel.getColumns().length;
 		String[] linkColumns = linkModel.getColumns();
 		int[] linkIndexs = new int[linkCols];
@@ -564,7 +545,6 @@ public class ResultUtils {
 		Object preIdentity = null;
 		Object[] linkValues = new Object[linkCols];
 		String[] linkStrs = new String[linkCols];
-
 		TranslateExtend extend = null;
 		Object[] cacheValues;
 		List rowTemp;
@@ -683,7 +663,6 @@ public class ResultUtils {
 		}
 		// 参照列，如按年份进行旋转
 		Integer[] categoryCols = mappingLabelIndex(pivotModel.getCategoryCols(), labelIndexMap);
-
 		// 旋转列，如按年份进行旋转，则旋转列为：年份下面的合格数量、不合格数量等子分类数据
 		Integer[] pivotCols = mappingLabelIndex(pivotModel.getPivotCols(), labelIndexMap);
 		// 分组主键列（以哪几列为基准）
@@ -915,7 +894,9 @@ public class ResultUtils {
 				// keyTemplate已经提前做了规整,将${key},${},${0} 统一成了{}
 				fieldStr = extend.keyTemplate.replace("{}", fieldStr);
 			}
+			// 根据key获取缓存值
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
+			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
 				if (extend.uncached != null) {
 					fieldValue = extend.uncached.replace("${value}", fieldStr);
@@ -1059,13 +1040,14 @@ public class ResultUtils {
 			Object processor;
 			for (int i = 0; i < resultProcessors.size(); i++) {
 				processor = resultProcessors.get(i);
-				// 数据旋转
+				// 数据旋转(行转列)
 				if (processor instanceof PivotModel) {
 					items = pivotResult((PivotModel) processor, labelIndexMap, items, pivotCategorySet);
 					changedCols = true;
-				} else if (processor instanceof UnpivotModel) {
+				} // 列转行
+				else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
-					changedCols = true;
+					//changedCols = true;
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);
@@ -1077,7 +1059,7 @@ public class ResultUtils {
 					// 行数据环比
 					RowsChainRelative.process((RowsChainRelativeModel) processor, labelIndexMap, items);
 				} else if (processor instanceof ReverseModel) {
-					// 数据反顺
+					// 数据反序
 					ReverseList.process((ReverseModel) processor, labelIndexMap, items);
 				}
 			}
@@ -1110,16 +1092,19 @@ public class ResultUtils {
 
 	/**
 	 * @todo 根据查询结果的类型，构造相应对象集合(增加map形式的结果返回机制)
+	 * @param sqlToyContext
 	 * @param queryResultRows
 	 * @param labelNames
 	 * @param resultType
+	 * @param changedCols
+	 * @param humpMapLabel
 	 * @return
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
-			Class resultType, boolean changedCols) throws Exception {
+			Class resultType, boolean changedCols, boolean humpMapLabel) throws Exception {
 		// 类型为null就默认返回二维List
-		if (queryResultRows == null || resultType == null || resultType.equals(List.class)
+		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
 			return queryResultRows;
 		}
@@ -1129,8 +1114,8 @@ public class ResultUtils {
 		}
 		// 已经存在pivot、unpivot、列环比计算等
 		if (changedCols) {
-			logger.warn("查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作不支持转map或VO对象!");
-			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、unpivot、列同比环比计算等改变列宽度的操作，因此不支持转map或VO对象!");
+			logger.warn("查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
+			SqlExecuteStat.debug("映射结果类型错误", "查询中存在类似pivot、列同比环比计算导致结果'列'数不固定，因此不支持转map或VO对象!");
 		}
 		Class superClass = resultType.getSuperclass();
 		// 如果结果类型是hashMap
@@ -1139,6 +1124,11 @@ public class ResultUtils {
 				|| HashMap.class.equals(superClass) || LinkedHashMap.class.equals(superClass)
 				|| ConcurrentHashMap.class.equals(superClass) || Map.class.equals(superClass)) {
 			int width = labelNames.length;
+			String[] realLabel = labelNames;
+			// 驼峰处理
+			if (humpMapLabel) {
+				realLabel = humpFieldNames(labelNames, null);
+			}
 			List result = new ArrayList();
 			List rowList;
 			boolean isMap = resultType.equals(Map.class);
@@ -1154,20 +1144,19 @@ public class ResultUtils {
 					rowMap = (Map) resultType.getDeclaredConstructor().newInstance();
 				}
 				for (int j = 0; j < width; j++) {
-					rowMap.put(labelNames[j], rowList.get(j));
+					rowMap.put(realLabel[j], rowList.get(j));
 				}
 				result.add(rowMap);
 			}
 			return result;
 		}
-		EntityMeta entityMeta = null;
+		HashMap<String, String> columnFieldMap = null;
 		if (sqlToyContext.isEntity(resultType)) {
-			entityMeta = sqlToyContext.getEntityMeta(resultType);
+			columnFieldMap = sqlToyContext.getEntityMeta(resultType).getColumnFieldMap();
 		}
-
 		// 封装成VO对象形式
 		return BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
-				convertRealProps(labelNames, (entityMeta == null) ? null : entityMeta.getColumnFieldMap()), resultType);
+				convertRealProps(labelNames, columnFieldMap), resultType);
 	}
 
 	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
@@ -1186,6 +1175,7 @@ public class ResultUtils {
 	/**
 	 * @todo 加工字段名称，将数据库sql查询的columnName转成对应对象的属性名称(去除下划线)
 	 * @param labelNames
+	 * @param colFieldMap
 	 * @return
 	 */
 	public static String[] humpFieldNames(String[] labelNames, HashMap<String, String> colFieldMap) {
@@ -1206,31 +1196,6 @@ public class ResultUtils {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * @TODO 将字段名称变成驼峰模式
-	 * @param queryExecutor
-	 * @param labelNames
-	 * @return
-	 */
-	public static String[] humpFieldNames(QueryExecutor queryExecutor, String[] labelNames) {
-		Type resultType = queryExecutor.getInnerModel().resultType;
-		boolean hump = true;
-		if (null != resultType) {
-			Class superClass = ((Class) resultType).getSuperclass();
-			if ((resultType.equals(HashMap.class) || resultType.equals(Map.class)
-					|| resultType.equals(ConcurrentMap.class) || resultType.equals(ConcurrentHashMap.class)
-					|| resultType.equals(LinkedHashMap.class) || HashMap.class.equals(superClass)
-					|| LinkedHashMap.class.equals(superClass) || ConcurrentHashMap.class.equals(superClass)
-					|| Map.class.equals(superClass)) && !queryExecutor.getInnerModel().humpMapLabel) {
-				hump = false;
-			}
-		}
-		if (hump) {
-			return humpFieldNames(labelNames, null);
-		}
-		return labelNames;
 	}
 
 	/**

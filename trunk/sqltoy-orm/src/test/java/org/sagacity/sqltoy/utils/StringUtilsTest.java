@@ -5,8 +5,11 @@ package org.sagacity.sqltoy.utils;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyConstants;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @author zhongxuchen
@@ -44,4 +47,66 @@ public class StringUtilsTest {
 		assertArrayEquals(result, new String[] { "a", "\"\"\",\"", "a" });
 	}
 
+	@Test
+	public void testRegex() {
+		String temp = "{Key}";
+		String result = temp.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}");
+		System.err.println(result);
+		System.err.println(result.replace("${value}", "chenren"));
+	}
+
+	@Test
+	public void testMatchForUpdate() {
+		String sql = "selec * from table ";
+		System.err.println(SqlUtil.hasLock(sql.concat(" "), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" for update"), DBType.SQLSERVER));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.MYSQL));
+		System.err.println(SqlUtil.hasLock(sql.concat(" with(rowlock xlock)"), DBType.SQLSERVER));
+		String sql1 = "select * from table with ";
+		String regex = "(?i)with\\s*\\(\\s*(rowlock|xlock|updlock|holdlock)?\\,?\\s*(rowlock|xlock|updlock|holdlock)\\s*\\)";
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,xlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock,updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(rowlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock updlock)"), regex));
+		System.err.println(StringUtil.matches(sql1.concat("(holdlock)"), regex));
+	}
+
+	@Test
+	public void testLike() {
+		String[] ary = "   a   b  c d".trim().split("\\s+");
+		for (int i = 0; i < ary.length; i++) {
+			System.err.println("[" + ary[i] + "]");
+		}
+		String sql = "支持保留字处理，对象操作自动增加保留字符号，跨数据库sql自动适配";
+		System.err.println(StringUtil.like(sql, "数据库".split("\\s+")));
+		System.err.println(StringUtil.like(sql, "保留  操作  ，跨数库".split("\\s+")));
+		System.err.println(StringUtil.like(sql, "保留  操作  ， 数据库".split("\\s+")));
+
+	}
+
+	@Test
+	public void testMatch() {
+		String sqlLow = "from t where1 (1=1)";
+		String sql = "select 1 from";
+		String sqlWith = "with t as () * from";
+		System.err.println(StringUtil.matches(sqlLow, "^\\s*where\\W"));
+		System.err.println(StringUtil.matches(sqlLow, "^from\\W"));
+		System.err.println(StringUtil.matches(sql, "^(select|with)\\W"));
+		System.err.println(StringUtil.matches(sqlWith, "^(select|with)\\W"));
+		String sequence = "SEQ_${tableName}";
+		System.err.println(sequence.replaceFirst("(?i)\\$\\{tableName\\}", "staff_info"));
+		System.err.println(sequence.replaceFirst("(?i)\\$?\\{tableName\\}", "staff_info"));
+		System.err.println("A_B_C_D".replace("_", ""));
+
+	}
+
+	@Test
+	public void testWhereMatch() {
+		Pattern WHERE_CLOSE_PATTERN = Pattern
+				.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+		System.err.println(StringUtil.matches("inner join ", WHERE_CLOSE_PATTERN));
+
+	}
 }

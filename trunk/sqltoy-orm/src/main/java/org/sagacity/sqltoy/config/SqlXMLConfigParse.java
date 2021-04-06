@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.config;
 
 import static java.lang.System.out;
@@ -114,15 +111,17 @@ public class SqlXMLConfigParse {
 		String fileName;
 		Object resource;
 		boolean isDebug = logger.isDebugEnabled();
+		Long lastModified;
+		Long preModified;
 		for (int i = 0; i < xmlFiles.size(); i++) {
 			resource = xmlFiles.get(i);
 			if (resource instanceof File) {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
 				synchronized (fileName) {
-					Long lastModified = Long.valueOf(sqlFile.lastModified());
+					lastModified = Long.valueOf(sqlFile.lastModified());
 					// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-					Long preModified = filesLastModifyMap.get(fileName);
+					preModified = filesLastModifyMap.get(fileName);
 					// 最后修改时间比上次修改时间大，重新加载sql文件
 					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
 						filesLastModifyMap.put(fileName, lastModified);
@@ -190,10 +189,12 @@ public class SqlXMLConfigParse {
 						sqlToyConfig = parseSingleSql(sqlElt, dialect);
 						if (sqlToyConfig != null) {
 							// 去除sql中的注释语句并放入缓存
-							if (cache.containsKey(sqlToyConfig.getId()) && !isReload) {
+							if (cache.containsKey(sqlToyConfig.getId())) {
 								logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
 								// 移除分页优化缓存
-								PageOptimizeUtils.remove(sqlToyConfig.getId());
+								if (isReload) {
+									PageOptimizeUtils.remove(sqlToyConfig.getId());
+								}
 							}
 							cache.put(sqlToyConfig.getId(), sqlToyConfig);
 						}
@@ -365,18 +366,27 @@ public class SqlXMLConfigParse {
 		}
 
 		// 解析分页优化器
-		// <page-optimize alive-max="100" alive-seconds="90"/>
+		// <page-optimize parallel="true" alive-max="100" alive-seconds="90"
+		// parallel-maxwait-seconds="600"/>
 		nodeList = sqlElt.getElementsByTagName(local.concat("page-optimize"));
 		if (nodeList.getLength() > 0) {
 			PageOptimize optimize = new PageOptimize();
 			Element pageOptimize = (Element) nodeList.item(0);
-			// sqlToyConfig.setPageOptimize(true);
+			// 保留不同条件的count缓存记录量
 			if (pageOptimize.hasAttribute("alive-max")) {
 				optimize.aliveMax(Integer.parseInt(pageOptimize.getAttribute("alive-max")));
 			}
 			// 不同sql条件分页记录数量保存有效时长(默认90秒)
 			if (pageOptimize.hasAttribute("alive-seconds")) {
 				optimize.aliveSeconds(Integer.parseInt(pageOptimize.getAttribute("alive-seconds")));
+			}
+			// 是否支持并行查询
+			if (pageOptimize.hasAttribute("parallel")) {
+				optimize.parallel(Boolean.parseBoolean(pageOptimize.getAttribute("parallel")));
+			}
+			// 最大并行等待时长(秒)
+			if (pageOptimize.hasAttribute("parallel-maxwait-seconds")) {
+				optimize.parallelMaxWaitSeconds(Long.parseLong(pageOptimize.getAttribute("parallel-maxwait-seconds")));
 			}
 			sqlToyConfig.setPageOptimize(optimize);
 		}
@@ -520,7 +530,7 @@ public class SqlXMLConfigParse {
 			if (tmp == null) {
 				tmp = getAttrValue(elt, "column");
 			}
-			String[] columns = tmp.toLowerCase().split("\\,");
+			String[] columns = trimParams(tmp.toLowerCase().split("\\,"));
 			String type = getAttrValue(elt, "type").toLowerCase();
 			String maskCode = getAttrValue(elt, "mask-code");
 			String headSize = getAttrValue(elt, "head-size");
@@ -638,7 +648,7 @@ public class SqlXMLConfigParse {
 			elt = (Element) shardingTables.item(i);
 			if (elt.hasAttribute("tables") && elt.hasAttribute("strategy")) {
 				ShardingStrategyConfig shardingModel = new ShardingStrategyConfig(1);
-				shardingModel.setTables(elt.getAttribute("tables").split("\\,"));
+				shardingModel.setTables(trimParams(elt.getAttribute("tables").split("\\,")));
 				String[] fields;
 				if (elt.hasAttribute("params")) {
 					fields = elt.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
@@ -854,6 +864,9 @@ public class SqlXMLConfigParse {
 			if (filter.hasAttribute("cache-type")) {
 				filterModel.setCacheType(filter.getAttribute("cache-type"));
 			}
+			if (filter.hasAttribute("cache-key-index")) {
+				filterModel.setCacheKeyIndex(Integer.parseInt(filter.getAttribute("cache-key-index")));
+			}
 			if (filter.hasAttribute("cache-mapping-max")) {
 				filterModel.setCacheMappingMax(Integer.parseInt(filter.getAttribute("cache-mapping-max")));
 				// sql in a参数量不能超过1000
@@ -1049,7 +1062,9 @@ public class SqlXMLConfigParse {
 					translateModel.setSplitRegex(splitRegex);
 					translateModel.setLinkSign(linkSign);
 					if (uncachedTemplate != null) {
-						translateModel.setUncached(uncachedTemplate);
+						// 统一未匹配中的通配符号为${value}
+						translateModel.setUncached(
+								uncachedTemplate.replaceAll("(?i)\\$?\\{\\s*key\\s*\\}", "\\$\\{value\\}"));
 					}
 					if (cacheIndexs != null) {
 						if (i < cacheIndexs.length - 1) {
@@ -1116,7 +1131,7 @@ public class SqlXMLConfigParse {
 			Element df;
 			for (int i = 0; i < dfElts.getLength(); i++) {
 				df = (Element) dfElts.item(i);
-				String[] columns = df.getAttribute("columns").toLowerCase().split("\\,");
+				String[] columns = trimParams(df.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
@@ -1131,7 +1146,7 @@ public class SqlXMLConfigParse {
 			Element nf;
 			for (int i = 0; i < nfElts.getLength(); i++) {
 				nf = (Element) nfElts.item(i);
-				String[] columns = nf.getAttribute("columns").toLowerCase().split("\\,");
+				String[] columns = trimParams(nf.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
@@ -1309,7 +1324,6 @@ public class SqlXMLConfigParse {
 				}
 			}
 		}
-
 		// 加入sqlToyConfig
 		sqlToyConfig.setResultProcessor(resultProcessor);
 	}

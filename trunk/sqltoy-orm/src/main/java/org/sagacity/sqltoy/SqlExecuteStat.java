@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy;
 
 import static java.lang.System.out;
@@ -186,7 +183,7 @@ public class SqlExecuteStat {
 					result.append("\n/*|     内部sql: ").append(fitSqlParams(content, args));
 					result.append("\n/*|     save(All)|saveOrUpdate(All)|deleleAll|batchUpdate等不输出sql执行参数");
 				} else {
-					result.append("\n/*|     入参后sql: ").append(fitSqlParams(content, args));
+					result.append("\n/*|     模拟入参后sql: ").append(fitSqlParams(content, args));
 					result.append("\n/*|     sql参数: ");
 					if (args != null && args.length > 0) {
 						StringBuilder paramStr = new StringBuilder();
@@ -202,7 +199,8 @@ public class SqlExecuteStat {
 					}
 				}
 			} else {
-				result.append("\n/*|---- 过程: " + step + "," + topic + ":" + StringUtil.fillArgs(content, args));
+				result.append("\n/*|---- 过程: " + step + "," + topic
+						+ (content == null ? "" : ":" + StringUtil.fillArgs(content, args)));
 			}
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
@@ -224,6 +222,11 @@ public class SqlExecuteStat {
 	public static void destroy() {
 		// 执行完成时打印日志
 		destroyLog();
+		threadLocal.remove();
+		threadLocal.set(null);
+	}
+
+	public static void destroyNotLog() {
 		threadLocal.remove();
 		threadLocal.set(null);
 	}
@@ -368,5 +371,13 @@ public class SqlExecuteStat {
 			return sqlTrace.getExecuteTime();
 		}
 		return -1L;
+	}
+
+	public static SqlExecuteTrace get() {
+		return threadLocal.get();
+	}
+
+	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
+		threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
 	}
 }

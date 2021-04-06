@@ -66,7 +66,7 @@ public class DMDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getRandomResult(org.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.
 	 * sagacity .sqltoy.SqlToyContext,
 	 * org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
@@ -83,10 +83,10 @@ public class DMDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findPageBySql(org.sagacity
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.lang.Long,
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.lang.Long,
 	 * java.lang.Integer, java.sql.Connection)
 	 */
 	@Override
@@ -165,27 +165,16 @@ public class DMDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findBySql(org.sagacity.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
 	 * java.lang.reflect.Type,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String realSql = sql;
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT: {
-				realSql = realSql.concat(" for update nowait ");
-				break;
-			}
-			case UPGRADE:
-				realSql = realSql.concat(" for update ");
-				break;
-			}
-		}
+		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -193,7 +182,7 @@ public class DMDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getCountBySql(java.lang
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
@@ -344,7 +333,7 @@ public class DMDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -397,7 +386,7 @@ public class DMDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -437,8 +426,8 @@ public class DMDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = sql.concat(" for update nowait");
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -449,7 +438,7 @@ public class DMDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
@@ -468,7 +457,7 @@ public class DMDialect implements Dialect {
 	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
@@ -492,5 +481,19 @@ public class DMDialect implements Dialect {
 			final String dialect) throws Exception {
 		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
 				dbType);
+	}
+
+	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
+		// 判断是否已经包含for update
+		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
+			return "";
+		}
+		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			return " for update nowait ";
+		}
+		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
+			return " for update skip locked";
+		}
+		return " for update ";
 	}
 }

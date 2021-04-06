@@ -46,11 +46,12 @@ public class ElasticSearchUtils {
 	 * @param sqlToyConfig
 	 * @param sql
 	 * @param resultClass
+	 * @param humpMapLabel
 	 * @return
 	 * @throws Exception
 	 */
 	public static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Class resultClass) throws Exception {
+			Class resultClass,boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		// 原生sql支持(7.5.1 还未支持分页)
@@ -95,7 +96,7 @@ public class ElasticSearchUtils {
 
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
-				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols));
+				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols,true));
 		return resultSet;
 	}
 

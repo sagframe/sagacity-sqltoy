@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.translate;
 
 import java.time.LocalDateTime;
@@ -103,12 +100,15 @@ public class CacheUpdateWatcher extends Thread {
 		} catch (InterruptedException e) {
 		}
 		boolean isRun = true;
+		Long preCheck;
+		CheckerConfigModel checkerConfig;
+		long interval;
+		long nowInterval;
+		long nowMillis;
+		String checker;
+		LocalDateTime ldt;
+		int hourMinutes;
 		while (isRun) {
-			Long preCheck;
-			CheckerConfigModel checkerConfig;
-			long interval;
-			long nowInterval;
-			String checker;
 			// 多个检测任务
 			for (int i = 0; i < updateCheckers.size(); i++) {
 				checker = prefix + i;
@@ -116,12 +116,12 @@ public class CacheUpdateWatcher extends Thread {
 				// 上次检测时间
 				preCheck = lastCheckTime.get(checker);
 				// 当前检测时间
-				long nowMillis = System.currentTimeMillis();
+				nowMillis = System.currentTimeMillis();
 				// 当前的时间间隔
 				nowInterval = (nowMillis - preCheck.longValue()) / 1000;
-				LocalDateTime ldt = LocalDateTime.now();
+				ldt = LocalDateTime.now();
 				// 当前时间区间格式HHmm
-				int hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
+				hourMinutes = ldt.getHour() * 100 + ldt.getMinute();
 				interval = getInterval(checkerConfig.getTimeSections(), hourMinutes);
 				// 间隔大于设定阈值,执行检测
 				if (nowInterval >= interval) {
@@ -177,7 +177,8 @@ public class CacheUpdateWatcher extends Thread {
 		if (!checkerConfig.isIncrement()) {
 			try {
 				for (CacheCheckResult result : results) {
-					logger.debug("检测到缓存:{} 类别:{} 发生更新!", result.getCacheName(), result.getCacheType());
+					logger.debug("检测到缓存发生更新: cacheName:{} cacheType:{}!", result.getCacheName(),
+							(result.getCacheType() == null) ? "无" : result.getCacheType());
 					translateCacheManager.clear(result.getCacheName(), result.getCacheType());
 				}
 			} catch (Exception e) {
@@ -188,8 +189,9 @@ public class CacheUpdateWatcher extends Thread {
 		else {
 			String cacheName = checkerConfig.getCache();
 			try {
-				logger.debug("检测到缓存:{} 发生{}条记录更新!", cacheName, results.size());
+				logger.debug("检测到缓存cacheName:{} 发生:{} 条记录更新!", cacheName, results.size());
 				HashMap<String, Object[]> cacheData;
+				int count = 0;
 				// 内部不存在分组的缓存
 				if (!checkerConfig.isHasInsideGroup()) {
 					cacheData = translateCacheManager.getCache(cacheName, null);
@@ -201,6 +203,7 @@ public class CacheUpdateWatcher extends Thread {
 						// key不能为null
 						if (result.getItem()[0] != null) {
 							cacheData.put(result.getItem()[0].toString(), result.getItem());
+							count++;
 						}
 					}
 				} // 内部存在分组的缓存(如数据字典)
@@ -211,10 +214,15 @@ public class CacheUpdateWatcher extends Thread {
 							// 为null则等待首次调用加载
 							if (cacheData != null) {
 								cacheData.put(result.getItem()[0].toString(), result.getItem());
+								count++;
+							} else {
+								logger.warn("增量缓存更新:cacheName={},cacheType={},未取到对应缓存数据,请检查数据结构是否正确(或缓存未必调用并初始化过)!",
+										cacheName, result.getCacheType());
 							}
 						}
 					}
 				}
+				logger.debug("缓存实际完成:{} 条记录更新!", count);
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("缓存增量更新检测,更新缓存:{} 发生异常:{}", cacheName, e.getMessage());

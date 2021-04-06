@@ -38,11 +38,21 @@ public class DataSetResult<T> implements Serializable {
 	 * 总记录数量
 	 */
 	private Long recordCount = 0L;
-	
+
 	/**
 	 * 执行总时长,毫秒
 	 */
 	private Long executeTime = -1L;
+
+	/**
+	 * 执行成功标志
+	 */
+	private boolean success = true;
+
+	/**
+	 * 执行信息
+	 */
+	private String message;
 
 	/**
 	 * @return the labelNames
@@ -132,5 +142,33 @@ public class DataSetResult<T> implements Serializable {
 	 */
 	public void setExecuteTime(Long executeTime) {
 		this.executeTime = executeTime;
+	}
+
+	/**
+	 * @return the success
+	 */
+	public boolean isSuccess() {
+		return success;
+	}
+
+	/**
+	 * @param success the success to set
+	 */
+	public void setSuccess(boolean success) {
+		this.success = success;
+	}
+
+	/**
+	 * @return the message
+	 */
+	public String getMessage() {
+		return message;
+	}
+
+	/**
+	 * @param message the message to set
+	 */
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

@@ -32,19 +32,21 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
+import org.sagacity.sqltoy.dialect.handler.LockSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -300,6 +302,11 @@ public class DialectUtils {
 		if (isLastSql) {
 			lastCountSql = sql;
 		} else {
+			String countPart = " count(1) ";
+			// es count(1) 不起作用
+			if (dbType.equals(DBType.ES)) {
+				countPart = " count(*) ";
+			}
 			String query_tmp = sql;
 			String withSql = "";
 			// with as分析器(避免每次做with 检测,提升效率)
@@ -353,15 +360,17 @@ public class DialectUtils {
 				selectFields = clearSymSelectFromSql(selectFields);
 				// 存在统计函数 update by chenrenfei ,date: 2017-2-24
 				if (StringUtil.matches(selectFields, STAT_PATTERN)) {
-					countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
+					countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
+							.append(") sag_count_tmpTable ");
 				} else {
 					// 截取from后的部分
-					countQueryStr.append("select count(1) ")
+					countQueryStr.append("select ").append(countPart)
 							.append((sql_from_index != -1 ? query_tmp.substring(sql_from_index) : query_tmp));
 				}
 			} // 包含distinct 或包含union则直接将查询作为子表(普通做法)
 			else {
-				countQueryStr.append("select count(1) from (").append(query_tmp).append(") sag_count_tmpTable ");
+				countQueryStr.append("select ").append(countPart).append(" from (").append(query_tmp)
+						.append(") sag_count_tmpTable ");
 			}
 
 			paramCnt = getParamsCount(countQueryStr.toString());
@@ -542,7 +551,7 @@ public class DialectUtils {
 		ReflectPropertyHandler handler = getSaveOrUpdateReflectHandler(sqlToyContext, entityMeta.getIdArray(),
 				reflectPropertyHandler, forceUpdateFields);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -611,7 +620,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -853,7 +862,7 @@ public class DialectUtils {
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 			// 排除sqlserver timestamp类型
-			if (!isMSsql || fieldMeta.getType() != java.sql.Types.TIMESTAMP) {
+			if (!(isMSsql && fieldMeta.getType() == java.sql.Types.TIMESTAMP)) {
 				columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 				if (meter > 0) {
 					sql.append(",");
@@ -867,10 +876,11 @@ public class DialectUtils {
 					if (convertBlob && fieldMeta.getFieldType().equals("byte[]")) {
 						sql.append(nullFunction);
 						sql.append("(cast(? as bytea),").append(columnName).append(" )");
-//						sql.append(" cast(");
-//						sql.append(nullFunction);
-//						sql.append("(cast(? as varchar),").append("cast(").append(columnName).append(" as varchar))");
-//						sql.append(" as bytea)");
+						// sql.append(" cast(");
+						// sql.append(nullFunction);
+						// sql.append("(cast(? as
+						// varchar),").append("cast(").append(columnName).append(" as varchar))");
+						// sql.append(" as bytea)");
 					} else {
 						sql.append(nullFunction);
 						sql.append("(?,").append(columnName).append(")");
@@ -908,7 +918,7 @@ public class DialectUtils {
 	public static Serializable load(final SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			EntityMeta entityMeta, Serializable entity, List<Class> cascadeTypes, Connection conn, final Integer dbType)
 			throws Exception {
-		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		Object[] pkValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		// 检查主键值是否合法
 		for (int i = 0; i < pkValues.length; i++) {
 			if (StringUtil.isBlank(pkValues[i])) {
@@ -933,21 +943,28 @@ public class DialectUtils {
 		}
 
 		// 存在主表对应子表
-		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
+		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			List pkRefDetails;
 			EntityMeta mappedMeta;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			Object[] mainFieldValues;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				// 判定是否要加载
-				if (cascadeTypes.contains(oneToMany.getMappedType())) {
-					sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getLoadSubTableSql(),
-							oneToMany.getMappedFields(), pkValues);
+				if (cascadeTypes.contains(cascadeModel.getMappedType())) {
+					mainFieldValues = BeanUtil.reflectBeanToAry(result, cascadeModel.getFields());
+					sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getLoadSubTableSql(),
+							cascadeModel.getMappedFields(), mainFieldValues);
 					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
-						BeanUtil.setProperty(result, oneToMany.getProperty(), pkRefDetails);
+						// oneToMany
+						if (cascadeModel.getCascadeType() == 1) {
+							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails);
+						} else {
+							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails.get(0));
+						}
 					}
 				}
 			}
@@ -958,94 +975,237 @@ public class DialectUtils {
 	/**
 	 * @todo 提供统一的loadAll处理机制
 	 * @param sqlToyContext
-	 * @param sql
 	 * @param entities
 	 * @param cascadeTypes
+	 * @param lockMode
 	 * @param conn
 	 * @param dbType
+	 * @param tableName
+	 * @param lockSqlHandler
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<?> loadAll(final SqlToyContext sqlToyContext, String sql, List<?> entities,
-			List<Class> cascadeTypes, Connection conn, final Integer dbType) throws Exception {
+	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
+			LockMode lockMode, Connection conn, final Integer dbType, String tableName, LockSqlHandler lockSqlHandler)
+			throws Exception {
 		if (entities == null || entities.isEmpty()) {
 			return entities;
 		}
 		Class entityClass = BeanUtil.getEntityClass(entities.get(0).getClass());
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
-
 		// 没有主键不能进行load相关的查询
-		if (entityMeta.getIdArray() == null) {
+		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length < 1) {
 			throw new IllegalArgumentException(
-					"表:" + entityMeta.getSchemaTable() + " 没有主键,不符合load或loadAll规则,请检查表设计是否合理!");
+					entityClass.getName() + " Entity Object hasn't primary key,cann't use loadAll method!");
 		}
-		// 主键值
-		List pkValues = BeanUtil.reflectBeansToList(entities, entityMeta.getIdArray());
 		int idSize = entityMeta.getIdArray().length;
-		// 构造内部的listz(如果复合主键，形成{p1v1,p1v2,p1v3},{p2v1,p2v2,p2v3}) 格式，然后一次查询出结果
-		List[] idValues = new List[idSize];
-		for (int i = 0; i < idSize; i++) {
-			idValues[i] = new ArrayList();
-		}
-		List rowList;
-		// 检查主键值,主键值必须不为null
-		Object value;
-		for (int i = 0, n = pkValues.size(); i < n; i++) {
-			rowList = (List) pkValues.get(i);
-			for (int j = 0; j < idSize; j++) {
-				value = rowList.get(j);
-				// 验证主键值是否合法
-				if (StringUtil.isBlank(value)) {
-					throw new IllegalArgumentException(
-							entityMeta.getSchemaTable() + " loadAll method must assign value for pk,row:" + i
-									+ " pk field:" + entityMeta.getIdArray()[j]);
-				}
-				if (!idValues[j].contains(value)) {
-					idValues[j].add(value);
+		SqlToyResult sqlToyResult = null;
+		// 单主键
+		if (idSize == 1) {
+			// 切取id数组
+			Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
+			if (idValues == null || idValues.length == 0) {
+				throw new IllegalArgumentException(
+						tableName + " loadAll method must assign value for pk field:" + entityMeta.getIdArray()[0]);
+			}
+			// 组织loadAll sql语句
+			String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues });
+		} // 复合主键
+		else {
+			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
+			Object[] rowData;
+			Object cellValue;
+			// 将条件构造成一个数组
+			Object[] realValues = new Object[idValues.size() * idSize];
+			int index = 0;
+			for (int i = 0, n = idValues.size(); i < n; i++) {
+				rowData = idValues.get(i);
+				for (int j = 0; j < idSize; j++) {
+					cellValue = rowData[j];
+					// 验证主键值是否合法
+					if (StringUtil.isBlank(cellValue)) {
+						throw new IllegalArgumentException(tableName + " loadAll method must assign value for pk,row:"
+								+ i + " pk field:" + entityMeta.getIdArray()[j]);
+					}
+					realValues[index] = cellValue;
+					index++;
 				}
 			}
+			// 组织loadAll sql语句
+			String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues);
 		}
-		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), idValues);
 
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
-
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false, entityMeta.getColumnFieldMap());
+		if (entitySet == null || entitySet.isEmpty()) {
+			return entitySet;
+		}
 		// 存在主表对应子表
-		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getOneToManys().isEmpty()) {
+		if (null != cascadeTypes && !cascadeTypes.isEmpty() && !entityMeta.getCascadeModels().isEmpty()) {
 			StringBuilder subTableSql = new StringBuilder();
 			List items;
 			SqlToyResult subToyResult;
 			EntityMeta mappedMeta;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-				if (cascadeTypes.contains(oneToMany.getMappedType())) {
-					mappedMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+			int fieldSize;
+			List<Object[]> idValues = null;
+			String colName;
+			Object[] rowData;
+			Object cellValue;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				if (cascadeTypes.contains(cascadeModel.getMappedType())) {
+					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					// 清空buffer
 					subTableSql.delete(0, subTableSql.length());
 					// 构造查询语句,update 2019-12-09 使用完整字段
-					subTableSql.append("select ").append(mappedMeta.getAllColumnNames()).append(" from ")
-							.append(oneToMany.getMappedTable()).append(" where ");
-					for (int i = 0; i < idSize; i++) {
-						if (i > 0) {
-							subTableSql.append(" and ");
+					subTableSql.append(mappedMeta.getLoadAllSql()).append(" where ");
+					String orderCols = "";
+					boolean hasOrder = StringUtil.isNotBlank(cascadeModel.getOrderBy());
+					boolean hasExtCondtion = StringUtil.isNotBlank(cascadeModel.getLoadExtCondition()) ? true : false;
+					fieldSize = cascadeModel.getMappedFields().length;
+					// 单主键
+					if (fieldSize == 1) {
+						colName = cascadeModel.getMappedColumns()[0];
+						subTableSql.append(colName);
+						subTableSql.append(" in (?) ");
+						if (hasOrder) {
+							orderCols = orderCols.concat(colName).concat(",");
 						}
-						subTableSql.append(oneToMany.getMappedColumns()[i]);
-						subTableSql.append(" in (:" + entityMeta.getIdArray()[i] + ") ");
+					} // 复合主键
+					else {
+						// 构造(field1=? and field2=?)
+						String condition = " (";
+						for (int i = 0; i < fieldSize; i++) {
+							colName = cascadeModel.getMappedColumns()[i];
+							if (i > 0) {
+								condition = condition.concat(" and ");
+							}
+							condition = condition.concat(colName).concat("=?");
+							if (hasOrder) {
+								orderCols = orderCols.concat(colName).concat(",");
+							}
+						}
+						condition = condition.concat(") ");
+						// 构造成 (field1=? and field2=?) or (field1=? and field2=?)
+						if (hasExtCondtion) {
+							subTableSql.append(" (");
+						}
+						idValues = BeanUtil.reflectBeansToInnerAry(entitySet, cascadeModel.getFields(), null, null);
+						for (int i = 0; i < idValues.size(); i++) {
+							if (i > 0) {
+								subTableSql.append(" or ");
+							}
+							subTableSql.append(condition);
+						}
+						if (hasExtCondtion) {
+							subTableSql.append(") ");
+						}
 					}
-					subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), entityMeta.getIdArray(),
-							idValues);
+
+					// 自定义扩展条件
+					if (hasExtCondtion) {
+						subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
+					}
+					if (hasOrder) {
+						subTableSql.append(" order by ").append(orderCols).append(cascadeModel.getOrderBy());
+					}
+					// 单主键
+					if (fieldSize == 1) {
+						Object[] pkValues = BeanUtil.sliceToArray(entitySet, cascadeModel.getFields()[0]);
+						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null,
+								new Object[] { pkValues });
+					} else {
+						// 复合主键,将条件值构造成一个数组
+						Object[] realValues = new Object[idValues.size() * fieldSize];
+						int index = 0;
+						for (int i = 0, n = idValues.size(); i < n; i++) {
+							rowData = idValues.get(i);
+							for (int j = 0; j < fieldSize; j++) {
+								cellValue = rowData[j];
+								realValues[index] = cellValue;
+								index++;
+							}
+						}
+						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null, realValues);
+					}
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
-							subToyResult.getParamsValue(), oneToMany.getMappedType(), null, conn, dbType, false,
+							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
 							mappedMeta.getColumnFieldMap());
-					// 调用vo中mapping方法,将子表对象规整到主表对象的oneToMany集合中
-					BeanUtil.invokeMethod(entities.get(0),
-							"mapping" + StringUtil.firstToUpperCase(oneToMany.getProperty()),
-							new Object[] { entitySet, items });
+					SqlExecuteStat.debug("子表加载结果", "子记录数:{} 条", items.size());
+					// 将item的值分配映射到main主表对象上
+					BeanUtil.loadAllMapping(entitySet, items, cascadeModel);
 				}
 			}
 		}
 		return entitySet;
+	}
+
+	/**
+	 * @TODO 组织loadAll sql语句
+	 * @param entityMeta
+	 * @param dataSize
+	 * @param tableName
+	 * @param lockSqlHandler
+	 * @param lockMode
+	 * @param dbType
+	 * @return
+	 */
+	private static String wrapLoadAll(EntityMeta entityMeta, int dataSize, String tableName,
+			LockSqlHandler lockSqlHandler, LockMode lockMode, Integer dbType) {
+		int idSize = entityMeta.getIdArray().length;
+		StringBuilder loadSql = new StringBuilder();
+		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
+		loadSql.append(" from ");
+		loadSql.append(entityMeta.getSchemaTable(tableName));
+		// sqlserver 锁语句不同于其他
+		if (dbType == DBType.SQLSERVER && lockMode != null) {
+			switch (lockMode) {
+			case UPGRADE:
+				loadSql.append(" with (rowlock xlock) ");
+				break;
+			case UPGRADE_NOWAIT:
+			case UPGRADE_SKIPLOCK:
+				loadSql.append(" with (rowlock readpast) ");
+				break;
+			}
+		}
+		loadSql.append(" where ");
+		String field;
+		String colName;
+		// 单主键
+		if (idSize == 1) {
+			field = entityMeta.getIdArray()[0];
+			colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+			loadSql.append(colName);
+			loadSql.append(" in (?) ");
+		} else {
+			// 复合主键构造 (field1=? and field2=?)
+			String condition = " (";
+			for (int i = 0; i < idSize; i++) {
+				field = entityMeta.getIdArray()[i];
+				colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
+				if (i > 0) {
+					condition = condition.concat(" and ");
+				}
+				condition = condition.concat(colName).concat("=?");
+			}
+			condition = condition.concat(")");
+			// 构造 (field1=? and field2=?) or (field1=? and field2=?)
+			for (int i = 0; i < dataSize; i++) {
+				if (i > 0) {
+					loadSql.append(" or ");
+				}
+				loadSql.append(condition);
+			}
+		}
+
+		if (lockSqlHandler != null) {
+			loadSql.append(lockSqlHandler.getLockSql(loadSql.toString(), dbType, lockMode));
+		}
+		return loadSql.toString();
 	}
 
 	/**
@@ -1176,18 +1336,28 @@ public class DialectUtils {
 			BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], result);
 		}
 		// 判定是否有级联子表数据保存
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			List subTableData;
-			final Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			List subTableData = null;
 			EntityMeta subTableEntityMeta;
 			String insertSubTableSql;
 			SavePKStrategy savePkStrategy;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-				final String[] mappedFields = oneToMany.getMappedFields();
-				subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
-				logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
-				subTableData = (List) BeanUtil.getProperty(entity, oneToMany.getProperty());
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				final String[] mappedFields = cascadeModel.getMappedFields();
+				final Object[] mainValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+				subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+				// oneToMany
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				} else {
+					subTableData = new ArrayList();
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
+				}
 				if (subTableData != null && !subTableData.isEmpty()) {
+					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
+					SqlExecuteStat.debug("执行子表级联保存", null);
 					insertSubTableSql = generateSqlHandler.generateSql(subTableEntityMeta, null);
 					savePkStrategy = generateSavePKStrategy.generate(subTableEntityMeta);
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
@@ -1195,10 +1365,12 @@ public class DialectUtils {
 							sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], idValues[i]);
+										this.setValue(mappedFields[i], mainValues[i]);
 									}
 								}
 							}, conn, dbType, null);
+				} else {
+					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}
 		}
@@ -1233,7 +1405,7 @@ public class DialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
-		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler, false, 0);
+		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
 		boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
@@ -1376,7 +1548,7 @@ public class DialectUtils {
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
 				tableName);
 		// 不存在级联操作
-		if (!cascade || entityMeta.getOneToManys() == null || entityMeta.getOneToManys().isEmpty()) {
+		if (!cascade || entityMeta.getCascadeModels().isEmpty()) {
 			return updateCnt;
 		}
 		// 级联保存
@@ -1388,35 +1560,46 @@ public class DialectUtils {
 			}
 		}
 		// 级联子表数据
-		List subTableData;
-		final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		List subTableData = null;
 		String[] forceUpdateProps = null;
 		EntityMeta subTableEntityMeta;
 		// 对子表进行级联处理
-		for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
-			subTableEntityMeta = sqlToyContext.getEntityMeta(oneToMany.getMappedType());
+		for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+			final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+			subTableEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 			forceUpdateProps = (subTableForceUpdateProps == null) ? null
-					: subTableForceUpdateProps.get(oneToMany.getMappedType());
-			subTableData = (List) BeanUtil.invokeMethod(entity,
-					"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
-			final String[] mappedFields = oneToMany.getMappedFields();
+					: subTableForceUpdateProps.get(cascadeModel.getMappedType());
+			// oneToMany
+			if (cascadeModel.getCascadeType() == 1) {
+				subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+			} else {
+				subTableData = new ArrayList();
+				Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				if (item != null) {
+					subTableData.add(item);
+				}
+			}
+			final String[] mappedFields = cascadeModel.getMappedFields();
 
 			// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-			if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
-					|| typeMap.containsKey(oneToMany.getMappedType()))) {
+			if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
+					|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+				SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
-				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
-						mappedFields, IdValues);
+				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
+						mappedFields, mainFieldValues);
 				SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 						null, conn, dbType, null);
 			}
 			// 子表数据不为空,采取saveOrUpdateAll操作
 			if (subTableData != null && !subTableData.isEmpty()) {
+				logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", realTable, subTableEntityMeta.getTableName());
+				SqlExecuteStat.debug("执行子表级联更新操作", null);
 				// 将外键值通过反调赋到相关属性上
 				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
 					public void process() {
 						for (int i = 0; i < mappedFields.length; i++) {
-							this.setValue(mappedFields[i], IdValues[i]);
+							this.setValue(mappedFields[i], mainFieldValues[i]);
 						}
 					}
 				};
@@ -1450,6 +1633,8 @@ public class DialectUtils {
 							// 设置关联外键字段的属性值(来自主表的主键)
 							reflectPropsHandler, conn, dbType, null);
 				}
+			} else {
+				logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", realTable, subTableEntityMeta.getTableName());
 			}
 		}
 		return updateCnt;
@@ -1649,7 +1834,7 @@ public class DialectUtils {
 		ReflectPropertyHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler,
 				forceUpdateFields);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
-				handler, false, 0);
+				handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
@@ -1719,7 +1904,7 @@ public class DialectUtils {
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete 操作,表:" + realTable + " 没有主键,请检查表设计!");
 		}
-		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 		Integer[] parameterTypes = new Integer[idValues.length];
 		boolean validator = true;
 		// 判断主键值是否为空
@@ -1735,12 +1920,20 @@ public class DialectUtils {
 					+ " delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 		// 级联删除子表数据
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				EntityMeta subMeta;
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
-				if (oneToMany.isDelete()) {
-					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), oneToMany.getDeleteSubTableSql(), idValues,
-							parameterTypes, conn, dbType, null);
+				if (cascadeModel.isDelete()) {
+					subMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+					Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
+					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
+					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
+						subTableFieldType[i] = subMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
+					}
+					SqlExecuteStat.debug("执行级联删除操作", null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),
+							mainFieldValues, subTableFieldType, conn, dbType, null);
 				}
 			}
 		}
@@ -1766,12 +1959,14 @@ public class DialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		// 记录数量小于1000且无级联采用一次sql执行完成删除
+		// if (entities.size() < 1000 && entityMeta.getCascadeModels().isEmpty()) {
+		// }
 		String realTable = entityMeta.getSchemaTable(tableName);
 		if (null == entityMeta.getIdArray()) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + " 没有主键,请检查表设计!");
 		}
-		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null, false,
-				0);
+		List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
 		// 判断主键值是否存在空
 		Object[] idsValue;
 		for (int i = 0, n = idValues.size(); i < n; i++) {
@@ -1788,13 +1983,22 @@ public class DialectUtils {
 			parameterTypes[i] = entityMeta.getColumnJdbcType(entityMeta.getIdArray()[i]);
 		}
 		// 级联批量删除子表数据
-		if (!entityMeta.getOneToManys().isEmpty()) {
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+		if (!entityMeta.getCascadeModels().isEmpty()) {
+			EntityMeta subTableMeta;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
-				if (oneToMany.isDelete()) {
-					SqlExecuteStat.showSql("级联删除子表记录", oneToMany.getDeleteSubTableSql(), null);
-					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), oneToMany.getDeleteSubTableSql(),
-							idValues, parameterTypes, null, null, sqlToyContext.getBatchSize(), null, conn, dbType);
+				if (cascadeModel.isDelete()) {
+					subTableMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+					List<Object[]> mainFieldValues = BeanUtil.reflectBeansToInnerAry(entities, cascadeModel.getFields(),
+							null, null);
+					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
+					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
+						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
+					}
+					SqlExecuteStat.showSql("级联删除子表记录", cascadeModel.getDeleteSubTableSql(), null);
+					SqlUtilsExt.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), cascadeModel.getDeleteSubTableSql(),
+							mainFieldValues, subTableFieldType, null, null, sqlToyContext.getBatchSize(), null, conn,
+							dbType);
 				}
 			}
 		}
@@ -1825,7 +2029,7 @@ public class DialectUtils {
 			// 如果没有特别指定属性，则通过数据是否为null来判断具体的字段
 			if (paramsNamed == null || paramsNamed.length == 0) {
 				String[] fieldsArray = entityMeta.getFieldsArray();
-				Object[] fieldValues = BeanUtil.reflectBeanToAry(entity, fieldsArray, null, null);
+				Object[] fieldValues = BeanUtil.reflectBeanToAry(entity, fieldsArray);
 				List paramValueList = new ArrayList();
 				List<String> paramNames = new ArrayList<String>();
 				boolean hasNoPkField = false;
@@ -1847,7 +2051,7 @@ public class DialectUtils {
 				realParamNamed = paramNames.toArray(new String[paramNames.size()]);
 			} else {
 				realParamNamed = paramsNamed;
-				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed, null, null);
+				paramValues = BeanUtil.reflectBeanToAry(entity, paramsNamed);
 			}
 			// 取出符合条件的2条记录
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
@@ -1880,7 +2084,7 @@ public class DialectUtils {
 				return false;
 			}
 			// 判断是否是本身
-			Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+			Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
 			List compareValues = (List) result.get(0);
 			// 相等表示唯一
 			boolean isEqual = true;
@@ -2038,9 +2242,9 @@ public class DialectUtils {
 				callStat.execute();
 				rs = callStat.getResultSet();
 				// 执行查询 解决存储过程返回多个结果集问题，取最后一个结果集
-//				while (callStat.getMoreResults()) {
-//					rs = callStat.getResultSet();
-//				}
+				// while (callStat.getMoreResults()) {
+				// rs = callStat.getResultSet();
+				// }
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -2124,7 +2328,7 @@ public class DialectUtils {
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
-				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+				forceSet.add(field.toLowerCase().replace("_", ""));
 			}
 		}
 		// 强制修改字段赋值
@@ -2177,7 +2381,7 @@ public class DialectUtils {
 		final Set<String> forceSet = new HashSet<String>();
 		if (forceUpdateProps != null && forceUpdateProps.length > 0) {
 			for (String field : forceUpdateProps) {
-				forceSet.add(field.toLowerCase().replaceAll("\\_", ""));
+				forceSet.add(field.toLowerCase().replace("_", ""));
 			}
 		}
 		// 强制修改字段赋值

@@ -81,7 +81,7 @@ public class ShardingUtils {
 						+ strategyConfig.getStrategy() + " 未定义,请检查!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
-					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
+					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
 			ShardingDBModel dbModel = shardingStrategy.getShardingDB(sqlToyContext, entity.getClass(),
 					entityMeta.getSchemaTable(), strategyConfig.getDecisionType(), valueMap);
 			shardingModel.setDataSourceName(dbModel.getDataSourceName());
@@ -101,7 +101,7 @@ public class ShardingUtils {
 						+ " Sharding Table Strategy:" + strategyConfig.getStrategy() + " 未定义,请检查!");
 			}
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
-					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields(), null, null));
+					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
 			String tableName = shardingStrategy.getShardingTable(sqlToyContext, entity.getClass(),
 					entityMeta.getSchemaTable(), strategyConfig.getDecisionType(), valueMap);
 			if (StringUtil.isNotBlank(tableName)) {
@@ -150,7 +150,7 @@ public class ShardingUtils {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding DB Strategy:"
 						+ dbConfig.getStrategy() + " 未定义,请检查!");
 			}
-			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null, false, 0);
+			shardingDBValues = BeanUtil.reflectBeansToInnerAry(entities, dbConfig.getFields(), null, null);
 		}
 		// 分表
 		boolean hasTable = false;
@@ -164,8 +164,7 @@ public class ShardingUtils {
 				throw new IllegalArgumentException("POJO 对象:" + entityClass.getName() + " Sharding Table Strategy:"
 						+ tableConfig.getStrategy() + " 未定义,请检查!");
 			}
-			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null, false,
-					0);
+			shardingTableValues = BeanUtil.reflectBeansToInnerAry(entities, tableConfig.getFields(), null, null);
 		}
 
 		Map<String, ShardingGroupModel> shardingGroupMaps = new HashMap<String, ShardingGroupModel>();
@@ -325,7 +324,8 @@ public class ShardingUtils {
 			entry = (Map.Entry) iter.next();
 			sqlTable = (String) entry.getKey();
 			targetTable = (String) entry.getValue();
-			if (targetTable != null && !targetTable.trim().equals("") && !sqlTable.equals(targetTable)) {
+			// 替换成实际表名
+			if (targetTable != null && !targetTable.trim().equals("") && !sqlTable.equalsIgnoreCase(targetTable)) {
 				sqlToyConfig.setCountSql(matchReplace(sqlToyConfig.getCountSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setSql(matchReplace(sqlToyConfig.getSql(dialect), sqlTable, targetTable));
 				sqlToyConfig.setFastSql(matchReplace(sqlToyConfig.getFastSql(dialect), sqlTable, targetTable));
@@ -521,7 +521,7 @@ public class ShardingUtils {
 			// 标识符
 			String signature = entityMeta.getBizIdSignature();
 			Integer[] relatedColumnIndex = entityMeta.getBizIdRelatedColIndex();
-			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null, false, 0);
+			List<Object[]> ids = BeanUtil.reflectBeansToInnerAry(entities, pks, null, null);
 			Object pkValue;
 			Object[] relatedColValue = null;
 			Object[] fullParamValues;
@@ -530,7 +530,7 @@ public class ShardingUtils {
 				// 主键值未赋予,则自动赋予
 				if (pkValue == null || pkValue.toString().trim().equals("")) {
 					if (entityMeta.isBizIdEqPK()) {
-						fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns, null, null);
+						fullParamValues = BeanUtil.reflectBeanToAry(entities.get(i), reflectColumns);
 						if (relatedColumnIndex != null) {
 							relatedColValue = new Object[relatedColumnIndex.length];
 							for (int meter = 0; meter < relatedColumnIndex.length; meter++) {

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -24,7 +25,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description sqltoy对象集合相关操作sharding策略分组以及并行提交相关数据库进行执行
+ * @description sqltoy对象集合相关操作、sharding策略分组以及并行提交相关数据库进行执行
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日
  */
@@ -81,6 +82,8 @@ public class ParallelUtils {
 		// 设置最大等待时长
 		if (shardingConfig.getMaxWaitSeconds() > 0) {
 			pool.awaitTermination(shardingConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
+		} else {
+			pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 		}
 		// 提取各个线程返回的结果进行合并
 		try {

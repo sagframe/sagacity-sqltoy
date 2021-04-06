@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.support;
 
 import java.io.Serializable;
@@ -22,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
@@ -40,6 +38,8 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
+import org.sagacity.sqltoy.model.CacheMatchExtend;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
@@ -59,8 +59,8 @@ import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.BeanPropsWrapper;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MapperUtils;
@@ -73,7 +73,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy的对外服务层,基础Dao支持工具类，用于被继承扩展自己的Dao
  * @author zhongxuchen
  * @version v4.0,Date:2012-6-1
@@ -194,7 +194,7 @@ public class SqlToyDaoSupport {
 	 *       String[]{"dictTypeCode","dictName"})，将会根据给定的2个参数
 	 *       通过VO取到相应的值，作为组合条件到dictDetailVO对应的表中查询记录是否存在
 	 * @param entity
-	 * @param paramsNamed
+	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
 	 * @return
 	 */
 	protected boolean isUnique(final Serializable entity, final String... paramsNamed) {
@@ -459,10 +459,10 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如:
-	 * <p>
-	 * 1、new QueryExecutor(sql,entity).dataSource(dataSource) 2、new
+	 * <li>1、new QueryExecutor(sql,entity).dataSource(dataSource)</li>
+	 * <li>2、new
 	 * QueryExecutor(sql).names(paramNames).values(paramValues).resultType(resultType);
-	 * </p>
+	 * </li>
 	 * 
 	 * @param queryExecutor
 	 * @return
@@ -656,6 +656,11 @@ public class SqlToyDaoSupport {
 		return (List<T>) findByQuery(query).getRows();
 	}
 
+	/**
+	 * @TODO 以queryExecutor 封装sql、条件、数据库源等进行集合查询
+	 * @param queryExecutor (可动态设置数据源)
+	 * @return
+	 */
 	protected QueryResult findByQuery(final QueryExecutor queryExecutor) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
@@ -668,7 +673,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param paginationModel
-	 * @param queryExecutor
+	 * @param queryExecutor   (可动态设置数据源)
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final PaginationModel paginationModel, final QueryExecutor queryExecutor) {
@@ -737,6 +742,12 @@ public class SqlToyDaoSupport {
 		return (List<T>) findTopByQuery(new QueryExecutor(sql, entity), topSize).getRows();
 	}
 
+	/**
+	 * @TODO 以queryExecutor封装sql、条件参数、数据源等进行取top集合查询
+	 * @param queryExecutor (可动态设置数据源)
+	 * @param topSize
+	 * @return
+	 */
 	protected QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
@@ -747,7 +758,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 在符合条件的结果中随机提取多少条记录,randomCount>1 则取整数记录，randomCount<1 则按比例提取随机记录
 	 *       如randomCount=0.05 总记录数为100,则随机取出5条记录
-	 * @param queryExecutor
+	 * @param queryExecutor (可动态设置数据源)
 	 * @param randomCount
 	 * @return
 	 */
@@ -1061,7 +1072,7 @@ public class SqlToyDaoSupport {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
 			// 根据sql中的变量从entity对象中提取参数值
 			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
-					sqlToyConfig.getParamsName(), null, null);
+					sqlToyConfig.getParamsName());
 			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
 					getDataSource(innerModel.dataSource));
 		}
@@ -1149,8 +1160,8 @@ public class SqlToyDaoSupport {
 	 * @param names
 	 * @return
 	 */
-	protected BeanPropsWrapper wrapBeanProps(String... names) {
-		return new BeanPropsWrapper(names);
+	protected BeanWrapper wrapBeanProps(String... names) {
+		return BeanWrapper.create().names(names);
 	}
 
 	/**
@@ -1176,9 +1187,9 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 产生ID(可以指定增量范围)
-	 * @param signature
-	 * @param increment
+	 * @todo 产生ID(可以指定增量范围，当一个表里面涉及多个业务主键时，sqltoy在配置层面只支持单个，但开发者可以调用此方法自行获取后赋值)
+	 * @param signature 唯一标识符号
+	 * @param increment 唯一标识符号，默认设置为1
 	 * @return
 	 */
 	protected long generateBizId(String signature, int increment) {
@@ -1201,7 +1212,7 @@ public class SqlToyDaoSupport {
 		}
 		String businessIdType = entityMeta.getColumnJavaType(entityMeta.getBusinessIdField());
 		Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
-		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, null);
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray());
 		// 提取关联属性的值
 		Object[] relatedColValue = null;
 		if (relatedColumn != null) {
@@ -1248,43 +1259,38 @@ public class SqlToyDaoSupport {
 		return this.sqlToyContext.getTranslateManager().getCacheData(cacheName, cacheType);
 	}
 
-	protected String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes) {
-		return cacheMatchKeys(cacheName, null, matchRegex, matchIndexes);
-	}
-
 	/**
 	 * @TODO 通过缓存匹配名称并返回key集合(类似数据库中的like)便于后续进行精准匹配
-	 * @param cacheName
-	 * @param cacheType
-	 * @param matchName
-	 * @param matchIndexes
+	 * @param matchRegex       如: 页面传过来的员工名称、客户名称等，反查对应的员工id和客户id
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
-	protected String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes) {
-		if (StringUtil.isBlank(cacheName) || StringUtil.isBlank(matchRegex)) {
+	protected String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter) {
+		if (cacheMatchFilter == null || StringUtil.isBlank(cacheMatchFilter.getCacheFilterArgs().cacheName)
+				|| StringUtil.isBlank(matchRegex)) {
 			throw new IllegalArgumentException("缓存反向名称匹配key必须要提供cacheName和matchName值!");
 		}
-		int[] nameIndexes = { 1 };
-		if (matchIndexes != null && matchIndexes.length > 0) {
-			nameIndexes = matchIndexes;
-		}
-		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager().getCacheData(cacheName,
-				cacheType);
+		CacheMatchExtend extendArgs = cacheMatchFilter.getCacheFilterArgs();
+		int[] nameIndexes = extendArgs.matchIndexs;
+		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
+				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
 		Collection<Object[]> values = cacheDatas.values();
 		List<String> keySet = new ArrayList<String>();
-		String lowName = matchRegex.toLowerCase();
+		String[] lowName = matchRegex.trim().toLowerCase().split("\\s+");
 		int meter = 0;
+		int cacheKeyIndex = extendArgs.cacheKeyIndex;
 		for (Object[] row : values) {
 			for (int index : nameIndexes) {
 				// 字符包含
-				if (row[index] != null && row[index].toString().toLowerCase().contains(lowName)) {
+				if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
 					meter++;
-					keySet.add(row[0].toString());
+					keySet.add(row[cacheKeyIndex].toString());
 					break;
 				}
 			}
 			// 不超过1000个(作为in条件值有限制)
-			if (meter == 1000) {
+			if (meter == extendArgs.matchSize) {
 				break;
 			}
 		}
@@ -1409,14 +1415,31 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
+		
+		//将notSelect构造成select，形成统一处理机制
+		String[] selectFieldAry = null;
+		Set<String> notSelect = innerModel.notSelectFields;
+		if (notSelect != null) {
+			List<String> selectFields = new ArrayList<String>();
+			for (String field : entityMeta.getFieldsArray()) {
+				if (!notSelect.contains(field.toLowerCase())) {
+					selectFields.add(field);
+				}
+			}
+			if (selectFields.size() > 0) {
+				selectFieldAry = new String[selectFields.size()];
+				selectFields.toArray(selectFieldAry);
+			}
+		} else {
+			selectFieldAry = innerModel.fields;
+		}
 		// 指定的查询字段
 		String fields = "";
-		if (innerModel.fields != null && innerModel.fields.length > 0) {
+		if (selectFieldAry != null && selectFieldAry.length > 0) {
 			int index = 0;
 			String colName;
 			HashSet<String> cols = new HashSet<String>();
-			for (String field : innerModel.fields) {
+			for (String field : selectFieldAry) {
 				// 去除重复字段
 				if (!cols.contains(field)) {
 					colName = entityMeta.getColumnName(field);
@@ -1576,7 +1599,7 @@ public class SqlToyDaoSupport {
 				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO对象!");
 			}
 			String[] paramName = SqlConfigParseUtils.getSqlParamsName(where, false);
-			values = BeanUtil.reflectBeanToAry(values[0], paramName, null, null);
+			values = BeanUtil.reflectBeanToAry(values[0], paramName);
 			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(where, paramName, values);
 			where = sqlToyResult.getSql();
 			values = sqlToyResult.getParamsValue();
@@ -1784,9 +1807,11 @@ public class SqlToyDaoSupport {
 				futureResult.add(future);
 			}
 			pool.shutdown();
-			// 设置最大等待时长(最大不能超过10个小时)
+			// 设置最大等待时长
 			if (parallConfig.getMaxWaitSeconds() != null) {
 				pool.awaitTermination(parallConfig.getMaxWaitSeconds(), TimeUnit.SECONDS);
+			} else {
+				pool.awaitTermination(SqlToyConstants.PARALLEL_MAXWAIT_SECONDS, TimeUnit.SECONDS);
 			}
 			ParallQueryResult item;
 			int index = 0;

@@ -1,6 +1,3 @@
-/**
- * @Copyright 2007 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.utils;
 
 import java.util.ArrayList;
@@ -739,13 +736,18 @@ public class StringUtil {
 		return result;
 	}
 
+	public static String toHumpStr(String source, boolean firstIsUpperCase) {
+		return toHumpStr(source, firstIsUpperCase, true);
+	}
+
 	/**
 	 * @todo 将字符串转换成驼峰形式
 	 * @param source
 	 * @param firstIsUpperCase
+	 * @param removeDealine
 	 * @return
 	 */
-	public static String toHumpStr(String source, boolean firstIsUpperCase) {
+	public static String toHumpStr(String source, boolean firstIsUpperCase, boolean removeDealine) {
 		if (isBlank(source)) {
 			return source;
 		}
@@ -755,6 +757,9 @@ public class StringUtil {
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < humpAry.length; i++) {
 			cell = humpAry[i];
+			if (i > 0 && !removeDealine) {
+				result.append("_");
+			}
 			// 全大写或全小写
 			if (cell.toUpperCase().equals(cell)) {
 				result.append(firstToUpperOtherToLower(cell));
@@ -957,5 +962,33 @@ public class StringUtil {
 			}
 		}
 		return result.toString();
+	}
+
+	/**
+	 * @TODO 提供类似于sql中的like功能
+	 * @param source
+	 * @param keywords 将匹配的字符用空格或者%进行切割并trim变成字符数组进行匹配
+	 * @return
+	 */
+	public static boolean like(String source, String[] keywords) {
+		int index = 0;
+		for (String keyword : keywords) {
+			index = source.indexOf(keyword, index);
+			if (index == -1) {
+				return false;
+			}
+			// 位置从前一个匹配字符的尾部开始
+			index = index + keyword.length();
+		}
+		return true;
+	}
+
+	public static void arrayTrim(String[] params) {
+		if (params == null || params.length == 0) {
+			return;
+		}
+		for (int i = 0; i < params.length; i++) {
+			params[i] = params[i].trim();
+		}
 	}
 }

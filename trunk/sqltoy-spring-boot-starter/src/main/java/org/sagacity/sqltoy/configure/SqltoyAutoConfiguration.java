@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import static java.lang.System.err;
 
 /**
  * @description sqltoy 自动配置类
@@ -126,17 +127,42 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
+		// 分页页号超出总页时转第一页，否则返回空集合
+		sqlToyContext.setPageOverToFirst(properties.isPageOverToFirst());
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改
 		sqlToyContext.setDialectConfig(properties.getDialectConfig());
 
+		// update 2021-01-18 设置缓存类别,默认ehcache
+		sqlToyContext.setCacheType(properties.getCacheType());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
-			IUnifyFieldsHandler handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor()
-					.newInstance();
-			sqlToyContext.setUnifyFieldsHandler(handler);
+			try {
+				IUnifyFieldsHandler handler = null;
+				// 类
+				if (unfiyHandler.contains(".")) {
+					handler = (IUnifyFieldsHandler) Class.forName(unfiyHandler).getDeclaredConstructor().newInstance();
+				} // spring bean名称
+				else if (applicationContext.containsBean(unfiyHandler)) {
+					handler = (IUnifyFieldsHandler) applicationContext.getBean(unfiyHandler);
+					if (handler == null) {
+						throw new ClassNotFoundException("项目中未定义unifyFieldsHandler=" + unfiyHandler + " 对应的bean!");
+					}
+				}
+				if (handler != null) {
+					sqlToyContext.setUnifyFieldsHandler(handler);
+				}
+			} catch (ClassNotFoundException cne) {
+				err.println("------------------- 错误提示 ------------------------------------------- ");
+				err.println("spring.sqltoy.unifyFieldsHandler=" + unfiyHandler + " 对应类不存在,错误原因:");
+				err.println("--1.您可能直接copy了参照项目的配置文件,但没有将具体的类也同步copy过来!");
+				err.println("--2.如您并不需要此功能，请将配置文件中注释掉spring.sqltoy.unifyFieldsHandler");
+				err.println("------------------------------------------------");
+				cne.printStackTrace();
+				throw cne;
+			}
 		}
 
 		// 设置elastic连接
@@ -145,7 +171,7 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDefaultElastic(es.getDefaultId());
 			List<ElasticEndpoint> endpoints = new ArrayList<ElasticEndpoint>();
 			for (ElasticConfig esconfig : es.getEndpoints()) {
-				ElasticEndpoint ep = new ElasticEndpoint(esconfig.getUrl(), esconfig.getVersion());
+				ElasticEndpoint ep = new ElasticEndpoint(esconfig.getUrl(), esconfig.getSqlPath());
 				ep.setId(esconfig.getId());
 				if (esconfig.getCharset() != null) {
 					ep.setCharset(esconfig.getCharset());
@@ -159,10 +185,13 @@ public class SqltoyAutoConfiguration {
 				if (esconfig.getSocketTimeout() != null) {
 					ep.setSocketTimeout(esconfig.getSocketTimeout());
 				}
+				ep.setAuthCaching(esconfig.isAuthCaching());
 				ep.setUsername(esconfig.getUsername());
 				ep.setPassword(esconfig.getPassword());
-				ep.setPath(esconfig.getPath());
 				ep.setKeyStore(esconfig.getKeyStore());
+				ep.setKeyStorePass(esconfig.getKeyStorePass());
+				ep.setKeyStoreSelfSign(esconfig.isKeyStoreSelfSign());
+				ep.setKeyStoreType(esconfig.getKeyStoreType());
 				endpoints.add(ep);
 			}
 			// 这里已经完成了当没有设置默认节点时将第一个节点作为默认节点

@@ -55,7 +55,7 @@ public class ElasticSqlPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) extend.resultType);
+				(Class) extend.resultType,extend.humpMapLabel);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getRecordCount());
 		return page;
@@ -87,7 +87,7 @@ public class ElasticSqlPlugin {
 			}
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) extend.resultType);
+				(Class) extend.resultType,extend.humpMapLabel);
 		return result.getRows();
 	}
 

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -17,12 +18,12 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.OneToManyModel;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
@@ -74,7 +75,7 @@ public class SybaseIQDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getRandomResult(org.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.
 	 * sagacity .sqltoy.SqlToyContext,
 	 * org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
@@ -258,10 +259,10 @@ public class SybaseIQDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findBySql(org.sagacity.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
 	 * java.lang.reflect.Type,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
@@ -277,7 +278,7 @@ public class SybaseIQDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getCountBySql(java.lang
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
@@ -320,8 +321,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null,
-					conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable() + "'", null, null, conn,
+					dbType, true);
 		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
@@ -332,7 +334,8 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
+					conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -355,8 +358,9 @@ public class SybaseIQDialect implements Dialect {
 				&& entityMeta.getIdStrategy().equals(PKStrategy.IDENTITY));
 		boolean isOpenIdentity = (isIdentity && SqlToyConstants.sybaseIQIdentityOpen());
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'",
-					null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),
+					"SET TEMPORARY OPTION IDENTITY_INSERT='" + entityMeta.getSchemaTable(tableName) + "'", null, null,
+					conn, dbType, true);
 		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
@@ -367,7 +371,8 @@ public class SybaseIQDialect implements Dialect {
 					}
 				}, reflectPropertyHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
-			SqlUtil.executeSql(sqlToyContext.getTypeHandler(),"SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null, conn, dbType, true);
+			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
+					conn, dbType, true);
 		}
 		return updateCount;
 	}
@@ -400,31 +405,7 @@ public class SybaseIQDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
 	}
 
 	/*
@@ -445,7 +426,7 @@ public class SybaseIQDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -471,42 +452,56 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, NVL_FUNCTION, forceUpdateFields, conn,
 				dbType, tableName);
 		// 级联保存
-		if (cascade && null != entityMeta.getOneToManys() && !entityMeta.getOneToManys().isEmpty()) {
+		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
 			if (emptyCascadeClasses != null)
 				for (Type type : emptyCascadeClasses) {
 					typeMap.put(type, "");
 				}
 			// 级联子表数据
-			List subTableData;
-			final Object[] IdValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray(), null, null);
+			List subTableData = null;
 			String[] forceUpdateProps = null;
-			for (OneToManyModel oneToMany : entityMeta.getOneToManys()) {
+			EntityMeta subEntityMeta;
+			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
+				subEntityMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+				final String[] mappedFields = cascadeModel.getMappedFields();
+				final Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
 				forceUpdateProps = (subTableForceUpdateProps == null) ? null
-						: subTableForceUpdateProps.get(oneToMany.getMappedType());
-				subTableData = (List) BeanUtil.invokeMethod(entity,
-						"get".concat(StringUtil.firstToUpperCase(oneToMany.getProperty())), null);
-				final String[] mappedFields = oneToMany.getMappedFields();
-				/**
-				 * 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
-				 */
-				if (oneToMany.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
-						|| typeMap.containsKey(oneToMany.getMappedType()))) {
-					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(oneToMany.getCascadeUpdateSql(),
-							mappedFields, IdValues);
-					SqlUtil.executeSql(sqlToyContext.getTypeHandler(),sqlToyResult.getSql(), sqlToyResult.getParamsValue(), null, conn, dbType, null);
+						: subTableForceUpdateProps.get(cascadeModel.getMappedType());
+				if (cascadeModel.getCascadeType() == 1) {
+					subTableData = (List) BeanUtil.getProperty(entity, cascadeModel.getProperty());
+				} else {
+					subTableData = new ArrayList();
+					Object item = BeanUtil.getProperty(entity, cascadeModel.getProperty());
+					if (item != null) {
+						subTableData.add(item);
+					}
+				}
+
+				// 针对子表存量数据,调用级联修改的语句，分delete 和update两种操作 1、删除存量数据;2、设置存量数据状态为停用
+				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
+						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
+					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
+							mappedFields, mainFieldValues);
+					SqlExecuteStat.debug("对存量数据进行级联修改", null);
+					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
+							sqlToyResult.getParamsValue(), null, conn, dbType, null);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
+					SqlExecuteStat.debug("执行子表级联更新操作", null);
+					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subEntityMeta.getTableName());
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
-										this.setValue(mappedFields[i], IdValues[i]);
+										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}
 								}
 							}, forceUpdateProps, conn, dbType, dialect, null, null);
+				} else {
+					logger.info("未执行update主表:{} 对应级联子表: {} 更新操作,子表数据为空!", tableName, subEntityMeta.getTableName());
 				}
 			}
 		}
@@ -518,7 +513,7 @@ public class SybaseIQDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -560,12 +555,12 @@ public class SybaseIQDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -576,7 +571,7 @@ public class SybaseIQDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
@@ -594,7 +589,7 @@ public class SybaseIQDialect implements Dialect {
 	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,

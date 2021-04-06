@@ -56,7 +56,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	//private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
+	// private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
 
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
@@ -73,9 +73,8 @@ public class SqlServerDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getRandomResult(org.
-	 * sagacity .sqltoy.SqlToyContext,
-	 * org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
+	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
@@ -90,11 +89,10 @@ public class SqlServerDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findPageBySql(org.sagacity
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection)
+	 * org.sagacity.sqltoy.executor.QueryExecutor,java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -103,19 +101,22 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String realSql = sqlToyConfig.getSql(dialect);
-		//存在@fast() 快速分页
+		String fastSql = "";
+		// 存在@fast() 快速分页
 		if (sqlToyConfig.isHasFast()) {
+			fastSql = sqlToyConfig.getFastSql(dialect);
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			sql.append(" (").append(fastSql);
 		} else {
 			sql.append(realSql);
 		}
 		// order by位置
-		int orderByIndex = StringUtil.matchIndex(realSql, ORDER_BY);
+		int orderByIndex = StringUtil.matchIndex(sqlToyConfig.isHasFast() ? fastSql : realSql, ORDER_BY);
 		// 存在order by，继续判断order by 是否在子查询内
 		if (orderByIndex > 0) {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
-			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(realSql), ORDER_BY);
+			orderByIndex = StringUtil
+					.matchIndex(DialectUtils.clearDisturbSql(sqlToyConfig.isHasFast() ? fastSql : realSql), ORDER_BY);
 		}
 		// 不存在order by或order by存在于子查询中
 		if (orderByIndex < 0) {
@@ -183,20 +184,16 @@ public class SqlServerDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findBySql(org.sagacity.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
 	 * java.lang.reflect.Type,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String realSql = sql;
-		// 组织锁表语句
-		if (lockMode != null) {
-			realSql = SqlServerDialectUtils.lockSql(realSql, null, lockMode);
-		}
+		String realSql = SqlServerDialectUtils.lockSql(sql, null, lockMode);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
 				dbType, 0, fetchSize, maxRows);
 	}
@@ -204,7 +201,7 @@ public class SqlServerDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getCountBySql(java.lang
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
@@ -292,9 +289,7 @@ public class SqlServerDialect implements Dialect {
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
 		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
-		if (lockMode != null) {
-			loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName), lockMode);
-		}
+		loadSql = SqlServerDialectUtils.lockSql(loadSql, entityMeta.getSchemaTable(tableName), lockMode);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
@@ -309,39 +304,7 @@ public class SqlServerDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + " Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		if (lockMode != null) {
-			switch (lockMode) {
-			case UPGRADE_NOWAIT:
-			case UPGRADE:
-				loadSql.append(" with (rowlock xlock) ");
-				break;
-			}
-		}
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
 	}
 
 	/*
@@ -361,7 +324,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -392,7 +355,7 @@ public class SqlServerDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -434,13 +397,13 @@ public class SqlServerDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		String realSql = SqlServerDialectUtils.lockSql(sql, null, LockMode.UPGRADE_NOWAIT);
+			final String dialect, final LockMode lockMode) throws Exception {
+		String realSql = SqlServerDialectUtils.lockSql(sql, null, (lockMode == null) ? LockMode.UPGRADE : lockMode);
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -451,7 +414,7 @@ public class SqlServerDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
@@ -470,7 +433,7 @@ public class SqlServerDialect implements Dialect {
 	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,

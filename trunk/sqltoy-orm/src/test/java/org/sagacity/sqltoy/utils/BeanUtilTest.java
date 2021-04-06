@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.DataRange;
@@ -19,10 +20,22 @@ public class BeanUtilTest {
 		dataRange.setEndDate(LocalDate.now());
 		staff.setDataRange(dataRange);
 
-		Object[] result = BeanUtil.reflectBeanToAry(staff,
-				new String[] { "staffId", "email", "dataRange.beginDate", "dataRange.enddate" }, null, null);
+		HashMap params = new HashMap();
+		params.put("companyId", "C0001");
+		params.put("companyName", "xxx企业集团");
+		staff.setParams(params);
+
+		Object[] result = BeanUtil.reflectBeanToAry(staff, new String[] { "staffId", "email", "dataRange.beginDate",
+				"dataRange.enddate", "params.companyId", "params.companyName" }, null, null);
 		for (Object tmp : result) {
 			System.err.println(tmp);
 		}
+	}
+
+	@Test
+	public void testTypeName() {
+		System.err.println(byte[].class.getSimpleName());
+		System.err.println(byte[].class.getName());
+		System.err.println(byte[].class.getTypeName());
 	}
 }

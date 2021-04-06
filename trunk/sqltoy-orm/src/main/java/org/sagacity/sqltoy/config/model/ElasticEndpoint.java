@@ -7,8 +7,11 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -16,10 +19,14 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -37,32 +44,35 @@ public class ElasticEndpoint implements Serializable {
 
 	private RestClient restClient;
 
-	/**
-	 * 默认版本为6.3
-	 * 
-	 * @param url
-	 */
 	public ElasticEndpoint(String url) {
 		this.url = url;
-		this.version = "6.3";
-		this.majorVersion = 6;
-		this.minorVersion = 3;
 	}
 
-	public ElasticEndpoint(String url, String version) {
+	public ElasticEndpoint(String url, String sqlPath) {
 		this.url = url;
-		this.version = StringUtil.isBlank(version) ? "6.3" : version;
-		String[] vers = this.version.trim().split("\\.");
-		this.majorVersion = Integer.parseInt(vers[0]);
-		if (vers.length > 1) {
-			this.minorVersion = Integer.parseInt(vers[1]);
+		if (StringUtil.isNotBlank(sqlPath)) {
+			if (sqlPath.startsWith("/")) {
+				this.sqlPath = sqlPath.substring(1);
+			} else {
+				this.sqlPath = sqlPath;
+			}
+
+			String sqlLowPath = this.sqlPath.toLowerCase();
+			// elasticsearch原生sql路径为_sql
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
+				this.nativeSql = true;
+			} else {
+				this.nativeSql = false;
+			}
 		}
 	}
 
-	/**
-	 * 请求路径(默认为根路径)
-	 */
-	private String path = "/";
+	// 6.3+原生: _xpack/sql
+	// 7.x 原生:_sql
+	// elasticsearch-sql7.4 /_sql
+	// elasticsearch-sql7.5+ /_nlpcn/sql
+	// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
+	private String sqlPath = "_sql";
 
 	/**
 	 * 配置名称
@@ -85,9 +95,29 @@ public class ElasticEndpoint implements Serializable {
 	private String password;
 
 	/**
+	 * 是否禁止抢占式身份认证
+	 */
+	private boolean authCaching = true;
+
+	/**
+	 * 证书类型
+	 */
+	private String keyStoreType;
+
+	/**
 	 * 证书文件
 	 */
 	private String keyStore;
+
+	/**
+	 * 证书秘钥
+	 */
+	private String keyStorePass;
+
+	/**
+	 * 证书是否自签名
+	 */
+	private boolean keyStoreSelfSign = true;
 
 	/**
 	 * 编码格式
@@ -110,37 +140,29 @@ public class ElasticEndpoint implements Serializable {
 	private int socketTimeout = 180000;
 
 	/**
-	 * 版本
+	 * 是否原生sql
 	 */
-	private String version;
+	private boolean nativeSql = true;
 
-	/**
-	 * 主版本
-	 */
-	private int majorVersion = 6;
-
-	/**
-	 * 次版本
-	 */
-	private int minorVersion = 0;
-
-	/**
-	 * _xpack sql(6.3.x 版本开始支持sql)
-	 */
-	private boolean nativeSql = false;
-
-	/**
-	 * @return the path
-	 */
-	public String getPath() {
-		return path;
+	public String getSqlPath() {
+		return sqlPath;
 	}
 
-	/**
-	 * @param path the path to set
-	 */
-	public void setPath(String path) {
-		this.path = path;
+	public void setSqlPath(String sqlPath) {
+		if (StringUtil.isNotBlank(sqlPath)) {
+			if (sqlPath.startsWith("/")) {
+				this.sqlPath = sqlPath.substring(1);
+			} else {
+				this.sqlPath = sqlPath;
+			}
+			String sqlLowPath = this.sqlPath.toLowerCase();
+			// elasticsearch原生sql路径为_sql
+			if (sqlLowPath.startsWith("_sql") || sqlLowPath.startsWith("_xpack/sql")) {
+				this.nativeSql = true;
+			} else {
+				this.nativeSql = false;
+			}
+		}
 	}
 
 	/**
@@ -183,20 +205,6 @@ public class ElasticEndpoint implements Serializable {
 	 */
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	/**
-	 * @return the keyStore
-	 */
-	public String getKeyStore() {
-		return keyStore;
-	}
-
-	/**
-	 * @param keyStore the keyStore to set
-	 */
-	public void setKeyStore(String keyStore) {
-		this.keyStore = keyStore;
 	}
 
 	/**
@@ -276,19 +284,95 @@ public class ElasticEndpoint implements Serializable {
 		return restClient;
 	}
 
+	public boolean isNativeSql() {
+		return nativeSql;
+	}
+
+	/**
+	 * @return the keyStoreType
+	 */
+	public String getKeyStoreType() {
+		return keyStoreType;
+	}
+
+	/**
+	 * @param keyStoreType the keyStoreType to set
+	 */
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
+	}
+
+	/**
+	 * @return the keyStore
+	 */
+	public String getKeyStore() {
+		return keyStore;
+	}
+
+	/**
+	 * @param keyStore the keyStore to set
+	 */
+	public void setKeyStore(String keyStore) {
+		this.keyStore = keyStore;
+	}
+
+	/**
+	 * @return the keyStorePass
+	 */
+	public String getKeyStorePass() {
+		return keyStorePass;
+	}
+
+	/**
+	 * @param keyStorePass the keyStorePass to set
+	 */
+	public void setKeyStorePass(String keyStorePass) {
+		this.keyStorePass = keyStorePass;
+	}
+
+	/**
+	 * @return the keyStoreSelfSign
+	 */
+	public boolean isKeyStoreSelfSign() {
+		return keyStoreSelfSign;
+	}
+
+	/**
+	 * @param keyStoreSelfSign the keyStoreSelfSign to set
+	 */
+	public void setKeyStoreSelfSign(boolean keyStoreSelfSign) {
+		this.keyStoreSelfSign = keyStoreSelfSign;
+	}
+
+	/**
+	 * @return the authCaching
+	 */
+	public boolean isAuthCaching() {
+		return authCaching;
+	}
+
+	/**
+	 * @param authCaching the authCaching to set
+	 */
+	public void setAuthCaching(boolean authCaching) {
+		this.authCaching = authCaching;
+	}
+
 	/**
 	 * @param restClient the restClient to set
 	 */
 	public void initRestClient() {
-		if (StringUtil.isBlank(this.getUrl()))
+		if (StringUtil.isBlank(this.getUrl())) {
 			return;
+		}
 		if (restClient == null) {
 			// 替换全角字符
 			String[] urls = this.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
 					.split("\\,");
 			// 当为单一地址时使用httpclient直接调用
-			if (urls.length < 2)
+			if (urls.length < 2) {
 				return;
+			}
 			List<HttpHost> hosts = new ArrayList<HttpHost>();
 			for (String urlStr : urls) {
 				try {
@@ -311,73 +395,53 @@ public class ElasticEndpoint implements Serializable {
 				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
 						&& StringUtil.isNotBlank(getPassword())) ? true : false;
+				//是否ssl证书模式
+				final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 				// 凭据提供器
 				if (hasCrede) {
 					credsProvider.setCredentials(AuthScope.ANY,
 							// 认证用户名和密码
 							new UsernamePasswordCredentials(getUsername(), getPassword()));
 				}
-				builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-					@Override
-					public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-						httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
-								.setDefaultRequestConfig(requestConfig);
-						if (hasCrede) {
-							httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
-						}
-						return httpClientBuilder;
+
+				SSLContextBuilder sslBuilder = null;
+				try {
+					if (hasSsl) {
+						KeyStore truststore = KeyStore.getInstance(
+								StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
+						truststore.load(FileUtil.getFileInputStream(keyStore),
+								(keyStorePass == null) ? null : keyStorePass.toCharArray());
+						sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
+								keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
 					}
-				});
-				restClient = builder.build();
+					final SSLContext sslContext = (sslBuilder == null) ? null : sslBuilder.build();
+					final boolean disableAuthCaching = !authCaching;
+					builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
+						@Override
+						public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+							httpClientBuilder.setDefaultConnectionConfig(connectionConfig)
+									.setDefaultRequestConfig(requestConfig);
+							// 禁用抢占式身份验证
+							if (disableAuthCaching) {
+								httpClientBuilder.disableAuthCaching();
+							}
+							// 用户名密码
+							if (hasCrede) {
+								httpClientBuilder.setDefaultCredentialsProvider(credsProvider);
+							}
+							// 证书
+							if (hasSsl) {
+								httpClientBuilder.setSSLContext(sslContext);
+							}
+							return httpClientBuilder;
+						}
+					});
+					restClient = builder.build();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
-	/**
-	 * @return the nativeSql
-	 */
-	public boolean isNativeSql() {
-		return nativeSql;
-	}
-
-	/**
-	 * @param nativeSql the nativeSql to set
-	 */
-	public void setNativeSql(boolean nativeSql) {
-		this.nativeSql = nativeSql;
-	}
-
-	/**
-	 * @return the version
-	 */
-	public String getVersion() {
-		return version;
-	}
-
-	/**
-	 * @return the majorVersion
-	 */
-	public int getMajorVersion() {
-		return majorVersion;
-	}
-
-	/**
-	 * @return the minorVersion
-	 */
-	public int getMinorVersion() {
-		return minorVersion;
-	}
-
-	public static void main(String args[]) {
-		String urlStr = "http://192.168.56.1:9200";
-		try {
-			URL url = new java.net.URL(urlStr);
-			System.err.println("protocol=" + url.getProtocol());
-			System.err.println("host=" + url.getHost());
-			System.err.println("port=" + url.getPort());
-			System.err.println("path=" + url.getPath());
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-	}
 }

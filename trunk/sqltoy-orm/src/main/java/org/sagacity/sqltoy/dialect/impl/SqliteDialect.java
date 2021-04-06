@@ -68,7 +68,7 @@ public class SqliteDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getRandomResult(org.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.
 	 * sagacity .sqltoy.SqlToyContext,
 	 * org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
@@ -109,10 +109,10 @@ public class SqliteDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findPageBySql(org.sagacity
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
 	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.lang.Long,
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.lang.Long,
 	 * java.lang.Integer, java.sql.Connection)
 	 */
 	@Override
@@ -176,10 +176,10 @@ public class SqliteDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#findBySql(org.sagacity.
+	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
 	 * java.lang.reflect.Type,
-	 * org.sagacity.core.database.callback.RowCallbackHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
@@ -195,7 +195,7 @@ public class SqliteDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.DialectSqlWrapper#getCountBySql(java.lang
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang
 	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
@@ -298,31 +298,7 @@ public class SqliteDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		if (null == entities || entities.isEmpty()) {
-			return null;
-		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		// 判断是否存在主键
-		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException(
-					entities.get(0).getClass().getName() + "Entity Object hasn't primary key,cann't use load method!");
-		}
-		StringBuilder loadSql = new StringBuilder();
-		loadSql.append("select ").append(ReservedWordsUtil.convertSimpleSql(entityMeta.getAllColumnNames(), dbType));
-		loadSql.append(" from ");
-		// sharding 分表情况下会传递表名
-		loadSql.append(entityMeta.getSchemaTable(tableName));
-		loadSql.append(" where ");
-		String field;
-		for (int i = 0, n = entityMeta.getIdArray().length; i < n; i++) {
-			field = entityMeta.getIdArray()[i];
-			if (i > 0) {
-				loadSql.append(" and ");
-			}
-			loadSql.append(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
-			loadSql.append(" in (:").append(field).append(") ");
-		}
-		return DialectUtils.loadAll(sqlToyContext, loadSql.toString(), entities, cascadeTypes, conn, dbType);
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
 	}
 
 	/*
@@ -359,7 +335,7 @@ public class SqliteDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -398,7 +374,7 @@ public class SqliteDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
@@ -440,12 +416,12 @@ public class SqliteDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetch(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final LockMode lockMode) throws Exception {
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, updateRowHandler, conn,
 				dbType, 0);
 	}
@@ -456,7 +432,7 @@ public class SqliteDialect implements Dialect {
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
@@ -474,7 +450,7 @@ public class SqliteDialect implements Dialect {
 	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
 	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,

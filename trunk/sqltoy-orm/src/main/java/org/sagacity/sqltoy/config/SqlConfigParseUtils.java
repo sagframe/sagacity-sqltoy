@@ -1,6 +1,3 @@
-/**
- * @Copyright 2009 版权归陈仁飞，不要肆意侵权抄袭，如引用请注明出处保留作者信息。
- */
 package org.sagacity.sqltoy.config;
 
 import java.util.ArrayList;
@@ -71,6 +68,8 @@ public class SqlConfigParseUtils {
 	 * sql伪指令开始标记,#[]符号等于 null==?判断
 	 */
 	public final static String SQL_PSEUDO_START_MARK = "#[";
+	// 2021-01-17 改进对称位置寻找策略,兼容sql中存在[] 符号
+	public final static String SQL_PSEUDO_SYM_START_MARK = "[";
 	public final static int SQL_PSEUDO_START_MARK_LENGTH = SQL_PSEUDO_START_MARK.length();
 
 	/**
@@ -106,7 +105,7 @@ public class SqlConfigParseUtils {
 	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
 	// where 1=1 结尾模式
-	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1$");
+	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1\\s*$");
 
 	public final static Pattern AND_START_PATTERN = Pattern.compile("(?i)^and\\W");
 	public final static Pattern OR_START_PATTERN = Pattern.compile("(?i)^or\\W");
@@ -118,6 +117,9 @@ public class SqlConfigParseUtils {
 	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
+
+	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
+			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -211,28 +213,22 @@ public class SqlConfigParseUtils {
 		} else {
 			sqlParam = processNamedParamsQuery(queryStr);
 		}
-
 		sqlToyResult.setSql(sqlParam.getSql());
-
 		// 参数和参数值进行匹配
 		sqlToyResult.setParamsValue(matchNamedParam(sqlParam.getParamsName(), paramsNamed, paramsValue));
-
 		// 剔除查询条件为null的sql语句和对应的参数
 		processNullConditions(sqlToyResult);
 		// 替换@blank(?)为空白,增强sql组织能力
 		processBlank(sqlToyResult);
 		// 替换@value(?) 为参数对应的数值
 		processValue(sqlToyResult);
-
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
-
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
 		processIn(sqlToyResult);
 		// 参数为null的处理策略(用null直接代替变量)
 		replaceNull(sqlToyResult, 0);
-
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
@@ -387,11 +383,20 @@ public class SqlConfigParseUtils {
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql, iMarkSql;
 		List paramValuesList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+		boolean logicValue;
+		int ifStart;
+		int ifEnd;
+		Object paramValue;
+		// sql中是否存在is
+		boolean sqlhasIs;
+		String evalStr;
+		int logicParamCnt;
 		while (pseudoMarkStart != -1) {
 			// 始终从最后一个#[]进行处理
 			beginMarkIndex = queryStr.lastIndexOf(SQL_PSEUDO_START_MARK);
-			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
-					beginMarkIndex + SQL_PSEUDO_START_MARK_LENGTH);
+			// update 2021-01-17 按照"["和"]" 找对称位置，兼容sql中存在[]场景
+			endMarkIndex = StringUtil.getSymMarkIndex(SQL_PSEUDO_SYM_START_MARK, SQL_PSEUDO_END_MARK, queryStr,
+					beginMarkIndex);
 			// 最后一个#[前的sql
 			preSql = queryStr.substring(0, beginMarkIndex).concat(BLANK);
 			// 最后#[]中的查询语句,加空白减少substr(index+1)可能引起的错误
@@ -408,13 +413,13 @@ public class SqlConfigParseUtils {
 				// 在#[前的参数个数
 				preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN);
 				// 判断是否有@if(xx==value1||xx>=value2) 形式的逻辑判断
-				boolean logicValue = true;
-				int start = StringUtil.matchIndex(markContentSql, IF_PATTERN);
+				logicValue = true;
+				ifStart = StringUtil.matchIndex(markContentSql, IF_PATTERN);
 				// sql中存在逻辑判断
-				if (start > -1) {
-					int end = StringUtil.getSymMarkIndex("(", ")", markContentSql, start);
-					String evalStr = markContentSql.substring(markContentSql.indexOf("(", start) + 1, end);
-					int logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
+				if (ifStart > -1) {
+					ifEnd = StringUtil.getSymMarkIndex("(", ")", markContentSql, ifStart);
+					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
+					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
@@ -425,7 +430,8 @@ public class SqlConfigParseUtils {
 						}
 					} else {
 						// 逻辑成立,去除@if()部分sql和对应的参数,同时将剩余参数数量减掉@if()中的参数数量
-						markContentSql = markContentSql.substring(0, start).concat(markContentSql.substring(end + 1));
+						markContentSql = markContentSql.substring(0, ifStart)
+								.concat(markContentSql.substring(ifEnd + 1));
 						for (int k = 0; k < logicParamCnt; k++) {
 							paramValuesList.remove(preParamCnt);
 						}
@@ -436,8 +442,6 @@ public class SqlConfigParseUtils {
 				if (logicValue) {
 					beginIndex = 0;
 					endIndex = 0;
-					Object value;
-					boolean sqlhasIs;
 					// 按顺序处理#[]中sql的参数
 					for (int i = preParamCnt; i < preParamCnt + paramCnt; i++) {
 						sqlhasIs = false;
@@ -455,14 +459,15 @@ public class SqlConfigParseUtils {
 						if (StringUtil.matches(iMarkSql.toLowerCase(), IS_PATTERN)) {
 							sqlhasIs = true;
 						}
-						value = paramValuesList.get(i);
+						paramValue = paramValuesList.get(i);
 						// 1、参数值为null且非is 条件sql语句
 						// 2、is 条件sql语句值非null、true、false 剔除#[]部分内容，同时将参数从数组中剔除
-						if ((null == value && !sqlhasIs)
-								|| (null != value && value.getClass().isArray()
-										&& CollectionUtil.convertArray(value).length == 0)
-								|| (null != value && (value instanceof Collection) && ((Collection) value).isEmpty())
-								|| (sqlhasIs && null != value && !(value instanceof java.lang.Boolean))) {
+						if ((null == paramValue && !sqlhasIs)
+								|| (null != paramValue && paramValue.getClass().isArray()
+										&& CollectionUtil.convertArray(paramValue).length == 0)
+								|| (null != paramValue && (paramValue instanceof Collection)
+										&& ((Collection) paramValue).isEmpty())
+								|| (sqlhasIs && null != paramValue && !(paramValue instanceof java.lang.Boolean))) {
 							// sql中剔除最后部分的#[]内容
 							markContentSql = BLANK;
 							for (int k = paramCnt; k > 0; k--) {
@@ -544,12 +549,13 @@ public class SqlConfigParseUtils {
 		}
 	}
 
-	// update 2020-09-22 增加sql中的循环功能,避免极为特殊场景下不必要的争议
-	// 格式:loop(:loopAry,loopContent) 和 loop(:loopArgs,loopContent,linkSign) 两种
-	// #[or @loop(:beginDates,'(startTime between :beginDates[i] and
-	// endDates[i])',or)]
 	/**
-	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换
+	 * @update 2020-09-22 增加sql中的循环功能
+	 * @TODO 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
+	 *       <li>loop(:loopAry,loopContent)</li>
+	 *       <li>loop(:loopArgs,loopContent,linkSign)</li>
+	 *       <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	 *       endDates[i])',or)]</li>
 	 * @param queryStr
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -593,15 +599,11 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
-	 * 
+	 * @update 2020-4-14 修复参数为null时,忽视了匹配的in(?)
 	 * @TODO 处理sql 语句中的in 条件，功能有2类:
-	 *       <p>
-	 *       1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)
-	 *       </p>
-	 *       <p>
-	 *       2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由 数组长度决定
-	 *       </p>
+	 *       <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
+	 *       <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
+	 *       数组长度决定</li>
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {
@@ -690,9 +692,9 @@ public class SqlConfigParseUtils {
 		int index = StringUtil.matchIndex(preSql, WHERE_END_PATTERN);
 		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
-			// where 后面拼接的条件语句是空白,增加1=1,避免最终只有一个where
+			// where 后面拼接的条件语句是空白,剔除where
 			if (tmp.equals("")) {
-				return preSql.concat(" 1=1 ");
+				return preSql.substring(0, index + 1).concat(" ");
 			}
 			// and 概率更高优先判断，剔除and 或 or
 			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
@@ -700,7 +702,16 @@ public class SqlConfigParseUtils {
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if (markContentSql.trim().equals("")) {
-				return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+				// 排除部分场景直接剔除where 语句
+				// 以where拼接")" 开头字符串,剔除where
+				if (tailSql.trim().startsWith(")")) {
+					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
+				} // where 后面跟order by、group by、left join、right join、full join、having、union
+				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
+					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
+				} else {
+					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+				}
 			}
 		}
 		// update 2017-12-4
@@ -713,6 +724,10 @@ public class SqlConfigParseUtils {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(3)).concat(" ");
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(2)).concat(" ");
+			} else if (tmp.startsWith(")")) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
+			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!markContentSql.trim().equals("")) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
 			}
@@ -767,7 +782,6 @@ public class SqlConfigParseUtils {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(dialect);
 		// debug模式下面关闭sql打印
 		sqlToyConfig.setShowSql(!StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX));
-
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号
@@ -782,7 +796,6 @@ public class SqlConfigParseUtils {
 		if (StringUtil.matches(originalSql, SqlUtil.UNION_PATTERN)) {
 			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		}
-
 		// 只有在查询模式前提下才支持fastPage机制
 		if (sqlType.equals(SqlType.search)) {
 			// 判断是否有快速分页@fast 宏
@@ -800,7 +813,6 @@ public class SqlConfigParseUtils {
 				sqlToyConfig.setFastSql(fastSql);
 				sqlToyConfig.setFastPreSql(preSql);
 				sqlToyConfig.setFastTailSql(tailSql);
-
 				// 判断是否有快速分页
 				sqlToyConfig.setHasFast(true);
 			} else {

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.service;
 
 import java.io.Serializable;
@@ -10,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
@@ -155,7 +153,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 判断是否唯一 true 表示唯一不重复；false 表示不唯一，即数据库中已经存在
 	 * @param entity
-	 * @param paramsNamed group+uniqueField
+	 * @param paramsNamed group+uniqueField 对象属性名称(不是数据库表字段名称)
 	 * @return
 	 */
 	public boolean isUnique(Serializable entity, final String... paramsNamed);
@@ -183,6 +181,14 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
+	
+	/**
+	 * @todo 选择性的加载子表信息
+	 * @param entities
+	 * @param cascadeTypes
+	 * @return
+	 */
+	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
 
 	/**
 	 * @TODO 根据id集合批量加载对象
@@ -281,22 +287,11 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param cacheName
 	 * @param matchRegex
-	 * @param matchIndexes
+	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
-	public String[] cacheMatchKeys(String cacheName, String matchRegex, int... matchIndexes);
-
-	/**
-	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param cacheName
-	 * @param cacheType
-	 * @param matchRegex
-	 * @param matchIndexes
-	 * @return
-	 */
-	public String[] cacheMatchKeys(String cacheName, String cacheType, String matchRegex, int... matchIndexes);
+	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
 
 	/**
 	 * @TODO 实现VO和POJO之间属性值的复制,如名称不一致，在VO中字段上使用@SqlToyFieldAlias 注解来处理
