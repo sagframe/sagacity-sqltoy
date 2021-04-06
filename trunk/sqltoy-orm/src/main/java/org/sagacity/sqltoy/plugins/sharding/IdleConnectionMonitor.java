@@ -62,8 +62,8 @@ public class IdleConnectionMonitor extends Thread {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		int i = 0;
 		while (isRun) {
+			int i = 0;
 			for (Object[] dataBase : dataSourceWeightConfig) {
 				try {
 					dataSource = (DataSource) applicationContext.getBean(dataBase[0].toString());
