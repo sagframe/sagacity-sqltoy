@@ -130,13 +130,15 @@ public class SqlWithAnalysis implements Serializable {
 			withSqlSet
 					.add(new String[] { aliasTable, ext, tailSql.substring(withAsMatcher.end(), endWith), withAfter });
 			tailSql = tailSql.substring(endWith + 1);
-		} else
+		} else {
 			return;
+		}
 		// with 中包含多个 as
 		Matcher otherMatcher = SqlToyConstants.otherWithPattern.matcher(tailSql);
 		while (otherMatcher.find()) {
-			if (otherMatcher.start() != 0)
+			if (otherMatcher.start() != 0) {
 				break;
+			}
 			withAfter = "";
 			groupStr = otherMatcher.group();
 			groupLow = groupStr.toLowerCase();
