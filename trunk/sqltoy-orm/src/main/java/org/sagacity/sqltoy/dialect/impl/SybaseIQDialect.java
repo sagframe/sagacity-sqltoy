@@ -195,7 +195,10 @@ public class SybaseIQDialect implements Dialect {
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -204,7 +207,10 @@ public class SybaseIQDialect implements Dialect {
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
@@ -225,7 +231,10 @@ public class SybaseIQDialect implements Dialect {
 			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		String partSql = " select top " + topSize + " ";
@@ -247,7 +256,10 @@ public class SybaseIQDialect implements Dialect {
 			sql.append(minSql.replaceFirst("(?i)select ", partSql));
 		}
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);

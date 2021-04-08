@@ -81,7 +81,10 @@ public class SqliteDialect implements Dialect {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
@@ -97,7 +100,10 @@ public class SqliteDialect implements Dialect {
 		sql.append(randomCount);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
@@ -123,7 +129,10 @@ public class SqliteDialect implements Dialect {
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -132,7 +141,10 @@ public class SqliteDialect implements Dialect {
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -155,7 +167,10 @@ public class SqliteDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -163,7 +178,10 @@ public class SqliteDialect implements Dialect {
 		sql.append(topSize);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
