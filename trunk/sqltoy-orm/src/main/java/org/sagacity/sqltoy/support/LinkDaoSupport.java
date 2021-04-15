@@ -19,6 +19,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.SaveMode;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.utils.BeanWrapper;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,14 +194,15 @@ public class LinkDaoSupport {
 
 	/**
 	 * @todo 获取数据源,如果参数dataSource为null则返回默认的dataSource
-	 * @param dataSource
+	 * @param pointDataSource
 	 * @return
 	 */
-	public DataSource getDataSource(DataSource dataSource) {
-		DataSource result = dataSource;
-		if (null == result) {
-			result = this.dataSource;
-		}
+	public DataSource getDataSource(DataSource pointDataSource) {
+		// 提供一个扩展，便于在使用DynamicDataSource 等开源框架或其它特殊场景给开发者提供数据源获取的扩展
+		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
+		DataSource result = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), pointDataSource,
+				null, this.dataSource, sqlToyContext.getDefaultDataSource());
+		// 第四、sqltoyContext默认的数据源
 		if (null == result) {
 			result = sqlToyContext.obtainDataSource(null);
 		}

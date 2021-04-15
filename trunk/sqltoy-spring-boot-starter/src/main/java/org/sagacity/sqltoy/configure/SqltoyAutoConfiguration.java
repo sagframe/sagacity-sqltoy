@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.configure;
 
+import static java.lang.System.err;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,7 @@ import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
@@ -23,7 +26,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import static java.lang.System.err;
 
 /**
  * @description sqltoy 自动配置类
@@ -240,6 +242,19 @@ public class SqltoyAutoConfiguration {
 			else if (typeHandler.contains(".")) {
 				sqlToyContext.setTypeHandler(
 						(TypeHandler) Class.forName(typeHandler).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义数据源选择器
+		String dataSourceSelector = properties.getDataSourceSelector();
+		if (StringUtil.isNotBlank(dataSourceSelector)) {
+			if (applicationContext.containsBean(dataSourceSelector)) {
+				sqlToyContext
+						.setDataSourceSelector((DataSourceSelector) applicationContext.getBean(dataSourceSelector));
+			} // 包名和类名称
+			else if (dataSourceSelector.contains(".")) {
+				sqlToyContext.setDataSourceSelector(
+						(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

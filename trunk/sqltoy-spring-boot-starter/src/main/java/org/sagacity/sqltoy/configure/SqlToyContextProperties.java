@@ -92,7 +92,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * 分页页号超出总页时转第一页，否则返回空集合
 	 */
 	private boolean pageOverToFirst = true;
-	
+
 	/**
 	 * 统一字段处理器
 	 */
@@ -127,6 +127,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 字段类型转换器
 	 */
 	private String typeHandler;
+
+	/**
+	 * 自定义数据源选择器
+	 */
+	private String dataSourceSelector;
 
 	/**
 	 * 缓存类型，默认ehcache，可选caffeine
@@ -390,6 +395,20 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setPageOverToFirst(boolean pageOverToFirst) {
 		this.pageOverToFirst = pageOverToFirst;
+	}
+
+	/**
+	 * @return the dataSourceSelector
+	 */
+	public String getDataSourceSelector() {
+		return dataSourceSelector;
+	}
+
+	/**
+	 * @param dataSourceSelector the dataSourceSelector to set
+	 */
+	public void setDataSourceSelector(String dataSourceSelector) {
+		this.dataSourceSelector = dataSourceSelector;
 	}
 
 }
