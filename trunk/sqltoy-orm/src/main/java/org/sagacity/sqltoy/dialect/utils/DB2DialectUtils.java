@@ -42,7 +42,10 @@ public class DB2DialectUtils {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		// sql中是否存在排序或union
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
@@ -59,7 +62,10 @@ public class DB2DialectUtils {
 		sql.append(" rows only ");
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);

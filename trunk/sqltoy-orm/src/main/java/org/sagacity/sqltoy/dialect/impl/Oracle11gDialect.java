@@ -106,7 +106,9 @@ public class Oracle11gDialect implements Dialect {
 		int startIndex = 1;
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (");
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 			startIndex = 0;
 		}
 		sql.append("SELECT * FROM (SELECT ROWNUM page_row_id,SAG_Paginationtable.* FROM ( ");
@@ -129,7 +131,10 @@ public class Oracle11gDialect implements Dialect {
 		}
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -152,7 +157,9 @@ public class Oracle11gDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (");
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		sql.append("SELECT SAG_Paginationtable.* FROM ( ");
 		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
@@ -160,7 +167,10 @@ public class Oracle11gDialect implements Dialect {
 		sql.append(Double.valueOf(topSize).intValue());
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);

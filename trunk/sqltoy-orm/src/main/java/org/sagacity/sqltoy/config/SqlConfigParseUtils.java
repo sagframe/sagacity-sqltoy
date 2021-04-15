@@ -809,7 +809,12 @@ public class SqlConfigParseUtils {
 				String fastSql = matchedFastSql.substring(matchedFastSql.indexOf("(") + 1, endMarkIndex);
 				String tailSql = originalSql.substring(start + endMarkIndex + 1);
 				// sql剔除掉快速分页宏,在分页查询时再根据presql和tailsql、fastsql自行组装，从而保障正常的非分页查询直接提取sql
-				sqlToyConfig.setSql(preSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
+				if (preSql.trim().endsWith("(") && tailSql.trim().startsWith(")")) {
+					sqlToyConfig.setSql(preSql.concat(fastSql).concat(tailSql));
+					sqlToyConfig.setIgnoreBracket(true);
+				} else {
+					sqlToyConfig.setSql(preSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
+				}
 				sqlToyConfig.setFastSql(fastSql);
 				sqlToyConfig.setFastPreSql(preSql);
 				sqlToyConfig.setFastTailSql(tailSql);

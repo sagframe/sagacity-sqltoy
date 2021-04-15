@@ -212,7 +212,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropertyHandler (常规情况下传null)
 	 * @return
 	 */
 	@Deprecated
@@ -222,15 +222,15 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 保存或修改数据并返回数据库记录变更数量
 	 * @param serializableVO
-	 * @param forceUpdateProps
+	 * @param forceUpdateProps 强制修改的字段
 	 */
 	public Long saveOrUpdate(Serializable serializableVO, String... forceUpdateProps);
 
 	/**
-	 * @TODO 批量保存或修改操作
+	 * @TODO 批量保存或修改操作(当已经存在就执行修改)
 	 * @param <T>
 	 * @param entities
-	 * @param forceUpdateProps
+	 * @param forceUpdateProps 强制修改的字段
 	 * @return
 	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
@@ -239,8 +239,8 @@ public interface SqlToyLazyDao {
 	 * @todo 批量修改或保存数据并返回数据库记录变更数量
 	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler
-	 * @param forceUpdateProps
+	 * @param reflectPropertyHandler 常规传null
+	 * @param forceUpdateProps 强制修改的字段
 	 * @return
 	 */
 	@Deprecated
@@ -574,7 +574,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param randomCount
+	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,

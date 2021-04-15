@@ -252,7 +252,10 @@ public class DB2Dialect implements Dialect {
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -261,7 +264,10 @@ public class DB2Dialect implements Dialect {
 		sql.append(" offset ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -285,7 +291,10 @@ public class DB2Dialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -293,7 +302,10 @@ public class DB2Dialect implements Dialect {
 		sql.append(topSize);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
