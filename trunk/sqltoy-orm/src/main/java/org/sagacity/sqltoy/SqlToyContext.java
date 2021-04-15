@@ -16,7 +16,9 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
@@ -43,7 +45,7 @@ import org.springframework.context.ApplicationContextAware;
 //3、支持缓存翻译和反向缓存条件检索(通过缓存将名称匹配成精确的key)，实现sql简化和性能大幅提升
 //4、支持快速分页和分页优化功能，实现分页最高级别的优化，同时还考虑到了cte多个with as情况下的优化支持
 //5、支持并行查询
-//6、根本杜绝sql注入问题，以后不需要讨论这个话题
+//6、根本杜绝sql注入问题，让大家耳根清净，sql注入不再是话题
 //7、支持行列转换、分组汇总求平均、同比环比计算，在于用算法解决复杂sql，同时也解决了sql跨数据库问题
 //8、支持保留字自动适配
 //9、支持跨数据库函数自适配,从而非常有利于一套代码适应多种数据库便于产品化,比如oracle的nvl，当sql在mysql环境执行时自动替换为ifnull
@@ -210,6 +212,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 提供自定义类型处理器,一般针对json等类型
 	 */
 	private TypeHandler typeHandler;
+
+	/**
+	 * dataSource选择器，提供给开发者扩展窗口
+	 */
+	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
 
 	/**
 	 * @param workerId the workerId to set
@@ -679,6 +686,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.applicationContext = applicationContext;
 	}
 
+	public ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+
 	/**
 	 * @param serverId the serverId to set
 	 */
@@ -691,6 +702,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
+	}
+
+	public DataSource getDefaultDataSource() {
+		return defaultDataSource;
 	}
 
 	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
@@ -836,5 +851,19 @@ public class SqlToyContext implements ApplicationContextAware {
 		} catch (Exception e) {
 
 		}
+	}
+
+	/**
+	 * @return the dataSourceSelector
+	 */
+	public DataSourceSelector getDataSourceSelector() {
+		return dataSourceSelector;
+	}
+
+	/**
+	 * @param dataSourceSelector the dataSourceSelector to set
+	 */
+	public void setDataSourceSelector(DataSourceSelector dataSourceSelector) {
+		this.dataSourceSelector = dataSourceSelector;
 	}
 }

@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -50,15 +51,16 @@ public abstract class BaseLink implements Serializable {
 		this.dataSource = dataSource;
 	}
 
-	public DataSource getDataSource(SqlToyConfig sqlToyConfig) {
-		DataSource result = dataSource;
-		// 数据源为空或非强制指定了数据源，则使用sql中指定的数据源
-		if ((null == result || defaultDataSource == false)
-				&& (sqlToyConfig != null && null != sqlToyConfig.getDataSource())) {
-			result = sqlToyContext.getDataSourceBean(sqlToyConfig.getDataSource());
-		}
+	public DataSource getDataSource(SqlToyConfig sqltoyConfig) {
+		// xml中定义的sql配置了datasource
+		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
+		// 数据源选择扩展
+		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
+		DataSource result = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(),
+				defaultDataSource ? null : dataSource, sqlDataSource, (defaultDataSource == false) ? null : dataSource,
+				sqlToyContext.getDefaultDataSource());
 		if (null == result) {
-			result = sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource());
+			result = sqlToyContext.obtainDataSource(sqlDataSource);
 		}
 		return result;
 	}

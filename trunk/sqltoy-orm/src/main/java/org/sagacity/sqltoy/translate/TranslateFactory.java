@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
@@ -93,12 +94,17 @@ public class TranslateFactory {
 		if (dataSourceName == null) {
 			dataSourceName = sqlToyConfig.getDataSource();
 		}
-		return DialectFactory.getInstance().findByQuery(sqlToyContext,
-				new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
-						new Object[] { new Date(preCheckTime.getTime()) }),
-				sqlToyConfig, null,
-				StringUtil.isBlank(dataSourceName) ? sqlToyContext.obtainDataSource(sqlToyConfig.getDataSource())
-						: sqlToyContext.getDataSourceBean(dataSourceName))
+		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
+				dataSourceName, null, sqlToyContext.getDefaultDataSource());
+		if (null == dataSource) {
+			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
+		}
+		return DialectFactory.getInstance()
+				.findByQuery(sqlToyContext,
+						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
+								new Object[] { new Date(preCheckTime.getTime()) }),
+						sqlToyConfig, null, dataSource)
 				.getRows();
 	}
 
@@ -284,10 +290,6 @@ public class TranslateFactory {
 	private static List getSqlCacheData(final SqlToyContext sqlToyContext, TranslateConfigModel cacheModel,
 			String cacheType) throws Exception {
 		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(cacheModel.getSql(), SqlType.search, "");
-		String dataSourceName = cacheModel.getDataSource();
-		if (dataSourceName == null) {
-			dataSourceName = sqlToyConfig.getDataSource();
-		}
 		QueryExecutor queryExecutor = null;
 		if (StringUtil.isBlank(cacheType)) {
 			queryExecutor = new QueryExecutor(cacheModel.getSql());
@@ -295,10 +297,13 @@ public class TranslateFactory {
 			queryExecutor = new QueryExecutor(cacheModel.getSql(), sqlToyConfig.getParamsName(),
 					new Object[] { cacheType.trim() });
 		}
-		DataSource dataSource = null;
-		if (StringUtil.isNotBlank(dataSourceName)) {
-			dataSource = sqlToyContext.getDataSourceBean(dataSourceName);
+		String dataSourceName = cacheModel.getDataSource();
+		if (dataSourceName == null) {
+			dataSourceName = sqlToyConfig.getDataSource();
 		}
+		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
+		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
+				dataSourceName, null, sqlToyContext.getDefaultDataSource());
 		if (null == dataSource) {
 			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
 		}
