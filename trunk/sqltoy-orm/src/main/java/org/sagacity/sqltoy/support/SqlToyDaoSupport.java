@@ -56,6 +56,7 @@ import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -124,40 +125,28 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 获取数据源,如果参数dataSource为null则返回默认的dataSource
-	 * @param dataSource
+	 * @param pointDataSource
 	 * @return
 	 */
-	protected DataSource getDataSource(DataSource dataSource) {
-		DataSource result = dataSource;
-		if (null == result) {
-			result = this.dataSource;
-		}
-		if (null == result) {
-			result = sqlToyContext.obtainDataSource(null);
-		}
-		return result;
+	protected DataSource getDataSource(DataSource pointDataSource) {
+		return getDataSource(pointDataSource, null);
 	}
 
 	/**
 	 * @TODO 获取sql对应的dataSource
-	 * @param dataSource
+	 * @param pointDataSource
 	 * @param sqltoyConfig
 	 * @return
 	 */
-	private DataSource getDataSource(DataSource dataSource, SqlToyConfig sqltoyConfig) {
-		// 第一、接口调用时直接指定的数据源
-		DataSource result = dataSource;
-		// 第二、sql指定的数据源
-		if (null == result && (null != sqltoyConfig && null != sqltoyConfig.getDataSource())) {
-			result = sqlToyContext.getDataSourceBean(sqltoyConfig.getDataSource());
-		}
-		// 第三、自动注入的数据源
+	private DataSource getDataSource(DataSource pointDataSource, SqlToyConfig sqltoyConfig) {
+		// xml中定义的sql配置了datasource
+		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
+		// 提供一个扩展，让开发者在特殊场景下可以自行定义dataSourceSelector实现数据源的选择和获取
+		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
+		DataSource result = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), pointDataSource,
+				sqlDataSource, this.dataSource, sqlToyContext.getDefaultDataSource());
 		if (null == result) {
-			result = this.dataSource;
-		}
-		// 第四、sqltoyContext默认的数据源
-		if (null == result) {
-			result = sqlToyContext.obtainDataSource(sqltoyConfig.getDataSource());
+			result = sqlToyContext.obtainDataSource(sqlDataSource);
 		}
 		return result;
 	}
@@ -1415,8 +1404,8 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-		
-		//将notSelect构造成select，形成统一处理机制
+
+		// 将notSelect构造成select，形成统一处理机制
 		String[] selectFieldAry = null;
 		Set<String> notSelect = innerModel.notSelectFields;
 		if (notSelect != null) {

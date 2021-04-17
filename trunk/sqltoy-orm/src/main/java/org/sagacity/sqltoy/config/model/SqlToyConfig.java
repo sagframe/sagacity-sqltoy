@@ -156,6 +156,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * 判定sql是否有union 语法
 	 */
 	private boolean hasUnion = false;
+	
+	/**
+	 * @fast场景下外围是否已经包含了()
+	 */
+	private boolean ignoreBracket=false;
 
 	/**
 	 * @return the hasUnion
@@ -687,6 +692,20 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 
 	public void setTableShardingParams(String[] tableShardingParams) {
 		this.tableShardingParams = tableShardingParams;
+	}
+
+	/**
+	 * @return the ignoreBracket
+	 */
+	public boolean isIgnoreBracket() {
+		return ignoreBracket;
+	}
+
+	/**
+	 * @param ignoreBracket the ignoreBracket to set
+	 */
+	public void setIgnoreBracket(boolean ignoreBracket) {
+		this.ignoreBracket = ignoreBracket;
 	}
 
 }

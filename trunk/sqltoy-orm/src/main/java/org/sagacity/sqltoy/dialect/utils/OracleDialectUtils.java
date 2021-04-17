@@ -103,7 +103,10 @@ public class OracleDialectUtils {
 		boolean hasOrderOrUnion = DialectUtils.hasOrderByOrUnion(innerSql);
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
@@ -121,7 +124,10 @@ public class OracleDialectUtils {
 		sql.append(randomCount);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);

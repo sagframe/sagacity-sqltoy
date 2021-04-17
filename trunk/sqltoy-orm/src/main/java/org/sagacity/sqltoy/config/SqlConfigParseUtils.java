@@ -118,6 +118,9 @@ public class SqlConfigParseUtils {
 	 */
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
 
+	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
+			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
@@ -689,9 +692,9 @@ public class SqlConfigParseUtils {
 		int index = StringUtil.matchIndex(preSql, WHERE_END_PATTERN);
 		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
-			// where 后面拼接的条件语句是空白,增加1=1,避免最终只有一个where
+			// where 后面拼接的条件语句是空白,剔除where
 			if (tmp.equals("")) {
-				return preSql.concat(" 1=1 ");
+				return preSql.substring(0, index + 1).concat(" ");
 			}
 			// and 概率更高优先判断，剔除and 或 or
 			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
@@ -699,7 +702,16 @@ public class SqlConfigParseUtils {
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if (markContentSql.trim().equals("")) {
-				return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+				// 排除部分场景直接剔除where 语句
+				// 以where拼接")" 开头字符串,剔除where
+				if (tailSql.trim().startsWith(")")) {
+					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
+				} // where 后面跟order by、group by、left join、right join、full join、having、union
+				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
+					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
+				} else {
+					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+				}
 			}
 		}
 		// update 2017-12-4
@@ -712,6 +724,10 @@ public class SqlConfigParseUtils {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(3)).concat(" ");
 			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(2)).concat(" ");
+			} else if (tmp.startsWith(")")) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
+			} else if (StringUtil.matches(tmp.toLowerCase(), WHERE_CLOSE_PATTERN)) {
+				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!markContentSql.trim().equals("")) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
 			}
@@ -793,7 +809,12 @@ public class SqlConfigParseUtils {
 				String fastSql = matchedFastSql.substring(matchedFastSql.indexOf("(") + 1, endMarkIndex);
 				String tailSql = originalSql.substring(start + endMarkIndex + 1);
 				// sql剔除掉快速分页宏,在分页查询时再根据presql和tailsql、fastsql自行组装，从而保障正常的非分页查询直接提取sql
-				sqlToyConfig.setSql(preSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
+				if (preSql.trim().endsWith("(") && tailSql.trim().startsWith(")")) {
+					sqlToyConfig.setSql(preSql.concat(fastSql).concat(tailSql));
+					sqlToyConfig.setIgnoreBracket(true);
+				} else {
+					sqlToyConfig.setSql(preSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
+				}
 				sqlToyConfig.setFastSql(fastSql);
 				sqlToyConfig.setFastPreSql(preSql);
 				sqlToyConfig.setFastTailSql(tailSql);

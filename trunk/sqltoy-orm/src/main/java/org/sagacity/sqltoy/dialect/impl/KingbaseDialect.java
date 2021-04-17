@@ -86,7 +86,10 @@ public class KingbaseDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		// 存在order 或union 则在sql外包裹一层
 		if (hasOrderOrUnion) {
@@ -100,7 +103,10 @@ public class KingbaseDialect implements Dialect {
 		sql.append(randomCount);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
@@ -126,7 +132,10 @@ public class KingbaseDialect implements Dialect {
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -135,7 +144,10 @@ public class KingbaseDialect implements Dialect {
 		sql.append(" , ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -158,7 +170,10 @@ public class KingbaseDialect implements Dialect {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(sqlToyConfig.getFastSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(sqlToyConfig.getFastSql(dialect));
 		} else {
 			sql.append(sqlToyConfig.getSql(dialect));
 		}
@@ -166,7 +181,10 @@ public class KingbaseDialect implements Dialect {
 		sql.append(topSize);
 
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
@@ -222,7 +240,7 @@ public class KingbaseDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
-	// 问为什么不用kingbase的on conflict() do update特性?原本是用的这个，但其有bug，一切都是于原因的!
+	// kingbase的on conflict() do update特性跟mysql一样存在bug
 	/*
 	 * (non-Javadoc)
 	 * 

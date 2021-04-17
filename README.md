@@ -23,8 +23,7 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.8 发版日期: 2021-03-24
-* 优化clickhouse和dorisdb支持，配套quickvo4.18.8更新
+# 最新版本号: 4.18.13 发版日期: 2021-04-15
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么

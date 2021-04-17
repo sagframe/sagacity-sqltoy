@@ -106,7 +106,10 @@ public class SqlServerDialect implements Dialect {
 		if (sqlToyConfig.isHasFast()) {
 			fastSql = sqlToyConfig.getFastSql(dialect);
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			sql.append(" (").append(fastSql);
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+			sql.append(fastSql);
 		} else {
 			sql.append(realSql);
 		}
@@ -129,7 +132,10 @@ public class SqlServerDialect implements Dialect {
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
 		sql.append(" rows only");
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
@@ -150,7 +156,10 @@ public class SqlServerDialect implements Dialect {
 			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect)).append(" (");
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
 		}
 		String minSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		String partSql = " select top " + topSize + " ";
@@ -172,7 +181,10 @@ public class SqlServerDialect implements Dialect {
 			sql.append(minSql.replaceFirst("(?i)select ", partSql));
 		}
 		if (sqlToyConfig.isHasFast()) {
-			sql.append(") ").append(sqlToyConfig.getFastTailSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), null, null);
