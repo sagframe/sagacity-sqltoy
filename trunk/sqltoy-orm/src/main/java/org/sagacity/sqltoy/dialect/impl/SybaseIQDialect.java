@@ -188,9 +188,10 @@ public class SybaseIQDialect implements Dialect {
 	 * @return
 	 * @throws Exception
 	 */
-	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+	@Override
+    public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+                                     QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
+                                     final String dialect) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -276,9 +277,10 @@ public class SybaseIQDialect implements Dialect {
 	 * java.lang.reflect.Type,
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
-	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+	@Override
+    public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+                                 final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+                                 final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		if (null != lockMode) {
 			throw new UnsupportedOperationException("sybase iq lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -339,7 +341,8 @@ public class SybaseIQDialect implements Dialect {
 		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
@@ -376,7 +379,8 @@ public class SybaseIQDialect implements Dialect {
 		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DialectExtUtils.mergeIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), null,
 								NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
@@ -507,7 +511,8 @@ public class SybaseIQDialect implements Dialect {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
-								public void process() {
+								@Override
+                                public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}

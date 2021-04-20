@@ -29,7 +29,8 @@ public enum ReturnPkType {
 		return this.returnPkType;
 	}
 
-	public String toString() {
+	@Override
+    public String toString() {
 		return Integer.toString(this.returnPkType);
 	}
 

@@ -28,7 +28,8 @@ public enum SqlType {
 		return this.sqlType;
 	}
 
-	public String toString() {
+	@Override
+    public String toString() {
 		return this.sqlType;
 	}
 

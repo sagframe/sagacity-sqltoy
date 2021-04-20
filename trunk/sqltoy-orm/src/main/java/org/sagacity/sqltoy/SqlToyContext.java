@@ -682,7 +682,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
 	}
 
-	public void setApplicationContext(ApplicationContext applicationContext) {
+	@Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
 
