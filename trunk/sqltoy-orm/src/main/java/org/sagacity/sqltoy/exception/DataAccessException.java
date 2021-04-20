@@ -46,15 +46,18 @@ public class DataAccessException extends RuntimeException {
 		super(StringUtil.fillArgs(message, errorArgs), e);
 	}
 
-	public void printStackTrace() {
+	@Override
+    public void printStackTrace() {
 		printStackTrace(System.err);
 	}
 
-	public void printStackTrace(PrintStream outStream) {
+	@Override
+    public void printStackTrace(PrintStream outStream) {
 		printStackTrace(new PrintWriter(outStream));
 	}
 
-	public void printStackTrace(PrintWriter writer) {
+	@Override
+    public void printStackTrace(PrintWriter writer) {
 		super.printStackTrace(writer);
 		if (getCause() != null) {
 			getCause().printStackTrace(writer);

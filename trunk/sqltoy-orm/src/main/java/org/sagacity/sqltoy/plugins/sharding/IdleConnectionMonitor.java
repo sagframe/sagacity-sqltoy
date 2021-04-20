@@ -49,7 +49,8 @@ public class IdleConnectionMonitor extends Thread {
 		this.intervalSeconds = intervalSeconds;
 	}
 
-	public void run() {
+	@Override
+    public void run() {
 		// 延时
 		try {
 			if (delaySeconds >= 1) {

@@ -703,7 +703,8 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+			@Override
+            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet,
@@ -1068,7 +1069,8 @@ public class SqlUtil {
 			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
-			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
+			@Override
+            public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
 				String pid = ((List) rowData).get(2).toString();
@@ -1289,7 +1291,8 @@ public class SqlUtil {
 		}
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			@Override
+            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
 					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
@@ -1420,8 +1423,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
-		if (StringUtil.isBlank(sql))
-			return sql;
+		if (StringUtil.isBlank(sql)) {
+            return sql;
+        }
 		String key = entityMeta.getTableName() + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {

@@ -341,8 +341,9 @@ public class QueryExecutorExtend implements Serializable {
 				}
 			}
 		}
-		if (params.isEmpty())
-			return null;
+		if (params.isEmpty()) {
+            return null;
+        }
 		String[] result = new String[params.size()];
 		params.toArray(result);
 		return result;

@@ -1167,7 +1167,8 @@ public class SqlToyDaoSupport {
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, this.getDataSource(dataSource),
 				new DataSourceCallbackHandler() {
-					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+					@Override
+                    public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 						if (!conn.isClosed()) {
 							conn.commit();
 						}
@@ -1712,8 +1713,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
-		if (sourcePage == null)
-			return null;
+		if (sourcePage == null) {
+            return null;
+        }
 		PaginationModel result = new PaginationModel();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());

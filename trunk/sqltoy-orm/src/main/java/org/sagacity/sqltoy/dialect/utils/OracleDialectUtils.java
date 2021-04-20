@@ -155,7 +155,8 @@ public class OracleDialectUtils {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
-			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
+			@Override
+            public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null, 0);
 				int cursorIndex = -1;
