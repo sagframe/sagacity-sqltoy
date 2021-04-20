@@ -1420,8 +1420,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
-		if (StringUtil.isBlank(sql))
-			return sql;
+		if (StringUtil.isBlank(sql)) {
+            return sql;
+        }
 		String key = entityMeta.getTableName() + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {

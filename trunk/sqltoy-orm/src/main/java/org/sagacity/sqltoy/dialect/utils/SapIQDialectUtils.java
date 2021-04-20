@@ -144,8 +144,9 @@ public class SapIQDialectUtils {
 			}
 		});
 		// 无主键直接返回null
-		if (noPK)
-			return null;
+		if (noPK) {
+            return null;
+        }
 		if (result == null) {
 			result = fullParamValues[pkIndex];
 		}

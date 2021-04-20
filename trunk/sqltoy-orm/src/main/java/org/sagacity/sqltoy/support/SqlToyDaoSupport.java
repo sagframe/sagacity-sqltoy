@@ -1712,8 +1712,9 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
-		if (sourcePage == null)
-			return null;
+		if (sourcePage == null) {
+            return null;
+        }
 		PaginationModel result = new PaginationModel();
 		result.setPageNo(sourcePage.getPageNo());
 		result.setPageSize(sourcePage.getPageSize());

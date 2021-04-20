@@ -56,8 +56,9 @@ public abstract class IFunction {
 		result.append("(");
 		if (args != null && args.length > 0) {
 			for (int i = 0; i < args.length; i++) {
-				if (i > 0)
-					result.append(",");
+				if (i > 0) {
+                    result.append(",");
+                }
 				result.append(args[i]);
 			}
 		}

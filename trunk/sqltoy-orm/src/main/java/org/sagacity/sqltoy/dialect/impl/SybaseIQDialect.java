@@ -466,10 +466,11 @@ public class SybaseIQDialect implements Dialect {
 		// 级联保存
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			if (emptyCascadeClasses != null)
-				for (Type type : emptyCascadeClasses) {
-					typeMap.put(type, "");
-				}
+			if (emptyCascadeClasses != null) {
+                for (Type type : emptyCascadeClasses) {
+                    typeMap.put(type, "");
+                }
+            }
 			// 级联子表数据
 			List subTableData = null;
 			String[] forceUpdateProps = null;
