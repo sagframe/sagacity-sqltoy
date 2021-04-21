@@ -74,6 +74,8 @@ public class SqlUtil {
 	 * sql中的单行注释
 	 */
 	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^+!]");
+	// -- 模式单行注释
+	public final static Pattern lineMaskPattern = Pattern.compile("^\\s*\\-{2}");
 
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
@@ -630,8 +632,9 @@ public class SqlUtil {
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
+		// update 2021-04-21 优化单行注释的匹配
 		// 剔除单行注释
-		markIndex = sql.indexOf("--");
+		markIndex = StringUtil.matchIndex(sql, lineMaskPattern);
 		while (markIndex != -1) {
 			// 换行符号
 			endMarkIndex = sql.indexOf("\n", markIndex);
@@ -642,7 +645,7 @@ public class SqlUtil {
 				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
 			}
-			markIndex = sql.indexOf("--");
+			markIndex = StringUtil.matchIndex(sql, lineMaskPattern);
 		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
 		if (sql.endsWith(";") || sql.endsWith(",")) {
@@ -703,8 +706,7 @@ public class SqlUtil {
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet,
@@ -879,6 +881,7 @@ public class SqlUtil {
 						}
 					}
 					meter++;
+					// 批量执行
 					if (useBatch) {
 						pst.addBatch();
 						if ((meter % batchSize) == 0 || index == totalRows) {
@@ -888,9 +891,11 @@ public class SqlUtil {
 							}
 							pst.clearBatch();
 						}
-					} else {
-						pst.execute();
-						updateCount = updateCount + ((pst.getUpdateCount() > 0) ? pst.getUpdateCount() : 0);
+					} // 单条执行
+					else {
+						updateCount = pst.executeUpdate();
+						// updateCount = updateCount + ((pst.getUpdateCount() > 0) ?
+						// pst.getUpdateCount() : 0);
 					}
 				}
 			}
@@ -1069,8 +1074,7 @@ public class SqlUtil {
 			final int nodeLevel, Connection conn, final int dbType) throws Exception {
 		// 修改节点level和节点路径
 		batchUpdateByJdbc(typeHandler, updateLevelAndRoute, ids, 500, new InsertRowCallbackHandler() {
-			@Override
-            public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
+			public void process(PreparedStatement pst, int index, Object rowData) throws SQLException {
 				String id = ((List) rowData).get(0).toString();
 				// 获得父节点id和父节点路径
 				String pid = ((List) rowData).get(2).toString();
@@ -1291,8 +1295,7 @@ public class SqlUtil {
 		}
 		PreparedStatement pst = conn.prepareStatement(executeSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
 				if (dbType == DBType.SQLSERVER && paramsType != null) {
 					setSqlServerParamsValue(typeHandler, conn, dbType, pst, params, paramsType, 0);
@@ -1424,8 +1427,8 @@ public class SqlUtil {
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
 		if (StringUtil.isBlank(sql)) {
-            return sql;
-        }
+			return sql;
+		}
 		String key = entityMeta.getTableName() + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {
