@@ -74,8 +74,6 @@ public class SqlUtil {
 	 * sql中的单行注释
 	 */
 	public final static Pattern maskPattern = Pattern.compile("\\/\\*[^+!]");
-	// -- 模式单行注释
-	public final static Pattern lineMaskPattern = Pattern.compile("^\\s*\\-{2}");
 
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
@@ -605,6 +603,33 @@ public class SqlUtil {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
+		// 换行符号分隔
+		if (sql.contains("--")) {
+			String[] sqlAry = sql.split("\\n");
+			StringBuilder sqlBuffer = new StringBuilder();
+			int startMask;
+			int lineMaskIndex;
+			for (String line : sqlAry) {
+				// 排除掉-- 开头的行语句
+				if (!line.trim().startsWith("--")) {
+					// 不包含-- 直接拼接
+					lineMaskIndex = line.indexOf("--");
+					if (lineMaskIndex == -1) {
+						sqlBuffer.append(line);
+					} else {
+						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
+						startMask = findStartLineMask(line, lineMaskIndex);
+						if (startMask > 0) {
+							sqlBuffer.append(line.substring(0, startMask));
+						} else {
+							sqlBuffer.append(line);
+						}
+					}
+				}
+			}
+			sql = sqlBuffer.toString();
+		}
+
 		int endMarkIndex;
 		// 剔除<!-- -->形式的多行注释
 		int markIndex = sql.indexOf("<!--");
@@ -632,27 +657,75 @@ public class SqlUtil {
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
-		// update 2021-04-21 优化单行注释的匹配
-		// 剔除单行注释
-		markIndex = StringUtil.matchIndex(sql, lineMaskPattern);
-		while (markIndex != -1) {
-			// 换行符号
-			endMarkIndex = sql.indexOf("\n", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 1) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
-			}
-			markIndex = StringUtil.matchIndex(sql, lineMaskPattern);
-		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
 		if (sql.endsWith(";") || sql.endsWith(",")) {
 			sql = sql.substring(0, sql.length() - 1);
 		}
 		// 剔除全角
 		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+	}
+
+	/**
+	 * @TODO 找到行注释的开始位置
+	 * @param sql
+	 * @param lineMaskIndex
+	 * @return
+	 */
+	private static int findStartLineMask(String sql, int lineMaskIndex) {
+		// 单引号、双引号、hint注释结尾 的最后位置
+		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
+		// 行注释的位置在单引号等最后位置后面,直接返回
+		if (lineMaskIndex > lastIndex) {
+			return lineMaskIndex;
+		}
+		int start = StringUtil.matchIndex(sql, "\'");
+		int symMarkEnd;
+		int size = sql.length();
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+						.concat(sql.substring(symMarkEnd + 1));
+				start = StringUtil.matchIndex(sql, "\'");
+			} else {
+				break;
+			}
+		}
+		start = StringUtil.matchIndex(sql, "\"");
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+						.concat(sql.substring(symMarkEnd + 1));
+				start = StringUtil.matchIndex(sql, "\"");
+			} else {
+				break;
+			}
+		}
+		start = sql.indexOf("/*");
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 2))
+						.concat(sql.substring(symMarkEnd + 2));
+				start = sql.indexOf("/*");
+			} else {
+				break;
+			}
+		}
+		System.err.println("size=" + size + " lastSize=" + sql.length());
+		return sql.indexOf("--");
+	}
+
+	private static String loopBlank(int size) {
+		if (size == 0) {
+			return "";
+		}
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < size; i++) {
+			result.append(" ");
+		}
+		return result.toString();
 	}
 
 	/**
