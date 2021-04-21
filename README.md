@@ -149,44 +149,6 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 </sql>
 ```
 
-* mybatis同样的功能的写法(很显然基于事实的对比，mybatis的写法不清晰也不便于维护)!
-
-```
-<select id="show_case" resultMap="BaseResultMap">
- select *
- from sqltoy_device_order_info t 
- <where>
-     <if test="statusAry!=null">
-	and t.status in
-	<foreach collection="status" item="statusAry" separator="," open="(" close=")">  
-            #{status}  
- 	</foreach>  
-    </if>
-    <if test="orderId!=null">
-	and t.ORDER_ID=#{orderId}
-    </if>
-    <if test="authedOrganIds!=null">
-	and t.ORGAN_ID in
-	<foreach collection="authedOrganIds" item="order_id" separator="," open="(" close=")">  
-            #{order_id}  
- 	</foreach>  
-    </if>
-    <if test="staffIds!=null">
-	and t.STAFF_ID in
-	<foreach collection="staffIds" item="staff_id" separator="," open="(" close=")">  
-            #{staff_id}  
- 	</foreach>  
-    </if>
-    <if test="beginDate!=null">
-	and t.TRANS_DATE>=#{beginDate}
-    </if>
-    <if test="endDate!=null">
-	and t.TRANS_DATE<#{endDate}
-    </if>
-</where>
-</select>
-```
-
 ## 2.3 天然防止sql注入,执行过程:
 * 假设sql语句如下
 ```xml
