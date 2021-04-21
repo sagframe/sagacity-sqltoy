@@ -894,8 +894,6 @@ public class SqlUtil {
 					} // 单条执行
 					else {
 						updateCount = pst.executeUpdate();
-						// updateCount = updateCount + ((pst.getUpdateCount() > 0) ?
-						// pst.getUpdateCount() : 0);
 					}
 				}
 			}

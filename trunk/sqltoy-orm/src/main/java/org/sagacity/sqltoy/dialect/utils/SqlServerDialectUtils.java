@@ -843,8 +843,7 @@ public class SqlServerDialectUtils {
 							pst.clearBatch();
 						}
 					} else {
-						pst.execute();
-						updateCount = updateCount + ((pst.getUpdateCount() > 0) ? pst.getUpdateCount() : 0);
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
