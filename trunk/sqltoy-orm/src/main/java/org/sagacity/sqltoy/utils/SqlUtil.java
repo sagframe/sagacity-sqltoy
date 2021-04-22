@@ -603,33 +603,6 @@ public class SqlUtil {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
-		// 换行符号分隔
-		if (sql.contains("--")) {
-			String[] sqlAry = sql.split("\\n");
-			StringBuilder sqlBuffer = new StringBuilder();
-			int startMask;
-			int lineMaskIndex;
-			for (String line : sqlAry) {
-				// 排除掉-- 开头的行语句
-				if (!line.trim().startsWith("--")) {
-					// 不包含-- 直接拼接
-					lineMaskIndex = line.indexOf("--");
-					if (lineMaskIndex == -1) {
-						sqlBuffer.append(line);
-					} else {
-						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
-						startMask = findStartLineMask(line, lineMaskIndex);
-						if (startMask > 0) {
-							sqlBuffer.append(line.substring(0, startMask));
-						} else {
-							sqlBuffer.append(line);
-						}
-					}
-				}
-			}
-			sql = sqlBuffer.toString();
-		}
-
 		int endMarkIndex;
 		// 剔除<!-- -->形式的多行注释
 		int markIndex = sql.indexOf("<!--");
@@ -656,6 +629,32 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
+		}
+		// 换行符号分隔
+		if (sql.contains("--")) {
+			String[] sqlAry = sql.split("\\n");
+			StringBuilder sqlBuffer = new StringBuilder();
+			int startMask;
+			int lineMaskIndex;
+			for (String line : sqlAry) {
+				// 排除掉-- 开头的行语句
+				if (!line.trim().startsWith("--")) {
+					// 不包含-- 直接拼接
+					lineMaskIndex = line.indexOf("--");
+					if (lineMaskIndex == -1) {
+						sqlBuffer.append(line);
+					} else {
+						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
+						startMask = findStartLineMask(line, lineMaskIndex);
+						if (startMask > 0) {
+							sqlBuffer.append(line.substring(0, startMask));
+						} else {
+							sqlBuffer.append(line);
+						}
+					}
+				}
+			}
+			sql = sqlBuffer.toString();
 		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
 		if (sql.endsWith(";") || sql.endsWith(",")) {

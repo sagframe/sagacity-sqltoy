@@ -8,11 +8,17 @@
    			--#not_debug#--
 			select distinct 'organIdName' cacheName,'--' as t, null cache_type --测试--
 			from sys_organ_info t
+			<!-- 
+			from sys_organ_info t
+			-->
 			where t.UPDATE_TIME >=:lastUpdateTime
 			-- 员工工号姓名缓存检测
 			union all
 			select distinct 'staffIdName' cacheName,"--" ache_type 
 			from /*+--all*/ sys_staff_info t1
+			/*
+			  table
+			*/
 			where t1.UPDATE_TIME >=:lastUpdateTime
 			]]>
     </value>
