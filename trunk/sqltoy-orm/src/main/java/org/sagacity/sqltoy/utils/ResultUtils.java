@@ -898,13 +898,14 @@ public class ResultUtils {
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
+				//定义未匹配模板则不输出日志
 				if (extend.uncached != null) {
 					fieldValue = extend.uncached.replace("${value}", fieldStr);
 				} else {
 					fieldValue = fieldValue.toString();
+					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
+							fieldValue);
 				}
-				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
-						fieldValue);
 			} else {
 				fieldValue = cacheValues[extend.index];
 			}
@@ -935,13 +936,14 @@ public class ResultUtils {
 			}
 			cacheValues = translateKeyMap.get(key.trim());
 			if (cacheValues == null || cacheValues.length == 0) {
+				//定义未匹配模板则不输出日志
 				if (extend.uncached != null) {
 					result.append(extend.uncached.replace("${value}", key));
 				} else {
 					result.append(key);
+					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
+							key);
 				}
-				logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
-						key);
 			} else {
 				result.append(cacheValues[extend.index]);
 			}

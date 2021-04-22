@@ -645,6 +645,8 @@ public class SqlUtil {
 					if (meter > 0) {
 						sqlBuffer.append("\n");
 					}
+					// 增加一个空白
+					sqlBuffer.append(" ");
 					if (lineMaskIndex == -1) {
 						sqlBuffer.append(line);
 					} else {
