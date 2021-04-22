@@ -612,7 +612,6 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
 			}
 			markIndex = sql.indexOf("<!--");
@@ -625,22 +624,27 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
-		// 换行符号分隔
+		// 单行注释，必须要放在最后处理，避免跟<!-- --> 这类冲突
 		if (sql.contains("--")) {
-			String[] sqlAry = sql.split("\\n");
+			String[] sqlAry = sql.split("\n");
 			StringBuilder sqlBuffer = new StringBuilder();
 			int startMask;
 			int lineMaskIndex;
+			String lineStr;
+			int meter = 0;
 			for (String line : sqlAry) {
-				// 排除掉-- 开头的行语句
-				if (!line.trim().startsWith("--")) {
+				lineStr = line.trim();
+				// 排除掉-- 开头和空行
+				if (!lineStr.equals("") && !lineStr.startsWith("--")) {
 					// 不包含-- 直接拼接
 					lineMaskIndex = line.indexOf("--");
+					if (meter > 0) {
+						sqlBuffer.append("\n");
+					}
 					if (lineMaskIndex == -1) {
 						sqlBuffer.append(line);
 					} else {
@@ -652,6 +656,7 @@ public class SqlUtil {
 							sqlBuffer.append(line);
 						}
 					}
+					meter++;
 				}
 			}
 			sql = sqlBuffer.toString();
@@ -661,7 +666,8 @@ public class SqlUtil {
 			sql = sql.substring(0, sql.length() - 1);
 		}
 		// 剔除全角
-		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+		sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+		return sql;
 	}
 
 	/**
@@ -677,6 +683,7 @@ public class SqlUtil {
 		if (lineMaskIndex > lastIndex) {
 			return lineMaskIndex;
 		}
+		// 单引号之间
 		int start = StringUtil.matchIndex(sql, "\'");
 		int symMarkEnd;
 		while (start != -1) {
@@ -689,6 +696,7 @@ public class SqlUtil {
 				break;
 			}
 		}
+		// 双引号之间
 		start = StringUtil.matchIndex(sql, "\"");
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
@@ -700,6 +708,7 @@ public class SqlUtil {
 				break;
 			}
 		}
+		// hint /*+ all */ 或 /*! all*/ 注释
 		start = sql.indexOf("/*");
 		while (start != -1) {
 			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
