@@ -199,9 +199,10 @@ public class SqliteDialect implements Dialect {
 	 * java.lang.reflect.Type,
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
-	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+	@Override
+    public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+                                 final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+                                 final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		if (null != lockMode) {
 			throw new UnsupportedOperationException("sqlite lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -335,13 +336,15 @@ public class SqliteDialect implements Dialect {
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPk, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPk,
 				ReturnPkType.PREPARD_ID, insertSql, entity, new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
-					public SavePKStrategy generate(EntityMeta entityMeta) {
+					@Override
+                    public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								SqliteDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
@@ -381,7 +384,8 @@ public class SqliteDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return SqliteDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);

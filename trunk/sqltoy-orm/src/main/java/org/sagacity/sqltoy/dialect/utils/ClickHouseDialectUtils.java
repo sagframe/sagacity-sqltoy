@@ -116,7 +116,8 @@ public class ClickHouseDialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			@Override
+            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
 					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
 						pst = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);

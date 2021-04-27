@@ -29,10 +29,14 @@ public class StringUtil {
 	 */
 	private static Pattern quotaPattern = Pattern.compile("(^')|([^\\\\]')");
 
+	private static Pattern quotaChkPattern = Pattern.compile("[^\\\\]'");
+
 	/**
 	 * 双引号匹配正则表达式
 	 */
 	private static Pattern twoQuotaPattern = Pattern.compile("(^\")|([^\\\\]\")");
+
+	private static Pattern twoQuotaChkPattern = Pattern.compile("[^\\\\]\"");
 
 	/**
 	 * private constructor,cann't be instantiated by other class 私有构造函数方法防止被实例化
@@ -273,11 +277,14 @@ public class StringUtil {
 	 */
 	public static int getSymMarkIndex(String beginMarkSign, String endMarkSign, String source, int startIndex) {
 		Pattern pattern = null;
+		Pattern chkPattern = null;
 		// 单引号和双引号，排除\' 和 \"
 		if (beginMarkSign.equals("'")) {
 			pattern = quotaPattern;
+			chkPattern = quotaChkPattern;
 		} else if (beginMarkSign.equals("\"")) {
 			pattern = twoQuotaPattern;
+			chkPattern = twoQuotaChkPattern;
 		}
 		// 判断对称符号是否相等
 		boolean symMarkIsEqual = beginMarkSign.equals(endMarkSign) ? true : false;
@@ -302,6 +309,10 @@ public class StringUtil {
 			// 转义符号占一位,开始位后移一位
 			if (endIndex > beginSignIndex + 1) {
 				endIndex = endIndex + 1;
+			} else if (endIndex == beginSignIndex + 1) {
+				if (matchIndex(source, chkPattern, beginSignIndex + 1)[0] == endIndex) {
+					endIndex = endIndex + 1;
+				}
 			}
 		}
 		int preEndIndex = 0;
@@ -314,6 +325,10 @@ public class StringUtil {
 				// 转义符号占一位,开始位后移一位
 				if (beginSignIndex > endIndex + 1) {
 					beginSignIndex = beginSignIndex + 1;
+				} else if (beginSignIndex == endIndex + 1) {
+					if (matchIndex(source, chkPattern, endIndex + 1)[0] == beginSignIndex) {
+						beginSignIndex = beginSignIndex + 1;
+					}
 				}
 			}
 
@@ -331,6 +346,10 @@ public class StringUtil {
 				// 转义符号占一位,开始位后移一位
 				if (endIndex > beginSignIndex + 1) {
 					endIndex = endIndex + 1;
+				} else if (endIndex == beginSignIndex + 1) {
+					if (matchIndex(source, chkPattern, beginSignIndex + 1)[0] == endIndex) {
+						endIndex = endIndex + 1;
+					}
 				}
 			}
 			// 找不到则返回上一个截止位置
@@ -700,16 +719,20 @@ public class StringUtil {
 		int endSignIndex;
 		Map.Entry entry;
 		Pattern pattern;
+		Pattern chkPattern;
 		// 排除不存在的过滤对称符号
 		while (iter.hasNext()) {
 			entry = (Map.Entry) iter.next();
 			beginSign = (String) entry.getKey();
 			endSign = (String) entry.getValue();
 			pattern = null;
+			chkPattern = null;
 			if (beginSign.equals("'")) {
 				pattern = quotaPattern;
+				chkPattern = quotaChkPattern;
 			} else if (beginSign.equals("\"")) {
 				pattern = twoQuotaPattern;
+				chkPattern = twoQuotaChkPattern;
 			}
 			endSignIndex = -1;
 			if (pattern == null) {
@@ -724,8 +747,12 @@ public class StringUtil {
 					beginSignIndex = beginSignIndex + 1;
 					endSignIndex = matchIndex(source, pattern, beginSignIndex + 1)[0];
 					// 转义符号占一位,开始位后移一位
-					if (endSignIndex >= beginSignIndex + 1) {
+					if (endSignIndex > beginSignIndex + 1) {
 						endSignIndex = endSignIndex + 1;
+					} else if (endSignIndex == beginSignIndex + 1) {
+						if (matchIndex(source, chkPattern, beginSignIndex + 1)[0] == endSignIndex) {
+							endSignIndex = endSignIndex + 1;
+						}
 					}
 				}
 			}

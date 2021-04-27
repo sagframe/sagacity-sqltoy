@@ -124,7 +124,8 @@ public class SqlServerDialectUtils {
 		// 返回记录变更量
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
 								false);
@@ -594,7 +595,8 @@ public class SqlServerDialectUtils {
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			@Override
+            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity) {
 					pst = conn.prepareStatement(realInsertSql, PreparedStatement.RETURN_GENERATED_KEYS);
 				} else {
@@ -659,7 +661,8 @@ public class SqlServerDialectUtils {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, new ReflectPropertyHandler() {
-						public void process() {
+						@Override
+                        public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
 								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
@@ -843,8 +846,7 @@ public class SqlServerDialectUtils {
 							pst.clearBatch();
 						}
 					} else {
-						pst.execute();
-						updateCount = updateCount + ((pst.getUpdateCount() > 0) ? pst.getUpdateCount() : 0);
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
@@ -893,10 +895,11 @@ public class SqlServerDialectUtils {
 		// 级联修改
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			if (emptyCascadeClasses != null)
-				for (Type type : emptyCascadeClasses) {
-					typeMap.put(type, "");
-				}
+			if (emptyCascadeClasses != null) {
+                for (Type type : emptyCascadeClasses) {
+                    typeMap.put(type, "");
+                }
+            }
 			// 级联子表数据
 			List subTableData = null;
 			String[] forceUpdateProps = null;
@@ -932,7 +935,8 @@ public class SqlServerDialectUtils {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
-								public void process() {
+								@Override
+                                public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}

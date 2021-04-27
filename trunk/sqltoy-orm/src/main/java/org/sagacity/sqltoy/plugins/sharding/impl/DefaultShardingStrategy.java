@@ -62,7 +62,8 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	private ApplicationContext applicationContext;
 
-	@Autowired
+	@Override
+    @Autowired
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
@@ -108,8 +109,9 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
-	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
-			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
+	@Override
+    public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
+                                   String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		if (paramsMap == null || baseTableName == null || dateParams == null || tableNamesMap == null) {
 			return null;
 		}

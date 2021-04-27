@@ -29,7 +29,8 @@ public enum ReturnPkType {
 		return this.returnPkType;
 	}
 
-	public String toString() {
+	@Override
+    public String toString() {
 		return Integer.toString(this.returnPkType);
 	}
 
@@ -39,12 +40,13 @@ public enum ReturnPkType {
 	 * @return
 	 */
 	public static ReturnPkType getReturnPkType(Integer returnPkType) {
-		if (returnPkType == 1)
-			return GENERATED_KEYS;
-		else if (returnPkType == 2)
-			return PREPARD_ID;
-		else if (returnPkType == 1)
-			return RESULT_GET;
+		if (returnPkType == 1) {
+            return GENERATED_KEYS;
+        } else if (returnPkType == 2) {
+            return PREPARD_ID;
+        } else if (returnPkType == 1) {
+            return RESULT_GET;
+        }
 		return RESULT_GET;
 	}
 }

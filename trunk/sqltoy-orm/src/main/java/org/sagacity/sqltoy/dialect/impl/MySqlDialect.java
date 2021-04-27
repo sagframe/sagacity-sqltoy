@@ -207,9 +207,10 @@ public class MySqlDialect implements Dialect {
 	 * java.lang.reflect.Type,
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
 	 */
-	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+	@Override
+    public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+                                 final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+                                 final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
@@ -347,13 +348,15 @@ public class MySqlDialect implements Dialect {
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
 				insertSql, entity, new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
-					public SavePKStrategy generate(EntityMeta entityMeta) {
+					@Override
+                    public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));
 					}
@@ -394,7 +397,8 @@ public class MySqlDialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					@Override
+                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return MySqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, forceUpdateFields, null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);

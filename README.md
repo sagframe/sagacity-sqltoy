@@ -23,7 +23,7 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.13 发版日期: 2021-04-15
+# 最新版本号: 4.18.18 发版日期: 2021-04-26
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -148,10 +148,9 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 	]]></value>
 </sql>
 ```
+* mybatis同样的功能的写法
 
-* mybatis同样的功能的写法(很显然基于事实的对比，mybatis的写法不清晰也不便于维护)!
-
-```
+```xml
 <select id="show_case" resultMap="BaseResultMap">
  select *
  from sqltoy_device_order_info t 
@@ -186,7 +185,6 @@ sqlToyLazyDao.deleteByQuery(StaffInfoVO.class, EntityQuery.create().where("statu
 </where>
 </select>
 ```
-
 ## 2.3 天然防止sql注入,执行过程:
 * 假设sql语句如下
 ```xml
