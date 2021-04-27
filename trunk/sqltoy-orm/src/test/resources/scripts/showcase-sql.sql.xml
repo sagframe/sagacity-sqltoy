@@ -6,7 +6,7 @@
     <value>
    <![CDATA[
    			--#not_debug#--
-			select /* test*/ distinct 'organIdName' cacheName,'--' as t, null cache_type --测试--
+			select '' , distinct 'organIdName', /**/,cacheName,'--' as t, null cache_type --测试--
 			from sys_organ_info t
 			<!-- 
 			from sys_organ_info t
