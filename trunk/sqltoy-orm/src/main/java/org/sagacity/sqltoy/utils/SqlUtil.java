@@ -612,7 +612,6 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 3));
 			}
 			markIndex = sql.indexOf("<!--");
@@ -625,31 +624,116 @@ public class SqlUtil {
 				sql = sql.substring(0, markIndex);
 				break;
 			} else {
-				// update 2017-6-5
 				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 2));
 			}
 			markIndex = StringUtil.matchIndex(sql, maskPattern);
 		}
-		// 剔除单行注释
-		markIndex = sql.indexOf("--");
-		while (markIndex != -1) {
-			// 换行符号
-			endMarkIndex = sql.indexOf("\n", markIndex);
-			if (endMarkIndex == -1 || endMarkIndex == sql.length() - 1) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				// update 2017-6-5 增加concat(" ")避免因换行导致sql语句直接相连
-				sql = sql.substring(0, markIndex).concat(" ").concat(sql.substring(endMarkIndex + 1));
+		// 单行注释，必须要放在最后处理，避免跟<!-- --> 这类冲突
+		if (sql.contains("--")) {
+			String[] sqlAry = sql.split("\n");
+			StringBuilder sqlBuffer = new StringBuilder();
+			int startMask;
+			int lineMaskIndex;
+			String lineStr;
+			int meter = 0;
+			for (String line : sqlAry) {
+				lineStr = line.trim();
+				// 排除掉-- 开头和空行
+				if (!lineStr.equals("") && !lineStr.startsWith("--")) {
+					// 不包含-- 直接拼接
+					lineMaskIndex = line.indexOf("--");
+					if (meter > 0) {
+						sqlBuffer.append("\n");
+					}
+					// 增加一个空白
+					sqlBuffer.append(" ");
+					if (lineMaskIndex == -1) {
+						sqlBuffer.append(line);
+					} else {
+						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
+						startMask = findStartLineMask(line, lineMaskIndex);
+						if (startMask > 0) {
+							sqlBuffer.append(line.substring(0, startMask));
+						} else {
+							sqlBuffer.append(line);
+						}
+					}
+					meter++;
+				}
 			}
-			markIndex = sql.indexOf("--");
+			sql = sqlBuffer.toString();
 		}
 		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
 		if (sql.endsWith(";") || sql.endsWith(",")) {
 			sql = sql.substring(0, sql.length() - 1);
 		}
 		// 剔除全角
-		return sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+		sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．", ".");
+		return sql;
+	}
+
+	/**
+	 * @TODO 找到行注释的开始位置
+	 * @param sql
+	 * @param lineMaskIndex
+	 * @return
+	 */
+	private static int findStartLineMask(String sql, int lineMaskIndex) {
+		// 单引号、双引号、hint注释结尾 的最后位置
+		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
+		// 行注释的位置在单引号等最后位置后面,直接返回
+		if (lineMaskIndex > lastIndex) {
+			return lineMaskIndex;
+		}
+		// 单引号之间
+		int start = StringUtil.matchIndex(sql, "\'");
+		int symMarkEnd;
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+						.concat(sql.substring(symMarkEnd + 1));
+				start = StringUtil.matchIndex(sql, "\'");
+			} else {
+				break;
+			}
+		}
+		// 双引号之间
+		start = StringUtil.matchIndex(sql, "\"");
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 1))
+						.concat(sql.substring(symMarkEnd + 1));
+				start = StringUtil.matchIndex(sql, "\"");
+			} else {
+				break;
+			}
+		}
+		// hint /*+ all */ 或 /*! all*/ 注释
+		start = sql.indexOf("/*");
+		while (start != -1) {
+			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
+			if (symMarkEnd != -1) {
+				sql = sql.substring(0, start).concat(loopBlank(symMarkEnd - start + 2))
+						.concat(sql.substring(symMarkEnd + 2));
+				start = sql.indexOf("/*");
+			} else {
+				break;
+			}
+		}
+		return sql.indexOf("--");
+	}
+
+	private static String loopBlank(int size) {
+		if (size == 0) {
+			return "";
+		}
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < size; i++) {
+			result.append(" ");
+		}
+		return result.toString();
 	}
 
 	/**
@@ -878,6 +962,7 @@ public class SqlUtil {
 						}
 					}
 					meter++;
+					// 批量执行
 					if (useBatch) {
 						pst.addBatch();
 						if ((meter % batchSize) == 0 || index == totalRows) {
@@ -887,9 +972,9 @@ public class SqlUtil {
 							}
 							pst.clearBatch();
 						}
-					} else {
-						pst.execute();
-						updateCount = updateCount + ((pst.getUpdateCount() > 0) ? pst.getUpdateCount() : 0);
+					} // 单条执行
+					else {
+						updateCount = pst.executeUpdate();
 					}
 				}
 			}
@@ -1420,8 +1505,9 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static String convertFieldsToColumns(EntityMeta entityMeta, String sql) {
-		if (StringUtil.isBlank(sql))
+		if (StringUtil.isBlank(sql)) {
 			return sql;
+		}
 		String key = entityMeta.getTableName() + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {

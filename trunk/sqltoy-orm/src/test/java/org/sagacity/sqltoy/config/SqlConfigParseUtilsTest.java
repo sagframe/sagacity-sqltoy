@@ -61,7 +61,9 @@ public class SqlConfigParseUtilsTest {
 				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
 			}
 		}
-		System.err.println(JSON.toJSONString(result));
+		for (SqlToyConfig config : result) {
+			System.err.println(config.getSql());
+		}
 	}
 
 	@Test
@@ -79,7 +81,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { null, null, null });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testAllNull() throws Exception {
 		String sql = "select * from table where #[id=:id and name like :name] #[and status=:status]";
@@ -87,7 +89,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { null, null, null });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testLoop() throws Exception {
 		String sql = "select * from table where #[id=:id and name like :name] #[and @loop(:status,' status=':status[i]'','or')]";
@@ -98,7 +100,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, null });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testSynSign() throws Exception {
 		String sql = "select * from table where #[id in [arraystringconcat(name)] and id=:id ]#[and name like :name] #[and status=:status]";
@@ -106,7 +108,7 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testOptSign() throws Exception {
 		String sql = "select * from table where #[id=id+:id ]#[and name like :name] #[and status=:status]";

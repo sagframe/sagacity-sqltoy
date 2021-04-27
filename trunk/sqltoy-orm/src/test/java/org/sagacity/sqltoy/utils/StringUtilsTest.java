@@ -109,4 +109,13 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches("inner join ", WHERE_CLOSE_PATTERN));
 
 	}
+	
+	@Test
+	public void testLineMaskMatch() {
+		String sql="select 'a',\"b\",/**/ from table -- 备注";
+		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
+		int lineMaskIndex = sql.indexOf("--");
+		System.err.println("lastIndex="+lastIndex+"lineMaskIndex="+lineMaskIndex);
+
+	}
 }
