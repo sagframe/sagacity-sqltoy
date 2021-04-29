@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
  * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
  * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
+ * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -99,6 +100,8 @@ public class SqlConfigParseUtils {
 	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
 	public final static String ARG_NAME = "?";
 	public final static String ARG_REGEX = "\\?";
+	public final static String ARG_DBL_NAME = "??";
+	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
 	public final static String ARG_NAME_BLANK = "? ";
 
@@ -205,13 +208,16 @@ public class SqlConfigParseUtils {
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
+		String questionDblMark = "#sqltoy_dblqsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
 			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
 			sql = processLoop(sql, paramsNamed, paramsValue);
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
-			sqlParam = processNamedParamsQuery(queryStr);
+			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
+			String sql = queryStr.replaceAll(ARG_DBL_REGEX, questionDblMark);
+			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
 		// 参数和参数值进行匹配
@@ -233,6 +239,9 @@ public class SqlConfigParseUtils {
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
+		} else {
+			// 将代表json中的?? 符号换回
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionDblMark, ARG_DBL_NAME));
 		}
 		return sqlToyResult;
 	}
