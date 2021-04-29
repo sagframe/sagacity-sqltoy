@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.StatementResultHandler;
 import org.sagacity.sqltoy.callback.UniqueSqlHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -224,22 +226,41 @@ public class DialectUtils {
 		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql("执行查询", lastSql, paramsValue);
-		PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-		if (fetchSize > 0) {
-			pst.setFetchSize(fetchSize);
-		}
-		if (maxRows > 0) {
-			pst.setMaxRows(maxRows);
-		}
 		ResultSet rs = null;
-		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, rowCallbackHandler,
-						null, startIndex));
+		// 无参数使用Statement update 2021-4-29
+		if (paramsValue == null || paramsValue.length == 0) {
+			Statement statement = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			if (fetchSize > 0) {
+				statement.setFetchSize(fetchSize);
 			}
-		});
+			if (maxRows > 0) {
+				statement.setMaxRows(maxRows);
+			}
+			rs = statement.executeQuery(lastSql);
+			return (QueryResult) SqlUtil.statementProcess(null, statement, rs, new StatementResultHandler() {
+				public void execute(Object obj, Statement pst, ResultSet rs) throws Exception {
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+							rowCallbackHandler, null, startIndex));
+				}
+			});
+		} else {
+			PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY);
+			if (fetchSize > 0) {
+				pst.setFetchSize(fetchSize);
+			}
+			if (maxRows > 0) {
+				pst.setMaxRows(maxRows);
+			}
+			return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs,
+							rowCallbackHandler, null, startIndex));
+				}
+			});
+		}
 	}
 
 	/**
@@ -262,21 +283,30 @@ public class DialectUtils {
 		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql("执行updateFetch", lastSql, paramsValue);
-		PreparedStatement pst = null;
-		if (updateRowHandler == null) {
-			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-		} else {
-			pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-		}
 		ResultSet rs = null;
-		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
-				rs = pst.executeQuery();
-				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-						updateRowHandler, startIndex));
-			}
-		});
+		// 无参数模式
+		if (paramsValue == null || paramsValue.length == 0) {
+			Statement statement = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+					(updateRowHandler == null) ? ResultSet.CONCUR_READ_ONLY : ResultSet.CONCUR_UPDATABLE);
+			rs = statement.executeQuery(lastSql);
+			return (QueryResult) SqlUtil.statementProcess(null, statement, rs, new StatementResultHandler() {
+				public void execute(Object obj, Statement pst, ResultSet rs) throws Exception {
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
+							updateRowHandler, startIndex));
+				}
+			});
+		} else {
+			PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY,
+					(updateRowHandler == null) ? ResultSet.CONCUR_READ_ONLY : ResultSet.CONCUR_UPDATABLE);
+			return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
+					rs = pst.executeQuery();
+					this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
+							updateRowHandler, startIndex));
+				}
+			});
+		}
 	}
 
 	/**
@@ -392,21 +422,36 @@ public class DialectUtils {
 		lastCountSql = SqlUtilsExt.signSql(lastCountSql, dbType, sqlToyConfig);
 		// 打印sql
 		SqlExecuteStat.showSql("执行count查询", lastCountSql, realParams);
-		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
-		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
-				long resultCount = 0;
-				if (realParams != null) {
-					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
+		// 无参数模式
+		if (realParams == null || realParams.length == 0) {
+			Statement statement = conn.createStatement();
+			rs = statement.executeQuery(lastCountSql);
+			return (Long) SqlUtil.statementProcess(null, statement, rs, new StatementResultHandler() {
+				public void execute(Object obj, Statement pst, ResultSet rs) throws SQLException, IOException {
+					long resultCount = 0;
+					if (rs.next()) {
+						resultCount = rs.getLong(1);
+					}
+					this.setResult(resultCount);
 				}
-				rs = pst.executeQuery();
-				if (rs.next()) {
-					resultCount = rs.getLong(1);
+			});
+		} else {
+			PreparedStatement pst = conn.prepareStatement(lastCountSql);
+			return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+				public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+					long resultCount = 0;
+					if (realParams != null) {
+						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
+					}
+					rs = pst.executeQuery();
+					if (rs.next()) {
+						resultCount = rs.getLong(1);
+					}
+					this.setResult(resultCount);
 				}
-				this.setResult(resultCount);
-			}
-		});
+			});
+		}
 	}
 
 	/**

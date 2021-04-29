@@ -39,6 +39,7 @@ import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
+import org.sagacity.sqltoy.callback.StatementResultHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -540,6 +541,30 @@ public class SqlUtil {
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
+		try {
+			preparedStatementResultHandler.execute(userData, pst, rs);
+		} catch (Exception se) {
+			logger.error(se.getMessage(), se);
+			throw se;
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
+				if (pst != null) {
+					pst.close();
+					pst = null;
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+		return preparedStatementResultHandler.getResult();
+	}
+
+	public static Object statementProcess(Object userData, Statement pst, ResultSet rs,
+			StatementResultHandler preparedStatementResultHandler) throws Exception {
 		try {
 			preparedStatementResultHandler.execute(userData, pst, rs);
 		} catch (Exception se) {
