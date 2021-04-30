@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
  * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
  * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
+ * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -90,7 +91,7 @@ public class SqlConfigParseUtils {
 	// add 2016-5-27 by chenrenfei
 	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\?\\s*\\)";
 	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
-	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\?\\s*\\)";
+	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 
@@ -99,6 +100,8 @@ public class SqlConfigParseUtils {
 	public final static Pattern IS_PATTERN = Pattern.compile("\\s+is\\s+(not)?\\s+\\?");
 	public final static String ARG_NAME = "?";
 	public final static String ARG_REGEX = "\\?";
+	public final static String ARG_DBL_NAME = "??";
+	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
 	public final static String ARG_NAME_BLANK = "? ";
 
@@ -205,13 +208,16 @@ public class SqlConfigParseUtils {
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
+		String questionDblMark = "#sqltoy_dblqsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
 			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
 			sql = processLoop(sql, paramsNamed, paramsValue);
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
-			sqlParam = processNamedParamsQuery(queryStr);
+			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
+			String sql = queryStr.replaceAll(ARG_DBL_REGEX, questionDblMark);
+			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
 		// 参数和参数值进行匹配
@@ -220,8 +226,6 @@ public class SqlConfigParseUtils {
 		processNullConditions(sqlToyResult);
 		// 替换@blank(?)为空白,增强sql组织能力
 		processBlank(sqlToyResult);
-		// 替换@value(?) 为参数对应的数值
-		processValue(sqlToyResult);
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%
 		processLike(sqlToyResult);
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
@@ -229,9 +233,15 @@ public class SqlConfigParseUtils {
 		processIn(sqlToyResult);
 		// 参数为null的处理策略(用null直接代替变量)
 		replaceNull(sqlToyResult, 0);
+		// update 2021-4-29 放在最后，避免参数值中存在?号
+		// 替换@value(?) 为参数对应的数值
+		processValue(sqlToyResult);
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
+		} else {
+			// 将代表json中的?? 符号换回
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionDblMark, ARG_DBL_NAME));
 		}
 		return sqlToyResult;
 	}
@@ -516,6 +526,7 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * @update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
@@ -524,6 +535,7 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		String queryStr = sqlToyResult.getSql().toLowerCase();
+		// @value(?) 或@value(null)
 		Matcher m = VALUE_PATTERN.matcher(queryStr);
 		int index = 0;
 		int paramCnt = 0;
@@ -535,14 +547,20 @@ public class SqlConfigParseUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
-			// 用参数的值直接覆盖@value(:name)
-			paramValue = paramValueList.get(paramCnt - valueCnt);
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
-					(paramValue == null) ? "null" : paramValue.toString()));
-			// 剔除参数@value(?) 对应的参数值
-			paramValueList.remove(paramCnt - valueCnt);
-			valueCnt++;
+			// @value(?)
+			if (m.group().contains(ARG_NAME)) {
+				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
+				// 用参数的值直接覆盖@value(:name)
+				paramValue = paramValueList.get(paramCnt - valueCnt);
+				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
+						(paramValue == null) ? "null" : paramValue.toString()));
+				// 剔除参数@value(?) 对应的参数值
+				paramValueList.remove(paramCnt - valueCnt);
+				valueCnt++;
+			} // @value(null)
+			else {
+				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, "null"));
+			}
 		}
 		if (valueCnt > 0) {
 			sqlToyResult.setParamsValue(paramValueList.toArray());
@@ -884,4 +902,5 @@ public class SqlConfigParseUtils {
 			}
 		}
 	}
+
 }

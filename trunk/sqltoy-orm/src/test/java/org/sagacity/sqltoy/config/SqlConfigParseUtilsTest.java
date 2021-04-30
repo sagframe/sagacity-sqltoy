@@ -116,4 +116,12 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
+	
+	@Test
+	public void testAtValue() throws Exception {
+		String sql = "select * from table where 1=1 #[and id=:id] and name like @value(:name) #[and status=:status]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
+				new Object[] { "1", null, "1" });
+		System.err.println(JSON.toJSONString(result));
+	}
 }
