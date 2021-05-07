@@ -514,7 +514,9 @@ public class DialectFactory {
 						treeModel.idField(columnName);
 					}
 				}
-				treeModel.table(entityMeta.getTableName());
+				if (null == treeModel.getTableName()) {
+					treeModel.table(entityMeta.getSchemaTable());
+				}
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
 					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
