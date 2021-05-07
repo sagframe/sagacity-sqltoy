@@ -514,7 +514,7 @@ public class DialectFactory {
 						treeModel.idField(columnName);
 					}
 				}
-				if (null == treeModel.getTableName()) {
+				if (StringUtil.isBlank(treeModel.getTableName())) {
 					treeModel.table(entityMeta.getSchemaTable());
 				}
 				// 通过实体对象取值给rootId和idValue赋值
