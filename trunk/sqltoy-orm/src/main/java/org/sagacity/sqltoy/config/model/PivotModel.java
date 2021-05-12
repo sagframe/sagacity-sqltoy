@@ -27,16 +27,16 @@ public class PivotModel implements Serializable {
 	 * 旋转依据的分类列
 	 */
 	private String[] categoryCols;
-	
+
 	/**
 	 * 通过sql获取旋转分类参照数据
 	 */
 	private String categorySql;
 
 	/**
-	 * 需要旋转的列
+	 * 需要旋转的开始和截止列(可以是列名，也可以是对应的index数字)
 	 */
-	private String[] pivotCols;
+	private String[] startEndCols;
 
 	/**
 	 * 默认值
@@ -51,11 +51,17 @@ public class PivotModel implements Serializable {
 	}
 
 	/**
-	 * @param groupCols
-	 *            the groupCols to set
+	 * @param groupCols the groupCols to set
 	 */
-	public void setGroupCols(String[] groupCols) {
-		this.groupCols = groupCols;
+	public PivotModel setGroupCols(String... groupCols) {
+		if (groupCols != null && groupCols.length > 0) {
+			if (groupCols.length > 1) {
+				this.groupCols = groupCols;
+			} else {
+				this.groupCols = groupCols[0].split("\\,");
+			}
+		}
+		return this;
 	}
 
 	/**
@@ -66,34 +72,47 @@ public class PivotModel implements Serializable {
 	}
 
 	/**
-	 * @param categoryCols
-	 *            the categoryCols to set
+	 * @param categoryCols the categoryCols to set
 	 */
-	public void setCategoryCols(String[] categoryCols) {
-		this.categoryCols = categoryCols;
+	public PivotModel setCategoryCols(String... categoryCols) {
+		if (categoryCols != null && categoryCols.length > 0) {
+			if (categoryCols.length > 1) {
+				this.categoryCols = categoryCols;
+			} else {
+				this.categoryCols = categoryCols[0].split("\\,");
+			}
+		}
+		return this;
 	}
 
 	/**
 	 * @return the pivotCols
 	 */
-	public String[] getPivotCols() {
-		return pivotCols;
+	public String[] getStartEndCols() {
+		return startEndCols;
 	}
 
 	/**
-	 * @param pivotCols
-	 *            the pivotCols to set
+	 * @param pivotCols the pivotCols to set
 	 */
-	public void setPivotCols(String[] pivotCols) {
-		this.pivotCols = pivotCols;
+	public PivotModel setStartEndCols(String... startEndCols) {
+		if (startEndCols != null && startEndCols.length > 0) {
+			if (startEndCols.length > 1) {
+				this.startEndCols = startEndCols;
+			} else {
+				this.startEndCols = startEndCols[0].split("\\,");
+			}
+		}
+		return this;
 	}
 
 	public Object getDefaultValue() {
 		return defaultValue;
 	}
 
-	public void setDefaultValue(Object defaultValue) {
+	public PivotModel setDefaultValue(Object defaultValue) {
 		this.defaultValue = defaultValue;
+		return this;
 	}
 
 	/**
@@ -106,8 +125,9 @@ public class PivotModel implements Serializable {
 	/**
 	 * @param categorySql the categorySql to set
 	 */
-	public void setCategorySql(String categorySql) {
+	public PivotModel setCategorySql(String categorySql) {
 		this.categorySql = categorySql;
+		return this;
 	}
 
 }

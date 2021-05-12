@@ -1,6 +1,8 @@
 # 在线文档
 ## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
 
+# [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
+
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy4.18 使用手册.doc
 
@@ -23,7 +25,7 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.19 发版日期: 2021-04-30
+# 最新版本号: 4.18.20 发版日期: 2021-05-13
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么

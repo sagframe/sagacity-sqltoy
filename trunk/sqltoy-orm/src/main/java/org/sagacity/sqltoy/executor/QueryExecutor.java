@@ -14,9 +14,11 @@ import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
+import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
 import org.sagacity.sqltoy.model.NamedValuesModel;
@@ -336,15 +338,30 @@ public class QueryExecutor implements Serializable {
 		}
 		return this;
 	}
-
-	// 分库分表在xml中应用,代码中暂时不支持(必要性不强，不建议将sql写在代码中，更不推荐调试完sql再转成jooq对象查询模式)
-//	public QueryExecutor shardingDB(String strategory, String... columns) {
-//		return this;
-//	}
-//
-//	public QueryExecutor shardingTable(String strategory, String... columns) {
-//		return this;
-//	}
+	
+	/**
+	 * @TODO 列转行
+	 * @param unpivotModel
+	 * @return
+	 */
+	public QueryExecutor unpivot(UnpivotModel unpivotModel) {
+		if (unpivotModel != null) {
+			innerModel.calculators.add(unpivotModel);
+		}
+		return this;
+	}
+	
+	/**
+	 * @TODO 行转列
+	 * @param pivotModel
+	 * @return
+	 */
+	public QueryExecutor pivot(PivotModel pivotModel) {
+		if (pivotModel != null) {
+			innerModel.calculators.add(pivotModel);
+		}
+		return this;
+	}
 
 	public QueryExecutorExtend getInnerModel() {
 		return innerModel;

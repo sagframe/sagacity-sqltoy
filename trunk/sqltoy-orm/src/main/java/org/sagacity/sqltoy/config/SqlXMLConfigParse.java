@@ -1205,12 +1205,12 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("category-sql")) {
 						pivotModel.setCategorySql(elt.getAttribute("category-sql"));
 					}
-					String[] pivotCols = new String[2];
-					pivotCols[0] = elt.getAttribute("start-column").toLowerCase();
+					String[] startEndCols = new String[2];
+					startEndCols[0] = elt.getAttribute("start-column").toLowerCase();
 					if (elt.hasAttribute("end-column")) {
-						pivotCols[1] = elt.getAttribute("end-column").toLowerCase();
+						startEndCols[1] = elt.getAttribute("end-column").toLowerCase();
 					} else {
-						pivotCols[1] = pivotCols[0];
+						startEndCols[1] = startEndCols[0];
 					}
 					if (elt.hasAttribute("default-value")) {
 						String defaultValue = elt.getAttribute("default-value");
@@ -1225,7 +1225,7 @@ public class SqlXMLConfigParse {
 							pivotModel.setDefaultValue(defaultValue);
 						}
 					}
-					pivotModel.setPivotCols(pivotCols);
+					pivotModel.setStartEndCols(startEndCols);
 					resultProcessor.add(pivotModel);
 				} // 列转行
 				else if (eltName.equals(local.concat("unpivot"))) {
