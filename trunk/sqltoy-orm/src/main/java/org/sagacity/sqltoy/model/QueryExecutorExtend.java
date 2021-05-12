@@ -114,7 +114,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
-	
+
 	/**
 	 * 对字段进行安全脱敏
 	 */
@@ -124,6 +124,9 @@ public class QueryExecutorExtend implements Serializable {
 	 * 列格式模型
 	 */
 	public LinkedHashMap<String, FormatModel> colsFormat = new LinkedHashMap<String, FormatModel>();
+
+	// 行转列、列转行等
+	public List calculators = new ArrayList();
 
 	/**
 	 * 分页优化模型
@@ -176,8 +179,8 @@ public class QueryExecutorExtend implements Serializable {
 			}
 			return paramsName;
 		}
-		
-		//没有额外指定分表策略，优先使用sql xml中定义的策略
+
+		// 没有额外指定分表策略，优先使用sql xml中定义的策略
 		if (tableShardings.isEmpty()) {
 			return sqlToyConfig.getTableShardingParams();
 		} else {
@@ -341,8 +344,9 @@ public class QueryExecutorExtend implements Serializable {
 				}
 			}
 		}
-		if (params.isEmpty())
+		if (params.isEmpty()) {
 			return null;
+		}
 		String[] result = new String[params.size()];
 		params.toArray(result);
 		return result;
