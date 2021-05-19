@@ -119,7 +119,7 @@ public class SqlConfigParseUtils {
 	/**
 	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
 	 */
-	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n|\\=)+");
+	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n|\\=|\\>|\\<)+");
 
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
