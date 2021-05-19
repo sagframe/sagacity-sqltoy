@@ -85,6 +85,16 @@
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>
+					<xsd:attribute name="locale">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="US" />
+								<xsd:enumeration value="UK" />
+								<xsd:enumeration value="CHINA" />
+								<xsd:enumeration value="JAPAN" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="number-format" minOccurs="0"
@@ -109,6 +119,16 @@
 								<xsd:enumeration value="HALF_DOWN" />
 								<xsd:enumeration value="ROUND_DOWN" />
 								<xsd:enumeration value="ROUND_UP" />
+							</xsd:restriction>
+						</xsd:simpleType>
+					</xsd:attribute>
+					<xsd:attribute name="locale">
+						<xsd:simpleType>
+							<xsd:restriction base="xsd:string">
+								<xsd:enumeration value="US" />
+								<xsd:enumeration value="UK" />
+								<xsd:enumeration value="CHINA" />
+								<xsd:enumeration value="JAPAN" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>

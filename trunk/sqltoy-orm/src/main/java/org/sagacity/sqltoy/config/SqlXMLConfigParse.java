@@ -1133,11 +1133,13 @@ public class SqlXMLConfigParse {
 				df = (Element) dfElts.item(i);
 				String[] columns = trimParams(df.getAttribute("columns").toLowerCase().split("\\,"));
 				String format = df.hasAttribute("format") ? df.getAttribute("format") : "yyyy-MM-dd";
+				String locale = df.hasAttribute("locale") ? df.getAttribute("locale") : null;
 				for (String col : columns) {
 					FormatModel formatModel = new FormatModel();
 					formatModel.setColumn(col);
 					formatModel.setType(1);
 					formatModel.setFormat(format);
+					formatModel.setLocale(locale);
 					formatModels.add(formatModel);
 				}
 			}
@@ -1150,6 +1152,7 @@ public class SqlXMLConfigParse {
 				String format = nf.hasAttribute("format") ? nf.getAttribute("format") : "capital";
 				String roundStr = nf.hasAttribute("roundingMode") ? nf.getAttribute("roundingMode").toUpperCase()
 						: null;
+				String locale = nf.hasAttribute("locale") ? nf.getAttribute("locale") : null;
 				RoundingMode roundMode = null;
 				if (roundStr != null) {
 					if (roundStr.equals("HALF_UP")) {
@@ -1168,6 +1171,7 @@ public class SqlXMLConfigParse {
 					formatModel.setRoundingMode(roundMode);
 					formatModel.setType(2);
 					formatModel.setFormat(format);
+					formatModel.setLocale(locale);
 					formatModels.add(formatModel);
 				}
 			}
