@@ -108,7 +108,14 @@ public class EntityQuery implements Serializable {
 	}
 
 	public EntityQuery values(Object... values) {
-		innerModel.values = values;
+		//兼容map
+		if (values != null && values.length == 1 && values[0]!=null && values[0] instanceof Map) {
+			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) values[0]);
+			innerModel.names = model.getNames();
+			innerModel.values = model.getValues();
+		} else {
+			innerModel.values = values;
+		}
 		return this;
 	}
 

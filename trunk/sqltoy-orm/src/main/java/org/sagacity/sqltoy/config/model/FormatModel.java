@@ -35,6 +35,11 @@ public class FormatModel implements Serializable {
 	private String format;
 	
 	/**
+	 * 区域
+	 */
+	private String locale;
+	
+	/**
 	 * 
 	 */
 	private RoundingMode roundingMode=null;
@@ -93,6 +98,14 @@ public class FormatModel implements Serializable {
 	 */
 	public void setRoundingMode(RoundingMode roundingMode) {
 		this.roundingMode = roundingMode;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 
 }

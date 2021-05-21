@@ -109,13 +109,24 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches("inner join ", WHERE_CLOSE_PATTERN));
 
 	}
-	
+
 	@Test
 	public void testLineMaskMatch() {
-		String sql="select 'a',\"b\",/**/ from table -- 备注";
+		String sql = "select 'a',\"b\",/**/ from table -- 备注";
 		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
 		int lineMaskIndex = sql.indexOf("--");
-		System.err.println("lastIndex="+lastIndex+"lineMaskIndex="+lineMaskIndex);
+		System.err.println("lastIndex=" + lastIndex + "lineMaskIndex=" + lineMaskIndex);
 
+	}
+
+	@Test
+	public void testWhereMatch1() {
+		Pattern SQL_ID_PATTERN = Pattern.compile("^[A-Za-z_0-9\\-]+$");
+		System.err.println(StringUtil.matches("inner_join", SQL_ID_PATTERN));
+		System.err.println(StringUtil.matches("inner-join", SQL_ID_PATTERN));
+		System.err.println(StringUtil.matches("innerjoin1", SQL_ID_PATTERN));
+		System.err.println(StringUtil.matches("inner join1", SQL_ID_PATTERN));
+		System.err.println(StringUtil.matches("innerAoin1", SQL_ID_PATTERN));
+		System.err.println(StringUtil.matches("inner_Aoin-10", SQL_ID_PATTERN));
 	}
 }

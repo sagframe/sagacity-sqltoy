@@ -245,6 +245,7 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
+				entityMeta.setSchema(entity.schema());
 				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
 						.concat(entity.tableName()));
 

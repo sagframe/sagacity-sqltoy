@@ -37,6 +37,8 @@ public class EntityMeta implements Serializable {
 	 */
 	private String deleteByIdsSql;
 
+	private String schema;
+
 	/**
 	 * 表名
 	 */
@@ -828,5 +830,19 @@ public class EntityMeta implements Serializable {
 
 	public HashMap<String, String> getColumnFieldMap() {
 		return columnFieldMap;
+	}
+
+	/**
+	 * @return the schema
+	 */
+	public String getSchema() {
+		return schema;
+	}
+
+	/**
+	 * @param schema the schema to set
+	 */
+	public void setSchema(String schema) {
+		this.schema = schema;
 	}
 }

@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2015年2月13日
  */
 public class MySqlDialectUtils {
+
 	/**
 	 * @todo 产生mysql数据库的saveOrUpdate操作sql语句
 	 * @param dbType

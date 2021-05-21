@@ -71,7 +71,7 @@ public class NumberUtil {
 		return format(target, pattern, null, null);
 	}
 
-	public static String format(Object target, String pattern, RoundingMode roundingMode, String locale) {
+	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale) {
 		if (target == null) {
 			return null;
 		}
@@ -93,8 +93,8 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
-			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
-					: DecimalFormat.getInstance(new Locale(locale)));
+			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getInstance()
+					: DecimalFormat.getInstance(locale));
 			if (roundingMode != null) {
 				df.setRoundingMode(roundingMode);
 			}
@@ -114,7 +114,7 @@ public class NumberUtil {
 	 * @param locale
 	 * @return
 	 */
-	public static String formatCurrency(Object target, String pattern, String locale) {
+	public static String formatCurrency(Object target, String pattern, Locale locale) {
 		if (target == null) {
 			return null;
 		}
@@ -134,8 +134,8 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
-			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
-					: DecimalFormat.getCurrencyInstance(new Locale(locale)));
+			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getCurrencyInstance()
+					: DecimalFormat.getCurrencyInstance(locale));
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
