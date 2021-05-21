@@ -83,6 +83,7 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return column;
 		}
+		//不属于关键词
 		if (!reservedWords.contains(column.toLowerCase())) {
 			return column;
 		}

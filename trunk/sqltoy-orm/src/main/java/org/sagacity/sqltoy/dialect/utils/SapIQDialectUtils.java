@@ -144,8 +144,9 @@ public class SapIQDialectUtils {
 			}
 		});
 		// 无主键直接返回null
-		if (noPK)
+		if (noPK) {
 			return null;
+		}
 		if (result == null) {
 			result = fullParamValues[pkIndex];
 		}
@@ -181,7 +182,7 @@ public class SapIQDialectUtils {
 							}
 						}
 					}, openIdentity, conn, dbType, null);
-				}else {
+				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}

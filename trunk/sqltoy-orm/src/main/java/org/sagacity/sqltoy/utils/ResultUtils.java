@@ -974,7 +974,7 @@ public class ResultUtils {
 			resultProcessors.addAll(sqlToyConfig.getResultProcessor());
 		}
 		// QueryExecutor中扩展的计算
-		if (!extend.calculators.isEmpty()) {
+		if (extend!=null && !extend.calculators.isEmpty()) {
 			resultProcessors.addAll(extend.calculators);
 		}
 		Object processor;
@@ -1021,7 +1021,7 @@ public class ResultUtils {
 		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
 			resultProcessors.addAll(sqlToyConfig.getResultProcessor());
 		}
-		if (!extend.calculators.isEmpty()) {
+		if (extend!=null && !extend.calculators.isEmpty()) {
 			resultProcessors.addAll(extend.calculators);
 		}
 		// 整理列名称跟index的对照map
