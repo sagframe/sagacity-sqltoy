@@ -205,8 +205,10 @@ public class SqlExecuteStat {
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
 		result.append("\n");
-		if (sqlTrace.isError() || sqlTrace.isOverTime()) {
+		if (sqlTrace.isError()) {
 			logger.error(result.toString());
+		} else if (sqlTrace.isOverTime()) {
+			logger.warn(result.toString());
 		} else {
 			if (logger.isDebugEnabled()) {
 				logger.debug(result.toString());

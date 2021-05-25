@@ -1449,7 +1449,7 @@ public class SqlToyDaoSupport {
 			fields = entityMeta.getAllColumnNames();
 		}
 
-		String sql = "select ".concat(fields).concat(translateFields).concat(" from ")
+		String sql = "select ".concat((innerModel.distinct)?" distinct ":"").concat(fields).concat(translateFields).concat(" from ")
 				.concat(entityMeta.getSchemaTable());
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);

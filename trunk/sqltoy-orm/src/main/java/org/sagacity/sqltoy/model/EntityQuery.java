@@ -55,6 +55,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	public EntityQuery distinct() {
+		innerModel.distinct = true;
+		return this;
+	}
+
 	/**
 	 * @TODO 用链式模式实现字段选择
 	 * @param selectFields
@@ -108,8 +113,8 @@ public class EntityQuery implements Serializable {
 	}
 
 	public EntityQuery values(Object... values) {
-		//兼容map
-		if (values != null && values.length == 1 && values[0]!=null && values[0] instanceof Map) {
+		// 兼容map
+		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
 			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) values[0]);
 			innerModel.names = model.getNames();
 			innerModel.values = model.getValues();

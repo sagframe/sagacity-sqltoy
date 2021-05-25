@@ -50,6 +50,8 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public String[] fields;
 	
+	public boolean distinct=false;
+	
 	/**
 	 * 不参与查询的字段
 	 */
