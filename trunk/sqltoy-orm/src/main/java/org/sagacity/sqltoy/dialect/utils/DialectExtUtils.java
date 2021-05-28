@@ -42,7 +42,7 @@ public class DialectExtUtils {
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append("insert into ");
-		sql.append(entityMeta.getSchemaTable(tableName));
+		sql.append(entityMeta.getSchemaTable(tableName, dbType));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;
@@ -163,7 +163,7 @@ public class DialectExtUtils {
 			}
 		}
 		queryStr.append(" from ");
-		queryStr.append(entityMeta.getSchemaTable(tableName));
+		queryStr.append(entityMeta.getSchemaTable(tableName, dbType));
 		queryStr.append(" where  ");
 
 		for (int i = 0; i < realParamNamed.length; i++) {
@@ -191,7 +191,7 @@ public class DialectExtUtils {
 	public static String mergeIgnore(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy, String fromTable,
 			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		// 在无主键的情况下产生insert sql语句
-		String realTable = (tableName == null) ? entityMeta.getSchemaTable() : tableName;
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
 					isAssignPK, realTable);
@@ -326,7 +326,7 @@ public class DialectExtUtils {
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append("insert into ");
-		sql.append(entityMeta.getSchemaTable(tableName));
+		sql.append(entityMeta.getSchemaTable(tableName, dbType));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;

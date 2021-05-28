@@ -66,6 +66,8 @@ public class SqlToyContextProperties implements Serializable {
 	 * 批量操作，每批次数量,默认200
 	 */
 	private Integer batchSize;
+	
+	private int fetchSize=-1;
 
 	/**
 	 * 分页最大单页数据量(默认是5万)
@@ -409,6 +411,20 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDataSourceSelector(String dataSourceSelector) {
 		this.dataSourceSelector = dataSourceSelector;
+	}
+
+	/**
+	 * @return the fetchSize
+	 */
+	public int getFetchSize() {
+		return fetchSize;
+	}
+
+	/**
+	 * @param fetchSize the fetchSize to set
+	 */
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
 	}
 
 }

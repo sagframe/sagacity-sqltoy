@@ -55,6 +55,21 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置jdbc参数，一般无需设置
+	 * @param fetchSize
+	 * @return
+	 */
+	public EntityQuery fetchSize(int fetchSize) {
+		innerModel.fetchSize = fetchSize;
+		return this;
+	}
+	
+	public EntityQuery maxRows(int maxRows) {
+		innerModel.maxRows = maxRows;
+		return this;
+	}
+	
 	public EntityQuery distinct() {
 		innerModel.distinct = true;
 		return this;
@@ -96,7 +111,7 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-
+	
 	/**
 	 * @TODO where 条件
 	 * @param where

@@ -22,7 +22,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -49,9 +48,9 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, Integer dbType,
-			String dialect) throws Exception {
+			String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect);
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -64,17 +63,18 @@ public class ClickHouseDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, Integer dbType, String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect);
+				dbType, dialect, fetchSize, maxRows);
 	}
 
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, Integer dbType, String dialect) throws Exception {
+			Integer topSize, Connection conn, Integer dbType, String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
 		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect);
+				dialect, fetchSize, maxRows);
 	}
 
 	@Override
@@ -100,16 +100,19 @@ public class ClickHouseDialect implements Dialect {
 			LockMode lockMode, Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
 
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
+			Connection conn, Integer dbType, String dialect, String tableName, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null,
+				fetchSize, maxRows);
 	}
 
 	@Override
@@ -190,7 +193,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
-			final LockMode lockMode) throws Exception {
+			final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -213,8 +216,8 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
+			final int fetchSize) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

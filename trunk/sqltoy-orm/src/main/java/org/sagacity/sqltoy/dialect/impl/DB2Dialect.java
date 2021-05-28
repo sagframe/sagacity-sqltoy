@@ -32,7 +32,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -99,8 +98,9 @@ public class DB2Dialect implements Dialect {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -117,11 +117,11 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			final LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			final String tableName, final int fetchSize, final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
 				(sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
-				});
+				}, fetchSize, maxRows);
 	}
 
 	/*
@@ -233,9 +233,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return DB2DialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect);
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -249,9 +249,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect);
+				dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -264,9 +264,10 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final int maxRows) throws Exception {
 		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect);
+				dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -425,10 +426,10 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode) throws Exception {
+			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -446,7 +447,7 @@ public class DB2Dialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " fetch first " + topSize + " rows only for update with rs";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -465,7 +466,7 @@ public class DB2Dialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " order by rand() fetch first " + random + " rows only for update with rs";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -479,8 +480,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
+			final String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
+				fetchSize);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {

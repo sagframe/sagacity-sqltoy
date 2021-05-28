@@ -97,6 +97,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean pageOverToFirst = true;
 
 	/**
+	 * 默认查询数据库端提取记录量
+	 */
+	private int fetchSize = -1;
+
+	/**
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
@@ -275,7 +280,8 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
-
+		// 设置默认fetchSize
+		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
@@ -340,7 +346,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		if (applicationContext.containsBean(dataSourceName)) {
+		// 优先使用扩展来实现
+		if (dataSourceSelector != null) {
+			return dataSourceSelector.getDataSourceBean(applicationContext, dataSourceName);
+		} else if (applicationContext.containsBean(dataSourceName)) {
 			return (DataSource) applicationContext.getBean(dataSourceName);
 		}
 		return null;
@@ -574,6 +583,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.TDENGINE)) {
+			this.dialect = Dialect.TDENGINE;
 		} else if (tmp.startsWith(Dialect.ES)) {
 			this.dialect = Dialect.ES;
 		} else {
@@ -866,5 +877,19 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDataSourceSelector(DataSourceSelector dataSourceSelector) {
 		this.dataSourceSelector = dataSourceSelector;
+	}
+
+	/**
+	 * @return the fetchSize
+	 */
+	public int getFetchSize() {
+		return fetchSize;
+	}
+
+	/**
+	 * @param fetchSize the fetchSize to set
+	 */
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
 	}
 }

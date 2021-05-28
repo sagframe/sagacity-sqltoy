@@ -28,7 +28,6 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,9 +75,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount,
-				randomCount, conn, dbType, dialect);
+				randomCount, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -92,9 +91,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect);
+				dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -106,9 +105,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final int maxRows) throws Exception {
 		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect);
+				dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -155,8 +155,9 @@ public class PostgreSqlDialect implements Dialect {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -171,11 +172,12 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, final Integer dbType, final String dialect, final String tableName) throws Exception {
+			Connection conn, final Integer dbType, final String dialect, final String tableName, final int fetchSize,
+			final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
 				(sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
-				});
+				}, fetchSize, maxRows);
 	}
 
 	/*
@@ -250,7 +252,7 @@ public class PostgreSqlDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
-	//postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性跟mysql一样存在bug
+	// postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性跟mysql一样存在bug
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -383,10 +385,10 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode) throws Exception {
+			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramValues, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -403,7 +405,7 @@ public class PostgreSqlDialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " limit " + topSize + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -421,7 +423,7 @@ public class PostgreSqlDialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " order by random() limit " + random + " for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -433,8 +435,9 @@ public class PostgreSqlDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
+			final String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
+				fetchSize);
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {

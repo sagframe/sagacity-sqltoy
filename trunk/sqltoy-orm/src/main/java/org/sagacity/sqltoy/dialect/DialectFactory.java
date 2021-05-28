@@ -149,7 +149,7 @@ public class DialectFactory {
 			break;
 		}
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-		//postgresql/greenplum
+		// postgresql/greenplum
 		case DBType.POSTGRESQL: {
 			dialectSqlWrapper = new PostgreSqlDialect();
 			break;
@@ -304,7 +304,7 @@ public class DialectFactory {
 							// 做sql签名
 							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
-									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit));
+									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit, false));
 						}
 					});
 			SqlExecuteStat.debug("执行结果", "受影响记录数量:{} 条!", updateTotalCnt);
@@ -418,7 +418,8 @@ public class DialectFactory {
 								return;
 							}
 							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
-									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -519,7 +520,7 @@ public class DialectFactory {
 					}
 				}
 				if (StringUtil.isBlank(treeModel.getTableName())) {
-					treeModel.table(entityMeta.getSchemaTable());
+					treeModel.table(entityMeta.getSchemaTable(null, null));
 				}
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
@@ -604,7 +605,8 @@ public class DialectFactory {
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							queryResult.setPageNo(pageNo);
 							queryResult.setPageSize(pageSize);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
@@ -736,7 +738,7 @@ public class DialectFactory {
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler, conn, null, dbType, dialect,
-												extend.fetchSize, extend.maxRows);
+												getFetchSize(extend.fetchSize), extend.maxRows);
 										long totalRecord = (queryResult.getRows() == null) ? 0
 												: queryResult.getRows().size();
 										queryResult.setPageNo(1L);
@@ -753,7 +755,7 @@ public class DialectFactory {
 											long realStartPage = isOverPage ? 1 : pageNo;
 											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 													realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn,
-													dbType, dialect);
+													dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
 											queryResult.setPageNo(realStartPage);
 										}
 										queryResult.setPageSize(pageSize);
@@ -849,7 +851,8 @@ public class DialectFactory {
 						SqlExecuteStat.mergeTrace(sqlTrace);
 						Long startTime = System.currentTimeMillis();
 						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
-								queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+								queryExecutor, pageNo, pageSize, conn, dbType, dialect, getFetchSize(extend.fetchSize),
+								extend.maxRows);
 						queryResult.setRows(result.getRows());
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
@@ -946,7 +949,8 @@ public class DialectFactory {
 							}
 							// 调用数据库方言查询结果
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findTopBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -1010,8 +1014,8 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									extend.rowCallbackHandler, conn, lockMode, dbType, dialect, extend.fetchSize,
-									extend.maxRows);
+									extend.rowCallbackHandler, conn, lockMode, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -1379,7 +1383,8 @@ public class DialectFactory {
 													batchModel.getEntities(),
 													(cascadeTypes == null) ? null
 															: CollectionUtil.arrayToList(cascadeTypes),
-													lockMode, conn, dbType, dialect, shardingModel.getTableName()));
+													lockMode, conn, dbType, dialect, shardingModel.getTableName(),
+													getFetchSize(-1), -1));
 										}
 									});
 						}));
@@ -1689,7 +1694,8 @@ public class DialectFactory {
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
-									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
+									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode, extend.fetchSize,
+									extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,
@@ -1837,7 +1843,7 @@ public class DialectFactory {
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
 									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									conn, dbType, dialect);
+									conn, dbType, dialect, -1);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
@@ -1864,5 +1870,12 @@ public class DialectFactory {
 		} finally {
 			SqlExecuteStat.destroy();
 		}
+	}
+
+	private int getFetchSize(int fetchSize) {
+		if (fetchSize > 0) {
+			return fetchSize;
+		}
+		return SqlToyConstants.FETCH_SIZE;
 	}
 }
