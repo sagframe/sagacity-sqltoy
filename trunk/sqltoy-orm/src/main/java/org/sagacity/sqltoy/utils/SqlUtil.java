@@ -755,7 +755,7 @@ public class SqlUtil {
 			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
 			throws Exception {
 		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, conn, dbType,
-				ignoreAllEmptySet, colFieldMap);
+				ignoreAllEmptySet, colFieldMap, -1, -1);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
 				throw new IllegalAccessException("查询结果不唯一,loadByJdbcQuery 方法只针对单条结果的数据查询!");
@@ -781,11 +781,17 @@ public class SqlUtil {
 	 */
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
-			throws Exception {
+			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap,
+			final int fetchSize, final int maxRows) throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
+		if (fetchSize > 0) {
+			pst.setFetchSize(fetchSize);
+		}
+		if (maxRows > 0) {
+			pst.setMaxRows(maxRows);
+		}
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
@@ -1018,23 +1024,28 @@ public class SqlUtil {
 		if (treeTableModel.isChar()) {
 			flag = "'";
 		}
+		String nodeRouteField = ReservedWordsUtil.convertWord(treeTableModel.getNodeRouteField(), dbType);
+		String nodeLevelField = ReservedWordsUtil.convertWord(treeTableModel.getNodeLevelField(), dbType);
+		String idField = ReservedWordsUtil.convertWord(treeTableModel.getIdField(), dbType);
+		String pidField = ReservedWordsUtil.convertWord(treeTableModel.getPidField(), dbType);
+		String tableName = ReservedWordsUtil.convertSimpleSql(treeTableModel.getTableName(), dbType);
+		String conditions = ReservedWordsUtil.convertWord(treeTableModel.getConditions(), dbType);
+		String leafField = ReservedWordsUtil.convertWord(treeTableModel.getLeafField(), dbType);
 		// 修改nodeRoute和nodeLevel
-		if (StringUtil.isNotBlank(treeTableModel.getNodeRouteField())
-				&& StringUtil.isNotBlank(treeTableModel.getNodeLevelField())) {
-			StringBuilder nextNodeQueryStr = new StringBuilder("select ").append(treeTableModel.getIdField())
-					.append(",").append(treeTableModel.getNodeRouteField()).append(",")
-					.append(treeTableModel.getPidField()).append(" from ").append(treeTableModel.getTableName())
-					.append(" where ").append(treeTableModel.getPidField()).append(" in (${inStr})");
-			String idInfoSql = "select ".concat(treeTableModel.getNodeLevelField()).concat(",")
-					.concat(treeTableModel.getNodeRouteField()).concat(" from ").concat(treeTableModel.getTableName())
-					.concat(" where ").concat(treeTableModel.getIdField()).concat("=").concat(flag)
+		if (StringUtil.isNotBlank(nodeRouteField) && StringUtil.isNotBlank(nodeLevelField)) {
+			StringBuilder nextNodeQueryStr = new StringBuilder("select ").append(idField).append(",")
+					.append(nodeRouteField).append(",").append(pidField).append(" from ").append(tableName)
+					.append(" where ").append(pidField).append(" in (${inStr})");
+			String idInfoSql = "select ".concat(nodeLevelField).concat(",").concat(nodeRouteField).concat(" from ")
+					.concat(tableName).concat(" where ").concat(idField).concat("=").concat(flag)
 					.concat(treeTableModel.getRootId().toString()).concat(flag);
 			// 附加条件(如一张表里面分账套,将多家企业的部门信息放于一张表中,附加条件就可以是账套)
-			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-				idInfoSql = idInfoSql.concat(" and ").concat(treeTableModel.getConditions());
+			if (StringUtil.isNotBlank(conditions)) {
+				idInfoSql = idInfoSql.concat(" and ").concat(conditions);
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false, null);
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false, null,
+					SqlToyConstants.FETCH_SIZE, -1);
 			// 设置第一层level
 			int nodeLevel = 0;
 			String nodeRoute = "";
@@ -1042,14 +1053,13 @@ public class SqlUtil {
 				nodeLevel = Integer.parseInt(((List) idInfo.get(0)).get(0).toString());
 				nodeRoute = ((List) idInfo.get(0)).get(1).toString();
 			}
-			StringBuilder updateLevelAndRoute = new StringBuilder("update ").append(treeTableModel.getTableName())
-					.append(" set ").append(treeTableModel.getNodeLevelField()).append("=?,")
-					.append(treeTableModel.getNodeRouteField()).append("=? ").append(" where ")
-					.append(treeTableModel.getIdField()).append("=?");
+			StringBuilder updateLevelAndRoute = new StringBuilder("update ").append(tableName).append(" set ")
+					.append(nodeLevelField).append("=?,").append(nodeRouteField).append("=? ").append(" where ")
+					.append(idField).append("=?");
 			// 附加条件
-			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-				nextNodeQueryStr.append(" and ").append(treeTableModel.getConditions());
-				updateLevelAndRoute.append(" and ").append(treeTableModel.getConditions());
+			if (StringUtil.isNotBlank(conditions)) {
+				nextNodeQueryStr.append(" and ").append(conditions);
+				updateLevelAndRoute.append(" and ").append(conditions);
 			}
 
 			// 模拟指定节点的信息
@@ -1058,18 +1068,20 @@ public class SqlUtil {
 			// 下级节点
 			List ids;
 			if (treeTableModel.getIdValue() != null) {
-				StringBuilder firstNextNodeQuery = new StringBuilder("select ").append(treeTableModel.getIdField())
-						.append(",").append(treeTableModel.getNodeRouteField()).append(",")
-						.append(treeTableModel.getPidField()).append(" from ").append(treeTableModel.getTableName())
-						.append(" where ").append(treeTableModel.getIdField()).append("=?");
-				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-					firstNextNodeQuery.append(" and ").append(treeTableModel.getConditions());
+				StringBuilder firstNextNodeQuery = new StringBuilder("select ").append(idField).append(",")
+						.append(nodeRouteField).append(",").append(pidField).append(" from ").append(tableName)
+						.append(" where ").append(idField).append("=?");
+				if (StringUtil.isNotBlank(conditions)) {
+					firstNextNodeQuery.append(" and ").append(conditions);
 				}
 				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
-						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false, null);
+						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false, null,
+						SqlToyConstants.FETCH_SIZE, -1);
 			} else {
-				ids = findByJdbcQuery(typeHandler, nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
-						flag + treeTableModel.getRootId() + flag), null, null, null, conn, dbType, false, null);
+				ids = findByJdbcQuery(typeHandler,
+						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
+								flag + treeTableModel.getRootId() + flag),
+						null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
@@ -1077,21 +1089,21 @@ public class SqlUtil {
 			}
 		}
 		// 设置节点是否为叶子节点，（mysql不支持update table where in 机制）
-		if (StringUtil.isNotBlank(treeTableModel.getLeafField())) {
+		if (StringUtil.isNotBlank(leafField)) {
 			// 将所有记录先全部设置为叶子节点(isLeaf=1)
 			StringBuilder updateLeafSql = new StringBuilder();
-			updateLeafSql.append("update ").append(treeTableModel.getTableName());
-			updateLeafSql.append(" set ").append(treeTableModel.getLeafField()).append("=1");
+			updateLeafSql.append("update ").append(tableName);
+			updateLeafSql.append(" set ").append(leafField).append("=1");
 			// 附加条件(保留)
-			if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-				updateLeafSql.append(" where ").append(treeTableModel.getConditions());
+			if (StringUtil.isNotBlank(conditions)) {
+				updateLeafSql.append(" where ").append(conditions);
 			}
 			// 先将所有节点设置为叶子
-			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateLeafSql.toString(), null, null, conn, dbType, true, true);
 
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
-			updateTrunkLeafSql.append("update ").append(treeTableModel.getTableName());
+			updateTrunkLeafSql.append("update ").append(tableName);
 			// int dbType = DataSourceUtils.getDbType(conn);
 			// 支持mysql8 update 2018-5-11
 			if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
@@ -1100,37 +1112,36 @@ public class SqlUtil {
 				// on a.organ_id=b.organ_pid set IS_LEAF=0
 				// set field=value
 				updateTrunkLeafSql.append(" inner join (select ");
-				updateTrunkLeafSql.append(treeTableModel.getPidField());
-				updateTrunkLeafSql.append(" from ").append(treeTableModel.getTableName());
-				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-					updateTrunkLeafSql.append(" where ").append(treeTableModel.getConditions());
+				updateTrunkLeafSql.append(pidField);
+				updateTrunkLeafSql.append(" from ").append(tableName);
+				if (StringUtil.isNotBlank(conditions)) {
+					updateTrunkLeafSql.append(" where ").append(conditions);
 				}
 				updateTrunkLeafSql.append(") as t_wrapLeaf ");
 				updateTrunkLeafSql.append(" on ");
-				updateTrunkLeafSql.append(treeTableModel.getIdField()).append("=t_wrapLeaf.")
-						.append(treeTableModel.getPidField());
+				updateTrunkLeafSql.append(idField).append("=t_wrapLeaf.").append(pidField);
 				updateTrunkLeafSql.append(" set ");
-				updateTrunkLeafSql.append(treeTableModel.getLeafField()).append("=0");
-				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-					updateTrunkLeafSql.append(" where ").append(treeTableModel.getConditions());
+				updateTrunkLeafSql.append(leafField).append("=0");
+				if (StringUtil.isNotBlank(conditions)) {
+					updateTrunkLeafSql.append(" where ").append(conditions);
 				}
 			} else {
 				// update organ_info set IS_LEAF=0
 				// where organ_id in (select organ_pid from organ_info)
 				updateTrunkLeafSql.append(" set ");
-				updateTrunkLeafSql.append(treeTableModel.getLeafField()).append("=0");
-				updateTrunkLeafSql.append(" where ").append(treeTableModel.getIdField());
-				updateTrunkLeafSql.append(" in (select ").append(treeTableModel.getPidField());
-				updateTrunkLeafSql.append(" from ").append(treeTableModel.getTableName());
-				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-					updateTrunkLeafSql.append(" where ").append(treeTableModel.getConditions());
+				updateTrunkLeafSql.append(leafField).append("=0");
+				updateTrunkLeafSql.append(" where ").append(idField);
+				updateTrunkLeafSql.append(" in (select ").append(pidField);
+				updateTrunkLeafSql.append(" from ").append(tableName);
+				if (StringUtil.isNotBlank(conditions)) {
+					updateTrunkLeafSql.append(" where ").append(conditions);
 				}
 				updateTrunkLeafSql.append(") ");
-				if (StringUtil.isNotBlank(treeTableModel.getConditions())) {
-					updateTrunkLeafSql.append(" and ").append(treeTableModel.getConditions());
+				if (StringUtil.isNotBlank(conditions)) {
+					updateTrunkLeafSql.append(" and ").append(conditions);
 				}
 			}
-			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, true);
+			executeSql(typeHandler, updateTrunkLeafSql.toString(), null, null, conn, dbType, true, false);
 		}
 		return true;
 	}
@@ -1224,7 +1235,7 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
-					null, conn, dbType, false, null);
+					null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,
@@ -1361,9 +1372,11 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
-			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit)
-			throws Exception {
-		SqlExecuteStat.showSql("execute sql=", executeSql, params);
+			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit,
+			boolean processWord) throws Exception {
+		// 对sql进行关键词符号替换
+		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
+		SqlExecuteStat.showSql("execute sql=", realSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;
 		if (autoCommit != null) {
@@ -1372,7 +1385,7 @@ public class SqlUtil {
 				hasSetAutoCommit = true;
 			}
 		}
-		PreparedStatement pst = conn.prepareStatement(executeSql);
+		PreparedStatement pst = conn.prepareStatement(realSql);
 		Object result = preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				// sqlserver 存在timestamp不能赋值问题,通过对象完成的修改、插入忽视掉timestamp列
@@ -1617,15 +1630,15 @@ public class SqlUtil {
 		if (!StringUtil.matches(" ".concat(sqlLow), "\\W(from|where)\\W")) {
 			if (StringUtil.matches(sqlLow, "^(and|or)\\W")) {
 				return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
-						.concat(entityMeta.getSchemaTable()).concat(" where 1=1 ").concat(sql);
+						.concat(entityMeta.getSchemaTable(null, null)).concat(" where 1=1 ").concat(sql);
 			}
-			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
-					.concat(" where ").concat(sql);
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+					.concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(sql);
 		}
 		// where开头 补齐select * from
 		if (StringUtil.matches(sqlLow, "^where\\W")) {
-			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ").concat(entityMeta.getSchemaTable())
-					.concat(" ").concat(sql);
+			return "select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
+					.concat(entityMeta.getSchemaTable(null, null)).concat(" ").concat(sql);
 		}
 		return sql;
 	}

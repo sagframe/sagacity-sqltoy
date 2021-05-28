@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -32,11 +33,6 @@ public class EntityMeta implements Serializable {
 	 */
 	private String loadAllSql;
 
-	/**
-	 * 通过主键删除记录的语句
-	 */
-	private String deleteByIdsSql;
-
 	private String schema;
 
 	/**
@@ -48,11 +44,6 @@ public class EntityMeta implements Serializable {
 	 * 主键的约束名称
 	 */
 	private String pkConstraint;
-
-	/**
-	 * schema.table 模式字符串
-	 */
-	private String schemaTable;
 
 	/**
 	 * 主键列
@@ -70,8 +61,9 @@ public class EntityMeta implements Serializable {
 	private Integer[] fieldsTypeArray;
 
 	/**
-	 * 是否存在default值
+	 * 是否存在default值(仅用于sybaseiq,后期可废弃)
 	 */
+	@Deprecated
 	private boolean hasDefaultValue = false;
 
 	/**
@@ -418,23 +410,6 @@ public class EntityMeta implements Serializable {
 		this.sequence = sequence;
 	}
 
-	/**
-	 * @return the deleteByIdsSql
-	 */
-	public String getDeleteByIdsSql(String tableName) {
-		if (StringUtil.isBlank(tableName)) {
-			return deleteByIdsSql;
-		}
-		return "delete from ".concat(tableName).concat(" ").concat(idArgWhereSql);
-	}
-
-	/**
-	 * @param deleteByIdsSql the deleteByIdsSql to set
-	 */
-	public void setDeleteByIdsSql(String deleteByIdsSql) {
-		this.deleteByIdsSql = deleteByIdsSql;
-	}
-
 	public String getColumnName(String fieldName) {
 		FieldMeta fieldMeta = fieldsMeta.get(fieldName.toLowerCase());
 		if (fieldMeta == null) {
@@ -472,25 +447,13 @@ public class EntityMeta implements Serializable {
 		return fieldMeta.getFieldType();
 	}
 
-	/**
-	 * @return the schemaTable
-	 */
-	public String getSchemaTable() {
-		return schemaTable;
-	}
-
-	public String getSchemaTable(String tableName) {
-		if (StringUtil.isNotBlank(tableName)) {
-			return tableName;
+	public String getSchemaTable(String shardingTable, Integer dbType) {
+		String table = tableName;
+		if (StringUtil.isNotBlank(shardingTable)) {
+			table = shardingTable;
 		}
-		return schemaTable;
-	}
-
-	/**
-	 * @param schemaTable the schemaTable to set
-	 */
-	public void setSchemaTable(String schemaTable) {
-		this.schemaTable = schemaTable;
+		table = ReservedWordsUtil.convertWord(table, dbType);
+		return (schema == null) ? table : schema.concat(".").concat(table);
 	}
 
 	/**
@@ -552,12 +515,12 @@ public class EntityMeta implements Serializable {
 		this.listSql = listSql;
 	}
 
-	public String getLoadSql(String tableName) {
-		if (tableName == null || tableName.equals(schemaTable)) {
+	public String getLoadSql(String shardingTable) {
+		if (shardingTable == null || shardingTable.equals(tableName)) {
 			return loadSql;
 		}
 		// 针对sharding 分表情况使用重新组织表名
-		return "select ".concat(allColumnNames).concat(" from ").concat(tableName).concat(" ")
+		return "select ".concat(allColumnNames).concat(" from ").concat(getSchemaTable(shardingTable, null)).concat(" ")
 				.concat(this.idNameWhereSql);
 	}
 

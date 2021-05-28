@@ -1055,7 +1055,7 @@ public class SqlToyDaoSupport {
 		}
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
-		String sql = "delete from ".concat(entityMeta.getSchemaTable()).concat(" where ").concat(where);
+		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
@@ -1449,8 +1449,8 @@ public class SqlToyDaoSupport {
 			fields = entityMeta.getAllColumnNames();
 		}
 
-		String sql = "select ".concat((innerModel.distinct)?" distinct ":"").concat(fields).concat(translateFields).concat(" from ")
-				.concat(entityMeta.getSchemaTable());
+		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
+				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);
 		}
@@ -1472,7 +1472,6 @@ public class SqlToyDaoSupport {
 				if (index > 0) {
 					sql = sql.concat(",");
 				}
-
 				// entry.getValue() is order way,like: desc or " "
 				sql = sql.concat(columnName).concat(entry.getValue());
 				index++;
@@ -1485,10 +1484,12 @@ public class SqlToyDaoSupport {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
 							: (Serializable) innerModel.values[0]).resultType(resultType)
-									.dataSource(getDataSource(innerModel.dataSource));
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource));
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
+					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		}
 		// 设置是否空白转null
 		queryExecutor.getInnerModel().blankToNull = innerModel.blankToNull;
@@ -1530,7 +1531,7 @@ public class SqlToyDaoSupport {
 		if (innerModel.tableSharding != null) {
 			ShardingStrategyConfig shardingConfig = innerModel.tableSharding;
 			// 补充表名称
-			shardingConfig.setTables(new String[] { entityMeta.getSchemaTable() });
+			shardingConfig.setTables(new String[] { entityMeta.getTableName() });
 			List<ShardingStrategyConfig> tableShardings = new ArrayList<ShardingStrategyConfig>();
 			tableShardings.add(shardingConfig);
 			queryExecutor.getInnerModel().tableShardings = tableShardings;
@@ -1601,7 +1602,7 @@ public class SqlToyDaoSupport {
 		// 处理where 中写的java 字段名称为数据库表字段名称
 		where = SqlUtil.convertFieldsToColumns(entityMeta, where);
 		StringBuilder sql = new StringBuilder();
-		sql.append("update ").append(entityMeta.getSchemaTable()).append(" set ");
+		sql.append("update ").append(entityMeta.getSchemaTable(null, null)).append(" set ");
 		Entry<String, Object> entry;
 
 		// 对统一更新字段做处理
@@ -1699,7 +1700,7 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T extends Serializable> List<T> convertType(List sourceList, Class<T> resultType) {
-		if (sourceList == null || sourceList.isEmpty() || resultType == null) {
+		if (sourceList == null || resultType == null) {
 			throw new IllegalArgumentException("sourceList 和 resultType 不能为null!");
 		}
 		try {

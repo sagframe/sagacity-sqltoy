@@ -77,9 +77,9 @@ public class OracleDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return OracleDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect);
+				conn, dbType, dialect,fetchSize,maxRows);
 	}
 
 	/*
@@ -94,9 +94,9 @@ public class OracleDialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return OracleDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect);
+				dbType, dialect,fetchSize,maxRows);
 	}
 
 	/*
@@ -108,9 +108,9 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return OracleDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect);
+				dialect,fetchSize,maxRows);
 	}
 
 	/*
@@ -236,9 +236,9 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
+			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName, final int fetchSize, final int maxRows)
 			throws Exception {
-		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName);
+		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,fetchSize,maxRows);
 	}
 
 	/*
@@ -390,11 +390,11 @@ public class OracleDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode) throws Exception {
+			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql
 				.concat(OracleDialectUtils.getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -412,7 +412,7 @@ public class OracleDialect implements Dialect {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		String realSql = sql + " fetch first " + topSize + " rows only for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0,-1,-1);
 	}
 
 	/*
@@ -431,7 +431,7 @@ public class OracleDialect implements Dialect {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update nowait";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0,-1,-1);
 	}
 
 	/*
@@ -443,8 +443,8 @@ public class OracleDialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize) throws Exception {
 		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
-				dbType);
+				dbType,fetchSize);
 	}
 }

@@ -22,7 +22,6 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
@@ -55,8 +54,9 @@ public class OracleDialectUtils {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -75,11 +75,12 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, String tableName, final int fetchSize,
+			final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
 				(sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
-				});
+				}, fetchSize, maxRows);
 	}
 
 	/**
@@ -97,7 +98,7 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		// 是否有order by,update 2017-5-22
@@ -132,7 +133,7 @@ public class OracleDialectUtils {
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -148,8 +149,8 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect)
-			throws Exception {
+			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		// 是否有order by
 		boolean hasOrderBy = SqlUtil.hasOrderBy(
@@ -181,7 +182,7 @@ public class OracleDialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -199,7 +200,7 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -236,7 +237,7 @@ public class OracleDialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -254,12 +255,15 @@ public class OracleDialectUtils {
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
-			final Integer dbType) throws Exception {
+			final Integer dbType, final int fetchSize) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
+				if (fetchSize > 0) {
+					callStat.setFetchSize(fetchSize);
+				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null, 0);
 				int cursorIndex = -1;
 				int cursorCnt = 0;

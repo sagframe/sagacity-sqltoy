@@ -36,7 +36,7 @@ public class DefaultDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 
 		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
@@ -71,7 +71,7 @@ public class DefaultDialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class DefaultDialectUtils {
 	 */
 	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -116,7 +116,7 @@ public class DefaultDialectUtils {
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect)
+			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
@@ -158,6 +158,6 @@ public class DefaultDialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 }

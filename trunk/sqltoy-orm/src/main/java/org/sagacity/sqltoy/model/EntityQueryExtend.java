@@ -29,6 +29,16 @@ public class EntityQueryExtend implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 5446320176141577000L;
+	
+	/**
+	 * jdbc 查询时默认加载到内存中的记录数量 -1表示不设置，采用数据库默认的值
+	 */
+	public int fetchSize = -1;
+	
+	/**
+	 * jdbc查询最大返回记录数量
+	 */
+	public int maxRows = -1;
 
 	/**
 	 * 条件语句

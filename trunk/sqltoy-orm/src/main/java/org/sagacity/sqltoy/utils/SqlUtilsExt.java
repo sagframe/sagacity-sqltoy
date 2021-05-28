@@ -247,7 +247,7 @@ public class SqlUtilsExt {
 	}
 
 	/**
-	 * @todo 自动进行类型转换,设置sql中的参数条件的值
+	 * @todo 自动进行类型转换,设置sql中的参数条件的值(目前仅sybaseiq中使用，后期废弃)
 	 * @param typeHandler
 	 * @param conn
 	 * @param dbType
@@ -257,6 +257,7 @@ public class SqlUtilsExt {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
+	@Deprecated
 	public static void setParamsValue(TypeHandler typeHandler, Connection conn, final Integer dbType,
 			PreparedStatement pst, Object[] params, final EntityMeta entityMeta) throws SQLException, IOException {
 		if (null != params && params.length > 0) {

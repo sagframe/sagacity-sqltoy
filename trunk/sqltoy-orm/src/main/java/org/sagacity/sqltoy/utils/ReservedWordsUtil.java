@@ -55,7 +55,7 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return sql;
 		}
-		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE) {
 			return sql.replaceAll("\\[", "`").replaceAll("\\]", "`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.DB2 || dbType == DBType.DM
@@ -83,7 +83,7 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return column;
 		}
-		//不属于关键词
+		// 不属于关键词
 		if (!reservedWords.contains(column.toLowerCase())) {
 			return column;
 		}
@@ -91,7 +91,7 @@ public class ReservedWordsUtil {
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return "[".concat(column).concat("]");
 		}
-		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
+		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE) {
 			return "`".concat(column).concat("`");
 		}
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.KINGBASE || dbType == DBType.DB2
@@ -112,7 +112,6 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return sql;
 		}
-
 		if (dbType == null || dbType == DBType.ES || dbType == DBType.MONGO || dbType == DBType.UNDEFINE) {
 			return sql;
 		}
@@ -142,7 +141,8 @@ public class ReservedWordsUtil {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");
-			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57) {
+			} else if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57
+					|| dbType == DBType.TDENGINE) {
 				sqlBuff.append("`").append(keyWord).append("`");
 			} else {
 				sqlBuff.append(keyWord);
