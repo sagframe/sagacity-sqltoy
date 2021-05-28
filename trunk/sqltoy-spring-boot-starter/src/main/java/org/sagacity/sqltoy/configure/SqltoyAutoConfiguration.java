@@ -85,7 +85,10 @@ public class SqltoyAutoConfiguration {
 		if (properties.getBatchSize() != null) {
 			sqlToyContext.setBatchSize(properties.getBatchSize());
 		}
-
+		// 默认数据库fetchSize
+		if (properties.getFetchSize() > 0) {
+			sqlToyContext.setFetchSize(properties.getFetchSize());
+		}
 		// 分页查询单页最大记录数量(默认50000)
 		if (properties.getPageFetchSizeLimit() != null) {
 			sqlToyContext.setPageFetchSizeLimit(properties.getPageFetchSizeLimit());

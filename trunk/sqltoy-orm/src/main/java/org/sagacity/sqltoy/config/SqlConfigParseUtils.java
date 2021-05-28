@@ -117,9 +117,11 @@ public class SqlConfigParseUtils {
 	public final static Pattern UPDATE_SET_PATTERN = Pattern.compile("(?i)\\Wset\\s*$");
 
 	/**
-	 * 判断sql中是否有空白、tab、回车、换行符合,如果没有则表示是一个sql id
+	 * 判断sql中是否有空白、tab、回车、换行符合、等于号,如果没有则表示是一个sql id
 	 */
-	public final static Pattern SQL_ID_PATTERN = Pattern.compile("(\\s|\\t|\\r|\\n)+");
+	// public final static Pattern SQL_ID_PATTERN =
+	// Pattern.compile("(\\s|\\t|\\r|\\n|\\=|\\>|\\<)+");
+	public final static Pattern SQL_ID_PATTERN = Pattern.compile("^[A-Za-z_0-9\\-]+$");
 
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
@@ -176,11 +178,7 @@ public class SqlConfigParseUtils {
 			return false;
 		}
 		// 强制约定sqlId key必须没有空格、回车、tab和换行符号
-		String tmp = queryStr.trim();
-		if (StringUtil.matches(tmp, SQL_ID_PATTERN)) {
-			return false;
-		}
-		return true;
+		return StringUtil.matches(queryStr.trim(), SQL_ID_PATTERN);
 	}
 
 	/**

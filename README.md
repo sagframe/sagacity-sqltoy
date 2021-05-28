@@ -7,7 +7,11 @@
 ## 请见:docs/睿智平台SqlToy4.18 使用手册.doc
 
 # 范例演示项目
-## 快速上手主要功能项目
+## 快速集成演示项目
+* https://gitee.com/sagacity/sqltoy-helloworld
+* 阅读其readme.md学习
+
+## 快速上手功能演示项目
 * https://github.com/sagframe/sqltoy-quickstart 
 * 阅读其readme.md学习 
 
@@ -25,7 +29,7 @@
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 4.18.20 发版日期: 2021-05-13
+# 最新版本号: 4.18.21 发版日期: 2021-05-21
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
@@ -47,8 +51,10 @@
    * kingbase
    * mongodb (只支持查询)
    * sybase_iq 支持15.4以上版本，建议使用16版本
+
+## 1.2 jdk版本要求1.8+
    
-## 1.2 sqltoy-orm 发展轨迹
+## 1.3 sqltoy-orm 发展轨迹
 * 2007~2008年，做农行的一个管理类项目，因查询统计较多，且查询条件多而且经常要增加条件，就不停想如何快速适应这种变化，一个比较偶然的灵感发现了比mybatis强无数倍的动态sql写法，并作为hibernate jpa 查询方面的补充，收到了极为震撼的开发体验。可以看写于2009年的一篇博文: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012年，因一直做金融类企业项目，所面对的数据规模基本上是千万级别的，因此sqltoy一直围绕jpa进行sql查询增强，期间已经集成了缓存翻译、快速分页、行列旋转等比其他框架更具特色的查询特性。
 * 2013~2014年，因为了避免让开发者在项目中同时使用两种技术，因此在sqltoy中实现了hibernate 基于对象的crud功能(并优化了其不足)，形成了完整的sqltoy-orm框架。

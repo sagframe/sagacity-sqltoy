@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.utils;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.DataRange;
@@ -34,7 +35,7 @@ public class BeanUtilTest {
 
 	@Test
 	public void testTypeName() {
-		System.err.println(byte[].class.getSimpleName());
+		System.err.println(DateUtil.formatDate(LocalDate.now(), "MMM dd,yyyy", Locale.US));
 		System.err.println(byte[].class.getName());
 		System.err.println(byte[].class.getTypeName());
 	}

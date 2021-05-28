@@ -137,8 +137,16 @@ public class QueryExecutor implements Serializable {
 	}
 
 	public QueryExecutor values(Object... paramsValue) {
-		innerModel.paramsValue = paramsValue;
-		innerModel.shardingParamsValue = paramsValue;
+		// 兼容map
+		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
+			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) paramsValue[0]);
+			innerModel.paramsName = model.getNames();
+			innerModel.paramsValue = model.getValues();
+			innerModel.shardingParamsValue = model.getValues();
+		} else {
+			innerModel.paramsValue = paramsValue;
+			innerModel.shardingParamsValue = paramsValue;
+		}
 		return this;
 	}
 
@@ -338,7 +346,19 @@ public class QueryExecutor implements Serializable {
 		}
 		return this;
 	}
-	
+
+	/**
+	 * @TODO 用map形式传参
+	 * @param paramsMap
+	 * @return
+	 */
+	public QueryExecutor paramsMap(Map<String, Object> paramsMap) {
+		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
+		innerModel.paramsName = model.getNames();
+		innerModel.paramsValue = model.getValues();
+		return this;
+	}
+
 	/**
 	 * @TODO 列转行
 	 * @param unpivotModel
@@ -350,7 +370,7 @@ public class QueryExecutor implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * @TODO 行转列
 	 * @param pivotModel

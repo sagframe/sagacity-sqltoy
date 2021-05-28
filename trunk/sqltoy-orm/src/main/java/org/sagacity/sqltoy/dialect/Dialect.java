@@ -57,7 +57,7 @@ public interface Dialect {
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final Long totalCount, final Long randomCount, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
+			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 分页查询
@@ -74,7 +74,7 @@ public interface Dialect {
 	 */
 	public QueryResult findPageBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final Long pageNo, final Integer pageSize, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
+			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 取top记录数
@@ -90,7 +90,7 @@ public interface Dialect {
 	 */
 	public QueryResult findTopBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final QueryExecutor queryExecutor, final Integer topSize, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception;
+			final String dialect, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 普通sql查询
@@ -161,7 +161,7 @@ public interface Dialect {
 	 */
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, final Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception;
+			final String tableName, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 保存单条记录
@@ -337,7 +337,7 @@ public interface Dialect {
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect, final LockMode lockMode) throws Exception;
+			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception;
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
@@ -364,5 +364,5 @@ public interface Dialect {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
-			final Integer dbType, final String dialect) throws Exception;
+			final Integer dbType, final String dialect,final int fetchSize) throws Exception;
 }

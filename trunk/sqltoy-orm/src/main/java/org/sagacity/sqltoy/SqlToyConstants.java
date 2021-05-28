@@ -39,7 +39,7 @@ public class SqlToyConstants {
 	};
 
 	// 目前还不支持此功能的提醒
-	public static String UN_SUPPORT_MESSAGE = "It is not support this function!";
+	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";
 
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
@@ -122,6 +122,8 @@ public class SqlToyConstants {
 	 * 并行默认最大等待时长
 	 */
 	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
+
+	public static int FETCH_SIZE = -1;
 
 	/**
 	 * 字符串中内嵌参数的匹配模式

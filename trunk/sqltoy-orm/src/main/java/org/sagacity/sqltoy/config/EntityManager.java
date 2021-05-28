@@ -245,9 +245,9 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
-				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-						.concat(entity.tableName()));
-
+				if (StringUtil.isNotBlank(entity.schema())) {
+					entityMeta.setSchema(entity.schema());
+				}
 				// 解析自定义注解
 				parseCustomAnnotation(entityMeta, entityClass);
 
@@ -255,7 +255,6 @@ public class EntityManager {
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
 
@@ -290,7 +289,7 @@ public class EntityManager {
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
 				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
-						.concat(entityMeta.getSchemaTable()));
+						.concat(entityMeta.getSchemaTable(null, null)));
 
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
@@ -309,9 +308,6 @@ public class EntityManager {
 					if (StringUtil.isBlank(entityMeta.getLoadSql(null))) {
 						entityMeta.setLoadSql(entityMeta.getLoadAllSql().concat(loadNamedWhereSql.toString()));
 					}
-					// delete sql是内部产生，所以用?形式作为参数
-					entityMeta.setDeleteByIdsSql(
-							"delete from ".concat(entityMeta.getSchemaTable()).concat(loadArgWhereSql.toString()));
 				}
 				// 内部存在逻辑设置allFields
 				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
@@ -429,7 +425,7 @@ public class EntityManager {
 			if (shardingTable.aliasNames() != null) {
 				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-			config.setTables(new String[] { entityMeta.getSchemaTable() });
+			config.setTables(new String[] { entityMeta.getTableName() });
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
 			config.setStrategy(strategy);
@@ -693,7 +689,7 @@ public class EntityManager {
 		cascadeModel.setMappedColumns(mappedColumns);
 		cascadeModel.setMappedFields(mappedFields);
 		// 子表的schema.table
-		String subSchemaTable = subTableMeta.getSchemaTable();
+		String subSchemaTable = subTableMeta.getSchemaTable(null, null);
 		cascadeModel.setMappedTable(subSchemaTable);
 		cascadeModel.setProperty(field.getName());
 		// 子表外键查询条件

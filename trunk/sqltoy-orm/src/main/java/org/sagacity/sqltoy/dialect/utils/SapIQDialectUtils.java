@@ -120,8 +120,7 @@ public class SapIQDialectUtils {
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				pst = conn.prepareStatement(realInsertSql);
 				// 存在默认值
 				if (entityMeta.isHasDefaultValue()) {
@@ -146,8 +145,8 @@ public class SapIQDialectUtils {
 		});
 		// 无主键直接返回null
 		if (noPK) {
-            return null;
-        }
+			return null;
+		}
 		if (result == null) {
 			result = fullParamValues[pkIndex];
 		}
@@ -177,14 +176,13 @@ public class SapIQDialectUtils {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
-						@Override
-                        public void process() {
+						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
 								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
 						}
 					}, openIdentity, conn, dbType, null);
-				}else {
+				} else {
 					logger.info("未执行save操作的级联子表{}批量保存,子表数据为空!", subTableEntityMeta.getTableName());
 				}
 			}

@@ -123,7 +123,7 @@ public class DateUtil {
 		return parse(data, format, null);
 	}
 
-	public static Date parse(Object data, String format, String local) {
+	public static Date parse(Object data, String format, Locale locale) {
 		if (null == data) {
 			logger.error("The date string is null!");
 			return null;
@@ -134,13 +134,13 @@ public class DateUtil {
 				logger.error("The date string is null!");
 				return null;
 			}
-			return parseString(dateString, format, local);
+			return parseString(dateString, format, locale);
 		}
 		if (format == null) {
-			return convertDateObject(data, null, local);
+			return convertDateObject(data, null, locale);
 		}
-		String result = formatDate(data, format, local);
-		return parseString(result, format, local);
+		String result = formatDate(data, format, locale);
+		return parseString(result, format, locale);
 	}
 
 	public static Date parseString(String dateStr) {
@@ -154,7 +154,7 @@ public class DateUtil {
 	 * @param locale
 	 * @return
 	 */
-	public static Date parseString(String dateVar, String dateFormat, String locale) {
+	public static Date parseString(String dateVar, String dateFormat, Locale locale) {
 		if (dateVar == null) {
 			return null;
 		}
@@ -174,7 +174,7 @@ public class DateUtil {
 			while (formatIter.hasNext()) {
 				format = (String) formatIter.next();
 				if (dateParser == null) {
-					dateParser = new SimpleDateFormat(format, Locale.US);
+					dateParser = new SimpleDateFormat(format, locale == null ? Locale.US : locale);
 				} else {
 					dateParser.applyPattern(format);
 				}
@@ -288,8 +288,7 @@ public class DateUtil {
 				realDF = hasBlank ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
 			}
 		}
-		DateFormat df = (StringUtil.isBlank(locale)) ? new SimpleDateFormat(realDF)
-				: new SimpleDateFormat(realDF, new Locale(locale));
+		DateFormat df = (locale == null) ? new SimpleDateFormat(realDF) : new SimpleDateFormat(realDF, locale);
 		try {
 			return df.parse(dateStr);
 		} catch (ParseException e) {
@@ -306,10 +305,10 @@ public class DateUtil {
 	 * @todo 日期对象类型转换
 	 * @param dt
 	 * @param format
-	 * @param local
+	 * @param locale
 	 * @return
 	 */
-	public static Date convertDateObject(Object dt, String format, String local) {
+	public static Date convertDateObject(Object dt, String format, Locale locale) {
 		if (dt == null) {
 			System.err.println("日期不能为空,请正确输入!");
 			return null;
@@ -320,7 +319,7 @@ public class DateUtil {
 			if (dtStr.length() == 13 && NumberUtil.isInteger(dtStr)) {
 				result = new java.util.Date(Long.valueOf(dtStr));
 			} else {
-				result = parseString(dtStr, format, local);
+				result = parseString(dtStr, format, locale);
 			}
 		} // 为什么要new 一个，目的是避免前面日期对象变化导致后续转化后的也变化，所以这里是新建
 		else if (dt instanceof java.util.Date) {
@@ -332,7 +331,7 @@ public class DateUtil {
 		} else if (dt instanceof java.lang.Number) {
 			// 13位表示毫秒数
 			if (dtStr.length() != 13) {
-				result = parseString(dtStr, format, local);
+				result = parseString(dtStr, format, locale);
 			} else {
 				result = new java.util.Date(((Number) dt).longValue());
 			}
@@ -354,7 +353,7 @@ public class DateUtil {
 		return formatDate(dt, fmt, null);
 	}
 
-	public static String formatDate(Object dt, String fmt, String locale) {
+	public static String formatDate(Object dt, String fmt, Locale locale) {
 		if (dt == null) {
 			return null;
 		}
@@ -377,13 +376,12 @@ public class DateUtil {
 			int day = getDay(dt);
 			return (day < 10 ? "0" : "").concat(Integer.toString(day));
 		}
-		DateFormat df = StringUtil.isBlank(locale) ? new SimpleDateFormat(fmt)
-				: new SimpleDateFormat(fmt, new Locale(locale));
+		DateFormat df = (locale == null) ? new SimpleDateFormat(fmt) : new SimpleDateFormat(fmt, locale);
 		Date tmp = convertDateObject(dt, null, locale);
 		return (null == tmp) ? null : df.format(tmp);
 	}
 
-	public static String formatDate(Object dt, String fmt, String targetFmt, String locale) {
+	public static String formatDate(Object dt, String fmt, String targetFmt, Locale locale) {
 		Date result = parse(dt, fmt, locale);
 		return formatDate(result, targetFmt);
 	}

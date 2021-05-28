@@ -83,6 +83,7 @@ public class DataSourceUtils {
 
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
+		public final static String TDENGINE = "tdengine";
 
 		public final static String UNDEFINE = "UNDEFINE";
 	}
@@ -125,9 +126,9 @@ public class DataSourceUtils {
 		public final static int KINGBASE = 120;
 		public final static int MONGO = 130;
 		public final static int ES = 140;
-
+		public final static int TDENGINE = 150;
 		// 下面将逐步淘汰
-		public final static int SYBASE_IQ = 150;
+		public final static int SYBASE_IQ = 190;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -157,7 +158,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.KINGBASE, DBType.KINGBASE);
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
-
+		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		// 纳入将不再支持范围
 		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
@@ -214,6 +215,9 @@ public class DataSourceUtils {
 		}
 		case DBType.MONGO: {
 			return Dialect.MONGO;
+		}
+		case DBType.TDENGINE: {
+			return Dialect.TDENGINE;
 		}
 		case DBType.SYBASE_IQ: {
 			return Dialect.SYBASE_IQ;
@@ -297,6 +301,9 @@ public class DataSourceUtils {
 			} // TIDB
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
+			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
+				return Dialect.TDENGINE;
 			}
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.KINGBASE) != -1) {
 				return Dialect.KINGBASE;
@@ -400,6 +407,8 @@ public class DataSourceUtils {
 			} // TIDB
 			else if (dbDialect.equals(Dialect.TIDB)) {
 				dbType = DBType.TIDB;
+			} else if (dbDialect.equals(Dialect.TDENGINE)) {
+				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
 				dbType = DBType.KINGBASE;
 			} // sybase IQ
