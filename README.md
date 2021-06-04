@@ -382,6 +382,28 @@ List<QueryResult<TreeModel>> list = super.parallQuery(
 </bean>
 
 ```
+* 6、通过sqlId+dialect模式，可针对特定数据库写sql,sqltoy根据数据库类型获取实际执行sql,顺序为:
+    dialect_sqlId->sqlId_dialect->sqlId，
+	如数据库为mysql,调用sqlId:sqltoy_showcase,则实际执行:sqltoy_showcase_mysql
+```xml
+	<sql id="sqltoy_showcase">
+		<value>
+			<![CDATA[
+			select * from sqltoy_user_log t 
+			where t.user_id=:userId 
+				]]>
+		</value>
+	</sql>
+        <!-- sqlId_数据库方言(小写) -->
+	<sql id="sqltoy_showcase_mysql">
+		<value>
+			<![CDATA[
+			select * from sqltoy_user_log t 
+			where t.user_id=:userId 
+				]]>
+		</value>
+	</sql>
+```
   
 ## 2.8 提供行列转换(数据旋转)，避免写复杂的sql或存储过程，用算法来化解对sql的高要求，同时实现数据库无关(不管是mysql还是sqlserver)
 
@@ -519,8 +541,8 @@ public class UserLogVO extends AbstractUserLogVO {
 
 
 ```
-## 2.11 五种非数据库相关主键生成策略
-    主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
+## 2.11 五种非数据库相关主键生成策略(可自扩展)
+* 主键策略除了数据库自带的 sequence\identity 外包含以下数据库无关的主键策略。通过quickvo配置，自动生成在VO对象中。
 ### 2.11.1 shortNanoTime 22位有序安全ID，格式: 13位当前毫秒+6位纳秒+3位主机ID
 ### 2.11.2 nanoTimeId 26位有序安全ID,格式:15位:yyMMddHHmmssSSS+6位纳秒+2位(线程Id+随机数)+3位主机ID
 ### 2.11.3 uuid:32 位uuid
