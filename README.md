@@ -275,18 +275,6 @@ public void findPageByEntity() {
 	result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 }
-
-/**
- *  基于参数数组传参数
- */
-public void findPageByParams() {
-	//默认pageSize 为10，pageNo 为1
-	PaginationModel pageModel = new PaginationModel();
-	String[] paramNames=new String[]{"staffName"};
-	Object[] paramValues=new  Object[]{"陈"};
-	PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage",paramNames,paramValues,StaffInfoVO.class);
-	System.err.println(JSON.toJSONString(result));
-}
 	
 ```
 
