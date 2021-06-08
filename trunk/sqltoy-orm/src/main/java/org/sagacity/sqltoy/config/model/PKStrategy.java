@@ -33,8 +33,7 @@ public enum PKStrategy {
 		return this.strategy;
 	}
 
-	@Override
-    public String toString() {
+	public String toString() {
 		return this.strategy;
 	}
 
@@ -44,18 +43,14 @@ public enum PKStrategy {
 	 * @return
 	 */
 	public static PKStrategy getPKStrategy(String strategy) {
-		if (strategy.equalsIgnoreCase(ASSIGN.getValue())) {
-            return ASSIGN;
-        }
-		if (strategy.equalsIgnoreCase(SEQUENCE.getValue())) {
-            return SEQUENCE;
-        }
-		if (strategy.equalsIgnoreCase(IDENTITY.getValue())) {
-            return IDENTITY;
-        }
-		if (strategy.equalsIgnoreCase(GENERATOR.getValue())) {
-            return GENERATOR;
-        }
+		if (strategy.equalsIgnoreCase(ASSIGN.getValue()))
+			return ASSIGN;
+		if (strategy.equalsIgnoreCase(SEQUENCE.getValue()))
+			return SEQUENCE;
+		if (strategy.equalsIgnoreCase(IDENTITY.getValue()))
+			return IDENTITY;
+		if (strategy.equalsIgnoreCase(GENERATOR.getValue()))
+			return GENERATOR;
 		return ASSIGN;
 	}
 }

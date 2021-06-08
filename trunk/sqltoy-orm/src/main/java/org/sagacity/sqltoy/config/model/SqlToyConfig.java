@@ -555,8 +555,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.formatModels = formatModels;
 	}
 
-	@Override
-    public SqlToyConfig clone() {
+	public SqlToyConfig clone() {
 		try {
 			return (SqlToyConfig) super.clone();
 		} catch (CloneNotSupportedException e) {

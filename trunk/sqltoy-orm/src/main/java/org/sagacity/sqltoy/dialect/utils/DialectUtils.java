@@ -233,8 +233,7 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, rowCallbackHandler,
@@ -278,8 +277,7 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
@@ -404,8 +402,7 @@ public class DialectUtils {
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
 				if (realParams != null) {
 					SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, realParams, null, 0);
@@ -1301,8 +1298,7 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
 					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
 						pst = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
@@ -1379,8 +1375,7 @@ public class DialectUtils {
 					saveAll(sqlToyContext, subTableEntityMeta, savePkStrategy.getPkStrategy(),
 							savePkStrategy.isAssginValue(), insertSubTableSql, subTableData,
 							sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
-								@Override
-                                public void process() {
+								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainValues[i]);
 									}
@@ -1614,8 +1609,7 @@ public class DialectUtils {
 				SqlExecuteStat.debug("执行子表级联更新操作", null);
 				// 将外键值通过反调赋到相关属性上
 				ReflectPropertyHandler reflectPropsHandler = new ReflectPropertyHandler() {
-					@Override
-                    public void process() {
+					public void process() {
 						for (int i = 0; i < mappedFields.length; i++) {
 							this.setValue(mappedFields[i], mainFieldValues[i]);
 						}
@@ -1700,8 +1694,7 @@ public class DialectUtils {
 		}
 
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			@Override
-            public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -1729,8 +1722,7 @@ public class DialectUtils {
 			return;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			@Override
-            public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
 				if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -1784,8 +1776,7 @@ public class DialectUtils {
 			return;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
-			@Override
-            public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
 				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
@@ -2246,8 +2237,7 @@ public class DialectUtils {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
-			@Override
-            public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
+			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
 				if (fetchSize > 0) {
 					callStat.setFetchSize(fetchSize);

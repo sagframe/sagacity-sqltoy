@@ -5,8 +5,6 @@ import static java.lang.System.err;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
@@ -204,10 +202,7 @@ public class SqltoyAutoConfiguration {
 		}
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
-			if (applicationContext.containsBean(properties.getDefaultDataSource())) {
-				sqlToyContext.setDefaultDataSource(
-						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
-			}
+			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
 		}
 
 		// 自定义获取数据源的策略配置

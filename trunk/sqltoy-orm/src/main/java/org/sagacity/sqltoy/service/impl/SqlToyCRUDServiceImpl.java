@@ -114,8 +114,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
-	@Override
-    @Transactional
+	@Transactional
 	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
 			throw new IllegalArgumentException("update 数据对象为null!");
@@ -270,8 +269,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see
 	 * org.sagacity.sqltoy.service.SqlToyCRUDService#delete(java.io.Serializable )
 	 */
-	@Override
-    @Transactional
+	@Transactional
 	public Long delete(Serializable entity) {
 		return sqlToyLazyDao.delete(entity);
 	}
