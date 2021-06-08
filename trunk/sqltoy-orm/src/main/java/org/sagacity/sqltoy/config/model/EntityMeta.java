@@ -403,7 +403,7 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getSequence() {
-		return sequence;
+		return (sequence == null) ? "" : sequence;
 	}
 
 	public void setSequence(String sequence) {

@@ -16,8 +16,7 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
 public class ToDate extends IFunction {
 	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_date\\(");
 
-	@Override
-    public String dialects() {
+	public String dialects() {
 		return "oracle,dm";
 	}
 

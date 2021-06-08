@@ -20,24 +20,21 @@ public class SubStr extends IFunction {
 	/**
 	 * 本身就支持substr的数据库
 	 */
-	@Override
-    public String dialects() {
+	public String dialects() {
 		return ALL;
 	}
 
 	/**
 	 * 匹配substr(xx，xx)函数的正则表达式
 	 */
-	@Override
-    public Pattern regex() {
+	public Pattern regex() {
 		return regex;
 	}
 
 	/**
 	 * 针对不同数据库对如：substr(arg1,arg2,arg3)进行转换，框架自动将arg1和arg2等参数作为数组传进来
 	 */
-	@Override
-    public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
+	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB || dialect == DBType.SQLSERVER
 				|| dialect == DBType.SYBASE_IQ) {
 			return wrapArgs("substring", args);

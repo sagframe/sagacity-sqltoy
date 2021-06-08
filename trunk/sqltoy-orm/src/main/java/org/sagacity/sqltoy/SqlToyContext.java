@@ -145,6 +145,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
+	private String defaultDataSourceName;
+
 	/**
 	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
 	 */
@@ -261,7 +263,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
-
+		// 初始化默认dataSource
+		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
 
@@ -693,8 +696,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
 	}
 
-	@Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
+	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
 
@@ -712,14 +714,17 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * @param defaultDataSource the defaultDataSource to set
 	 */
-	public void setDefaultDataSource(DataSource defaultDataSource) {
-		this.defaultDataSource = defaultDataSource;
+	public void initDefaultDataSource() {
+		if (StringUtil.isNotBlank(defaultDataSourceName)) {
+			this.defaultDataSource = getDataSourceBean(defaultDataSourceName);
+		}
 	}
 
 	public DataSource getDefaultDataSource() {
 		return defaultDataSource;
 	}
 
+	@Deprecated
 	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
 		this.obtainDataSource = obtainDataSource;
 	}
@@ -728,6 +733,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @TODO 提供给SqlToyDaoSupport等获取数据源
 	 * @return
 	 */
+	@Deprecated
 	public DataSource obtainDataSource(String sqlDataSource) {
 		if (obtainDataSource == null) {
 			return defaultDataSource;
@@ -891,5 +897,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setFetchSize(int fetchSize) {
 		this.fetchSize = fetchSize;
+	}
+
+	public void setDefaultDataSourceName(String defaultDataSourceName) {
+		this.defaultDataSourceName = defaultDataSourceName;
 	}
 }
