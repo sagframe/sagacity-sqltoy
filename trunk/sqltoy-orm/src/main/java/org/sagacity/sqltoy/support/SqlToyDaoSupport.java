@@ -1834,6 +1834,6 @@ public class SqlToyDaoSupport {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
 			return sqlToyContext.getDialect();
 		}
-		return DataSourceUtils.getDialect(getDataSource(dataSource));
+		return DataSourceUtils.getDialect(sqlToyContext, getDataSource(dataSource));
 	}
 }
