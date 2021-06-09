@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy;
 
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
+import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
@@ -224,6 +227,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * dataSource选择器，提供给开发者扩展窗口
 	 */
 	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
+
+	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
 
 	/**
 	 * @param workerId the workerId to set
@@ -899,7 +904,23 @@ public class SqlToyContext implements ApplicationContextAware {
 		this.fetchSize = fetchSize;
 	}
 
+	public void setDefaultDataSource(DataSource defaultDataSource) {
+		this.defaultDataSource = defaultDataSource;
+	}
+	
 	public void setDefaultDataSourceName(String defaultDataSourceName) {
 		this.defaultDataSourceName = defaultDataSourceName;
+	}
+
+	public void setConnectionFactory(ConnectionFactory connectionFactory) {
+		this.connectionFactory = connectionFactory;
+	}
+
+	public Connection getConnection(DataSource datasource) {
+		return connectionFactory.getConnection(datasource);
+	}
+
+	public void releaseConnection(Connection conn, DataSource dataSource) {
+		connectionFactory.releaseConnection(conn, dataSource);
 	}
 }
