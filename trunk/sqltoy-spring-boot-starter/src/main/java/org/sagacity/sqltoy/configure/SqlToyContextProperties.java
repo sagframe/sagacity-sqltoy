@@ -66,8 +66,8 @@ public class SqlToyContextProperties implements Serializable {
 	 * 批量操作，每批次数量,默认200
 	 */
 	private Integer batchSize;
-	
-	private int fetchSize=-1;
+
+	private int fetchSize = -1;
 
 	/**
 	 * 分页最大单页数据量(默认是5万)
@@ -139,6 +139,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 缓存类型，默认ehcache，可选caffeine
 	 */
 	private String cacheType = "ehcache";
+
+	/**
+	 * 连接管理的实现扩展定义
+	 */
+	private String connectionFactory;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -427,4 +432,10 @@ public class SqlToyContextProperties implements Serializable {
 		this.fetchSize = fetchSize;
 	}
 
+	public void setConnectionFactory(String connectionFactory) {
+		this.connectionFactory = connectionFactory;
+	}
+	public String getConnectionFactory() {
+		return connectionFactory;
+	}
 }

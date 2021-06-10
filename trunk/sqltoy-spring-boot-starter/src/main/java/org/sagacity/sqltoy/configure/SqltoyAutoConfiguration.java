@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -253,6 +254,18 @@ public class SqltoyAutoConfiguration {
 			else if (dataSourceSelector.contains(".")) {
 				sqlToyContext.setDataSourceSelector(
 						(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义数据库连接获取和释放的接口实现
+		String connectionFactory = properties.getConnectionFactory();
+		if (StringUtil.isNotBlank(connectionFactory)) {
+			if (applicationContext.containsBean(connectionFactory)) {
+				sqlToyContext.setConnectionFactory((ConnectionFactory) applicationContext.getBean(connectionFactory));
+			} // 包名和类名称
+			else if (connectionFactory.contains(".")) {
+				sqlToyContext.setConnectionFactory(
+						(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;
