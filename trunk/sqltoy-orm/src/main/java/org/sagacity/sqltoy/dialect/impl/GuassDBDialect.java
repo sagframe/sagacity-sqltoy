@@ -214,8 +214,7 @@ public class GuassDBDialect implements Dialect {
 			final Integer dbType, final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -305,8 +304,7 @@ public class GuassDBDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {

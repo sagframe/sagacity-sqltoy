@@ -220,8 +220,7 @@ public class PostgreSqlDialect implements Dialect {
 			final Integer dbType, final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
@@ -278,10 +277,9 @@ public class PostgreSqlDialect implements Dialect {
 	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.lang.String[],
 	 * java.sql.Connection, java.lang.Boolean)
 	 */
-	@Override
-    public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-                                ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-                                final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
@@ -333,8 +331,7 @@ public class PostgreSqlDialect implements Dialect {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
 						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {

@@ -28,8 +28,7 @@ public enum SaveMode {
 		return this.mode;
 	}
 
-	@Override
-    public String toString() {
+	public String toString() {
 		return Integer.toString(mode);
 	}
 }

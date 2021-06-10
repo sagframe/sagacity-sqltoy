@@ -471,7 +471,7 @@ public class DataSourceUtils {
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;
 		String dialect;
 		try {
@@ -493,12 +493,12 @@ public class DataSourceUtils {
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 		// 返回反调的结果
 		return handler.getResult();
@@ -509,19 +509,19 @@ public class DataSourceUtils {
 	 * @param datasource
 	 * @return
 	 */
-	public static int getDBType(DataSource datasource) {
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
+		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType = DBType.UNDEFINE;
 		try {
 			dbType = getDBType(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 		return dbType;
 	}
@@ -531,11 +531,11 @@ public class DataSourceUtils {
 	 * @param datasource
 	 * @return
 	 */
-	public static String getDialect(DataSource datasource) {
+	public static String getDialect(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
 			return "";
 		}
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
 			if (conn == null) {
 				return "";
@@ -571,12 +571,12 @@ public class DataSourceUtils {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 
 	}

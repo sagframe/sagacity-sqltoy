@@ -5,14 +5,13 @@ import static java.lang.System.err;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
@@ -204,10 +203,7 @@ public class SqltoyAutoConfiguration {
 		}
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
-			if (applicationContext.containsBean(properties.getDefaultDataSource())) {
-				sqlToyContext.setDefaultDataSource(
-						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
-			}
+			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
 		}
 
 		// 自定义获取数据源的策略配置
@@ -258,6 +254,18 @@ public class SqltoyAutoConfiguration {
 			else if (dataSourceSelector.contains(".")) {
 				sqlToyContext.setDataSourceSelector(
 						(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义数据库连接获取和释放的接口实现
+		String connectionFactory = properties.getConnectionFactory();
+		if (StringUtil.isNotBlank(connectionFactory)) {
+			if (applicationContext.containsBean(connectionFactory)) {
+				sqlToyContext.setConnectionFactory((ConnectionFactory) applicationContext.getBean(connectionFactory));
+			} // 包名和类名称
+			else if (connectionFactory.contains(".")) {
+				sqlToyContext.setConnectionFactory(
+						(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

@@ -76,8 +76,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getCountBySql(sqlOrNamedQuery, paramsNamed, paramsValue);
 	}
 
-	@Override
-    public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
+	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap) {
 		return super.getCountBySql(sqlOrNamedQuery, paramsMap);
 	}
 
@@ -346,9 +345,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.executeStore(storeNameOrKey, inParamValues, null, null, null);
 	}
 
-	@Override
-    public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
-                                    Class resultType) {
+	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
+			Class resultType) {
 		return super.executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);
 	}
 
@@ -974,8 +972,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	@Override
-    public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
 		return super.convertType(sourcePage, resultType);
 	}
 

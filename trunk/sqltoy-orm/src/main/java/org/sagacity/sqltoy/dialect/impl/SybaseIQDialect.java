@@ -275,10 +275,9 @@ public class SybaseIQDialect implements Dialect {
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
 	 * java.sql.Connection)
 	 */
-	@Override
-    public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-                                 final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-                                 final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		if (null != lockMode) {
 			throw new UnsupportedOperationException("sybase iq lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -339,8 +338,7 @@ public class SybaseIQDialect implements Dialect {
 		}
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
@@ -377,8 +375,7 @@ public class SybaseIQDialect implements Dialect {
 		}
 		Long updateCount = DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DialectExtUtils.mergeIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), null,
 								NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
@@ -471,11 +468,10 @@ public class SybaseIQDialect implements Dialect {
 		// 级联保存
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			if (emptyCascadeClasses != null) {
-                for (Type type : emptyCascadeClasses) {
-                    typeMap.put(type, "");
-                }
-            }
+			if (emptyCascadeClasses != null)
+				for (Type type : emptyCascadeClasses) {
+					typeMap.put(type, "");
+				}
 			// 级联子表数据
 			List subTableData = null;
 			String[] forceUpdateProps = null;
@@ -512,8 +508,7 @@ public class SybaseIQDialect implements Dialect {
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
 							new ReflectPropertyHandler() {
-								@Override
-                                public void process() {
+								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}
