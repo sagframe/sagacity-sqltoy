@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -16,12 +17,11 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
@@ -54,8 +54,9 @@ public class OracleDialectUtils {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -74,11 +75,114 @@ public class OracleDialectUtils {
 	 * @throws Exception
 	 */
 	public static List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, String tableName) throws Exception {
+			LockMode lockMode, Connection conn, final Integer dbType, String tableName, final int fetchSize,
+			final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
 				(sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
-				});
+				}, fetchSize, maxRows);
+	}
+
+	/**
+	 * @TODO 分页查询
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param queryExecutor
+	 * @param pageNo
+	 * @param pageSize
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public static QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		boolean isNamed = sqlToyConfig.isNamedParam();
+		// 是否有order by,update 2017-5-22
+		boolean hasOrderBy = SqlUtil.hasOrderBy(
+				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		// order by 外包裹一层,确保查询结果是按排序
+		if (hasOrderBy) {
+			sql.append(" select SAG_Paginationtable.* from (");
+		}
+		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		if (hasOrderBy) {
+			sql.append(") SAG_Paginationtable ");
+		}
+		sql.append(" offset ");
+		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
+		sql.append(" rows fetch next ");
+		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
+		sql.append(" rows only ");
+		if (sqlToyConfig.isHasFast()) {
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
+		}
+		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
+	}
+
+	/**
+	 * @todo 实现top记录查询
+	 * @param sqlToyContext
+	 * @param sqlToyConfig
+	 * @param queryExecutor
+	 * @param topSize
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		// 是否有order by
+		boolean hasOrderBy = SqlUtil.hasOrderBy(
+				sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect), true);
+		if (sqlToyConfig.isHasFast()) {
+			sql.append(sqlToyConfig.getFastPreSql(dialect));
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(" (");
+			}
+		}
+		// order by 外包裹一层,确保查询结果是按排序
+		if (hasOrderBy) {
+			sql.append("select SAG_Paginationtable.* from (");
+		}
+		sql.append(sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect));
+		if (hasOrderBy) {
+			sql.append(") SAG_Paginationtable ");
+		}
+		sql.append(" fetch first ");
+		sql.append(topSize);
+		sql.append(" rows only");
+		if (sqlToyConfig.isHasFast()) {
+			if (!sqlToyConfig.isIgnoreBracket()) {
+				sql.append(") ");
+			}
+			sql.append(sqlToyConfig.getFastTailSql(dialect));
+		}
+		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
+				sql.toString(), null, null);
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -96,7 +200,7 @@ public class OracleDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		// 注：dbms_random包需要手工安装，位于$ORACLE_HOME/rdbms/admin/dbmsrand.sql
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -133,7 +237,7 @@ public class OracleDialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -151,13 +255,15 @@ public class OracleDialectUtils {
 	 */
 	public static StoreResult executeStore(final SqlToyConfig sqlToyConfig, final SqlToyContext sqlToyContext,
 			final String storeSql, final Object[] inParamValues, final Integer[] outParamTypes, final Connection conn,
-			final Integer dbType) throws Exception {
+			final Integer dbType, final int fetchSize) throws Exception {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
-			@Override
-            public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
+			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
+				if (fetchSize > 0) {
+					callStat.setFetchSize(fetchSize);
+				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, callStat, inParamValues, null, 0);
 				int cursorIndex = -1;
 				int cursorCnt = 0;

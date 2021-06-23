@@ -20,10 +20,10 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.PaginationModel;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -203,7 +203,7 @@ public class Mongo extends BaseLink {
 	 * @param pageModel
 	 * @return
 	 */
-	public PaginationModel findPage(PaginationModel pageModel) {
+	public Page findPage(Page pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
@@ -252,9 +252,9 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private PaginationModel findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, PaginationModel pageModel,
+	private Page findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Page pageModel,
 			String mql, Class resultClass, boolean humpMapLabel) throws Exception {
-		PaginationModel result = new PaginationModel();
+		Page result = new Page();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
 		BasicQuery query = new BasicQuery(mql);

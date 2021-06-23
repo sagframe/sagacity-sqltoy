@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.sagacity.sqltoy.callback.TreeIdAndPidGet;
-import org.sagacity.sqltoy.model.NamedValuesModel;
+import org.sagacity.sqltoy.config.model.NamedValuesModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

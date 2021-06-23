@@ -56,13 +56,9 @@ public abstract class BaseLink implements Serializable {
 		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
 		// 数据源选择扩展
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		DataSource result = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(),
+		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(),
 				defaultDataSource ? null : dataSource, sqlDataSource, (defaultDataSource == false) ? null : dataSource,
 				sqlToyContext.getDefaultDataSource());
-		if (null == result) {
-			result = sqlToyContext.obtainDataSource(sqlDataSource);
-		}
-		return result;
 	}
 
 	/**
@@ -73,6 +69,6 @@ public abstract class BaseLink implements Serializable {
 		if (StringUtil.isNotBlank(sqlToyContext.getDialect())) {
 			return sqlToyContext.getDialect();
 		}
-		return DataSourceUtils.getDialect(getDataSource(null));
+		return DataSourceUtils.getDialect(sqlToyContext, getDataSource(null));
 	}
 }

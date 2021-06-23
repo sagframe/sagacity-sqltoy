@@ -12,28 +12,26 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DB2DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -100,8 +98,9 @@ public class DB2Dialect implements Dialect {
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		loadSql = loadSql.concat(getLockSql(loadSql, dbType, lockMode));
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
@@ -118,11 +117,11 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			final LockMode lockMode, Connection conn, final Integer dbType, final String dialect,
-			final String tableName) throws Exception {
+			final String tableName, final int fetchSize, final int maxRows) throws Exception {
 		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
 				(sql, dbTypeValue, lockedMode) -> {
 					return getLockSql(sql, dbTypeValue, lockedMode);
-				});
+				}, fetchSize, maxRows);
 	}
 
 	/*
@@ -146,15 +145,13 @@ public class DB2Dialect implements Dialect {
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
 				isAssignPKValue(entityMeta.getIdStrategy()), returnPkType, insertSql, entity, new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
-					@Override
-                    public SavePKStrategy generate(EntityMeta entityMeta) {
+					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								isAssignPKValue(entityMeta.getIdStrategy()));
 					}
@@ -170,7 +167,7 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -196,8 +193,7 @@ public class DB2Dialect implements Dialect {
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
 				(cascade == false) ? null : new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
@@ -216,7 +212,7 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropertyHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
@@ -234,9 +230,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return DB2DialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect);
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -250,34 +246,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		StringBuilder sql = new StringBuilder();
-		boolean isNamed = sqlToyConfig.isNamedParam();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
-		}
-		sql.append(" limit ");
-		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-		sql.append(" offset ");
-		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
+				dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -290,32 +261,10 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect) throws Exception {
-		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
-		}
-		sql.append(" limit ");
-		sql.append(topSize);
-
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
+			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final int maxRows) throws Exception {
+		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
+				dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -327,10 +276,9 @@ public class DB2Dialect implements Dialect {
 	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection,
 	 * java.lang.Integer, java.lang.String, int, int)
 	 */
-	@Override
-    public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-                                 final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-                                 final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
+			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
+			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
 		String realSql;
 		// db2 锁记录
@@ -388,14 +336,13 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
 						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
@@ -417,13 +364,12 @@ public class DB2Dialect implements Dialect {
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
 						// 将输入的数据进行类型转换
 						return DB2DialectUtils.getSaveIgnoreExistSql(dbType, entityMeta, entityMeta.getIdStrategy(),
@@ -474,10 +420,10 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
-			final String dialect, final LockMode lockMode) throws Exception {
+			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -495,7 +441,7 @@ public class DB2Dialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " fetch first " + topSize + " rows only for update with rs";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -514,7 +460,7 @@ public class DB2Dialect implements Dialect {
 			final Integer dbType, final String dialect) throws Exception {
 		String realSql = sql + " order by rand() fetch first " + random + " rows only for update with rs";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0);
+				dbType, 0, -1, -1);
 	}
 
 	/*
@@ -528,8 +474,9 @@ public class DB2Dialect implements Dialect {
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
-		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType);
+			final String dialect, final int fetchSize) throws Exception {
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
+				fetchSize);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {

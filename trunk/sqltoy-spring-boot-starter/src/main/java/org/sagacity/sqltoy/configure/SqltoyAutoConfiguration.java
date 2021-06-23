@@ -5,16 +5,14 @@ import static java.lang.System.err;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sql.DataSource;
-
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -85,7 +83,10 @@ public class SqltoyAutoConfiguration {
 		if (properties.getBatchSize() != null) {
 			sqlToyContext.setBatchSize(properties.getBatchSize());
 		}
-
+		// 默认数据库fetchSize
+		if (properties.getFetchSize() > 0) {
+			sqlToyContext.setFetchSize(properties.getFetchSize());
+		}
 		// 分页查询单页最大记录数量(默认50000)
 		if (properties.getPageFetchSizeLimit() != null) {
 			sqlToyContext.setPageFetchSizeLimit(properties.getPageFetchSizeLimit());
@@ -201,22 +202,7 @@ public class SqltoyAutoConfiguration {
 		}
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
-			if (applicationContext.containsBean(properties.getDefaultDataSource())) {
-				sqlToyContext.setDefaultDataSource(
-						(DataSource) applicationContext.getBean(properties.getDefaultDataSource()));
-			}
-		}
-
-		// 自定义获取数据源的策略配置
-		String obtainDataSource = properties.getObtainDataSource();
-		if (StringUtil.isNotBlank(obtainDataSource)) {
-			if (applicationContext.containsBean(obtainDataSource)) {
-				sqlToyContext.setObtainDataSource((ObtainDataSource) applicationContext.getBean(obtainDataSource));
-			} // 包名和类名称
-			else if (obtainDataSource.contains(".")) {
-				sqlToyContext.setObtainDataSource(
-						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
-			}
+			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
 		}
 
 		// 自定义缓存实现管理器
@@ -255,6 +241,18 @@ public class SqltoyAutoConfiguration {
 			else if (dataSourceSelector.contains(".")) {
 				sqlToyContext.setDataSourceSelector(
 						(DataSourceSelector) Class.forName(dataSourceSelector).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义数据库连接获取和释放的接口实现
+		String connectionFactory = properties.getConnectionFactory();
+		if (StringUtil.isNotBlank(connectionFactory)) {
+			if (applicationContext.containsBean(connectionFactory)) {
+				sqlToyContext.setConnectionFactory((ConnectionFactory) applicationContext.getBean(connectionFactory));
+			} // 包名和类名称
+			else if (connectionFactory.contains(".")) {
+				sqlToyContext.setConnectionFactory(
+						(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

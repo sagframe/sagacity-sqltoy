@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.SqlExecuteLog;
-import org.sagacity.sqltoy.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.config.model.SqlExecuteLog;
+import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -205,8 +205,10 @@ public class SqlExecuteStat {
 		}
 		result.append("\n/*|----------------------完成执行报告输出 --------------------------------------------------*/");
 		result.append("\n");
-		if (sqlTrace.isError() || sqlTrace.isOverTime()) {
+		if (sqlTrace.isError()) {
 			logger.error(result.toString());
+		} else if (sqlTrace.isOverTime()) {
+			logger.warn(result.toString());
 		} else {
 			if (logger.isDebugEnabled()) {
 				logger.debug(result.toString());

@@ -160,7 +160,8 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 参数转日期
-	 * 
+	 * @param dateType
+	 * @param increase
 	 * @return
 	 */
 	public ParamsFilter toDate(DateType dateType, int increase) {

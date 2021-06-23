@@ -83,6 +83,7 @@ public class DataSourceUtils {
 
 		// 以15.4为基准起始版(基本目前没有用户)
 		public final static String SYBASE_IQ = "sybase_iq";
+		public final static String TDENGINE = "tdengine";
 
 		public final static String UNDEFINE = "UNDEFINE";
 	}
@@ -125,9 +126,7 @@ public class DataSourceUtils {
 		public final static int KINGBASE = 120;
 		public final static int MONGO = 130;
 		public final static int ES = 140;
-
-		// 下面将逐步淘汰
-		public final static int SYBASE_IQ = 150;
+		public final static int TDENGINE = 150;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -157,10 +156,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.KINGBASE, DBType.KINGBASE);
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
-
+		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
-		// 纳入将不再支持范围
-		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 	}
 
 	/**
@@ -215,8 +212,8 @@ public class DataSourceUtils {
 		case DBType.MONGO: {
 			return Dialect.MONGO;
 		}
-		case DBType.SYBASE_IQ: {
-			return Dialect.SYBASE_IQ;
+		case DBType.TDENGINE: {
+			return Dialect.TDENGINE;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -231,8 +228,8 @@ public class DataSourceUtils {
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
 			int dbType = getDBType(conn);
-			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
+			// sqlserver
+			if (dbType == DBType.SQLSERVER) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -298,6 +295,9 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
 			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
+				return Dialect.TDENGINE;
+			}
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.KINGBASE) != -1) {
 				return Dialect.KINGBASE;
 			}
@@ -321,6 +321,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @todo 获取当前数据库的版本
+	 * @param conn
 	 * @return
 	 * @throws SQLException
 	 */
@@ -400,12 +401,11 @@ public class DataSourceUtils {
 			} // TIDB
 			else if (dbDialect.equals(Dialect.TIDB)) {
 				dbType = DBType.TIDB;
+			} else if (dbDialect.equals(Dialect.TDENGINE)) {
+				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
 				dbType = DBType.KINGBASE;
-			} // sybase IQ
-			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
-				dbType = DBType.SYBASE_IQ;
-			} else if (dbDialect.equals(Dialect.ES)) {
+			}else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
@@ -462,7 +462,7 @@ public class DataSourceUtils {
 	 */
 	public static Object processDataSource(SqlToyContext sqltoyContext, DataSource datasource,
 			DataSourceCallbackHandler handler) {
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType;
 		String dialect;
 		try {
@@ -484,12 +484,12 @@ public class DataSourceUtils {
 			handler.doConnection(conn, dbType, dialect);
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 		// 返回反调的结果
 		return handler.getResult();
@@ -500,33 +500,34 @@ public class DataSourceUtils {
 	 * @param datasource
 	 * @return
 	 */
-	public static int getDBType(DataSource datasource) {
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+	public static int getDBType(SqlToyContext sqltoyContext, DataSource datasource) {
+		Connection conn = sqltoyContext.getConnection(datasource);
 		Integer dbType = DBType.UNDEFINE;
 		try {
 			dbType = getDBType(conn);
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 		return dbType;
 	}
 
 	/**
 	 * @TDDO 获取数据库类型的名称
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */
-	public static String getDialect(DataSource datasource) {
+	public static String getDialect(SqlToyContext sqltoyContext, DataSource datasource) {
 		if (datasource == null) {
 			return "";
 		}
-		Connection conn = org.springframework.jdbc.datasource.DataSourceUtils.getConnection(datasource);
+		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
 			if (conn == null) {
 				return "";
@@ -562,12 +563,12 @@ public class DataSourceUtils {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 			conn = null;
 			throw new RuntimeException(e);
 		} finally {
 			// 释放连接,连接池实际是归还连接，未必一定关闭
-			org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection(conn, datasource);
+			sqltoyContext.releaseConnection(conn, datasource);
 		}
 
 	}

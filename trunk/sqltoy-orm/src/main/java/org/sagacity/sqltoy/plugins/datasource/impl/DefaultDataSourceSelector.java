@@ -30,9 +30,7 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 		DataSource result = null;
 		// 第二优先:sql中指定的数据源
 		if (StringUtil.isNotBlank(sqlDataSourceName)) {
-			if (applicationContext.containsBean(sqlDataSourceName)) {
-				result = (DataSource) applicationContext.getBean(sqlDataSourceName);
-			}
+			result = getDataSourceBean(applicationContext, sqlDataSourceName);
 		}
 		// 第三优先:dao中autowired注入的数据源
 		if (result == null) {

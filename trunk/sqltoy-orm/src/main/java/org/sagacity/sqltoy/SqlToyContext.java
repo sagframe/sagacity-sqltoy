@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy;
 
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -13,13 +14,13 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
+import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.datasource.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -97,6 +98,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean pageOverToFirst = true;
 
 	/**
+	 * 默认查询数据库端提取记录量
+	 */
+	private int fetchSize = -1;
+
+	/**
 	 * 统一公共字段赋值处理; 如修改时,为修改人和修改时间进行统一赋值; 创建时:为创建人、创建时间、修改人、修改时间进行统一赋值
 	 */
 	private IUnifyFieldsHandler unifyFieldsHandler;
@@ -140,10 +146,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
-	/**
-	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
-	 */
-	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
+	private String defaultDataSourceName;
 
 	/**
 	 * @return the translateManager
@@ -219,6 +222,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
 
 	/**
+	 * 提供数据源获得connection的扩展(默认spring的实现)
+	 */
+	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
+
+	/**
 	 * @param workerId the workerId to set
 	 */
 	public void setWorkerId(Integer workerId) {
@@ -256,7 +264,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
 		SqlToyConstants.loadProperties(dialectConfig);
-
+		// 初始化默认dataSource
+		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
 		setWorkerAndDataCenterId();
 
@@ -275,7 +284,8 @@ public class SqlToyContext implements ApplicationContextAware {
 
 		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
-
+		// 设置默认fetchSize
+		SqlToyConstants.FETCH_SIZE = this.fetchSize;
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
@@ -340,7 +350,10 @@ public class SqlToyContext implements ApplicationContextAware {
 		if (StringUtil.isBlank(dataSourceName)) {
 			return null;
 		}
-		if (applicationContext.containsBean(dataSourceName)) {
+		// 优先使用扩展来实现
+		if (dataSourceSelector != null) {
+			return dataSourceSelector.getDataSourceBean(applicationContext, dataSourceName);
+		} else if (applicationContext.containsBean(dataSourceName)) {
 			return (DataSource) applicationContext.getBean(dataSourceName);
 		}
 		return null;
@@ -574,6 +587,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.TDENGINE)) {
+			this.dialect = Dialect.TDENGINE;
 		} else if (tmp.startsWith(Dialect.ES)) {
 			this.dialect = Dialect.ES;
 		} else {
@@ -682,8 +697,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.setUncachedKeyResult(uncachedKeyResult);
 	}
 
-	@Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
+	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
 
@@ -701,27 +715,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * @param defaultDataSource the defaultDataSource to set
 	 */
-	public void setDefaultDataSource(DataSource defaultDataSource) {
-		this.defaultDataSource = defaultDataSource;
+	public void initDefaultDataSource() {
+		if (StringUtil.isNotBlank(defaultDataSourceName)) {
+			this.defaultDataSource = getDataSourceBean(defaultDataSourceName);
+		}
 	}
 
 	public DataSource getDefaultDataSource() {
 		return defaultDataSource;
-	}
-
-	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
-	/**
-	 * @TODO 提供给SqlToyDaoSupport等获取数据源
-	 * @return
-	 */
-	public DataSource obtainDataSource(String sqlDataSource) {
-		if (obtainDataSource == null) {
-			return defaultDataSource;
-		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
 	}
 
 	/**
@@ -866,5 +867,39 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	public void setDataSourceSelector(DataSourceSelector dataSourceSelector) {
 		this.dataSourceSelector = dataSourceSelector;
+	}
+
+	/**
+	 * @return the fetchSize
+	 */
+	public int getFetchSize() {
+		return fetchSize;
+	}
+
+	/**
+	 * @param fetchSize the fetchSize to set
+	 */
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
+	}
+
+	public void setDefaultDataSource(DataSource defaultDataSource) {
+		this.defaultDataSource = defaultDataSource;
+	}
+	
+	public void setDefaultDataSourceName(String defaultDataSourceName) {
+		this.defaultDataSourceName = defaultDataSourceName;
+	}
+
+	public void setConnectionFactory(ConnectionFactory connectionFactory) {
+		this.connectionFactory = connectionFactory;
+	}
+
+	public Connection getConnection(DataSource datasource) {
+		return connectionFactory.getConnection(datasource);
+	}
+
+	public void releaseConnection(Connection conn, DataSource dataSource) {
+		connectionFactory.releaseConnection(conn, dataSource);
 	}
 }

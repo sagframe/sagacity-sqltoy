@@ -9,9 +9,9 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -38,7 +38,7 @@ public class DB2DialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
@@ -71,7 +71,7 @@ public class DB2DialectUtils {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class DB2DialectUtils {
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
 			String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName);
+		String realTable = entityMeta.getSchemaTable(tableName,dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
@@ -246,7 +246,7 @@ public class DB2DialectUtils {
 	 */
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName);
+		String realTable = entityMeta.getSchemaTable(tableName,dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,

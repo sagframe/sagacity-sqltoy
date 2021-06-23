@@ -54,6 +54,8 @@ public class NumberUtil {
 		public final static String CAPITAL = "capital";
 		public final static String CAPITAL_MONEY = "capitalmoney";
 		public final static String CAPITAL_RMB = "capital-rmb";
+		public final static String CAPITAL_EN = "capital-en";
+		public final static String CAPITAL_ENGLISH = "capital-english";
 	}
 
 	private NumberUtil() {
@@ -71,7 +73,7 @@ public class NumberUtil {
 		return format(target, pattern, null, null);
 	}
 
-	public static String format(Object target, String pattern, RoundingMode roundingMode, String locale) {
+	public static String format(Object target, String pattern, RoundingMode roundingMode, Locale locale) {
 		if (target == null) {
 			return null;
 		}
@@ -93,8 +95,12 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
-			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getInstance()
-					: DecimalFormat.getInstance(new Locale(locale)));
+			// 数字转换成英文金额
+			if (lowPattern.equals(Pattern.CAPITAL_EN) || lowPattern.equals(Pattern.CAPITAL_ENGLISH)) {
+				return convertToEnglishMoney(tmp);
+			}
+			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getInstance()
+					: DecimalFormat.getInstance(locale));
 			if (roundingMode != null) {
 				df.setRoundingMode(roundingMode);
 			}
@@ -114,7 +120,7 @@ public class NumberUtil {
 	 * @param locale
 	 * @return
 	 */
-	public static String formatCurrency(Object target, String pattern, String locale) {
+	public static String formatCurrency(Object target, String pattern, Locale locale) {
 		if (target == null) {
 			return null;
 		}
@@ -134,8 +140,12 @@ public class NumberUtil {
 			if (lowPattern.equals(Pattern.CAPITAL_MONEY) || lowPattern.equals(Pattern.CAPITAL_RMB)) {
 				return toCapitalMoney(tmp);
 			}
-			DecimalFormat df = (DecimalFormat) (StringUtil.isBlank(locale) ? DecimalFormat.getCurrencyInstance()
-					: DecimalFormat.getCurrencyInstance(new Locale(locale)));
+			// 数字转换成英文金额
+			if (lowPattern.equals(Pattern.CAPITAL_EN) || lowPattern.equals(Pattern.CAPITAL_ENGLISH)) {
+				return convertToEnglishMoney(tmp);
+			}
+			DecimalFormat df = (DecimalFormat) ((locale == null) ? DecimalFormat.getCurrencyInstance()
+					: DecimalFormat.getCurrencyInstance(locale));
 			df.applyPattern(pattern);
 			return df.format(tmp);
 		} catch (Exception e) {
@@ -580,4 +590,148 @@ public class NumberUtil {
 		}
 		return 0;
 	}
+
+	/****************** 数字金额转换为英文格式 Begin ********************************/
+	/**
+	 * @TODO 将数字转换为英文描述
+	 * @param value
+	 * @return
+	 */
+	public static String convertToEnglishMoney(BigDecimal value) {
+		if (null == value) {
+			return "";
+		}
+		String str = value.toString();
+		String[] arrs = str.split(",");
+		if (arrs.length == 1) {
+			str += ".00";
+		}
+		if (arrs.length == 2 && (arrs[1].length() == 1)) {
+			str += "0";
+		}
+		return convertToEnglishMoney(str);
+	}
+
+	/**
+	 * @TODO 将数字转换为英文描述
+	 * @param value
+	 * @return
+	 */
+	public static String convertToEnglishMoney(String value) {
+		int z = value.indexOf("."); // 取小数点位置
+		String lstr, rstr = "";
+		if (z > -1) { // 看是否有小数，如果有，则分别取左边和右边
+			lstr = value.substring(0, z);
+			rstr = value.substring(z + 1);
+		} else { // 否则就是全部
+			lstr = value;
+		}
+
+		String lstrrev = reverse(lstr); // 对左边的字串取反
+		String[] a = new String[5]; // 定义5个字串变量来存放解析出来的叁位一组的字串
+
+		switch (lstrrev.length() % 3) {
+		case 1:
+			lstrrev += "00";
+			break;
+		case 2:
+			lstrrev += "0";
+			break;
+		default:
+			;
+		}
+		StringBuilder lm = new StringBuilder(); // 用来存放转换後的整数部分
+		for (int i = 0; i < lstrrev.length() / 3; i++) {
+			a[i] = reverse(lstrrev.substring(3 * i, 3 * i + 3)); // 截取第一个叁位
+			if (!"000".equals(a[i])) { // 用来避免这种情况：1000000 = one million thousand only
+				if (i != 0) {
+					lm.insert(0, transThree(a[i]) + " " + parseMore(String.valueOf(i)) + " "); // 加:
+																								// thousand、million、billion
+				} else {
+					lm = new StringBuilder(transThree(a[i])); // 防止i=0时， 在多加两个空格.
+				}
+			} else {
+				lm.append(transThree(a[i]));
+			}
+		}
+
+		String xs = ""; // 用来存放转换後小数部分
+		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
+			xs = "AND " + transTwo(rstr) + " CENTS"; // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
+		}
+		return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
+	}
+
+	private static String parseFirst(String s) {
+		String[] a = new String[] { "", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE" };
+		return a[Integer.parseInt(s.substring(s.length() - 1))];
+	}
+
+	private static String parseTeen(String s) {
+		String[] a = new String[] { "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN",
+				"SEVENTEEN", "EIGHTEEN", "NINETEEN" };
+		return a[Integer.parseInt(s) - 10];
+	}
+
+	private static String parseTen(String s) {
+		String[] a = new String[] { "TEN", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY",
+				"NINETY" };
+		return a[Integer.parseInt(s.substring(0, 1)) - 1];
+	}
+
+	// 两位
+	private static String transTwo(String s) {
+		String value = "";
+		// 判断位数
+		if (s.length() > 2) {
+			s = s.substring(0, 2);
+		} else if (s.length() < 2) {
+			s = "0" + s;
+		}
+
+		if (s.startsWith("0")) // 07 - seven 是否小於10
+		{
+			value = parseFirst(s);
+		} else if (s.startsWith("1")) // 17 seventeen 是否在10和20之间
+		{
+			value = parseTeen(s);
+		} else if (s.endsWith("0")) // 是否在10与100之间的能被10整除的数
+		{
+			value = parseTen(s);
+		} else {
+			value = parseTen(s) + " " + parseFirst(s);
+		}
+		return value;
+	}
+
+	private static String parseMore(String s) {
+		String[] a = new String[] { "", "THOUSAND", "MILLION", "BILLION" };
+		return a[Integer.parseInt(s)];
+	}
+
+	// 制作叁位的数
+	// s.length = 3
+	private static String transThree(String s) {
+		String value = "";
+		if (s.startsWith("0")) // 是否小於100
+		{
+			value = transTwo(s.substring(1));
+		} else if (s.substring(1).equals("00")) // 是否被100整除
+		{
+			value = parseFirst(s.substring(0, 1)) + " HUNDRED";
+		} else {
+			value = parseFirst(s.substring(0, 1)) + " HUNDRED AND " + transTwo(s.substring(1));
+		}
+		return value;
+	}
+
+	private static String reverse(String s) {
+		char[] aChr = s.toCharArray();
+		StringBuffer tmp = new StringBuffer();
+		for (int i = aChr.length - 1; i >= 0; i--) {
+			tmp.append(aChr[i]);
+		}
+		return tmp.toString();
+	}
+	/****************** 数字金额转换为英文格式 End ********************************/
 }

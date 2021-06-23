@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -30,13 +29,6 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public Object save(Serializable entity);
-
-	/**
-	 * @todo 批量保存对象
-	 * @param entities
-	 * @param reflectPropertyHandler
-	 */
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @todo 批量保存对象
@@ -79,15 +71,6 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
-	 * @todo 批量修改对象
-	 * @param entities
-	 * @param reflectPropertyHandler
-	 * @param forceUpdateProps
-	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
-			String... forceUpdateProps);
-
-	/**
 	 * @todo 批量深度集合修改
 	 * @param entities 批量对象集合
 	 */
@@ -108,15 +91,6 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
-
-	/**
-	 * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
-	 * @param entities
-	 * @param reflectPropertyHandler
-	 * @param forceUpdateProps
-	 */
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
 
 	/**
 	 * @todo 获取对象数据
@@ -200,44 +174,6 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids);
 
 	/**
-	 * 在controller层不允许直接暴露sql,因此sql必须是通过注解在POJO上的
-	 * 
-	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> List<T> findFrom(T entity);
-
-	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
-	 * @todo 通过实体对象中的@page/或@list 定义的sql查询分页结果集
-	 * @param paginationModel
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity);
-
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
-			ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
-	 * @todo 通过实体对象中@page/@list 定义的sql 查询top记录
-	 * @param entity
-	 * @param topSize
-	 * @return
-	 */
-	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize);
-
-	/**
-	 * @todo 通过实体对象中@page/@list 定义的sql进行随机记录查询
-	 * @param entity
-	 * @param randomCount
-	 * @return
-	 */
-	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount);
-
-	/**
 	 * @todo 获取业务ID
 	 * @param signature
 	 * @param increment
@@ -319,7 +255,7 @@ public interface SqlToyCRUDService {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**

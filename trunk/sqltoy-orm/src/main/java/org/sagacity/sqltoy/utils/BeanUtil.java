@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
@@ -724,7 +724,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+			ReflectPropsHandler reflectPropertyHandler) throws Exception {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
@@ -803,7 +803,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler) {
+			ReflectPropsHandler reflectPropertyHandler) {
 		if (null == serializable || null == properties || properties.length == 0) {
 			return null;
 		}
@@ -895,7 +895,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler) {
+			ReflectPropsHandler reflectPropertyHandler) {
 		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}

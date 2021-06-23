@@ -14,11 +14,8 @@ import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
-import org.sagacity.sqltoy.config.annotation.ListSql;
-import org.sagacity.sqltoy.config.annotation.LoadSql;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
-import org.sagacity.sqltoy.config.annotation.PaginationSql;
 import org.sagacity.sqltoy.config.annotation.PartitionKey;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
@@ -245,17 +242,13 @@ public class EntityManager {
 				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
-				entityMeta.setSchemaTable((StringUtil.isBlank(entity.schema()) ? "" : (entity.schema().concat(".")))
-						.concat(entity.tableName()));
-
-				// 解析自定义注解
-				parseCustomAnnotation(entityMeta, entityClass);
-
+				if (StringUtil.isNotBlank(entity.schema())) {
+					entityMeta.setSchema(entity.schema());
+				}
 				// 主键约束(for postgresql)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
-
 				// 解析Entity包含的字段信息
 				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
 
@@ -290,7 +283,7 @@ public class EntityManager {
 				entityMeta.setAllColumnNames(allColNames.toString());
 				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
 				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
-						.concat(entityMeta.getSchemaTable()));
+						.concat(entityMeta.getSchemaTable(null, null)));
 
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
 				entityMeta.setIdNameWhereSql(loadNamedWhereSql.toString());
@@ -309,9 +302,6 @@ public class EntityManager {
 					if (StringUtil.isBlank(entityMeta.getLoadSql(null))) {
 						entityMeta.setLoadSql(entityMeta.getLoadAllSql().concat(loadNamedWhereSql.toString()));
 					}
-					// delete sql是内部产生，所以用?形式作为参数
-					entityMeta.setDeleteByIdsSql(
-							"delete from ".concat(entityMeta.getSchemaTable()).concat(loadArgWhereSql.toString()));
 				}
 				// 内部存在逻辑设置allFields
 				entityMeta.setFieldsArray(fieldList.toArray(new String[rejectIdFieldList.size() + idList.size()]));
@@ -354,31 +344,6 @@ public class EntityManager {
 			}
 		}
 		return entityMeta;
-	}
-
-	/**
-	 * @todo 解析自定义注解
-	 * @param entityMeta
-	 * @param entityClass
-	 */
-	private void parseCustomAnnotation(EntityMeta entityMeta, Class entityClass) {
-		// 单记录查询的自定义语句
-		if (entityClass.isAnnotationPresent(LoadSql.class)) {
-			LoadSql loadSql = (LoadSql) entityClass.getAnnotation(LoadSql.class);
-			entityMeta.setLoadSql(loadSql.value());
-		}
-
-		// 分页查询的语句
-		if (entityClass.isAnnotationPresent(PaginationSql.class)) {
-			PaginationSql paginationSql = (PaginationSql) entityClass.getAnnotation(PaginationSql.class);
-			entityMeta.setPageSql(paginationSql.value());
-		}
-
-		// 集合查询语句
-		if (entityClass.isAnnotationPresent(ListSql.class)) {
-			ListSql listSql = (ListSql) entityClass.getAnnotation(ListSql.class);
-			entityMeta.setListSql(listSql.value());
-		}
 	}
 
 	/**
@@ -429,7 +394,7 @@ public class EntityManager {
 			if (shardingTable.aliasNames() != null) {
 				System.arraycopy(shardingTable.aliasNames(), 0, aliasNames, 0, shardingTable.aliasNames().length);
 			}
-			config.setTables(new String[] { entityMeta.getSchemaTable() });
+			config.setTables(new String[] { entityMeta.getTableName() });
 			config.setAliasNames(aliasNames);
 			config.setDecisionType(shardingDB.decisionType());
 			config.setStrategy(strategy);
@@ -598,10 +563,6 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-			// sqltoy默认提供的实现(兼容旧版本包命名,统一到新的packageName下面)
-			if (generator.startsWith("org.sagacity.sqltoy")) {
-				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
-			}
 			// redis 情况特殊,依赖redisTemplate,小心修改
 			if (generator.endsWith("RedisIdGenerator")) {
 				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
@@ -693,7 +654,7 @@ public class EntityManager {
 		cascadeModel.setMappedColumns(mappedColumns);
 		cascadeModel.setMappedFields(mappedFields);
 		// 子表的schema.table
-		String subSchemaTable = subTableMeta.getSchemaTable();
+		String subSchemaTable = subTableMeta.getSchemaTable(null, null);
 		cascadeModel.setMappedTable(subSchemaTable);
 		cascadeModel.setProperty(field.getName());
 		// 子表外键查询条件
@@ -774,17 +735,12 @@ public class EntityManager {
 		String[] fieldsDefaultValue = new String[fieldSize];
 		Boolean[] fieldsNullable = new Boolean[fieldSize];
 		FieldMeta fieldMeta;
-		boolean hasDefaultValue = false;
 		for (int i = 0; i < fieldSize; i++) {
 			fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
 			fieldsTypeArray[i] = fieldMeta.getType();
-			if (fieldMeta.getDefaultValue() != null) {
-				hasDefaultValue = true;
-			}
 			fieldsDefaultValue[i] = fieldMeta.getDefaultValue();
 			fieldsNullable[i] = fieldMeta.isNullable();
 		}
-		entityMeta.setHasDefaultValue(hasDefaultValue);
 		entityMeta.setFieldsTypeArray(fieldsTypeArray);
 		entityMeta.setFieldsDefaultValue(fieldsDefaultValue);
 		entityMeta.setFieldsNullable(fieldsNullable);

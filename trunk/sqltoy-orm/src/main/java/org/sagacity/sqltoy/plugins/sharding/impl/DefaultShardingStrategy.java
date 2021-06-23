@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -62,8 +62,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 */
 	private ApplicationContext applicationContext;
 
-	@Override
-    @Autowired
+	@Autowired
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
@@ -109,9 +108,8 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
-	@Override
-    public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
-                                   String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
+	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
+			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
 		if (paramsMap == null || baseTableName == null || dateParams == null || tableNamesMap == null) {
 			return null;
 		}

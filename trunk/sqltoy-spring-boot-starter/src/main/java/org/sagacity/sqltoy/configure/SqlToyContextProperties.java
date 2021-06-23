@@ -67,6 +67,8 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer batchSize;
 
+	private int fetchSize = -1;
+
 	/**
 	 * 分页最大单页数据量(默认是5万)
 	 */
@@ -114,11 +116,6 @@ public class SqlToyContextProperties implements Serializable {
 	private String reservedWords;
 
 	/**
-	 * 自定义获取DataSource的策略类
-	 */
-	private String obtainDataSource;
-
-	/**
 	 * 缓存管理器
 	 */
 	private String translateCacheManager;
@@ -137,6 +134,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 缓存类型，默认ehcache，可选caffeine
 	 */
 	private String cacheType = "ehcache";
+
+	/**
+	 * 连接管理的实现扩展定义
+	 */
+	private String connectionFactory;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -339,14 +341,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.reservedWords = reservedWords;
 	}
 
-	public String getObtainDataSource() {
-		return obtainDataSource;
-	}
-
-	public void setObtainDataSource(String obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
 	/**
 	 * @return the translateCacheManager
 	 */
@@ -411,4 +405,24 @@ public class SqlToyContextProperties implements Serializable {
 		this.dataSourceSelector = dataSourceSelector;
 	}
 
+	/**
+	 * @return the fetchSize
+	 */
+	public int getFetchSize() {
+		return fetchSize;
+	}
+
+	/**
+	 * @param fetchSize the fetchSize to set
+	 */
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
+	}
+
+	public void setConnectionFactory(String connectionFactory) {
+		this.connectionFactory = connectionFactory;
+	}
+	public String getConnectionFactory() {
+		return connectionFactory;
+	}
 }

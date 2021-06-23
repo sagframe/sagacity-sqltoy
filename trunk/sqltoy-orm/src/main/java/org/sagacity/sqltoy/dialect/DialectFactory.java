@@ -18,12 +18,14 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PageOptimize;
+import org.sagacity.sqltoy.config.model.ShardingModel;
+import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
@@ -41,20 +43,17 @@ import org.sagacity.sqltoy.dialect.impl.OracleDialect;
 import org.sagacity.sqltoy.dialect.impl.PostgreSqlDialect;
 import org.sagacity.sqltoy.dialect.impl.SqlServerDialect;
 import org.sagacity.sqltoy.dialect.impl.SqliteDialect;
-import org.sagacity.sqltoy.dialect.impl.SybaseIQDialect;
 import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.ShardingModel;
-import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
+import org.sagacity.sqltoy.model.UniqueExecutor;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -149,7 +148,7 @@ public class DialectFactory {
 			break;
 		}
 		// 9.5+(9.5开始支持类似merge into形式的语法,参见具体实现)
-		//postgresql/greenplum
+		// postgresql/greenplum
 		case DBType.POSTGRESQL: {
 			dialectSqlWrapper = new PostgreSqlDialect();
 			break;
@@ -198,12 +197,6 @@ public class DialectFactory {
 			dialectSqlWrapper = new KingbaseDialect();
 			break;
 		}
-		// sybase iq基本淘汰
-		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
-		case DBType.SYBASE_IQ: {
-			dialectSqlWrapper = new SybaseIQDialect();
-			break;
-		}
 		// 如果匹配不上使用默认dialect
 		default:
 			dialectSqlWrapper = new DefaultDialect();
@@ -228,7 +221,7 @@ public class DialectFactory {
 	 * @return
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
-			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
+			final int batchSize, final ReflectPropsHandler reflectPropertyHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
@@ -241,8 +234,7 @@ public class DialectFactory {
 					sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String realSql = sqlToyConfig.getSql(dialect);
 							Integer[] fieldTypes = null;
 							List values = dataSet;
@@ -294,8 +286,7 @@ public class DialectFactory {
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 							new QueryExecutor(sqlToyConfig.getSql(), paramsNamed, paramsValue), dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(dialect),
 									paramsNamed, paramsValue);
 							// 替换sharding table
@@ -304,7 +295,7 @@ public class DialectFactory {
 							// 做sql签名
 							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
-									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit));
+									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit, false));
 						}
 					});
 			SqlExecuteStat.debug("执行结果", "受影响记录数量:{} 条!", updateTotalCnt);
@@ -336,8 +327,7 @@ public class DialectFactory {
 					null);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).isUnique(sqlToyContext,
 									uniqueExecutor.getEntity(), uniqueExecutor.getUniqueFields(), conn, dbType,
 									shardingModel.getTableName()));
@@ -375,21 +365,12 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
-							boolean rewrapParams = false;
-							// sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数(sybaseIq已经很少在用)
-							if (dbType.intValue() == DBType.SYBASE_IQ) {
-								rewrapParams = true;
-							}
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, rewrapParams);
+									sqlToyConfig, queryExecutor, dialect, false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
-							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
-									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
-											dialect);
+							Long totalCount = null;
 							Long randomCnt;
 							// 记录数量大于1表示取随机记录数量
 							if (randomCount >= 1) {
@@ -402,7 +383,6 @@ public class DialectFactory {
 									totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
 								}
-
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
 								SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条!", totalCount, randomCnt);
 								// 如果总记录数不为零，randomCnt最小为1
@@ -410,15 +390,9 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
-							// 总记录数为零(主要针对sybase & informix 数据库)
-							if (totalCount != null && totalCount == 0) {
-								this.setResult(new QueryResult());
-								logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
-										sqlToyConfig.getIdOrSql());
-								return;
-							}
 							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
-									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -519,7 +493,7 @@ public class DialectFactory {
 					}
 				}
 				if (StringUtil.isBlank(treeModel.getTableName())) {
-					treeModel.table(entityMeta.getSchemaTable());
+					treeModel.table(entityMeta.getSchemaTable(null, null));
 				}
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
@@ -549,8 +523,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(treeModel.getTableName(), "wrapTreeTableRoute", true);
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(SqlUtil.wrapTreeTableRoute(sqlToyContext.getTypeHandler(), treeModel, conn,
 									dbType));
 						}
@@ -598,13 +571,13 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							queryResult.setPageNo(pageNo);
 							queryResult.setPageSize(pageSize);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
@@ -660,8 +633,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, true);
@@ -736,7 +708,7 @@ public class DialectFactory {
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler, conn, null, dbType, dialect,
-												extend.fetchSize, extend.maxRows);
+												getFetchSize(extend.fetchSize), extend.maxRows);
 										long totalRecord = (queryResult.getRows() == null) ? 0
 												: queryResult.getRows().size();
 										queryResult.setPageNo(1L);
@@ -753,7 +725,7 @@ public class DialectFactory {
 											long realStartPage = isOverPage ? 1 : pageNo;
 											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 													realSqlToyConfig, queryExecutor, realStartPage, pageSize, conn,
-													dbType, dialect);
+													dbType, dialect, getFetchSize(extend.fetchSize), extend.maxRows);
 											queryResult.setPageNo(realStartPage);
 										}
 										queryResult.setPageSize(pageSize);
@@ -849,7 +821,8 @@ public class DialectFactory {
 						SqlExecuteStat.mergeTrace(sqlTrace);
 						Long startTime = System.currentTimeMillis();
 						QueryResult result = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext, sqlToyConfig,
-								queryExecutor, pageNo, pageSize, conn, dbType, dialect);
+								queryExecutor, pageNo, pageSize, conn, dbType, dialect, getFetchSize(extend.fetchSize),
+								extend.maxRows);
 						queryResult.setRows(result.getRows());
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
@@ -923,8 +896,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -946,7 +918,8 @@ public class DialectFactory {
 							}
 							// 调用数据库方言查询结果
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findTopBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType, dialect);
+									realSqlToyConfig, queryExecutor, realTopSize, conn, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -999,8 +972,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1010,8 +982,8 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									extend.rowCallbackHandler, conn, lockMode, dbType, dialect, extend.fetchSize,
-									extend.maxRows);
+									extend.rowCallbackHandler, conn, lockMode, dbType, dialect,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
@@ -1061,8 +1033,7 @@ public class DialectFactory {
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1173,8 +1144,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
 						}
@@ -1200,7 +1170,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
+			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
@@ -1216,8 +1186,7 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-                                    public void doConnection(Connection conn, Integer dbType, String dialect)
+									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(context,
 												batchModel.getEntities(), batchSize, reflectPropertyHandler,
@@ -1257,7 +1226,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
+			final ReflectPropsHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
@@ -1271,8 +1240,7 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-                                    public void doConnection(Connection conn, Integer dbType, String dialect)
+									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
 												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
@@ -1320,8 +1288,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "load", null);
 			return (T) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
 									conn, dbType, dialect, shardingModel.getTableName()));
@@ -1372,14 +1339,14 @@ public class DialectFactory {
 							ShardingModel shardingModel = batchModel.getShardingModel();
 							return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
 									new DataSourceCallbackHandler() {
-										@Override
-                                        public void doConnection(Connection conn, Integer dbType, String dialect)
+										public void doConnection(Connection conn, Integer dbType, String dialect)
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
 													batchModel.getEntities(),
 													(cascadeTypes == null) ? null
 															: CollectionUtil.arrayToList(cascadeTypes),
-													lockMode, conn, dbType, dialect, shardingModel.getTableName()));
+													lockMode, conn, dbType, dialect, shardingModel.getTableName(),
+													getFetchSize(-1), -1));
 										}
 									});
 						}));
@@ -1412,8 +1379,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
@@ -1438,7 +1404,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
+			final ReflectPropsHandler reflectPropertyHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
@@ -1453,8 +1419,7 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-                                    public void doConnection(Connection conn, Integer dbType, String dialect)
+									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
 												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
@@ -1503,8 +1468,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).update(sqlToyContext, entity, forceUpdateFields,
 									cascade, forceCascadeClass, subTableForceUpdateProps, conn, dbType, dialect,
 									shardingModel.getTableName()));
@@ -1531,7 +1495,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
+			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropertyHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");
@@ -1546,8 +1510,7 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-                                    public void doConnection(Connection conn, Integer dbType, String dialect)
+									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
 												batchModel.getEntities(), batchSize, forceUpdateFields,
@@ -1592,8 +1555,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
 						}
@@ -1631,8 +1593,7 @@ public class DialectFactory {
 						final ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-                                    public void doConnection(Connection conn, Integer dbType, String dialect)
+									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).deleteAll(context,
 												batchModel.getEntities(), batchSize, conn, dbType, dialect, autoCommit,
@@ -1678,8 +1639,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1689,7 +1649,8 @@ public class DialectFactory {
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
-									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode);
+									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode, getFetchSize(extend.fetchSize),
+									extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,
@@ -1721,8 +1682,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1765,8 +1725,7 @@ public class DialectFactory {
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
 									sqlToyConfig, queryExecutor, dialect, false);
@@ -1814,8 +1773,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
 			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
-						@Override
-                        public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String dialectSql = sqlToyConfig.getSql(dialect);
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
 							int outCount = (outParamsType == null) ? 0 : outParamsType.length;
@@ -1837,7 +1795,7 @@ public class DialectFactory {
 							SqlExecuteStat.showSql("存储过程执行", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
 									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									conn, dbType, dialect);
+									conn, dbType, dialect, -1);
 							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
 							// {此区域代码正常情况下不会使用
 							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
@@ -1864,5 +1822,12 @@ public class DialectFactory {
 		} finally {
 			SqlExecuteStat.destroy();
 		}
+	}
+
+	private int getFetchSize(int fetchSize) {
+		if (fetchSize > 0) {
+			return fetchSize;
+		}
+		return SqlToyConstants.FETCH_SIZE;
 	}
 }

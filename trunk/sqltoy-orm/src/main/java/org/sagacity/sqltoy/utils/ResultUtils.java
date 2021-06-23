@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -21,6 +22,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
@@ -34,12 +36,11 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.LabelIndexModel;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -172,11 +173,13 @@ public class ResultUtils {
 					if (value != null) {
 						// 日期格式
 						if (fmt.getType() == 1) {
-							row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat()));
+							row.set(columnIndex, DateUtil.formatDate(value, fmt.getFormat(),
+									(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
 						}
 						// 数字格式化
 						else {
-							row.set(columnIndex, NumberUtil.format(value, fmt.getFormat()));
+							row.set(columnIndex, NumberUtil.format(value, fmt.getFormat(), fmt.getRoundingMode(),
+									(fmt.getLocale() == null) ? null : new Locale(fmt.getLocale())));
 						}
 					}
 				}
@@ -664,7 +667,7 @@ public class ResultUtils {
 		// 参照列，如按年份进行旋转
 		Integer[] categoryCols = mappingLabelIndex(pivotModel.getCategoryCols(), labelIndexMap);
 		// 旋转列，如按年份进行旋转，则旋转列为：年份下面的合格数量、不合格数量等子分类数据
-		Integer[] pivotCols = mappingLabelIndex(pivotModel.getPivotCols(), labelIndexMap);
+		Integer[] pivotCols = mappingLabelIndex(pivotModel.getStartEndCols(), labelIndexMap);
 		// 分组主键列（以哪几列为基准）
 		Integer[] groupCols = mappingLabelIndex(pivotModel.getGroupCols(), labelIndexMap);
 		// update 2016-12-13 提取category后进行了排序
@@ -898,13 +901,13 @@ public class ResultUtils {
 			Object[] cacheValues = translateKeyMap.get(fieldStr);
 			// 未匹配到
 			if (cacheValues == null || cacheValues.length == 0) {
-				//定义未匹配模板则不输出日志
+				// 定义未匹配模板则不输出日志
 				if (extend.uncached != null) {
 					fieldValue = extend.uncached.replace("${value}", fieldStr);
 				} else {
 					fieldValue = fieldValue.toString();
-					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
-							fieldValue);
+					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache,
+							extend.cacheType, fieldValue);
 				}
 			} else {
 				fieldValue = cacheValues[extend.index];
@@ -936,13 +939,13 @@ public class ResultUtils {
 			}
 			cacheValues = translateKeyMap.get(key.trim());
 			if (cacheValues == null || cacheValues.length == 0) {
-				//定义未匹配模板则不输出日志
+				// 定义未匹配模板则不输出日志
 				if (extend.uncached != null) {
 					result.append(extend.uncached.replace("${value}", key));
 				} else {
 					result.append(key);
-					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache, extend.cacheType,
-							key);
+					logger.warn("translate cache:{},cacheType:{}, 对应的key:{}没有设置相应的value!", extend.cache,
+							extend.cacheType, key);
 				}
 			} else {
 				result.append(cacheValues[extend.index]);
@@ -965,28 +968,32 @@ public class ResultUtils {
 	 */
 	public static List getPivotCategory(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Connection conn, final Integer dbType, String dialect) throws Exception {
-		if (sqlToyConfig.getResultProcessor() != null && !sqlToyConfig.getResultProcessor().isEmpty()) {
-			List resultProcessors = sqlToyConfig.getResultProcessor();
-			Object processor;
-			QueryExecutorExtend extend = queryExecutor.getInnerModel();
-			for (int i = 0; i < resultProcessors.size(); i++) {
-				processor = resultProcessors.get(i);
-				// 数据旋转只能存在一个
-				if (processor instanceof PivotModel) {
-					PivotModel pivotModel = (PivotModel) processor;
-					if (pivotModel.getCategorySql() != null) {
-						SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-								sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
-								queryExecutor, dialect, false);
-						SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-								extend.getParamsName(pivotSqlConfig),
-								extend.getParamsValue(sqlToyContext, pivotSqlConfig));
-						List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
-								pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn,
-								dbType, sqlToyConfig.isIgnoreEmpty(), null);
-						// 行转列返回
-						return CollectionUtil.convertColToRow(pivotCategory, null);
-					}
+		List resultProcessors = new ArrayList();
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
+			resultProcessors.addAll(sqlToyConfig.getResultProcessor());
+		}
+		// QueryExecutor中扩展的计算
+		if (extend != null && !extend.calculators.isEmpty()) {
+			resultProcessors.addAll(extend.calculators);
+		}
+		Object processor;
+		for (int i = 0; i < resultProcessors.size(); i++) {
+			processor = resultProcessors.get(i);
+			// 数据旋转只能存在一个
+			if (processor instanceof PivotModel) {
+				PivotModel pivotModel = (PivotModel) processor;
+				if (pivotModel.getCategorySql() != null) {
+					SqlToyConfig pivotSqlConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
+							queryExecutor, dialect, false);
+					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
+							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig));
+					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
+							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
+							sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
+					// 行转列返回
+					return CollectionUtil.convertColToRow(pivotCategory, null);
 				}
 			}
 		}
@@ -999,6 +1006,7 @@ public class ResultUtils {
 	 * @param dataSetResult
 	 * @param pivotCategorySet
 	 * @param extend
+	 * @return
 	 */
 	public static boolean calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
 			QueryExecutorExtend extend) {
@@ -1007,11 +1015,16 @@ public class ResultUtils {
 		if (items == null || items.isEmpty()) {
 			return false;
 		}
-
 		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();
-		List resultProcessors = sqlToyConfig.getResultProcessor();
+		List resultProcessors = new ArrayList();
+		if (!sqlToyConfig.getResultProcessor().isEmpty()) {
+			resultProcessors.addAll(sqlToyConfig.getResultProcessor());
+		}
+		if (extend != null && !extend.calculators.isEmpty()) {
+			resultProcessors.addAll(extend.calculators);
+		}
 		// 整理列名称跟index的对照map
 		LabelIndexModel labelIndexMap = null;
 		if (!secureMasks.isEmpty() || !formatModels.isEmpty()
@@ -1049,7 +1062,6 @@ public class ResultUtils {
 				} // 列转行
 				else if (processor instanceof UnpivotModel) {
 					items = UnpivotList.process((UnpivotModel) processor, dataSetResult, labelIndexMap, items);
-					//changedCols = true;
 				} else if (processor instanceof SummaryModel) {
 					// 数据汇总合计
 					GroupSummary.process((SummaryModel) processor, labelIndexMap, items);

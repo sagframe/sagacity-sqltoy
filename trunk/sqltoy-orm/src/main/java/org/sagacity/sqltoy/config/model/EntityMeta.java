@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
+import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -32,10 +33,7 @@ public class EntityMeta implements Serializable {
 	 */
 	private String loadAllSql;
 
-	/**
-	 * 通过主键删除记录的语句
-	 */
-	private String deleteByIdsSql;
+	private String schema;
 
 	/**
 	 * 表名
@@ -46,11 +44,6 @@ public class EntityMeta implements Serializable {
 	 * 主键的约束名称
 	 */
 	private String pkConstraint;
-
-	/**
-	 * schema.table 模式字符串
-	 */
-	private String schemaTable;
 
 	/**
 	 * 主键列
@@ -66,11 +59,6 @@ public class EntityMeta implements Serializable {
 	 * 所有字段的类别
 	 */
 	private Integer[] fieldsTypeArray;
-
-	/**
-	 * 是否存在default值
-	 */
-	private boolean hasDefaultValue = false;
 
 	/**
 	 * 所有字段的默认值
@@ -156,16 +144,6 @@ public class EntityMeta implements Serializable {
 	 * 业务id字段
 	 */
 	private String businessIdField;
-
-	/**
-	 * 分页查询的sql
-	 */
-	private String pageSql;
-
-	/**
-	 * 批量集合查询
-	 */
-	private String listSql;
 
 	/**
 	 * 根据主键load查询的sql
@@ -409,28 +387,11 @@ public class EntityMeta implements Serializable {
 	}
 
 	public String getSequence() {
-		return sequence;
+		return (sequence == null) ? "" : sequence;
 	}
 
 	public void setSequence(String sequence) {
 		this.sequence = sequence;
-	}
-
-	/**
-	 * @return the deleteByIdsSql
-	 */
-	public String getDeleteByIdsSql(String tableName) {
-		if (StringUtil.isBlank(tableName)) {
-			return deleteByIdsSql;
-		}
-		return "delete from ".concat(tableName).concat(" ").concat(idArgWhereSql);
-	}
-
-	/**
-	 * @param deleteByIdsSql the deleteByIdsSql to set
-	 */
-	public void setDeleteByIdsSql(String deleteByIdsSql) {
-		this.deleteByIdsSql = deleteByIdsSql;
 	}
 
 	public String getColumnName(String fieldName) {
@@ -470,25 +431,13 @@ public class EntityMeta implements Serializable {
 		return fieldMeta.getFieldType();
 	}
 
-	/**
-	 * @return the schemaTable
-	 */
-	public String getSchemaTable() {
-		return schemaTable;
-	}
-
-	public String getSchemaTable(String tableName) {
-		if (StringUtil.isNotBlank(tableName)) {
-			return tableName;
+	public String getSchemaTable(String shardingTable, Integer dbType) {
+		String table = tableName;
+		if (StringUtil.isNotBlank(shardingTable)) {
+			table = shardingTable;
 		}
-		return schemaTable;
-	}
-
-	/**
-	 * @param schemaTable the schemaTable to set
-	 */
-	public void setSchemaTable(String schemaTable) {
-		this.schemaTable = schemaTable;
+		table = ReservedWordsUtil.convertWord(table, dbType);
+		return (schema == null) ? table : schema.concat(".").concat(table);
 	}
 
 	/**
@@ -519,43 +468,12 @@ public class EntityMeta implements Serializable {
 		return isRepeat;
 	}
 
-	/**
-	 * @return the pageSql
-	 */
-	public String getPageSql() {
-		if (StringUtil.isBlank(this.pageSql)) {
-			return this.listSql;
-		}
-		return pageSql;
-	}
-
-	/**
-	 * @param pageSql the pageSql to set
-	 */
-	public void setPageSql(String pageSql) {
-		this.pageSql = pageSql;
-	}
-
-	/**
-	 * @return the listSql
-	 */
-	public String getListSql() {
-		return listSql;
-	}
-
-	/**
-	 * @param listSql the listSql to set
-	 */
-	public void setListSql(String listSql) {
-		this.listSql = listSql;
-	}
-
-	public String getLoadSql(String tableName) {
-		if (tableName == null || tableName.equals(schemaTable)) {
+	public String getLoadSql(String shardingTable) {
+		if (shardingTable == null || shardingTable.equals(tableName)) {
 			return loadSql;
 		}
 		// 针对sharding 分表情况使用重新组织表名
-		return "select ".concat(allColumnNames).concat(" from ").concat(tableName).concat(" ")
+		return "select ".concat(allColumnNames).concat(" from ").concat(getSchemaTable(shardingTable, null)).concat(" ")
 				.concat(this.idNameWhereSql);
 	}
 
@@ -631,20 +549,6 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsNullable(Boolean[] fieldsNullable) {
 		this.fieldsNullable = fieldsNullable;
-	}
-
-	/**
-	 * @return the hasDefaultValue
-	 */
-	public boolean isHasDefaultValue() {
-		return hasDefaultValue;
-	}
-
-	/**
-	 * @param hasDefaultValue the hasDefaultValue to set
-	 */
-	public void setHasDefaultValue(boolean hasDefaultValue) {
-		this.hasDefaultValue = hasDefaultValue;
 	}
 
 	/**
@@ -828,5 +732,19 @@ public class EntityMeta implements Serializable {
 
 	public HashMap<String, String> getColumnFieldMap() {
 		return columnFieldMap;
+	}
+
+	/**
+	 * @return the schema
+	 */
+	public String getSchema() {
+		return schema;
+	}
+
+	/**
+	 * @param schema the schema to set
+	 */
+	public void setSchema(String schema) {
+		this.schema = schema;
 	}
 }

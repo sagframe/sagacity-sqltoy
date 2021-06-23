@@ -17,8 +17,9 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
@@ -26,11 +27,10 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -69,7 +69,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+			final String dialect,final int fetchSize, final int maxRows) throws Exception {
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -99,7 +99,7 @@ public class SqlServerDialectUtils {
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig));
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+				extend.rowCallbackHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/**
@@ -117,15 +117,14 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// sqlserver merge into must end with ";" charater
 		// 返回记录变更量
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
-					@Override
-                    public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
+					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
 								false);
@@ -157,7 +156,7 @@ public class SqlServerDialectUtils {
 		if (entityMeta.getIdArray() == null) {
 			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
 		}
-		String realTable = entityMeta.getSchemaTable(tableName);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
 		String columnName;
@@ -320,7 +319,7 @@ public class SqlServerDialectUtils {
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		StringBuilder sql = new StringBuilder(columnSize * 30 + 100);
-		String realTable = entityMeta.getSchemaTable(tableName);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		String columnName;
 		sql.append("merge into ");
 		sql.append(realTable);
@@ -452,7 +451,7 @@ public class SqlServerDialectUtils {
 		StringBuilder sql = new StringBuilder(columnSize * 20 + 30);
 		StringBuilder values = new StringBuilder(columnSize * 2 - 1);
 		sql.append(" insert into ");
-		sql.append(entityMeta.getSchemaTable(tableName));
+		sql.append(entityMeta.getSchemaTable(tableName, dbType));
 		sql.append(" (");
 		FieldMeta fieldMeta;
 		String field;
@@ -546,7 +545,7 @@ public class SqlServerDialectUtils {
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null, handler);
 		boolean needUpdatePk = false;
@@ -595,8 +594,7 @@ public class SqlServerDialectUtils {
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
-			@Override
-            public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
+			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity) {
 					pst = conn.prepareStatement(realInsertSql, PreparedStatement.RETURN_GENERATED_KEYS);
 				} else {
@@ -660,9 +658,8 @@ public class SqlServerDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
-					saveAll(sqlToyContext, subTableData, new ReflectPropertyHandler() {
-						@Override
-                        public void process() {
+					saveAll(sqlToyContext, subTableData, new ReflectPropsHandler() {
+						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
 								this.setValue(mappedFields[i], mainFieldValues[i]);
 							}
@@ -689,7 +686,7 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -720,7 +717,7 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
-			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropertyHandler reflectPropertyHandler,
+			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropsHandler reflectPropertyHandler,
 			Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
@@ -730,7 +727,7 @@ public class SqlServerDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -890,16 +887,16 @@ public class SqlServerDialectUtils {
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		Long updateCount = DialectUtils.update(sqlToyContext, entity, entityMeta, "isnull", forceUpdateFields, conn,
-				dbType, tableName);
+				dbType, realTable);
 		// 级联修改
 		if (cascade && !entityMeta.getCascadeModels().isEmpty()) {
 			HashMap<Type, String> typeMap = new HashMap<Type, String>();
-			if (emptyCascadeClasses != null) {
-                for (Type type : emptyCascadeClasses) {
-                    typeMap.put(type, "");
-                }
-            }
+			if (emptyCascadeClasses != null)
+				for (Type type : emptyCascadeClasses) {
+					typeMap.put(type, "");
+				}
 			// 级联子表数据
 			List subTableData = null;
 			String[] forceUpdateProps = null;
@@ -926,7 +923,7 @@ public class SqlServerDialectUtils {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), null, conn, dbType, null);
+							sqlToyResult.getParamsValue(), null, conn, dbType, null,true);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {
@@ -934,9 +931,8 @@ public class SqlServerDialectUtils {
 					SqlExecuteStat.debug("执行子表级联更新操作", null);
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropertyHandler() {
-								@Override
-                                public void process() {
+							new ReflectPropsHandler() {
+								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);
 									}

@@ -31,8 +31,7 @@ public enum MaskType {
 		return this.type;
 	}
 
-	@Override
-    public String toString() {
+	public String toString() {
 		return type;
 	}
 }

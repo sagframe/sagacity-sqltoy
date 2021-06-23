@@ -32,18 +32,30 @@ public class UnpivotModel implements Serializable {
 		return columnsToRows;
 	}
 
-	public void setColumnsToRows(String[] columnsToRows) {
-		this.columnsToRows = columnsToRows;
+	public UnpivotModel setColumnsToRows(String... columnsToRows) {
+		if (columnsToRows != null && columnsToRows.length > 0) {
+			if (columnsToRows.length > 1) {
+				this.columnsToRows = columnsToRows;
+			} else {
+				this.columnsToRows = columnsToRows[0].split("\\,");
+			}
+		}
+		return this;
 	}
 
 	public String[] getNewColumnsLabels() {
 		return newColumnsLabels;
 	}
 
-	public void setNewColumnsLabels(String[] newColumnsLabels) {
-		this.newColumnsLabels = newColumnsLabels;
+	public UnpivotModel setNewColumnsLabels(String... newColumnsLabels) {
+		if (newColumnsLabels != null && newColumnsLabels.length > 0) {
+			if (newColumnsLabels.length > 1) {
+				this.newColumnsLabels = newColumnsLabels;
+			} else {
+				this.newColumnsLabels = newColumnsLabels[0].split("\\,");
+			}
+		}
+		return this;
 	}
-
-	
 
 }

@@ -14,8 +14,8 @@ import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSearchPlugin;
 import org.sagacity.sqltoy.plugins.nosql.ElasticSqlPlugin;
 
@@ -161,14 +161,14 @@ public class Elastic extends BaseLink {
 	 * @param pageModel
 	 * @return
 	 */
-	public PaginationModel findPage(PaginationModel pageModel) {
+	public Page findPage(Page pageModel) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
 		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		if (noSqlConfig == null) {
 			throw new IllegalArgumentException(ERROR_MESSAGE);
 		}
-		PaginationModel pageResult = null;
+		Page pageResult = null;
 		try {
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());

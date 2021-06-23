@@ -7,23 +7,21 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.utils.ClickHouseDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 
 /**
  * @project sqltoy-orm
@@ -50,41 +48,9 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, Integer dbType,
-			String dialect) throws Exception {
-		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// select * from table order by rand() limit :randomCount 性能比较差,通过产生rand()
-		// row_number 再排序方式性能稍好 同时也可以保证通用性
-		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-		}
-		sql.append("select sag_random_table1.* from (");
-		// sql中是否存在排序或union,存在order 或union 则在sql外包裹一层
-		if (DialectUtils.hasOrderByOrUnion(innerSql)) {
-			sql.append("select rand() as sag_row_number,sag_random_table.* from (");
-			sql.append(innerSql);
-			sql.append(") sag_random_table ");
-		} else {
-			sql.append(innerSql.replaceFirst("(?i)select", "select rand() as sag_row_number,"));
-		}
-		sql.append(" )  as sag_random_table1 ");
-		sql.append(" order by sag_random_table1.sag_row_number limit ");
-		sql.append(randomCount);
-
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
+			String dialect, final int fetchSize, final int maxRows) throws Exception {
+		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -97,66 +63,18 @@ public class ClickHouseDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, Integer dbType, String dialect)
-			throws Exception {
-		StringBuilder sql = new StringBuilder();
-		boolean isNamed = sqlToyConfig.isNamedParam();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
-		}
-		// clickhouse 分页类似于postgresql
-		sql.append(" limit ");
-		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
-		sql.append(" offset ");
-		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_LAST_PARAM_NAME : "?");
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, dbType, 0, extend.fetchSize, extend.maxRows);
+			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, Integer dbType, String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
+		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
+				dbType, dialect, fetchSize, maxRows);
 	}
 
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, Integer dbType, String dialect) throws Exception {
-		StringBuilder sql = new StringBuilder();
-		if (sqlToyConfig.isHasFast()) {
-			sql.append(sqlToyConfig.getFastPreSql(dialect));
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(" (");
-			}
-			sql.append(sqlToyConfig.getFastSql(dialect));
-		} else {
-			sql.append(sqlToyConfig.getSql(dialect));
-		}
-		sql.append(" limit ");
-		sql.append(topSize);
-
-		if (sqlToyConfig.isHasFast()) {
-			if (!sqlToyConfig.isIgnoreBracket()) {
-				sql.append(") ");
-			}
-			sql.append(sqlToyConfig.getFastTailSql(dialect));
-		}
-
-		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, extend.fetchSize, extend.maxRows);
+			Integer topSize, Connection conn, Integer dbType, String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
+				dialect, fetchSize, maxRows);
 	}
 
 	@Override
@@ -182,16 +100,19 @@ public class ClickHouseDialect implements Dialect {
 			LockMode lockMode, Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search, "");
-		String loadSql = ReservedWordsUtil.convertSql(sqlToyConfig.getSql(dialect), dbType);
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
 		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
 				conn, dbType);
 	}
 
 	@Override
 	public List<?> loadAll(SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes, LockMode lockMode,
-			Connection conn, Integer dbType, String dialect, String tableName) throws Exception {
-		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null);
+			Connection conn, Integer dbType, String dialect, String tableName, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null,
+				fetchSize, maxRows);
 	}
 
 	@Override
@@ -207,7 +128,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// clickhouse 不支持sequence，支持identity自增模式
@@ -228,7 +149,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] forceUpdateFields,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -242,7 +163,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			ReflectPropsHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -250,7 +171,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -272,7 +193,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, Integer dbType, String dialect,
-			final LockMode lockMode) throws Exception {
+			final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -295,8 +216,8 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect)
-			throws Exception {
+			Object[] inParamsValue, Integer[] outParamsType, Connection conn, Integer dbType, String dialect,
+			final int fetchSize) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}

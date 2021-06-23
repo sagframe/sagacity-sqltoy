@@ -18,8 +18,8 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
-import org.sagacity.sqltoy.executor.DialectExecutor;
-import org.sagacity.sqltoy.model.ShardingGroupModel;
+import org.sagacity.sqltoy.config.model.ShardingGroupModel;
+import org.sagacity.sqltoy.dialect.executor.DialectExecutor;
 import org.sagacity.sqltoy.model.ShardingResult;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 

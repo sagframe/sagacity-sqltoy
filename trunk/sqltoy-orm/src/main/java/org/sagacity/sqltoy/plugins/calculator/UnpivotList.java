@@ -6,9 +6,9 @@ package org.sagacity.sqltoy.plugins.calculator;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.LabelIndexModel;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 

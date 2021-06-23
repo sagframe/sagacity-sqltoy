@@ -18,14 +18,14 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
+import org.sagacity.sqltoy.config.model.ShardingGroupModel;
+import org.sagacity.sqltoy.config.model.ShardingModel;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
-import org.sagacity.sqltoy.model.ShardingDBModel;
-import org.sagacity.sqltoy.model.ShardingGroupModel;
-import org.sagacity.sqltoy.model.ShardingModel;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -60,7 +60,7 @@ public class ShardingUtils {
 		ShardingModel shardingModel = new ShardingModel();
 		shardingModel.setDataSource(dataSource);
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		shardingModel.setTableName(entityMeta.getSchemaTable());
+		shardingModel.setTableName(entityMeta.getTableName());
 		// 主键值需要提前按照主键策略赋予(sequence 和assign模式的不会实际执行赋值)
 		if (wrapIdValue) {
 			assignPK(sqlToyContext, entityMeta, entity);
@@ -83,7 +83,7 @@ public class ShardingUtils {
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
 			ShardingDBModel dbModel = shardingStrategy.getShardingDB(sqlToyContext, entity.getClass(),
-					entityMeta.getSchemaTable(), strategyConfig.getDecisionType(), valueMap);
+					entityMeta.getTableName(), strategyConfig.getDecisionType(), valueMap);
 			shardingModel.setDataSourceName(dbModel.getDataSourceName());
 			if (dbModel.getDataSource() == null) {
 				shardingModel.setDataSource(sqlToyContext.getDataSourceBean(dbModel.getDataSourceName()));
@@ -103,7 +103,7 @@ public class ShardingUtils {
 			IgnoreCaseLinkedMap<String, Object> valueMap = hashParams(strategyConfig.getAliasNames(),
 					BeanUtil.reflectBeanToAry(entity, strategyConfig.getFields()));
 			String tableName = shardingStrategy.getShardingTable(sqlToyContext, entity.getClass(),
-					entityMeta.getSchemaTable(), strategyConfig.getDecisionType(), valueMap);
+					entityMeta.getTableName(), strategyConfig.getDecisionType(), valueMap);
 			if (StringUtil.isNotBlank(tableName)) {
 				shardingModel.setTableName(tableName);
 			}
@@ -124,7 +124,7 @@ public class ShardingUtils {
 			EntityMeta entityMeta, DataSource dataSource) throws Exception {
 		ShardingConfig shardingConfig = entityMeta.getShardingConfig();
 		ShardingModel shardingModel = null;
-		String entityTable = entityMeta.getSchemaTable();
+		String entityTable = entityMeta.getTableName();
 		// 没有sharding配置，则作为单个分组返回
 		if (shardingConfig == null) {
 			Collection<ShardingGroupModel> result = new ArrayList<ShardingGroupModel>();
@@ -512,7 +512,7 @@ public class ShardingUtils {
 			return;
 		}
 		if (idGenerator != null) {
-			String table = entityMeta.getSchemaTable();
+			String table = entityMeta.getTableName();
 			String idType = entityMeta.getIdType();
 			// 业务主键跟主键重叠，已经将主键长度设置为业务主键长度
 			int idLength = entityMeta.getIdLength();

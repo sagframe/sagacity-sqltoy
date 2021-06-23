@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;

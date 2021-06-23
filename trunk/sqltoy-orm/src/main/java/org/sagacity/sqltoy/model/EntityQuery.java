@@ -8,10 +8,13 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.SelectFields;
+import org.sagacity.sqltoy.config.model.NamedValuesModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.inner.EntityQueryExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -56,6 +59,26 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
+	 * @TODO 设置jdbc参数，一般无需设置
+	 * @param fetchSize
+	 * @return
+	 */
+	public EntityQuery fetchSize(int fetchSize) {
+		innerModel.fetchSize = fetchSize;
+		return this;
+	}
+	
+	public EntityQuery maxRows(int maxRows) {
+		innerModel.maxRows = maxRows;
+		return this;
+	}
+	
+	public EntityQuery distinct() {
+		innerModel.distinct = true;
+		return this;
+	}
+
+	/**
 	 * @TODO 用链式模式实现字段选择
 	 * @param selectFields
 	 * @return
@@ -91,7 +114,7 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-
+	
 	/**
 	 * @TODO where 条件
 	 * @param where
@@ -108,7 +131,14 @@ public class EntityQuery implements Serializable {
 	}
 
 	public EntityQuery values(Object... values) {
-		innerModel.values = values;
+		// 兼容map
+		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
+			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) values[0]);
+			innerModel.names = model.getNames();
+			innerModel.values = model.getValues();
+		} else {
+			innerModel.values = values;
+		}
 		return this;
 	}
 

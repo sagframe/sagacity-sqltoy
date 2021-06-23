@@ -12,9 +12,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 
 /**
@@ -89,7 +89,6 @@ public class Query extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	@Deprecated
 	public Query fetchSize(int fetchSize) {
 		this.fetchSize = fetchSize;
 		return this;
@@ -106,6 +105,7 @@ public class Query extends BaseLink {
 		return this;
 	}
 
+	@Deprecated
 	public Query rowhandler(RowCallbackHandler handler) {
 		this.handler = handler;
 		return this;
@@ -249,18 +249,18 @@ public class Query extends BaseLink {
 
 	/**
 	 * @TODO 进行分页查询
-	 * @param pageModel
+	 * @param page
 	 * @return
 	 */
-	public PaginationModel<?> findPage(final PaginationModel pageModel) {
+	public Page<?> findPage(final Page page) {
 		QueryExecutor queryExecute = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
-		if (pageModel.getSkipQueryCount()) {
-			return (PaginationModel<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
-					pageModel.getPageNo(), pageModel.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		if (page.getSkipQueryCount()) {
+			return (Page<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
+					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 		}
-		return (PaginationModel<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig,
-				pageModel.getPageNo(), pageModel.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig,
+				page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 	}
 
 	private QueryExecutor build() {

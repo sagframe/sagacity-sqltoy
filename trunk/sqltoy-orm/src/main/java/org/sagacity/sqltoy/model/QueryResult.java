@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 所有查询的结果形态模型
@@ -73,8 +75,8 @@ public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 	 * @todo 获取分页结果模型
 	 * @return
 	 */
-	public PaginationModel getPageResult() {
-		PaginationModel result = new PaginationModel();
+	public Page getPageResult() {
+		Page result = new Page();
 		result.setPageNo(this.getPageNo());
 		result.setPageSize(this.getPageSize());
 		result.setRecordCount(this.getRecordCount());

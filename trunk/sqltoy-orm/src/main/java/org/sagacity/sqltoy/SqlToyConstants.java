@@ -10,7 +10,6 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -39,7 +38,7 @@ public class SqlToyConstants {
 	};
 
 	// 目前还不支持此功能的提醒
-	public static String UN_SUPPORT_MESSAGE = "It is not support this function!";
+	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";
 
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
@@ -122,6 +121,8 @@ public class SqlToyConstants {
 	 * 并行默认最大等待时长
 	 */
 	public static int PARALLEL_MAXWAIT_SECONDS = 1800;
+
+	public static int FETCH_SIZE = -1;
 
 	/**
 	 * 字符串中内嵌参数的匹配模式
@@ -220,22 +221,6 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean mysqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.mysql.support.saveOrUpdate", "false"));
-	}
-
-	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean postgresqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.postgresql.support.saveOrUpdate", "false"));
-	}
-
-	/**
 	 * @todo 获取记录提取的警告阀值
 	 * @return
 	 */
@@ -263,33 +248,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * sybase iq 主键采用identity模式时是否需要在前后开启 SET TEMPORARY OPTION
-	 * IDENTITY_INSERT=tableName
-	 * 
-	 * @return
-	 */
-	public static boolean sybaseIQIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.sybase.iq.identity.open", "false"));
-	}
-
-	/**
 	 * @todo oracle分页是否忽视排序导致错乱的问题
 	 * @return
 	 */
 	public static boolean oraclePageIgnoreOrder() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.oracle.page.ignore.order", "false"));
-	}
-
-	/**
-	 * @todo 取随机记录是否采用数据库自带的方言机制
-	 * @return
-	 */
-	public static boolean randomWithDialect(Integer dbType) {
-		// 目前是不支持的
-		if (dbType == DataSourceUtils.DBType.SYBASE_IQ) {
-			return false;
-		}
-		return Boolean.parseBoolean(getKeyValue("sqltoy.random.with.dialect", "true"));
 	}
 
 	/**

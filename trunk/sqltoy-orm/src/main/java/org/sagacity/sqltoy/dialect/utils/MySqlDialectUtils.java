@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @version v1.0,Date:2015年2月13日
  */
 public class MySqlDialectUtils {
+
 	/**
 	 * @todo 产生mysql数据库的saveOrUpdate操作sql语句
 	 * @param dbType
@@ -28,7 +29,7 @@ public class MySqlDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName);
+		String realTable = entityMeta.getSchemaTable(tableName,dbType);
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
 					false, realTable);
