@@ -228,6 +228,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
 
+	/**
+	 * 提供数据源获得connection的扩展(默认spring的实现)
+	 */
 	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
 
 	/**

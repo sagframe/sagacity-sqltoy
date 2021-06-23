@@ -1091,6 +1091,7 @@
 			<xsd:enumeration value="#,###.00" />
 			<xsd:enumeration value="capital" />
 			<xsd:enumeration value="capital-rmb" />
+			<xsd:enumeration value="capital-en" />
 		</xsd:restriction>
 	</xsd:simpleType>
 </xsd:schema>
