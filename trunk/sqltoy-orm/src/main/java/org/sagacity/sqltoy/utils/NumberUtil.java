@@ -64,9 +64,7 @@ public class NumberUtil {
 	/**
 	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
 	 * @param target
-	 * @param pattern :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
-	 *                '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
-	 *                整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
+	 * @param pattern
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
@@ -453,7 +451,8 @@ public class NumberUtil {
 	/**
 	 * @todo 将多位阿拉伯数字转换成中文
 	 * @param sourceInt
-	 * @return String
+	 * @param isMoney
+	 * @return
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
 		if (sourceInt.equals("0")) {

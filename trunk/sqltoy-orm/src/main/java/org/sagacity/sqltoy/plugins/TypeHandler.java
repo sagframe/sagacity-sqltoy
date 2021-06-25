@@ -19,6 +19,7 @@ public abstract class TypeHandler {
 	 * @param paramIndex
 	 * @param jdbcType
 	 * @return
+	 * @throws SQLException
 	 */
 	public boolean setNull(PreparedStatement pst, int paramIndex, int jdbcType) throws SQLException {
 		return false;

@@ -66,8 +66,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List)
 	 */
 	@Override
 	@Transactional

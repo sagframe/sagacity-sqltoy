@@ -155,8 +155,6 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * 返回上一页号
-	 * 
 	 * @return 上一页号
 	 */
 	public long getPriorPage() {
@@ -167,8 +165,6 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * 返回最后一页
-	 * 
 	 * @return 最后一页
 	 */
 	public long getLastPage() {
@@ -176,8 +172,6 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * 返回第一页
-	 * 
 	 * @return 第一页
 	 */
 	public long getFirstPage() {
@@ -185,8 +179,6 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * 返回下一页号
-	 * 
 	 * @return 下一页号
 	 */
 	public long getNextPage() {
@@ -197,9 +189,7 @@ public class Page<T> implements Serializable {
 	}
 
 	/**
-	 * 总页数
-	 * 
-	 * @return totalPage
+	 * @return totalPage 总页数
 	 */
 	public long getTotalPage() {
 		if (this.pageSize < 1) {

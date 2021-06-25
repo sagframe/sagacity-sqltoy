@@ -69,11 +69,11 @@ public class MacroUtils {
 
 	/**
 	 * @todo 递归调用解析字符串中的转换器
-	 * @param reportContext
-	 * @param reportId
-	 * @param hasMacroStr
+	 * @param hasMacroStr 含macro宏的字符串
+	 * @param keyValues
 	 * @param isOuter(isOuter 当@abc(@do(),xxx):为true表示从最外层的macro@abce,false则会先执行@do()
 	 *                        然后再执行@abc())
+	 * @param macros
 	 * @return
 	 */
 	public static String replaceMacros(String hasMacroStr, IgnoreKeyCaseMap<String, Object> keyValues, boolean isOuter,
@@ -130,8 +130,7 @@ public class MacroUtils {
 
 	/**
 	 * @todo <b>判断匹配的字符串是否是转换器</b>
-	 * @author zhongxuchen
-	 * @date 2011-6-10 下午12:01:47
+	 * @param macros
 	 * @param matchedStr
 	 * @param isStart
 	 * @return

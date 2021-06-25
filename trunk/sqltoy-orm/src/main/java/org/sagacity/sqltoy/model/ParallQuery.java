@@ -48,11 +48,11 @@ public class ParallQuery implements Serializable {
 
 	/**
 	 * @TODO 分页场景
-	 * @param pageModel
+	 * @param page
 	 * @return
 	 */
-	public ParallQuery pageModel(Page pageModel) {
-		extend.pageModel = pageModel;
+	public ParallQuery page(Page page) {
+		extend.page = page;
 		return this;
 	}
 

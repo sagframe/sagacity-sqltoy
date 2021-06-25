@@ -133,7 +133,6 @@ public class TranslateManager {
 	 * @param conn
 	 * @param translates
 	 * @return
-	 * @throws Exception
 	 */
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(Connection conn,
 			HashMap<String, Translate> translates) {
@@ -170,7 +169,6 @@ public class TranslateManager {
 	 * @param cacheModel
 	 * @param cacheType  一般为null,不为空时一般用于数据字典等同于dictType
 	 * @return
-	 * @throws Exception
 	 */
 	private HashMap<String, Object[]> getCacheData(TranslateConfigModel cacheModel, String cacheType) {
 		// 从缓存中提取数据
@@ -187,23 +185,10 @@ public class TranslateManager {
 	}
 
 	/**
-	 * @see getCacheData(String cacheName, String cacheType) 剔除sqlToyContext参数
-	 * @param sqlToyContext
-	 * @param cacheName
-	 * @param cacheType
-	 * @return
-	 */
-	@Deprecated
-	public HashMap<String, Object[]> getCacheData(SqlToyContext sqlToyContext, String cacheName, String cacheType) {
-		return getCacheData(cacheName, cacheType);
-	}
-
-	/**
 	 * @todo 提供对外的访问(如要做增量更新可以对这里的数据进行修改即可达到缓存的更新作用)
 	 * @param cacheName
 	 * @param cacheType (一般为null,不为空时一般用于数据字典等同于dictType)
 	 * @return
-	 * @throws Exception
 	 */
 	public HashMap<String, Object[]> getCacheData(String cacheName, String cacheType) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);

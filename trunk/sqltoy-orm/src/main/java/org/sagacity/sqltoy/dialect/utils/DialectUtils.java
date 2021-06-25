@@ -543,7 +543,7 @@ public class DialectUtils {
 	 * @param entityMeta
 	 * @param forceUpdateFields
 	 * @param generateSqlHandler
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -552,11 +552,11 @@ public class DialectUtils {
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			EntityMeta entityMeta, String[] forceUpdateFields, GenerateSqlHandler generateSqlHandler,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, Boolean autoCommit)
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, Boolean autoCommit)
 			throws Exception {
 		// 重新构造修改或保存的属性赋值反调
 		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(sqlToyContext, entityMeta.getIdArray(),
-				reflectPropertyHandler, forceUpdateFields);
+				reflectPropsHandler, forceUpdateFields);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -614,7 +614,7 @@ public class DialectUtils {
 	 * @param batchSize
 	 * @param entityMeta
 	 * @param generateSqlHandler
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -622,10 +622,10 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropertyHandler,
+			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropsHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -1398,14 +1398,14 @@ public class DialectUtils {
 	 * @param insertSql
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param autoCommit
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
@@ -1416,7 +1416,7 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropsHandler);
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1656,11 +1656,11 @@ public class DialectUtils {
 	// update 级联操作时，子表会涉及saveOrUpdateAll动作,而mysql和postgresql 对应的
 	// ON DUPLICATE KEY UPDATE 当字段为非空时报错，因此需特殊处理
 	private static void mysqlSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
-			ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				"ifnull", conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1675,17 +1675,17 @@ public class DialectUtils {
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, dbType, null);
+				batchSize, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	// 针对oceanBase
 	private static void oceanBaseSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			List<?> entities, ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "nvl",
 				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1704,17 +1704,17 @@ public class DialectUtils {
 				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						OracleDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	// 针对postgresql 数据库
 	private static void postgreSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			List<?> entities, ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				"COALESCE", conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1734,17 +1734,17 @@ public class DialectUtils {
 				return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, "COALESCE", sequence, isAssignPK,
 						tableName);
 			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	// 针对sqlite 数据库
 	private static void sqliteSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			List<?> entities, ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				"ifnull", conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1758,17 +1758,17 @@ public class DialectUtils {
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert or ignore into ");
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, dbType, null);
+				batchSize, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	// 针对达梦数据库
 	private static void dmSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta, List<?> entities,
-			ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "nvl",
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "nvl",
 				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1782,17 +1782,17 @@ public class DialectUtils {
 				return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", "nvl", sequence,
 						DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
 			}
-		}, reflectPropertyHandler, conn, dbType, null);
+		}, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
 	// 针对人大金仓kingbase数据库
 	private static void kingbaseSaveOrUpdateAll(SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			List<?> entities, ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields,
+			List<?> entities, ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler, "NVL",
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "NVL",
 				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
@@ -1804,7 +1804,7 @@ public class DialectUtils {
 		String insertSql = DialectExtUtils.insertIgnore(dbType, entityMeta, entityMeta.getIdStrategy(), "NVL",
 				"nextval('" + entityMeta.getSequence() + "')", isAssignPK, tableName);
 		Long saveCnt = saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				batchSize, reflectPropertyHandler, conn, dbType, null);
+				batchSize, reflectPropsHandler, conn, dbType, null);
 		logger.debug("级联子表:{} 变更记录数:{},新建记录数为:{}", tableName, updateCnt, saveCnt);
 	}
 
@@ -1814,7 +1814,7 @@ public class DialectUtils {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateFields
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param nullFunction
 	 * @param conn
 	 * @param dbType
@@ -1825,7 +1825,7 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropsHandler reflectPropertyHandler, String nullFunction,
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, String nullFunction,
 			Connection conn, final Integer dbType, final Boolean autoCommit, String tableName, boolean skipNull)
 			throws Exception {
 		if (entities == null || entities.isEmpty()) {
@@ -1843,7 +1843,7 @@ public class DialectUtils {
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropertyHandler,
+		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropsHandler,
 				forceUpdateFields);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);

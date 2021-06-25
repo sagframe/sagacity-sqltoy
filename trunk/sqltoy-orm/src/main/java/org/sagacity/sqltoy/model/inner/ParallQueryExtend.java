@@ -28,7 +28,7 @@ public class ParallQueryExtend implements Serializable {
 	/**
 	 * 分页模型
 	 */
-	public Page pageModel;
+	public Page page;
 
 	/**
 	 * 返回结果类型

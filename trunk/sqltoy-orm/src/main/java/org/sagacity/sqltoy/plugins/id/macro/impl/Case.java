@@ -19,7 +19,7 @@ public class Case extends AbstractMacro {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.id.macro.AbstractMacro#execute(java.lang.Object)
+	 * org.sagacity.sqltoy.plugins.id.macro.AbstractMacro#execute(java.lang.Object)
 	 */
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {

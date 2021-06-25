@@ -107,7 +107,7 @@ public class SqlServerDialectUtils {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateFields
 	 * @param conn
 	 * @param dbType
@@ -117,7 +117,7 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// sqlserver merge into must end with ";" charater
@@ -135,7 +135,7 @@ public class SqlServerDialectUtils {
 						}
 						return sql.concat(";");
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/**
@@ -677,7 +677,7 @@ public class SqlServerDialectUtils {
 	 * @todo 批量保存处理
 	 * @param sqlToyContext
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -686,7 +686,7 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -698,7 +698,7 @@ public class SqlServerDialectUtils {
 		}
 		// 返回记录修改量
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entities,
-				reflectPropertyHandler, conn, dbType, autoCommit);
+				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/**
@@ -709,7 +709,7 @@ public class SqlServerDialectUtils {
 	 * @param isAssignPK
 	 * @param insertSql
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -717,7 +717,7 @@ public class SqlServerDialectUtils {
 	 * @throws Exception
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
-			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropsHandler reflectPropertyHandler,
+			boolean isAssignPK, String insertSql, List<?> entities, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, final Boolean autoCommit) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
@@ -727,7 +727,7 @@ public class SqlServerDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropsHandler);
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID

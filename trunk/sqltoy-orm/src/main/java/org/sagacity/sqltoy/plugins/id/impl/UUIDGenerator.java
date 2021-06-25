@@ -28,7 +28,7 @@ public class UUIDGenerator implements IdGenerator {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.IdGenerator#getId(java.lang.String,
+	 * @see org.sagacity.sqltoy.plugins.id.IdGenerator#getId(java.lang.String,
 	 * java.lang.String, java.lang.Object[], int)
 	 */
 	@Override

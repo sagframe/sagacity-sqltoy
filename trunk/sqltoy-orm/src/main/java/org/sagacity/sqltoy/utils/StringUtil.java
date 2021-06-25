@@ -493,13 +493,13 @@ public class StringUtil {
 	/**
 	 * @todo 获取匹配成功的个数
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static int matchCnt(String source, Pattern p) {
-		Matcher m = p.matcher(source);
+	public static int matchCnt(String source, Pattern pattern) {
+		Matcher matcher = pattern.matcher(source);
 		int count = 0;
-		while (m.find()) {
+		while (matcher.find()) {
 			count++;
 		}
 		return count;

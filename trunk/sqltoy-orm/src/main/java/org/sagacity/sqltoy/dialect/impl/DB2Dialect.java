@@ -163,18 +163,18 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -207,15 +207,15 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, int, java.lang.String[],
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
 	 * java.lang.Integer, java.lang.String, java.lang.Boolean, java.lang.String)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropsHandler reflectPropertyHandler, Connection conn,
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
@@ -330,13 +330,13 @@ public class DB2Dialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, int,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.lang.String[],
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.lang.String[],
 	 * java.sql.Connection, java.lang.Integer, java.lang.String, java.lang.Boolean,
 	 * java.lang.String)
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -350,7 +350,7 @@ public class DB2Dialect implements Dialect {
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
 								tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -359,12 +359,12 @@ public class DB2Dialect implements Dialect {
 	 * @see
 	 * org.sagacity.sqltoy.dialect.Dialect#saveAllIgnoreExist(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, int,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
 	 * java.lang.Integer, java.lang.String, java.lang.Boolean, java.lang.String)
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -376,7 +376,7 @@ public class DB2Dialect implements Dialect {
 								VIRTUAL_TABLE, NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 
 	}
 

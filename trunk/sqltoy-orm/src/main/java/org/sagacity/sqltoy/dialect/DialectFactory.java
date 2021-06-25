@@ -214,14 +214,14 @@ public class DialectFactory {
 	 * @param sqlToyConfig
 	 * @param dataSet
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param insertCallhandler
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
-			final int batchSize, final ReflectPropsHandler reflectPropertyHandler,
+			final int batchSize, final ReflectPropsHandler reflectPropsHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
@@ -243,7 +243,7 @@ public class DialectFactory {
 								// 替换sql中:name为?并提取参数名称归集成数组
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-										reflectPropertyHandler);
+										reflectPropsHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
 										sqlParamsModel.getParamsName());
 								realSql = sqlParamsModel.getSql();
@@ -1165,12 +1165,12 @@ public class DialectFactory {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateProps
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropertyHandler,
+			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
@@ -1189,7 +1189,7 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler,
+												batchModel.getEntities(), batchSize, reflectPropsHandler,
 												forceUpdateProps, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
 									}
@@ -1221,12 +1221,12 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropertyHandler, final DataSource dataSource,
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
@@ -1243,7 +1243,7 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn,
 												dbType, dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
@@ -1399,12 +1399,12 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropertyHandler, final DataSource dataSource,
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
 			final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
@@ -1422,7 +1422,7 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn,
 												dbType, dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
@@ -1490,12 +1490,12 @@ public class DialectFactory {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateFields
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropertyHandler,
+			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");
@@ -1514,7 +1514,7 @@ public class DialectFactory {
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
 												batchModel.getEntities(), batchSize, forceUpdateFields,
-												reflectPropertyHandler, conn, dbType, dialect, autoCommit,
+												reflectPropsHandler, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
 									}
 								});
@@ -1543,6 +1543,7 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param dataSource
+	 * @return
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null) {
@@ -1572,11 +1573,13 @@ public class DialectFactory {
 
 	/**
 	 * @todo 批量删除对象
+	 * @param <T>
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
 	 * @param dataSource
 	 * @param autoCommit
+	 * @return
 	 */
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {

@@ -60,11 +60,11 @@ public class SqlExecuteStat {
 
 	/**
 	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
-	 * @param e
+	 * @param exception
 	 */
-	public static void error(Exception e) {
+	public static void error(Exception exception) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setError(e.getMessage());
+			threadLocal.get().setError(exception.getMessage());
 		}
 	}
 

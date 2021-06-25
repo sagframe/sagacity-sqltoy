@@ -157,14 +157,14 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	@Override
@@ -178,9 +178,9 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] forceUpdateFields,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
@@ -195,16 +195,16 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
 			return updateCnt;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
@@ -212,7 +212,7 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
@@ -221,7 +221,7 @@ public class DefaultDialect implements Dialect {
 						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
 				.replaceFirst("(?i)insert ", "insert ignore ");
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
-				entities, batchSize, reflectPropertyHandler, conn, dbType, autoCommit);
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	@Override

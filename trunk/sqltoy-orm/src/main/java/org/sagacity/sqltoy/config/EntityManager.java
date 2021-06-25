@@ -207,7 +207,7 @@ public class EntityManager {
 	 * @todo <b>解析sqltoy entity对象获取其跟数据库相关的配置信息</b>
 	 * @param sqlToyContext
 	 * @param entityClass
-	 * @param notEntityWarn 当不是entity实体bean时是否进行日志提示
+	 * @param isWarn 当不是entity实体bean时是否进行日志提示
 	 * @return
 	 */
 	public synchronized EntityMeta parseEntityMeta(SqlToyContext sqlToyContext, Class entityClass, boolean isWarn) {

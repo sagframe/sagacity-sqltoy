@@ -175,7 +175,7 @@ public class ClickHouseDialectUtils {
 	 * @param insertSql
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -183,7 +183,7 @@ public class ClickHouseDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
-			final int batchSize, ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
@@ -196,7 +196,7 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropsHandler);
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID

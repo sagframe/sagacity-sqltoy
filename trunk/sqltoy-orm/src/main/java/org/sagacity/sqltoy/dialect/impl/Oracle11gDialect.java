@@ -233,7 +233,7 @@ public class Oracle11gDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -249,7 +249,7 @@ public class Oracle11gDialect implements Dialect {
 						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
 								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -257,12 +257,12 @@ public class Oracle11gDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
 	 * java.lang.Boolean)
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -277,7 +277,7 @@ public class Oracle11gDialect implements Dialect {
 						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, VIRTUAL_TABLE, NVL_FUNCTION,
 								sequence, isAssignPKValue(pkStrategy), tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -354,11 +354,11 @@ public class Oracle11gDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -372,7 +372,7 @@ public class Oracle11gDialect implements Dialect {
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropertyHandler, conn, dbType, autoCommit);
+				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -407,14 +407,14 @@ public class Oracle11gDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropsHandler reflectPropertyHandler, Connection conn,
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 

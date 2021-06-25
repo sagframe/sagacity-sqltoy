@@ -107,10 +107,6 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDebug(properties.getDebug());
 		}
 
-		// sql执行打印策略(默认为error时打印)
-		if (properties.getPrintSqlStrategy() != null) {
-			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
-		}
 		// sql执行超过多长时间则打印提醒(默认30秒)
 		if (properties.getPrintSqlTimeoutMillis() != null) {
 			sqlToyContext.setPrintSqlTimeoutMillis(properties.getPrintSqlTimeoutMillis());

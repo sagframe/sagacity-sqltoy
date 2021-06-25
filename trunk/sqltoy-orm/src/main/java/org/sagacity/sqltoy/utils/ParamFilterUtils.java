@@ -1001,7 +1001,7 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤大于指定参照数据值,否则查询条件为null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
 	private static Object filterMore(Object param, Object contrastParam) {
@@ -1036,7 +1036,7 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤大于等于指定参照数据值,否则查询条件为null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
 	private static Object filterMoreEquals(Object param, Object contrastParam) {

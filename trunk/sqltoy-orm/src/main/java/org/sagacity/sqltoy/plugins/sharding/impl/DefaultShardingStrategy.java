@@ -70,7 +70,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#initialize()
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#initialize()
 	 */
 	@Override
 	public void initialize() {
@@ -104,7 +104,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#getTargetTableName(org.
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getTargetTableName(org.
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
@@ -157,7 +157,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingModel(org.sagacity.
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.sagacity.
 	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
 	 */
 	@Override

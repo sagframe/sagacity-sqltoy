@@ -537,6 +537,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param preparedStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
@@ -569,6 +570,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param callableStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
 			CallableStatementResultHandler callableStatementResultHandler) throws Exception {

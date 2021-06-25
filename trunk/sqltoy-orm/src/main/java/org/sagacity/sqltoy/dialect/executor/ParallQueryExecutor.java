@@ -57,9 +57,9 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 			QueryExecutor queryExecutor = new QueryExecutor(extend.sql).resultType(extend.resultType).names(paramNames)
 					.values(paramValues);
 			// 分页
-			if (extend.pageModel != null) {
+			if (extend.page != null) {
 				result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-						extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+						extend.page.getPageNo(), extend.page.getPageSize(), dataSource));
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));

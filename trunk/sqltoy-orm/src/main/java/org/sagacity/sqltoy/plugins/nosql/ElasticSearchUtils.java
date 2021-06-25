@@ -319,6 +319,7 @@ public class ElasticSearchUtils {
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
+	 * @param isSuggest
 	 */
 	private static void processRow(List result, JSONObject rowJson, String[] realFields, boolean isSuggest) {
 		Object root = getRealJSONObject(rowJson, realFields, isSuggest);
@@ -388,6 +389,7 @@ public class ElasticSearchUtils {
 	 * @todo 提取实际json对象
 	 * @param rowJson
 	 * @param realFields
+	 * @param isSuggest
 	 * @return
 	 */
 	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {
