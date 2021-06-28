@@ -20,7 +20,6 @@ import org.springframework.context.ApplicationContext;
  * @description 检测sharding涉及到的数据库连接状况,动态调整权重
  * @author zhongxuchen
  * @version v1.0, Date:2019年9月10日
- * @modify 2019年9月10日,修改说明
  */
 public class IdleConnectionMonitor extends Thread {
 	/**

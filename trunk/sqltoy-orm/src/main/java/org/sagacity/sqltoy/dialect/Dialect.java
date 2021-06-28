@@ -350,11 +350,13 @@ public interface Dialect {
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
 			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception;
 
+	// 极少使用
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, final Integer topSize, final UpdateRowHandler updateRowHandler, final Connection conn,
 			final Integer dbType, final String dialect) throws Exception;
 
+	// 容易产生获得cursor不稳定错误
 	@Deprecated
 	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, final Integer random, final UpdateRowHandler updateRowHandler, final Connection conn,

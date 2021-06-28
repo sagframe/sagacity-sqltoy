@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description hash取模形式的分库策略
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月1日

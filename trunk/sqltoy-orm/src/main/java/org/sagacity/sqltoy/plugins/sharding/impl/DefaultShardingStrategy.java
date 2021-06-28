@@ -24,7 +24,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供默认的数据库sharding策略
  * @author zhongxuchen
  * @version v1.0,Date: 2017年1月3日

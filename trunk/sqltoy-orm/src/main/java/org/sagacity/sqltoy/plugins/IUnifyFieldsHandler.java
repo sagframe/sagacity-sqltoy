@@ -5,7 +5,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 统一字段赋值处理
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月17日

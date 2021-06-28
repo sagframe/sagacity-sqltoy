@@ -64,6 +64,8 @@ public class SqlServerDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */

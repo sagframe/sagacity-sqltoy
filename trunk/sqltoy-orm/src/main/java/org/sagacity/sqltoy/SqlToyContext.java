@@ -53,12 +53,12 @@ import org.springframework.context.ApplicationContextAware;
 //12、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//------------------------------------------------------------------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------------*/
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
  * @author zhongxuchen
- * @version v1.0,Date:2009-12-11 下午09:48:15
+ * @version v1.0,Date:2009-12-11
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
@@ -143,6 +143,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
+	/**
+	 * 默认数据源名称，一般无需设置
+	 */
 	private String defaultDataSourceName;
 
 	/**
@@ -176,7 +179,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 数据库类型
 	 */
 	private String dialect;
-
+	
+	/*----------------snowflake参数,如不设置框架自动以本机IP来获取----  */
 	/**
 	 * snowflake 集群节点id<31
 	 */
@@ -186,9 +190,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 数据中心id<31
 	 */
 	private Integer dataCenterId;
+	/*----------------snowflake 参数---- ------------------------------------------------ */
 
 	/**
-	 * 服务器id(3位数字)
+	 * 服务器id(3位数字)，用于22位和26位主键生成，不设置会自动根据本机IP生成
 	 */
 	private Integer serverId;
 

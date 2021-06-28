@@ -9,7 +9,7 @@ import java.util.Date;
  * @project sqltoy-orm
  * @description 定义主键产生器接口,自定义产生器必须实现getId()方法
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-4 上午10:08:15
+ * @version v1.0,Date:2012-6-4
  */
 public interface IdGenerator {
 	/**

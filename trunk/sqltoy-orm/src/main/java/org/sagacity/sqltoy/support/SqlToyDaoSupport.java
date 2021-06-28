@@ -1140,38 +1140,6 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @todo 取符合条件的前固定数量的记录，锁定并进行修改
-	 * @param queryExecutor
-	 * @param topSize
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize, updateRowHandler,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
-	}
-
-	/**
-	 * @todo 随机提取符合条件的记录,锁定并进行修改
-	 * @param queryExecutor
-	 * @param random
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, sqlToyConfig, random, updateRowHandler,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
-	}
-
-	/**
 	 * @todo 获取对象信息(对应的表以及字段、主键策略等等的信息)
 	 * @param entityClass
 	 * @return

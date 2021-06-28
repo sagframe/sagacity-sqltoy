@@ -71,6 +71,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -93,6 +95,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -145,6 +149,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -195,6 +201,8 @@ public class OracleDialectUtils {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -250,6 +258,7 @@ public class OracleDialectUtils {
 	 * @param outParamTypes
 	 * @param conn
 	 * @param dbType
+	 * @param fetchSize
 	 * @return
 	 * @throws Exception
 	 */

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description translate 翻译缓存管理接口定义，为基于其他缓存框架的实现提供接口规范
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-14
