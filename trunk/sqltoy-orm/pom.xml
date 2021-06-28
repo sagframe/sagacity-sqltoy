@@ -11,9 +11,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.3.8</spring-framework.version>
-		<spring-data-redis.version>2.5.1</spring-data-redis.version>
-		<spring-data-mongo.version>3.2.1</spring-data-mongo.version>
-		<ojdbc.version>19.10.0.0</ojdbc.version>
+		<spring-data-redis.version>2.5.2</spring-data-redis.version>
+		<spring-data-mongo.version>3.2.2</spring-data-mongo.version>
+		<ojdbc.version>19.11.0.0</ojdbc.version>
 		<ehcache.version>3.9.4</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.14</httpclient-core.version>
@@ -22,7 +22,7 @@
 		<mongo.version>3.12.8</mongo.version>
 		<junit-jupiter.version>5.7.2</junit-jupiter.version>
 		<junit-platform.version>1.7.2</junit-platform.version>
-		<slf4j.version>1.7.30</slf4j.version>
+		<slf4j.version>1.7.31</slf4j.version>
 		<log4j.version>2.14.1</log4j.version>
 		<caffeine.version>2.9.1</caffeine.version>
 	</properties>

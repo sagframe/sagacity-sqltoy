@@ -79,11 +79,6 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer printSqlTimeoutMillis;
 
-	/**
-	 * sql打印策略,分debug\error两种模式,默认error时打印
-	 */
-	private String printSqlStrategy = "error";
-
 	private Integer scriptCheckIntervalSeconds;
 
 	private Integer delayCheckSeconds;
@@ -290,14 +285,6 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setPrintSqlTimeoutMillis(Integer printSqlTimeoutMillis) {
 		this.printSqlTimeoutMillis = printSqlTimeoutMillis;
-	}
-
-	public String getPrintSqlStrategy() {
-		return printSqlStrategy;
-	}
-
-	public void setPrintSqlStrategy(String printSqlStrategy) {
-		this.printSqlStrategy = printSqlStrategy;
 	}
 
 	public Integer getScriptCheckIntervalSeconds() {
