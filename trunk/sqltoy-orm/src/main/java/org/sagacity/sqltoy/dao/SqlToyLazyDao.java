@@ -44,7 +44,7 @@ import org.sagacity.sqltoy.translate.TranslateHandler;
  * @description 提供一个便捷的dao实现,供开发过程中直接通过service调用,避免大量的自定义Dao中仅仅是一些简单的中转调用
  * @author zhongxuchen
  * @version v1.0,Date:2015年11月27日
- * @modify Date:2017-11-28 {增加link链式操作功能,开放全部DaoSupport中的功能}
+ * @modify Date:2017-11-28 {增加link链式操作功能,开放全部SqlToyDaoSupport中的功能}
  * @modify Date:2020-4-23 {对分页查询增加泛型支持}
  * @modify Date:2020-10-20 {增加loadAll(list,lock)}
  */
@@ -141,7 +141,6 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
-	// sqltoy的update内部处理是考虑属性为null情况的，一次交互完成，比jpa更加合理，可以深入了解
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entity
@@ -241,7 +240,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 根据实体对象的主键值获取对象的详细信息
 	 * @param entity
-	 * @return entity 
+	 * @return entity
 	 */
 	public <T extends Serializable> T load(final T entity);
 
@@ -254,7 +253,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> T load(final T entity, final LockMode lockMode);
 
 	/**
-	 * @todo 指定加载子类的单记录查询
+	 * @todo 对象加载同时指定加载子类，实现级联加载
 	 * @param entity
 	 * @param lockMode
 	 * @param cascadeTypes
@@ -277,7 +276,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities, final LockMode lockMode);
-	
+
 	/**
 	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
@@ -291,21 +290,27 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
 	 * @param entityClass
-	 * @param entityQuery
+	 * @param entityQuery EntityQuery.create().where(条件语句).names().values().orderBy()
+	 *                    链式设置查询逻辑
 	 * @return
 	 */
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @TODO 单表分页查询
+	 *       <p>
+	 *       <li>1、对象传参:findEntity(StaffInfo.class,new
+	 *       Page(),EntityQuery.create().where("status=:status").values(staffInfo))
+	 *       2、数组传参:findEntity(StaffInfo.class,new
+	 *       Page(),EntityQuery.create().where("status=?").values(1))</li>
+	 *       <p>
 	 * @param <T>
 	 * @param entityClass
 	 * @param page
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> Page<T> findEntity(Class<T> entityClass, final Page page,
-			EntityQuery entityQuery);
+	public <T> Page<T> findEntity(Class<T> entityClass, final Page page, EntityQuery entityQuery);
 
 	/**
 	 * @todo 选择性的加载子表信息
@@ -376,7 +381,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等
-	 * @param query
+	 * @param query new QueryExecutor(sql).names().values().filters() 链式设置查询
 	 * @return
 	 */
 	public Object loadByQuery(final QueryExecutor query);
@@ -390,6 +395,10 @@ public interface SqlToyLazyDao {
 	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
+	/*
+	 * @see getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+	 * final Object[] paramsValue)
+	 */
 	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
 
 	/**
@@ -441,7 +450,7 @@ public interface SqlToyLazyDao {
 	public List findBySql(final String sqlOrSqlId, final String[] paramsNamed, final Object[] paramsValue);
 
 	/**
-	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
+	 * @todo 通过QueryExecutor来构造查询逻辑进行分页查询
 	 * @param page
 	 * @param queryExecutor
 	 * @return
@@ -454,11 +463,11 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass         返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
+	 * @param voClass       返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
 	 * @return
 	 */
-	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
-			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramValues, final Class<T> voClass);
 
 	/**
 	 * @TODO 提供基于Map传参的分页查询
@@ -469,19 +478,18 @@ public interface SqlToyLazyDao {
 	 * @param voClass
 	 * @return
 	 */
-	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
-			final Map<String, Object> paramsMap, final Class<T> voClass);
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> voClass);
 
 	/**
-	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
+	 * @TODO 通过VO对象传参模式的分页，返回结果是VO类型的集合
 	 * @param <T>
 	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param entity
 	 * @return
 	 */
-	public <T extends Serializable> Page<T> findPageBySql(final Page page,
-			final String sqlOrNamedSql, final T entity);
+	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
@@ -491,10 +499,8 @@ public interface SqlToyLazyDao {
 	 * @param paramValues
 	 * @return
 	 */
-	public Page findPageBySql(final Page page, final String sqlOrNamedSql,
-			final String[] paramsNamed, final Object[] paramValues);
-
-	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
+	public Page findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramValues);
 
 	/**
 	 * @todo 取记录的前多少条记录
@@ -532,21 +538,26 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
 			final double topSize);
 
-	
+	/*
+	 * 用QueryExecutor组织查询逻辑
+	 * 
+	 * @see findTopBySql(String sqlOrNamedSql, T entity, double topSize)
+	 */
+	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
 
 	/**
 	 * @TODO 通过对象传参模式取随机记录
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
+	 * @param randomCount   小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
 			final double randomCount);
 
 	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
-	
+
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
 
@@ -578,10 +589,9 @@ public interface SqlToyLazyDao {
 	 *       </p>
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param insertCallhandler (一般为null)
 	 * @param autoCommit        (一般为null)
 	 */
-	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,final Boolean autoCommit);
+	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);
 
 	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
@@ -747,7 +757,7 @@ public interface SqlToyLazyDao {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param parallelConfig
+	 * @param parallelConfig 设置并行参数:ParallelConfig.create().maxThreads(5).maxWaitSeconds(600)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,

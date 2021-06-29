@@ -80,7 +80,7 @@ public class Save extends BaseLink {
 
 	/**
 	 * @todo 保存时遇到已经存在时的三种模式(append:依然追加/update:修改/ignore:忽视)
-	 * @param existMode
+	 * @param saveMode
 	 * @return
 	 */
 	public Save saveMode(SaveMode saveMode) {
