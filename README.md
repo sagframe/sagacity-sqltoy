@@ -684,7 +684,8 @@ public class CrudCaseServiceTest {
 
 ## 4.2 快速阅读理解sqltoy:
 
-  - 从BaseDaoSupport(或SqlToyDaoSupport)作为入口,你会看到sqltoy的所有提供的功能，通过LinkDaoSupport则可以按照不同分类视角看到sqltoy的功能组织形式。
+  - 从SqlToyLazyDao作为入口，了解sqltoy提供的所有功能
+  - SqlToyDaoSupport 是SqlToyLazyDao 具体功能实现。
   - 从DialectFactory会进入不同数据库方言的实现入口。可以跟踪看到具体数据库的实现逻辑。你会看到oracle、mysql等分页、取随机记录、快速分页的封装等。
   - EntityManager:你会找到如何扫描POJO并构造成模型，知道通过POJO操作数据库实质会变成相应的sql进行交互。
   - ParallelUtils:对象分库分表并行执行器，通过这个类你会看到分库分表批量操作时如何将集合分组到不同的库不同的表并进行并行调度的。
