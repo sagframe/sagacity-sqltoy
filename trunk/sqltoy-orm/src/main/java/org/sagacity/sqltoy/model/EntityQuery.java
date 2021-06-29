@@ -116,8 +116,8 @@ public class EntityQuery implements Serializable {
 	}
 	
 	/**
-	 * @TODO where 条件
-	 * @param where
+	 * @TODO where 条件，例如:   "#[name like :name ] #[and status in (:status)]"
+	 * @param where 
 	 * @return
 	 */
 	public EntityQuery where(String where) {
