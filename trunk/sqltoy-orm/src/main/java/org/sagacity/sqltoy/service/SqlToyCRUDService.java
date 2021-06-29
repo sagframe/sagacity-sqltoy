@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -33,20 +32,17 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @todo 批量保存对象
+	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler
-	 */
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
-	 * @todo 批量保存对象
-	 * @param entities
+	 * @return
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities);
 
 	/**
 	 * @todo 批量保存对象并忽视已经存在的记录
+	 * @param <T>
 	 * @param entities
+	 * @return
 	 */
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
@@ -54,42 +50,39 @@ public interface SqlToyCRUDService {
 	 * @todo 修改对象，设置强制修改的属性
 	 * @param entity
 	 * @param forceUpdateProps
+	 * @return
 	 */
 	public Long update(Serializable entity, String... forceUpdateProps);
 
 	/**
 	 * @TODO 提供级联修改
-	 * @param serializableVO
+	 * @param entity
 	 * @param forceUpdateProps
 	 * @return
 	 */
-	public Long updateCascade(Serializable serializableVO, String... forceUpdateProps);
+	public Long updateCascade(Serializable entity, String... forceUpdateProps);
 
 	/**
 	 * @todo 对属性进行强制修改,属性值为null则强制更新数据库字段值
 	 * @param entity
+	 * @return
 	 */
 	public Long updateDeeply(Serializable entity);
 
 	/**
 	 * @todo 批量对象修改，通过forceUpdateProps指定哪些字段需要强制修改
+	 * @param <T>
 	 * @param entities
-	 * @param forceUpdateProps
+	 * @param forceUpdateProps 强制修改的字段
+	 * @return
 	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
-	 * @todo 批量修改对象
+	 * @todo 批量深度集合修改，属性值为null将直接覆盖数据库中的值
+	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler
-	 * @param forceUpdateProps
-	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
-			String... forceUpdateProps);
-
-	/**
-	 * @todo 批量深度集合修改
-	 * @param entities 批量对象集合
+	 * @return
 	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
 
@@ -97,6 +90,7 @@ public interface SqlToyCRUDService {
 	 * @todo 修改或保存单条记录
 	 * @param entity           实体对象
 	 * @param forceUpdateProps 强制修改的对象属性
+	 * @return
 	 */
 	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps);
 
@@ -108,15 +102,6 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
-
-	/**
-	 * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
-	 * @param entities
-	 * @param reflectPropertyHandler
-	 * @param forceUpdateProps
-	 */
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
 
 	/**
 	 * @todo 获取对象数据
@@ -135,12 +120,15 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 删除单条对象
 	 * @param entity
+	 * @return
 	 */
 	public Long delete(Serializable entity);
 
 	/**
 	 * @todo 批量删除对象
+	 * @param <T>
 	 * @param entities
+	 * @return
 	 */
 	public <T extends Serializable> Long deleteAll(List<T> entities);
 
@@ -185,7 +173,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
-	 * @param cascadeTypes
+	 * @param cascadeTypes 
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
@@ -198,44 +186,6 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadByIds(final Class<T> voClass, Object... ids);
-
-	/**
-	 * 在controller层不允许直接暴露sql,因此sql必须是通过注解在POJO上的
-	 * 
-	 * @todo 通过实体对象中的@list 或@page 定义的sql查询结果集
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> List<T> findFrom(T entity);
-
-	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
-	 * @todo 通过实体对象中的@page/或@list 定义的sql查询分页结果集
-	 * @param paginationModel
-	 * @param entity
-	 * @return
-	 */
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity);
-
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
-			ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
-	 * @todo 通过实体对象中@page/@list 定义的sql 查询top记录
-	 * @param entity
-	 * @param topSize
-	 * @return
-	 */
-	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize);
-
-	/**
-	 * @todo 通过实体对象中@page/@list 定义的sql进行随机记录查询
-	 * @param entity
-	 * @param randomCount
-	 * @return
-	 */
-	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount);
 
 	/**
 	 * @todo 获取业务ID
@@ -256,9 +206,9 @@ public interface SqlToyCRUDService {
 	 * @TODO 利用缓存通过反调模式对集合数据进行编码转名称翻译
 	 * @param dataSet
 	 * @param cacheName
-	 * @param handler   反调方法:取key 和回写名称
+	 * @param translateHandler   反调方法:取key 和回写名称
 	 */
-	public void translate(Collection dataSet, String cacheName, TranslateHandler handler);
+	public void translate(Collection dataSet, String cacheName, TranslateHandler translateHandler);
 
 	/**
 	 * @todo 对记录进行翻译(可以)
@@ -267,10 +217,10 @@ public interface SqlToyCRUDService {
 	 * @param cacheType      针对类似数据字典性质的有分类的缓存
 	 * @param cacheNameIndex 手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2
 	 *                       默认cacheNameIndex为1)
-	 * @param handler
+	 * @param translateHandler
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
-			TranslateHandler handler);
+			TranslateHandler translateHandler);
 
 	/**
 	 * @todo 判断缓存是否存在
@@ -299,7 +249,6 @@ public interface SqlToyCRUDService {
 	 * @param source
 	 * @param resultType
 	 * @return
-	 * @throws Exception
 	 */
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType);
 
@@ -319,7 +268,7 @@ public interface SqlToyCRUDService {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType);
 
 	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**
@@ -337,7 +286,7 @@ public interface SqlToyCRUDService {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param parallelConfig
+	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
@@ -348,7 +297,7 @@ public interface SqlToyCRUDService {
 	 * @param <T>
 	 * @param parallQueryList
 	 * @param paramsMap
-	 * @param parallelConfig
+	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,

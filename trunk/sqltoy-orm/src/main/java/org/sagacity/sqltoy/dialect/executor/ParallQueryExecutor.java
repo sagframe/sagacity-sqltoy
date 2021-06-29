@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.executor;
+package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
 
@@ -11,8 +11,9 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.ParallQuery;
-import org.sagacity.sqltoy.model.ParallQueryExtend;
 import org.sagacity.sqltoy.model.ParallQueryResult;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
 
 /**
  * @project sagacity-sqltoy
@@ -56,9 +57,9 @@ public class ParallQueryExecutor implements Callable<ParallQueryResult> {
 			QueryExecutor queryExecutor = new QueryExecutor(extend.sql).resultType(extend.resultType).names(paramNames)
 					.values(paramValues);
 			// 分页
-			if (extend.pageModel != null) {
+			if (extend.page != null) {
 				result.setResult(dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig,
-						extend.pageModel.getPageNo(), extend.pageModel.getPageSize(), dataSource));
+						extend.page.getPageNo(), extend.page.getPageSize(), dataSource));
 			} else {
 				result.setResult(
 						dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource));

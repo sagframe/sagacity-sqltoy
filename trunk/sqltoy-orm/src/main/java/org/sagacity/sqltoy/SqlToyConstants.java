@@ -10,17 +10,25 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.FileUtil;
+import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqlToy的基础常量参数定义
  * @author zhongxuchen
  * @version v1.0,Date:2014年12月26日
  */
 public class SqlToyConstants {
+
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(SqlToyConstants.class);
+
 	/**
 	 * 符号对,用来提取字符串中对称字符的过滤,如:{ name(){} }，第一个{对称的符合}是最后一位
 	 */
@@ -222,22 +230,6 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean mysqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.mysql.support.saveOrUpdate", "false"));
-	}
-
-	/**
-	 * @todo mysql 是否原生支持saveOrUpdate
-	 * @return
-	 */
-	public static boolean postgresqlSupportSaveOrUpdate() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.postgresql.support.saveOrUpdate", "false"));
-	}
-
-	/**
 	 * @todo 获取记录提取的警告阀值
 	 * @return
 	 */
@@ -265,33 +257,11 @@ public class SqlToyConstants {
 	}
 
 	/**
-	 * sybase iq 主键采用identity模式时是否需要在前后开启 SET TEMPORARY OPTION
-	 * IDENTITY_INSERT=tableName
-	 * 
-	 * @return
-	 */
-	public static boolean sybaseIQIdentityOpen() {
-		return Boolean.parseBoolean(getKeyValue("sqltoy.sybase.iq.identity.open", "false"));
-	}
-
-	/**
 	 * @todo oracle分页是否忽视排序导致错乱的问题
 	 * @return
 	 */
 	public static boolean oraclePageIgnoreOrder() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.oracle.page.ignore.order", "false"));
-	}
-
-	/**
-	 * @todo 取随机记录是否采用数据库自带的方言机制
-	 * @return
-	 */
-	public static boolean randomWithDialect(Integer dbType) {
-		// 目前是不支持的
-		if (dbType == DataSourceUtils.DBType.SYBASE_IQ) {
-			return false;
-		}
-		return Boolean.parseBoolean(getKeyValue("sqltoy.random.with.dialect", "true"));
 	}
 
 	/**
@@ -410,5 +380,63 @@ public class SqlToyConstants {
 	 */
 	public static boolean openSqlSign() {
 		return Boolean.parseBoolean(getKeyValue("sqltoy.open.sqlsign", "true"));
+	}
+
+	/**
+	 * @TODO 针对主键策略提前设置或计算雪花算法的worker_id,dataCenterId以及22位和26位主键对应的应用id
+	 * @param workerId
+	 * @param dataCenterId
+	 * @param serverId
+	 */
+	public static void setWorkerAndDataCenterId(Integer workerId, Integer dataCenterId, Integer serverId) {
+		try {
+			String serverIdentity = IdUtil.getLastIp(2);
+			int id = Integer.parseInt(serverIdentity == null ? "0" : serverIdentity);
+			String keyValue;
+			if (workerId == null) {
+				keyValue = getKeyValue("sqltoy.snowflake.workerId");
+				if (keyValue != null) {
+					workerId = Integer.parseInt(keyValue);
+				}
+			}
+			if (dataCenterId == null) {
+				keyValue = getKeyValue("sqltoy.snowflake.dataCenterId");
+				if (keyValue != null) {
+					dataCenterId = Integer.parseInt(keyValue);
+				}
+			}
+			if (workerId != null && (workerId.intValue() > 0 && workerId.intValue() < 32)) {
+				WORKER_ID = workerId.intValue();
+			} else {
+				if (id > 31) {
+					// 个位作为workerId
+					WORKER_ID = id % 10;
+				} else {
+					WORKER_ID = id;
+				}
+			}
+			if (dataCenterId != null && dataCenterId.intValue() > 0 && dataCenterId.intValue() < 32) {
+				DATA_CENTER_ID = dataCenterId.intValue();
+			} else {
+				if (id > 31) {
+					// 十位数作为dataCenterId
+					DATA_CENTER_ID = id / 10;
+				} else {
+					DATA_CENTER_ID = id;
+				}
+			}
+			// 22位或26位主键对应的serverId
+			String serverNode = (serverId == null) ? getKeyValue("sqltoy.server.id") : ("" + serverId);
+			if (serverNode != null) {
+				serverNode = StringUtil.addLeftZero2Len(serverNode, 3);
+				if (serverNode.length() > 3) {
+					serverNode = serverNode.substring(serverNode.length() - 3);
+				}
+				SERVER_ID = serverNode;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
+		}
 	}
 }

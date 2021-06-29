@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.model;
+package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -13,7 +13,6 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -22,6 +21,8 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
@@ -78,12 +79,6 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	@Deprecated
 	public RowCallbackHandler rowCallbackHandler;
-
-	/**
-	 * 查询属性值反射处理
-	 */
-	@Deprecated
-	public ReflectPropertyHandler reflectPropertyHandler;
 
 	/**
 	 * 查询结果类型
@@ -221,8 +216,7 @@ public class QueryExecutorExtend implements Serializable {
 		// 是否萃取过
 		if (!extracted) {
 			if (entity != null) {
-				paramsValue = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getFullParamNames(), null,
-						reflectPropertyHandler);
+				paramsValue = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getFullParamNames(), null, null);
 			}
 			extracted = true;
 		}
@@ -253,11 +247,10 @@ public class QueryExecutorExtend implements Serializable {
 	public Object[] getTableShardingParamsValue(SqlToyConfig sqlToyConfig) throws Exception {
 		if (entity != null) {
 			if (!tableShardings.isEmpty()) {
-				return BeanUtil.reflectBeanToAry(entity, getTableShardingParams(), null, reflectPropertyHandler);
+				return BeanUtil.reflectBeanToAry(entity, getTableShardingParams(), null, null);
 			}
 			if (sqlToyConfig.getTableShardingParams() != null) {
-				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null,
-						reflectPropertyHandler);
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getTableShardingParams(), null, null);
 			}
 		}
 		return shardingParamsValue;
@@ -273,11 +266,10 @@ public class QueryExecutorExtend implements Serializable {
 		if (entity != null) {
 			// 后续手工设定的优先于xml中原有配置
 			if (dbSharding != null) {
-				return BeanUtil.reflectBeanToAry(entity, dbSharding.getFields(), null, reflectPropertyHandler);
+				return BeanUtil.reflectBeanToAry(entity, dbSharding.getFields(), null, null);
 			}
 			if (sqlToyConfig.getDataSourceSharding() != null) {
-				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null,
-						reflectPropertyHandler);
+				return BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getDataSourceSharding().getFields(), null, null);
 			}
 		}
 		return shardingParamsValue;

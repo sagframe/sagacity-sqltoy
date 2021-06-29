@@ -10,13 +10,10 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -33,9 +30,10 @@ import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
@@ -57,7 +55,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 获取sql对应的配置模型
 	 * @param sqlKey
 	 * @param sqlType
-	 * @return
+	 * @return SqlToyConfig
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType);
 
@@ -89,7 +87,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过map传参获取记录数量
 	 * @param sqlOrNamedQuery
 	 * @param paramsMap
-	 * @return
+	 * @return Long
 	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
@@ -97,7 +95,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过POJO产生count语句
 	 * @param entityClass
 	 * @param entityQuery
-	 * @return
+	 * @return Long
 	 */
 	public Long getCount(Class entityClass, EntityQuery entityQuery);
 
@@ -105,6 +103,7 @@ public interface SqlToyLazyDao {
 	 * @todo 存储过程调用
 	 * @param storeSqlOrKey 可以是xml中的sqlId 或者直接{call storeName (?,?)}
 	 * @param inParamValues
+	 * @return StoreResult
 	 */
 	public StoreResult executeStore(final String storeSqlOrKey, final Object[] inParamValues);
 
@@ -114,23 +113,23 @@ public interface SqlToyLazyDao {
 	 * @param inParamValues
 	 * @param outParamsType 可以为null
 	 * @param resultType    可以是VO、Map.class、LinkedHashMap.class、Array.class,null(二维List)
-	 * @return
+	 * @return StoreResult
 	 */
 	public StoreResult executeStore(String storeSqlOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType);
 
 	/**
 	 * @todo 保存对象,并返回主键值
-	 * @param serializableVO
-	 * @return
+	 * @param entity
+	 * @return Object 主键值
 	 */
-	public Object save(Serializable serializableVO);
+	public Object save(Serializable entity);
 
 	/**
 	 * @TODO 批量保存对象，并返回数据更新记录量
 	 * @param <T>
 	 * @param entities
-	 * @return 数据库记录变更量(插入数据量)
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities);
 
@@ -138,48 +137,43 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量保存对象并忽视已经存在的记录
 	 * @param <T>
 	 * @param entities
-	 * @return 数据库记录变更量(插入数据量)
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
-
-	/**
-	 * @todo 批量保存数据,返回数据库记录变更数量
-	 * @param dataSet
-	 * @param reflectPropertyHandler
-	 */
-	@Deprecated
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
 
 	// sqltoy的update内部处理是考虑属性为null情况的，一次交互完成，比jpa更加合理，可以深入了解
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
-	 * @param entitySet
+	 * @param entity
 	 * @param forceUpdateProps 强制修改的字段属性
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
-	public Long update(Serializable serializableVO, String... forceUpdateProps);
+	public Long update(Serializable entity, String... forceUpdateProps);
 
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
 	 * @param entityUpdate
-	 * @return
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	/**
 	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long updateDeeply(Serializable serializableVO);
 
 	/**
 	 * @todo 修改数据并返回数据库记录变更数量
-	 * @param serializableVO
+	 * @param entity
 	 * @param forceUpdateProps
 	 * @param emptyUpdateClass
 	 * @param subTableForceUpdateProps
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
-	public Long updateCascade(Serializable serializableVO, String[] forceUpdateProps, Class[] emptyUpdateClass,
+	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
 
 	/**
@@ -187,75 +181,46 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entities
 	 * @param forceUpdateProps
-	 * @return
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
-	 * @todo 批量修改对象并返回数据库记录变更数量
-	 * @param entitys
-	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
-	 * @param forceUpdateProps       强制修改的属性
-	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
-			String... forceUpdateProps);
-
-	/**
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
-	 * @return
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
 
 	/**
-	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
-	 * @param <T>
-	 * @param entities
-	 * @param reflectPropertyHandler (常规情况下传null)
-	 * @return
-	 */
-	@Deprecated
-	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler);
-
-	/**
 	 * @todo 保存或修改数据并返回数据库记录变更数量
-	 * @param serializableVO
+	 * @param entity
 	 * @param forceUpdateProps 强制修改的字段
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
-	public Long saveOrUpdate(Serializable serializableVO, String... forceUpdateProps);
+	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps);
 
 	/**
 	 * @TODO 批量保存或修改操作(当已经存在就执行修改)
 	 * @param <T>
 	 * @param entities
 	 * @param forceUpdateProps 强制修改的字段
-	 * @return
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
-	 * @todo 批量修改或保存数据并返回数据库记录变更数量
-	 * @param <T>
-	 * @param entities
-	 * @param reflectPropertyHandler 常规传null
-	 * @param forceUpdateProps 强制修改的字段
-	 * @return
-	 */
-	@Deprecated
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
-
-	/**
 	 * @todo 删除单条对象并返回数据库记录影响的数量
 	 * @param entity
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long delete(final Serializable entity);
 
 	/**
 	 * @todo 批量删除对象并返回数据库记录影响的数量
 	 * @param entities
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
 
@@ -263,12 +228,12 @@ public interface SqlToyLazyDao {
 	 * @TODO 基于单表查询进行删除操作,提供在代码中进行快捷操作
 	 * @param entityClass
 	 * @param entityQuery
-	 * @return
+	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @todo truncate表
+	 * @todo truncate 刪除全表记录
 	 * @param entityClass
 	 */
 	public void truncate(final Class entityClass);
@@ -276,8 +241,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 根据实体对象的主键值获取对象的详细信息
 	 * @param entity
-	 * @return
-	 * @throws Exception
+	 * @return entity 
 	 */
 	public <T extends Serializable> T load(final T entity);
 
@@ -285,7 +249,7 @@ public interface SqlToyLazyDao {
 	 * @todo 根据主键获取对象,提供读取锁设定
 	 * @param entity
 	 * @param lockMode
-	 * @return
+	 * @return entity
 	 */
 	public <T extends Serializable> T load(final T entity, final LockMode lockMode);
 
@@ -294,14 +258,14 @@ public interface SqlToyLazyDao {
 	 * @param entity
 	 * @param lockMode
 	 * @param cascadeTypes
-	 * @return
+	 * @return entity
 	 */
 	public <T extends Serializable> T loadCascade(final T entity, final LockMode lockMode, final Class... cascadeTypes);
 
 	/**
 	 * @todo 根据集合中的主键获取实体的详细信息(底层是批量加载优化了性能,同时控制了in 1000个问题)
 	 * @param entities
-	 * @return
+	 * @return entities
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
 
@@ -313,14 +277,15 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities, final LockMode lockMode);
-
+	
 	/**
-	 * @TODO 加载全表数据(不推荐使用,1、极少全表加载;2、易导致lazyDao接口功能过于宽泛)
+	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
-	 * @param resultType
+	 * @param entityClass
+	 * @param entityQuery
 	 * @return
 	 */
-	public <T extends Serializable> List<T> findAll(Class<T> resultType);
+	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
@@ -335,11 +300,11 @@ public interface SqlToyLazyDao {
 	 * @TODO 单表分页查询
 	 * @param <T>
 	 * @param entityClass
-	 * @param paginationModel
+	 * @param page
 	 * @param entityQuery
 	 * @return
 	 */
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, final PaginationModel paginationModel,
+	public <T> Page<T> findEntity(Class<T> entityClass, final Page page,
 			EntityQuery entityQuery);
 
 	/**
@@ -477,56 +442,56 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 根据实体对象获取select * from table 并整合wherePartSql或properties 条件参数进行分页查询
-	 * @param pageModel
+	 * @param page
 	 * @param queryExecutor
 	 * @return
 	 */
-	public QueryResult findPageByQuery(final PaginationModel pageModel, final QueryExecutor queryExecutor);
+	public QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor);
 
 	/**
 	 * @todo 普通sql分页查询
-	 * @param paginationModel
+	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
 	 * @param voClass         返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
 	 * @return
 	 */
-	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues, final Class<T> voClass);
 
 	/**
 	 * @TODO 提供基于Map传参的分页查询
 	 * @param <T>
-	 * @param paginationModel
+	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
 	 * @param voClass
 	 * @return
 	 */
-	public <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql,
 			final Map<String, Object> paramsMap, final Class<T> voClass);
 
 	/**
 	 * @TODO 通过VO对象传参模式的分页，返回结果是VO的集合
 	 * @param <T>
-	 * @param paginationModel
+	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param entity
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
+	public <T extends Serializable> Page<T> findPageBySql(final Page page,
 			final String sqlOrNamedSql, final T entity);
 
 	/**
 	 * @TODO 通过条件参数名称和value值模式分页查询，将分页结果按二维List返回
-	 * @param paginationModel
+	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
 	 * @return
 	 */
-	public PaginationModel findPageBySql(final PaginationModel paginationModel, final String sqlOrNamedSql,
+	public Page findPageBySql(final Page page, final String sqlOrNamedSql,
 			final String[] paramsNamed, final Object[] paramValues);
 
 	public QueryResult findTopByQuery(final QueryExecutor queryExecutor, final double topSize);
@@ -567,7 +532,7 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> findTopBySql(final String sqlOrNamedSql, final T entity,
 			final double topSize);
 
-	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
+	
 
 	/**
 	 * @TODO 通过对象传参模式取随机记录
@@ -580,6 +545,8 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
 			final double randomCount);
 
+	public QueryResult getRandomResult(final QueryExecutor queryExecutor, final double randomCount);
+	
 	public <T> List<T> getRandomResult(final String sqlOrNamedSql, final String[] paramsNamed,
 			final Object[] paramsValue, final Class<T> voClass, final double randomCount);
 
@@ -614,8 +581,7 @@ public interface SqlToyLazyDao {
 	 * @param insertCallhandler (一般为null)
 	 * @param autoCommit        (一般为null)
 	 */
-	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
-			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit);
+	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet,final Boolean autoCommit);
 
 	// sqltoy的updateFetch是jpa没有的，可以深入了解其原理，一次交互完成查询、锁定、修改并返回修改后结果
 	/**
@@ -626,39 +592,13 @@ public interface SqlToyLazyDao {
 	 */
 	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler);
 
-	@Deprecated
-	public List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler);
-
-	/**
-	 * @todo 随机提取符合条件的记录,锁定并进行修改
-	 * @param queryExecutor
-	 * @param random
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	public List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler);
-
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @return
+	 * @return Long 数据库发生变更的记录数
 	 */
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity);
-
-	/**
-	 * @todo 执行sql,并返回被修改的记录数量
-	 * @param sqlOrNamedSql
-	 * @param entity
-	 * @param reflectPropertyHandler (一般传null)
-	 * @return Long updateCount
-	 */
-	@Deprecated
-	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
-			final ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量
@@ -688,18 +628,6 @@ public interface SqlToyLazyDao {
 	 * @TODO 数据库提交(针对特殊场景使用,正常情况下此方法不要使用)
 	 */
 	public void flush();
-
-	/**
-	 * @TODO es操作
-	 * @return
-	 */
-	public Elastic elastic();
-
-	/**
-	 * @TODO mongo操作
-	 * @return
-	 */
-	public Mongo mongo();
 
 	/**
 	 * @TODO 获取sqltoy的上下文
@@ -783,7 +711,6 @@ public interface SqlToyLazyDao {
 	 * @param source
 	 * @param resultType
 	 * @return
-	 * @throws Exception
 	 */
 	public <T extends Serializable> T convertType(Serializable source, Class<T> resultType);
 
@@ -803,12 +730,9 @@ public interface SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType);
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType);
 
-	// parallQuery 面向查询(不要用于事务操作过程中),sqltoy提供强大的方法，但是否恰当使用需要使用者做合理的判断
 	/**
-	 * -- 避免开发者将全部功能用一个超级sql完成，提供拆解执行的同时确保执行效率，达到了效率和可维护的平衡
-	 * 
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param parallQueryList
 	 * @param paramNames
@@ -849,7 +773,17 @@ public interface SqlToyLazyDao {
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 
-	/** ------- 链式操作，功能就是上面参数直传模式的用链式赋值的封装(优雅但易遗漏赋值)，根据情况使用 ---- */
+	/**
+	 * @TODO es操作
+	 * @return
+	 */
+	public Elastic elastic();
+
+	/**
+	 * @TODO mongo操作
+	 * @return
+	 */
+	public Mongo mongo();
 
 	/**
 	 * @TODO 提供链式操作模式删除操作集合

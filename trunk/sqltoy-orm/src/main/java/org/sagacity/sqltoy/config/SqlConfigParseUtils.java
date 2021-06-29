@@ -813,7 +813,7 @@ public class SqlConfigParseUtils {
 			sqlToyConfig.setHasUnion(SqlUtil.hasUnion(originalSql, false));
 		}
 		// 只有在查询模式前提下才支持fastPage机制
-		if (sqlType.equals(SqlType.search)) {
+		if (SqlType.search.equals(sqlType)) {
 			// 判断是否有快速分页@fast 宏
 			Matcher matcher = FAST_PATTERN.matcher(originalSql);
 			if (matcher.find()) {

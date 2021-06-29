@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.utils.DateUtil;
@@ -24,7 +24,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供默认的数据库sharding策略
  * @author zhongxuchen
  * @version v1.0,Date: 2017年1月3日
@@ -70,7 +70,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#initialize()
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#initialize()
 	 */
 	@Override
 	public void initialize() {
@@ -104,7 +104,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#getTargetTableName(org.
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getTargetTableName(org.
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
@@ -157,7 +157,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingModel(org.sagacity.
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.sagacity.
 	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
 	 */
 	@Override

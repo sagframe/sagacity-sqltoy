@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.executor;
+package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -10,21 +10,17 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.NamedValuesModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
-import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.MaskType;
-import org.sagacity.sqltoy.model.NamedValuesModel;
-import org.sagacity.sqltoy.model.ParamsFilter;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
-import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -267,13 +263,6 @@ public class QueryExecutor implements Serializable {
 	@Deprecated
 	public QueryExecutor rowCallbackHandler(RowCallbackHandler rowCallbackHandler) {
 		innerModel.rowCallbackHandler = rowCallbackHandler;
-		return this;
-	}
-
-	// jdk8 stream之后意义已经不大
-	@Deprecated
-	public QueryExecutor reflectPropertyHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		innerModel.reflectPropertyHandler = reflectPropertyHandler;
 		return this;
 	}
 

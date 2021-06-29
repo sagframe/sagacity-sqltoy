@@ -56,12 +56,6 @@ public class Now extends IFunction {
 		if (dialect == DBType.SQLSERVER) {
 			return wrapArgs("getdate", args);
 		}
-		if (dialect == DBType.SYBASE_IQ) {
-			if (hasArgs) {
-				return wrapArgs(functionName, args);
-			}
-			return "getdate()";
-		}
 		return super.IGNORE;
 	}
 }

@@ -1,4 +1,36 @@
-﻿# v4.18.3 2021-2-26
+﻿
+# v4.18.25 2021-06-08
+* 1、修复oracle无主键表保存操作一个NPP错误
+* 2、优化defaultDataSource获取模式，适应dynamic-datasource插件场景
+* 3、在sqlToyContext中扩展了ConnectionFactory 供自定义获取当前ThreadLocal中的connection的机制，为非spring场景做铺垫
+
+# v4.18.22 2021-05-26
+* 1、在findEntity中EntityQuery可以设置fetchSize
+* 2、在sqltoyContext中可以全局设置fetchSize,如: spring.sqltoy.fetchSize=200
+* 3、convertType 支持空集合返回空集合
+* 4、针对一些特殊原因导致表名是数据库关键词的处理支持
+
+# v4.18.21 2021-05-21
+* 1、修复elasticsearch sql查询的一个NPP错误
+* 2、date-format增加locale选项，支持英文等日期格式化
+* 3、针对分页和取top记录和取随机记录方法适度进行了规整，避免每个方言里面重复书写
+
+# v4.18.18 2021-04-26
+* 1、优化极端场景下sql中单行注释处理
+
+# v4.18.13 2021-04-15
+* 1、增加DataSourceSelector扩展，提供在多数据源特殊场景下可自行扩展
+
+# v4.18.8 2021-03-24
+* 1、优化clickhouse修改和删除操作，增加对dorisdb的支持
+
+# v4.18.7 2021-03-12
+* 1、兼容pojo或dto的属性名称含下划线的特殊场景，如：staff_name 和对应的getStaff_Name()
+* 2、分页页号越界时可统一配置是否从第一页开始:spring.sqltoy.pageOverToFirst默认为true
+* 3、列转行允许将结果映射到vo/pojo,map等类型上
+* 4、优化loadAll复合主键场景下的处理逻辑以及附带的级联加载逻辑
+
+# v4.18.3 2021-2-26
 * 1、级联操作进行优化，精简级联配置，增加OneToOne类型的支持
 
 ```java

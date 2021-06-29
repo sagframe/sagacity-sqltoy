@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.model.inner.CacheMatchExtend;
+
 /**
  * @project sagacity-sqltoy
  * @description 缓存名称匹配取key集合
@@ -25,16 +27,6 @@ public class CacheMatchFilter implements Serializable {
 		CacheMatchFilter filter = new CacheMatchFilter();
 		return filter;
 	}
-
-	/**
-	 * @TODO 指定参数名称(用于findEntity 和 findByQuery 对应的EntityQuery 以及QueryExecutor中)
-	 * @param param
-	 * @return
-	 */
-//	public CacheMatchFilter param(String param) {
-//		cacheFilterArgs.param = param;
-//		return this;
-//	}
 	
 	/**
 	 * @TODO 设置缓存名称

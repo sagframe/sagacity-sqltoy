@@ -47,7 +47,7 @@ public class ScanEntityAndSqlResource {
 	/**
 	 * @todo 从指定包package中获取所有的sqltoy实体对象(意义已经不大,entity类目前已经改为在使用时加载的解析模式)
 	 * @param pack
-	 * @param recursive
+	 * @param recursive 是否递归往下钻取
 	 * @param charset
 	 * @return
 	 */
@@ -190,11 +190,10 @@ public class ScanEntityAndSqlResource {
 	 * @todo 获取sqltoy配置的sql文件
 	 * @param resourceDir
 	 * @param mappingResources
-	 * @param dialect          方言过滤(目前已经废弃)
 	 * @return
 	 * @throws Exception
 	 */
-	public static List getSqlResources(String resourceDir, List<String> mappingResources, String dialect)
+	public static List getSqlResources(String resourceDir, List<String> mappingResources)
 			throws Exception {
 		List result = new ArrayList();
 		String realRes;
@@ -289,7 +288,6 @@ public class ScanEntityAndSqlResource {
 	 * @param startClasspath
 	 * @return
 	 * @throws Exception
-	 * @modify update 2017-10-28 从单URL变成URL枚举数组
 	 */
 	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;

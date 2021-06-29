@@ -11,7 +11,8 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.GenerateSqlHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -19,13 +20,12 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -69,7 +69,7 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long, java.lang.Long,
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
 	@Override
@@ -85,8 +85,8 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -101,7 +101,7 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.executor.QueryExecutor, double, java.sql.Connection)
+	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
@@ -197,13 +197,13 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+		return PostgreSqlDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				autoCommit, tableName);
 	}
 
@@ -240,14 +240,13 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List, java.lang.String[],
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
@@ -274,59 +273,39 @@ public class PostgreSqlDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.lang.String[],
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.lang.String[],
 	 * java.sql.Connection, java.lang.Boolean)
 	 */
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+		// PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize,
+		// reflectPropsHandler, forceUpdateFields, conn, dbType, dialect, autoCommit,
+		// tableName);
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
 			return updateCnt;
 		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
 				dialect, autoCommit, tableName);
 		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
 		return updateCnt + saveCnt;
 	}
-
-//	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-//			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn,
-//			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-//			throws Exception {
-//		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-//		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
-//				new GenerateSqlHandler() {
-//					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-//						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-//						String sequence = "nextval('" + entityMeta.getSequence() + "')";
-//						boolean isAssignPK = PostgreSqlDialectUtils.isAssignPKValue(pkStrategy);
-//						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-//							// 伪造成sequence模式
-//							pkStrategy = PKStrategy.SEQUENCE;
-//							sequence = "DEFAULT";
-//						}
-//						return PostgreSqlDialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPK,
-//								sequence, forceUpdateFields, tableName);
-//					}
-//				}, reflectPropertyHandler, conn, dbType, autoCommit);
-//	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
 	 * java.lang.Boolean)
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
@@ -343,7 +322,7 @@ public class PostgreSqlDialect implements Dialect {
 						return DialectExtUtils.insertIgnore(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 								isAssignPK, tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -388,47 +367,6 @@ public class PostgreSqlDialect implements Dialect {
 				dbType, 0, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFetchTop(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * java.lang.String, java.lang.Object[], java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " limit " + topSize + " for update nowait";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.sagacity.sqltoy.dialect.Dialect#updateFetchRandom(org.sagacity.sqltoy
-	 * .SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * java.lang.String, java.lang.Object[], java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler, java.sql.Connection)
-	 */
-	@Override
-	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
-			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by random() limit " + random + " for update nowait";
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, -1, -1);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findByStore(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.executor.StoreExecutor)
-	 */
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,

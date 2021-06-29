@@ -18,7 +18,7 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.Translate;
-import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

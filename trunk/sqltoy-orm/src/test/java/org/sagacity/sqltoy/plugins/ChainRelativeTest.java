@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
-import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.utils.CollectionUtil;

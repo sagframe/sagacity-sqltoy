@@ -80,7 +80,7 @@ public class IdUtil {
 	 * @return
 	 */
 	public static String getDebugId() {
-		// 当前时间(毫秒)
+		// 当前时间(秒)
 		String nowTime = DateUtil.formatDate(new Date(), "HH:mm:ss");
 		// 后7位纳秒间隔
 		String nanoTime = "" + System.nanoTime();

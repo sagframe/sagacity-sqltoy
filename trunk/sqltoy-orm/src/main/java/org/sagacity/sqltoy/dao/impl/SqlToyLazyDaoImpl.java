@@ -10,14 +10,11 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -34,13 +31,14 @@ import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
-import org.sagacity.sqltoy.support.BaseDaoSupport;
+import org.sagacity.sqltoy.support.SqlToyDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.springframework.stereotype.Repository;
 
@@ -52,7 +50,7 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")
-public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
+public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao {
 
 	/*
 	 * (non-Javadoc)
@@ -163,52 +161,44 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findPageByQuery(org.sagacity.core
-	 * .database.model.PaginationModel, org.sagacity.sqltoy.executor.QueryExecutor)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#findPageByQuery(org.sagacity.sqltoy.
+	 * model.Page, org.sagacity.sqltoy.model.QueryExecutor)
 	 */
 	@Override
-	public QueryResult findPageByQuery(PaginationModel pageModel, QueryExecutor queryExecutor) {
-		return super.findPageByQuery(pageModel, queryExecutor);
+	public QueryResult findPageByQuery(Page page, QueryExecutor queryExecutor) {
+		return super.findPageByQuery(page, queryExecutor);
+	}
+
+	@Override
+	public <T extends Serializable> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final T entity) {
+		return (Page<T>) super.findPageBySql(page, sqlOrNamedSql, entity);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findPageByEntity(org.sagacity.core
-	 * .database.model.PaginationModel, java.io.Serializable)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#finePageBySql(org.sagacity.sqltoy.model
+	 * .Page, java.lang.String, java.lang.String[], java.lang.Object[],
+	 * java.lang.Class)
 	 */
 	@Override
-	public <T extends Serializable> PaginationModel<T> findPageBySql(final PaginationModel paginationModel,
-			final String sqlOrNamedSql, final T entity) {
-		return (PaginationModel<T>) super.findPageBySql(paginationModel, sqlOrNamedSql, entity);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#finePageBySql(org.sagacity.core
-	 * .database.model.PaginationModel, java.lang.String, java.lang.String[],
-	 * java.lang.Object[], java.lang.Class)
-	 */
-	@Override
-	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
-			String[] paramsNamed, Object[] paramValues, Class<T> voClass) {
-		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
+	public <T> Page<T> findPageBySql(Page page, String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues,
+			Class<T> voClass) {
+		return (Page<T>) super.findPageByQuery(page,
 				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass)).getPageResult();
 	}
 
 	@Override
-	public PaginationModel findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql, String[] paramsNamed,
-			Object[] paramValues) {
-		return super.findPageByQuery(paginationModel, new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues))
-				.getPageResult();
+	public Page findPageBySql(Page page, String sqlOrNamedSql, String[] paramsNamed, Object[] paramValues) {
+		return super.findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues)).getPageResult();
 	}
 
 	@Override
-	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
-			Map<String, Object> paramsMap, Class<T> voClass) {
-		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
-				new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getPageResult();
+	public <T> Page<T> findPageBySql(Page page, String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
+		return (Page<T>) super.findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
+				.getPageResult();
 	}
 
 	/*
@@ -245,8 +235,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#getRandomResultByQuery(org.sagacity
-	 * .sqltoy.executor.QueryExecutor, double)
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#getRandomResultByQuery(org.sagacity.
+	 * sqltoy.model.QueryExecutor, double)
 	 */
 	@Override
 	public QueryResult getRandomResult(QueryExecutor queryExecutor, double randomCount) {
@@ -282,29 +272,22 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getRandomResult(sqlOrNamedSql, paramsNamed, paramsValue, voClass, randomCount);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#batchUpdate(java.lang.String,
-	 * java.util.List, org.sagacity.core.database.callback.InsertRowCallbackHandler,
-	 * boolean)
-	 */
-	@Override
-	public Long batchUpdate(String sqlOrNamedSql, List dataSet, InsertRowCallbackHandler insertCallhandler,
-			Boolean autoCommit) {
-		return super.batchUpdate(sqlOrNamedSql, dataSet, null, insertCallhandler, autoCommit);
-	}
-
 	@Override
 	public Long batchUpdate(String sqlOrNamedSql, List dataSet) {
-		return super.batchUpdate(sqlOrNamedSql, dataSet, null, null);
+		return super.batchUpdate(sqlOrNamedSql, dataSet, null);
+	}
+
+	@Override
+	public Long batchUpdate(String sqlOrNamedSql, List dataSet, Boolean autoCommit) {
+		return super.batchUpdate(sqlOrNamedSql, dataSet, autoCommit);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#wrapTreeTableRoute(org.sagacity
-	 * .core.database.model.TreeTableModel)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#wrapTreeTableRoute(org.sagacity.sqltoy.
+	 * model.TreeTableModel)
 	 */
 	@Override
 	public boolean wrapTreeTableRoute(TreeTableModel treeTableModel) {
@@ -378,17 +361,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler) {
-		return super.saveAll(entities, reflectPropertyHandler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#update(java.io.Serializable,
 	 * java.lang.String[])
 	 */
@@ -431,33 +403,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateAll(entities, forceUpdateProps);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateAll(java.util.List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
-			String... forceUpdateProps) {
-		return super.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
-	}
-
 	@Override
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
 		return super.updateAllDeeply(entities, null);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#updateAllDeeply(java.util
-	 * .List, org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler) {
-		return super.updateAllDeeply(entities, reflectPropertyHandler);
 	}
 
 	/*
@@ -480,18 +428,6 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps) {
 		return super.saveOrUpdateAll(entities, forceUpdateProps);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdateAll(java.util.List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
-		return super.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*
@@ -538,7 +474,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#load(java.io.Serializable,
-	 * org.sagacity.sqltoy.LockMode)
+	 * org.sagacity.sqltoy.model.LockMode)
 	 */
 	@Override
 	public <T extends Serializable> T load(T entity, LockMode lockMode) {
@@ -596,7 +532,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadCascade(java.io.Serializable,
-	 * java.lang.Class[], org.sagacity.sqltoy.LockMode)
+	 * java.lang.Class[], org.sagacity.sqltoy.model.LockMode)
 	 */
 	@Override
 	public <T extends Serializable> T loadCascade(T entity, LockMode lockMode, Class... cascadeTypes) {
@@ -606,8 +542,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadByQuery(org.sagacity.sqltoy
-	 * .executor.QueryExecutor)
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadByQuery(org.sagacity.sqltoy.model.QueryExecutor)
 	 */
 	@Override
 	public Object loadByQuery(QueryExecutor queryExecutor) {
@@ -617,8 +552,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findByQuery(org.sagacity.sqltoy
-	 * .executor.QueryExecutor)
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findByQuery(org.sagacity.sqltoy.model.QueryExecutor)
 	 */
 	@Override
 	public QueryResult findByQuery(QueryExecutor queryExecutor) {
@@ -628,8 +562,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findTopByQuery(org.sagacity.sqltoy
-	 * .executor.QueryExecutor, double)
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findTopByQuery(org.sagacity.sqltoy.model.QueryExecutor, double)
 	 */
 	@Override
 	public QueryResult findTopByQuery(QueryExecutor queryExecutor, double topSize) {
@@ -639,56 +572,17 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFatch(org.sagacity.sqltoy
-	 * .executor.QueryExecutor,
-	 * org.sagacity.core.database.callback.UpdateRowHandler)
+	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFatch(org.sagacity.sqltoy.model.QueryExecutor,
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler)
 	 */
 	@Override
 	public List updateFetch(QueryExecutor queryExecutor, UpdateRowHandler updateRowHandler) {
 		return super.updateFetch(queryExecutor, updateRowHandler);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFetchTop(org.sagacity.sqltoy
-	 * .executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler)
-	 */
-	@Override
-	@Deprecated
-	public List updateFetchTop(QueryExecutor queryExecutor, Integer topSize, UpdateRowHandler updateRowHandler) {
-		return super.updateFetchTop(queryExecutor, topSize, updateRowHandler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFetchRandom(org.sagacity.
-	 * sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler)
-	 */
-	@Override
-	@Deprecated
-	public List updateFetchRandom(QueryExecutor queryExecutor, Integer random, UpdateRowHandler updateRowHandler) {
-		return super.updateFetchRandom(queryExecutor, random, updateRowHandler);
-	}
-
 	@Override
 	public Long executeSql(String sqlOrNamedSql, Serializable entity) {
-		return super.executeSql(sqlOrNamedSql, entity, null);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#executeSql(java.lang.String,
-	 * java.io.Serializable,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public Long executeSql(String sqlOrNamedSql, Serializable entity, ReflectPropertyHandler reflectPropertyHandler) {
-		return super.executeSql(sqlOrNamedSql, entity, reflectPropertyHandler);
+		return super.executeSql(sqlOrNamedSql, entity);
 	}
 
 	@Override
@@ -901,7 +795,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#translate(java.lang.String,
-	 * java.lang.String, org.sagacity.sqltoy.plugin.TranslateHandler)
+	 * java.lang.String, org.sagacity.sqltoy.translate.TranslateHandler)
 	 */
 	@Override
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
@@ -925,8 +819,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T extends Serializable> List<T> findAll(Class<T> resultType) {
-		return super.findAll(resultType);
+	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		return super.loadEntity(entityClass, entityQuery);
 	}
 
 	@Override
@@ -935,9 +829,8 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
-			EntityQuery entityQuery) {
-		return super.findEntity(entityClass, paginationModel, entityQuery);
+	public <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
+		return super.findEntity(entityClass, page, entityQuery);
 	}
 
 	@Override
@@ -972,7 +865,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * @param resultType
 	 * @return
 	 */
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
 		return super.convertType(sourcePage, resultType);
 	}
 

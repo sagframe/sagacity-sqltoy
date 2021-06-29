@@ -127,8 +127,6 @@ public class DataSourceUtils {
 		public final static int MONGO = 130;
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
-		// 下面将逐步淘汰
-		public final static int SYBASE_IQ = 190;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -160,8 +158,6 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
-		// 纳入将不再支持范围
-		DBNameTypeMap.put(Dialect.SYBASE_IQ, DBType.SYBASE_IQ);
 	}
 
 	/**
@@ -219,9 +215,6 @@ public class DataSourceUtils {
 		case DBType.TDENGINE: {
 			return Dialect.TDENGINE;
 		}
-		case DBType.SYBASE_IQ: {
-			return Dialect.SYBASE_IQ;
-		}
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -235,8 +228,8 @@ public class DataSourceUtils {
 	public static String getDatabaseSqlSplitSign(Connection conn) {
 		try {
 			int dbType = getDBType(conn);
-			// sybase or sqlserver
-			if (dbType == DBType.SQLSERVER || dbType == DBType.SYBASE_IQ) {
+			// sqlserver
+			if (dbType == DBType.SQLSERVER) {
 				return " go ";
 			}
 		} catch (Exception e) {
@@ -328,6 +321,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @todo 获取当前数据库的版本
+	 * @param conn
 	 * @return
 	 * @throws SQLException
 	 */
@@ -411,10 +405,7 @@ public class DataSourceUtils {
 				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
 				dbType = DBType.KINGBASE;
-			} // sybase IQ
-			else if (dbDialect.equals(Dialect.SYBASE_IQ)) {
-				dbType = DBType.SYBASE_IQ;
-			} else if (dbDialect.equals(Dialect.ES)) {
+			}else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
@@ -528,6 +519,7 @@ public class DataSourceUtils {
 
 	/**
 	 * @TDDO 获取数据库类型的名称
+	 * @param sqltoyContext
 	 * @param datasource
 	 * @return
 	 */

@@ -41,8 +41,7 @@ public class ShardingResult implements java.io.Serializable {
 	}
 
 	/**
-	 * @param rows
-	 *            the rows to set
+	 * @param rows List
 	 */
 	public void setRows(List<?> rows) {
 		this.rows = rows;
@@ -57,7 +56,6 @@ public class ShardingResult implements java.io.Serializable {
 
 	/**
 	 * @param success
-	 *            the success to set
 	 */
 	public void setSuccess(boolean success) {
 		this.success = success;

@@ -10,13 +10,13 @@ import java.util.List;
  * @author zhongxuchen
  * @version v1.0,Date:2011-2-25
  */
-public class PaginationModel<T> implements Serializable {
+public class Page<T> implements Serializable {
 	private static final long serialVersionUID = -7117473828519846708L;
 
 	/**
 	 * 每页记录数(默认为10)
 	 */
-	private Integer pageSize = 10;
+	private int pageSize = 10;
 
 	/**
 	 * 当前页数(默认从1开始,以页面给用户显示的为基准)
@@ -43,34 +43,32 @@ public class PaginationModel<T> implements Serializable {
 	 */
 	private long startIndex = 0;
 
-	public PaginationModel() {
+	public Page() {
 
 	}
 
-	public PaginationModel(Integer pageSize, Long pageNo) {
-		if (pageSize != null) {
+	public Page(int pageSize, long pageNo) {
+		if (pageSize > 0) {
 			this.pageSize = pageSize;
 		}
-		if (pageNo != null) {
-			this.pageNo = pageNo;
-		}
+		this.pageNo = pageNo;
 	}
 
-	public PaginationModel(List<T> rows, long recordCount) {
+	public Page(List<T> rows, long recordCount) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = 0;
 	}
 
-	public PaginationModel(List<T> rows, long recordCount, long startIndex) {
+	public Page(List<T> rows, long recordCount, long startIndex) {
 		setPageSize(10);
 		setRecordCount(recordCount);
 		setRows(rows);
 		this.startIndex = startIndex;
 	}
 
-	public PaginationModel(List<T> rows, long recordCount, Integer pageSize, long startIndex) {
+	public Page(List<T> rows, long recordCount, int pageSize, long startIndex) {
 		setPageSize(pageSize);
 		setRecordCount(recordCount);
 		setRows(rows);
@@ -88,14 +86,14 @@ public class PaginationModel<T> implements Serializable {
 		this.rows = rows;
 	}
 
-	public Integer getPageSize() {
-		if (pageSize == null || pageSize < 1) {
+	public int getPageSize() {
+		if (pageSize < 1) {
 			return 10;
 		}
 		return pageSize;
 	}
 
-	public void setPageSize(Integer pageSize) {
+	public void setPageSize(int pageSize) {
 		this.pageSize = pageSize;
 	}
 
@@ -157,8 +155,6 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	/**
-	 * 返回上一页号
-	 * 
 	 * @return 上一页号
 	 */
 	public long getPriorPage() {
@@ -169,8 +165,6 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	/**
-	 * 返回最后一页
-	 * 
 	 * @return 最后一页
 	 */
 	public long getLastPage() {
@@ -178,8 +172,6 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	/**
-	 * 返回第一页
-	 * 
 	 * @return 第一页
 	 */
 	public long getFirstPage() {
@@ -187,8 +179,6 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	/**
-	 * 返回下一页号
-	 * 
 	 * @return 下一页号
 	 */
 	public long getNextPage() {
@@ -199,9 +189,7 @@ public class PaginationModel<T> implements Serializable {
 	}
 
 	/**
-	 * 总页数
-	 * 
-	 * @return totalPage
+	 * @return totalPage 总页数
 	 */
 	public long getTotalPage() {
 		if (this.pageSize < 1) {

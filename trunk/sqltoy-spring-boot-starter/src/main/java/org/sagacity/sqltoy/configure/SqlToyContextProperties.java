@@ -80,12 +80,13 @@ public class SqlToyContextProperties implements Serializable {
 	private Integer printSqlTimeoutMillis;
 
 	/**
-	 * sql打印策略,分debug\error两种模式,默认error时打印
+	 * sql文件脚本变更检测间隔时长(秒)
 	 */
-	private String printSqlStrategy = "error";
-
 	private Integer scriptCheckIntervalSeconds;
 
+	/**
+	 * 缓存更新、sql脚本更新 延迟多少秒开始检测
+	 */
 	private Integer delayCheckSeconds;
 
 	private String encoding;
@@ -114,11 +115,6 @@ public class SqlToyContextProperties implements Serializable {
 	 * 数据库保留字,用逗号分隔
 	 */
 	private String reservedWords;
-
-	/**
-	 * 自定义获取DataSource的策略类
-	 */
-	private String obtainDataSource;
 
 	/**
 	 * 缓存管理器
@@ -292,14 +288,6 @@ public class SqlToyContextProperties implements Serializable {
 		this.printSqlTimeoutMillis = printSqlTimeoutMillis;
 	}
 
-	public String getPrintSqlStrategy() {
-		return printSqlStrategy;
-	}
-
-	public void setPrintSqlStrategy(String printSqlStrategy) {
-		this.printSqlStrategy = printSqlStrategy;
-	}
-
 	public Integer getScriptCheckIntervalSeconds() {
 		return scriptCheckIntervalSeconds;
 	}
@@ -344,14 +332,6 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setReservedWords(String reservedWords) {
 		this.reservedWords = reservedWords;
-	}
-
-	public String getObtainDataSource() {
-		return obtainDataSource;
-	}
-
-	public void setObtainDataSource(String obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
 	}
 
 	/**

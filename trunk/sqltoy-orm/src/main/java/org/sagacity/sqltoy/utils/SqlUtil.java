@@ -393,7 +393,7 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(TypeHandler typeHandler, ResultSet rs, Class voClass,
+	private static List reflectResultToVO(TypeHandler typeHandler, ResultSet rs, Class voClass,
 			boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
@@ -448,7 +448,7 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
+			rowData = reflectResultRowToDTO(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
 					voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
@@ -488,7 +488,7 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
+	private static Object reflectResultRowToDTO(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
 			Method[] setMethods, String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet)
 			throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
@@ -537,6 +537,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param preparedStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object preparedStatementProcess(Object userData, PreparedStatement pst, ResultSet rs,
 			PreparedStatementResultHandler preparedStatementResultHandler) throws Exception {
@@ -569,6 +570,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param callableStatementResultHandler
 	 * @return
+	 * @throws Exception
 	 */
 	public static Object callableStatementProcess(Object userData, CallableStatement pst, ResultSet rs,
 			CallableStatementResultHandler callableStatementResultHandler) throws Exception {
@@ -837,7 +839,7 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
+			result = reflectResultToVO(typeHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -1368,14 +1370,15 @@ public class SqlUtil {
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
+	 * @param reservedWord
 	 * @return
 	 * @throws Exception
 	 */
 	public static Long executeSql(TypeHandler typeHandler, final String executeSql, final Object[] params,
 			final Integer[] paramsType, final Connection conn, final Integer dbType, final Boolean autoCommit,
-			boolean processWord) throws Exception {
+			boolean reservedWord) throws Exception {
 		// 对sql进行关键词符号替换
-		String realSql = processWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
+		String realSql = reservedWord ? ReservedWordsUtil.convertSql(executeSql, dbType) : executeSql;
 		SqlExecuteStat.showSql("execute sql=", realSql, params);
 		boolean hasSetAutoCommit = false;
 		Long updateCounts = null;

@@ -7,10 +7,10 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.PaginationModel;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +36,8 @@ public class ElasticSqlPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
+	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			Page pageModel, QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
@@ -51,7 +51,7 @@ public class ElasticSqlPlugin {
 				System.out.println("findPageByElastic sql=" + realSql);
 			}
 		}
-		PaginationModel page = new PaginationModel();
+		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,

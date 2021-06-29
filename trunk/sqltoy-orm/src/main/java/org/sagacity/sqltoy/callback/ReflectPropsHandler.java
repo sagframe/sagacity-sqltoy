@@ -13,7 +13,7 @@ import java.util.List;
  * @version v1.0,Date:2012-7-14
  */
 @SuppressWarnings("rawtypes")
-public abstract class ReflectPropertyHandler {
+public abstract class ReflectPropsHandler {
 	/**
 	 * 集合数据的行号
 	 */

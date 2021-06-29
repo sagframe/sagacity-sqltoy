@@ -2,6 +2,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 存储过程返回结果集

@@ -44,10 +44,12 @@ public class TranslateConfigParse {
 
 	/**
 	 * @todo 解析translate配置文件
+	 * @param sqlToyContext
 	 * @param translateMap
 	 * @param checker
 	 * @param translateConfig
 	 * @param charset
+	 * @return
 	 * @throws Exception
 	 */
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
@@ -89,7 +91,7 @@ public class TranslateConfigParse {
 							translateCacheModel.setKeepAlive(defaultConfig.getDefaultKeepAlive());
 							XMLUtil.setAttributes(elt, translateCacheModel);
 							translateCacheModel.setType(translateType);
-							//非sqlId模式定义
+							// 非sqlId模式定义
 							if (translateType.equals("sql")) {
 								if (StringUtil.isBlank(translateCacheModel.getSql())) {
 									sqlNode = elt.getElementsByTagName("sql");
@@ -222,7 +224,7 @@ public class TranslateConfigParse {
 							}
 							checherConfigModel.setTimeSections(timeSections);
 							checker.add(checherConfigModel);
-							logger.debug("已经加载缓存更新检测器:type={}", translateType);
+							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}", checherConfigModel.getCache(), translateType);
 						}
 					}
 				}

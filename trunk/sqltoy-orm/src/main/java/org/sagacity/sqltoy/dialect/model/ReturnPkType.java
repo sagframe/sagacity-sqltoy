@@ -41,9 +41,9 @@ public enum ReturnPkType {
 	public static ReturnPkType getReturnPkType(Integer returnPkType) {
 		if (returnPkType == 1)
 			return GENERATED_KEYS;
-		else if (returnPkType == 2)
+		if (returnPkType == 2)
 			return PREPARD_ID;
-		else if (returnPkType == 1)
+		if (returnPkType == 3)
 			return RESULT_GET;
 		return RESULT_GET;
 	}

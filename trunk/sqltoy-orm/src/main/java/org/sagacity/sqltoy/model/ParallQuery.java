@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.config.model.NamedValuesModel;
+import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
@@ -46,11 +48,11 @@ public class ParallQuery implements Serializable {
 
 	/**
 	 * @TODO 分页场景
-	 * @param pageModel
+	 * @param page
 	 * @return
 	 */
-	public ParallQuery pageModel(PaginationModel pageModel) {
-		extend.pageModel = pageModel;
+	public ParallQuery page(Page page) {
+		extend.page = page;
 		return this;
 	}
 

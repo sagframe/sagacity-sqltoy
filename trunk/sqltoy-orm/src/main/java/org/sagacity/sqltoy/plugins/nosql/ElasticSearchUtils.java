@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.model.DataSetResult;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
@@ -319,6 +319,7 @@ public class ElasticSearchUtils {
 	 * @param result
 	 * @param rowJson
 	 * @param realFields
+	 * @param isSuggest
 	 */
 	private static void processRow(List result, JSONObject rowJson, String[] realFields, boolean isSuggest) {
 		Object root = getRealJSONObject(rowJson, realFields, isSuggest);
@@ -388,6 +389,7 @@ public class ElasticSearchUtils {
 	 * @todo 提取实际json对象
 	 * @param rowJson
 	 * @param realFields
+	 * @param isSuggest
 	 * @return
 	 */
 	private static Object getRealJSONObject(JSONObject rowJson, String[] realFields, boolean isSuggest) {

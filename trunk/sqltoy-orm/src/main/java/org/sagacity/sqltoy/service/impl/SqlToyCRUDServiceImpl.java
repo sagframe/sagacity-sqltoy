@@ -6,20 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
-import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
-import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
-import org.sagacity.sqltoy.model.PaginationModel;
+import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,25 +66,12 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	@Transactional
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler) {
-		return sqlToyLazyDao.saveAll(entities, reflectPropertyHandler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List)
 	 */
 	@Override
 	@Transactional
 	public <T extends Serializable> Long saveAll(List<T> entities) {
-		return sqlToyLazyDao.saveAll(entities, null);
+		return sqlToyLazyDao.saveAll(entities);
 	}
 
 	@Override
@@ -142,19 +124,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util .List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	@Transactional
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
-			String... forceUpdateProps) {
-		return sqlToyLazyDao.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util .List,
 	 * java.lang.String[])
 	 */
 	@Override
@@ -172,7 +141,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Override
 	@Transactional
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities) {
-		return sqlToyLazyDao.updateAllDeeply(entities, null);
+		return sqlToyLazyDao.updateAllDeeply(entities);
 	}
 
 	/*
@@ -200,20 +169,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	@Transactional
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps) {
 		return sqlToyLazyDao.saveOrUpdateAll(entities, forceUpdateProps);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
-	 * .io.Serializable, java.lang.String[],
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	@Transactional
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
-		return sqlToyLazyDao.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
 	}
 
 	/*
@@ -334,116 +289,6 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid).idLength(appendIdSize));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findFrom(java.io.
-	 * Serializable )
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> List<T> findFrom(T entity) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException(
-					"findFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
-		}
-		return sqlToyLazyDao.findBySql(entityMeta.getListSql(), entity);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findFrom(java.io.
-	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException(
-					"findFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
-		}
-		return (List<T>) sqlToyLazyDao.findByQuery(
-				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
-				.getRows();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findPageFrom(org.sagacity
-	 * .core.database.model.PaginationModel, java.io.Serializable)
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getPageSql())) {
-			throw new DataAccessException(
-					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
-		}
-		return sqlToyLazyDao.findPageBySql(paginationModel, entityMeta.getPageSql(), entity);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findPageFrom(org.sagacity
-	 * .core.database.model.PaginationModel, java.io.Serializable,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
-			ReflectPropertyHandler reflectPropertyHandler) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getPageSql())) {
-			throw new DataAccessException(
-					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
-		}
-		return (PaginationModel<T>) sqlToyLazyDao.findPageByQuery(paginationModel,
-				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
-				.getPageResult();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findTop(java.io.
-	 * Serializable, long)
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> List<T> findTopFrom(T entity, double topSize) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql())) {
-			throw new DataAccessException(
-					"findTopFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
-		}
-		return (List<T>) sqlToyLazyDao.findTopBySql(entityMeta.getListSql(), entity, topSize);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#getRandomResult(java
-	 * .io.Serializable, int)
-	 */
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> List<T> getRandomFrom(T entity, double randomCount) {
-		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
-		if (StringUtil.isBlank(entityMeta.getListSql()) && StringUtil.isBlank(entityMeta.getPageSql())) {
-			throw new DataAccessException("getRandomFromByEntity[" + entity.getClass().getName()
-					+ "]沒有在类上用注解@ListSql()或@PaginationSql() 定义查询sql!");
-		}
-		return (List<T>) sqlToyLazyDao.getRandomResult(
-				StringUtil.isBlank(entityMeta.getListSql()) ? entityMeta.getPageSql() : entityMeta.getListSql(), entity,
-				randomCount);
-	}
-
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
@@ -538,7 +383,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	}
 
 	@Override
-	public <T extends Serializable> PaginationModel<T> convertType(PaginationModel sourcePage, Class<T> resultType) {
+	public <T extends Serializable> Page<T> convertType(Page sourcePage, Class<T> resultType) {
 		return sqlToyLazyDao.convertType(sourcePage, resultType);
 	}
 

@@ -17,10 +17,10 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.PaginationModel;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.HttpClientUtils;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
@@ -54,8 +54,8 @@ public class ElasticSearchPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
+	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
+			Page pageModel, QueryExecutor queryExecutor) throws Exception {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
@@ -74,7 +74,7 @@ public class ElasticSearchPlugin {
 			throw e;
 		}
 
-		PaginationModel page = new PaginationModel();
+		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,extend.humpMapLabel);

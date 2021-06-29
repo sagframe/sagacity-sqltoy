@@ -11,15 +11,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.SqlExecuteLog;
-import org.sagacity.sqltoy.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.config.model.SqlExecuteLog;
+import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen
  * @version v1.0,Date:2015年6月12日
@@ -60,11 +60,11 @@ public class SqlExecuteStat {
 
 	/**
 	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
-	 * @param e
+	 * @param exception
 	 */
-	public static void error(Exception e) {
+	public static void error(Exception exception) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setError(e.getMessage());
+			threadLocal.get().setError(exception.getMessage());
 		}
 	}
 

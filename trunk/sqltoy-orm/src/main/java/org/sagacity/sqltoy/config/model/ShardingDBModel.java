@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.model;
+package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
 
@@ -9,15 +9,16 @@ import javax.sql.DataSource;
 
 /**
  * @project sagacity-sqltoy4.0
- * @description 单一分库分表模型
+ * @description 分库模型
  * @author zhongxuchen
- * @version v1.0,Date:2017年11月6日
+ * @version v1.0,Date:2017年11月3日
  */
-public class ShardingModel implements Serializable {
+public class ShardingDBModel implements Serializable {
+
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 4092467610948600457L;
+	private static final long serialVersionUID = -4119527303448356631L;
 
 	/**
 	 * 数据源名称
@@ -25,14 +26,9 @@ public class ShardingModel implements Serializable {
 	private String dataSourceName;
 
 	/**
-	 * 数据源名称
+	 * 数据源
 	 */
 	private DataSource dataSource;
-
-	/**
-	 * 表名
-	 */
-	private String tableName;
 
 	/**
 	 * @return the dataSourceName
@@ -60,20 +56,6 @@ public class ShardingModel implements Serializable {
 	 */
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
-	}
-
-	/**
-	 * @return the tableName
-	 */
-	public String getTableName() {
-		return tableName;
-	}
-
-	/**
-	 * @param tableName the tableName to set
-	 */
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
 	}
 
 }

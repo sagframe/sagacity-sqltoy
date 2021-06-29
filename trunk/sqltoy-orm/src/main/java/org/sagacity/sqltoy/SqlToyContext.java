@@ -14,15 +14,13 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
-import org.sagacity.sqltoy.plugins.connection.impl.DefaultConnectionFactory;
+import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.datasource.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -30,7 +28,6 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
-import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -42,8 +39,6 @@ import org.springframework.context.ApplicationContextAware;
 
 //------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
-//  (很多框架没有悟到这一点，且没有发现条件参数95%以上为null或为空白就表示不参与条件检索,少量特殊情况
-//   只需稍做处理即可规整，所以总是摆脱不了if(param!=null)形态的显式逻辑判断),此特点是开发sqltoy的起点!
 //2、sql中支持注释(规避了对hint特性的影响,知道hint吗?搜oracle hint)，和动态更新加载，便于开发和后期维护整个过程的管理
 //3、支持缓存翻译和反向缓存条件检索(通过缓存将名称匹配成精确的key)，实现sql简化和性能大幅提升
 //4、支持快速分页和分页优化功能，实现分页最高级别的优化，同时还考虑到了cte多个with as情况下的优化支持
@@ -54,16 +49,15 @@ import org.springframework.context.ApplicationContextAware;
 //9、支持跨数据库函数自适配,从而非常有利于一套代码适应多种数据库便于产品化,比如oracle的nvl，当sql在mysql环境执行时自动替换为ifnull
 //10、支持分库分表
 //11、提供了取top、取random记录、树形表结构构造和递归查询支持、updateFetch单次交互完成修改和查询等实用的功能
-//12、sqltoy的update、save、saveAll、load 等crud操作规避了hibernate jpa的缺陷,
-//    可以深入对比update/updateAll、saveOrUpdate/saveOrUpdateAll内部差异
+//12、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//------------------------------------------------------------------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------------*/
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
  * @author zhongxuchen
- * @version v1.0,Date:2009-12-11 下午09:48:15
+ * @version v1.0,Date:2009-12-11
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
@@ -148,12 +142,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String cacheType = "ehcache";
 
-	private String defaultDataSourceName;
-
 	/**
-	 * 获取数据源策略配置,供特殊场景下由开发者自定义获取数据(如多个数据源根据ThreadLocal中存放的信息来判断使用哪个)
+	 * 默认数据源名称，一般无需设置
 	 */
-	private ObtainDataSource obtainDataSource = new DefaultObtainDataSource();
+	private String defaultDataSourceName;
 
 	/**
 	 * @return the translateManager
@@ -178,12 +170,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean debug = false;
 
 	/**
-	 * debug\error 此参数废弃,减少容易混淆的概念，目前作用等同于debug
-	 */
-	@Deprecated
-	private String printSqlStrategy = "error";
-
-	/**
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
 	private int printSqlTimeoutMillis = 30000;
@@ -193,6 +179,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String dialect;
 
+	/*----------------snowflake参数,如不设置框架自动以本机IP来获取----  */
 	/**
 	 * snowflake 集群节点id<31
 	 */
@@ -202,9 +189,10 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 数据中心id<31
 	 */
 	private Integer dataCenterId;
+	/*----------------snowflake 参数---- ---------------------------- */
 
 	/**
-	 * 服务器id(3位数字)
+	 * 服务器id(3位数字)，用于22位和26位主键生成，不设置会自动根据本机IP生成
 	 */
 	private Integer serverId;
 
@@ -228,22 +216,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
 
+	/**
+	 * 提供数据源获得connection的扩展(默认spring的实现)
+	 */
 	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
-
-	/**
-	 * @param workerId the workerId to set
-	 */
-	public void setWorkerId(Integer workerId) {
-		this.workerId = workerId;
-	}
-
-	/**
-	 * @param dataCenterId the dataCenterId to set
-	 */
-	public void setDataCenterId(Integer dataCenterId) {
-		this.dataCenterId = dataCenterId;
-	}
-
+	
 	/**
 	 * spring 上下文容器
 	 */
@@ -271,7 +248,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
-		setWorkerAndDataCenterId();
+		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
@@ -399,52 +376,6 @@ public class SqlToyContext implements ApplicationContextAware {
 		return result;
 	}
 
-	// 设置workerId和dataCenterId,当没有通过配置文件指定workerId时通过IP来自动分配
-	// 当一个IP节点上部署多个实例时需要手工指定
-	private void setWorkerAndDataCenterId() {
-		try {
-			String keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.workerId");
-			if (workerId == null && keyValue != null) {
-				workerId = Integer.parseInt(keyValue);
-			}
-			keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.dataCenterId");
-			if (dataCenterId == null && keyValue != null) {
-				dataCenterId = Integer.parseInt(keyValue);
-			}
-			if (workerId != null && (workerId.intValue() > 0 && workerId.intValue() < 32)) {
-				SqlToyConstants.WORKER_ID = workerId.intValue();
-			} else {
-				String serverIdentity = IdUtil.getLastIp(2);
-				int id = Integer.parseInt(serverIdentity == null ? "0" : serverIdentity);
-				if (id > 31) {
-					// 个位作为workerId
-					SqlToyConstants.WORKER_ID = id % 10;
-					// 十位数作为dataCenterId
-					if (dataCenterId == null) {
-						SqlToyConstants.DATA_CENTER_ID = id / 10;
-					}
-				} else {
-					SqlToyConstants.WORKER_ID = id;
-				}
-			}
-			if (dataCenterId != null && dataCenterId.intValue() > 0 && dataCenterId.intValue() < 32) {
-				SqlToyConstants.DATA_CENTER_ID = dataCenterId.intValue();
-			}
-			// 22位或26位主键对应的serverId
-			String serverNode = (serverId == null) ? SqlToyConstants.getKeyValue("sqltoy.server.id") : ("" + serverId);
-			if (serverNode != null) {
-				serverNode = StringUtil.addLeftZero2Len(serverNode, 3);
-				if (serverNode.length() > 3) {
-					serverNode = serverNode.substring(serverNode.length() - 3);
-				}
-				SqlToyConstants.SERVER_ID = serverNode;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
-		}
-	}
-
 	/**
 	 * @return the scriptLoader
 	 */
@@ -452,6 +383,27 @@ public class SqlToyContext implements ApplicationContextAware {
 		return scriptLoader;
 	}
 
+	/**
+	 * @param workerId the workerId to set
+	 */
+	public void setWorkerId(Integer workerId) {
+		this.workerId = workerId;
+	}
+
+	/**
+	 * @param dataCenterId the dataCenterId to set
+	 */
+	public void setDataCenterId(Integer dataCenterId) {
+		this.dataCenterId = dataCenterId;
+	}
+
+	/**
+	 * @param serverId the serverId to set
+	 */
+	public void setServerId(Integer serverId) {
+		this.serverId = serverId;
+	}
+	
 	/**
 	 * @return the batchSize
 	 */
@@ -710,13 +662,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	/**
-	 * @param serverId the serverId to set
-	 */
-	public void setServerId(Integer serverId) {
-		this.serverId = serverId;
-	}
-
-	/**
 	 * @param defaultDataSource the defaultDataSource to set
 	 */
 	public void initDefaultDataSource() {
@@ -727,23 +672,6 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public DataSource getDefaultDataSource() {
 		return defaultDataSource;
-	}
-
-	@Deprecated
-	public void setObtainDataSource(ObtainDataSource obtainDataSource) {
-		this.obtainDataSource = obtainDataSource;
-	}
-
-	/**
-	 * @TODO 提供给SqlToyDaoSupport等获取数据源
-	 * @return
-	 */
-	@Deprecated
-	public DataSource obtainDataSource(String sqlDataSource) {
-		if (obtainDataSource == null) {
-			return defaultDataSource;
-		}
-		return obtainDataSource.getDataSource(applicationContext, defaultDataSource, sqlDataSource);
 	}
 
 	/**
@@ -771,20 +699,6 @@ public class SqlToyContext implements ApplicationContextAware {
 			return new ElasticEndpoint(id);
 		}
 		return result;
-	}
-
-	/**
-	 * @return the printSqlStrategy
-	 */
-	public String getPrintSqlStrategy() {
-		return printSqlStrategy;
-	}
-
-	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
-	 */
-	public void setPrintSqlStrategy(String printSqlStrategy) {
-		this.printSqlStrategy = printSqlStrategy;
 	}
 
 	/**
@@ -907,7 +821,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
 	}
-	
+
 	public void setDefaultDataSourceName(String defaultDataSourceName) {
 		this.defaultDataSourceName = defaultDataSourceName;
 	}

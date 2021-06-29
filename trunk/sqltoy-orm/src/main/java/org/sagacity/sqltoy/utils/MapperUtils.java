@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
-import org.sagacity.sqltoy.model.DTOEntityMapModel;
+import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +60,11 @@ public class MapperUtils {
 	/**
 	 * @TODO 实现POJO和VO对象集合之间的相互转换和赋值
 	 * @param <T>
-	 * @param entity
+	 * @param sqlToyContext
+	 * @param sourceList
 	 * @param resultType
 	 * @return
+	 * @throws Exception
 	 */
 	public static <T extends Serializable> List<T> mapList(SqlToyContext sqlToyContext, List<Serializable> sourceList,
 			Class<T> resultType) throws Exception {

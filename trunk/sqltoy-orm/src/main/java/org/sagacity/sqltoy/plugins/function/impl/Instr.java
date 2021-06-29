@@ -53,7 +53,7 @@ public class Instr extends IFunction {
 			realArgs = args;
 		}
 		StringBuilder result = new StringBuilder();
-		if (dialect == DBType.SQLSERVER || dialect == DBType.SYBASE_IQ) {
+		if (dialect == DBType.SQLSERVER) {
 			if (funLow.equals("charindex")) {
 				return super.IGNORE;
 			}

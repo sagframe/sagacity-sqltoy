@@ -11,9 +11,8 @@ import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
-import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
+import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
-import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -108,10 +107,6 @@ public class SqltoyAutoConfiguration {
 			sqlToyContext.setDebug(properties.getDebug());
 		}
 
-		// sql执行打印策略(默认为error时打印)
-		if (properties.getPrintSqlStrategy() != null) {
-			sqlToyContext.setPrintSqlStrategy(properties.getPrintSqlStrategy());
-		}
 		// sql执行超过多长时间则打印提醒(默认30秒)
 		if (properties.getPrintSqlTimeoutMillis() != null) {
 			sqlToyContext.setPrintSqlTimeoutMillis(properties.getPrintSqlTimeoutMillis());
@@ -204,18 +199,6 @@ public class SqltoyAutoConfiguration {
 		// 设置默认数据库
 		if (properties.getDefaultDataSource() != null) {
 			sqlToyContext.setDefaultDataSourceName(properties.getDefaultDataSource());
-		}
-
-		// 自定义获取数据源的策略配置
-		String obtainDataSource = properties.getObtainDataSource();
-		if (StringUtil.isNotBlank(obtainDataSource)) {
-			if (applicationContext.containsBean(obtainDataSource)) {
-				sqlToyContext.setObtainDataSource((ObtainDataSource) applicationContext.getBean(obtainDataSource));
-			} // 包名和类名称
-			else if (obtainDataSource.contains(".")) {
-				sqlToyContext.setObtainDataSource(
-						(ObtainDataSource) Class.forName(obtainDataSource).getDeclaredConstructor().newInstance());
-			}
 		}
 
 		// 自定义缓存实现管理器

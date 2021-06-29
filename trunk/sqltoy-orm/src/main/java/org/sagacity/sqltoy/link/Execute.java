@@ -8,7 +8,6 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -35,11 +34,6 @@ public class Execute extends BaseLink {
 	 * 作为参数传递的实体对象(属性跟sql中的参数名称对应)
 	 */
 	private Serializable entity;
-
-	/**
-	 * 参数反调设置器(特殊情况下使用)
-	 */
-	private ReflectPropertyHandler reflectPropertyHandler;
 
 	/**
 	 * 是否自动提交
@@ -90,11 +84,6 @@ public class Execute extends BaseLink {
 		return this;
 	}
 
-	public Execute reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		this.reflectPropertyHandler = reflectPropertyHandler;
-		return this;
-	}
-
 	public Execute sql(String sql) {
 		this.sql = sql;
 		return this;
@@ -114,7 +103,7 @@ public class Execute extends BaseLink {
 		String[] names = paramsNamed;
 		if (entity != null) {
 			names = sqlToyConfig.getParamsName();
-			values = BeanUtil.reflectBeanToAry(entity, names, null, reflectPropertyHandler);
+			values = BeanUtil.reflectBeanToAry(entity, names, null, null);
 		}
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, null, autoCommit,
 				getDataSource(sqlToyConfig));

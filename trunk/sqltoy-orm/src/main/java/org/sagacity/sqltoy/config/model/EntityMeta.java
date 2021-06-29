@@ -61,12 +61,6 @@ public class EntityMeta implements Serializable {
 	private Integer[] fieldsTypeArray;
 
 	/**
-	 * 是否存在default值(仅用于sybaseiq,后期可废弃)
-	 */
-	@Deprecated
-	private boolean hasDefaultValue = false;
-
-	/**
 	 * 所有字段的默认值
 	 */
 	private String[] fieldsDefaultValue;
@@ -150,16 +144,6 @@ public class EntityMeta implements Serializable {
 	 * 业务id字段
 	 */
 	private String businessIdField;
-
-	/**
-	 * 分页查询的sql
-	 */
-	private String pageSql;
-
-	/**
-	 * 批量集合查询
-	 */
-	private String listSql;
 
 	/**
 	 * 根据主键load查询的sql
@@ -484,37 +468,6 @@ public class EntityMeta implements Serializable {
 		return isRepeat;
 	}
 
-	/**
-	 * @return the pageSql
-	 */
-	public String getPageSql() {
-		if (StringUtil.isBlank(this.pageSql)) {
-			return this.listSql;
-		}
-		return pageSql;
-	}
-
-	/**
-	 * @param pageSql the pageSql to set
-	 */
-	public void setPageSql(String pageSql) {
-		this.pageSql = pageSql;
-	}
-
-	/**
-	 * @return the listSql
-	 */
-	public String getListSql() {
-		return listSql;
-	}
-
-	/**
-	 * @param listSql the listSql to set
-	 */
-	public void setListSql(String listSql) {
-		this.listSql = listSql;
-	}
-
 	public String getLoadSql(String shardingTable) {
 		if (shardingTable == null || shardingTable.equals(tableName)) {
 			return loadSql;
@@ -596,20 +549,6 @@ public class EntityMeta implements Serializable {
 	 */
 	public void setFieldsNullable(Boolean[] fieldsNullable) {
 		this.fieldsNullable = fieldsNullable;
-	}
-
-	/**
-	 * @return the hasDefaultValue
-	 */
-	public boolean isHasDefaultValue() {
-		return hasDefaultValue;
-	}
-
-	/**
-	 * @param hasDefaultValue the hasDefaultValue to set
-	 */
-	public void setHasDefaultValue(boolean hasDefaultValue) {
-		this.hasDefaultValue = hasDefaultValue;
 	}
 
 	/**

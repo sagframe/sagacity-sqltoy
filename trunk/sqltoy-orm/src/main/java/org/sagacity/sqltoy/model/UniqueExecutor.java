@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.executor;
+package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 

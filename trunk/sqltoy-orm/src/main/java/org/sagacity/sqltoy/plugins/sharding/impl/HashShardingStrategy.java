@@ -6,12 +6,12 @@ package org.sagacity.sqltoy.plugins.sharding.impl;
 import java.util.HashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description hash取模形式的分库策略
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月1日
@@ -36,7 +36,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingTable(org.sagacity.
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingTable(org.sagacity.
 	 * sqltoy.SqlToyContext, java.lang.Class, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
@@ -56,7 +56,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingModel(org.sagacity.
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.sagacity.
 	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
 	 */
 	@Override
@@ -76,7 +76,7 @@ public class HashShardingStrategy implements ShardingStrategy {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#initialize()
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#initialize()
 	 */
 	@Override
 	public void initialize() {

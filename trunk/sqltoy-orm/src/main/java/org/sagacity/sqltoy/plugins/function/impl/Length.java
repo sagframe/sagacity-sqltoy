@@ -66,12 +66,6 @@ public class Length extends IFunction {
 			}
 			return wrapArgs("length", args);
 		}
-		if (dialect == DBType.SYBASE_IQ) {
-			if (funLow.equals("char_length")) {
-				return wrapArgs(functionName, args);
-			}
-			return wrapArgs("datalength", args);
-		}
 		return super.IGNORE;
 	}
 

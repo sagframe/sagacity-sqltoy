@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.DialectFactory;
-import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -33,7 +33,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 缓存刷新检测接口定义
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
@@ -97,9 +97,6 @@ public class TranslateFactory {
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
 		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
 				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
 		return DialectFactory.getInstance()
 				.findByQuery(sqlToyContext,
 						new QueryExecutor(checkerConfig.getSql(), sqlToyConfig.getParamsName(),
@@ -304,9 +301,6 @@ public class TranslateFactory {
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
 		DataSource dataSource = dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), null,
 				dataSourceName, null, sqlToyContext.getDefaultDataSource());
-		if (null == dataSource) {
-			dataSource = sqlToyContext.obtainDataSource(dataSourceName);
-		}
 		return DialectFactory.getInstance().findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null, dataSource)
 				.getRows();
 	}
