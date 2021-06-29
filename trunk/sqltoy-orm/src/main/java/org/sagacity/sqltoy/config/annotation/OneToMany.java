@@ -35,12 +35,4 @@ public @interface OneToMany {
 	// 定制级联修改保存对子表的操作语句
 	String update() default "";
 
-	// 关联表的字段(many column)
-	@Deprecated
-	String[] mappedColumns() default {};
-
-	// 关联的表
-	@Deprecated
-	String mappedTable() default "";
-
 }

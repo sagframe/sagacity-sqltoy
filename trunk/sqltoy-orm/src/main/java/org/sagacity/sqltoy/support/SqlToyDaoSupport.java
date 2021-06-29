@@ -103,7 +103,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2020-4-5 {分页Page模型中设置skipQueryCount=true跳过查总记录,默认false}
  * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
  * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
- * @modify Date:2021-06-25 {剔除linkDaoSupport、BaseDaoSupport,将link相关功能集中到SqlToyDaoSupport中}
+ * @modify Date:2021-06-25
+ *         {剔除linkDaoSupport、BaseDaoSupport,将link相关功能集中到SqlToyDaoSupport中}
  */
 @SuppressWarnings("rawtypes")
 public class SqlToyDaoSupport {
@@ -552,6 +553,17 @@ public class SqlToyDaoSupport {
 		return (T) loadByQuery(new QueryExecutor(sql, entity));
 	}
 
+	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		List<T> result = findEntity(entityClass, entityQuery);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
+			return result.get(0);
+		}
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+	}
+
 	/**
 	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如:
 	 * <li>1、new QueryExecutor(sql,entity).dataSource(dataSource)</li>
@@ -569,10 +581,13 @@ public class SqlToyDaoSupport {
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0) {
+		if (rows == null || rows.isEmpty()) {
+			return null;
+		}
+		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询预期!");
 	}
 
 	/**
@@ -618,7 +633,7 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit 自动提交，默认可以填null
+	 * @param autoCommit    自动提交，默认可以填null
 	 * @param dataSource
 	 * @return
 	 */
@@ -641,7 +656,7 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param dataSet
 	 * @param batchSize
-	 * @param autoCommit 自动提交，默认可以填null
+	 * @param autoCommit    自动提交，默认可以填null
 	 * @return
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
@@ -730,7 +745,7 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 以QueryExecutor 封装sql、参数等条件，实现分页查询
 	 * @param page
-	 * @param queryExecutor   (可动态设置数据源)
+	 * @param queryExecutor (可动态设置数据源)
 	 * @return
 	 */
 	protected QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor) {
@@ -738,12 +753,10 @@ public class SqlToyDaoSupport {
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 跳过查询总记录数量
 		if (page.getSkipQueryCount() != null && page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
-					page.getPageNo(), page.getPageSize(),
-					this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
+			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(),
+		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig));
 	}
 
@@ -757,8 +770,8 @@ public class SqlToyDaoSupport {
 	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
 	 * @return
 	 */
-	protected <T> Page<T> findPageBySql(final Page page, final String sql,
-			final String[] paramsNamed, final Object[] paramsValue, Class<T> voClass) {
+	protected <T> Page<T> findPageBySql(final Page page, final String sql, final String[] paramsNamed,
+			final Object[] paramsValue, Class<T> voClass) {
 		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
 		if (voClass != null) {
 			query.resultType(voClass);
@@ -766,8 +779,7 @@ public class SqlToyDaoSupport {
 		return (Page<T>) findPageByQuery(page, query).getPageResult();
 	}
 
-	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sql,
-			final T entity) {
+	protected <T extends Serializable> Page<T> findPageBySql(final Page page, final String sql, final T entity) {
 		return (Page<T>) findPageByQuery(page, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
@@ -783,7 +795,9 @@ public class SqlToyDaoSupport {
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @param voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
-	 * @param topSize >1 取整数部分，<1 则表示按比例获取
+	 * @param topSize                                                                                >1
+	 *                                                                                               取整数部分，<1
+	 *                                                                                               则表示按比例获取
 	 * @return
 	 */
 	protected <T> List<T> findTopBySql(final String sql, final String[] paramsNamed, final Object[] paramsValue,
@@ -1302,11 +1316,12 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 利用sqltoy的translate缓存，通过显式调用对集合数据的列进行翻译
-	 * @param dataSet        要翻译的数据集合
-	 * @param cacheName      缓存名称
-	 * @param cacheType      缓存分类(如字典分类),非分类型的填null
-	 * @param cacheNameIndex 缓存名称对应的列，默认为1(null也表示1)
-	 * @param translateHandler        2个方法:getKey(Object row),setName(Object row,String name)
+	 * @param dataSet          要翻译的数据集合
+	 * @param cacheName        缓存名称
+	 * @param cacheType        缓存分类(如字典分类),非分类型的填null
+	 * @param cacheNameIndex   缓存名称对应的列，默认为1(null也表示1)
+	 * @param translateHandler 2个方法:getKey(Object row),setName(Object row,String
+	 *                         name)
 	 */
 	protected void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler translateHandler) {
@@ -1349,17 +1364,6 @@ public class SqlToyDaoSupport {
 		}
 	}
 
-	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
-		List<T> result = findEntity(entityClass, entityQuery);
-		if(result==null||result.isEmpty()) {
-			return null;
-		}
-		if (result.size() == 1) {
-			return result.get(0);
-		}
-		throw new IllegalArgumentException("loadEntity查询出:"+result.size()+" 条记录,不符合load查询预期!");
-	}
-
 	/**
 	 * @TODO 提供针对单表简易快捷查询 EntityQuery.where("#[name like ?]#[and status in
 	 *       (?)]").values(new Object[]{xxx,xxx})
@@ -1389,12 +1393,11 @@ public class SqlToyDaoSupport {
 		if (null == entityClass || null == page) {
 			throw new IllegalArgumentException("findEntityPage entityClass、page值不能为空!");
 		}
-		return (Page<T>) findEntityUtil(entityClass, page,
-				(entityQuery == null) ? EntityQuery.create() : entityQuery, false);
+		return (Page<T>) findEntityUtil(entityClass, page, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				false);
 	}
 
-	private Object findEntityUtil(Class entityClass, Page page, EntityQuery entityQuery,
-			boolean isCount) {
+	private Object findEntityUtil(Class entityClass, Page page, EntityQuery entityQuery, boolean isCount) {
 		String where = "";
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
@@ -1582,11 +1585,11 @@ public class SqlToyDaoSupport {
 		}
 		// 跳过总记录数形式的分页
 		if (page.getSkipQueryCount()) {
-			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig,
-					page.getPageNo(), page.getPageSize(), realDataSource).getPageResult();
+			return dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
+					page.getPageSize(), realDataSource).getPageResult();
 		}
-		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(),
-				page.getPageSize(), realDataSource).getPageResult();
+		return dialectFactory.findPage(sqlToyContext, queryExecutor, sqlToyConfig, page.getPageNo(), page.getPageSize(),
+				realDataSource).getPageResult();
 	}
 
 	/**

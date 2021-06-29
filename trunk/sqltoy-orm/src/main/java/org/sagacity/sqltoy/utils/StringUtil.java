@@ -424,14 +424,14 @@ public class StringUtil {
 	/**
 	 * @todo 通过正则表达式判断是否匹配
 	 * @param source
-	 * @param p
+	 * @param pattern
 	 * @return
 	 */
-	public static boolean matches(String source, Pattern p) {
+	public static boolean matches(String source, Pattern pattern) {
 		if (isBlank(source)) {
 			return false;
 		}
-		return p.matcher(source).find();
+		return pattern.matcher(source).find();
 	}
 
 	/**
@@ -448,19 +448,19 @@ public class StringUtil {
 		return matchIndex(source, Pattern.compile(regex), start);
 	}
 
-	public static int matchIndex(String source, Pattern p) {
-		Matcher m = p.matcher(source);
+	public static int matchIndex(String source, Pattern pattern) {
+		Matcher m = pattern.matcher(source);
 		if (m.find()) {
 			return m.start();
 		}
 		return -1;
 	}
 
-	public static int[] matchIndex(String source, Pattern p, int start) {
+	public static int[] matchIndex(String source, Pattern pattern, int start) {
 		if (source.length() <= start) {
 			return new int[] { -1, -1 };
 		}
-		Matcher m = p.matcher(source.substring(start));
+		Matcher m = pattern.matcher(source.substring(start));
 		if (m.find()) {
 			return new int[] { m.start() + start, m.end() + start };
 		}
@@ -471,8 +471,8 @@ public class StringUtil {
 		return matchLastIndex(source, Pattern.compile(regex));
 	}
 
-	public static int matchLastIndex(String source, Pattern p) {
-		Matcher m = p.matcher(source);
+	public static int matchLastIndex(String source, Pattern pattern) {
+		Matcher m = pattern.matcher(source);
 		int matchIndex = -1;
 		while (m.find()) {
 			matchIndex = m.start();

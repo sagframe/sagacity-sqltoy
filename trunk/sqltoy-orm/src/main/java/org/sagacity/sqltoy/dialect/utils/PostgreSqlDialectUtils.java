@@ -170,6 +170,7 @@ public class PostgreSqlDialectUtils {
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
+	@Deprecated
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
@@ -202,6 +203,7 @@ public class PostgreSqlDialectUtils {
 	 * @param tableName
 	 * @return
 	 */
+	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName,dbType);

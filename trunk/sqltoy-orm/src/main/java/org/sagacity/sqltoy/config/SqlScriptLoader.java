@@ -115,7 +115,7 @@ public class SqlScriptLoader {
 		}
 		try {
 			// 检索所有匹配的sql.xml文件
-			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
+			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
 				if (enabledDebug) {

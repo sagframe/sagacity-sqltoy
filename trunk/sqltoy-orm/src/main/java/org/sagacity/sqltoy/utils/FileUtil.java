@@ -271,7 +271,6 @@ public class FileUtil {
 	 * @TODO 读取文件到二进制数组中
 	 * @param file
 	 * @return
-	 * @throws IOException
 	 */
 	public static byte[] readAsBytes(Object file) {
 		if (file == null) {
@@ -599,7 +598,6 @@ public class FileUtil {
 	 * @todo 复制整个文件夹的内容
 	 * @param oldPath 准备拷贝的目录
 	 * @param newPath 指定绝对路径的新目录
-	 * @return
 	 */
 	public static void copyFolder(String oldPath, String newPath) {
 		FileInputStream input = null;
