@@ -5,9 +5,11 @@ package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -185,16 +187,27 @@ public class DefaultDialect implements Dialect {
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		List<Serializable> entities = new ArrayList<Serializable>();
+		entities.add(entity);
+		return saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
 	}
 
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		// 不支持
-		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
+				reflectPropertyHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
+		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
+		if (updateCnt >= entities.size()) {
+			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
+			return updateCnt;
+		}
+		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropertyHandler, conn, dbType,
+				dialect, autoCommit, tableName);
+		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
+		return updateCnt + saveCnt;
 	}
 
 	@Override

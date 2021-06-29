@@ -42,8 +42,6 @@ import org.springframework.context.ApplicationContextAware;
 
 //------------------了解 sqltoy的关键优势: -------------------------------------------------------------------------------------------*/
 //1、最简最直观的sql编写方式(不仅仅是查询语句)，采用条件参数前置处理规整法，让sql语句部分跟客户端保持高度一致
-//  (很多框架没有悟到这一点，且没有发现条件参数95%以上为null或为空白就表示不参与条件检索,少量特殊情况
-//   只需稍做处理即可规整，所以总是摆脱不了if(param!=null)形态的显式逻辑判断),此特点是开发sqltoy的起点!
 //2、sql中支持注释(规避了对hint特性的影响,知道hint吗?搜oracle hint)，和动态更新加载，便于开发和后期维护整个过程的管理
 //3、支持缓存翻译和反向缓存条件检索(通过缓存将名称匹配成精确的key)，实现sql简化和性能大幅提升
 //4、支持快速分页和分页优化功能，实现分页最高级别的优化，同时还考虑到了cte多个with as情况下的优化支持
@@ -54,11 +52,10 @@ import org.springframework.context.ApplicationContextAware;
 //9、支持跨数据库函数自适配,从而非常有利于一套代码适应多种数据库便于产品化,比如oracle的nvl，当sql在mysql环境执行时自动替换为ifnull
 //10、支持分库分表
 //11、提供了取top、取random记录、树形表结构构造和递归查询支持、updateFetch单次交互完成修改和查询等实用的功能
-//12、sqltoy的update、save、saveAll、load 等crud操作规避了hibernate jpa的缺陷,
-//    可以深入对比update/updateAll、saveOrUpdate/saveOrUpdateAll内部差异
+//12、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//------------------------------------------------------------------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy4.0
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
@@ -178,12 +175,6 @@ public class SqlToyContext implements ApplicationContextAware {
 	private boolean debug = false;
 
 	/**
-	 * debug\error 此参数废弃,减少容易混淆的概念，目前作用等同于debug
-	 */
-	@Deprecated
-	private String printSqlStrategy = "error";
-
-	/**
 	 * 超时打印sql(毫秒,默认30秒)
 	 */
 	private int printSqlTimeoutMillis = 30000;
@@ -228,6 +219,9 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private DataSourceSelector dataSourceSelector = new DefaultDataSourceSelector();
 
+	/**
+	 * 提供数据源获得connection的扩展(默认spring的实现)
+	 */
 	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
 
 	/**
@@ -771,20 +765,6 @@ public class SqlToyContext implements ApplicationContextAware {
 			return new ElasticEndpoint(id);
 		}
 		return result;
-	}
-
-	/**
-	 * @return the printSqlStrategy
-	 */
-	public String getPrintSqlStrategy() {
-		return printSqlStrategy;
-	}
-
-	/**
-	 * @param printSqlStrategy the printSqlStrategy to set
-	 */
-	public void setPrintSqlStrategy(String printSqlStrategy) {
-		this.printSqlStrategy = printSqlStrategy;
 	}
 
 	/**
