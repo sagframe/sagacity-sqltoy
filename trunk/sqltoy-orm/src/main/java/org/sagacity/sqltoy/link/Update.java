@@ -83,7 +83,7 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 设置是否深度修改
+	 * @todo 设置每批记录量
 	 * @param batchSize
 	 * @return
 	 */

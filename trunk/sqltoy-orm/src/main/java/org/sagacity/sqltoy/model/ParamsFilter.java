@@ -60,7 +60,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO blank
-	 * 
 	 * @return
 	 */
 	public ParamsFilter blank() {
@@ -70,7 +69,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 等于
-	 * 
 	 * @return
 	 */
 	public ParamsFilter eq(Object... values) {
@@ -81,7 +79,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 不等于
-	 * 
 	 * @return
 	 */
 	public ParamsFilter neq(Object... values) {
@@ -92,7 +89,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 大于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -104,7 +100,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 大于等于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -116,7 +111,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 小于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -128,7 +122,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 小于等于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -140,7 +133,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO left like
-	 * 
 	 * @return
 	 */
 	public ParamsFilter llike() {
@@ -150,7 +142,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO right like
-	 * 
 	 * @return
 	 */
 	public ParamsFilter rlike() {
@@ -192,6 +183,18 @@ public class ParamsFilter implements Serializable {
 	public ParamsFilter primary(String... excludes) {
 		this.type = "primary";
 		this.excludes = excludes;
+		return this;
+	}
+
+	/**
+	 * @TODO between
+	 * @param startValue
+	 * @param endValue
+	 * @return
+	 */
+	public ParamsFilter between(Object startValue, Object endValue) {
+		this.type = "between";
+		this.value = new Object[] { startValue, endValue };
 		return this;
 	}
 
