@@ -90,8 +90,8 @@ public class Update extends BaseLink {
 	}
 
 	/**
-	 * @todo 设置是否深度修改
-	 * @param deeply
+	 * @todo 设置每批记录量
+	 * @param batchSize
 	 * @return
 	 */
 	public Update batchSize(int batchSize) {

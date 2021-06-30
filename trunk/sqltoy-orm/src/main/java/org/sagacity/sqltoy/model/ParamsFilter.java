@@ -195,6 +195,16 @@ public class ParamsFilter implements Serializable {
 	}
 
 	/**
+	 * @TODO between
+	 * @return
+	 */
+	public ParamsFilter between(Object startValue, Object endValue) {
+		this.type = "between";
+		this.value = new Object[] { startValue, endValue };
+		return this;
+	}
+	
+	/**
 	 * @return the type
 	 */
 	public String getType() {

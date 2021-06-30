@@ -91,9 +91,9 @@ public class QueryExecutor implements Serializable {
 					throw new IllegalArgumentException("针对QueryExecutor设置条件过滤必须要设置filterParams=[" + filter.getParams()
 							+ "],和filterType=[" + filter.getType() + "]!");
 				}
-				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "blank")) {
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
-						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、lt等类型必须要设置values值!");
+						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
