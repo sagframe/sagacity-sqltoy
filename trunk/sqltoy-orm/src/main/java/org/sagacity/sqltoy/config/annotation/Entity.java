@@ -36,5 +36,6 @@ public @interface Entity {
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	String pk_constraint() default "";
 }

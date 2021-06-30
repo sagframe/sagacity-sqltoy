@@ -30,7 +30,6 @@ import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
-import org.sagacity.sqltoy.utils.IdUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -265,7 +264,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务
-		setWorkerAndDataCenterId();
+		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
@@ -391,52 +390,6 @@ public class SqlToyContext implements ApplicationContextAware {
 			}
 		}
 		return result;
-	}
-
-	// 设置workerId和dataCenterId,当没有通过配置文件指定workerId时通过IP来自动分配
-	// 当一个IP节点上部署多个实例时需要手工指定
-	private void setWorkerAndDataCenterId() {
-		try {
-			String keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.workerId");
-			if (workerId == null && keyValue != null) {
-				workerId = Integer.parseInt(keyValue);
-			}
-			keyValue = SqlToyConstants.getKeyValue("sqltoy.snowflake.dataCenterId");
-			if (dataCenterId == null && keyValue != null) {
-				dataCenterId = Integer.parseInt(keyValue);
-			}
-			if (workerId != null && (workerId.intValue() > 0 && workerId.intValue() < 32)) {
-				SqlToyConstants.WORKER_ID = workerId.intValue();
-			} else {
-				String serverIdentity = IdUtil.getLastIp(2);
-				int id = Integer.parseInt(serverIdentity == null ? "0" : serverIdentity);
-				if (id > 31) {
-					// 个位作为workerId
-					SqlToyConstants.WORKER_ID = id % 10;
-					// 十位数作为dataCenterId
-					if (dataCenterId == null) {
-						SqlToyConstants.DATA_CENTER_ID = id / 10;
-					}
-				} else {
-					SqlToyConstants.WORKER_ID = id;
-				}
-			}
-			if (dataCenterId != null && dataCenterId.intValue() > 0 && dataCenterId.intValue() < 32) {
-				SqlToyConstants.DATA_CENTER_ID = dataCenterId.intValue();
-			}
-			// 22位或26位主键对应的serverId
-			String serverNode = (serverId == null) ? SqlToyConstants.getKeyValue("sqltoy.server.id") : ("" + serverId);
-			if (serverNode != null) {
-				serverNode = StringUtil.addLeftZero2Len(serverNode, 3);
-				if (serverNode.length() > 3) {
-					serverNode = serverNode.substring(serverNode.length() - 3);
-				}
-				SqlToyConstants.SERVER_ID = serverNode;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("设置workerId和dataCenterId发生错误:{}", e.getMessage());
-		}
 	}
 
 	/**
