@@ -50,7 +50,7 @@
    * tidb
    * kingbase
    * mongodb (只支持查询)
-   * sybase_iq 支持15.4以上版本，建议使用16版本
+   * 所有基于jdbc的查询
 
 ## 1.2 jdk版本要求1.8+
    
