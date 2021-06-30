@@ -68,11 +68,21 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @TODO 设置jdbc pst查询最大记录数,一般不会涉及
+	 * @param maxRows
+	 * @return
+	 */
+	@Deprecated
 	public EntityQuery maxRows(int maxRows) {
 		innerModel.maxRows = maxRows;
 		return this;
 	}
 	
+	/**
+	 * @TODO 查询时增加distinct
+	 * @return
+	 */
 	public EntityQuery distinct() {
 		innerModel.distinct = true;
 		return this;
@@ -125,11 +135,29 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置where中涉及的参数
+	 * <p>
+	 * EntityQuery.create().where("status=:status").names("status").values(1)
+	 * </p>
+	 * @param names
+	 * @return
+	 */
 	public EntityQuery names(String... names) {
 		innerModel.names = names;
 		return this;
 	}
 
+	/**
+	 * <p>
+	 * 1、EntityQuery.create().where("status=:status").names("status").values(1)
+	 * 2、EntityQuery.create().where("status=?").values(1)
+	 * 3、EntityQuery.create().where("status=:status and staffName like :staffName").values(staffInfo对象实体)
+	 * 4、EntityQuery.create().where("status=:status").values(map.put("status",1))
+	 * </p>
+	 * @param values
+	 * @return
+	 */
 	public EntityQuery values(Object... values) {
 		// 兼容map
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
@@ -143,7 +171,7 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
-	 * @TODO 用map形式传参
+	 * @TODO 用map形式传参，EntityQuery.create().values(map) 模式也可以兼容
 	 * @param paramsMap
 	 * @return
 	 */
@@ -163,7 +191,11 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
-	// 排序
+	/**
+	 * @TODO 设置排序默认为升序，如:EntityQuery.create().orderBy("status")
+	 * @param fields
+	 * @return
+	 */
 	public EntityQuery orderBy(String... fields) {
 		// 默认为升序
 		if (fields != null && fields.length > 0) {

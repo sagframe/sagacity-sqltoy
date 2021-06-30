@@ -54,8 +54,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
-	 * update 2018-4-10 针对开发者将entity传入Class类别产生的bug进行提示
-	 * 
+	 * @TODO sql和以entity对象实体传参模式
 	 * @param sql
 	 * @param entity
 	 * @throws Exception
@@ -132,6 +131,16 @@ public class QueryExecutor implements Serializable {
 		return this;
 	}
 
+	/**
+	 * @TODO 设置查询参数的值,包含三种场景
+	 * <p>
+	 * 1、new QueryExecutor(sql).names("status").values(1)
+	 * 2、new QueryExecutor(sql).values(1),sql中以?模式传参
+	 * 3、new QueryExecutor(sql).values(map.put("status",1)),兼容map传参
+	 * </p>
+	 * @param paramsValue
+	 * @return
+	 */
 	public QueryExecutor values(Object... paramsValue) {
 		// 兼容map
 		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
@@ -216,6 +225,7 @@ public class QueryExecutor implements Serializable {
 	 * @param maxRows
 	 * @return
 	 */
+	@Deprecated
 	public QueryExecutor maxRows(int maxRows) {
 		innerModel.maxRows = maxRows;
 		return this;
