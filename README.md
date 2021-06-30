@@ -50,7 +50,7 @@
    * tidb
    * kingbase
    * mongodb (只支持查询)
-   * 所有基于jdbc的查询
+   * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
 
 ## 1.2 jdk版本要求1.8+
    
