@@ -33,6 +33,9 @@ public class EntityMeta implements Serializable {
 	 */
 	private String loadAllSql;
 
+	/**
+	 * schema表空间
+	 */
 	private String schema;
 
 	/**
@@ -437,7 +440,14 @@ public class EntityMeta implements Serializable {
 			table = shardingTable;
 		}
 		table = ReservedWordsUtil.convertWord(table, dbType);
-		return (schema == null) ? table : schema.concat(".").concat(table);
+		if(schema == null) {
+			return table;
+		}
+		//table已经包含了schema，则直接返回,避免重复拼接schema
+		if(table.startsWith(schema.concat("."))) {
+			return table;
+		}
+		return schema.concat(".").concat(table);
 	}
 
 	/**

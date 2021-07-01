@@ -1558,7 +1558,7 @@ public class DialectUtils {
 			return 0L;
 		}
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
-				realTable);
+				tableName);
 		// 不存在级联操作
 		if (!cascade || entityMeta.getCascadeModels().isEmpty()) {
 			return updateCnt;
