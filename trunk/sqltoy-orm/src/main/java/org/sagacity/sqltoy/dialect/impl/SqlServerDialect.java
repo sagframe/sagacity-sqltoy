@@ -268,14 +268,13 @@ public class SqlServerDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		final String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// sqlserver merge into must end with ";" charater
 		// 返回变更的记录数量
 		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
 				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveIgnoreExistSql(dbType, entityMeta,
-								entityMeta.getIdStrategy(), realTable, "isnull", "@mySeqVariable", false);
+								entityMeta.getIdStrategy(), tableName, "isnull", "@mySeqVariable", false);
 						// 2012 版本
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
