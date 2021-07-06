@@ -8,7 +8,6 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.callback.SelectFields;
-import org.sagacity.sqltoy.config.model.NamedValuesModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
@@ -67,7 +66,7 @@ public class EntityQuery implements Serializable {
 		innerModel.fetchSize = fetchSize;
 		return this;
 	}
-	
+
 	/**
 	 * @TODO 设置jdbc pst查询最大记录数,一般不会涉及
 	 * @param maxRows
@@ -78,7 +77,7 @@ public class EntityQuery implements Serializable {
 		innerModel.maxRows = maxRows;
 		return this;
 	}
-	
+
 	/**
 	 * @TODO 查询时增加distinct
 	 * @return
@@ -124,10 +123,10 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * @TODO where 条件，例如:   "#[name like :name ] #[and status in (:status)]"
-	 * @param where 
+	 * @TODO where 条件，例如: "#[name like :name ] #[and status in (:status)]"
+	 * @param where
 	 * @return
 	 */
 	public EntityQuery where(String where) {
@@ -137,9 +136,9 @@ public class EntityQuery implements Serializable {
 
 	/**
 	 * @TODO 设置where中涉及的参数
-	 * <p>
-	 * EntityQuery.create().where("status=:status").names("status").values(1)
-	 * </p>
+	 *       <p>
+	 *       EntityQuery.create().where("status=:status").names("status").values(1)
+	 *       </p>
 	 * @param names
 	 * @return
 	 */
@@ -152,18 +151,18 @@ public class EntityQuery implements Serializable {
 	 * <p>
 	 * 1、EntityQuery.create().where("status=:status").names("status").values(1)
 	 * 2、EntityQuery.create().where("status=?").values(1)
-	 * 3、EntityQuery.create().where("status=:status and staffName like :staffName").values(staffInfo对象实体)
+	 * 3、EntityQuery.create().where("status=:status and staffName like
+	 * :staffName").values(staffInfo对象实体)
 	 * 4、EntityQuery.create().where("status=:status").values(map.put("status",1))
 	 * </p>
+	 * 
 	 * @param values
 	 * @return
 	 */
 	public EntityQuery values(Object... values) {
 		// 兼容map
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
-			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) values[0]);
-			innerModel.names = model.getNames();
-			innerModel.values = model.getValues();
+			innerModel.values = new Object[] { new IgnoreKeyCaseMap((Map) values[0]) };
 		} else {
 			innerModel.values = values;
 		}
@@ -176,9 +175,7 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.names = model.getNames();
-		innerModel.values = model.getValues();
+		innerModel.values = new Object[] { new IgnoreKeyCaseMap(paramsMap) };
 		return this;
 	}
 
@@ -268,10 +265,11 @@ public class EntityQuery implements Serializable {
 					throw new IllegalArgumentException("针对EntityQuery设置条件过滤必须要设置filterParams=[" + filter.getParams()
 							+ "],和filterType=[" + filter.getType() + "]!");
 				}
-				//类别是对比型的，需要设置value值进行对比
-				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte","between")) {
+				// 类别是对比型的，需要设置value值进行对比
+				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
-						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
+						throw new IllegalArgumentException(
+								"针对EntityQuery设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
