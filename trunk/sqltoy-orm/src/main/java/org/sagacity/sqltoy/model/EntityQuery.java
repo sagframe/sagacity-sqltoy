@@ -64,12 +64,12 @@ public class EntityQuery implements Serializable {
 		innerModel.fetchSize = fetchSize;
 		return this;
 	}
-	
+
 	public EntityQuery maxRows(int maxRows) {
 		innerModel.maxRows = maxRows;
 		return this;
 	}
-	
+
 	public EntityQuery distinct() {
 		innerModel.distinct = true;
 		return this;
@@ -111,7 +111,7 @@ public class EntityQuery implements Serializable {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * @TODO where 条件
 	 * @param where
@@ -130,9 +130,7 @@ public class EntityQuery implements Serializable {
 	public EntityQuery values(Object... values) {
 		// 兼容map
 		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
-			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) values[0]);
-			innerModel.names = model.getNames();
-			innerModel.values = model.getValues();
+			innerModel.values = new Object[] { new IgnoreKeyCaseMap((Map) values[0]) };
 		} else {
 			innerModel.values = values;
 		}
@@ -145,9 +143,7 @@ public class EntityQuery implements Serializable {
 	 * @return
 	 */
 	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.names = model.getNames();
-		innerModel.values = model.getValues();
+		innerModel.values = new Object[] { new IgnoreKeyCaseMap(paramsMap) };
 		return this;
 	}
 
@@ -235,7 +231,8 @@ public class EntityQuery implements Serializable {
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
-						throw new IllegalArgumentException("针对EntityQuery设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
+						throw new IllegalArgumentException(
+								"针对EntityQuery设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -44,7 +45,11 @@ public class EntityUpdate implements Serializable {
 	}
 
 	public EntityUpdate values(Object... values) {
-		innerModel.values = values;
+		if (values != null && values.length == 1 && values[0] != null && values[0] instanceof Map) {
+			innerModel.values = new Object[] { new IgnoreKeyCaseMap((Map) values[0]) };
+		} else {
+			innerModel.values = values;
+		}
 		return this;
 	}
 

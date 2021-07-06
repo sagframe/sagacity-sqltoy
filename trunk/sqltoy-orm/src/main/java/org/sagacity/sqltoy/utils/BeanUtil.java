@@ -825,6 +825,7 @@ public class BeanUtil {
 		boolean isMap = false;
 		String fieldLow;
 		Object fieldValue;
+		boolean hasKey = false;
 		try {
 			// 通过反射提取属性getMethod返回的数据值
 			for (int i = 0; i < methodLength; i++) {
@@ -832,32 +833,42 @@ public class BeanUtil {
 					// 支持xxxx.xxx 子对象属性提取
 					fields = properties[i].split("\\.");
 					fieldValue = serializable;
-					for (String field : fields) {
-						// 支持map类型 update 2021-01-31
-						if (fieldValue instanceof Map) {
-							if (fieldValue instanceof IgnoreKeyCaseMap) {
-								fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
-							} else {
-								iter = ((Map) fieldValue).entrySet().iterator();
-								isMap = false;
-								fieldLow = field.trim().toLowerCase();
-								while (iter.hasNext()) {
-									entry = (Map.Entry<String, Object>) iter.next();
-									if (entry.getKey().toLowerCase().equals(fieldLow)) {
-										fieldValue = entry.getValue();
-										isMap = true;
-										break;
+					hasKey = false;
+					//map 类型且key本身就是xxxx.xxxx格式
+					if (fieldValue instanceof Map) {
+						hasKey = ((Map) fieldValue).containsKey(properties[i].trim());
+						if (hasKey) {
+							fieldValue = ((Map) fieldValue).get(properties[i].trim());
+						}
+					}
+					if (!hasKey) {
+						for (String field : fields) {
+							// 支持map类型 update 2021-01-31
+							if (fieldValue instanceof Map) {
+								if (fieldValue instanceof IgnoreKeyCaseMap) {
+									fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
+								} else {
+									iter = ((Map) fieldValue).entrySet().iterator();
+									isMap = false;
+									fieldLow = field.trim().toLowerCase();
+									while (iter.hasNext()) {
+										entry = (Map.Entry<String, Object>) iter.next();
+										if (entry.getKey().toLowerCase().equals(fieldLow)) {
+											fieldValue = entry.getValue();
+											isMap = true;
+											break;
+										}
+									}
+									if (!isMap) {
+										fieldValue = null;
 									}
 								}
-								if (!isMap) {
-									fieldValue = null;
-								}
+							} else {
+								fieldValue = getProperty(fieldValue, field.trim());
 							}
-						} else {
-							fieldValue = getProperty(fieldValue, field.trim());
-						}
-						if (fieldValue == null) {
-							break;
+							if (fieldValue == null) {
+								break;
+							}
 						}
 					}
 					result[i] = fieldValue;

@@ -21,6 +21,21 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 	 */
 	private static final long serialVersionUID = 391326207592902507L;
 
+	public IgnoreKeyCaseMap() {
+
+	}
+
+	public IgnoreKeyCaseMap(Map map) {
+		if (map != null && !map.isEmpty()) {
+			Iterator<?> iter = map.entrySet().iterator();
+			Map.Entry<K, V> entry;
+			while (iter.hasNext()) {
+				entry = (Map.Entry<K, V>) iter.next();
+				super.put((K) toLowCaseKey(entry.getKey()), entry.getValue());
+			}
+		}
+	}
+
 	/**
 	 * key转小写
 	 *
@@ -68,8 +83,9 @@ public class IgnoreKeyCaseMap<K, V> extends ConcurrentHashMap<K, V> {
 			return;
 		}
 		Iterator<?> iter = map.entrySet().iterator();
+		Map.Entry<K, V> entry;
 		while (iter.hasNext()) {
-			Map.Entry<K, V> entry = (Map.Entry<K, V>) iter.next();
+			entry = (Map.Entry<K, V>) iter.next();
 			super.put((K) toLowCaseKey(entry.getKey()), entry.getValue());
 		}
 	}

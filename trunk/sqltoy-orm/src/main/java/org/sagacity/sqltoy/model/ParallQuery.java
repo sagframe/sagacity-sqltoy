@@ -5,8 +5,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.utils.CollectionUtil;
-
 /**
  * @project sagacity-sqltoy
  * @description 并行查询对象模型
@@ -73,9 +71,7 @@ public class ParallQuery implements Serializable {
 
 	//map传参
 	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		extend.names = model.getNames();
-		extend.values = model.getValues();
+		extend.values = new Object[] { paramsMap };
 		extend.selfCondition = true;
 		return this;
 	}
