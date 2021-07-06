@@ -10,10 +10,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.sagacity.sqltoy.callback.TreeIdAndPidGet;
-import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1261,31 +1259,5 @@ public class CollectionUtil {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * @TODO 循环将map转换为names和values数组对象
-	 * @param paramsMap
-	 * @return
-	 */
-	public static NamedValuesModel mapToNamedValues(Map<String, Object> paramsMap) {
-		NamedValuesModel result = new NamedValuesModel();
-		if (paramsMap == null || paramsMap.isEmpty()) {
-			return result;
-		}
-		String[] names = new String[paramsMap.size()];
-		Object[] values = new Object[paramsMap.size()];
-		Iterator<Entry<String, Object>> iter = paramsMap.entrySet().iterator();
-		int i = 0;
-		Entry<String, Object> entry;
-		while (iter.hasNext()) {
-			entry = iter.next();
-			names[i] = entry.getKey();
-			values[i] = entry.getValue();
-			i++;
-		}
-		result.setNames(names);
-		result.setValues(values);
-		return result;
 	}
 }

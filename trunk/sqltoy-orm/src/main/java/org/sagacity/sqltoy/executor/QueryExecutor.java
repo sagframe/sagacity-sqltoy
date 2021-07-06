@@ -19,9 +19,9 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MaskType;
-import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.TranslateExtend;
@@ -93,7 +93,8 @@ public class QueryExecutor implements Serializable {
 				}
 				if (CollectionUtil.any(filter.getType(), "eq", "neq", "gt", "gte", "lt", "lte", "between")) {
 					if (StringUtil.isBlank(filter.getValue())) {
-						throw new IllegalArgumentException("针对QueryExecutor设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
+						throw new IllegalArgumentException(
+								"针对QueryExecutor设置条件过滤eq、neq、gt、gte、lt、lte、between等类型必须要设置values值!");
 					}
 				}
 				// 存在blank 过滤器自动将blank param="*" 关闭
@@ -108,10 +109,7 @@ public class QueryExecutor implements Serializable {
 
 	public QueryExecutor(String sql, Map<String, Object> paramsMap) {
 		innerModel.sql = sql;
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.paramsName = model.getNames();
-		innerModel.paramsValue = model.getValues();
-		innerModel.shardingParamsValue = model.getValues();
+		innerModel.entity = new IgnoreKeyCaseMap(paramsMap);
 	}
 
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
@@ -139,10 +137,11 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor values(Object... paramsValue) {
 		// 兼容map
 		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
-			NamedValuesModel model = CollectionUtil.mapToNamedValues((Map) paramsValue[0]);
-			innerModel.paramsName = model.getNames();
-			innerModel.paramsValue = model.getValues();
-			innerModel.shardingParamsValue = model.getValues();
+			if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
+				innerModel.entity = (IgnoreKeyCaseMap) paramsValue[0];
+			} else {
+				innerModel.entity = new IgnoreKeyCaseMap((Map) paramsValue[0]);
+			}
 		} else {
 			innerModel.paramsValue = paramsValue;
 			innerModel.shardingParamsValue = paramsValue;
@@ -166,9 +165,6 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor resultType(Type resultType) {
-		if (resultType == null) {
-			logger.warn("请关注:查询语句sql={} 指定的resultType=null,将以ArrayList作为默认类型返回!", innerModel.sql);
-		}
 		innerModel.resultType = resultType;
 		return this;
 	}
@@ -353,9 +349,7 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor paramsMap(Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		innerModel.paramsName = model.getNames();
-		innerModel.paramsValue = model.getValues();
+		innerModel.entity = new IgnoreKeyCaseMap(paramsMap);
 		return this;
 	}
 

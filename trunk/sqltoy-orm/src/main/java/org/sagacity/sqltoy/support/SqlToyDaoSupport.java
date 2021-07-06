@@ -44,8 +44,8 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.EntityUpdateExtend;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
@@ -62,7 +62,6 @@ import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
-import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.MapperUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -198,9 +197,8 @@ public class SqlToyDaoSupport {
 				this.getDataSource(uniqueExecutor.getDataSource()));
 	}
 
-	protected Long getCountBySql(final String sqlOrNamedQuery, final Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return getCountByQuery(new QueryExecutor(sqlOrNamedQuery, model.getNames(), model.getValues()));
+	protected Long getCountBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
+		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
 	}
 
 	/**
@@ -269,8 +267,11 @@ public class SqlToyDaoSupport {
 	}
 
 	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return getSingleValue(sqlOrNamedSql, model.getNames(), model.getValues(), null);
+		Object queryResult = loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
+		if (null != queryResult) {
+			return ((List) queryResult).get(0);
+		}
+		return null;
 	}
 
 	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
@@ -415,8 +416,7 @@ public class SqlToyDaoSupport {
 
 	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return loadBySql(sqlOrNamedSql, model.getNames(), model.getValues(), resultType);
+		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(resultType));
 	}
 
 	/**
@@ -495,8 +495,7 @@ public class SqlToyDaoSupport {
 	}
 
 	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return executeSql(sqlOrNamedSql, model.getNames(), model.getValues(), false, null);
+		return executeSql(sqlOrNamedSql, (Serializable) new IgnoreKeyCaseMap(paramsMap), null);
 	}
 
 	/**
@@ -614,17 +613,17 @@ public class SqlToyDaoSupport {
 
 	/**
 	 * @todo 以entity对象的属性给sql中的:named 传参数，进行查询，并返回entityClass类型的集合
-	 * @param sql
+	 * @param sqlOrNamedSql
 	 * @param entity
 	 * @return
 	 */
-	protected <T extends Serializable> List<T> findBySql(final String sql, final T entity) {
-		return (List<T>) findByQuery(new QueryExecutor(sql, entity)).getRows();
+	protected <T extends Serializable> List<T> findBySql(final String sqlOrNamedSql, final T entity) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrNamedSql, entity)).getRows();
 	}
 
-	protected <T> List<T> findBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return findBySql(sql, model.getNames(), model.getValues(), voClass);
+	protected <T> List<T> findBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> voClass) {
+		return (List<T>) findByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getRows();
 	}
 
 	/**
@@ -691,10 +690,7 @@ public class SqlToyDaoSupport {
 	 */
 	protected <T> PaginationModel<T> findPageBySql(final PaginationModel paginationModel, final String sql,
 			final String[] paramsNamed, final Object[] paramsValue, Class<T> voClass) {
-		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue);
-		if (voClass != null) {
-			query.resultType(voClass);
-		}
+		QueryExecutor query = new QueryExecutor(sql, paramsNamed, paramsValue).resultType(voClass);
 		return (PaginationModel<T>) findPageByQuery(paginationModel, query).getPageResult();
 	}
 
@@ -703,10 +699,16 @@ public class SqlToyDaoSupport {
 		return (PaginationModel<T>) findPageByQuery(paginationModel, new QueryExecutor(sql, entity)).getPageResult();
 	}
 
-	protected <T> List<T> findTopBySql(final String sql, final Map<String, Object> paramsMap, final Class<T> voClass,
-			final double topSize) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return findTopBySql(sql, model.getNames(), model.getValues(), voClass, topSize);
+	protected <T> PaginationModel<T> findPageBySql(final PaginationModel page, final String sqlOrNamedSql,
+			final Map<String, Object> paramsMap, Class<T> voClass) {
+		return (PaginationModel<T>) findPageByQuery(page,
+				new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getPageResult();
+	}
+
+	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> voClass, final double topSize) {
+		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass), topSize)
+				.getRows();
 	}
 
 	/**
@@ -760,8 +762,8 @@ public class SqlToyDaoSupport {
 
 	protected <T> List<T> getRandomResult(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			Class<T> voClass, final double randomCount) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return getRandomResult(sqlOrNamedSql, model.getNames(), model.getValues(), voClass, randomCount);
+		return (List<T>) getRandomResult(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass), randomCount)
+				.getRows();
 	}
 
 	// voClass(null则返回List<List>二维集合,HashMap.class:则返回List<HashMap<columnLabel,columnValue>>)
@@ -1745,8 +1747,7 @@ public class SqlToyDaoSupport {
 
 	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		return parallQuery(parallQueryList, model.getNames(), model.getValues(), parallelConfig);
+		return parallQuery(parallQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
 	}
 
 	/**

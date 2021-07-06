@@ -193,8 +193,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
 			String[] paramsNamed, Object[] paramValues, Class<T> voClass) {
-		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
-				new QueryExecutor(sqlOrNamedSql, paramsNamed, paramValues).resultType(voClass)).getPageResult();
+		return super.findPageBySql(paginationModel, sqlOrNamedSql, paramsNamed, paramValues, voClass);
 	}
 
 	@Override
@@ -207,8 +206,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	@Override
 	public <T> PaginationModel<T> findPageBySql(PaginationModel paginationModel, String sqlOrNamedSql,
 			Map<String, Object> paramsMap, Class<T> voClass) {
-		return (PaginationModel<T>) super.findPageByQuery(paginationModel,
-				new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getPageResult();
+		return super.findPageBySql(paginationModel, sqlOrNamedSql, paramsMap, voClass);
 	}
 
 	/*
