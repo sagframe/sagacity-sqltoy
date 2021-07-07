@@ -197,8 +197,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 
 	@Override
 	public <T> Page<T> findPageBySql(Page page, String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> voClass) {
-		return (Page<T>) super.findPageByQuery(page, new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass))
-				.getPageResult();
+		return (Page<T>) super.findPageBySql(page, sqlOrNamedSql, paramsMap, voClass);
 	}
 
 	/*

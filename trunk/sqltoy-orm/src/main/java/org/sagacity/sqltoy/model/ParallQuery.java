@@ -5,9 +5,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.config.model.NamedValuesModel;
 import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
-import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -73,11 +71,9 @@ public class ParallQuery implements Serializable {
 		return this;
 	}
 
-	//map传参
+	// map传参
 	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
-		NamedValuesModel model = CollectionUtil.mapToNamedValues(paramsMap);
-		extend.names = model.getNames();
-		extend.values = model.getValues();
+		extend.values = new Object[] { paramsMap };
 		extend.selfCondition = true;
 		return this;
 	}
