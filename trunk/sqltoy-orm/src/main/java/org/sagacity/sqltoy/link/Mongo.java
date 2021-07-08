@@ -232,7 +232,7 @@ public class Mongo extends BaseLink {
 		if (entity != null) {
 			queryExecutor = new QueryExecutor(sql, entity);
 		} else {
-			queryExecutor = new QueryExecutor(sql, names, values);
+			queryExecutor = new QueryExecutor(sql).names(names).values(values);
 		}
 		if (resultType != null) {
 			queryExecutor.resultType(resultType);
@@ -252,8 +252,8 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private Page findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Page pageModel,
-			String mql, Class resultClass, boolean humpMapLabel) throws Exception {
+	private Page findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Page pageModel, String mql,
+			Class resultClass, boolean humpMapLabel) throws Exception {
 		Page result = new Page();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());

@@ -81,8 +81,6 @@ public class DataSourceUtils {
 		// 人大金仓数据库
 		public final static String KINGBASE = "kingbase";
 
-		// 以15.4为基准起始版(基本目前没有用户)
-		public final static String SYBASE_IQ = "sybase_iq";
 		public final static String TDENGINE = "tdengine";
 
 		public final static String UNDEFINE = "UNDEFINE";
@@ -307,13 +305,6 @@ public class DataSourceUtils {
 			// elasticsearch
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
-			}
-			// sybase iq
-			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.SYBASE_IQ) != -1
-					|| StringUtil.indexOfIgnoreCase(dbDialect, "sybaseiq") != -1
-					|| (StringUtil.indexOfIgnoreCase(dbDialect, "sap") != -1
-							&& StringUtil.indexOfIgnoreCase(dbDialect, "iq") != -1)) {
-				return Dialect.SYBASE_IQ;
 			}
 		}
 		return Dialect.UNDEFINE;
