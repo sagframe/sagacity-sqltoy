@@ -115,8 +115,7 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
 		innerModel.sql = sql;
 		innerModel.paramsName = paramsName;
-		innerModel.paramsValue = paramsValue;
-		innerModel.shardingParamsValue = paramsValue;
+		setValues(paramsValue);
 	}
 
 	/**
@@ -135,6 +134,11 @@ public class QueryExecutor implements Serializable {
 	}
 
 	public QueryExecutor values(Object... paramsValue) {
+		setValues(paramsValue);
+		return this;
+	}
+
+	private void setValues(Object... paramsValue) {
 		// 兼容map
 		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
 			if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
@@ -146,7 +150,6 @@ public class QueryExecutor implements Serializable {
 			innerModel.paramsValue = paramsValue;
 			innerModel.shardingParamsValue = paramsValue;
 		}
-		return this;
 	}
 
 	/**
