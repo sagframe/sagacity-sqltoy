@@ -268,7 +268,7 @@ public class Query extends BaseLink {
 		if (entity != null) {
 			queryExecutor = new QueryExecutor(sql, entity);
 		} else {
-			queryExecutor = new QueryExecutor(sql, names, values);
+			queryExecutor = new QueryExecutor(sql).names(names).values(values);
 		}
 		if (resultType != null) {
 			queryExecutor.resultType(resultType);
