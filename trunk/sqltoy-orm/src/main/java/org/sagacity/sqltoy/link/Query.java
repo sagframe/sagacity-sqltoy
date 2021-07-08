@@ -172,7 +172,7 @@ public class Query extends BaseLink {
 	 * @return
 	 */
 	public Object getValue() {
-		QueryExecutor queryExecute = new QueryExecutor(sql, names, values);
+		QueryExecutor queryExecute = new QueryExecutor(sql).names(names).values(values);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
@@ -259,8 +259,8 @@ public class Query extends BaseLink {
 			return (Page<?>) dialectFactory.findSkipTotalCountPage(sqlToyContext, queryExecute, sqlToyConfig,
 					page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 		}
-		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig,
-				page.getPageNo(), page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
+		return (Page<?>) dialectFactory.findPage(sqlToyContext, queryExecute, sqlToyConfig, page.getPageNo(),
+				page.getPageSize(), getDataSource(sqlToyConfig)).getPageResult();
 	}
 
 	private QueryExecutor build() {
@@ -268,7 +268,7 @@ public class Query extends BaseLink {
 		if (entity != null) {
 			queryExecutor = new QueryExecutor(sql, entity);
 		} else {
-			queryExecutor = new QueryExecutor(sql, names, values);
+			queryExecutor = new QueryExecutor(sql).names(names).values(values);
 		}
 		if (resultType != null) {
 			queryExecutor.resultType(resultType);
