@@ -79,9 +79,9 @@ public class Execute extends BaseLink {
 	public Execute values(Object... paramsValue) {
 		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
 			if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
-				entity = (IgnoreKeyCaseMap) paramsValue[0];
+				this.entity = (IgnoreKeyCaseMap) paramsValue[0];
 			} else {
-				entity = new IgnoreKeyCaseMap((Map) paramsValue[0]);
+				this.entity = new IgnoreKeyCaseMap((Map) paramsValue[0]);
 			}
 		} else {
 			this.paramsValue = paramsValue;

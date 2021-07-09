@@ -69,7 +69,7 @@ public class BeanUtilTest {
 	public void testMap() {
 		HashMap params = new HashMap();
 		params.put("companyId", "C0001");
-		params.put("companyName", "xxx企业集团");
+		params.put("companyName", null);
 		IgnoreKeyCaseMap map=new IgnoreKeyCaseMap(params);
 		System.err.println(((Map)map).get("companyId"));
 	}

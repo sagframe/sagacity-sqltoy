@@ -23,8 +23,8 @@ import org.sagacity.sqltoy.model.StoreResult;
  * @description 针对不同数据库进行功能封装实现，使得整个结构更加清晰更易维护
  * @author zhongxuchen
  * @version v1.0,Date:2013-8-29
- * @Modification Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}
- * @Modification Date:2019-09-15 {统一扩展dbType和dialect传递到下层}
+ * @update Date:2017-12-8 {修改接口定义:1、增加为开发者提供自行控制autoCommit机制; 2、增加分库分表的支持}
+ * @update Date:2019-09-15 {统一扩展dbType和dialect传递到下层}
  */
 @SuppressWarnings({ "rawtypes" })
 public interface Dialect {

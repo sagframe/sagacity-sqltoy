@@ -53,8 +53,8 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取sql对应的配置模型
-	 * @param sqlKey
-	 * @param sqlType
+	 * @param sqlKey    对应sqlId
+	 * @param sqlType   SqlType.search或传null
 	 * @return SqlToyConfig
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType);

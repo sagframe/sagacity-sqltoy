@@ -55,7 +55,7 @@ public class QueryExecutorExtend implements Serializable {
 	public Object[] paramsValue;
 
 	/**
-	 * 原生数值
+	 * 用于sharding策略的参数值
 	 */
 	public Object[] shardingParamsValue;
 

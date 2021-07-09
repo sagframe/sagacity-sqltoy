@@ -43,14 +43,18 @@ public enum PKStrategy {
 	 * @return
 	 */
 	public static PKStrategy getPKStrategy(String strategy) {
-		if (strategy.equalsIgnoreCase(ASSIGN.getValue()))
+		if (strategy.equalsIgnoreCase(ASSIGN.getValue())) {
 			return ASSIGN;
-		if (strategy.equalsIgnoreCase(SEQUENCE.getValue()))
+		}
+		if (strategy.equalsIgnoreCase(SEQUENCE.getValue())) {
 			return SEQUENCE;
-		if (strategy.equalsIgnoreCase(IDENTITY.getValue()))
+		}
+		if (strategy.equalsIgnoreCase(IDENTITY.getValue())) {
 			return IDENTITY;
-		if (strategy.equalsIgnoreCase(GENERATOR.getValue()))
+		}
+		if (strategy.equalsIgnoreCase(GENERATOR.getValue())) {
 			return GENERATOR;
+		}
 		return ASSIGN;
 	}
 }

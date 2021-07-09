@@ -143,7 +143,6 @@ public class MongoElasticUtils {
 		int startMarkLength = startMark.length();
 		int endMarkLength = endMark.length();
 		int pseudoMarkStart = queryStr.indexOf(startMark);
-
 		int beginIndex, endIndex, paramCnt, preParamCnt, beginMarkIndex, endMarkIndex;
 		String preSql, markContentSql, tailSql;
 		List paramValuesList = CollectionUtil.arrayToList(paramValues);
@@ -456,7 +455,6 @@ public class MongoElasticUtils {
 		String[] lables = new String[translateMap.size()];
 		String field;
 		int index = 0;
-		// Translate translateModel;
 		TranslateExtend extend;
 		HashMap<String, Integer> map = new HashMap<String, Integer>();
 		for (int i = 0; i < fields.length; i++) {

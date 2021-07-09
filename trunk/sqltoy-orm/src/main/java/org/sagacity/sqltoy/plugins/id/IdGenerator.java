@@ -17,10 +17,10 @@ public interface IdGenerator {
 	 * @param tableName       为特殊的主键生成策略预留表名
 	 * @param signature       识别符号
 	 * @param relatedColValue 关联字段的值
-	 * @param bizDate
-	 * @param idJavaType
-	 * @param length
-	 * @param sequencSize
+	 * @param bizDate         当前日期
+	 * @param idJavaType      主键数据类型
+	 * @param length          主键长度
+	 * @param sequencSize     流水号长度,如:20210709[001] 后三位为流水
 	 * @return
 	 */
 	public Object getId(String tableName, String signature, String[] relatedColumns, Object[] relatedColValue,
