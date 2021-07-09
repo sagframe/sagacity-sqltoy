@@ -720,7 +720,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合，比如前端传了一个企业名称，然后通过企业信息的缓存反向通过名称匹配到企业id，用于精准查询
-	 * @param matchRegex 匹配的正则表达式
+	 * @param matchRegex 匹配的表达式，如:中   上海,内容按照此顺序出现相关文字即可匹配上
 	 * @param cacheMatchFilter 例如:
 	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return

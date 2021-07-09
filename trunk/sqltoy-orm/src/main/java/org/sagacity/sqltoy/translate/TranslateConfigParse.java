@@ -45,9 +45,9 @@ public class TranslateConfigParse {
 	/**
 	 * @todo 解析translate配置文件
 	 * @param sqlToyContext
-	 * @param translateMap
-	 * @param checker
-	 * @param translateConfig
+	 * @param translateMap    最终缓存配置，构建一个空map，在解析过程中填充
+	 * @param checker         更新检测配置
+	 * @param translateConfig 缓存配置文件
 	 * @param charset
 	 * @return
 	 * @throws Exception
