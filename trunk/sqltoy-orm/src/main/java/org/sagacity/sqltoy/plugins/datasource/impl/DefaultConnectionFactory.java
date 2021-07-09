@@ -22,7 +22,7 @@ public class DefaultConnectionFactory implements ConnectionFactory {
 	}
 
 	/**
-	 * sqltoy只是获得connection进行sql处理，conn的关闭和commit都
+	 * sqltoy只是获得connection进行sql处理，conn的关闭和commit都交spring事务处理
 	 */
 	@Override
 	public void releaseConnection(Connection conn, DataSource dataSource) {

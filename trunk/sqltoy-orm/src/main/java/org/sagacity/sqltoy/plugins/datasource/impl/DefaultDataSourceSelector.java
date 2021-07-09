@@ -28,7 +28,7 @@ public class DefaultDataSourceSelector implements DataSourceSelector {
 			return pointDataSouce;
 		}
 		DataSource result = null;
-		// 第二优先:sql中指定的数据源
+		// 第二优先:sql中指定的数据源<sql id="xxx" datasource="xxxxDataSource">
 		if (StringUtil.isNotBlank(sqlDataSourceName)) {
 			result = getDataSourceBean(applicationContext, sqlDataSourceName);
 		}
