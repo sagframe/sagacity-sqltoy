@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及 #[@value(:named)
  *         sql] 形式,使得增强sql组织拼装能力}
  * @modify {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
- * @modify {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if() 基于freemarker的复杂逻辑判断代码}
+ * @modify {Date:2017-12-7,优化where和and 或or的拼接处理}
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
