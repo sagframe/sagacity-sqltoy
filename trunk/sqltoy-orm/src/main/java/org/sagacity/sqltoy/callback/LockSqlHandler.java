@@ -14,5 +14,12 @@ import org.sagacity.sqltoy.model.LockMode;
 */
 @FunctionalInterface
 public interface LockSqlHandler {
+	/**
+	 * @TODO 提供不同数据库类型sql加锁语句处理
+	 * @param sql
+	 * @param dbType    数据库类型
+	 * @param lockMode  锁类型
+	 * @return
+	 */
 	public String getLockSql(String sql, Integer dbType, LockMode lockMode);
 }

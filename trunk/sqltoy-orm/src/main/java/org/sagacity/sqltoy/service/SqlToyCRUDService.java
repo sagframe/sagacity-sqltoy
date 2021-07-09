@@ -149,19 +149,19 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 对树形数据进行封装，构造对象对应表的nodeRoute，nodeLevel，isLeaf等信息 便于对树形结构数据快速查询
 	 * @param entity
-	 * @param pid
+	 * @param pidField 父节点属性名称(java对象属性名称)
 	 * @return
 	 */
-	public boolean wrapTreeTableRoute(final Serializable entity, String pid);
+	public boolean wrapTreeTableRoute(final Serializable entity, String pidField);
 
 	/**
 	 * @todo 对树形数据进行封装，构造对象对应表的nodeRoute，nodeLevel，isLeaf等信息 便于对树形结构数据快速查询
 	 * @param entity
-	 * @param pid
-	 * @param appendIdSize
+	 * @param pidField      父节点属性名称(java对象属性名称)
+	 * @param appendIdSize  构造成nodeRoute时单个id值的长度，如：1001,1002如果长度设置为6，则001001,001002
 	 * @return
 	 */
-	public boolean wrapTreeTableRoute(final Serializable entity, String pid, int appendIdSize);
+	public boolean wrapTreeTableRoute(final Serializable entity, String pidField, int appendIdSize);
 
 	/**
 	 * @todo 根据对象主键获取对象详细信息
@@ -173,7 +173,7 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
-	 * @param cascadeTypes 
+	 * @param cascadeTypes 级联加载的子表对象类型
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes);
@@ -189,7 +189,7 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @todo 获取业务ID
-	 * @param signature
+	 * @param signature  格式:tableName_yyyyMMdd,如：staff_info20210701 
 	 * @param increment
 	 * @return
 	 */
@@ -237,7 +237,7 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param matchRegex
+	 * @param matchRegex       匹配表达式，如:中国    上海
 	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */

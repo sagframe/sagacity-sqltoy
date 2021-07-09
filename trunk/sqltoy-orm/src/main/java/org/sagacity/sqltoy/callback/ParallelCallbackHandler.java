@@ -19,7 +19,7 @@ public interface ParallelCallbackHandler {
 	/**
 	 * @todo 并行执行反调计算
 	 * @param sqlToyContext
-	 * @param shardingGroupModel
+	 * @param shardingGroupModel 集合数据根据分组策略拆分成的单一组数据和对应table或数据源配置
 	 * @return
 	 * @throws Exception
 	 */

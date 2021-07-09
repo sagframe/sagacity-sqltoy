@@ -205,13 +205,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
-	
+
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes) {
 		return sqlToyLazyDao.loadAllCascade(entities, cascadeTypes);
 	}
-	
+
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
@@ -272,8 +272,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional
-	public boolean wrapTreeTableRoute(Serializable entity, String pid) {
-		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid));
+	public boolean wrapTreeTableRoute(Serializable entity, String pidField) {
+		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pidField));
 	}
 
 	/*
@@ -285,8 +285,8 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 */
 	@Override
 	@Transactional
-	public boolean wrapTreeTableRoute(Serializable entity, String pid, int appendIdSize) {
-		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pid).idLength(appendIdSize));
+	public boolean wrapTreeTableRoute(Serializable entity, String pidField, int appendIdSize) {
+		return sqlToyLazyDao.wrapTreeTableRoute(new TreeTableModel(entity).pidField(pidField).idLength(appendIdSize));
 	}
 
 	@Override

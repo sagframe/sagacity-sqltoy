@@ -77,6 +77,13 @@ public class TranslateManager {
 		this.translateConfig = translateConfig;
 	}
 
+	/**
+	 * @TODO 初始化缓存管理器
+	 * @param sqlToyContext
+	 * @param cacheManager            自定义的缓存管理器(一般为null)
+	 * @param delayCheckCacheSeconds  延时多久进行更新检测
+	 * @throws Exception
+	 */
 	public synchronized void initialize(SqlToyContext sqlToyContext, TranslateCacheManager cacheManager,
 			int delayCheckCacheSeconds) throws Exception {
 		// 防止被多次调用
