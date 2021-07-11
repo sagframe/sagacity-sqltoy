@@ -219,7 +219,14 @@ public class TranslateManager {
 			logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
 			return null;
 		}
-		return getCacheData(cacheModel, cacheType);
+		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
+		SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
+		HashMap<String, Object[]> result = getCacheData(cacheModel, cacheType);
+		// 将缓存之前前的日志设置回线程中
+		if (sqlTrace != null) {
+			SqlExecuteStat.set(sqlTrace);
+		}
+		return result;
 	}
 
 	/**
