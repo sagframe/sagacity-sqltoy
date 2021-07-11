@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
@@ -92,7 +94,7 @@ public class TranslateManager {
 					updateCheckers, translateConfig, charset);
 			// 配置了缓存翻译
 			if (!translateMap.isEmpty()) {
-				//可以自定义缓存管理器,默认为ehcache实现
+				// 可以自定义缓存管理器,默认为ehcache实现
 				if (cacheManager == null) {
 					translateCacheManager = new TranslateEhcacheManager();
 				} else {
@@ -137,6 +139,8 @@ public class TranslateManager {
 	 */
 	public HashMap<String, HashMap<String, Object[]>> getTranslates(Connection conn,
 			HashMap<String, Translate> translates) {
+		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
+		SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
@@ -161,6 +165,10 @@ public class TranslateManager {
 			} else {
 				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", extend.cache);
 			}
+		}
+		// 将缓存之前前的日志设置回线程中
+		if (sqlTrace != null) {
+			SqlExecuteStat.set(sqlTrace);
 		}
 		return result;
 	}
