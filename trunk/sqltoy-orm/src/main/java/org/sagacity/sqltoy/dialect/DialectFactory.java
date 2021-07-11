@@ -826,7 +826,9 @@ public class DialectFactory {
 						queryResult.setRecordCount(
 								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
 						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						if (sqlTrace != null && SqlExecuteStat.get() != null) {
+							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
@@ -850,7 +852,9 @@ public class DialectFactory {
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
 						SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						if (sqlTrace != null && SqlExecuteStat.get() != null) {
+							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
@@ -1672,8 +1676,8 @@ public class DialectFactory {
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
-									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode, getFetchSize(extend.fetchSize),
-									extend.maxRows);
+									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,
