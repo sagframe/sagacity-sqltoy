@@ -800,7 +800,9 @@ public class DialectFactory {
 						queryResult.setRecordCount(
 								getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, conn, dbType, dialect));
 						SqlExecuteStat.debug("查询count执行耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						if (sqlTrace != null && SqlExecuteStat.get() != null) {
+							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
@@ -824,7 +826,9 @@ public class DialectFactory {
 						queryResult.setLabelNames(result.getLabelNames());
 						queryResult.setLabelTypes(result.getLabelTypes());
 						SqlExecuteStat.debug("查询分页记录耗时", (System.currentTimeMillis() - startTime) + "毫秒!");
-						sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						if (sqlTrace != null && SqlExecuteStat.get() != null) {
+							sqlTrace.addLogs(SqlExecuteStat.get().getExecuteLogs());
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						queryResult.setSuccess(false);
@@ -1167,8 +1171,8 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler,
-			final DataSource dataSource, final Boolean autoCommit) {
+			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
+			final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
@@ -1223,8 +1227,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
-			final Boolean autoCommit) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
@@ -1240,8 +1243,8 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
-												batchModel.getEntities(), batchSize, reflectPropsHandler, conn,
-												dbType, dialect, autoCommit, shardingModel.getTableName()));
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
+												dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
 						List<Long> tmp = new ArrayList();
@@ -1401,8 +1404,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
-			final Boolean autoCommit) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
@@ -1419,8 +1421,8 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
-												batchModel.getEntities(), batchSize, reflectPropsHandler, conn,
-												dbType, dialect, autoCommit, shardingModel.getTableName()));
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
+												dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
 						List<Long> tmp = new ArrayList();
@@ -1649,8 +1651,8 @@ public class DialectFactory {
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
-									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode, getFetchSize(extend.fetchSize),
-									extend.maxRows);
+									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode,
+									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,

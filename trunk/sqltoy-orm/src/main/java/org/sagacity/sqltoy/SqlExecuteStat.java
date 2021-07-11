@@ -379,6 +379,8 @@ public class SqlExecuteStat {
 	}
 
 	public static void mergeTrace(SqlExecuteTrace sqlTrace) {
-		threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
+		if (sqlTrace != null) {
+			threadLocal.set(new SqlExecuteTrace(sqlTrace.getId(), sqlTrace.getType(), sqlTrace.isPrint()));
+		}
 	}
 }
