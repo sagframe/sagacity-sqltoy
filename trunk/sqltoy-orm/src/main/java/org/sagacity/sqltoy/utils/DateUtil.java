@@ -338,7 +338,7 @@ public class DateUtil {
 		} else if (dt instanceof java.time.LocalTime) {
 			result = asDate((LocalTime) dt);
 		} else {
-			throw new IllegalArgumentException(dt + "日期数据必须是String、Date、Long、Integer类型,请正确输入!");
+			result = parseString(dtStr, format, locale);
 		}
 		return result;
 	}
