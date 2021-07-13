@@ -82,7 +82,7 @@ public class ScanEntityAndSqlResource {
 					addEntitiesInPackage(packageName, filePath, recursive, entities);
 				} else if ("jar".equals(protocol)) {
 					// 如果是jar包文件
-					logger.debug("jar类型的扫描,加载sql.xml文件");
+					logger.debug("jar类型的扫描,加载POJO实体bean");
 					// 定义一个JarFile
 					JarFile jar;
 					try {
