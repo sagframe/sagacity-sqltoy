@@ -148,8 +148,8 @@ public class SqlScriptLoader {
 				}
 			} else {
 				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
-				if (logger.isWarnEnabled()) {
-					logger.warn(
+				if (enabledDebug) {
+					logger.debug(
 							"没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
 							sqlResourcesDir);
 				} else {

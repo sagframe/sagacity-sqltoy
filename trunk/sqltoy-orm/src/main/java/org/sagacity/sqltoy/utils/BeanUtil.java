@@ -489,12 +489,19 @@ public class BeanUtil {
 			if (paramValue instanceof LocalDateTime) {
 				return (LocalDateTime) paramValue;
 			}
+			// 修复oracle.sql.timestamp 转localdatetime的缺陷
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+				return DateUtil.asLocalDateTime(oracleTimeStampConvert(paramValue));
+			}
 			return DateUtil.asLocalDateTime(DateUtil.convertDateObject(paramValue));
 		}
 		// 第四
 		if (typeName.equals("java.time.localdate")) {
 			if (paramValue instanceof LocalDate) {
 				return (LocalDate) paramValue;
+			}
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+				return DateUtil.asLocalDate(oracleDateConvert(paramValue));
 			}
 			return DateUtil.asLocalDate(DateUtil.convertDateObject(paramValue));
 		}
@@ -510,7 +517,7 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new Timestamp(((java.util.Date) paramValue).getTime());
 			}
-			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 				return oracleTimeStampConvert(paramValue);
 			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
@@ -525,8 +532,8 @@ public class BeanUtil {
 			if (paramValue instanceof Number) {
 				return new java.util.Date(((Number) paramValue).longValue());
 			}
-			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
-				return new java.util.Date(oracleDateConvert(paramValue).getTime());
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+				return oracleDateConvert(paramValue);
 			}
 			return DateUtil.parseString(valueStr);
 		}
@@ -555,6 +562,9 @@ public class BeanUtil {
 		if (typeName.equals("java.time.localtime")) {
 			if (paramValue instanceof LocalTime) {
 				return (LocalTime) paramValue;
+			}
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
+				return DateUtil.asLocalTime(oracleTimeStampConvert(paramValue));
 			}
 			return DateUtil.asLocalTime(DateUtil.convertDateObject(paramValue));
 		}
@@ -614,7 +624,7 @@ public class BeanUtil {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
@@ -630,7 +640,7 @@ public class BeanUtil {
 				return new java.sql.Time(((java.util.Date) paramValue).getTime());
 			}
 
-			if (paramValue.getClass().getTypeName().toLowerCase().equals("oracle.sql.timestamp")) {
+			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Time(oracleDateConvert(paramValue).getTime());
 			}
 			return DateUtil.parseString(valueStr);
@@ -834,7 +844,7 @@ public class BeanUtil {
 					fields = properties[i].split("\\.");
 					fieldValue = serializable;
 					hasKey = false;
-					//map 类型且key本身就是xxxx.xxxx格式
+					// map 类型且key本身就是xxxx.xxxx格式
 					if (fieldValue instanceof Map) {
 						hasKey = ((Map) fieldValue).containsKey(properties[i].trim());
 						if (hasKey) {
