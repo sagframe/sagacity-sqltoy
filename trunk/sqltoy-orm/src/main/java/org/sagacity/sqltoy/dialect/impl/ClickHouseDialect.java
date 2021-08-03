@@ -186,8 +186,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		return ClickHouseDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit,
-				tableName);
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	@Override

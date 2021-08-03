@@ -20,7 +20,6 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.ImpalaDialectUtils;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -314,7 +313,7 @@ public class ImpalaDialect implements Dialect {
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return ImpalaDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	/*
