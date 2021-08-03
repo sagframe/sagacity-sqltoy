@@ -36,9 +36,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingTable(org.sagacity.
-	 * sqltoy.SqlToyContext, java.lang.Class, java.lang.String, java.lang.String,
-	 * java.util.HashMap)
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingTable(org.
+	 * sagacity. sqltoy.SqlToyContext, java.lang.Class, java.lang.String,
+	 * java.lang.String, java.util.HashMap)
 	 */
 	@Override
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
@@ -56,8 +56,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.sagacity.
-	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.
+	 * sagacity. sqltoy.SqlToyContext, java.lang.String, java.lang.String,
+	 * java.util.HashMap)
 	 */
 	@Override
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,

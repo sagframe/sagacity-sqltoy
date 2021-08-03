@@ -138,8 +138,8 @@ public class DefaultDialectUtils {
 	 * @throws Exception
 	 */
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			QueryExecutor queryExecutor, Integer topSize, Connection conn, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));

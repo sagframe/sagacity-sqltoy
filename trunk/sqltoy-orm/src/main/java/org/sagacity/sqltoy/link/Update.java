@@ -165,7 +165,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, null,
-				getDataSource(null), autoCommit);
+		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, null, getDataSource(null),
+				autoCommit);
 	}
 }

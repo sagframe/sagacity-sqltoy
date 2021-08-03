@@ -33,10 +33,10 @@ public interface Dialect {
 	 * @TODO 判断唯一性
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
+	 * @param paramsNamed   对象属性名称(不是数据库表字段名称)
 	 * @param conn
 	 * @param dbType
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 */
 	public boolean isUnique(final SqlToyContext sqlToyContext, final Serializable entity, final String[] paramsNamed,
@@ -110,7 +110,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param fetchSize
-	 * @param maxRows 设置最大查询记录，一般无需设置
+	 * @param maxRows            设置最大查询记录，一般无需设置
 	 * @return
 	 * @throws Exception
 	 */
@@ -145,7 +145,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -162,9 +162,9 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @param fetchSize
-	 * @param maxRows 
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -179,7 +179,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -196,7 +196,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -215,7 +215,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName                分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -235,14 +235,14 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler,
-			final Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler, final Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 保存或修改单条记录
@@ -253,7 +253,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName         分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -272,14 +272,14 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields,
-			final Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, final Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 批量保存,主键冲突的则忽视
@@ -291,7 +291,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName           分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -306,7 +306,7 @@ public interface Dialect {
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -322,7 +322,7 @@ public interface Dialect {
 	 * @param dbType
 	 * @param dialect
 	 * @param autoCommit
-	 * @param tableName 分表场景对应取得的表名(无分表则当前表名)
+	 * @param tableName     分表场景对应取得的表名(无分表则当前表名)
 	 * @return
 	 * @throws Exception
 	 */
@@ -348,7 +348,8 @@ public interface Dialect {
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception;
+			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows)
+			throws Exception;
 
 	/**
 	 * @todo 执行存储过程
@@ -366,5 +367,5 @@ public interface Dialect {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
-			final Integer dbType, final String dialect,final int fetchSize) throws Exception;
+			final Integer dbType, final String dialect, final int fetchSize) throws Exception;
 }

@@ -58,8 +58,8 @@ public class ClickHouseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection, java.lang.Integer, java.lang.String)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,

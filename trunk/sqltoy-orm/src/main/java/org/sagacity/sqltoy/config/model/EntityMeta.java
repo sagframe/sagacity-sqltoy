@@ -440,11 +440,11 @@ public class EntityMeta implements Serializable {
 			table = shardingTable;
 		}
 		table = ReservedWordsUtil.convertWord(table, dbType);
-		if(schema == null) {
+		if (schema == null) {
 			return table;
 		}
-		//table已经包含了schema，则直接返回,避免重复拼接schema
-		if(table.startsWith(schema.concat("."))) {
+		// table已经包含了schema，则直接返回,避免重复拼接schema
+		if (table.startsWith(schema.concat("."))) {
 			return table;
 		}
 		return schema.concat(".").concat(table);

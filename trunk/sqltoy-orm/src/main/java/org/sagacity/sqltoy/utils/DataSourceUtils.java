@@ -80,7 +80,7 @@ public class DataSourceUtils {
 
 		// 人大金仓数据库
 		public final static String KINGBASE = "kingbase";
-
+		public final static String IMPALA = "impala";
 		public final static String TDENGINE = "tdengine";
 
 		public final static String UNDEFINE = "UNDEFINE";
@@ -125,6 +125,7 @@ public class DataSourceUtils {
 		public final static int MONGO = 130;
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
+		public final static int IMPALA = 160;
 	}
 
 	public static HashMap<String, Integer> DBNameTypeMap = new HashMap<String, Integer>();
@@ -155,6 +156,7 @@ public class DataSourceUtils {
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
+		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 	}
 
@@ -209,6 +211,9 @@ public class DataSourceUtils {
 		}
 		case DBType.MONGO: {
 			return Dialect.MONGO;
+		}
+		case DBType.IMPALA: {
+			return Dialect.IMPALA;
 		}
 		case DBType.TDENGINE: {
 			return Dialect.TDENGINE;
@@ -302,6 +307,9 @@ public class DataSourceUtils {
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.GREENPLUM) != -1) {
 				return Dialect.POSTGRESQL;
 			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.IMPALA) != -1) {
+				return Dialect.IMPALA;
+			}
 			// elasticsearch
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.ES) != -1) {
 				return Dialect.ES;
@@ -392,11 +400,13 @@ public class DataSourceUtils {
 			} // TIDB
 			else if (dbDialect.equals(Dialect.TIDB)) {
 				dbType = DBType.TIDB;
+			} else if (dbDialect.equals(Dialect.IMPALA)) {
+				dbType = DBType.IMPALA;
 			} else if (dbDialect.equals(Dialect.TDENGINE)) {
 				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
 				dbType = DBType.KINGBASE;
-			}else if (dbDialect.equals(Dialect.ES)) {
+			} else if (dbDialect.equals(Dialect.ES)) {
 				dbType = DBType.ES;
 			}
 			DBNameTypeMap.put(dbKey, dbType);
@@ -549,6 +559,8 @@ public class DataSourceUtils {
 				return Dialect.DM;
 			case DBType.KINGBASE:
 				return Dialect.KINGBASE;
+			case DBType.IMPALA:
+				return Dialect.IMPALA;
 			default:
 				return "";
 			}

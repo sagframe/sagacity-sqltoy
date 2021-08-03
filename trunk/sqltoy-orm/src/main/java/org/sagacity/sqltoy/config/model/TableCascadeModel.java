@@ -77,7 +77,7 @@ public class TableCascadeModel implements Serializable {
 	 * 排序
 	 */
 	private String orderBy;
-	
+
 	/**
 	 * load级联加载的扩展条件
 	 */

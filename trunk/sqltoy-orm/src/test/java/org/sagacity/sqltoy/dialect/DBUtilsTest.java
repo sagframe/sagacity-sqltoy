@@ -117,5 +117,14 @@ public class DBUtilsTest {
 		int selectIndex = StringUtil.matchIndex(sql, SELECT_REGEX);
 		String selectFields = (sql_from_index < 1) ? "" : sql.substring(selectIndex + 6, sql_from_index).toLowerCase();
 		System.err.println("1=" + clearSymSelectFromSql(selectFields));
+		
+		Connection conn=getConnection("com.cloudera.impala.jdbc.Driver","jdbc:impala://192.168.10.141:21050/sqltoy",null,null);
+		try {
+			System.err.println(conn.getMetaData().getDatabaseProductName());
+			System.err.println(conn.getMetaData().getDatabaseProductName());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

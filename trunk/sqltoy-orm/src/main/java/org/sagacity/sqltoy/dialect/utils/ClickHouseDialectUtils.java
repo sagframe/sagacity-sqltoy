@@ -274,7 +274,7 @@ public class ClickHouseDialectUtils {
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		if (null == entityMeta.getIdArray()) {
-			throw new IllegalArgumentException("delete table:" + entityMeta.getSchemaTable(tableName,dbType)
+			throw new IllegalArgumentException("delete table:" + entityMeta.getSchemaTable(tableName, dbType)
 					+ " no primary key,please check table design!");
 		}
 		Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
@@ -289,14 +289,14 @@ public class ClickHouseDialectUtils {
 			}
 		}
 		if (!validator) {
-			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName,dbType)
+			throw new IllegalArgumentException(entityMeta.getSchemaTable(tableName, dbType)
 					+ "delete operate is illegal,table must has primary key and all primaryKey's value must has value!");
 		}
 
-		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName,dbType)).concat(" delete ")
+		String deleteSql = "alter table ".concat(entityMeta.getSchemaTable(tableName, dbType)).concat(" delete ")
 				.concat(entityMeta.getIdArgWhereSql());
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), deleteSql, idValues, parameterTypes, conn, dbType,
-				null,true);
+				null, true);
 	}
 
 	/**
@@ -317,7 +317,7 @@ public class ClickHouseDialectUtils {
 			return 0L;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (null == entityMeta.getIdArray() || entityMeta.getIdArray().length == 0) {
 			throw new IllegalArgumentException("delete/deleteAll 操作,表:" + realTable + "没有主键,请检查表设计!");
 		}
@@ -330,7 +330,7 @@ public class ClickHouseDialectUtils {
 		String field;
 		SqlToyResult sqlToyResult = null;
 		String colName;
-		//单主键
+		// 单主键
 		if (idSize == 1) {
 			Object[] idValues = BeanUtil.sliceToArray(entities, entityMeta.getIdArray()[0]);
 			if (idValues == null || idValues.length == 0) {
@@ -384,13 +384,13 @@ public class ClickHouseDialectUtils {
 			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues);
 		}
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
-				null, conn, dbType, autoCommit,false);
+				null, conn, dbType, autoCommit, false);
 	}
 
 	public static Long update(SqlToyContext sqlToyContext, Serializable entity, String nullFunction,
 			String[] forceUpdateFields, Connection conn, final Integer dbType, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键
 		if (entityMeta.getIdArray() == null) {
 			throw new IllegalArgumentException("表:" + realTable + " 无主键,不符合update/updateAll规则,请检查表设计是否合理!");
@@ -419,7 +419,7 @@ public class ClickHouseDialectUtils {
 			throw new IllegalArgumentException("update sql is null,引起问题的原因是没有设置需要修改的字段!");
 		}
 		Long updateCnt = SqlUtil.executeSql(sqlToyContext.getTypeHandler(), updateSql, fieldsValues,
-				entityMeta.getFieldsTypeArray(), conn, dbType, null,false);
+				entityMeta.getFieldsTypeArray(), conn, dbType, null, false);
 		return updateCnt;
 	}
 

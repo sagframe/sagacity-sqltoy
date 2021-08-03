@@ -31,11 +31,11 @@ public class GroupMeta implements Serializable {
 	 * 平均标题
 	 */
 	private String averageTitle;
-	
+
 	/**
 	 * 标题存放位置
 	 */
-	private String labelColumn; 
+	private String labelColumn;
 
 	public String getGroupColumn() {
 		return groupColumn;
@@ -53,8 +53,7 @@ public class GroupMeta implements Serializable {
 	}
 
 	/**
-	 * @param sumTitle
-	 *            the sumTitle to set
+	 * @param sumTitle the sumTitle to set
 	 */
 	public void setSumTitle(String sumTitle) {
 		this.sumTitle = sumTitle;
@@ -68,8 +67,7 @@ public class GroupMeta implements Serializable {
 	}
 
 	/**
-	 * @param averageTitle
-	 *            the averageTitle to set
+	 * @param averageTitle the averageTitle to set
 	 */
 	public void setAverageTitle(String averageTitle) {
 		this.averageTitle = averageTitle;

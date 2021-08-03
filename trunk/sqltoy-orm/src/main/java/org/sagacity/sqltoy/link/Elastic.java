@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -56,7 +57,7 @@ public class Elastic extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class<?> resultType;
+	private Type resultType;
 
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
@@ -91,7 +92,7 @@ public class Elastic extends BaseLink {
 		return this;
 	}
 
-	public Elastic resultType(Class<?> resultType) {
+	public Elastic resultType(Type resultType) {
 		this.resultType = resultType;
 		return this;
 	}

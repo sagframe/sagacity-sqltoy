@@ -448,8 +448,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToDTO(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
-					voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToDTO(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes, voClass,
+					ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}

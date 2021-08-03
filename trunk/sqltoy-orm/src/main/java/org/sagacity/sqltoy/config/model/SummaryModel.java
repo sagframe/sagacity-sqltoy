@@ -22,11 +22,11 @@ public class SummaryModel implements Serializable {
 	 * 是否是逆向汇总
 	 */
 	private boolean reverse = false;
-	
+
 	/**
 	 * 全局汇总是否逆向
 	 */
-	private boolean globalReverse=false;
+	private boolean globalReverse = false;
 
 	/**
 	 * 定义所有需要计算的列
@@ -56,7 +56,7 @@ public class SummaryModel implements Serializable {
 	 * 全局汇总合计标题存放的列
 	 */
 	private String globalLabelColumn;
-	
+
 	/**
 	 * 全局统计的分组列
 	 */
@@ -85,8 +85,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param reverse
-	 *            the reverse to set
+	 * @param reverse the reverse to set
 	 */
 	public void setReverse(boolean reverse) {
 		this.reverse = reverse;
@@ -100,8 +99,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param summaryCols
-	 *            the summaryCols to set
+	 * @param summaryCols the summaryCols to set
 	 */
 	public void setSummaryCols(String summaryCols) {
 		this.summaryCols = summaryCols;
@@ -115,8 +113,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param combineTemplate
-	 *            the combineTemplate to set
+	 * @param combineTemplate the combineTemplate to set
 	 */
 	public void setCombineTemplate(String combineTemplate) {
 		this.combineTemplate = combineTemplate;
@@ -138,8 +135,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param groupMeta
-	 *            the groupMeta to set
+	 * @param groupMeta the groupMeta to set
 	 */
 	public void setGroupMeta(GroupMeta[] groupMeta) {
 		this.groupMeta = groupMeta;
@@ -161,8 +157,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param globalSumTitle
-	 *            the globalSumTitle to set
+	 * @param globalSumTitle the globalSumTitle to set
 	 */
 	public void setGlobalSumTitle(String globalSumTitle) {
 		this.globalSumTitle = globalSumTitle;
@@ -176,8 +171,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param globalAverageTitle
-	 *            the globalAverageTitle to set
+	 * @param globalAverageTitle the globalAverageTitle to set
 	 */
 	public void setGlobalAverageTitle(String globalAverageTitle) {
 		this.globalAverageTitle = globalAverageTitle;
@@ -191,8 +185,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param sumSite
-	 *            the sumSite to set
+	 * @param sumSite the sumSite to set
 	 */
 	public void setSumSite(String sumSite) {
 		this.sumSite = sumSite;
@@ -206,8 +199,7 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @param linkSign
-	 *            the linkSign to set
+	 * @param linkSign the linkSign to set
 	 */
 	public void setLinkSign(String linkSign) {
 		this.linkSign = linkSign;
@@ -240,6 +232,5 @@ public class SummaryModel implements Serializable {
 	public void setGroupColumn(String groupColumn) {
 		this.groupColumn = groupColumn;
 	}
-	
-	
+
 }

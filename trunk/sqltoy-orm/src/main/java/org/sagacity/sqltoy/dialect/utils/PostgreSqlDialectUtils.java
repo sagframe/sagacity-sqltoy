@@ -152,8 +152,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit, String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit,
+			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -172,9 +172,8 @@ public class PostgreSqlDialectUtils {
 
 	@Deprecated
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
@@ -206,7 +205,7 @@ public class PostgreSqlDialectUtils {
 	@Deprecated
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);

@@ -19,7 +19,7 @@ public interface UniqueSqlHandler {
 	 * @param entityMeta
 	 * @param paramNames
 	 * @param tableName
-	 * @param topSize     一般设置为2
+	 * @param topSize    一般设置为2
 	 * @return
 	 */
 	public String process(EntityMeta entityMeta, String[] paramNames, String tableName, int topSize);

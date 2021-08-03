@@ -37,10 +37,10 @@ public abstract class IFunction {
 
 	/**
 	 * @TODO 函数转换,通过不同方言重新组织当前的函数
-	 * @param dialect       数据库方言
-	 * @param functionName  函数名称
-	 * @param hasArgs       函数中是否含参数
-	 * @param args          函数中的参数
+	 * @param dialect      数据库方言
+	 * @param functionName 函数名称
+	 * @param hasArgs      函数中是否含参数
+	 * @param args         函数中的参数
 	 * @return
 	 */
 	public abstract String wrap(int dialect, String functionName, boolean hasArgs, String... args);

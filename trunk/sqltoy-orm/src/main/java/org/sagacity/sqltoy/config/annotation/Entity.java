@@ -17,13 +17,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Entity {
-	//表名
+	// 表名
 	String tableName();
 
-	//表对应schema
+	// 表对应schema
 	String schema() default "";
 
-	//主键约束名称
+	// 主键约束名称
 	@Deprecated
 	String pk_constraint() default "";
 }

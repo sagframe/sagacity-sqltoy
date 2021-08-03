@@ -395,7 +395,7 @@ public class ElasticEndpoint implements Serializable {
 				final CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
 						&& StringUtil.isNotBlank(getPassword())) ? true : false;
-				//是否ssl证书模式
+				// 是否ssl证书模式
 				final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 				// 凭据提供器
 				if (hasCrede) {

@@ -42,8 +42,7 @@ public class SavePKStrategy implements Serializable {
 	}
 
 	/**
-	 * @param pkStrategy
-	 *            the pkStrategy to set
+	 * @param pkStrategy the pkStrategy to set
 	 */
 	public void setPkStrategy(PKStrategy pkStrategy) {
 		this.pkStrategy = pkStrategy;
@@ -57,8 +56,7 @@ public class SavePKStrategy implements Serializable {
 	}
 
 	/**
-	 * @param isAssginValue
-	 *            the isAssginValue to set
+	 * @param isAssginValue the isAssginValue to set
 	 */
 	public void setAssginValue(boolean isAssginValue) {
 		this.isAssginValue = isAssginValue;
