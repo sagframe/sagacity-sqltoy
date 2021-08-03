@@ -56,11 +56,15 @@ public class ScanEntityAndSqlResource {
 		// class类的集合
 		Set<Class<?>> entities = new LinkedHashSet<Class<?>>();
 		// 获取包的名字 并进行替换
-		String packageName = pack;
-		// 剔除第一个字符为目录的符合
+		String packageName = pack.trim();
+		// 剔除第一个字符为目录的符合,并统一packName为xxx.xxx 格式
 		if (packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
 		}
+		if (packageName.endsWith("/")) {
+			packageName = packageName.substring(0, packageName.length() - 1);
+		}
+		packageName = packageName.replace("/", ".");
 		String packageDirName = packageName.replace('.', '/');
 		// 定义一个枚举的集合,循环向下级目录检索entity类
 		Enumeration<URL> dirs;

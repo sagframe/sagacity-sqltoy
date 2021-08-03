@@ -182,7 +182,7 @@ public class EntityManager {
 		// 扫描并获取包以及包下层包中的sqltoy entity对象
 		if (packagesToScan != null && packagesToScan.length > 0) {
 			for (String pkg : this.packagesToScan) {
-				entities.addAll(ScanEntityAndSqlResource.getPackageEntities(pkg, recursive, "UTF-8"));
+				entities.addAll(ScanEntityAndSqlResource.getPackageEntities(pkg.trim(), recursive, "UTF-8"));
 			}
 		}
 		// 加载直接指定的sqltoy entity对象

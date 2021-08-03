@@ -74,7 +74,7 @@ public class DataSourceUtils {
 
 		// tidb(语法遵循mysql)未验证
 		public final static String TIDB = "tidb";
-
+		public final static String IMPALA = "impala";
 		// 达梦数据库(dm8验证)
 		public final static String DM = "dm";
 
@@ -127,6 +127,7 @@ public class DataSourceUtils {
 		public final static int MONGO = 130;
 		public final static int ES = 140;
 		public final static int TDENGINE = 150;
+		public final static int IMPALA = 160;
 		// 下面将逐步淘汰
 		public final static int SYBASE_IQ = 190;
 	}
@@ -158,6 +159,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.KINGBASE, DBType.KINGBASE);
 		// 2020-6-7 启动增加对tidb的支持
 		DBNameTypeMap.put(Dialect.TIDB, DBType.TIDB);
+		DBNameTypeMap.put(Dialect.IMPALA, DBType.IMPALA);
 		DBNameTypeMap.put(Dialect.TDENGINE, DBType.TDENGINE);
 		DBNameTypeMap.put(Dialect.UNDEFINE, DBType.UNDEFINE);
 		// 纳入将不再支持范围
@@ -221,6 +223,9 @@ public class DataSourceUtils {
 		}
 		case DBType.SYBASE_IQ: {
 			return Dialect.SYBASE_IQ;
+		}
+		case DBType.IMPALA: {
+			return Dialect.IMPALA;
 		}
 		default:
 			return Dialect.UNDEFINE;
@@ -301,6 +306,9 @@ public class DataSourceUtils {
 			} // TIDB
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TIDB) != -1) {
 				return Dialect.TIDB;
+			}
+			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.IMPALA) != -1) {
+				return Dialect.IMPALA;
 			}
 			if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.TDENGINE) != -1) {
 				return Dialect.TDENGINE;
@@ -407,6 +415,8 @@ public class DataSourceUtils {
 			} // TIDB
 			else if (dbDialect.equals(Dialect.TIDB)) {
 				dbType = DBType.TIDB;
+			} else if (dbDialect.equals(Dialect.IMPALA)) {
+				dbType = DBType.IMPALA;
 			} else if (dbDialect.equals(Dialect.TDENGINE)) {
 				dbType = DBType.TDENGINE;
 			} else if (dbDialect.equals(Dialect.KINGBASE)) {
