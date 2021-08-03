@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,7 +84,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class<?> resultType;
+	private Type resultType;
 
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
@@ -122,7 +123,7 @@ public class Mongo extends BaseLink {
 		return this;
 	}
 
-	public Mongo resultType(Class<?> resultType) {
+	public Mongo resultType(Type resultType) {
 		this.resultType = resultType;
 		return this;
 	}

@@ -538,6 +538,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.IMPALA) || tmp.contains("kudu")) {
+			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {
 			this.dialect = Dialect.TDENGINE;
 		} else if (tmp.startsWith(Dialect.ES)) {
@@ -840,7 +842,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setDefaultDataSource(DataSource defaultDataSource) {
 		this.defaultDataSource = defaultDataSource;
 	}
-	
+
 	public void setDefaultDataSourceName(String defaultDataSourceName) {
 		this.defaultDataSourceName = defaultDataSourceName;
 	}

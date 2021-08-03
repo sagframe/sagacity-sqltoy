@@ -108,11 +108,6 @@ public class SqlScriptLoader {
 		}
 		initialized = true;
 		boolean enabledDebug = logger.isDebugEnabled();
-		if (enabledDebug) {
-			logger.debug("开始加载sql配置文件..........................");
-		} else {
-			out.println("开始加载sql配置文件..........................");
-		}
 		try {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
@@ -149,17 +144,16 @@ public class SqlScriptLoader {
 			} else {
 				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
 				if (enabledDebug) {
-					logger.debug(
-							"没有检查到相应的.sql.xml文件,请检查sqltoyContext配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!",
-							sqlResourcesDir);
+					logger.debug("总计加载*.sql.xml文件数量为:0 !");
+					logger.debug("请检查配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!", sqlResourcesDir);
 				} else {
-					out.println("未检测到以.sql.xml结尾的文件,请检查sqltoyContext配置项sqlResourcesDir=" + sqlResourcesDir
-							+ "配置是否正确,或文件没有在编译路径下(bin、classes等)!");
+					out.println("总计加载*.sql.xml文件数量为:0 !");
+					out.println("请检查配置项sqlResourcesDir=" + sqlResourcesDir + "是否正确,或文件没有在编译路径下(bin、classes等)!");
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("加载和解析xml过程发生异常!" + e.getMessage(), e);
+			logger.error("加载和解析sql.xml为结尾的文件过程发生异常!" + e.getMessage(), e);
 		}
 		// 存在sql文件，启动文件变更检测便于重新加载sql
 		if (realSqlList != null && !realSqlList.isEmpty()) {
@@ -185,7 +179,7 @@ public class SqlScriptLoader {
 						delayCheckSeconds, sleepSeconds);
 				watcher.start();
 			} else {
-				logger.warn("sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
+				logger.warn("sql文件更新检测:sleepSeconds={} 小于1秒或大于24小时，表示关闭sql文件变更检测!", sleepSeconds);
 			}
 		}
 	}

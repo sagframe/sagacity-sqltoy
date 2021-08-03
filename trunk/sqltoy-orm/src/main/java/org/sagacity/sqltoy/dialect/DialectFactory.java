@@ -33,6 +33,7 @@ import org.sagacity.sqltoy.dialect.impl.DB2Dialect;
 import org.sagacity.sqltoy.dialect.impl.DMDialect;
 import org.sagacity.sqltoy.dialect.impl.DefaultDialect;
 import org.sagacity.sqltoy.dialect.impl.GuassDBDialect;
+import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MySqlDialect;
 import org.sagacity.sqltoy.dialect.impl.OceanBaseDialect;
@@ -196,6 +197,10 @@ public class DialectFactory {
 		} // 北大金仓
 		case DBType.KINGBASE: {
 			dialectSqlWrapper = new KingbaseDialect();
+			break;
+		}
+		case DBType.IMPALA: {
+			dialectSqlWrapper = new ImpalaDialect();
 			break;
 		}
 		// sybase iq基本淘汰
