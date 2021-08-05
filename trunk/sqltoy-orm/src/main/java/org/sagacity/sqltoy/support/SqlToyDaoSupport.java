@@ -1375,19 +1375,8 @@ public class SqlToyDaoSupport {
 
 	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
 			boolean isCount) {
-		String where = "";
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
-
-		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
-		if (StringUtil.isBlank(innerModel.where)) {
-			if (innerModel.values != null && innerModel.values.length > 0) {
-				where = SqlUtil.wrapWhere(entityMeta);
-			}
-		} else {
-			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
-		}
-
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
@@ -1406,7 +1395,6 @@ public class SqlToyDaoSupport {
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
 		}
-
 		// 将notSelect构造成select，形成统一处理机制
 		String[] selectFieldAry = null;
 		Set<String> notSelect = innerModel.notSelectFields;
@@ -1450,9 +1438,17 @@ public class SqlToyDaoSupport {
 		} else {
 			fields = entityMeta.getAllColumnNames();
 		}
-
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
+		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
+		String where = "";
+		if (StringUtil.isBlank(innerModel.where)) {
+			if (innerModel.values != null && innerModel.values.length > 0) {
+				where = SqlUtil.wrapWhere(entityMeta);
+			}
+		} else {
+			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
+		}
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);
 		}
