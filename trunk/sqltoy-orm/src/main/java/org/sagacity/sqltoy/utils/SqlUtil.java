@@ -1564,7 +1564,12 @@ public class SqlUtil {
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
 									|| tailChar < 48 || tailChar > 122)) {
-						sqlBuff.append(preSql).append(columnName);
+						// 含关键词处理
+						if (preSql.endsWith("[") || preSql.endsWith("`") || preSql.endsWith("\"")) {
+							sqlBuff.append(preSql).append(columnName);
+						} else {
+							sqlBuff.append(preSql).append(ReservedWordsUtil.convertWord(columnName, null));
+						}
 						start = index + field.length();
 					}
 					index = StringUtil.indexOfIgnoreCase(realSql, field, index + field.length());

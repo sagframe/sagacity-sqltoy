@@ -14,7 +14,7 @@
 		<spring-data-redis.version>2.5.3</spring-data-redis.version>
 		<spring-data-mongo.version>3.2.3</spring-data-mongo.version>
 		<ojdbc.version>19.11.0.0</ojdbc.version>
-		<ehcache.version>3.9.4</ehcache.version>
+		<ehcache.version>3.9.5</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.14</httpclient-core.version>
 		<elastic-rest-client.version>7.13.4</elastic-rest-client.version>

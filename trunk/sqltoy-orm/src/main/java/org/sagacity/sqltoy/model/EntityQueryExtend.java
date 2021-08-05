@@ -76,6 +76,10 @@ public class EntityQueryExtend implements Serializable {
 	 * 锁类型
 	 */
 	public LockMode lockMode;
+	
+	public String groupBy;
+	
+	public String having;
 
 	/**
 	 * 空白字符转为null，默认为true

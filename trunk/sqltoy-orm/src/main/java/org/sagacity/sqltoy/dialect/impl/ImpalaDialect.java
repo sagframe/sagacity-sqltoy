@@ -20,7 +20,6 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.ImpalaDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -55,14 +54,6 @@ public class ImpalaDialect implements Dialect {
 				});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
-	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
-	 * java.sql.Connection)
-	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
@@ -71,15 +62,6 @@ public class ImpalaDialect implements Dialect {
 				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity
-	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor,
-	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection)
-	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
@@ -88,13 +70,6 @@ public class ImpalaDialect implements Dialect {
 				dbType, dialect, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findTopBySql(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor, double, java.sql.Connection)
-	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
@@ -103,14 +78,7 @@ public class ImpalaDialect implements Dialect {
 				dialect, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
-	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
-	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
-	 * java.sql.Connection)
-	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
@@ -119,12 +87,6 @@ public class ImpalaDialect implements Dialect {
 				0, fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang .String,
-	 * java.lang.String[], java.lang.Object[], java.sql.Connection)
-	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType, final String dialect)
@@ -132,12 +94,6 @@ public class ImpalaDialect implements Dialect {
 		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdate(org.sagacity.sqltoy.
-	 * SqlToyContext, java.io.Serializable, java.sql.Connection)
-	 */
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, final String[] forceUpdateFields,
 			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
@@ -148,12 +104,6 @@ public class ImpalaDialect implements Dialect {
 				dbType, dialect, autoCommit, tableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveOrUpdateAll(org.sagacity.sqltoy
-	 * .SqlToyContext, java.util.List, java.sql.Connection)
-	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
@@ -169,14 +119,6 @@ public class ImpalaDialect implements Dialect {
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
-	 * java.lang.Boolean)
-	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
@@ -189,12 +131,6 @@ public class ImpalaDialect implements Dialect {
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#load(java.io.Serializable,
-	 * java.util.List, java.sql.Connection)
-	 */
 	@Override
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
@@ -208,12 +144,6 @@ public class ImpalaDialect implements Dialect {
 				conn, dbType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#loadAll(java.util.List,
-	 * java.util.List, java.sql.Connection)
-	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName,
@@ -222,12 +152,6 @@ public class ImpalaDialect implements Dialect {
 				fetchSize, maxRows);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#save(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.util.List, java.sql.Connection)
-	 */
 	@Override
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
@@ -242,13 +166,6 @@ public class ImpalaDialect implements Dialect {
 				insertSql, entity, null, null, conn, dbType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
-	 * SqlToyContext , java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
-	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropertyHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
@@ -261,13 +178,6 @@ public class ImpalaDialect implements Dialect {
 				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#update(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.lang.String[],
-	 * java.sql.Connection)
-	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] emptyCascadeClasses,
@@ -276,55 +186,28 @@ public class ImpalaDialect implements Dialect {
 		return saveOrUpdate(sqlToyContext, entity, forceUpdateFields, conn, dbType, dialect, null, tableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
-	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropsHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return this.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn,
-				dbType, dialect, autoCommit, tableName);
+		return saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn, dbType,
+				dialect, autoCommit, tableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#delete(org.sagacity.sqltoy.
-	 * SqlToyContext , java.io.Serializable, java.sql.Connection)
-	 */
 	@Override
 	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		return DialectUtils.delete(sqlToyContext, entity, conn, dbType, tableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#deleteAll(org.sagacity.sqltoy.
-	 * SqlToyContext, java.util.List, java.sql.Connection)
-	 */
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return ImpalaDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
-	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
-	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
