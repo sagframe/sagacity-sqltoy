@@ -77,7 +77,7 @@ public class ElasticSqlPlugin {
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
 		if (topSize != null) {
-			realSql = realSql + " limit 0," + topSize;
+			realSql = realSql + " limit " + topSize;
 		}
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {
