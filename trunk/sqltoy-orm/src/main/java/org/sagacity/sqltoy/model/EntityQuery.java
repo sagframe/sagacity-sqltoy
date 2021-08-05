@@ -225,6 +225,18 @@ public class EntityQuery implements Serializable {
 		return this;
 	}
 
+	public EntityQuery groupBy(String... groups) {
+		if (groups != null && groups.length > 0) {
+			innerModel.groupBy = StringUtil.linkAry(",", true, groups);
+		}
+		return this;
+	}
+
+	public EntityQuery having(String having) {
+		innerModel.having = having;
+		return this;
+	}
+
 	/**
 	 * @TODO 锁记录
 	 * @param lockMode

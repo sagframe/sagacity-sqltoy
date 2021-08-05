@@ -62,6 +62,10 @@ public class EntityQueryExtend implements Serializable {
 	 */
 	public String[] fields;
 
+	public String groupBy;
+
+	public String having;
+
 	public boolean distinct = false;
 
 	/**
