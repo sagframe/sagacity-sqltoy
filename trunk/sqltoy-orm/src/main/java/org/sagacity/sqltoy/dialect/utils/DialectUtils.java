@@ -1405,8 +1405,8 @@ public class DialectUtils {
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit)
+			throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -1660,8 +1660,8 @@ public class DialectUtils {
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				"ifnull", conn, dbType, null, tableName, true);
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "ifnull",
+				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
@@ -1744,8 +1744,8 @@ public class DialectUtils {
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				"ifnull", conn, dbType, null, tableName, true);
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "ifnull",
+				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
@@ -1843,8 +1843,7 @@ public class DialectUtils {
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropsHandler,
-				forceUpdateFields);
+		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropsHandler, forceUpdateFields);
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		// 判断主键是否为空

@@ -58,8 +58,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param column
-	 *            the column to set
+	 * @param column the column to set
 	 */
 	public void setColumn(String column) {
 		this.column = column;
@@ -73,8 +72,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param type
-	 *            the type to set
+	 * @param type the type to set
 	 */
 	public void setType(String type) {
 		this.type = type;
@@ -88,8 +86,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param headSize
-	 *            the headSize to set
+	 * @param headSize the headSize to set
 	 */
 	public void setHeadSize(int headSize) {
 		this.headSize = headSize;
@@ -103,8 +100,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param tailSize
-	 *            the tailSize to set
+	 * @param tailSize the tailSize to set
 	 */
 	public void setTailSize(int tailSize) {
 		this.tailSize = tailSize;
@@ -118,8 +114,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param maskCode
-	 *            the maskCode to set
+	 * @param maskCode the maskCode to set
 	 */
 	public void setMaskCode(String maskCode) {
 		this.maskCode = maskCode;
@@ -133,8 +128,7 @@ public class SecureMask implements Serializable {
 	}
 
 	/**
-	 * @param maskRate
-	 *            the maskRate to set
+	 * @param maskRate the maskRate to set
 	 */
 	public void setMaskRate(int maskRate) {
 		this.maskRate = maskRate;

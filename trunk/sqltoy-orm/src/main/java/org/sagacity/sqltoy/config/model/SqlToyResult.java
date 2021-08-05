@@ -44,8 +44,7 @@ public class SqlToyResult implements Serializable {
 	}
 
 	/**
-	 * @param sql
-	 *            the sql to set
+	 * @param sql the sql to set
 	 */
 	public void setSql(String sql) {
 		this.sql = sql;
@@ -59,8 +58,7 @@ public class SqlToyResult implements Serializable {
 	}
 
 	/**
-	 * @param paramsValue
-	 *            the paramsValue to set
+	 * @param paramsValue the paramsValue to set
 	 */
 	public void setParamsValue(Object[] paramsValue) {
 		this.paramsValue = paramsValue;

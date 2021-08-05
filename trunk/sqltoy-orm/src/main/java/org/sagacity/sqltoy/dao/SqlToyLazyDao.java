@@ -53,8 +53,8 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取sql对应的配置模型
-	 * @param sqlKey    对应sqlId
-	 * @param sqlType   SqlType.search或传null
+	 * @param sqlKey  对应sqlId
+	 * @param sqlType SqlType.search或传null
 	 * @return SqlToyConfig
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType);
@@ -152,7 +152,8 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
-	 * @param entityUpdate 例如:EntityUpdate.create().set("createBy", "chenrenfei").where("staffName like ?").values("张")
+	 * @param entityUpdate 例如:EntityUpdate.create().set("createBy",
+	 *                     "chenrenfei").where("staffName like ?").values("张")
 	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
@@ -281,7 +282,8 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
 	 * @param entityClass
-	 * @param entityQuery 例如:EntityQuery.create().where("tenantId=? and staffId=?).values("1","S0001")
+	 * @param entityQuery 例如:EntityQuery.create().where("tenantId=? and
+	 *                    staffId=?).values("1","S0001")
 	 * @return
 	 */
 	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
@@ -290,7 +292,9 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
 	 * @param entityClass
-	 * @param entityQuery EntityQuery.create().where("status=:status #[and staffName like :staffName]").names("status","staffName").values(1,null).orderBy()
+	 * @param entityQuery EntityQuery.create().where("status=:status #[and staffName
+	 *                    like
+	 *                    :staffName]").names("status","staffName").values(1,null).orderBy()
 	 *                    链式设置查询逻辑
 	 * @return
 	 */
@@ -298,12 +302,12 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 单表分页查询
-	 * <p>
-	 *  1、对象传参:
-	 *  findEntity(StaffInfo.class,new Page(),EntityQuery.create().where("status=:status").values(staffInfo))
-	 *  2、数组传参:
-	 *  findEntity(StaffInfo.class,new Page(),EntityQuery.create().where("status=?").values(1))
-	 * <p>
+	 *       <p>
+	 *       1、对象传参: findEntity(StaffInfo.class,new
+	 *       Page(),EntityQuery.create().where("status=:status").values(staffInfo))
+	 *       2、数组传参: findEntity(StaffInfo.class,new
+	 *       Page(),EntityQuery.create().where("status=?").values(1))
+	 *       <p>
 	 * @param <T>
 	 * @param entityClass
 	 * @param page
@@ -403,7 +407,8 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询
-	 * @param query 范例:new QueryExecutor(sql).names(xxx).values(xxx).filters() 链式设置查询
+	 * @param query 范例:new QueryExecutor(sql).names(xxx).values(xxx).filters()
+	 *              链式设置查询
 	 * @return
 	 */
 	public QueryResult findByQuery(final QueryExecutor query);
@@ -452,7 +457,9 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 通过QueryExecutor来构造查询逻辑进行分页查询
 	 * @param page
-	 * @param queryExecutor 范例:new QueryExecutor(sql).names(xxx).values(xxx).filters() 链式设置查询
+	 * @param queryExecutor 范例:new
+	 *                      QueryExecutor(sql).names(xxx).values(xxx).filters()
+	 *                      链式设置查询
 	 * @return
 	 */
 	public QueryResult findPageByQuery(final Page page, final QueryExecutor queryExecutor);
@@ -589,7 +596,7 @@ public interface SqlToyLazyDao {
 	 *       </p>
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param autoCommit        (一般为null)
+	 * @param autoCommit    (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);
 
@@ -684,23 +691,18 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
-	 * <p>
-	 * 	sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new TranslateHandler() {
-	 *      // 将翻译后的名称值设置到对应的属性上
-	 *		public void setName(Object row, String name) {
-	 *			((StaffInfoVO)row).setStaffName(name);
-	 *		}
-	 *		//告知key值
-	 *		public Object getKey(Object row) {
-	 *			return ((StaffInfoVO)row).getStaffId();
-	 *		}
-	 *	});
-	 * </p>
-	 * @param dataSet 数据集合
-	 * @param cacheName 缓存名称
+	 *       <p>
+	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
+	 *       TranslateHandler() { // 将翻译后的名称值设置到对应的属性上 public void setName(Object
+	 *       row, String name) { ((StaffInfoVO)row).setStaffName(name); } //告知key值
+	 *       public Object getKey(Object row) { return
+	 *       ((StaffInfoVO)row).getStaffId(); } });
+	 *       </p>
+	 * @param dataSet        数据集合
+	 * @param cacheName      缓存名称
 	 * @param cacheType
 	 * @param cacheNameIndex
-	 * @param handler 
+	 * @param handler
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
 			TranslateHandler handler);
@@ -720,7 +722,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合，比如前端传了一个企业名称，然后通过企业信息的缓存反向通过名称匹配到企业id，用于精准查询
-	 * @param matchRegex 匹配的表达式，如:中   上海,内容按照此顺序出现相关文字即可匹配上
+	 * @param matchRegex       匹配的表达式，如:中 上海,内容按照此顺序出现相关文字即可匹配上
 	 * @param cacheMatchFilter 例如:
 	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
@@ -756,17 +758,17 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
-	 * <p>
-	 *  //定义参数
-	 *	String[] paramNames = new String[] { "userId", "defaultRoles", "deployId", "authObjType" };
-	 *	Object[] paramValues = new Object[] { userId, defaultRoles, GlobalConstants.DEPLOY_ID,SagacityConstants.TempAuthObjType.GROUP };
-	 *	// 使用并行查询同时执行2个sql,条件参数是2个查询的合集
-	 *	List<QueryResult<TreeModel>> list = super.parallQuery(
-	 *	     Arrays.asList(
-	 *	        ParallQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
-	 *			ParallQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
-	 *	     paramNames, paramValues,);
-	 * </p>
+	 *       <p>
+	 *       //定义参数 String[] paramNames = new String[] { "userId", "defaultRoles",
+	 *       "deployId", "authObjType" }; Object[] paramValues = new Object[] {
+	 *       userId, defaultRoles,
+	 *       GlobalConstants.DEPLOY_ID,SagacityConstants.TempAuthObjType.GROUP }; //
+	 *       使用并行查询同时执行2个sql,条件参数是2个查询的合集 List<QueryResult<TreeModel>> list =
+	 *       super.parallQuery( Arrays.asList(
+	 *       ParallQuery.create().sql("webframe_searchAllModuleMenus").resultType(TreeModel.class),
+	 *       ParallQuery.create().sql("webframe_searchAllUserReports").resultType(TreeModel.class)),
+	 *       paramNames, paramValues,);
+	 *       </p>
 	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
 	 * @param paramNames
 	 * @param paramValues
@@ -780,7 +782,7 @@ public interface SqlToyLazyDao {
 	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
 	 * @param paramNames
 	 * @param paramValues
-	 * @param parallelConfig 设置并行参数:ParallelConfig.create().maxThreads(5).maxWaitSeconds(600)
+	 * @param parallelConfig               设置并行参数:ParallelConfig.create().maxThreads(5).maxWaitSeconds(600)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
@@ -800,7 +802,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param parallQueryList<ParallQuery> ParallQuery中可以单独对本查询设置条件参数
 	 * @param paramsMap
-	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig               例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,

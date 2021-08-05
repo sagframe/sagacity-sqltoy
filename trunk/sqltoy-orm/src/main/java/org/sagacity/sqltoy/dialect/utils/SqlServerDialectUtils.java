@@ -71,7 +71,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect,final int fetchSize, final int maxRows) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -687,9 +687,8 @@ public class SqlServerDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit, final String tableName) throws Exception {
+	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = generateInsertSql(dbType, entityMeta, tableName, entityMeta.getIdStrategy(), "isnull",
@@ -925,7 +924,7 @@ public class SqlServerDialectUtils {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), null, conn, dbType, null,true);
+							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

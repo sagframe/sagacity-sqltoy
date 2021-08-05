@@ -220,7 +220,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 提供数据源获得connection的扩展(默认spring的实现)
 	 */
 	private ConnectionFactory connectionFactory = new DefaultConnectionFactory();
-	
+
 	/**
 	 * spring 上下文容器
 	 */
@@ -403,7 +403,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setServerId(Integer serverId) {
 		this.serverId = serverId;
 	}
-	
+
 	/**
 	 * @return the batchSize
 	 */
@@ -543,6 +543,8 @@ public class SqlToyContext implements ApplicationContextAware {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.IMPALA) || tmp.contains("kudu")) {
+			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {
 			this.dialect = Dialect.TDENGINE;
 		} else if (tmp.startsWith(Dialect.ES)) {

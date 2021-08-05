@@ -58,8 +58,8 @@ public class ClickHouseDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection, java.lang.Integer, java.lang.String)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection, java.lang.Integer, java.lang.String)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -186,8 +186,7 @@ public class ClickHouseDialect implements Dialect {
 	@Override
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
-		return ClickHouseDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit,
-				tableName);
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
 	@Override

@@ -1473,8 +1473,16 @@ public class SqlToyDaoSupport {
 
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
+		// where条件
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);
+		}
+		// 分组和having
+		if (StringUtil.isNotBlank(innerModel.groupBy)) {
+			sql = sql.concat(" group by ").concat(SqlUtil.convertFieldsToColumns(entityMeta, innerModel.groupBy));
+			if (StringUtil.isNotBlank(innerModel.having)) {
+				sql = sql.concat(" having ").concat(SqlUtil.convertFieldsToColumns(entityMeta, innerModel.having));
+			}
 		}
 		// 处理order by 排序
 		if (!innerModel.orderBy.isEmpty()) {

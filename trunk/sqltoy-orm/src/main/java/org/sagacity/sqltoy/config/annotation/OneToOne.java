@@ -18,18 +18,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface OneToOne {
-	//主表列名(many column)
+	// 主表列名(many column)
 	String[] fields() default {};
 
-	//关联表对应对象的属性
+	// 关联表对应对象的属性
 	String[] mappedFields();
 
-	//是否级联删除
+	// 是否级联删除
 	boolean delete() default false;
 
-	//加载自定义sql
+	// 加载自定义sql
 	String load() default "";
 
-	//定制级联修改保存对子表的操作语句
+	// 定制级联修改保存对子表的操作语句
 	String update() default "";
 }

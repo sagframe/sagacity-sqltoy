@@ -18,31 +18,31 @@ public class FormatModel implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 8483990404112803642L;
-	
+
 	/**
 	 * 列名
 	 */
 	private String column;
-	
+
 	/**
 	 * 0:date,1:number
 	 */
-	private int type=0;
-	
+	private int type = 0;
+
 	/**
 	 * 格式
 	 */
 	private String format;
-	
+
 	/**
 	 * 区域
 	 */
 	private String locale;
-	
+
 	/**
 	 * 
 	 */
-	private RoundingMode roundingMode=null;
+	private RoundingMode roundingMode = null;
 
 	/**
 	 * @return the column

@@ -129,4 +129,17 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches("innerAoin1", SQL_ID_PATTERN));
 		System.err.println(StringUtil.matches("inner_Aoin-10", SQL_ID_PATTERN));
 	}
+
+	@Test
+	public void testWhereMatch2() {
+		String packageName = "/com/sinochem/xdata/";
+		if (packageName.charAt(0) == '/') {
+			packageName = packageName.substring(1);
+		}
+		if (packageName.endsWith("/")) {
+			packageName = packageName.substring(0, packageName.length() - 1);
+		}
+		packageName = packageName.replace("/", ".");
+		System.err.println(packageName);
+	}
 }

@@ -9,6 +9,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -49,9 +50,14 @@ public class DialectExtUtils {
 		boolean isStart = true;
 		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
 		String columnName;
+		boolean isString = false;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			isString = false;
+			if (fieldMeta.getFieldType().equals("java.lang.string")) {
+				isString = true;
+			}
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (!isStart) {
 				sql.append(",");
@@ -89,7 +95,12 @@ public class DialectExtUtils {
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
-					values.append("?");
+					//kudu 中文以产生乱码
+					if (dbType == DBType.IMPALA && isString) {
+						values.append("cast(? as string)");
+					} else {
+						values.append("?");
+					}
 				}
 				isStart = false;
 			}

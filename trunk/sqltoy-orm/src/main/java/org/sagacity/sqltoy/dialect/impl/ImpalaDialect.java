@@ -6,53 +6,47 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sagacity.sqltoy.SqlExecuteStat;
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.GenerateSavePKStrategy;
-import org.sagacity.sqltoy.callback.GenerateSqlHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
-import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
-import org.sagacity.sqltoy.dialect.utils.DMDialectUtils;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
-import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 国产达梦数据库方言支持(从DM8开始支持),问题: 1、dm数据库跟oracle差异:在merge
- *              into里面使用nvl报错;目前采取了先更新后saveIgnore的操作模式 2、updateFetch操作报游标错误
+ * @description 提供基于impala对kudu的支持
  * @author zhongxuchen
- * @version v1.0,Date:2020-06-05
- * @modify Date:2020-06-05 初始创建达梦数据库支持
+ * @version v1.0,Date:2021-8-1
  */
-public class DMDialect implements Dialect {
+public class ImpalaDialect implements Dialect {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(DMDialect.class);
+	protected final Logger logger = LoggerFactory.getLogger(ImpalaDialect.class);
 
 	/**
 	 * 判定为null的函数
 	 */
-	public static final String NVL_FUNCTION = "nvl";
+	public static final String NVL_FUNCTION = "ifnull";
 
 	@Override
-	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
-			final Integer dbType, String tableName) {
+	public boolean isUnique(final SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed,
+			Connection conn, final Integer dbType, final String tableName) {
 		return DialectUtils.isUnique(sqlToyContext, entity, paramsNamed, conn, dbType, tableName,
 				(entityMeta, realParamNamed, table, topSize) -> {
 					String queryStr = DialectExtUtils.wrapUniqueSql(entityMeta, realParamNamed, dbType, table);
@@ -72,7 +66,7 @@ public class DMDialect implements Dialect {
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return OracleDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
+		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
 				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
@@ -89,7 +83,7 @@ public class DMDialect implements Dialect {
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return OracleDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
+		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
 				dbType, dialect, fetchSize, maxRows);
 	}
 
@@ -104,7 +98,7 @@ public class DMDialect implements Dialect {
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
 			final int maxRows) throws Exception {
-		return OracleDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
+		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
 				dialect, fetchSize, maxRows);
 	}
 
@@ -120,9 +114,8 @@ public class DMDialect implements Dialect {
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
 			throws Exception {
-		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
-				dbType, 0, fetchSize, maxRows);
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
+				0, fetchSize, maxRows);
 	}
 
 	/*
@@ -132,9 +125,9 @@ public class DMDialect implements Dialect {
 	 * java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
-	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final boolean isLastSql, final Connection conn, final Integer dbType,
-			final String dialect) throws Exception {
+	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
+			Object[] paramsValue, boolean isLastSql, final Connection conn, final Integer dbType, final String dialect)
+			throws Exception {
 		return DialectUtils.getCountBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, isLastSql, conn, dbType);
 	}
 
@@ -165,17 +158,14 @@ public class DMDialect implements Dialect {
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
-				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
-		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
-		if (updateCnt >= entities.size()) {
-			SqlExecuteStat.debug("修改记录", "修改记录量:" + updateCnt + " 条!");
-			return updateCnt;
-		}
-		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, reflectPropsHandler, conn, dbType,
-				dialect, autoCommit, tableName);
-		SqlExecuteStat.debug("新增记录", "新建记录数量:" + saveCnt + " 条!");
-		return updateCnt + saveCnt;
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils
+				.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION,
+						"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName)
+				.replaceFirst("(?i)insert ", "upsert ");
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -189,21 +179,13 @@ public class DMDialect implements Dialect {
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
-			Boolean autoCommit, final String tableName) throws Exception {
+			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		return DialectUtils.saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta,
-				new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence() + ".nextval";
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
-						return DialectExtUtils.mergeIgnore(dbType, entityMeta, pkStrategy, "dual", NVL_FUNCTION,
-								sequence, DMDialectUtils.isAssignPKValue(pkStrategy), tableName);
-					}
-				}, reflectPropsHandler, conn, dbType, autoCommit);
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -216,7 +198,13 @@ public class DMDialect implements Dialect {
 	public Serializable load(final SqlToyContext sqlToyContext, Serializable entity, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName)
 			throws Exception {
-		return OracleDialectUtils.load(sqlToyContext, entity, cascadeTypes, lockMode, conn, dbType, dialect, tableName);
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// 获取loadsql(loadsql 可以通过@loadSql进行改变，所以需要sqltoyContext重新获取)
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(entityMeta.getLoadSql(tableName), SqlType.search,
+				dialect);
+		String loadSql = sqlToyConfig.getSql(dialect);
+		return (Serializable) DialectUtils.load(sqlToyContext, sqlToyConfig, loadSql, entityMeta, entity, cascadeTypes,
+				conn, dbType);
 	}
 
 	/*
@@ -229,7 +217,7 @@ public class DMDialect implements Dialect {
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
 			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName,
 			final int fetchSize, final int maxRows) throws Exception {
-		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+		return DialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName, null,
 				fetchSize, maxRows);
 	}
 
@@ -243,36 +231,14 @@ public class DMDialect implements Dialect {
 	public Object save(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-		}
-		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, ReturnPkType.PREPARD_ID, insertSql,
-				entity, new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
-						return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-								DMDialectUtils.isAssignPKValue(pkStrategy), null);
-					}
-				}, new GenerateSavePKStrategy() {
-					public SavePKStrategy generate(EntityMeta entityMeta) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-						}
-						return new SavePKStrategy(pkStrategy, DMDialectUtils.isAssignPKValue(pkStrategy));
-					}
-				}, conn, dbType);
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
+				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.GENERATED_KEYS
+						: ReturnPkType.PREPARD_ID;
+		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
+				insertSql, entity, null, null, conn, dbType);
 	}
 
 	/*
@@ -286,19 +252,12 @@ public class DMDialect implements Dialect {
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
-		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		String sequence = entityMeta.getSequence().concat(".nextval");
-		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-			pkStrategy = PKStrategy.SEQUENCE;
-			sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-		}
-		boolean isAssignPK = DMDialectUtils.isAssignPKValue(pkStrategy);
-		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
-				isAssignPK, tableName);
-		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,
-				reflectPropsHandler, conn, dbType, autoCommit);
+		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
+		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
+		return DialectUtils.saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql,
+				entities, batchSize, reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	/*
@@ -310,22 +269,10 @@ public class DMDialect implements Dialect {
 	 */
 	@Override
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
-			final boolean cascade, final Class[] forceCascadeClass,
+			final boolean cascade, final Class[] emptyCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
-		return DialectUtils.update(sqlToyContext, entity, NVL_FUNCTION, forceUpdateFields, cascade,
-				(cascade == false) ? null : new GenerateSqlHandler() {
-					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						PKStrategy pkStrategy = entityMeta.getIdStrategy();
-						String sequence = entityMeta.getSequence().concat(".nextval");
-						if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
-							pkStrategy = PKStrategy.SEQUENCE;
-							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
-						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								"dual", NVL_FUNCTION, sequence, DMDialectUtils.isAssignPKValue(pkStrategy), null);
-					}
-				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
+		return saveOrUpdate(sqlToyContext, entity, forceUpdateFields, conn, dbType, dialect, null, tableName);
 	}
 
 	/*
@@ -340,8 +287,8 @@ public class DMDialect implements Dialect {
 			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
+		return this.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn,
+				dbType, dialect, autoCommit, tableName);
 	}
 
 	/*
@@ -366,38 +313,44 @@ public class DMDialect implements Dialect {
 	public Long deleteAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return DialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
+		return DefaultDialectUtils.deleteAll(sqlToyContext, entities, batchSize, conn, dbType, autoCommit, tableName);
 	}
 
-	// dm 数据库会报游标错误
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.sagacity.sqltoy.dialect.Dialect#updateFatch(org.sagacity.sqltoy.
+	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * org.sagacity.sqltoy.model.QueryExecutor,
+	 * org.sagacity.sqltoy.callback.UpdateRowHandler, java.sql.Connection)
+	 */
 	@Override
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, UpdateRowHandler updateRowHandler, Connection conn, final Integer dbType,
 			final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception {
-		String realSql = sql.concat(getLockSql(sql, dbType, (lockMode == null) ? LockMode.UPGRADE : lockMode));
-		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
-				dbType, 0, fetchSize, maxRows);
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
 	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize) throws Exception {
-		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
-				dbType, fetchSize);
+		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
+				fetchSize);
 	}
 
-	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		// 判断是否已经包含for update
-		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {
-			return "";
+	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
+		if (pkStrategy == null) {
+			return true;
 		}
-		if (lockMode == LockMode.UPGRADE_NOWAIT) {
-			return " for update nowait ";
+		// 目前不支持sequence模式
+		if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+			return false;
 		}
-		if (lockMode == LockMode.UPGRADE_SKIPLOCK) {
-			return " for update skip locked";
+		if (pkStrategy.equals(PKStrategy.IDENTITY)) {
+			return true;
 		}
-		return " for update ";
+		return true;
 	}
 }

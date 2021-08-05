@@ -79,8 +79,8 @@ public class GuassDBDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findPageBySql(org.sagacity.sqltoy.
 	 * SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
-	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long,
-	 * java.lang.Integer, java.sql.Connection)
+	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Integer,
+	 * java.sql.Connection)
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
@@ -238,9 +238,8 @@ public class GuassDBDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
@@ -272,9 +271,8 @@ public class GuassDBDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 

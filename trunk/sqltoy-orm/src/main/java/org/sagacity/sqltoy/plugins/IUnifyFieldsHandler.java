@@ -24,8 +24,8 @@ public interface IUnifyFieldsHandler {
 	 */
 	public Map<String, Object> updateUnifyFields();
 
-	//在非强制情况下，create和update赋值都是先判断字段是否已经赋值，如已经赋值则忽视
-	//强制赋值后，则忽视字段赋值，强制覆盖
+	// 在非强制情况下，create和update赋值都是先判断字段是否已经赋值，如已经赋值则忽视
+	// 强制赋值后，则忽视字段赋值，强制覆盖
 	/**
 	 * @TODO 強制修改的字段(一般针对update属性)
 	 * @return

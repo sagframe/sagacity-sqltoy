@@ -42,7 +42,7 @@ public class SqliteDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键表全部采用insert机制
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,

@@ -69,8 +69,7 @@ public class ShardingResult implements java.io.Serializable {
 	}
 
 	/**
-	 * @param message
-	 *            the message to set
+	 * @param message the message to set
 	 */
 	public void setMessage(String message) {
 		this.message = message;

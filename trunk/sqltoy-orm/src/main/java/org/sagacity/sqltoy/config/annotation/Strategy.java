@@ -17,16 +17,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Strategy {
-	//分库分表策略
+	// 分库分表策略
 	String name() default "";
 
-	//决策字段(以哪几个字段值作为切分策略,一般主键或分类字段)
+	// 决策字段(以哪几个字段值作为切分策略,一般主键或分类字段)
 	String[] fields() default {};
 
-	//别名
+	// 别名
 	String[] aliasNames() default {};
 
-	//决策类型(预留)
+	// 决策类型(预留)
 	String decisionType() default "";
 
 }
