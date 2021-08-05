@@ -129,14 +129,13 @@ public class Save extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
-			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, null,
-					getDataSource(null), autoCommit);
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, null, getDataSource(null),
+					autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
-			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
-					null, getDataSource(null), autoCommit);
+			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps, null,
+					getDataSource(null), autoCommit);
 		}
-		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, null,
-				getDataSource(null), autoCommit);
+		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, null, getDataSource(null), autoCommit);
 	}
 }

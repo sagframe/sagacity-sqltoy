@@ -96,7 +96,7 @@ public class Batch extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update, super.getDialect());
-		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, null,
-				insertCallhandler, autoCommit, getDataSource(sqlToyConfig));
+		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, realBatchSize, null, insertCallhandler,
+				autoCommit, getDataSource(sqlToyConfig));
 	}
 }

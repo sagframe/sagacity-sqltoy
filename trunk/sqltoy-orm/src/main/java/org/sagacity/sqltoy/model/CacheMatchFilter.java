@@ -27,7 +27,7 @@ public class CacheMatchFilter implements Serializable {
 		CacheMatchFilter filter = new CacheMatchFilter();
 		return filter;
 	}
-	
+
 	/**
 	 * @TODO 设置缓存名称
 	 * @param cacheName

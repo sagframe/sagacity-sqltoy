@@ -112,7 +112,7 @@ public class MacroIfLogic {
 					expressResult[i] = compare(value, compareType, compareValue);
 				}
 			}
-			
+
 			// 只支持&& 和||
 			// 与运算
 			if (logicStr.equals("\\&\\&") || logicStr.equals("&&")) {

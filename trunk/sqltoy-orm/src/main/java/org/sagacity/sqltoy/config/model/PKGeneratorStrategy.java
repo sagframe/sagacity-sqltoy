@@ -63,8 +63,7 @@ public class PKGeneratorStrategy implements Serializable {
 	}
 
 	/**
-	 * @param name
-	 *            the name to set
+	 * @param name the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -78,8 +77,7 @@ public class PKGeneratorStrategy implements Serializable {
 	}
 
 	/**
-	 * @param strategy
-	 *            the strategy to set
+	 * @param strategy the strategy to set
 	 */
 	public void setStrategy(String strategy) {
 		this.strategy = strategy;
@@ -93,8 +91,7 @@ public class PKGeneratorStrategy implements Serializable {
 	}
 
 	/**
-	 * @param sequence
-	 *            the sequence to set
+	 * @param sequence the sequence to set
 	 */
 	public void setSequence(String sequence) {
 		this.sequence = sequence;
@@ -108,8 +105,7 @@ public class PKGeneratorStrategy implements Serializable {
 	}
 
 	/**
-	 * @param generator
-	 *            the generator to set
+	 * @param generator the generator to set
 	 */
 	public void setGenerator(String generator) {
 		this.generator = generator;

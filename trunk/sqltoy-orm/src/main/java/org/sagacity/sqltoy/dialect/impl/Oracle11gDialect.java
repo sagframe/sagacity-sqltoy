@@ -74,9 +74,8 @@ public class Oracle11gDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org.
-	 * sagacity .sqltoy.SqlToyContext,
-	 * org.sagacity.sqltoy.config.model.SqlToyConfig,
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getRandomResult(org. sagacity
+	 * .sqltoy.SqlToyContext, org.sagacity.sqltoy.config.model.SqlToyConfig,
 	 * org.sagacity.sqltoy.model.QueryExecutor, java.lang.Long, java.lang.Long,
 	 * java.sql.Connection)
 	 */
@@ -85,7 +84,7 @@ public class Oracle11gDialect implements Dialect {
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		return OracleDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect,fetchSize,maxRows);
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -153,7 +152,8 @@ public class Oracle11gDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
+			final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
@@ -184,8 +184,8 @@ public class Oracle11gDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#findBySql(org.sagacity.
 	 * sqltoy.config.model.SqlToyConfig, java.lang.String[], java.lang.Object[],
-	 * java.lang.reflect.Type,
-	 * org.sagacity.sqltoy.callback.RowCallbackHandler, java.sql.Connection)
+	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
+	 * java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
@@ -199,8 +199,8 @@ public class Oracle11gDialect implements Dialect {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang
-	 * .String, java.lang.String[], java.lang.Object[], java.sql.Connection)
+	 * @see org.sagacity.sqltoy.dialect.Dialect#getCountBySql(java.lang .String,
+	 * java.lang.String[], java.lang.Object[], java.sql.Connection)
 	 */
 	@Override
 	public Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
@@ -301,9 +301,10 @@ public class Oracle11gDialect implements Dialect {
 	 */
 	@Override
 	public List<?> loadAll(final SqlToyContext sqlToyContext, List<?> entities, List<Class> cascadeTypes,
-			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName, final int fetchSize, final int maxRows)
-			throws Exception {
-		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,fetchSize,maxRows);
+			LockMode lockMode, Connection conn, final Integer dbType, final String dialect, final String tableName,
+			final int fetchSize, final int maxRows) throws Exception {
+		return OracleDialectUtils.loadAll(sqlToyContext, entities, cascadeTypes, lockMode, conn, dbType, tableName,
+				fetchSize, maxRows);
 	}
 
 	/*
@@ -466,7 +467,7 @@ public class Oracle11gDialect implements Dialect {
 			final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize) throws Exception {
 		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
-				dbType,fetchSize);
+				dbType, fetchSize);
 	}
 
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {

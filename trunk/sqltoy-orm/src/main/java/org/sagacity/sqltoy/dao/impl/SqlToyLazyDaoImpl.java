@@ -541,7 +541,9 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#loadByQuery(org.sagacity.sqltoy.model.QueryExecutor)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#loadByQuery(org.sagacity.sqltoy.model.
+	 * QueryExecutor)
 	 */
 	@Override
 	public Object loadByQuery(QueryExecutor queryExecutor) {
@@ -551,7 +553,9 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findByQuery(org.sagacity.sqltoy.model.QueryExecutor)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#findByQuery(org.sagacity.sqltoy.model.
+	 * QueryExecutor)
 	 */
 	@Override
 	public QueryResult findByQuery(QueryExecutor queryExecutor) {
@@ -561,7 +565,9 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#findTopByQuery(org.sagacity.sqltoy.model.QueryExecutor, double)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#findTopByQuery(org.sagacity.sqltoy.
+	 * model.QueryExecutor, double)
 	 */
 	@Override
 	public QueryResult findTopByQuery(QueryExecutor queryExecutor, double topSize) {
@@ -571,8 +577,9 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFatch(org.sagacity.sqltoy.model.QueryExecutor,
-	 * org.sagacity.sqltoy.callback.UpdateRowHandler)
+	 * @see
+	 * org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFatch(org.sagacity.sqltoy.model.
+	 * QueryExecutor, org.sagacity.sqltoy.callback.UpdateRowHandler)
 	 */
 	@Override
 	public List updateFetch(QueryExecutor queryExecutor, UpdateRowHandler updateRowHandler) {

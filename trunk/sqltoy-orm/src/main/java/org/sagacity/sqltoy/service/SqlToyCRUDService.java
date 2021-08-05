@@ -157,8 +157,8 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 对树形数据进行封装，构造对象对应表的nodeRoute，nodeLevel，isLeaf等信息 便于对树形结构数据快速查询
 	 * @param entity
-	 * @param pidField      父节点属性名称(java对象属性名称)
-	 * @param appendIdSize  构造成nodeRoute时单个id值的长度，如：1001,1002如果长度设置为6，则001001,001002
+	 * @param pidField     父节点属性名称(java对象属性名称)
+	 * @param appendIdSize 构造成nodeRoute时单个id值的长度，如：1001,1002如果长度设置为6，则001001,001002
 	 * @return
 	 */
 	public boolean wrapTreeTableRoute(final Serializable entity, String pidField, int appendIdSize);
@@ -169,7 +169,7 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
-	
+
 	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
@@ -189,7 +189,7 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @todo 获取业务ID
-	 * @param signature  格式:tableName_yyyyMMdd,如：staff_info20210701 
+	 * @param signature 格式:tableName_yyyyMMdd,如：staff_info20210701
 	 * @param increment
 	 * @return
 	 */
@@ -206,7 +206,7 @@ public interface SqlToyCRUDService {
 	 * @TODO 利用缓存通过反调模式对集合数据进行编码转名称翻译
 	 * @param dataSet
 	 * @param cacheName
-	 * @param translateHandler   反调方法:取key 和回写名称
+	 * @param translateHandler 反调方法:取key 和回写名称
 	 */
 	public void translate(Collection dataSet, String cacheName, TranslateHandler translateHandler);
 
@@ -214,9 +214,9 @@ public interface SqlToyCRUDService {
 	 * @todo 对记录进行翻译(可以)
 	 * @param dataSet
 	 * @param cacheName
-	 * @param cacheType      针对类似数据字典性质的有分类的缓存
-	 * @param cacheNameIndex 手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2
-	 *                       默认cacheNameIndex为1)
+	 * @param cacheType        针对类似数据字典性质的有分类的缓存
+	 * @param cacheNameIndex   手动指定缓存中名称对应的列(缓存默认格式为:key,name,extName1,extName2
+	 *                         默认cacheNameIndex为1)
 	 * @param translateHandler
 	 */
 	public void translate(Collection dataSet, String cacheName, String cacheType, Integer cacheNameIndex,
@@ -237,8 +237,9 @@ public interface SqlToyCRUDService {
 
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
-	 * @param matchRegex       匹配表达式，如:中国    上海
-	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param matchRegex       匹配表达式，如:中国 上海
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
@@ -286,7 +287,7 @@ public interface SqlToyCRUDService {
 	 * @param parallQueryList
 	 * @param paramNames
 	 * @param paramValues
-	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, String[] paramNames,
@@ -297,7 +298,7 @@ public interface SqlToyCRUDService {
 	 * @param <T>
 	 * @param parallQueryList
 	 * @param paramsMap
-	 * @param parallelConfig 例如:ParallelConfig.create().maxThreads(20)
+	 * @param parallelConfig  例如:ParallelConfig.create().maxThreads(20)
 	 * @return
 	 */
 	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallQueryList, Map<String, Object> paramsMap,

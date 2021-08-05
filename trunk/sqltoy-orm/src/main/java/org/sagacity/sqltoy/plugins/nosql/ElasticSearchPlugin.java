@@ -54,8 +54,8 @@ public class ElasticSearchPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			Page pageModel, QueryExecutor queryExecutor) throws Exception {
+	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, Page pageModel,
+			QueryExecutor queryExecutor) throws Exception {
 		String realMql = "";
 		JSONObject jsonQuery = null;
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
@@ -77,7 +77,8 @@ public class ElasticSearchPlugin {
 		Page page = new Page();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,extend.humpMapLabel);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
+				extend.humpMapLabel);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getRecordCount());
 		return page;
@@ -113,7 +114,8 @@ public class ElasticSearchPlugin {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,extend.humpMapLabel);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
+				extend.humpMapLabel);
 		return result.getRows();
 	}
 
@@ -128,7 +130,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, Class resultClass,boolean humpMapLabel) throws Exception {
+			JSONObject jsonQuery, Class resultClass, boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";

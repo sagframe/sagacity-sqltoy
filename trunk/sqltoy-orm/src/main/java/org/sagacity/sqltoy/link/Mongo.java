@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,7 +84,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 返回结果类型
 	 */
-	private Class<?> resultType;
+	private Type resultType;
 
 	/**
 	 * 返回结果是Map类型，属性标签是否需要驼峰化命名处理
@@ -122,7 +123,7 @@ public class Mongo extends BaseLink {
 		return this;
 	}
 
-	public Mongo resultType(Class<?> resultType) {
+	public Mongo resultType(Type resultType) {
 		this.resultType = resultType;
 		return this;
 	}
@@ -200,10 +201,10 @@ public class Mongo extends BaseLink {
 
 	/**
 	 * @todo 分页查询
-	 * @param pageModel
+	 * @param page
 	 * @return
 	 */
-	public Page findPage(Page pageModel) {
+	public Page findPage(Page page) {
 		QueryExecutor queryExecutor = build();
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.search, "");
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
@@ -215,7 +216,7 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findPage(getMongoTemplate(), sqlToyConfig, pageModel, realMql, (Class) extend.resultType,
+			return findPage(getMongoTemplate(), sqlToyConfig, page, realMql, (Class) extend.resultType,
 					extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();

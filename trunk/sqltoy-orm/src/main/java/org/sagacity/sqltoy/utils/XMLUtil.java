@@ -31,7 +31,6 @@ public class XMLUtil {
 	// xml 忽视验证的特性
 	private final static String NO_VALIDATOR_FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
-
 	private XMLUtil() {
 	}
 
@@ -80,7 +79,7 @@ public class XMLUtil {
 	 */
 	private static IgnoreKeyCaseMap<String, String> asMap(String... keyValues) {
 		IgnoreKeyCaseMap<String, String> result = new IgnoreKeyCaseMap<String, String>();
-		if (keyValues == null||keyValues.length==0) {
+		if (keyValues == null || keyValues.length == 0) {
 			return result;
 		}
 		for (int i = 0; i < keyValues.length - 1; i = i + 2) {

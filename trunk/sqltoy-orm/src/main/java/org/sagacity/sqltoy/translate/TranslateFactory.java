@@ -108,8 +108,8 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行基于service调用的检测
 	 * @param sqlToyContext
-	 * @param checkerConfig  缓存更新检测配置
-	 * @param preCheckTime   上次检测时间
+	 * @param checkerConfig 缓存更新检测配置
+	 * @param preCheckTime  上次检测时间
 	 * @return
 	 * @throws Exception
 	 */
@@ -122,8 +122,8 @@ public class TranslateFactory {
 	/**
 	 * @todo 执行基于rest请求模式的缓存更新检测
 	 * @param sqlToyContext
-	 * @param checkerConfig   缓存更新检测配置
-	 * @param preCheckTime    上次检测时间
+	 * @param checkerConfig 缓存更新检测配置
+	 * @param preCheckTime  上次检测时间
 	 * @return
 	 * @throws Exception
 	 */

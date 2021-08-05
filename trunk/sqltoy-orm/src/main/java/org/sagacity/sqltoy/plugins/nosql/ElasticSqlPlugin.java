@@ -36,8 +36,8 @@ public class ElasticSqlPlugin {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			Page pageModel, QueryExecutor queryExecutor) throws Exception {
+	public static Page findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, Page pageModel,
+			QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
@@ -55,7 +55,7 @@ public class ElasticSqlPlugin {
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) extend.resultType,extend.humpMapLabel);
+				(Class) extend.resultType, extend.humpMapLabel);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getRecordCount());
 		return page;
@@ -87,7 +87,7 @@ public class ElasticSqlPlugin {
 			}
 		}
 		DataSetResult result = ElasticSearchUtils.executeQuery(sqlToyContext, sqlToyConfig, realSql,
-				(Class) extend.resultType,extend.humpMapLabel);
+				(Class) extend.resultType, extend.humpMapLabel);
 		return result.getRows();
 	}
 
