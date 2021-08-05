@@ -1395,19 +1395,8 @@ public class SqlToyDaoSupport {
 	}
 
 	private Object findEntityUtil(Class entityClass, Page page, EntityQuery entityQuery, boolean isCount) {
-		String where = "";
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
-
-		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
-		if (StringUtil.isBlank(innerModel.where)) {
-			if (innerModel.values != null && innerModel.values.length > 0) {
-				where = SqlUtil.wrapWhere(entityMeta);
-			}
-		} else {
-			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
-		}
-
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
@@ -1474,6 +1463,15 @@ public class SqlToyDaoSupport {
 		String sql = "select ".concat((innerModel.distinct) ? " distinct " : "").concat(fields).concat(translateFields)
 				.concat(" from ").concat(entityMeta.getSchemaTable(null, null));
 		// where条件
+		String where = "";
+		// 动态组织where 后面的条件语句,此功能并不建议使用,where 一般需要指定明确条件
+		if (StringUtil.isBlank(innerModel.where)) {
+			if (innerModel.values != null && innerModel.values.length > 0) {
+				where = SqlUtil.wrapWhere(entityMeta);
+			}
+		} else {
+			where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
+		}
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);
 		}
