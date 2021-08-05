@@ -1456,6 +1456,13 @@ public class SqlToyDaoSupport {
 		if (StringUtil.isNotBlank(where)) {
 			sql = sql.concat(" where ").concat(where);
 		}
+		// 分组和having
+		if (StringUtil.isNotBlank(innerModel.groupBy)) {
+			sql = sql.concat(" group by ").concat(SqlUtil.convertFieldsToColumns(entityMeta, innerModel.groupBy));
+			if (StringUtil.isNotBlank(innerModel.having)) {
+				sql = sql.concat(" having ").concat(SqlUtil.convertFieldsToColumns(entityMeta, innerModel.having));
+			}
+		}
 		// 处理order by 排序
 		if (!innerModel.orderBy.isEmpty()) {
 			sql = sql.concat(" order by ");
