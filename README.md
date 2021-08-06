@@ -50,6 +50,7 @@
    * oceanBase
    * guassdb
    * tidb
+   * impala(kudu)
    * kingbase
    * mongodb (只支持查询)
    * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
