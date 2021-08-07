@@ -96,6 +96,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.update(entity, forceUpdateProps);
 	}
 
+	@Override
 	@Transactional
 	public Long updateCascade(Serializable entity, String... forceUpdateProps) {
 		if (null == entity) {
@@ -224,6 +225,7 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * @see
 	 * org.sagacity.sqltoy.service.SqlToyCRUDService#delete(java.io.Serializable )
 	 */
+	@Override
 	@Transactional
 	public Long delete(Serializable entity) {
 		return sqlToyLazyDao.delete(entity);

@@ -110,6 +110,7 @@ public class ImpalaDialect implements Dialect {
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
 	 * java.sql.Connection)
 	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)

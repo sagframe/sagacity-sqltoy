@@ -1190,6 +1190,7 @@ public class SqlToyDaoSupport {
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, this.getDataSource(dataSource),
 				new DataSourceCallbackHandler() {
+					@Override
 					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 						if (!conn.isClosed()) {
 							conn.commit();
