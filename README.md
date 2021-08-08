@@ -107,7 +107,7 @@
 ```
 * 基于对象单表查询，并带缓存翻译
 ```java  
-public PaginationModel<StaffInfoVO> findStaff(PaginationModel<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
+public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
      // sql可以直接在代码中编写,复杂sql建议在xml中定义
      // 单表entity查询场景下sql字段可以写成java类的属性名称
      return findEntity(StaffInfoVO.class, pageModel, EntityQuery.create()
@@ -264,13 +264,13 @@ where t.ORDER_ID=?
  *  基于对象传参数模式
  */
 public void findPageByEntity() {
-	PaginationModel pageModel = new PaginationModel();
+	Page pageModel = new Page();
 	StaffInfoVO staffVO = new StaffInfoVO();
 	// 作为查询条件传参数
 	staffVO.setStaffName("陈");
 	// 使用了分页优化器
 	// 第一次调用:执行count 和 取记录两次查询
-	PaginationModel result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
+	Page result = sqlToyLazyDao.findPageBySql(pageModel, "sqltoy_fastPage", staffVO);
 	System.err.println(JSON.toJSONString(result));
 	// 第二次调用:过滤条件一致，则不会再次执行count查询
 	//设置为第二页
@@ -593,7 +593,7 @@ spring.sqltoy.sqlResourcesDir=classpath:com/sqltoy/quickstart
 spring.sqltoy.translateConfig=classpath:sqltoy-translate.xml
 spring.sqltoy.debug=true
 #spring.sqltoy.reservedWords=status,sex_type
-#obtainDataSource: org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSourc
+#dataSourceSelector: org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector
 #spring.sqltoy.defaultDataSource=dataSource
 spring.sqltoy.unifyFieldsHandler=com.sqltoy.plugins.SqlToyUnifyFieldsHandler
 #spring.sqltoy.printSqlTimeoutMillis=200000
