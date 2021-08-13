@@ -150,6 +150,13 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable entity, String... forceUpdateProps);
 
 	/**
+	 * @todo 深度修改,不管是否为null全部字段强制修改
+	 * @param serializableVO
+	 * @return Long 数据库记录变更量(插入数据量)
+	 */
+	public Long updateDeeply(Serializable serializableVO);
+	
+	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
 	 * @param entityUpdate 例如:EntityUpdate.create().set("createBy",
@@ -157,13 +164,6 @@ public interface SqlToyLazyDao {
 	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
-
-	/**
-	 * @todo 深度修改,不管是否为null全部字段强制修改
-	 * @param serializableVO
-	 * @return Long 数据库记录变更量(插入数据量)
-	 */
-	public Long updateDeeply(Serializable serializableVO);
 
 	/**
 	 * @todo 级联修改数据并返回数据库记录变更数量

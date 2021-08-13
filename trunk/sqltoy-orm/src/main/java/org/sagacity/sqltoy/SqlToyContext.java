@@ -237,6 +237,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String reservedWords;
 
 	/**
+	 * 当发现有重复sqlId时是否抛出异常，终止程序执行
+	 */
+	private boolean breakWhenSqlRepeat = true;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -251,7 +256,7 @@ public class SqlToyContext implements ApplicationContextAware {
 		SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 
 		// 初始化脚本加载器
-		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds);
+		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
 
 		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
@@ -838,5 +843,9 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void releaseConnection(Connection conn, DataSource dataSource) {
 		connectionFactory.releaseConnection(conn, dataSource);
+	}
+
+	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
+		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
 	}
 }

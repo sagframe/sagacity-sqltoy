@@ -54,6 +54,8 @@ public class SqltoyAutoConfiguration {
 					"请检查sqltoy配置,是spring.sqltoy作为前缀,而不是sqltoy!\n正确范例: spring.sqltoy.sqlResourcesDir=classpath:com/sagframe/modules");
 		}
 		SqlToyContext sqlToyContext = new SqlToyContext();
+		// 当发现有重复sqlId时是否抛出异常，终止程序执行
+		sqlToyContext.setBreakWhenSqlRepeat(properties.isBreakWhenSqlRepeat());
 		// sql 文件资源路径
 		sqlToyContext.setSqlResourcesDir(properties.getSqlResourcesDir());
 		if (properties.getSqlResources() != null && properties.getSqlResources().length > 0) {

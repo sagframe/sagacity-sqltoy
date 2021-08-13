@@ -118,7 +118,9 @@ public class TranslateConfigParse {
 								translateCacheModel.setKeepAlive(-1);
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
-							logger.debug("已经加载缓存翻译:cache={},type={}", translateCacheModel.getCache(), translateType);
+							logger.debug("已经加载缓存翻译:cache={},type={}",
+									(translateCacheModel.getCache() == null) ? "[非增量]" : translateCacheModel.getCache(),
+									translateType);
 						}
 					}
 				}
