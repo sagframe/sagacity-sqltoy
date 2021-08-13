@@ -2,7 +2,7 @@ package org.sagacity.sqltoy.config;
 
 import static java.lang.System.out;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -91,8 +91,11 @@ public class SqlScriptLoader {
 	 * @param debug
 	 * @param delayCheckSeconds
 	 * @param scriptCheckIntervalSeconds
+	 * @param repeatBreak
+	 * @throws Exception
 	 */
-	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds) {
+	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
+			boolean breakWhenSqlRepeat) throws Exception {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
@@ -114,32 +117,36 @@ public class SqlScriptLoader {
 			if (realSqlList != null && !realSqlList.isEmpty()) {
 				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
 				if (enabledDebug) {
-					logger.debug("总计加载.sql.xml文件数量为:{}", realSqlList.size());
+					logger.debug("总计将加载.sql.xml文件数量为:{}", realSqlList.size());
 					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 				} else {
-					out.println("总计加载.sql.xml文件数量为:" + realSqlList.size());
+					out.println("总计将加载.sql.xml文件数量为:" + realSqlList.size());
 					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 				}
+				List<String> repeatSql = new ArrayList<String>();
 				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
 					sqlFile = realSqlList.get(i);
-					if (sqlFile instanceof File) {
-						if (enabledDebug) {
-							logger.debug("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
-						} else {
-							out.println("第:[" + i + "]个文件:" + ((File) sqlFile).getName());
-						}
-					} else {
-						if (enabledDebug) {
-							logger.debug("第:[" + i + "]个文件:" + sqlFile.toString());
-						} else {
-							out.println("第:[" + i + "]个文件:" + sqlFile.toString());
-						}
-					}
+					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding,
+							dialect, false, i));
 				}
-				for (int i = 0; i < realSqlList.size(); i++) {
-					SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache, encoding,
-							dialect, false);
+				// 存在重复sqlId
+				int repeatSqlSize = repeatSql.size();
+				if (repeatSqlSize > 0) {
+					StringBuilder repeatSqlIds = new StringBuilder();
+					repeatSqlIds.append("\n/*-------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理-------------*/\n");
+					for (String repeat : repeatSql) {
+						repeatSqlIds.append("/*--").append(repeat).append("\n");
+					}
+					if (breakWhenSqlRepeat) {
+						logger.error(repeatSqlIds.toString());
+					} else {
+						logger.warn(repeatSqlIds.toString());
+					}
+					// 重复sqlId时终止后续执行
+					if (breakWhenSqlRepeat) {
+						throw new Exception("发现存在:" + repeatSqlSize + " 个重复的sqlId,请检查!");
+					}
 				}
 			} else {
 				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
@@ -154,6 +161,7 @@ public class SqlScriptLoader {
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("加载和解析sql.xml为结尾的文件过程发生异常!" + e.getMessage(), e);
+			throw e;
 		}
 		// 存在sql文件，启动文件变更检测便于重新加载sql
 		if (realSqlList != null && !realSqlList.isEmpty()) {
@@ -264,7 +272,7 @@ public class SqlScriptLoader {
 	 * @throws Exception
 	 */
 	public void parseSqlFile(Object sqlFile) throws Exception {
-		SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding, dialect, true);
+		SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding, dialect, true, -1);
 	}
 
 	/**
