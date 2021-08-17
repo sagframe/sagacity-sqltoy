@@ -89,13 +89,14 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
+				// 默认值处理
 				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
-					//kudu 中文以产生乱码
+					// kudu 中文会产生乱码
 					if (dbType == DBType.IMPALA && isString) {
 						values.append("cast(? as string)");
 					} else {

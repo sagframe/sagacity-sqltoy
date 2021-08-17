@@ -126,6 +126,7 @@ public class SqlServerDialectUtils {
 		// 返回记录变更量
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
 								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
@@ -596,6 +597,7 @@ public class SqlServerDialectUtils {
 		final String realInsertSql = insertSql;
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity) {
 					pst = conn.prepareStatement(realInsertSql, PreparedStatement.RETURN_GENERATED_KEYS);
@@ -661,6 +663,7 @@ public class SqlServerDialectUtils {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
 					saveAll(sqlToyContext, subTableData, new ReflectPropsHandler() {
+						@Override
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
 								this.setValue(mappedFields[i], mainFieldValues[i]);

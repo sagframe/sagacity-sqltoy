@@ -137,6 +137,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String cacheType = "ehcache";
 
 	/**
+	 * 当发现有重复sqlId时是否抛出异常，终止程序执行
+	 */
+	private boolean breakWhenSqlRepeat = true;
+
+	/**
 	 * 连接管理的实现扩展定义
 	 */
 	private String connectionFactory;
@@ -415,7 +420,24 @@ public class SqlToyContextProperties implements Serializable {
 	public void setConnectionFactory(String connectionFactory) {
 		this.connectionFactory = connectionFactory;
 	}
+
 	public String getConnectionFactory() {
 		return connectionFactory;
 	}
+
+	/**
+	 * @return the breakWhenSqlRepeat
+	 */
+	public boolean isBreakWhenSqlRepeat() {
+		return breakWhenSqlRepeat;
+	}
+
+	/**
+	 * @param breakWhenSqlRepeat the breakWhenSqlRepeat to set
+	 */
+	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
+		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
+	}
+	
+	
 }

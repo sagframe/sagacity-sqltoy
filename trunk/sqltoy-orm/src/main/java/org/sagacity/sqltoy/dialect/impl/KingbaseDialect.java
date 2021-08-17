@@ -121,6 +121,7 @@ public class KingbaseDialect implements Dialect {
 	 * java.lang.reflect.Type, org.sagacity.sqltoy.callback.RowCallbackHandler,
 	 * java.sql.Connection)
 	 */
+	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
@@ -258,12 +259,14 @@ public class KingbaseDialect implements Dialect {
 						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
 				insertSql, entity, new GenerateSqlHandler() {
+					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 								KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), null);
 					}
 				}, new GenerateSavePKStrategy() {
+					@Override
 					public SavePKStrategy generate(EntityMeta entityMeta) {
 						return new SavePKStrategy(entityMeta.getIdStrategy(),
 								KingbaseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()));

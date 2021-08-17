@@ -327,6 +327,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 		return super.executeStore(storeNameOrKey, inParamValues, null, null, null);
 	}
 
+	@Override
 	public StoreResult executeStore(String storeNameOrKey, Object[] inParamValues, Integer[] outParamsType,
 			Class resultType) {
 		return super.executeStore(storeNameOrKey, inParamValues, outParamsType, resultType, null);

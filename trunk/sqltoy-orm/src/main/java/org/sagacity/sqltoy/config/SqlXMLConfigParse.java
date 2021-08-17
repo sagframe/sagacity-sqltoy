@@ -130,7 +130,7 @@ public class SqlXMLConfigParse {
 						} else {
 							out.println("sql文件:" + fileName + " 已经被修改,进行重新解析!");
 						}
-						parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true);
+						parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true, -1);
 					}
 				}
 			}
@@ -145,30 +145,32 @@ public class SqlXMLConfigParse {
 	 * @param encoding
 	 * @param dialect
 	 * @param isReload
+	 * @param index
+	 * @return
 	 * @throws Exception
 	 */
-	public static void parseSingleFile(Object xmlFile, ConcurrentHashMap<String, Long> filesLastModifyMap,
-			ConcurrentHashMap<String, SqlToyConfig> cache, String encoding, String dialect, boolean isReload)
+	public static List<String> parseSingleFile(Object xmlFile, ConcurrentHashMap<String, Long> filesLastModifyMap,
+			ConcurrentHashMap<String, SqlToyConfig> cache, String encoding, String dialect, boolean isReload, int index)
 			throws Exception {
 		InputStream fileIS = null;
+		List<String> repeatSql = new ArrayList<String>();
 		try {
 			boolean isDebug = logger.isDebugEnabled();
+			String sqlFile;
 			if (xmlFile instanceof File) {
 				File file = (File) xmlFile;
-				filesLastModifyMap.put(file.getName(), Long.valueOf(file.lastModified()));
+				sqlFile = file.getName();
+				filesLastModifyMap.put(sqlFile, Long.valueOf(file.lastModified()));
 				fileIS = new FileInputStream(file);
-				if (isDebug) {
-					logger.debug("正在解析sql文件,对应文件={}", file.getName());
-				} else {
-					out.println("正在解析sql文件,对应文件=" + file.getName());
-				}
 			} else {
-				fileIS = getResourceAsStream((String) xmlFile);
-				if (isDebug) {
-					logger.debug("正在解析sql文件,对应文件={}", (String) xmlFile);
-				} else {
-					out.println("正在解析sql文件,对应文件=" + (String) xmlFile);
-				}
+				sqlFile = (String) xmlFile;
+				fileIS = getResourceAsStream(sqlFile);
+			}
+			String logStr = "正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile);
+			if (isDebug) {
+				logger.debug(logStr);
+			} else {
+				out.println(logStr);
 			}
 			if (fileIS != null) {
 				domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
@@ -176,7 +178,7 @@ public class SqlXMLConfigParse {
 				Document doc = domBuilder.parse(fileIS);
 				NodeList sqlElts = doc.getDocumentElement().getChildNodes();
 				if (sqlElts == null || sqlElts.getLength() == 0) {
-					return;
+					return repeatSql;
 				}
 				// 解析单个sql
 				SqlToyConfig sqlToyConfig;
@@ -190,7 +192,8 @@ public class SqlXMLConfigParse {
 						if (sqlToyConfig != null) {
 							// 去除sql中的注释语句并放入缓存
 							if (cache.containsKey(sqlToyConfig.getId())) {
-								logger.warn("发现重复的SQL语句,id={},将被覆盖!", sqlToyConfig.getId());
+								repeatSql.add(StringUtil.fillArgs("sql文件:{} 中发现重复的SQL语句id={} 已经被覆盖!", sqlFile,
+										sqlToyConfig.getId()));
 								// 移除分页优化缓存
 								if (isReload) {
 									PageOptimizeUtils.remove(sqlToyConfig.getId());
@@ -212,6 +215,7 @@ public class SqlXMLConfigParse {
 				fileIS.close();
 			}
 		}
+		return repeatSql;
 	}
 
 	/**
@@ -1077,7 +1081,7 @@ public class SqlXMLConfigParse {
 					translateMap.put(translateModel.getExtend().column, translateModel);
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
-				logger.warn("sqlId:{} 对应的cache translate columns must mapped with cache-indexs!", sqlToyConfig.getId());
+				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!", sqlToyConfig.getId());
 			}
 		}
 		sqlToyConfig.setTranslateMap(translateMap);

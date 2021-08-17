@@ -268,6 +268,7 @@ public class OracleDialectUtils {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
+			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
 				if (fetchSize > 0) {
