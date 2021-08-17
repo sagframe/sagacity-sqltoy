@@ -165,7 +165,6 @@ public class SqlXMLConfigParse {
 			} else {
 				sqlFile = (String) xmlFile;
 				fileIS = getResourceAsStream(sqlFile);
-
 			}
 			String logStr = "正在解析".concat((index != -1) ? "第:[" + index + "]个" : "").concat("sql文件:").concat(sqlFile);
 			if (isDebug) {

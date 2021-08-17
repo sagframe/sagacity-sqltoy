@@ -124,10 +124,8 @@ public class SqlScriptLoader {
 					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 				}
 				List<String> repeatSql = new ArrayList<String>();
-				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
-					sqlFile = realSqlList.get(i);
-					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding,
+					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache, encoding,
 							dialect, false, i));
 				}
 				// 存在重复sqlId
@@ -247,11 +245,6 @@ public class SqlScriptLoader {
 					codeSqlCache.put(sqlKey, result);
 				}
 			}
-		}
-		// 这一步理论上不应该执行
-		if (result == null) {
-			result = new SqlToyConfig(realDialect);
-			result.setSql(sqlKey);
 		}
 		return result;
 	}
