@@ -264,10 +264,8 @@ public class SqlToyContext implements ApplicationContextAware {
 		} else {
 			translateManager.initialize(this, translateCacheManager, delayCheckSeconds);
 		}
-
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
-
 		// 设置保留字
 		ReservedWordsUtil.put(reservedWords);
 		// 设置默认fetchSize

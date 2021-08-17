@@ -91,6 +91,8 @@ public class SqlScriptLoader {
 	 * @param debug
 	 * @param delayCheckSeconds
 	 * @param scriptCheckIntervalSeconds
+	 * @param repeatBreak
+	 * @throws Exception
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
 			boolean repeatBreak) throws Exception {
@@ -113,7 +115,7 @@ public class SqlScriptLoader {
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				// 此处提供大量提示信息,避免开发者配置错误或未将资源文件编译到bin或classes下
 				if (enabledDebug) {
 					logger.debug("总计将加载.sql.xml文件数量为:{}", realSqlList.size());
 					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
@@ -122,11 +124,9 @@ public class SqlScriptLoader {
 					out.println("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
 				}
 				List<String> repeatSql = new ArrayList<String>();
-				Object sqlFile;
 				for (int i = 0; i < realSqlList.size(); i++) {
-					sqlFile = realSqlList.get(i);
-					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(sqlFile, filesLastModifyMap, sqlCache, encoding,
-							dialect, false, i));
+					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache,
+							encoding, dialect, false, i));
 				}
 				int repeatSqlSize = repeatSql.size();
 				if (repeatSqlSize > 0) {
@@ -141,7 +141,7 @@ public class SqlScriptLoader {
 						logger.warn(repeatSqlIds.toString());
 					}
 					if (repeatBreak) {
-						throw new Exception("发现存在:" + repeatSqlSize + " 个重复的sqlId,请检查!");
+						throw new Exception(repeatSqlIds.toString());
 					}
 				}
 			} else {
@@ -243,11 +243,6 @@ public class SqlScriptLoader {
 					codeSqlCache.put(sqlKey, result);
 				}
 			}
-		}
-		// 这一步理论上不会被执行
-		if (result == null) {
-			result = new SqlToyConfig(realDialect);
-			result.setSql(sqlKey);
 		}
 		return result;
 	}
