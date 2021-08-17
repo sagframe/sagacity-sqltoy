@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.18.33</version>
+	<version>4.18.35</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
@@ -11,15 +11,15 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring-framework.version>5.3.9</spring-framework.version>
-		<spring-data-redis.version>2.5.3</spring-data-redis.version>
-		<spring-data-mongo.version>3.2.3</spring-data-mongo.version>
+		<spring-data-redis.version>2.5.4</spring-data-redis.version>
+		<spring-data-mongo.version>3.2.4</spring-data-mongo.version>
 		<ojdbc.version>19.11.0.0</ojdbc.version>
 		<ehcache.version>3.9.5</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.14</httpclient-core.version>
-		<elastic-rest-client.version>7.13.4</elastic-rest-client.version>
+		<elastic-rest-client.version>7.14.0</elastic-rest-client.version>
 		<fastjson.version>1.2.76</fastjson.version>
-		<mongo.version>3.12.9</mongo.version>
+		<mongo.version>3.12.10</mongo.version>
 		<junit-jupiter.version>5.7.2</junit-jupiter.version>
 		<junit-platform.version>1.7.2</junit-platform.version>
 		<slf4j.version>1.7.32</slf4j.version>

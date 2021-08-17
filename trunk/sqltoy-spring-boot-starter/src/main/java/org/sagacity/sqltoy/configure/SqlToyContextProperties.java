@@ -141,6 +141,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String connectionFactory;
 
 	/**
+	 * 当发现有重复sqlId时是否抛出异常，终止程序执行
+	 */
+	private boolean breakWhenSqlRepeat = true;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -422,7 +427,16 @@ public class SqlToyContextProperties implements Serializable {
 	public void setConnectionFactory(String connectionFactory) {
 		this.connectionFactory = connectionFactory;
 	}
+
 	public String getConnectionFactory() {
 		return connectionFactory;
+	}
+
+	public boolean isBreakWhenSqlRepeat() {
+		return breakWhenSqlRepeat;
+	}
+
+	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
+		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
 	}
 }

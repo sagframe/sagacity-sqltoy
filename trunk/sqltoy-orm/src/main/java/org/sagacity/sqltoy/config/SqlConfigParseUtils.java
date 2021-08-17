@@ -116,11 +116,7 @@ public class SqlConfigParseUtils {
 	// update set 语法
 	public final static Pattern UPDATE_SET_PATTERN = Pattern.compile("(?i)\\Wset\\s*$");
 
-	/**
-	 * 判断sql中是否有空白、tab、回车、换行符合、等于号,如果没有则表示是一个sql id
-	 */
-	// public final static Pattern SQL_ID_PATTERN =
-	// Pattern.compile("(\\s|\\t|\\r|\\n|\\=|\\>|\\<)+");
+	// sqlId 必须是字母数字和-和_符号组成的字符串
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("^[A-Za-z_0-9\\-]+$");
 
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern

@@ -124,8 +124,8 @@ public class TranslateManager {
 				logger.warn("translateConfig={} 中未定义缓存,请正确定义,如不使用缓存翻译可忽视此提示!", translateConfig);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("加载和解析xml过程发生异常!{}", e.getMessage(), e);
+			// e.printStackTrace();
+			logger.error("加载sqltoy的translate缓存翻译过程发生异常!{}", e.getMessage(), e);
 			throw e;
 		}
 	}

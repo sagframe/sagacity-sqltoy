@@ -222,7 +222,9 @@ public class TranslateConfigParse {
 							}
 							checherConfigModel.setTimeSections(timeSections);
 							checker.add(checherConfigModel);
-							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}", checherConfigModel.getCache(), translateType);
+							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}",
+									(checherConfigModel.getCache() == null) ? "[非增量]" : checherConfigModel.getCache(),
+									translateType);
 						}
 					}
 				}
