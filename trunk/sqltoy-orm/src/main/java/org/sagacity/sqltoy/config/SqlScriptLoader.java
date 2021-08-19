@@ -125,8 +125,8 @@ public class SqlScriptLoader {
 				}
 				List<String> repeatSql = new ArrayList<String>();
 				for (int i = 0; i < realSqlList.size(); i++) {
-					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache, encoding,
-							dialect, false, i));
+					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache,
+							encoding, dialect, false, i));
 				}
 				// 存在重复sqlId
 				int repeatSqlSize = repeatSql.size();
@@ -143,7 +143,7 @@ public class SqlScriptLoader {
 					}
 					// 重复sqlId时终止后续执行
 					if (breakWhenSqlRepeat) {
-						throw new Exception("发现存在:" + repeatSqlSize + " 个重复的sqlId,请检查!");
+						throw new Exception(repeatSqlIds.toString());
 					}
 				}
 			} else {
