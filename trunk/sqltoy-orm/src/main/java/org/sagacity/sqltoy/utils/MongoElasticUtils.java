@@ -62,7 +62,11 @@ public class MongoElasticUtils {
 		}
 		// 提取参数值
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
-		return processNullConditions(mql, fullParamValues, sqlToyConfig.getNoSqlConfigModel().isSqlMode());
+		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues,
+				sqlToyConfig.getNoSqlConfigModel().isSqlMode());
+		SqlConfigParseUtils.processBlank(sqlToyResult);
+		SqlConfigParseUtils.processValue(sqlToyResult);
+		return sqlToyResult;
 	}
 
 	/**

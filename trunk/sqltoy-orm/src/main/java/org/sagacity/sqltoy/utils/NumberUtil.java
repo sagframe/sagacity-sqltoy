@@ -475,11 +475,19 @@ public class NumberUtil {
 			temp = Integer.parseInt(sourceInt.substring(length - i - 1, length - i));
 			if (temp == 0) {
 				if (i > 0 && i % 4 == 0) {
+					// 4位全是零，剔除掉单位
+					if ("万亿兆京".indexOf(firstChar) != -1) {
+						targetStr.delete(0, 1);
+					}
 					targetStr.insert(0, numUOM[i - 1]);
 				} else if ("零万亿兆京".indexOf(firstChar) == -1) {
 					targetStr.insert(0, "零");
 				}
 			} else {
+				// 4位全是零，剔除掉单位
+				if ((i > 0 && i % 4 == 0) && ("万亿兆京".indexOf(firstChar) != -1)) {
+					targetStr.delete(0, 1);
+				}
 				targetStr.insert(0, chinaNum[temp] + ((i > 0) ? realUOM[i - 1] : ""));
 			}
 		}
