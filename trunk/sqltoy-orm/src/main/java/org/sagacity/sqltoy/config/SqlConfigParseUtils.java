@@ -493,7 +493,7 @@ public class SqlConfigParseUtils {
 	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
 	 * @param sqlToyResult
 	 */
-	public static void processBlank(SqlToyResult sqlToyResult) {
+	private static void processBlank(SqlToyResult sqlToyResult) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -524,7 +524,7 @@ public class SqlConfigParseUtils {
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
 	 */
-	public static void processValue(SqlToyResult sqlToyResult) {
+	private static void processValue(SqlToyResult sqlToyResult) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}

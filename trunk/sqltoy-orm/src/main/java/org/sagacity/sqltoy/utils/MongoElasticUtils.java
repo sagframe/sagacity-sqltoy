@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description 提供针对mongodb、elasticSearch集成的处理函数和逻辑
  * @author zhongxuchen
  * @version v1.0,Date:2017年3月10日
@@ -47,6 +47,10 @@ public class MongoElasticUtils {
 	private final static String SQL_PSEUDO_END_MARK = "]";
 	private final static String MQL_PSEUDO_END_MARK = "</#>";
 	private final static String BLANK = " ";
+	public final static String BLANK_REGEX = "(?i)\\@blank\\s*\\(\\s*\\:[A-Za-z_0-9\\-]+\\s*\\)";
+	public final static Pattern BLANK_PATTERN = Pattern.compile(BLANK_REGEX);
+	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*\\:[A-Za-z_0-9\\-]+\\s*\\)";
+	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
 
 	private MongoElasticUtils() {
 	}
@@ -64,8 +68,10 @@ public class MongoElasticUtils {
 		Object[] fullParamValues = SqlConfigParseUtils.matchNamedParam(fullNames, paramNames, paramValues);
 		SqlToyResult sqlToyResult = processNullConditions(mql, fullParamValues,
 				sqlToyConfig.getNoSqlConfigModel().isSqlMode());
-		SqlConfigParseUtils.processBlank(sqlToyResult);
-		SqlConfigParseUtils.processValue(sqlToyResult);
+		// 处理@blank(:name)
+		processBlank(sqlToyResult);
+		// 处理@value(:name)
+		processValue(sqlToyResult);
 		return sqlToyResult;
 	}
 
@@ -250,6 +256,71 @@ public class MongoElasticUtils {
 		sqlToyResult.setSql(sqlMode ? queryStr : processComma(queryStr));
 		sqlToyResult.setParamsValue(paramValuesList.toArray());
 		return sqlToyResult;
+	}
+
+	/**
+	 * @TODO 将@blank(:paramName) 设置为" "空白输出,同时在条件数组中剔除:paramName对应位置的条件值
+	 * @param sqlToyResult
+	 */
+	private static void processBlank(SqlToyResult sqlToyResult) {
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
+			return;
+		}
+		String queryStr = sqlToyResult.getSql().toLowerCase();
+		Matcher m = BLANK_PATTERN.matcher(queryStr);
+		int index = 0;
+		int paramCnt = 0;
+		int blankCnt = 0;
+		List paramValueList = null;
+		while (m.find()) {
+			if (blankCnt == 0) {
+				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+			}
+			index = m.start();
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN);
+			// 剔除参数@blank(?) 对应的参数值
+			paramValueList.remove(paramCnt - blankCnt);
+			blankCnt++;
+		}
+		if (blankCnt > 0) {
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(BLANK_REGEX, BLANK));
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+		}
+	}
+
+	/**
+	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * @param sqlToyResult
+	 */
+	private static void processValue(SqlToyResult sqlToyResult) {
+		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
+			return;
+		}
+		String queryStr = sqlToyResult.getSql().toLowerCase();
+		// @value(:paramName)
+		Matcher m = VALUE_PATTERN.matcher(queryStr);
+		int index = 0;
+		int paramCnt = 0;
+		int valueCnt = 0;
+		List paramValueList = null;
+		Object paramValue = null;
+		while (m.find()) {
+			if (valueCnt == 0) {
+				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
+			}
+			index = m.start();
+			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), SqlToyConstants.SQL_NAMED_PATTERN);
+			// 用参数的值直接覆盖@value(:name)
+			paramValue = paramValueList.get(paramCnt - valueCnt);
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
+					(paramValue == null) ? "null" : paramValue.toString()));
+			// 剔除参数@value(:name) 对应的参数值
+			paramValueList.remove(paramCnt - valueCnt);
+			valueCnt++;
+		}
+		if (valueCnt > 0) {
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+		}
 	}
 
 	/**

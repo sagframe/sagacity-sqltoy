@@ -174,7 +174,7 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 解析float 字符�?
+	 * @todo 解析float 字符串
 	 * @param floatStr
 	 * @param maxIntDigits
 	 * @param maxFractionDigits
@@ -264,13 +264,13 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
+		// 取绝对值
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
 		if (realMoney.compareTo(new BigDecimal(0)) == 0) {
 			return "零元";
 		}
 		// 绝对值字符串
 		String sourceStr = realMoney.toString();
-
 		int dotIndex = sourceStr.indexOf(".");
 		String intPartStr = (dotIndex == -1) ? sourceStr : sourceStr.substring(0, dotIndex);
 		String decimalPartStr = "";

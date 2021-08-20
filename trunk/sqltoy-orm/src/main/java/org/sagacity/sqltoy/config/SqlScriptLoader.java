@@ -133,6 +133,9 @@ public class SqlScriptLoader {
 				if (repeatSqlSize > 0) {
 					StringBuilder repeatSqlIds = new StringBuilder();
 					repeatSqlIds.append("\n/*-------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理-------------*/\n");
+					if (breakWhenSqlRepeat) {
+						repeatSqlIds.append("/*--提示:设置 spring.sqltoy.breakWhenSqlRepeat=false 可允许sqlId重复并覆盖!-------\n");
+					}
 					for (String repeat : repeatSql) {
 						repeatSqlIds.append("/*--").append(repeat).append("\n");
 					}
