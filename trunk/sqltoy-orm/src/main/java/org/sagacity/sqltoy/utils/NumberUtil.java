@@ -174,7 +174,7 @@ public class NumberUtil {
 	}
 
 	/**
-	 * @todo 解析float 字符�?
+	 * @todo 解析float 字符串
 	 * @param floatStr
 	 * @param maxIntDigits
 	 * @param maxFractionDigits
@@ -264,13 +264,13 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
+		// 取绝对值
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
 		if (realMoney.compareTo(new BigDecimal(0)) == 0) {
 			return "零元";
 		}
 		// 绝对值字符串
 		String sourceStr = realMoney.toString();
-
 		int dotIndex = sourceStr.indexOf(".");
 		String intPartStr = (dotIndex == -1) ? sourceStr : sourceStr.substring(0, dotIndex);
 		String decimalPartStr = "";
@@ -475,11 +475,19 @@ public class NumberUtil {
 			temp = Integer.parseInt(sourceInt.substring(length - i - 1, length - i));
 			if (temp == 0) {
 				if (i > 0 && i % 4 == 0) {
+					// 4位全是零，剔除掉单位
+					if ("万亿兆京".indexOf(firstChar) != -1) {
+						targetStr.delete(0, 1);
+					}
 					targetStr.insert(0, numUOM[i - 1]);
 				} else if ("零万亿兆京".indexOf(firstChar) == -1) {
 					targetStr.insert(0, "零");
 				}
 			} else {
+				// 4位全是零，剔除掉单位
+				if ((i > 0 && i % 4 == 0) && ("万亿兆京".indexOf(firstChar) != -1)) {
+					targetStr.delete(0, 1);
+				}
 				targetStr.insert(0, chinaNum[temp] + ((i > 0) ? realUOM[i - 1] : ""));
 			}
 		}
