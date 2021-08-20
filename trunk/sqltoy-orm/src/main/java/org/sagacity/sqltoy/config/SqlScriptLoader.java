@@ -91,11 +91,11 @@ public class SqlScriptLoader {
 	 * @param debug
 	 * @param delayCheckSeconds
 	 * @param scriptCheckIntervalSeconds
-	 * @param repeatBreak
+	 * @param breakWhenSqlRepeat
 	 * @throws Exception
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
-			boolean repeatBreak) throws Exception {
+			boolean breakWhenSqlRepeat) throws Exception {
 		// 增加路径验证提示,最易配错导致无法加载sql文件
 		if (StringUtil.isNotBlank(sqlResourcesDir)
 				&& (sqlResourcesDir.toLowerCase().contains(".sql.xml") || sqlResourcesDir.contains("*"))) {
@@ -132,15 +132,18 @@ public class SqlScriptLoader {
 				if (repeatSqlSize > 0) {
 					StringBuilder repeatSqlIds = new StringBuilder();
 					repeatSqlIds.append("\n/*----------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理---------------\n");
+					if (breakWhenSqlRepeat) {
+						repeatSqlIds.append("/*--提示:设置 spring.sqltoy.breakWhenSqlRepeat=false 可允许sqlId重复并覆盖!-------\n");
+					}
 					for (String repeat : repeatSql) {
 						repeatSqlIds.append("/*--").append(repeat).append("\n");
 					}
-					if (repeatBreak) {
+					if (breakWhenSqlRepeat) {
 						logger.error(repeatSqlIds.toString());
 					} else {
 						logger.warn(repeatSqlIds.toString());
 					}
-					if (repeatBreak) {
+					if (breakWhenSqlRepeat) {
 						throw new Exception(repeatSqlIds.toString());
 					}
 				}
