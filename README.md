@@ -33,6 +33,11 @@
 * 5.0.12 发版日期: 2021-08-21
 * 4.18.37 发版日期: 2021-08-21
 
+# 4.x 升级5.x 项目影响点
+* 分页查询PaginationModel 类改为Page
+* org.sagacity.sqltoy.executor.QueryExecutor 改为 org.sagacity.sqltoy.model.QueryExecutor
+* findAll(pojo.class) 改为findEntity(pojo.class,null)
+
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
