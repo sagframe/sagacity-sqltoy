@@ -202,7 +202,7 @@ public class PostgreSqlDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String sequence, String[] forceUpdateFields, String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), NVL_FUNCTION, null,
 					false, realTable);
@@ -254,7 +254,7 @@ public class PostgreSqlDialectUtils {
 				}
 			} else {
 				sql.append(columnName);
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					values.append(NVL_FUNCTION);
 					values.append("(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),

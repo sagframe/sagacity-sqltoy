@@ -69,7 +69,7 @@ public class SqlServerDialectUtils {
 	 */
 	public static QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect,final int fetchSize, final int maxRows) throws Exception {
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		// sqlserver 不支持内部order by
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// sql中是否存在排序或union
@@ -237,7 +237,7 @@ public class SqlServerDialectUtils {
 					isStart = false;
 
 					// 存在默认值
-					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					if (null != fieldMeta.getDefaultValue()) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -372,7 +372,7 @@ public class SqlServerDialectUtils {
 					isStart = false;
 
 					// 存在默认值
-					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					if (null != fieldMeta.getDefaultValue()) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -501,7 +501,7 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
@@ -923,7 +923,7 @@ public class SqlServerDialectUtils {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
 							mappedFields, mainFieldValues);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), null, conn, dbType, null,true);
+							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}
 				// 子表数据不为空,采取saveOrUpdateAll操作
 				if (subTableData != null && !subTableData.isEmpty()) {

@@ -1247,6 +1247,7 @@ public class CollectionUtil {
 		if (value == null || (compareAry == null || compareAry.length == 0)) {
 			return false;
 		}
+		String valueStr = value.toString();
 		for (Object s : compareAry) {
 			if (s == null) {
 				return false;
@@ -1254,7 +1255,7 @@ public class CollectionUtil {
 			if (value.equals(s)) {
 				return true;
 			}
-			if (ignoreCase && value.toString().equalsIgnoreCase(s.toString())) {
+			if (ignoreCase && valueStr.equalsIgnoreCase(s.toString())) {
 				return true;
 			}
 		}
