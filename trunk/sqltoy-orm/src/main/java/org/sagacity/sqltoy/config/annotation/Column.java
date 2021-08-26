@@ -8,6 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.sagacity.sqltoy.SqlToyConstants;
+
 /**
  * @project sqltoy-orm
  * @description sqltoy entity 对象字段注解定义
@@ -39,7 +41,7 @@ public @interface Column {
 	boolean keyword() default false;
 
 	// 默认值
-	String defaultValue() default "";
+	String defaultValue() default SqlToyConstants.DEFAULT_NULL;
 
 	// 是否自增
 	boolean autoIncrement() default false;

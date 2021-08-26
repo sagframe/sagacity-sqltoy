@@ -45,6 +45,8 @@ public class SqlToyConstants {
 			put("{", "}");
 		}
 	};
+	
+	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
 
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";

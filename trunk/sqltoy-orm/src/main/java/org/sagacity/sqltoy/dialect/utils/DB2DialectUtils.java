@@ -90,7 +90,7 @@ public class DB2DialectUtils {
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
 			String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
@@ -169,7 +169,7 @@ public class DB2DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -246,7 +246,7 @@ public class DB2DialectUtils {
 	 */
 	public static String getSaveIgnoreExistSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
 			String fromTable, String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
@@ -303,7 +303,7 @@ public class DB2DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),

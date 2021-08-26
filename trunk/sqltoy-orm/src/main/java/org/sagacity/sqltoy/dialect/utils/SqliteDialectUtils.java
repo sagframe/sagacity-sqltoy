@@ -42,7 +42,7 @@ public class SqliteDialectUtils {
 	 */
 	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, String[] forceUpdateFields,
 			String tableName) {
-		String realTable = entityMeta.getSchemaTable(tableName,dbType);
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 无主键表全部采用insert机制
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(), "ifnull", null,
@@ -73,7 +73,7 @@ public class SqliteDialectUtils {
 			// sql中的关键字处理
 			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
 			// 默认值处理
-			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+			if (null != fieldMeta.getDefaultValue()) {
 				values.append("ifnull(?,");
 				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 				values.append(")");
