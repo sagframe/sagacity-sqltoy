@@ -789,8 +789,8 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	 * String, java.lang.String)
 	 */
 	@Override
-	public HashMap<String, Object[]> getTranslateCache(String cacheName, String elementId) {
-		return super.getTranslateCache(cacheName, elementId);
+	public HashMap<String, Object[]> getTranslateCache(String cacheName, String cacheType) {
+		return super.getTranslateCache(cacheName, cacheType);
 	}
 
 	@Override

@@ -49,6 +49,8 @@ public class SqlToyConstants {
 	// 目前还不支持此功能的提醒
 	public static String UN_SUPPORT_MESSAGE = "This feature is currently not supported!";
 
+	public static final String DEFAULT_NULL = "_SQLTOY_NULL_FLAG";
+
 	public static String UN_MATCH_DIALECT_MESSAGE = "Failed to correctly match the corresponding database dialect!";
 
 	/**

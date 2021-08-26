@@ -73,7 +73,7 @@ public class SqliteDialectUtils {
 			// sql中的关键字处理
 			sql.append(ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType));
 			// 默认值处理
-			if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+			if (null != fieldMeta.getDefaultValue()) {
 				values.append("ifnull(?,");
 				DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 				values.append(")");

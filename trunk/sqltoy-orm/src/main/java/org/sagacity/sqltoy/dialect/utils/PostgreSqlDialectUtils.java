@@ -260,7 +260,7 @@ public class PostgreSqlDialectUtils {
 				}
 			} else {
 				sql.append(columnName);
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					values.append(NVL_FUNCTION);
 					values.append("(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),

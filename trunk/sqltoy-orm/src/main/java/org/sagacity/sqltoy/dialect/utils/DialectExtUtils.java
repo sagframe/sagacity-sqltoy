@@ -90,7 +90,7 @@ public class DialectExtUtils {
 			} else {
 				sql.append(columnName);
 				// 默认值处理
-				if (isSupportNULL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
@@ -260,7 +260,7 @@ public class DialectExtUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -371,7 +371,7 @@ public class DialectExtUtils {
 				}
 			} else {
 				sql.append(columnName);
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction).append("(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
 							fieldMeta.getDefaultValue());
