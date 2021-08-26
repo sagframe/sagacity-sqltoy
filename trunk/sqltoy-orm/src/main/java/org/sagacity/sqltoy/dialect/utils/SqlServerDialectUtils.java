@@ -240,7 +240,7 @@ public class SqlServerDialectUtils {
 					isStart = false;
 
 					// 存在默认值
-					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					if (null != fieldMeta.getDefaultValue()) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -375,7 +375,7 @@ public class SqlServerDialectUtils {
 					isStart = false;
 
 					// 存在默认值
-					if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+					if (null != fieldMeta.getDefaultValue()) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -504,7 +504,7 @@ public class SqlServerDialectUtils {
 					values.append(",");
 				}
 				sql.append(fieldMeta.getColumnName());
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),

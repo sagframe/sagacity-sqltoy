@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.BusinessId;
 import org.sagacity.sqltoy.config.annotation.Column;
@@ -476,9 +477,9 @@ public class EntityManager {
 		}
 		// 字段的详细配置信息,字段名称，字段对应数据库表字段，字段默认值，字段类型
 		FieldMeta fieldMeta = new FieldMeta(field.getName(), column.name(),
-				StringUtil.isNotBlank(column.defaultValue()) ? column.defaultValue() : null, column.type(),
-				column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(), column.precision(),
-				column.scale());
+				(SqlToyConstants.DEFAULT_NULL.equals(column.defaultValue())) ? null : column.defaultValue(),
+				column.type(), column.nullable(), column.keyword(), Long.valueOf(column.length()).intValue(),
+				column.precision(), column.scale());
 		// 增加字段
 		allFieldAry.add(column.name());
 		// 字段是否自增

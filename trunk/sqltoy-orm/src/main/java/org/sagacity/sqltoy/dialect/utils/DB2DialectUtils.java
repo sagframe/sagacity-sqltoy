@@ -171,7 +171,7 @@ public class DB2DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -305,7 +305,7 @@ public class DB2DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),

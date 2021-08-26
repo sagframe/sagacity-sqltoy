@@ -217,7 +217,7 @@ public class DialectFactory {
 	 * @param dataSet
 	 * @param batchSize
 	 * @param reflectPropsHandler
-	 * @param insertCallhandler
+	 * @param insertCallhandler 使用反调方式自己对rs进行处理
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return

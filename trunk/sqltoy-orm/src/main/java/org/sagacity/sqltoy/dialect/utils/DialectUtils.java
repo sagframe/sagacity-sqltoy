@@ -778,7 +778,7 @@ public class DialectUtils {
 				}
 				insertRejIdCols.append(columnName);
 				// 存在默认值
-				if (isSupportNUL && StringUtil.isNotBlank(fieldMeta.getDefaultValue())) {
+				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
@@ -1940,14 +1940,22 @@ public class DialectUtils {
 		}
 		// 级联删除子表数据
 		if (!entityMeta.getCascadeModels().isEmpty()) {
+			int mapFieldSize;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				EntityMeta subMeta;
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (cascadeModel.isDelete()) {
 					subMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					Object[] mainFieldValues = BeanUtil.reflectBeanToAry(entity, cascadeModel.getFields());
-					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
-					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
+					mapFieldSize = cascadeModel.getFields().length;
+					for (int i = 0; i < mapFieldSize; i++) {
+						if (mainFieldValues[i] == null) {
+							throw new IllegalArgumentException("表:" + realTable + " 级联删除子表:" + subMeta.getTableName()
+									+ " 对应属性:" + cascadeModel.getFields()[i] + " 值为null!");
+						}
+					}
+					Integer[] subTableFieldType = new Integer[mapFieldSize];
+					for (int i = 0, n = mapFieldSize; i < n; i++) {
 						subTableFieldType[i] = subMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
 					SqlExecuteStat.debug("执行级联删除操作", null);
@@ -2006,14 +2014,28 @@ public class DialectUtils {
 		if (!entityMeta.getCascadeModels().isEmpty()) {
 			EntityMeta subTableMeta;
 			String delSubTableSql;
+			int mapFieldSize;
+			int meter = 0;
 			for (TableCascadeModel cascadeModel : entityMeta.getCascadeModels()) {
 				// 如果数据库本身通过on delete cascade机制，则sqltoy无需进行删除操作
 				if (cascadeModel.isDelete()) {
 					subTableMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					List<Object[]> mainFieldValues = BeanUtil.reflectBeansToInnerAry(entities, cascadeModel.getFields(),
 							null, null);
-					Integer[] subTableFieldType = new Integer[cascadeModel.getFields().length];
-					for (int i = 0, n = cascadeModel.getFields().length; i < n; i++) {
+					mapFieldSize = cascadeModel.getFields().length;
+					meter = 0;
+					for (Object[] row : mainFieldValues) {
+						for (int i = 0; i < mapFieldSize; i++) {
+							if (row[i] == null) {
+								throw new IllegalArgumentException(
+										"第:" + meter + "行,表:" + realTable + " 级联删除子表:" + subTableMeta.getTableName()
+												+ " 对应属性:" + cascadeModel.getFields()[i] + " 值为null!");
+							}
+						}
+						meter++;
+					}
+					Integer[] subTableFieldType = new Integer[mapFieldSize];
+					for (int i = 0, n = mapFieldSize; i < n; i++) {
 						subTableFieldType[i] = subTableMeta.getColumnJdbcType(cascadeModel.getMappedFields()[i]);
 					}
 					delSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getDeleteSubTableSql(), dbType);
