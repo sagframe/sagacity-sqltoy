@@ -150,12 +150,29 @@ public interface SqlToyLazyDao {
 	public Long update(Serializable entity, String... forceUpdateProps);
 
 	/**
+	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：
+	 *       <p>
+	 *       <li>1、锁查询；</li>
+	 *       <li>2、记录存在则修改；</li>
+	 *       <li>3、记录不存在则执行insert；</li>
+	 *       <li>4、返回修改或插入的记录信息</li>
+	 *       </p>
+	 * @param <T>
+	 * @param entity           尽量不要使用identity、sequence主键
+	 * @param updateRowHandler
+	 * @param uniqueProps      唯一性字段，用于做唯一性检索，不设置则按照主键进行查询
+	 * @return
+	 */
+	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
+			final String... uniqueProps);
+
+	/**
 	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
 	 * @return Long 数据库记录变更量(插入数据量)
 	 */
 	public Long updateDeeply(Serializable serializableVO);
-	
+
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
@@ -692,16 +709,11 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 对数据集合通过反调函数对具体属性进行翻译
 	 *       <p>
-	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new TranslateHandler() { 
-	 *          //告知key值
-	 *          public Object getKey(Object row) { 
-	 *              return ((StaffInfoVO)row).getStaffId(); 
-	 *          } 
-	 *          // 将翻译后的名称值设置到对应的属性上 
-	 *          public void setName(Object row, String name) { 
-	 *      	 	((StaffInfoVO)row).setStaffName(name); 
-	 *          } 
-	 *       });
+	 *       sqlToyLazyDao.translate(staffVOs<StaffInfoVO>, "staffIdName", new
+	 *       TranslateHandler() { //告知key值 public Object getKey(Object row) { return
+	 *       ((StaffInfoVO)row).getStaffId(); } // 将翻译后的名称值设置到对应的属性上 public void
+	 *       setName(Object row, String name) {
+	 *       ((StaffInfoVO)row).setStaffName(name); } });
 	 *       </p>
 	 * @param dataSet        数据集合
 	 * @param cacheName      缓存名称
@@ -720,7 +732,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);
-	
+
 	/**
 	 * @todo 判断缓存是否存在
 	 * @param cacheName

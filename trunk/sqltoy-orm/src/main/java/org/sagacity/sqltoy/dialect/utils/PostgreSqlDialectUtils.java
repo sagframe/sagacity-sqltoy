@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
-import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm

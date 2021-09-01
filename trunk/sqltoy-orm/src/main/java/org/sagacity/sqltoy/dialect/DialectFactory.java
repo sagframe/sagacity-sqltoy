@@ -217,7 +217,7 @@ public class DialectFactory {
 	 * @param dataSet
 	 * @param batchSize
 	 * @param reflectPropsHandler
-	 * @param insertCallhandler 使用反调方式自己对rs进行处理
+	 * @param insertCallhandler   使用反调方式自己对rs进行处理
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
@@ -1498,6 +1498,42 @@ public class DialectFactory {
 					});
 			SqlExecuteStat.debug("执行结果", "update操作影响记录量:{} 条!", updateTotalCnt);
 			return updateTotalCnt;
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
+	}
+
+	/**
+	 * @TODO 适用于库存台账、客户资金账强事务高并发场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps      空则表示根据主键查询
+	 * @param dataSource
+	 * @return
+	 */
+	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final DataSource dataSource) {
+		if (entity == null || updateRowHandler == null) {
+			logger.warn("updateSaveFetch entity or updateRowHandler is null,please check!");
+			return null;
+		}
+		try {
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch", null);
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
+			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
+					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+						@Override
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
+									updateRowHandler, uniqueProps, conn, dbType, dialect,
+									shardingModel.getTableName()));
+						}
+					});
+			return result;
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			throw new DataAccessException(e);

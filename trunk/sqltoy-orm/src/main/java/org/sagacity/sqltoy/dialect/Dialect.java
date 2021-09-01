@@ -225,6 +225,22 @@ public interface Dialect {
 			final String dialect, final String tableName) throws Exception;
 
 	/**
+	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps 唯一性pojo属性，为空默认为主键字段
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @param tableName
+	 * @return
+	 */
+	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final Connection conn,
+			final Integer dbType, final String dialect, final String tableName) throws Exception;
+
+	/**
 	 * @todo 批量修改对象
 	 * @param sqlToyContext
 	 * @param entities
