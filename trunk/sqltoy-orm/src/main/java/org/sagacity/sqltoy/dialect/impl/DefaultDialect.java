@@ -186,6 +186,14 @@ public class DefaultDialect implements Dialect {
 	}
 
 	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
+				dialect, tableName);
+	}
+
+	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			Connection conn, Integer dbType, String dialect, Boolean autoCommit, String tableName) throws Exception {
 		List<Serializable> entities = new ArrayList<Serializable>();

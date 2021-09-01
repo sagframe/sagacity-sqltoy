@@ -3,22 +3,34 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
+import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
+import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
+import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.SqlUtilsExt;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -268,5 +280,205 @@ public class DefaultDialectUtils {
 		}
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				null, conn, dbType, autoCommit, false);
+	}
+
+	/**
+	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
+	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, final Integer dbType,
+			String dialect, String tableName) throws Exception {
+		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		// 条件字段
+		String[] whereFields = uniqueProps;
+		if (whereFields == null || whereFields.length == 0) {
+			whereFields = entityMeta.getIdArray();
+		}
+		if (whereFields == null || whereFields.length == 0) {
+			throw new DataAccessException("updateSaveFetch操作的表:" + tableName + " 没有唯一获得一条记录的条件字段,请检查!");
+		}
+		// 全部字段的值
+		Object[] tempFieldValues = null;
+		// 条件字段值
+		Object[] whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
+		for (int i = 0; i < whereParamValues.length; i++) {
+			// 唯一性属性值存在空，则表示首次插入
+			if (StringUtil.isBlank(whereParamValues[i])) {
+				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity);
+				whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
+				break;
+			}
+		}
+		final Object[] fieldValues = tempFieldValues;
+		// 组织select * from table for update 语句
+		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
+		// 可编辑结果集
+		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+		List updateResult = (List) SqlUtil.preparedStatementProcess(whereParamValues, pst, null,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, (Object[]) rowData,
+								null, 0);
+						// 执行类似 select xxx from table for update(sqlserver语法有差异)
+						rs = pst.executeQuery();
+						int rowCnt = rs.getMetaData().getColumnCount();
+						int index = 0;
+						List result = new ArrayList();
+						while (rs.next()) {
+							if (index > 0) {
+								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
+							}
+							// 执行update反调，实现锁定行记录值的修改
+							updateRowHandler.updateRow(rs, index);
+							// 执行update
+							rs.updateRow();
+							index++;
+							// 重新获得修改后的值
+							result.add(ResultUtils.processResultRow(rs, 0, rowCnt, false));
+						}
+						// 没有查询到记录，表示是需要首次插入
+						if (index == 0) {
+							// 移到插入行
+							rs.moveToInsertRow();
+							FieldMeta fieldMeta;
+							Object[] fullFieldvalues = (fieldValues == null)
+									? processFieldValues(sqlToyContext, entityMeta, entity)
+									: fieldValues;
+							Object fieldValue;
+							for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
+								fieldMeta = entityMeta.getFieldMeta(entityMeta.getFieldsArray()[i]);
+								if (fieldMeta.isPK()) {
+									fieldValue = fullFieldvalues[i];
+								} else {
+									fieldValue = SqlUtilsExt.getDefaultValue(fullFieldvalues[i],
+											fieldMeta.getDefaultValue(), fieldMeta.getType(), fieldMeta.isNullable());
+								}
+								// 插入设置具体列的值
+								if (fieldValue != null) {
+									rs.updateObject(fieldMeta.getColumnName(), fieldValue);
+								}
+							}
+							// 执行插入
+							rs.insertRow();
+						}
+						this.setResult(result);
+					}
+				});
+		// 记录不存在首次保存，返回entity自身
+		if (updateResult == null || updateResult.isEmpty()) {
+			return entity;
+		} else {
+			List entities = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), updateResult,
+					entityMeta.getFieldsArray(), entity.getClass());
+			return (Serializable) entities.get(0);
+		}
+	}
+
+	/**
+	 * @TODO 组织updateSaveFetch的锁查询sql
+	 * @param entityMeta
+	 * @param dbType
+	 * @param uniqueProps
+	 * @param tableName
+	 * @return
+	 */
+	private static String wrapFetchSql(EntityMeta entityMeta, Integer dbType, String[] uniqueProps, String tableName) {
+		String realTable = entityMeta.getSchemaTable(tableName, dbType);
+		StringBuilder sql = new StringBuilder("select ");
+		String columnName;
+		for (int i = 0; i < entityMeta.getFieldsArray().length; i++) {
+			columnName = entityMeta.getColumnName(entityMeta.getFieldsArray()[i]);
+			if (i > 0) {
+				sql.append(",");
+			}
+			// 含关键字处理
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
+		}
+		sql.append(" from ").append(realTable).append(" where ");
+		int index = 0;
+		for (String field : uniqueProps) {
+			if (index > 0) {
+				sql.append(" and ");
+			}
+			columnName = entityMeta.getColumnName(field);
+			sql.append(ReservedWordsUtil.convertWord(columnName, dbType)).append("=?");
+		}
+		// 设置锁
+		if (dbType == DBType.SQLSERVER) {
+			return SqlServerDialectUtils.lockSql(sql.toString(), realTable, LockMode.UPGRADE);
+		} else {
+			return sql.append(" for update").toString();
+		}
+	}
+
+	/**
+	 * @TODO 反射实体对象的属性值到数组，并调用主键策略产生主键值并写回到entity中
+	 * @param sqlToyContext
+	 * @param entityMeta
+	 * @param entity
+	 * @return
+	 * @throws Exception
+	 */
+	private static Object[] processFieldValues(final SqlToyContext sqlToyContext, EntityMeta entityMeta,
+			Serializable entity) throws Exception {
+		// 构造全新的新增记录参数赋值反射(覆盖之前的)
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
+		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题
+		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
+		// 主键采用assign方式赋予，则调用generator产生id并赋予其值
+		if (entityMeta.getIdStrategy() != null && null != entityMeta.getIdGenerator()) {
+			int bizIdLength = entityMeta.getBizIdLength();
+			int idLength = entityMeta.getIdLength();
+			int pkIndex = entityMeta.getIdIndex();
+			// 是否存在业务ID
+			boolean hasBizId = (entityMeta.getBusinessIdGenerator() == null) ? false : true;
+			int bizIdColIndex = hasBizId ? entityMeta.getFieldIndex(entityMeta.getBusinessIdField()) : 0;
+			// 标识符
+			String signature = entityMeta.getBizIdSignature();
+			Integer[] relatedColumn = entityMeta.getBizIdRelatedColIndex();
+			String[] relatedColumnNames = entityMeta.getBizIdRelatedColumns();
+			int relatedColumnSize = (relatedColumn == null) ? 0 : relatedColumn.length;
+			Object[] relatedColValue = null;
+			String businessIdType = hasBizId ? entityMeta.getColumnJavaType(entityMeta.getBusinessIdField()) : "";
+			if (StringUtil.isBlank(fullParamValues[pkIndex]) || StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
+				if (relatedColumn != null) {
+					relatedColValue = new Object[relatedColumnSize];
+					for (int meter = 0; meter < relatedColumnSize; meter++) {
+						relatedColValue[meter] = fullParamValues[relatedColumn[meter]];
+						if (StringUtil.isBlank(relatedColValue[meter])) {
+							throw new IllegalArgumentException("对象:" + entityMeta.getEntityClass().getName()
+									+ " 生成业务主键依赖的关联字段:" + relatedColumnNames[meter] + " 值为null!");
+						}
+					}
+				}
+			}
+			if (StringUtil.isBlank(fullParamValues[pkIndex])) {
+				// id通过generator机制产生，设置generator产生的值
+				fullParamValues[pkIndex] = entityMeta.getIdGenerator().getId(entityMeta.getTableName(), signature,
+						entityMeta.getBizIdRelatedColumns(), relatedColValue, null, entityMeta.getIdType(), idLength,
+						entityMeta.getBizIdSequenceSize());
+				// 回写主键值
+				BeanUtil.setProperty(entity, entityMeta.getIdArray()[0], fullParamValues[pkIndex]);
+			}
+			if (hasBizId && StringUtil.isBlank(fullParamValues[bizIdColIndex])) {
+				fullParamValues[bizIdColIndex] = entityMeta.getBusinessIdGenerator().getId(entityMeta.getTableName(),
+						signature, entityMeta.getBizIdRelatedColumns(), relatedColValue, null, businessIdType,
+						bizIdLength, entityMeta.getBizIdSequenceSize());
+				// 回写业务主键值
+				BeanUtil.setProperty(entity, entityMeta.getBusinessIdField(), fullParamValues[bizIdColIndex]);
+			}
+		}
+		return fullParamValues;
 	}
 }

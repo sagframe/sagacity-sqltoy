@@ -27,7 +27,6 @@ public class BeanUtilTest {
 		params.put("companyId", "C0001");
 		params.put("companyName", "xxx企业集团");
 		staff.setParams(params);
-
 		Object[] result = BeanUtil.reflectBeanToAry(staff, new String[] { "staffId", "email", "dataRange.beginDate",
 				"dataRange.enddate", "params.companyId", "params.companyName" }, null, null);
 		for (Object tmp : result) {
