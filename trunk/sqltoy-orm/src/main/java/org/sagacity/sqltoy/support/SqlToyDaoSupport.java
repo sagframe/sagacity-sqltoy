@@ -892,6 +892,21 @@ public class SqlToyDaoSupport {
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
+	
+	/**
+	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * @param <T>
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps
+	 * @param dataSource
+	 * @return
+	 */
+	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
+			final String[] uniqueProps, final DataSource dataSource) {
+		return (T) dialectFactory.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps,
+				getDataSource(dataSource));
+	}
 
 	/**
 	 * @todo 修改对象,并通过指定级联的子对象做级联修改

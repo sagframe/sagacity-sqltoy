@@ -44,7 +44,7 @@ public class SqlScriptLoader {
 	/**
 	 * sql资源配置路径
 	 */
-	private String sqlResourcesDir = "classpath:/sqlResources/";
+	private String sqlResourcesDir;
 
 	/**
 	 * sql资源文件明细
@@ -153,10 +153,10 @@ public class SqlScriptLoader {
 				// 部分开发者经常会因为环境问题,未能将.sql.xml 文件编译到classes路径下，导致无法使用
 				if (enabledDebug) {
 					logger.debug("总计加载*.sql.xml文件数量为:0 !");
-					logger.debug("请检查配置项sqlResourcesDir={}是否正确,或文件没有在编译路径下(bin、classes等)!", sqlResourcesDir);
+					logger.debug("请检查配置项sqlResourcesDir={}是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!", sqlResourcesDir);
 				} else {
 					out.println("总计加载*.sql.xml文件数量为:0 !");
-					out.println("请检查配置项sqlResourcesDir=" + sqlResourcesDir + "是否正确,或文件没有在编译路径下(bin、classes等)!");
+					out.println("请检查配置项sqlResourcesDir=" + sqlResourcesDir + "是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!");
 				}
 			}
 		} catch (Exception e) {
@@ -231,7 +231,8 @@ public class SqlScriptLoader {
 				if (result == null) {
 					throw new DataAccessException("\n发生错误:sqlId=[" + sqlKey + "]无对应的sql配置,请检查对应的sql.xml文件是否被正确加载!\n"
 							+ "/*----------------------错误可能的原因如下---------------------*/\n"
-							+ "/* 1、检查: spring.sqltoy.sqlResourcesDir配置,如配错会导致sql文件没有被加载;\n"
+							+ "/* 1、检查: spring.sqltoy.sqlResourcesDir=[" + sqlResourcesDir
+							+ "]配置(如:字母拼写),会导致sql文件没有被加载;\n"
 							+ "/* 2、sql.xml文件没有被编译到classes目录下面;请检查maven的编译配置                        \n"
 							+ "/* 3、sqlId对应的文件内部错误!版本合并或书写错误会导致单个文件解析错误                          \n"
 							+ "/* ------------------------------------------------------------*/");

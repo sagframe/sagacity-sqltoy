@@ -23,6 +23,7 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
@@ -379,6 +380,14 @@ public class SqlServerDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
+				dialect, tableName);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

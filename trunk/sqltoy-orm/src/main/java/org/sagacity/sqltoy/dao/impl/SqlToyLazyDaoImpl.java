@@ -395,6 +395,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.update(entity, forceUpdateProps);
 	}
 
+	@Override
+	public <T extends Serializable> T updateSaveFetch(T entity, UpdateRowHandler updateRowHandler,
+			String... uniqueProps) {
+		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, null);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

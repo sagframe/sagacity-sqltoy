@@ -810,7 +810,7 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List processResultRow(ResultSet rs, int startColIndex, int rowCnt, boolean ignoreAllEmptySet)
+	public static List processResultRow(ResultSet rs, int startColIndex, int rowCnt, boolean ignoreAllEmptySet)
 			throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
