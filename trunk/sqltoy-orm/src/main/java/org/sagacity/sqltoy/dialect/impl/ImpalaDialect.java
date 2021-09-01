@@ -194,6 +194,14 @@ public class ImpalaDialect implements Dialect {
 		return saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn, dbType,
 				dialect, autoCommit, tableName);
 	}
+	
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
 
 	@Override
 	public Long delete(SqlToyContext sqlToyContext, Serializable entity, Connection conn, final Integer dbType,

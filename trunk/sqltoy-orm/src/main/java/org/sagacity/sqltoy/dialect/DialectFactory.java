@@ -1517,6 +1517,42 @@ public class DialectFactory {
 	}
 
 	/**
+	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * @param sqlToyContext
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps 空则表示根据主键查询
+	 * @param dataSource
+	 * @return
+	 */
+	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowHandler updateRowHandler, final String[] uniqueProps, final DataSource dataSource) {
+		if (entity == null || updateRowHandler == null) {
+			logger.warn("updateSaveFetch entity or updateRowHandler is null,please check!");
+			return null;
+		}
+		try {
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch", null);
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
+			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
+					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+						@Override
+						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+							this.setResult(getDialectSqlWrapper(dbType).updateSaveFetch(sqlToyContext, entity,
+									updateRowHandler, uniqueProps, conn, dbType, dialect,
+									shardingModel.getTableName()));
+						}
+					});
+			return result;
+		} catch (Exception e) {
+			SqlExecuteStat.error(e);
+			throw new DataAccessException(e);
+		} finally {
+			SqlExecuteStat.destroy();
+		}
+	}
+	
+	/**
 	 * @todo 批量修改对象
 	 * @param sqlToyContext
 	 * @param entities

@@ -538,6 +538,14 @@ public class SybaseIQDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

@@ -159,6 +159,17 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long update(Serializable serializableVO, String... forceUpdateProps);
+	
+	/**
+	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * @param <T>
+	 * @param entity
+	 * @param updateRowHandler
+	 * @param uniqueProps      唯一性字段，用于做唯一性检索，不设置则按照主键进行查询
+	 * @return
+	 */
+	public <T extends Serializable> T updateSaveFetch(final T entity, final UpdateRowHandler updateRowHandler,
+			final String... uniqueProps);
 
 	/**
 	 * @TODO 基于对象单表对象查询进行数据更新

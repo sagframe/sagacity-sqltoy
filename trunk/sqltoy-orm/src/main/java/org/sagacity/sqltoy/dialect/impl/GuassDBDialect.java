@@ -245,6 +245,14 @@ public class GuassDBDialect implements Dialect {
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,
+			String tableName) throws Exception {
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
+				dialect, tableName);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

@@ -280,7 +280,7 @@ public class SqlUtilsExt {
 	 * @param isNullable
 	 * @return
 	 */
-	private static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean isNullable) {
+	public static Object getDefaultValue(Object paramValue, String defaultValue, int jdbcType, boolean isNullable) {
 		Object realValue = paramValue;
 		// 当前值为null且默认值不为null、且字段不允许为null
 		if (realValue == null && defaultValue != null && !isNullable) {
