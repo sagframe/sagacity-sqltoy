@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
@@ -316,6 +317,7 @@ public class DefaultDialectUtils {
 		final Object[] fieldValues = tempFieldValues;
 		// 组织select * from table for update 语句
 		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
+		SqlExecuteStat.showSql("执行锁记录查询", sql, whereParamValues);
 		// 可编辑结果集
 		PreparedStatement pst = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 		List updateResult = (List) SqlUtil.preparedStatementProcess(whereParamValues, pst, null,
