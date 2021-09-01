@@ -335,6 +335,7 @@ public class DefaultDialectUtils {
 							if (index > 0) {
 								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
 							}
+							SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
 							// 执行update反调，实现锁定行记录值的修改
 							updateRowHandler.updateRow(rs, index);
 							// 执行update
@@ -345,6 +346,7 @@ public class DefaultDialectUtils {
 						}
 						// 没有查询到记录，表示是需要首次插入
 						if (index == 0) {
+							SqlExecuteStat.debug("执行insertRow", "查询未匹配到结果则进行首次插入!");
 							// 移到插入行
 							rs.moveToInsertRow();
 							FieldMeta fieldMeta;
