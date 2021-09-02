@@ -1,5 +1,5 @@
 # 在线文档
-## [https://github.com/sagframe/sqltoy-online-doc](https://sagframe.github.io/sqltoy-online-doc/#/)
+## [sqltoy-online-doc](https://www.kancloud.cn/hugoxue/sql_toy/2390352)
 
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
 
