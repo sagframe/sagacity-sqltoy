@@ -57,15 +57,15 @@ public class DialectExecutor implements Callable<ShardingResult> {
 		ShardingResult result = new ShardingResult();
 		// 异常捕获掉,确保其他节点可以正常执行
 		try {
-			logger.debug("库分表执行,DataSource节点:{},table={}", dataSourceName, tableName);
+			logger.debug("执行分库分表,DataSource节点:{},table={}", dataSourceName, tableName);
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);
 			e.printStackTrace();
 			result.setSuccess(false);
 			result.setMessage(
-					"分库分表执行,DataSource节点:" + dataSourceName + ",table=" + tableName + " 发生异常:" + e.getMessage());
-			logger.error("分库分表执行,DataSource节点:{},table={} 发生异常:{}", dataSourceName, tableName, e.getMessage());
+					"执行分库分表,DataSource节点:" + dataSourceName + ",table=" + tableName + " 发生异常:" + e.getMessage());
+			logger.error("执行分库分表,DataSource节点:{},table={} 发生异常:{}", dataSourceName, tableName, e.getMessage());
 		} finally {
 			SqlExecuteStat.destroy();
 		}
