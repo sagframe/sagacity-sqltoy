@@ -135,7 +135,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new OracleDialect();
 			break;
 		}
-		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不同在一个查询中多次引用)
+		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不能在一个查询中多次引用)
 		// 8.x+(支持with as语法)
 		// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
 		case DBType.MYSQL:

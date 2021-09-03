@@ -421,7 +421,6 @@ public class ResultUtils {
 					if (isUpdate) {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
-						//rs.insertRow();
 					}
 					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
 							ignoreAllEmpty);
