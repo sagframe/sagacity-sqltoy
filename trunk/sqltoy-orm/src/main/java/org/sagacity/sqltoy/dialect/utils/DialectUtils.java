@@ -2477,4 +2477,23 @@ public class DialectUtils {
 		}
 		return StringUtil.matchCnt(queryStr, "\\?");
 	}
+	
+	/**
+	 * @TODO 判断主键值是否为空，用于saveOrUpdate判断是否save
+	 * @param sqlToyContext
+	 * @param entity
+	 * @return
+	 */
+	public static boolean isEmptyPK(SqlToyContext sqlToyContext, Serializable entity) {
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
+		if (entityMeta.getIdArray() != null && entityMeta.getIdArray().length > 0) {
+			Object[] idValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getIdArray());
+			for (Object obj : idValues) {
+				if (null == obj) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
