@@ -410,6 +410,7 @@ public class DefaultDialectUtils {
 			}
 			columnName = entityMeta.getColumnName(field);
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType)).append("=?");
+			index++;
 		}
 		// 设置锁
 		if (dbType == DBType.SQLSERVER) {
