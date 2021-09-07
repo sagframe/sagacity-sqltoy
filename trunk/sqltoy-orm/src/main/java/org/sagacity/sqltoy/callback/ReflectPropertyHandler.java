@@ -131,16 +131,13 @@ public abstract class ReflectPropertyHandler {
 	 * @param properties
 	 */
 	public void setEqualNull(Object value, String... properties) {
+		if (properties == null || properties.length == 0) {
+			return;
+		}
 		for (String property : properties) {
 			if (this.getValue(property) != null && this.getValue(property).equals(value)) {
 				this.setValue(property, null);
 			}
-		}
-	}
-
-	public void setEqualNull(Object value, String property) {
-		if (this.getValue(property) != null && this.getValue(property).equals(value)) {
-			this.setValue(property, null);
 		}
 	}
 }
