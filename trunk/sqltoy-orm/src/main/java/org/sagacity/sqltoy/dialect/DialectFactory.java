@@ -1155,6 +1155,12 @@ public class DialectFactory {
 			logger.warn("saveOrUpdate entity is null,please check!");
 			return 0L;
 		}
+		// 主键值为空，直接调用save操作
+		if (DialectUtils.isEmptyPK(sqlToyContext, entity)) {
+			logger.debug("主键字段对应值存在null，因此saveOrUpdate转执行save操作!");
+			save(sqlToyContext, entity, dataSource);
+			return 1L;
+		}
 		try {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
