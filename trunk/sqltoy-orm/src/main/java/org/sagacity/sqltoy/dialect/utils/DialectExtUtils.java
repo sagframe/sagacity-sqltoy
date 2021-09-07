@@ -58,22 +58,26 @@ public class DialectExtUtils {
 			if (fieldMeta.getFieldType().equals("java.lang.string")) {
 				isString = true;
 			}
-			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
-			if (!isStart) {
-				sql.append(",");
-				values.append(",");
-			}
+			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);	
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
 				if (pkStrategy.equals(PKStrategy.IDENTITY)) {
 					// 目前只有mysql支持
 					if (isAssignPK) {
+						if (!isStart) {
+							sql.append(",");
+							values.append(",");
+						}
 						sql.append(columnName);
 						values.append("?");
 						isStart = false;
 					}
 				} // sequence 策略，oracle12c之后的identity机制统一转化为sequence模式
 				else if (pkStrategy.equals(PKStrategy.SEQUENCE)) {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					if (isAssignPK && isSupportNULL) {
 						values.append(isNullFunction);
@@ -83,11 +87,19 @@ public class DialectExtUtils {
 					}
 					isStart = false;
 				} else {
+					if (!isStart) {
+						sql.append(",");
+						values.append(",");
+					}
 					sql.append(columnName);
 					values.append("?");
 					isStart = false;
 				}
 			} else {
+				if (!isStart) {
+					sql.append(",");
+					values.append(",");
+				}
 				sql.append(columnName);
 				// 默认值处理
 				if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
