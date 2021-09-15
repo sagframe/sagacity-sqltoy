@@ -7,8 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -18,6 +20,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -384,6 +387,45 @@ public class ClickHouseDialectUtils {
 		return sql.toString();
 	}
 
+	@SuppressWarnings("unchecked")
+	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		String sql = "SELECT name COLUMN_NAME,comment COMMENTS,is_in_primary_key PRIMARY_KEY,is_in_partition_key PARTITION_KEY from system.columns t where t.table=?";
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, pst, rs,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						pst.setString(1, tableName);
+						rs = pst.executeQuery();
+						Map<String, ColumnMeta> colComments = new HashMap<String, ColumnMeta>();
+						while (rs.next()) {
+							ColumnMeta colMeta = new ColumnMeta();
+							colMeta.setColName(rs.getString("COLUMN_NAME"));
+							colMeta.setComments(rs.getString("COMMENTS"));
+							colMeta.setPK(rs.getString("PRIMARY_KEY").equals("1") ? true : false);
+							colMeta.setPartitionKey(rs.getString("PARTITION_KEY").equals("1") ? true : false);
+							colComments.put(colMeta.getColName(), colMeta);
+						}
+						this.setResult(colComments);
+					}
+				});
+		ColumnMeta mapColMeta;
+		for (ColumnMeta col : tableColumns) {
+			mapColMeta = colMap.get(col.getColName());
+			if (mapColMeta != null) {
+				col.setComments(mapColMeta.getComments());
+				col.setPK(mapColMeta.isPK());
+				col.setPartitionKey(mapColMeta.isPartitionKey());
+			}
+		}
+		return tableColumns;
+	}
+	
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

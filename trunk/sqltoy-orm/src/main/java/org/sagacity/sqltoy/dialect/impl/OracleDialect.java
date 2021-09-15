@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
@@ -26,9 +27,11 @@ import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.OracleDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -455,5 +458,32 @@ public class OracleDialect implements Dialect {
 			final String dialect, final int fetchSize) throws Exception {
 		return OracleDialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn,
 				dbType,fetchSize);
+	}
+	
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableColumns = OracleDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		// 获取主键信息
+		Map<String, ColumnMeta> pkMap = DefaultDialectUtils.getTablePrimaryKeys(catalog, schema, tableName, conn,
+				dbType, dialect);
+		if (pkMap == null || pkMap.isEmpty()) {
+			return tableColumns;
+		}
+		ColumnMeta mapMeta;
+		for (ColumnMeta colMeta : tableColumns) {
+			mapMeta = pkMap.get(colMeta.getColName());
+			if (mapMeta != null) {
+				colMeta.setPK(true);
+			}
+		}
+		return tableColumns;
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return OracleDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 }
