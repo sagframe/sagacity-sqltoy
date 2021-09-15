@@ -1676,4 +1676,40 @@ public class SqlUtil {
 		}
 		return false;
 	}
+
+	/**
+	 * @todo 处理sqlserver default值为((value))问题
+	 * @param defaultValue
+	 * @return
+	 */
+	public static String clearDefaultValue(String defaultValue) {
+		if (defaultValue == null) {
+			return null;
+		}
+		if (defaultValue.trim().equals("")) {
+			return defaultValue;
+		}
+		String result = defaultValue;
+		// 针对postgresql
+		if (result.indexOf("(") != -1 && result.indexOf(")") != -1 && result.indexOf("::") != -1) {
+			result = result.substring(result.indexOf("(") + 1, result.indexOf("::"));
+		}
+		// postgresql
+		if (result.indexOf("'") != -1 && result.indexOf("::") != -1) {
+			result = result.substring(0, result.indexOf("::"));
+		}
+		if (result.startsWith("((") && result.endsWith("))")) {
+			result = result.substring(2, result.length() - 2);
+		}
+		if (result.startsWith("(") && result.endsWith(")")) {
+			result = result.substring(1, result.length() - 1);
+		}
+		if (result.startsWith("'") && result.endsWith("'")) {
+			result = result.substring(1, result.length() - 1);
+		}
+		if (result.startsWith("\"") && result.endsWith("\"")) {
+			result = result.substring(1, result.length() - 1);
+		}
+		return result.trim();
+	}
 }

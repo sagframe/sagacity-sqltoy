@@ -26,10 +26,12 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
@@ -288,5 +290,17 @@ public class DefaultDialect implements Dialect {
 			return true;
 		}
 		return true;
+	}
+
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		return DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType, dialect);
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 }

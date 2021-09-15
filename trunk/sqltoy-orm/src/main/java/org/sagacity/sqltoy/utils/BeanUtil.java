@@ -802,15 +802,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * update 2020-12-2 支持多层对象反射取值
-	 * 
 	 * @todo 反射出单个对象中的属性并以对象数组返回
 	 * @param serializable
 	 * @param properties
 	 * @param defaultValues
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -913,7 +910,6 @@ public class BeanUtil {
 	 * @param defaultValues
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -1134,8 +1130,12 @@ public class BeanUtil {
 				index++;
 			}
 		} catch (Exception e) {
-			logger.error("将集合单元格数据:{} 反射到Java Bean的属性:{}过程异常!{}", cellData, propertyName, e.getMessage());
-			e.printStackTrace();
+			if (propertyName == null) {
+				logger.error("将集合数据映射到类:{} 异常,请检查类是否正确!{}", voClass.getName(), e.getMessage());
+			} else {
+				logger.error("将集合数据:{} 映射到类:{} 的属性:{}过程异常!{}", cellData, voClass.getName(), propertyName,
+						e.getMessage());
+			}
 			throw new RuntimeException(e);
 		}
 		return resultList;
@@ -1152,8 +1152,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate     强制更新
-	 * @throws Exception
+	 * @param forceUpdate
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType, boolean forceUpdate) {
@@ -1408,6 +1407,7 @@ public class BeanUtil {
 	/**
 	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
 	 * @param <T>
+	 * @param typeHandler
 	 * @param entityMeta
 	 * @param voClass
 	 * @param ids
@@ -1561,8 +1561,8 @@ public class BeanUtil {
 	 * @TODO 针对loadAll级联加载场景,子表通过主表id集合批量一次性完成加载的，所以子表集合包含了主表集合的全部关联信息
 	 * @param mainEntities
 	 * @param itemEntities
-	 * @param idProps
 	 * @param cascadeModel
+	 * @throws Exception
 	 */
 	public static void loadAllMapping(List mainEntities, List itemEntities, TableCascadeModel cascadeModel)
 			throws Exception {
