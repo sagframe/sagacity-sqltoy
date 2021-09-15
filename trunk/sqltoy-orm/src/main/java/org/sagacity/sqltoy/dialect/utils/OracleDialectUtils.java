@@ -6,24 +6,32 @@ package org.sagacity.sqltoy.dialect.utils;
 import java.io.Serializable;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 import oracle.jdbc.OracleTypes;
 
@@ -309,6 +317,72 @@ public class OracleDialectUtils {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
+	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		Map<String, String> colMap = (Map<String, String>) SqlUtil.preparedStatementProcess(null, pst, rs,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						pst.setString(1, tableName);
+						rs = pst.executeQuery();
+						Map<String, String> colComments = new HashMap<String, String>();
+						String comment;
+						while (rs.next()) {
+							comment = rs.getString("COMMENTS");
+							if (comment != null) {
+								colComments.put(rs.getString("COLUMN_NAME").toUpperCase(), comment);
+							}
+						}
+						this.setResult(colComments);
+					}
+				});
+		for (ColumnMeta col : tableColumns) {
+			col.setComments(colMap.get(col.getColName().toUpperCase()));
+		}
+		return tableColumns;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		String sql = "select * from user_tab_comments";
+		if (StringUtil.isNotBlank(tableName)) {
+			sql = sql.concat(" where TABLE_NAME like ?");
+		}
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				if (StringUtil.isNotBlank(tableName)) {
+					if (tableName.contains("%")) {
+						pst.setString(1, tableName);
+					} else {
+						pst.setString(1, "%" + tableName + "%");
+					}
+				}
+				rs = pst.executeQuery();
+				List<TableMeta> tables = new ArrayList<TableMeta>();
+				while (rs.next()) {
+					TableMeta tableMeta = new TableMeta();
+					tableMeta.setTableName(rs.getString("TABLE_NAME"));
+					tableMeta.setType(rs.getString("TABLE_TYPE"));
+					tableMeta.setRemarks(rs.getString("COMMENTS"));
+					tables.add(tableMeta);
+				}
+				this.setResult(tables);
+			}
+		});
+	}
+	
 	public static String getLockSql(String sql, Integer dbType, LockMode lockMode) {
 		// 判断是否已经包含for update
 		if (lockMode == null || SqlUtil.hasLock(sql, dbType)) {

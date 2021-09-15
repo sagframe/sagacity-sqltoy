@@ -2,12 +2,16 @@ package org.sagacity.sqltoy.dialect.impl;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -21,9 +25,12 @@ import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.utils.SqlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -246,6 +253,44 @@ public class ImpalaDialect implements Dialect {
 			String dialect) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableCols = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		// 获取主键信息
+		ResultSet rs = conn.createStatement().executeQuery("DESCRIBE " + tableName);
+		Map<String, ColumnMeta> colMap = (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						Map<String, ColumnMeta> colComments = new HashMap<String, ColumnMeta>();
+						while (rs.next()) {
+							ColumnMeta colMeta = new ColumnMeta();
+							colMeta.setColName(rs.getString("NAME"));
+							colMeta.setPK(rs.getBoolean("PRIMARY_KEY"));
+							colComments.put(colMeta.getColName(), colMeta);
+						}
+						this.setResult(colComments);
+					}
+				});
+		ColumnMeta mapColMeta;
+		for (ColumnMeta col : tableCols) {
+			mapColMeta = colMap.get(col.getColName());
+			if (mapColMeta != null) {
+				col.setPK(mapColMeta.isPK());
+			}
+		}
+		return tableCols;
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
 
 	public static boolean isAssignPKValue(PKStrategy pkStrategy) {

@@ -40,6 +40,7 @@ import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.executor.UniqueExecutor;
 import org.sagacity.sqltoy.model.CacheMatchExtend;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityQueryExtend;
 import org.sagacity.sqltoy.model.EntityUpdate;
@@ -53,6 +54,7 @@ import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TranslateExtend;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -1282,23 +1284,54 @@ public class SqlToyDaoSupport {
 		HashMap<String, Object[]> cacheDatas = this.sqlToyContext.getTranslateManager()
 				.getCacheData(extendArgs.cacheName, extendArgs.cacheType);
 		Collection<Object[]> values = cacheDatas.values();
-		List<String> keySet = new ArrayList<String>();
-		String[] lowName = matchRegex.trim().toLowerCase().split("\\s+");
-		int meter = 0;
+		String matchLowStr = matchRegex.toLowerCase().trim();
 		int cacheKeyIndex = extendArgs.cacheKeyIndex;
+		List<String> keySet = new ArrayList<String>();
+		int rowIndex = 0;
+		// 优先匹配相等的
+		if (extendArgs.priorMatchEqual) {
+			boolean hasEqual = false;
+			for (Object[] row : values) {
+				for (int index : nameIndexes) {
+					if (row[index] != null && row[index].toString().toLowerCase().equals(matchLowStr)) {
+						keySet.add(row[cacheKeyIndex].toString());
+						hasEqual = true;
+						break;
+					}
+				}
+				if (hasEqual) {
+					break;
+				}
+				rowIndex++;
+			}
+			// 不存在相等设置rowIndex为-1,表示后续所有记录参与like检索匹配
+			if (!hasEqual) {
+				rowIndex = -1;
+			}
+		}
+		// 开始like 分词模式的匹配
+		String[] lowName = matchLowStr.split("\\s+");
+		int meter = keySet.size();
+		int i = 0;
 		for (Object[] row : values) {
-			for (int index : nameIndexes) {
-				// 字符包含
-				if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
-					meter++;
-					keySet.add(row[cacheKeyIndex].toString());
+			// 相等的行排除,避免重复
+			if (i != rowIndex) {
+				for (int index : nameIndexes) {
+					if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
+						//避免priorMatchEqual=true matchSize==1 
+						if (meter < extendArgs.matchSize) {
+							keySet.add(row[cacheKeyIndex].toString());
+						}
+						meter++;
+						break;
+					}
+				}
+				// 不超过1000个(作为in条件值有限制)
+				if (meter == extendArgs.matchSize) {
 					break;
 				}
 			}
-			// 不超过1000个(作为in条件值有限制)
-			if (meter == extendArgs.matchSize) {
-				break;
-			}
+			i++;
 		}
 		String[] result = new String[keySet.size()];
 		keySet.toArray(result);
@@ -1768,6 +1801,32 @@ public class SqlToyDaoSupport {
 		return parallQuery(parallQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
 	}
 
+	/**
+	 * @TODO 获取表的列信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param dataSource
+	 * @return
+	 */
+	protected List<ColumnMeta> getTableColumns(final String catalog, final String schema, String tableName,
+			DataSource dataSource) {
+		return dialectFactory.getTableColumns(sqlToyContext, catalog, schema, tableName, getDataSource(dataSource));
+	}
+
+	/**
+	 * @TODO 获取数据库的表信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param dataSource
+	 * @return
+	 */
+	protected List<TableMeta> getTables(final String catalog, final String schema, String tableName,
+			DataSource dataSource) {
+		return dialectFactory.getTables(sqlToyContext, catalog, schema, tableName, getDataSource(dataSource));
+	}
+	
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param parallQueryList

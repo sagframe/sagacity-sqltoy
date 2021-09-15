@@ -7,8 +7,11 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -23,9 +26,11 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
@@ -478,5 +483,138 @@ public class DefaultDialectUtils {
 			}
 		}
 		return fullParamValues;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		ResultSet rs = conn.getMetaData().getColumns(catalog, schema, tableName, "%");
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		List<ColumnMeta> tableCols = (List<ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						List<ColumnMeta> colMetas = new ArrayList<ColumnMeta>();
+						String isAutoIncrement;
+						while (rs.next()) {
+							ColumnMeta colMeta = new ColumnMeta();
+							colMeta.setColName(rs.getString("COLUMN_NAME"));
+							colMeta.setDataType(rs.getInt("DATA_TYPE"));
+							colMeta.setTypeName(rs.getString("TYPE_NAME"));
+							colMeta.setDefaultValue(SqlUtil.clearDefaultValue(rs.getString("COLUMN_DEF")));
+							colMeta.setColumnSize(rs.getInt("COLUMN_SIZE"));
+							colMeta.setDecimalDigits(rs.getInt("DECIMAL_DIGITS"));
+							colMeta.setNumPrecRadix(rs.getInt("NUM_PREC_RADIX"));
+							colMeta.setComments(rs.getString("REMARKS"));
+							isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+							if (isAutoIncrement != null && (isAutoIncrement.equalsIgnoreCase("true")
+									|| isAutoIncrement.equalsIgnoreCase("YES") || isAutoIncrement.equalsIgnoreCase("Y")
+									|| isAutoIncrement.equals("1"))) {
+								colMeta.setAutoIncrement(true);
+							} else {
+								colMeta.setAutoIncrement(false);
+							}
+							if (rs.getInt("NULLABLE") == 1) {
+								colMeta.setNullable(true);
+							} else {
+								colMeta.setNullable(false);
+							}
+							colMetas.add(colMeta);
+						}
+						this.setResult(colMetas);
+					}
+				});
+		// 获取主键信息
+		Map<String, ColumnMeta> pkMap = getTablePrimaryKeys(catalog, schema, tableName, conn, dbType, dialect);
+		if (pkMap == null || pkMap.isEmpty()) {
+			return tableCols;
+		}
+		ColumnMeta mapMeta;
+		for (ColumnMeta colMeta : tableCols) {
+			mapMeta = pkMap.get(colMeta.getColName());
+			if (mapMeta != null) {
+				colMeta.setPK(true);
+			}
+		}
+		return tableCols;
+	}
+
+	/**
+	 * @TODO 获取表的主键字段
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String, ColumnMeta> getTablePrimaryKeys(String catalog, String schema, String tableName,
+			Connection conn, final Integer dbType, String dialect) throws Exception {
+		ResultSet rs = null;
+		try {
+			rs = conn.getMetaData().getPrimaryKeys(catalog, schema, tableName);
+		} catch (Exception e) {
+
+		}
+		if (rs != null) {
+			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+					new PreparedStatementResultHandler() {
+						@Override
+						public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
+							while (rs.next()) {
+								ColumnMeta colMeta = new ColumnMeta();
+								colMeta.setColName(rs.getString("COLUMN_NAME"));
+								colMeta.setPK(true);
+								pkMeta.put(colMeta.getColName(), colMeta);
+							}
+							this.setResult(pkMeta);
+						}
+					});
+		} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57) {
+			rs = conn.createStatement().executeQuery("desc " + tableName);
+			return (Map<String, ColumnMeta>) SqlUtil.preparedStatementProcess(null, null, rs,
+					new PreparedStatementResultHandler() {
+						public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException {
+							Map<String, ColumnMeta> pkMeta = new HashMap<String, ColumnMeta>();
+							while (rs.next()) {
+								ColumnMeta colMeta = new ColumnMeta();
+								colMeta.setColName(rs.getString("FIELD"));
+								colMeta.setPK(rs.getBoolean("KEY"));
+								if (colMeta.isPK()) {
+									pkMeta.put(colMeta.getColName(), colMeta);
+								}
+							}
+							this.setResult(pkMeta);
+						}
+					});
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		// 可自定义 PreparedStatement pst=conn.xxx;
+		ResultSet rs = conn.getMetaData().getTables(catalog, schema, tableName, new String[] { "TABLE", "VIEW" });
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, null, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				List<TableMeta> tables = new ArrayList<TableMeta>();
+				while (rs.next()) {
+					TableMeta tableMeta = new TableMeta();
+					tableMeta.setTableName(rs.getString("TABLE_NAME"));
+					tableMeta.setSchema(rs.getString("TABLE_SCHEM"));
+					tableMeta.setType(rs.getString("TABLE_TYPE"));
+					tableMeta.setRemarks(rs.getString("REMARKS"));
+					tables.add(tableMeta);
+				}
+				this.setResult(tables);
+			}
+		});
 	}
 }

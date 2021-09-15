@@ -30,6 +30,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -38,6 +39,7 @@ import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
@@ -938,4 +940,22 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Batch batch();
+	
+	/**
+	 * @TODO 获得表的字段信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @return
+	 */
+	public List<ColumnMeta> getTableColumns(final String catalog, final String schema, final String tableName);
+
+	/**
+	 * @TODO 获得数据库的表信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @return
+	 */
+	public List<TableMeta> getTables(final String catalog, final String schema, final String tableName);
 }

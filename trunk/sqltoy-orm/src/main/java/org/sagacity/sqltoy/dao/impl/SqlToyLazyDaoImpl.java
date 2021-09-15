@@ -31,6 +31,7 @@ import org.sagacity.sqltoy.link.TreeTable;
 import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
@@ -39,6 +40,7 @@ import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.support.BaseDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
@@ -1003,4 +1005,13 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.parallQuery(parallQueryList, paramsMap, parallelConfig);
 	}
 
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName) {
+		return super.getTableColumns(catalog, schema, tableName, null);
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName) {
+		return super.getTables(catalog, schema, tableName, null);
+	}
 }

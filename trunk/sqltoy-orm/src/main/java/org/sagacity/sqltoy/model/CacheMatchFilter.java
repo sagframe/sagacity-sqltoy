@@ -35,7 +35,7 @@ public class CacheMatchFilter implements Serializable {
 //		cacheFilterArgs.param = param;
 //		return this;
 //	}
-	
+
 	/**
 	 * @TODO 设置缓存名称
 	 * @param cacheName
@@ -89,6 +89,16 @@ public class CacheMatchFilter implements Serializable {
 		if (matchIndexs != null && matchIndexs.length > 0) {
 			cacheFilterArgs.matchIndexs = matchIndexs;
 		}
+		return this;
+	}
+
+	/**
+	 * @TODO 优先匹配完全相等的，并放于结果的第一行返回
+	 * @param priorMatchEqual
+	 * @return
+	 */
+	public CacheMatchFilter priorMatchEqual(boolean priorMatchEqual) {
+		cacheFilterArgs.priorMatchEqual = priorMatchEqual;
 		return this;
 	}
 
