@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -27,10 +28,12 @@ import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -56,8 +59,7 @@ public class SqlServerDialect implements Dialect {
 	 */
 	private static final String NVL_FUNCTION = "isnull";
 
-	// private static final Pattern FROM = Pattern.compile("(?i)\\s+from[\\(\\s+]");
-
+	// order by 匹配
 	private static final Pattern ORDER_BY = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
 	@Override
@@ -438,6 +440,34 @@ public class SqlServerDialect implements Dialect {
 			final String dialect, final int fetchSize) throws Exception {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
 				fetchSize);
+	}
+
+	@Override
+	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableColumns = SqlServerDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		// 获取主键信息
+		Map<String, ColumnMeta> pkMap = DefaultDialectUtils.getTablePrimaryKeys(catalog, schema, tableName, conn,
+				dbType, dialect);
+		if (pkMap == null || pkMap.isEmpty()) {
+			return tableColumns;
+		}
+		ColumnMeta mapMeta;
+		for (ColumnMeta colMeta : tableColumns) {
+			mapMeta = pkMap.get(colMeta.getColName());
+			if (mapMeta != null) {
+				colMeta.setPK(true);
+			}
+		}
+		return tableColumns;
+	}
+
+	@Override
+	public List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn, Integer dbType,
+			String dialect) throws Exception {
+		return SqlServerDialectUtils.getTables(catalog, schema,
+				(tableName != null && tableName.equals("%")) ? null : tableName, conn, dbType, dialect);
 	}
 
 }

@@ -48,10 +48,12 @@ import org.sagacity.sqltoy.dialect.impl.TidbDialect;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
 import org.sagacity.sqltoy.model.UniqueExecutor;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
@@ -1809,6 +1811,51 @@ public class DialectFactory {
 		} finally {
 			SqlExecuteStat.destroy();
 		}
+	}
+
+	/**
+	 * @TODO 获取数据库的表字段信息
+	 * @param sqlToyContext
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param dataSource
+	 * @return
+	 */
+	public List<ColumnMeta> getTableColumns(final SqlToyContext sqlToyContext, final String catalog,
+			final String schema, String tableName, DataSource dataSource) {
+		if (StringUtil.isBlank(tableName)) {
+			throw new IllegalArgumentException("getTableColumns method tableName is null,please check!");
+		}
+		return (List<ColumnMeta>) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+				new DataSourceCallbackHandler() {
+					@Override
+					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						this.setResult(getDialectSqlWrapper(dbType).getTableColumns(catalog, schema, tableName, conn,
+								dbType, dialect));
+					}
+				});
+	}
+
+	/**
+	 * @TODO 获取数据库的表信息
+	 * @param sqlToyContext
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param dataSource
+	 * @return
+	 */
+	public List<TableMeta> getTables(final SqlToyContext sqlToyContext, final String catalog, final String schema,
+			String tableName, DataSource dataSource) {
+		return (List<TableMeta>) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
+				new DataSourceCallbackHandler() {
+					@Override
+					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+						this.setResult(getDialectSqlWrapper(dbType).getTables(catalog, schema, tableName, conn, dbType,
+								dialect));
+					}
+				});
 	}
 
 	private int getFetchSize(int fetchSize) {

@@ -13,10 +13,12 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.TableMeta;
 
 /**
  * @project sqltoy-orm
@@ -229,7 +231,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
-	 * @param uniqueProps 唯一性pojo属性，为空默认为主键字段
+	 * @param uniqueProps      唯一性pojo属性，为空默认为主键字段
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -384,4 +386,32 @@ public interface Dialect {
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
 			final Integer dbType, final String dialect, final int fetchSize) throws Exception;
+
+	/**
+	 * @TODO 获得表的字段信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public List<ColumnMeta> getTableColumns(final String catalog, final String schema, final String tableName,
+			final Connection conn, final Integer dbType, final String dialect) throws Exception;
+
+	/**
+	 * @TODO 获得数据库的表信息
+	 * @param catalog
+	 * @param schema
+	 * @param tableName
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TableMeta> getTables(final String catalog, final String schema, final String tableName,
+			final Connection conn, final Integer dbType, final String dialect) throws Exception;
 }
