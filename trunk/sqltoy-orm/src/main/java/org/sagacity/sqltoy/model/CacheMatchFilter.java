@@ -85,6 +85,16 @@ public class CacheMatchFilter implements Serializable {
 	}
 
 	/**
+	 * @TODO 优先匹配相等的，并放于结果的第一行
+	 * @param priorMatchEqual
+	 * @return
+	 */
+	public CacheMatchFilter priorMatchEqual(Boolean priorMatchEqual) {
+		cacheFilterArgs.priorMatchEqual = priorMatchEqual;
+		return this;
+	}
+
+	/**
 	 * @return the cacheFilterArgs
 	 */
 	public CacheMatchExtend getCacheFilterArgs() {

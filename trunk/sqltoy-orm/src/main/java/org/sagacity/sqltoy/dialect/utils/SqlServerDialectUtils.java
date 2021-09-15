@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -27,9 +28,11 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
+import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -1010,6 +1013,88 @@ public class SqlServerDialectUtils {
 			break;
 		}
 		return loadSql;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		String sql = "select d.name TABLE_NAME, cast(isnull(f.value,'') as varchar(1000)) COMMENTS,d.xtype TABLE_TYPE"
+				+ " from syscolumns a "
+				+ "		 inner join sysobjects d on a.id=d.id and d.xtype in ('U','V') and d.name<>'dtproperties' "
+				+ "		 left join sys.extended_properties f on d.id=f.major_id and f.minor_id=0 "
+				+ "		 where a.colorder=1 ";
+		if (StringUtil.isNotBlank(tableName)) {
+			sql = sql.concat(" and d.name like ?");
+		}
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		return (List<TableMeta>) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
+			public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+				if (StringUtil.isNotBlank(tableName)) {
+					if (tableName.contains("%")) {
+						pst.setString(1, tableName);
+					} else {
+						pst.setString(1, "%" + tableName + "%");
+					}
+				}
+				rs = pst.executeQuery();
+				List<TableMeta> tables = new ArrayList<TableMeta>();
+				while (rs.next()) {
+					TableMeta tableMeta = new TableMeta();
+					tableMeta.setTableName(rs.getString("TABLE_NAME"));
+					tableMeta.setType(rs.getString("TABLE_TYPE"));
+					if (tableMeta.getType().equals("V")) {
+						tableMeta.setType("VIEW");
+					} else {
+						tableMeta.setType("TABLE");
+					}
+					tableMeta.setRemarks(rs.getString("COMMENTS"));
+					tables.add(tableMeta);
+				}
+				this.setResult(tables);
+			}
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	public static List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
+			Integer dbType, String dialect) throws Exception {
+		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, dbType,
+				dialect);
+		String sql = "SELECT a.name COLUMN_NAME,"
+				+ "				 cast(isnull(g.[value],'') as varchar(1000)) as COMMENTS "
+				+ "				 FROM syscolumns a  inner join sysobjects d on a.id=d.id "
+				+ "				 and d.xtype='U' and d.name<>'dtproperties' "
+				+ "				 left join syscomments e on a.cdefault=e.id"
+				+ "				 left join sys.extended_properties g "
+				+ "				 on a.id=g.major_id AND a.colid = g.minor_id   where d.name=? "
+				+ "   order by a.id,a.colorder";
+		PreparedStatement pst = conn.prepareStatement(sql);
+		ResultSet rs = null;
+		// 通过preparedStatementProcess反调，第二个参数是pst
+		Map<String, String> colMap = (Map<String, String>) SqlUtil.preparedStatementProcess(null, pst, rs,
+				new PreparedStatementResultHandler() {
+					@Override
+					public void execute(Object rowData, PreparedStatement pst, ResultSet rs) throws Exception {
+						pst.setString(1, tableName);
+						rs = pst.executeQuery();
+						Map<String, String> colComments = new HashMap<String, String>();
+						String comment;
+						while (rs.next()) {
+							comment = rs.getString("COMMENTS");
+							if (comment != null) {
+								colComments.put(rs.getString("COLUMN_NAME").toUpperCase(), comment);
+							}
+						}
+						this.setResult(colComments);
+					}
+				});
+		for (ColumnMeta col : tableColumns) {
+			col.setComments(colMap.get(col.getColName().toUpperCase()));
+		}
+		return tableColumns;
 	}
 
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
