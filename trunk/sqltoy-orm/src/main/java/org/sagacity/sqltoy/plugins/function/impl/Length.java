@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2015年10月19日
  */
 public class Length extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(length|lengthb|len|datalength|char\\_length)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(length|lengthb|len|datalength|char_length)\\(");
 
 	/*
 	 * (non-Javadoc)

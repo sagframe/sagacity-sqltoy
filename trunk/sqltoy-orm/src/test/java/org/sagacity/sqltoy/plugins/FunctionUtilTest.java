@@ -14,10 +14,11 @@ public class FunctionUtilTest {
 												 * funPackage.concat("SubStr"), funPackage.concat("Trim"),
 												 * funPackage.concat("Instr"), funPackage.concat("Concat"),
 												 * funPackage.concat("ConcatWs"), funPackage.concat("Nvl"),
-												 * funPackage.concat("DateFormat"), funPackage.concat("Now"),
+												
 												 * funPackage.concat("Length"), funPackage.concat("ToChar"),
 												 * funPackage.concat("If"),
 												 */
+			  funPackage.concat("DateFormat"),
 			funPackage.concat("Instr"), funPackage.concat("Concat")
 			// funPackage.concat("GroupConcat")
 	};

@@ -331,8 +331,8 @@ public class SqlToyDaoSupport {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
 		}
-		return (Long) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
-				true);
+		return (Long) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				entityClass, true);
 	}
 
 	/**
@@ -1340,7 +1340,7 @@ public class SqlToyDaoSupport {
 			if (i != rowIndex) {
 				for (int index : nameIndexes) {
 					if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
-						//避免priorMatchEqual=true matchSize==1 
+						// 避免priorMatchEqual=true matchSize==1
 						if (meter < extendArgs.matchSize) {
 							keySet.add(row[cacheKeyIndex].toString());
 						}
@@ -1419,31 +1419,64 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		return (List<T>) findEntity(entityClass, entityQuery, entityClass);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
-				false);
+		return (List<T>) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				resultType, false);
 	}
 
 	/**
-	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
-	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * @see findPageEntity
 	 * @param <T>
 	 * @param entityClass
 	 * @param page
 	 * @param entityQuery
 	 * @return
 	 */
+	@Deprecated
 	protected <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		if (null == entityClass || null == page) {
-			throw new IllegalArgumentException("findEntityPage entityClass、page值不能为空!");
-		}
-		return (Page<T>) findEntityUtil(entityClass, page, (entityQuery == null) ? EntityQuery.create() : entityQuery,
-				false);
+		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
 
-	private Object findEntityUtil(Class entityClass, Page page, EntityQuery entityQuery, boolean isCount) {
+	/**
+	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
+	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * @param <T>
+	 * @param page
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	protected <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
+		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> Page<T> findPageEntity(Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		if (null == entityClass || null == page) {
+			throw new IllegalArgumentException("findPageEntity entityClass、page值不能为空!");
+		}
+		return (Page<T>) findEntityBase(entityClass, page, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				resultType, false);
+	}
+
+	/**
+	 * @TODO 提供findEntity的基础实现，供对外接口包装，额外开放了resultClass的自定义功能
+	 * @param entityClass
+	 * @param page        如分页查询则需指定，非分页则传null
+	 * @param entityQuery
+	 * @param resultClass 指定返回结果类型
+	 * @param isCount
+	 * @return
+	 */
+	private Object findEntityBase(Class entityClass, Page page, EntityQuery entityQuery, Class resultClass,
+			boolean isCount) {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		String translateFields = "";
@@ -1555,7 +1588,7 @@ public class SqlToyDaoSupport {
 			}
 		}
 		QueryExecutor queryExecutor;
-		Class resultType = entityClass;
+		Class resultType = (resultClass == null) ? entityClass : resultClass;
 		// :named 模式(named模式参数值必须存在)
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,

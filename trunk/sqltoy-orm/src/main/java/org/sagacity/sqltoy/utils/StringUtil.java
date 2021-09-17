@@ -102,7 +102,7 @@ public class StringUtil {
 		if (source == null) {
 			return null;
 		}
-		return source.replaceAll("\r|\t|\n", target);
+		return source.replaceAll("\t|\r|\n", target);
 	}
 
 	/**

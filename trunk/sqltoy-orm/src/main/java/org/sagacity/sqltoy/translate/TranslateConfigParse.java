@@ -103,7 +103,7 @@ public class TranslateConfigParse {
 									sqlId = "s_trans_cache_0" + index;
 									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
-											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
+											SqlUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);
 									sqlToyConfig.setParamsName(
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
@@ -177,7 +177,7 @@ public class TranslateConfigParse {
 									}
 									isShowSql = StringUtil.matches(sql, SqlToyConstants.NOT_PRINT_REGEX);
 									SqlToyConfig sqlToyConfig = new SqlToyConfig(sqlId,
-											StringUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
+											SqlUtil.clearMistyChars(SqlUtil.clearMark(sql), " "));
 									sqlToyConfig.setShowSql(!isShowSql);
 									sqlToyConfig.setParamsName(
 											SqlConfigParseUtils.getSqlParamsName(sqlToyConfig.getSql(null), true));
@@ -194,7 +194,7 @@ public class TranslateConfigParse {
 								}
 							}
 							// 剔除tab\回车等特殊字符
-							String frequency = StringUtil.clearMistyChars(checherConfigModel.getCheckFrequency(), "");
+							String frequency = SqlUtil.clearMistyChars(checherConfigModel.getCheckFrequency(), "");
 							List<TimeSection> timeSections = new ArrayList<TimeSection>();
 							// frequency的格式 frequency="0..12?15,12..18:30?10,18:30..24?60"
 							if (StringUtil.isNotBlank(frequency)) {

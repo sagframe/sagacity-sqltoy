@@ -839,13 +839,40 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	}
 
 	@Override
+	public <T extends Serializable> T loadEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		List<T> result = findEntity(entityClass, entityQuery, resultType);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
+			return result.get(0);
+		}
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+	}
+
+	@Override
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findEntity(entityClass, entityQuery);
 	}
 
 	@Override
+	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		return (List<T>) super.findEntity(entityClass, entityQuery, resultType);
+	}
+
+	@Deprecated
+	@Override
 	public <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return super.findEntity(entityClass, page, entityQuery);
+		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
+	}
+
+	public <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
+		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
+	}
+
+	@Override
+	public <T> Page<T> findPageEntity(Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		return (Page<T>) super.findPageEntity(page, entityClass, entityQuery, resultType);
 	}
 
 	@Override

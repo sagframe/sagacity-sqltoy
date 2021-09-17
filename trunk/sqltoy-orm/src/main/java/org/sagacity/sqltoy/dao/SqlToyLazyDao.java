@@ -307,6 +307,8 @@ public interface SqlToyLazyDao {
 	 */
 	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
 
+	public <T extends Serializable> T loadEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
+
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
 	 * @param <T>
@@ -320,20 +322,53 @@ public interface SqlToyLazyDao {
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @TODO 单表分页查询
-	 *       <p>
-	 *       1、对象传参: findEntity(StaffInfo.class,new
-	 *       Page(),EntityQuery.create().where("status=:status").values(staffInfo))
-	 *       2、数组传参: findEntity(StaffInfo.class,new
-	 *       Page(),EntityQuery.create().where("status=?").values(1))
-	 *       <p>
+	 * @TODO 通过entity实体进行查询，但返回结果类型可自行指定
+	 * @param <T>
+	 * @param entityClass
+	 * @param entityQuery
+	 * @param resultType
+	 * @return
+	 */
+	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
+
+	// 命名不符合统一的风格
+	/**
+	 * @see findPageEntity
 	 * @param <T>
 	 * @param entityClass
 	 * @param page
 	 * @param entityQuery
 	 * @return
 	 */
+	@Deprecated 
 	public <T> Page<T> findEntity(Class<T> entityClass, final Page page, EntityQuery entityQuery);
+
+	/**
+	 * @TODO 单表分页查询
+	 *       <p>
+	 *       1、对象传参: findPageEntity(new
+	 *       Page(),StaffInfo.class,EntityQuery.create().where("status=:status").values(staffInfo))
+	 *       2、数组传参: findPageEntity(new Page(),
+	 *       StaffInfo.class,EntityQuery.create().where("status=?").values(1))
+	 *       <p>
+	 * @param <T>
+	 * @param page
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public <T> Page<T> findPageEntity(final Page page, Class<T> entityClass, EntityQuery entityQuery);
+
+	/**
+	 * @TODO 单表分页查询，同时可以指定返回对象类型为非实体对象
+	 * @param <T>
+	 * @param page
+	 * @param entityClass
+	 * @param entityQuery
+	 * @param resultType
+	 * @return
+	 */
+	public <T> Page<T> findPageEntity(final Page page, Class entityClass, EntityQuery entityQuery, Class<T> resultType);
 
 	/**
 	 * @todo 选择性的加载子表信息

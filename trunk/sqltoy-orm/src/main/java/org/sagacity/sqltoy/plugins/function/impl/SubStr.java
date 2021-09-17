@@ -36,6 +36,9 @@ public class SubStr extends IFunction {
 	 */
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB || dialect == DBType.SQLSERVER) {
+			if (dialect == DBType.SQLSERVER && args != null && args.length == 2) {
+				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
+			}
 			return wrapArgs("substring", args);
 		}
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.TIDB || dialect == DBType.MYSQL57
