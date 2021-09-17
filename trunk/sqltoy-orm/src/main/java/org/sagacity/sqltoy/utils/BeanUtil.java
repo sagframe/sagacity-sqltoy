@@ -470,7 +470,7 @@ public class BeanUtil {
 		}
 		String valueStr = paramValue.toString();
 		// 字符串第一优先
-		if (typeName.equals("string") || typeName.equals("java.lang.string")) {
+		if (typeName.equals("java.lang.string") || typeName.equals("string")) {
 			if (paramValue instanceof java.sql.Clob) {
 				java.sql.Clob clob = (java.sql.Clob) paramValue;
 				return clob.getSubString((long) 1, (int) clob.length());

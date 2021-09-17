@@ -50,7 +50,7 @@ public class IdleConnectionMonitor extends Thread {
 	}
 
 	public void run() {
-		// 延时
+		// 启动后延时进行检测
 		try {
 			if (delaySeconds >= 1) {
 				Thread.sleep(1000 * delaySeconds);
