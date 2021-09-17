@@ -10,6 +10,9 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @project sagacity-sqltoy
  * @description 封装各种生成唯一性ID算法的工具类
@@ -17,6 +20,11 @@ import java.util.UUID;
  * @version v1.0,Date:2012-4-7
  */
 public class IdUtil {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(IdUtil.class);
+	
 	// 纳秒id的ip截取位数
 	private static final int NANOTIME_IP_SUBSIZE = 3;
 
@@ -120,7 +128,7 @@ public class IdUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("根据ip产生id所依赖的serverId异常，无法获得ip信息:" + e.getMessage());
 		}
 		return result;
 	}
@@ -165,6 +173,10 @@ public class IdUtil {
 			}
 			// 补足位数
 			serverIdentity = StringUtil.addLeftZero2Len(ipLastNumStr, size);
+		}
+		// 无网络无法获取ip场景下
+		if (serverIdentity == null) {
+			return StringUtil.addLeftZero2Len("1", size);
 		}
 		return serverIdentity;
 	}

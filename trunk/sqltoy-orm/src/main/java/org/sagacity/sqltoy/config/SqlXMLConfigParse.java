@@ -337,7 +337,7 @@ public class SqlXMLConfigParse {
 		}
 		if (countSql != null) {
 			// 清理sql中的一些注释、以及特殊的符号
-			countSql = StringUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
+			countSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(countSql), " ").concat(" ");
 			countSql = FunctionUtils.getDialectSql(countSql, dialect);
 			countSql = ReservedWordsUtil.convertSql(countSql, DataSourceUtils.getDBType(dialect));
 			sqlToyConfig.setCountSql(countSql);

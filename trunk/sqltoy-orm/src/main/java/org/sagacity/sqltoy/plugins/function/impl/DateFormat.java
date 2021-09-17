@@ -16,7 +16,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @modify 2019年9月9日,修改说明
  */
 public class DateFormat extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wdate\\_format\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\Wdate_format\\(");
 
 	/*
 	 * (non-Javadoc)

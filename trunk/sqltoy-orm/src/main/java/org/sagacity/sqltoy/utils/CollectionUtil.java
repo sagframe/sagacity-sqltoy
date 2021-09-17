@@ -589,9 +589,7 @@ public class CollectionUtil {
 						: new String[] { keyProperty, valueProperty };
 			}
 			switch (dimen) {
-			case -1: {
-				break;
-			}
+			case -1:
 			case 0: {
 				break;
 			}

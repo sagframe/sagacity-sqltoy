@@ -402,7 +402,7 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 			String... uniqueProps) {
 		return super.updateSaveFetch(entity, updateRowHandler, uniqueProps, null);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -941,9 +941,25 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	}
 
 	@Override
-	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
-			EntityQuery entityQuery) {
-		return super.findEntity(entityClass, paginationModel, entityQuery);
+	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
+		return super.findEntity(entityClass, entityQuery, resultType);
+	}
+
+	@Override
+	@Deprecated
+	public <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel page, EntityQuery entityQuery) {
+		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
+	}
+
+	@Override
+	public <T> PaginationModel<T> findPageEntity(PaginationModel page, Class<T> entityClass, EntityQuery entityQuery) {
+		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
+	}
+
+	@Override
+	public <T> PaginationModel<T> findPageEntity(PaginationModel page, Class entityClass, EntityQuery entityQuery,
+			Class<T> resultType) {
+		return super.findPageEntity(page, entityClass, entityQuery, resultType);
 	}
 
 	@Override
