@@ -1723,7 +1723,7 @@ public class SqlUtil {
 		if (source == null) {
 			return null;
 		}
-		// 回车换行前后的空白也剔除
+		// 回车换行前后的空白也剔除(update 2021-09-17)
 		return source.replaceAll("\\s*[\r|\n]\\s*", target).replaceAll("\t", target);
 	}
 }

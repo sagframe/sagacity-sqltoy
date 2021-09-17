@@ -52,7 +52,7 @@ import org.springframework.context.ApplicationContextAware;
 //12、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch
 //13、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
 //14、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
-//-----------------------------------------------------------------------------------*/
+//------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置

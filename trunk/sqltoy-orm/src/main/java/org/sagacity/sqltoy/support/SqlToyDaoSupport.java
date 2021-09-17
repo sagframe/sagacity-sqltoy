@@ -105,7 +105,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @modify Date:2020-8-25 {增加并行查询功能,为极端场景下提升查询效率,为开发者拆解复杂sql做多次查询影响性能提供了解决之道}
  * @modify Date:2020-10-20 {findByQuery 增加lockMode,便于查询并锁定记录}
  * @modify Date:2021-06-25
- *         {剔除linkDaoSupport、BaseDaoSupport,将link相关功能集中到SqlToyDaoSupport中}
+ *         {剔除linkDaoSupport、BaseDaoSupport,将link功能放入SqlToyDaoSupport}
  */
 @SuppressWarnings("rawtypes")
 public class SqlToyDaoSupport {

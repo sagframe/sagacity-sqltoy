@@ -24,8 +24,7 @@ public class CacheMatchFilter implements Serializable {
 	private CacheMatchExtend cacheFilterArgs = new CacheMatchExtend();
 
 	public static CacheMatchFilter create() {
-		CacheMatchFilter filter = new CacheMatchFilter();
-		return filter;
+		return new CacheMatchFilter();
 	}
 
 	/**
