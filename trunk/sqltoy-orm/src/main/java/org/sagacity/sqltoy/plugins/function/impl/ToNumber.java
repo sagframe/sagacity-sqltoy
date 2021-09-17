@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.plugins.function.IFunction;
  * @version v1.0,Date:2013-1-2
  */
 public class ToNumber extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_number\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\Wto_number\\(");
 
 	/*
 	 * (non-Javadoc)

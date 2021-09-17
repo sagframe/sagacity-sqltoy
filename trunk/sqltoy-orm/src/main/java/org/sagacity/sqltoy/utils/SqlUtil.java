@@ -1261,7 +1261,7 @@ public class SqlUtil {
 		// 剔除sql中的注释
 		sqlContent = SqlUtil.clearMark(sqlContent);
 		if (splitSign.indexOf("go") != -1) {
-			sqlContent = StringUtil.clearMistyChars(sqlContent, " ");
+			sqlContent = clearMistyChars(sqlContent, " ");
 		}
 		// 分割成多个子语句
 		String[] statments = StringUtil.splitExcludeSymMark(sqlContent, splitSign, sqlCommentfilters);
@@ -1487,7 +1487,7 @@ public class SqlUtil {
 	 * @return
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar) {
-		StringBuilder lastSql = new StringBuilder(clearMistyChar ? StringUtil.clearMistyChars(sql, " ") : sql);
+		StringBuilder lastSql = new StringBuilder(clearMistyChar ? clearMistyChars(sql, " ") : sql);
 		// 找到第一个select 所对称的from位置，排查掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, sql.toLowerCase(), 0);
 		if (fromIndex != -1) {
@@ -1670,7 +1670,7 @@ public class SqlUtil {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @todo 处理sqlserver default值为((value))问题
 	 * @param defaultValue
@@ -1706,4 +1706,19 @@ public class SqlUtil {
 		}
 		return result.trim();
 	}
+
+	/**
+	 * @todo 替换换行、回车、tab符号;\r 换行、\t tab符合、\n 回车
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	public static String clearMistyChars(String source, String target) {
+		if (source == null) {
+			return null;
+		}
+		// 回车换行前后的空白也剔除
+		return source.replaceAll("\\s*[\r|\n]\\s*", target).replaceAll("\t", target);
+	}
+
 }

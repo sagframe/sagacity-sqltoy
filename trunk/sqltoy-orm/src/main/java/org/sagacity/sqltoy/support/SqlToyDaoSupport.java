@@ -224,8 +224,8 @@ public class SqlToyDaoSupport {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("getCountByEntityQuery entityClass值不能为空!");
 		}
-		return (Long) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
-				true);
+		return (Long) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				entityClass, true);
 	}
 
 	/**
@@ -894,7 +894,7 @@ public class SqlToyDaoSupport {
 		return dialectFactory.update(sqlToyContext, entity, forceUpdateProps, false, null, null,
 				this.getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 * @param <T>
@@ -1318,7 +1318,7 @@ public class SqlToyDaoSupport {
 			if (i != rowIndex) {
 				for (int index : nameIndexes) {
 					if (row[index] != null && StringUtil.like(row[index].toString().toLowerCase(), lowName)) {
-						//避免priorMatchEqual=true matchSize==1 
+						// 避免priorMatchEqual=true matchSize==1
 						if (meter < extendArgs.matchSize) {
 							keySet.add(row[cacheKeyIndex].toString());
 						}
@@ -1396,33 +1396,57 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		return (List<T>) findEntity(entityClass, entityQuery, entityClass);
+	}
+
+	protected <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		if (null == entityClass) {
 			throw new IllegalArgumentException("findEntityList entityClass值不能为空!");
 		}
-		return (List<T>) findEntityUtil(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
-				false);
+		return (List<T>) findEntityBase(entityClass, null, (entityQuery == null) ? EntityQuery.create() : entityQuery,
+				resultType, false);
 	}
 
 	/**
-	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
-	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * @see findPageEntity
 	 * @param <T>
 	 * @param entityClass
 	 * @param paginationModel
 	 * @param entityQuery
 	 * @return
 	 */
+	@Deprecated
 	protected <T> PaginationModel<T> findEntity(Class<T> entityClass, PaginationModel paginationModel,
 			EntityQuery entityQuery) {
-		if (null == entityClass || null == paginationModel) {
-			throw new IllegalArgumentException("findEntityPage entityClass、paginationModel值不能为空!");
-		}
-		return (PaginationModel<T>) findEntityUtil(entityClass, paginationModel,
-				(entityQuery == null) ? EntityQuery.create() : entityQuery, false);
+		return (PaginationModel<T>) findPageEntity(paginationModel, entityClass, entityQuery, entityClass);
 	}
 
-	private Object findEntityUtil(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
-			boolean isCount) {
+	/**
+	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
+	 *       (?)]").values(new Object[]{xxx,xxx})
+	 * @param <T>
+	 * @param paginationModel
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	protected <T> PaginationModel<T> findPageEntity(PaginationModel paginationModel, Class<T> entityClass,
+			EntityQuery entityQuery) {
+		return (PaginationModel<T>) findPageEntity(paginationModel, entityClass, entityQuery, entityClass);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> PaginationModel<T> findPageEntity(PaginationModel paginationModel, Class entityClass,
+			EntityQuery entityQuery, Class<T> resultType) {
+		if (null == entityClass || null == paginationModel) {
+			throw new IllegalArgumentException("findPageEntity entityClass、paginationModel值不能为空!");
+		}
+		return (PaginationModel<T>) findEntityBase(entityClass, paginationModel,
+				(entityQuery == null) ? EntityQuery.create() : entityQuery, resultType, false);
+	}
+
+	private Object findEntityBase(Class entityClass, PaginationModel paginationModel, EntityQuery entityQuery,
+			Class resultClass, boolean isCount) {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
 		String translateFields = "";
@@ -1531,7 +1555,7 @@ public class SqlToyDaoSupport {
 			}
 		}
 		QueryExecutor queryExecutor;
-		Class resultType = entityClass;
+		Class resultType = (resultClass == null) ? entityClass : resultClass;
 		// :named 模式(named模式参数值必须存在)
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
@@ -1826,7 +1850,7 @@ public class SqlToyDaoSupport {
 			DataSource dataSource) {
 		return dialectFactory.getTables(sqlToyContext, catalog, schema, tableName, getDataSource(dataSource));
 	}
-	
+
 	/**
 	 * @TODO 并行查询并返回一维List，有几个查询List中就包含几个结果对象，paramNames和paramValues是全部sql的条件参数的合集
 	 * @param parallQueryList

@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-1-2
  */
 public class ToChar extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wto\\_char\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\Wto_char\\(");
 
 	public String dialects() {
 		return ALL;

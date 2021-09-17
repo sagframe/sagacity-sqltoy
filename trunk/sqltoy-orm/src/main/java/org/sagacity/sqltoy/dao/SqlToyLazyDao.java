@@ -91,7 +91,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过map传参获取记录数量
 	 * @param sqlOrNamedQuery
 	 * @param paramsMap
-	 * @return recordCount 
+	 * @return recordCount
 	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
@@ -161,7 +161,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long update(Serializable serializableVO, String... forceUpdateProps);
-	
+
 	/**
 	 * @TODO 适用于库存台账、客户资金账等高并发强事务场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
 	 * @param <T>
@@ -259,7 +259,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entities
 	 * @param reflectPropertyHandler 常规传null
-	 * @param forceUpdateProps 强制修改的字段
+	 * @param forceUpdateProps       强制修改的字段
 	 * @return
 	 */
 	@Deprecated
@@ -357,15 +357,49 @@ public interface SqlToyLazyDao {
 	public <T> List<T> findEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
-	 * @TODO 单表分页查询
+	 * @TODO 通过entity实体进行查询，但返回结果类型可自行指定
+	 * @param <T>
+	 * @param entityClass
+	 * @param entityQuery
+	 * @param resultType
+	 * @return
+	 */
+	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
+
+	/**
+	 * @see findPageEntity
 	 * @param <T>
 	 * @param entityClass
 	 * @param paginationModel
 	 * @param entityQuery
 	 * @return
 	 */
+	@Deprecated
 	public <T> PaginationModel<T> findEntity(Class<T> entityClass, final PaginationModel paginationModel,
 			EntityQuery entityQuery);
+
+	/**
+	 * @TODO 单表分页查询
+	 * @param <T>
+	 * @param paginationModel
+	 * @param entityClass
+	 * @param entityQuery
+	 * @return
+	 */
+	public <T> PaginationModel<T> findPageEntity(final PaginationModel paginationModel, Class<T> entityClass,
+			EntityQuery entityQuery);
+
+	/**
+	 * @TODO 基于pojo进行分页查询，并允许指定返回结果的类型
+	 * @param <T>
+	 * @param page
+	 * @param entityClass
+	 * @param entityQuery
+	 * @param resultType
+	 * @return
+	 */
+	public <T> PaginationModel<T> findPageEntity(final PaginationModel page, Class entityClass, EntityQuery entityQuery,
+			Class<T> resultType);
 
 	/**
 	 * @todo 选择性的加载子表信息
@@ -599,7 +633,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param randomCount 小于1表示按比例提取，大于1则按整数部分提取记录数量
+	 * @param randomCount   小于1表示按比例提取，大于1则按整数部分提取记录数量
 	 * @return
 	 */
 	public <T extends Serializable> List<T> getRandomResult(final String sqlOrNamedSql, final T entity,
@@ -940,7 +974,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Batch batch();
-	
+
 	/**
 	 * @TODO 获得表的字段信息
 	 * @param catalog
