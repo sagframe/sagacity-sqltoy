@@ -115,7 +115,7 @@
 public Page<StaffInfoVO> findStaff(Page<StaffInfoVO> pageModel, StaffInfoVO staffInfoVO) {
      // sql可以直接在代码中编写,复杂sql建议在xml中定义
      // 单表entity查询场景下sql字段可以写成java类的属性名称
-     return findEntity(StaffInfoVO.class, pageModel, EntityQuery.create()
+     return findPageEntity(pageModel,StaffInfoVO.class, EntityQuery.create()
 	.where("#[staffName like :staffName]#[and createTime>=:beginDate]#[and createTime<=:endDate]")
 	.values(staffInfoVO)
 	// 字典缓存必须要设置cacheType
