@@ -15,7 +15,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-3-21
  */
 public class ConcatWs extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\Wconcat\\_ws\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\Wconcat_ws\\(");
 
 	/*
 	 * (non-Javadoc)

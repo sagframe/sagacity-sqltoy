@@ -796,7 +796,7 @@ public class SqlConfigParseUtils {
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号
-		String originalSql = StringUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
+		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(querySql), BLANK).concat(BLANK);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
