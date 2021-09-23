@@ -326,7 +326,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entityClass
 	 * @param entityQuery
-	 * @param resultType
+	 * @param resultType 指定返回结果类型
 	 * @return
 	 */
 	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);

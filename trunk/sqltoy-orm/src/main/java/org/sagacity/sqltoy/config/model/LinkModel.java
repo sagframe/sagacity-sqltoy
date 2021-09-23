@@ -50,6 +50,11 @@ public class LinkModel implements Serializable {
 	private int decorateSize;
 
 	/**
+	 * 是否去除重复
+	 */
+	private boolean distinct = false;
+
+	/**
 	 * @return the columns
 	 */
 	public String[] getColumns() {
@@ -131,6 +136,14 @@ public class LinkModel implements Serializable {
 	 */
 	public void setDecorateSize(int decorateSize) {
 		this.decorateSize = decorateSize;
+	}
+
+	public boolean isDistinct() {
+		return distinct;
+	}
+
+	public void setDistinct(boolean distinct) {
+		this.distinct = distinct;
 	}
 
 }
