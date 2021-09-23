@@ -6,11 +6,13 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -322,6 +324,7 @@ public class ResultUtils {
 			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
+			Set<String> linkSet = new HashSet<String>();
 			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
 			StringBuilder linkBuffer = new StringBuilder();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
@@ -344,6 +347,7 @@ public class ResultUtils {
 			Object[] cacheValues;
 			// 判断link拼接是否重新开始
 			boolean isLastProcess = false;
+			boolean doLink = true;
 			while (rs.next()) {
 				isLastProcess = false;
 				linkValue = rs.getObject(linkColumn);
@@ -370,8 +374,10 @@ public class ResultUtils {
 					if (index != 0) {
 						items.get(items.size() - 1).set(linkIndex, linkBuffer.toString());
 						linkBuffer.delete(0, linkBuffer.length());
+						linkSet.clear();
 					}
 					linkBuffer.append(linkStr);
+					linkSet.add(linkStr);
 					if (hasTranslate) {
 						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
 								columnSize, ignoreAllEmpty);
@@ -384,14 +390,18 @@ public class ResultUtils {
 					preIdentity = identity;
 				} else {
 					isLastProcess = true;
-					if (linkBuffer.length() > 0) {
-						linkBuffer.append(linkModel.getSign());
+					doLink = true;
+					if (linkModel.isDistinct() && linkSet.contains(linkStr)) {
+						doLink = false;
 					}
-					linkBuffer
-							.append(hasDecorate
-									? StringUtil.appendStr(linkStr, linkModel.getDecorateAppendChar(),
-											linkModel.getDecorateSize(), isLeft)
-									: linkStr);
+					linkSet.add(linkStr);
+					if (doLink) {
+						if (linkBuffer.length() > 0) {
+							linkBuffer.append(linkModel.getSign());
+						}
+						linkBuffer.append(hasDecorate ? StringUtil.appendStr(linkStr, linkModel.getDecorateAppendChar(),
+								linkModel.getDecorateSize(), isLeft) : linkStr);
+					}
 				}
 				index++;
 				// 存在超出25000条数据的查询
@@ -522,6 +532,7 @@ public class ResultUtils {
 		String[] linkColumns = linkModel.getColumns();
 		int[] linkIndexs = new int[linkCols];
 		StringBuilder[] linkBuffers = new StringBuilder[linkCols];
+		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkCols] : null;
 		boolean[] translateLinks = new boolean[linkCols];
 		TranslateExtend[] transExtends = new TranslateExtend[linkCols];
 		String linkColumn;
@@ -537,6 +548,9 @@ public class ResultUtils {
 				if (translateLinks[i]) {
 					transExtends[i] = translateMap.get(linkColumn.toLowerCase()).getExtend();
 				}
+			}
+			if (linkModel.isDistinct()) {
+				linkSets[i] = new HashSet<String>();
 			}
 		}
 		// link是否有修饰器
@@ -554,6 +568,7 @@ public class ResultUtils {
 		Object identity = null;
 		// 判断link拼接是否重新开始
 		boolean isLastProcess = false;
+		boolean doLink = false;
 		while (rs.next()) {
 			isLastProcess = false;
 			// 对多个link字段取值并进行翻译转义
@@ -588,11 +603,18 @@ public class ResultUtils {
 					for (int i = 0; i < linkCols; i++) {
 						rowTemp.set(linkIndexs[i], linkBuffers[i].toString());
 						linkBuffers[i].delete(0, linkBuffers[i].length());
+						// 清除
+						if (linkModel.isDistinct()) {
+							linkSets[i].clear();
+						}
 					}
 				}
 				// 再写入新的拼接串
 				for (int i = 0; i < linkCols; i++) {
 					linkBuffers[i].append(linkStrs[i]);
+					if (linkModel.isDistinct()) {
+						linkSets[i].add(linkStrs[i]);
+					}
 				}
 				// 提取result中的数据(identity相等时不需要提取)
 				if (hasTranslate) {
@@ -609,11 +631,21 @@ public class ResultUtils {
 				isLastProcess = true;
 				// identity相同，表示还在同一组内，直接拼接link字符
 				for (int i = 0; i < linkCols; i++) {
-					if (linkBuffers[i].length() > 0) {
-						linkBuffers[i].append(linkModel.getSign());
+					doLink = true;
+					// 判断是否已经重复
+					if (linkModel.isDistinct()) {
+						if (linkSets[i].contains(linkStrs[i])) {
+							doLink = false;
+						}
+						linkSets[i].add(linkStrs[i]);
 					}
-					linkBuffers[i].append(hasDecorate ? StringUtil.appendStr(linkStrs[i],
-							linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStrs[i]);
+					if (doLink) {
+						if (linkBuffers[i].length() > 0) {
+							linkBuffers[i].append(linkModel.getSign());
+						}
+						linkBuffers[i].append(hasDecorate ? StringUtil.appendStr(linkStrs[i],
+								linkModel.getDecorateAppendChar(), linkModel.getDecorateSize(), isLeft) : linkStrs[i]);
+					}
 				}
 			}
 			index++;
