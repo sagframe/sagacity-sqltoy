@@ -1081,7 +1081,8 @@ public class SqlXMLConfigParse {
 					translateMap.put(translateModel.getExtend().column, translateModel);
 				}
 			} else if (cacheIndexs != null && cacheIndexs.length != columns.length) {
-				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!", sqlToyConfig.getId());
+				logger.warn("sqlId:{} 对应的cache translate columns suggest config with cache-indexs!",
+						sqlToyConfig.getId());
 			}
 		}
 		sqlToyConfig.setTranslateMap(translateMap);
@@ -1110,6 +1111,9 @@ public class SqlXMLConfigParse {
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));
+		}
+		if (link.hasAttribute("distinct")) {
+			linkModel.setDistinct(Boolean.parseBoolean(link.getAttribute("distinct")));
 		}
 		NodeList nodeList = link.getElementsByTagName(local.concat("decorate"));
 		if (nodeList.getLength() > 0) {
