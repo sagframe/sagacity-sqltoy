@@ -96,13 +96,24 @@ public class ResultUtils {
 		} else {
 			// 取得字段列数,在没有rowCallbackHandler時用数组返回
 			int rowCnt = rs.getMetaData().getColumnCount();
+			// 类型转成string的列
+			Set<String> strTypeCols = getStringColumns(sqlToyConfig);
+			boolean hasToStrCols = !strTypeCols.isEmpty();
 			String[] labelNames = new String[rowCnt - startColIndex];
 			String[] labelTypes = new String[rowCnt - startColIndex];
 			HashMap<String, Integer> labelIndexMap = new HashMap<String, Integer>();
+			String labeNameLow;
 			for (int i = startColIndex; i < rowCnt; i++) {
 				labelNames[index] = rs.getMetaData().getColumnLabel(i + 1);
-				labelIndexMap.put(labelNames[index].toLowerCase(), index);
+				labeNameLow = labelNames[index].toLowerCase();
+				labelIndexMap.put(labeNameLow, index);
 				labelTypes[index] = rs.getMetaData().getColumnTypeName(i + 1);
+				// 类型因缓存翻译、格式化转为string
+				if (hasToStrCols) {
+					if (strTypeCols.contains(labeNameLow)) {
+						labelTypes[index] = "VARCHAR";
+					}
+				}
 				index++;
 			}
 			result.setLabelNames(labelNames);
@@ -321,11 +332,12 @@ public class ResultUtils {
 		if (linkModel != null) {
 			Object identity = null;
 			String linkColumn = linkModel.getColumns()[0];
-			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
+			String linkColumnLow = linkColumn.toLowerCase();
+			if (!labelIndexMap.containsKey(linkColumnLow)) {
 				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
 			}
 			Set<String> linkSet = new HashSet<String>();
-			int linkIndex = labelIndexMap.get(linkColumn.toLowerCase());
+			int linkIndex = labelIndexMap.get(linkColumnLow);
 			StringBuilder linkBuffer = new StringBuilder();
 			boolean hasDecorate = (linkModel.getDecorateAppendChar() == null) ? false : true;
 			boolean isLeft = true;
@@ -335,12 +347,12 @@ public class ResultUtils {
 			Object preIdentity = null;
 			Object linkValue;
 			String linkStr;
-			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumn.toLowerCase()) : false;
+			boolean translateLink = hasTranslate ? translateMap.containsKey(linkColumnLow) : false;
 			HashMap<String, Object[]> linkTranslateMap = null;
 			int linkTranslateIndex = 1;
 			TranslateExtend extend = null;
 			if (translateLink) {
-				extend = translateMap.get(linkColumn.toLowerCase()).getExtend();
+				extend = translateMap.get(linkColumnLow).getExtend();
 				linkTranslateIndex = extend.index;
 				linkTranslateMap = translateCache.get(extend.column);
 			}
@@ -535,18 +547,18 @@ public class ResultUtils {
 		Set<String>[] linkSets = linkModel.isDistinct() ? new HashSet[linkCols] : null;
 		boolean[] translateLinks = new boolean[linkCols];
 		TranslateExtend[] transExtends = new TranslateExtend[linkCols];
-		String linkColumn;
+		String linkColumnLow;
 		for (int i = 0; i < linkCols; i++) {
 			linkBuffers[i] = new StringBuilder();
-			linkColumn = linkColumns[i];
-			if (!labelIndexMap.containsKey(linkColumn.toLowerCase())) {
-				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumn + ",请检查sql或link 配置的正确性!");
+			linkColumnLow = linkColumns[i].toLowerCase();
+			if (!labelIndexMap.containsKey(linkColumnLow)) {
+				throw new DataAccessException("做link操作时,查询结果字段中没有字段:" + linkColumnLow + ",请检查sql或link 配置的正确性!");
 			}
-			linkIndexs[i] = labelIndexMap.get(linkColumn.toLowerCase());
+			linkIndexs[i] = labelIndexMap.get(linkColumnLow);
 			if (hasTranslate) {
-				translateLinks[i] = translateMap.containsKey(linkColumn.toLowerCase());
+				translateLinks[i] = translateMap.containsKey(linkColumnLow);
 				if (translateLinks[i]) {
-					transExtends[i] = translateMap.get(linkColumn.toLowerCase()).getExtend();
+					transExtends[i] = translateMap.get(linkColumnLow).getExtend();
 				}
 			}
 			if (linkModel.isDistinct()) {
@@ -1252,5 +1264,29 @@ public class ResultUtils {
 	private static void warnLog(SqlToyConfig sqlToyConfig, int totalCount) {
 		logger.warn("Large Result:totalCount={},sqlId={},sql={}", totalCount, sqlToyConfig.getId(),
 				sqlToyConfig.getSql(null));
+	}
+
+	/**
+	 * @TODO 组织因做缓存翻译、link、日期和数字格式化改变类型为VARCHAR的列
+	 * @param sqlToyConfig
+	 * @return
+	 */
+	private static Set<String> getStringColumns(SqlToyConfig sqlToyConfig) {
+		Set<String> strSet = new HashSet<String>();
+		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
+			strSet.addAll(sqlToyConfig.getTranslateMap().keySet());
+		}
+		if (sqlToyConfig.getLinkModel() != null) {
+			for (String col : sqlToyConfig.getLinkModel().getColumns()) {
+				strSet.add(col.toLowerCase());
+			}
+		}
+
+		if (sqlToyConfig.getFormatModels() != null && !sqlToyConfig.getFormatModels().isEmpty()) {
+			for (FormatModel fmt : sqlToyConfig.getFormatModels()) {
+				strSet.add(fmt.getColumn());
+			}
+		}
+		return strSet;
 	}
 }

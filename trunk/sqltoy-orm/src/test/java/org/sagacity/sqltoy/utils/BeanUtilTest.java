@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Locale;
@@ -8,6 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
+import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 
 public class BeanUtilTest {
@@ -33,7 +35,7 @@ public class BeanUtilTest {
 			System.err.println(tmp);
 		}
 	}
-	
+
 	@Test
 	public void testMultLevelMapReflect() {
 		StaffInfoVO staff = new StaffInfoVO();
@@ -48,10 +50,13 @@ public class BeanUtilTest {
 		params.put("companyId", "C0001");
 		params.put("companyName", "xxx企业集团");
 		staff.setParams(params);
-		Map map=new IgnoreKeyCaseMap();
+		Map map = new IgnoreKeyCaseMap();
 		map.put("staff", staff);
-		Object[] result = BeanUtil.reflectBeanToAry(map, new String[] { "staff.staffId", "staff.email", "staff.dataRange.beginDate",
-				"staff.dataRange.enddate", "staff.params.companyId", "staff.params.companyName" }, null, null);
+		Object[] result = BeanUtil
+				.reflectBeanToAry(map,
+						new String[] { "staff.staffId", "staff.email", "staff.dataRange.beginDate",
+								"staff.dataRange.enddate", "staff.params.companyId", "staff.params.companyName" },
+						null, null);
 		for (Object tmp : result) {
 			System.err.println(tmp);
 		}
@@ -63,13 +68,26 @@ public class BeanUtilTest {
 		System.err.println(byte[].class.getName());
 		System.err.println(byte[].class.getTypeName());
 	}
-	
+
 	@Test
 	public void testMap() {
 		HashMap params = new HashMap();
 		params.put("companyId", "C0001");
 		params.put("companyName", null);
-		IgnoreKeyCaseMap map=new IgnoreKeyCaseMap(params);
-		System.err.println(((Map)map).get("companyId"));
+		IgnoreKeyCaseMap map = new IgnoreKeyCaseMap(params);
+		System.err.println(((Map) map).get("companyId"));
+	}
+
+	/**
+	 * 显示java pojo的所有类型名称
+	 */
+	@Test
+	public void testFullTypeName() {
+		Method[] methods = TypeShowCase.class.getMethods();
+		for (Method method : methods) {
+			if (method.getParameterTypes().length > 0) {
+				System.err.println(method.getParameterTypes()[0].getTypeName());
+			}
+		}
 	}
 }
