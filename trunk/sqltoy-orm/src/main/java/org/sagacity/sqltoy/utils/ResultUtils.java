@@ -1273,6 +1273,7 @@ public class ResultUtils {
 	 */
 	private static Set<String> getStringColumns(SqlToyConfig sqlToyConfig) {
 		Set<String> strSet = new HashSet<String>();
+		//本身key是小写
 		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
 			strSet.addAll(sqlToyConfig.getTranslateMap().keySet());
 		}
@@ -1281,7 +1282,8 @@ public class ResultUtils {
 				strSet.add(col.toLowerCase());
 			}
 		}
-
+		
+		//column在解析时已经是小写
 		if (sqlToyConfig.getFormatModels() != null && !sqlToyConfig.getFormatModels().isEmpty()) {
 			for (FormatModel fmt : sqlToyConfig.getFormatModels()) {
 				strSet.add(fmt.getColumn());

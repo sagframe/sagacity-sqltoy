@@ -402,7 +402,7 @@ public class DMDialect implements Dialect {
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		String realSql = sql + " fetch first " + topSize + " rows only for update nowait";
+		String realSql = sql + " fetch first " + topSize + " rows only for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0,-1,-1);
 	}
@@ -421,7 +421,7 @@ public class DMDialect implements Dialect {
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
 		// throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
-		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update nowait";
+		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0,-1,-1);
 	}

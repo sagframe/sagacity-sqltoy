@@ -386,7 +386,7 @@ public class KingbaseDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " limit " + topSize + " for update nowait";
+		String realSql = sql + " limit " + topSize + " for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, -1, -1);
 	}
@@ -404,7 +404,7 @@ public class KingbaseDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by random() limit " + random + " for update nowait";
+		String realSql = sql + " order by random() limit " + random + " for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0, -1, -1);
 	}
