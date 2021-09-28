@@ -427,6 +427,8 @@ public class DefaultDialectUtils {
 		// 设置锁
 		if (dbType == DBType.SQLSERVER) {
 			return SqlServerDialectUtils.lockSql(sql.toString(), realTable, LockMode.UPGRADE);
+		} else if (dbType == DBType.DB2) {
+			return sql.append(" for update with rs").toString();
 		} else {
 			return sql.append(" for update").toString();
 		}
