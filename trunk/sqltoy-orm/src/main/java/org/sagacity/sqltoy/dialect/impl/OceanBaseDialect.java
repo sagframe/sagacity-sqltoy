@@ -406,7 +406,7 @@ public class OceanBaseDialect implements Dialect {
 	public QueryResult updateFetchTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer topSize, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " fetch first " + topSize + " rows only for update nowait";
+		String realSql = sql + " fetch first " + topSize + " rows only for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0,-1,-1);
 	}
@@ -424,7 +424,7 @@ public class OceanBaseDialect implements Dialect {
 	public QueryResult updateFetchRandom(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramsValue, Integer random, UpdateRowHandler updateRowHandler, Connection conn,
 			final Integer dbType, final String dialect) throws Exception {
-		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update nowait";
+		String realSql = sql + " order by dbms_random.random fetch first " + random + " rows only for update";
 		return DialectUtils.updateFetchBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, updateRowHandler, conn,
 				dbType, 0,-1,-1);
 	}
