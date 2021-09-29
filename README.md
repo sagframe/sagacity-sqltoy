@@ -4,7 +4,7 @@
 # [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
 
 # WORD版详细文档(完整)
-## 请见:docs/睿智平台SqlToy4.18 使用手册.doc
+## 请见:docs/睿智平台SqlToy5.1 使用手册.doc
 
 # 范例演示项目
 ## 快速集成演示项目
