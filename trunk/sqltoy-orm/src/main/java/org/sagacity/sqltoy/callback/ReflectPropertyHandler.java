@@ -94,6 +94,17 @@ public abstract class ReflectPropertyHandler {
 	}
 
 	/**
+	 * 判断propertyIndexMap是否已经完成初始化
+	 * @return
+	 */
+	public boolean initPropsIndexMap() {
+		if (propertyIndexMap != null && propertyIndexMap.size() > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * @TODO 取回结果
 	 * @return
 	 */

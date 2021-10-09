@@ -228,14 +228,14 @@ public class DialectFactory {
 	 * @param sqlToyConfig
 	 * @param dataSet
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param insertCallhandler
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
-			final int batchSize, final ReflectPropertyHandler reflectPropertyHandler,
+			final int batchSize, final ReflectPropertyHandler reflectPropsHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
@@ -257,7 +257,7 @@ public class DialectFactory {
 								// 替换sql中:name为?并提取参数名称归集成数组
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-										reflectPropertyHandler);
+										reflectPropsHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
 										sqlParamsModel.getParamsName());
 								realSql = sqlParamsModel.getSql();
@@ -1944,7 +1944,7 @@ public class DialectFactory {
 					}
 				});
 	}
-	
+
 	private int getFetchSize(int fetchSize) {
 		if (fetchSize > 0) {
 			return fetchSize;
