@@ -22,10 +22,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
@@ -729,54 +731,120 @@ public class BeanUtil {
 	 * @todo 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
 	 * @param datas
 	 * @param properties
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @return
 	 * @throws Exception
 	 */
-	public static List reflectBeansToList(List datas, String[] properties,
-			ReflectPropertyHandler reflectPropertyHandler) throws Exception {
+	public static List reflectBeansToList(List datas, String[] properties, ReflectPropertyHandler reflectPropsHandler)
+			throws Exception {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
 		List resultList = new ArrayList();
 		try {
-			int methodLength = properties.length;
-			Method[] realMethods = null;
-			boolean inited = false;
 			Object rowObject = null;
-			Object[] params = new Object[] {};
+			int methodLength = properties.length;
 			// 判断是否存在属性值处理反调
-			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
+			boolean hasHandler = (reflectPropsHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
 					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
-				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
+				reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 			}
+
+			// 判断是否有级联
+			boolean hasInnerClass = false;
+			for (String prop : properties) {
+				if (prop.contains(".")) {
+					hasInnerClass = true;
+					break;
+				}
+			}
+			// 级联含子对象模式(属性名称:staff.name 模式)
+			if (hasInnerClass) {
+				Object[] rowAry;
+				for (int i = 0, n = datas.size(); i < n; i++) {
+					rowObject = datas.get(i);
+					if (rowObject != null) {
+						List rowList = new ArrayList();
+						rowAry = reflectBeanToAry(rowObject, properties, null, reflectPropsHandler);
+						for (Object cell : rowAry) {
+							rowList.add(cell);
+						}
+						resultList.add(rowList);
+					}
+				}
+				return resultList;
+			}
+
+			// 非级联模式
+			Method[] realMethods = null;
+			boolean inited = false;
+			Object[] params = new Object[] {};
+			// 增加map类型支持
+			boolean isMap = false;
+			if (datas.get(0) != null) {
+				Class valueClass = datas.get(0).getClass();
+				if (valueClass.equals(HashMap.class) || valueClass.equals(ConcurrentHashMap.class)
+						|| valueClass.equals(Map.class) || valueClass.equals(ConcurrentMap.class)
+						|| HashMap.class.equals(valueClass) || LinkedHashMap.class.equals(valueClass)
+						|| ConcurrentHashMap.class.equals(valueClass) || Map.class.equals(valueClass)) {
+					isMap = true;
+				}
+			}
+			Iterator iter;
+			String fieldLow;
+			Map.Entry<String, Object> entry;
+			Map rowMap;
 			for (int i = 0, n = datas.size(); i < n; i++) {
 				rowObject = datas.get(i);
 				if (null != rowObject) {
-					// 第一行数据
-					if (!inited) {
-						realMethods = matchGetMethods(rowObject.getClass(), properties);
-						inited = true;
-					}
 					List dataList = new ArrayList();
-					for (int j = 0; j < methodLength; j++) {
-						if (realMethods[j] != null) {
-							dataList.add(realMethods[j].invoke(rowObject, params));
+					// 2021-10-09 支持map类型
+					if (isMap) {
+						if (rowObject instanceof IgnoreKeyCaseMap) {
+							rowMap = (IgnoreKeyCaseMap) rowObject;
+							for (int j = 0; j < methodLength; j++) {
+								dataList.add(rowMap.get(properties[j]));
+							}
 						} else {
-							dataList.add(null);
+							rowMap = (Map) rowObject;
+							// 考虑key大小写兼容
+							for (int j = 0; j < methodLength; j++) {
+								fieldLow = properties[j].toLowerCase();
+								iter = rowMap.entrySet().iterator();
+								while (iter.hasNext()) {
+									entry = (Map.Entry<String, Object>) iter.next();
+									if (entry.getKey().toLowerCase().equals(fieldLow)) {
+										dataList.add(entry.getValue());
+										break;
+									}
+								}
+							}
+						}
+					} else {
+						// 第一行数据
+						if (!inited) {
+							realMethods = matchGetMethods(rowObject.getClass(), properties);
+							inited = true;
+						}
+						for (int j = 0; j < methodLength; j++) {
+							if (realMethods[j] != null) {
+								dataList.add(realMethods[j].invoke(rowObject, params));
+							} else {
+								dataList.add(null);
+							}
 						}
 					}
 					// 反调对数据值进行加工处理
 					if (hasHandler) {
-						reflectPropertyHandler.setRowIndex(i);
-						reflectPropertyHandler.setRowList(dataList);
-						reflectPropertyHandler.process();
-						resultList.add(reflectPropertyHandler.getRowList());
+						reflectPropsHandler.setRowIndex(i);
+						reflectPropsHandler.setRowList(dataList);
+						reflectPropsHandler.process();
+						resultList.add(reflectPropsHandler.getRowList());
 					} else {
 						resultList.add(dataList);
 					}
@@ -808,31 +876,31 @@ public class BeanUtil {
 	 * @param serializable
 	 * @param properties
 	 * @param defaultValues
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @return
 	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler) {
+			ReflectPropertyHandler reflectPropsHandler) {
 		if (null == serializable || null == properties || properties.length == 0) {
 			return null;
 		}
 		int methodLength = properties.length;
 		Object[] result = new Object[methodLength];
 		// 判断是否存在属性值处理反调
-		boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
+		boolean hasHandler = (reflectPropsHandler != null) ? true : false;
 		// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
-		if (hasHandler) {
+		if (hasHandler && !reflectPropsHandler.initPropsIndexMap()) {
 			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 			for (int i = 0; i < methodLength; i++) {
 				propertyIndexMap.put(properties[i].toLowerCase(), i);
 			}
-			reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
+			reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 		}
 		String[] fields;
 		Iterator<?> iter;
 		Map.Entry<String, Object> entry;
-		boolean isMap = false;
+		boolean mapped = false;
 		String fieldLow;
 		Object fieldValue;
 		boolean hasKey = false;
@@ -846,9 +914,15 @@ public class BeanUtil {
 					hasKey = false;
 					// map 类型且key本身就是xxxx.xxxx格式
 					if (fieldValue instanceof Map) {
-						hasKey = ((Map) fieldValue).containsKey(properties[i].trim());
-						if (hasKey) {
-							fieldValue = ((Map) fieldValue).get(properties[i].trim());
+						iter = ((Map) fieldValue).entrySet().iterator();
+						fieldLow = properties[i].trim().toLowerCase();
+						while (iter.hasNext()) {
+							entry = (Map.Entry<String, Object>) iter.next();
+							if (entry.getKey().toLowerCase().equals(fieldLow)) {
+								fieldValue = entry.getValue();
+								hasKey = true;
+								break;
+							}
 						}
 					}
 					if (!hasKey) {
@@ -859,17 +933,17 @@ public class BeanUtil {
 									fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
-									isMap = false;
+									mapped = false;
 									fieldLow = field.trim().toLowerCase();
 									while (iter.hasNext()) {
 										entry = (Map.Entry<String, Object>) iter.next();
 										if (entry.getKey().toLowerCase().equals(fieldLow)) {
 											fieldValue = entry.getValue();
-											isMap = true;
+											mapped = true;
 											break;
 										}
 									}
-									if (!isMap) {
+									if (!mapped) {
 										fieldValue = null;
 									}
 								}
@@ -898,10 +972,10 @@ public class BeanUtil {
 		}
 		// 反调对数据值进行加工处理
 		if (hasHandler) {
-			reflectPropertyHandler.setRowIndex(0);
-			reflectPropertyHandler.setRowData(result);
-			reflectPropertyHandler.process();
-			return reflectPropertyHandler.getRowData();
+			reflectPropsHandler.setRowIndex(0);
+			reflectPropsHandler.setRowData(result);
+			reflectPropsHandler.process();
+			return reflectPropsHandler.getRowData();
 		}
 		return result;
 	}

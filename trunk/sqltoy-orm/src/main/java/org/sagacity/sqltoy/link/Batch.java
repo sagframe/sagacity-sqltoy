@@ -91,6 +91,13 @@ public class Batch extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * 不建议使用，从4.18.46 开始已经支持List<Map>传参数
+	 * 
+	 * @param insertCallhandler
+	 * @return
+	 */
+	@Deprecated
 	public Batch insertHandler(InsertRowCallbackHandler insertCallhandler) {
 		this.insertCallhandler = insertCallhandler;
 		return this;
