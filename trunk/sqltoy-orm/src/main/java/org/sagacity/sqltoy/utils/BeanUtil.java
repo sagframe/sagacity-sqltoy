@@ -22,10 +22,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
@@ -740,11 +742,8 @@ public class BeanUtil {
 		}
 		List resultList = new ArrayList();
 		try {
-			int methodLength = properties.length;
-			Method[] realMethods = null;
-			boolean inited = false;
 			Object rowObject = null;
-			Object[] params = new Object[] {};
+			int methodLength = properties.length;
 			// 判断是否存在属性值处理反调
 			boolean hasHandler = (reflectPropsHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
@@ -755,20 +754,89 @@ public class BeanUtil {
 				}
 				reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 			}
+
+			// 判断是否有级联
+			boolean hasInnerClass = false;
+			for (String prop : properties) {
+				if (prop.contains(".")) {
+					hasInnerClass = true;
+					break;
+				}
+			}
+			// 级联含子对象模式(属性名称:staff.name 模式)
+			if (hasInnerClass) {
+				Object[] rowAry;
+				for (int i = 0, n = datas.size(); i < n; i++) {
+					rowObject = datas.get(i);
+					if (rowObject != null) {
+						List rowList = new ArrayList();
+						rowAry = reflectBeanToAry(rowObject, properties, null, reflectPropsHandler);
+						for (Object cell : rowAry) {
+							rowList.add(cell);
+						}
+						resultList.add(rowList);
+					}
+				}
+				return resultList;
+			}
+
+			// 非级联模式
+			Method[] realMethods = null;
+			boolean inited = false;
+			Object[] params = new Object[] {};
+			// 增加map类型支持
+			boolean isMap = false;
+			if (datas.get(0) != null) {
+				Class valueClass = datas.get(0).getClass();
+				if (valueClass.equals(HashMap.class) || valueClass.equals(ConcurrentHashMap.class)
+						|| valueClass.equals(Map.class) || valueClass.equals(ConcurrentMap.class)
+						|| HashMap.class.equals(valueClass) || LinkedHashMap.class.equals(valueClass)
+						|| ConcurrentHashMap.class.equals(valueClass) || Map.class.equals(valueClass)) {
+					isMap = true;
+				}
+			}
+			Iterator iter;
+			String fieldLow;
+			Map.Entry<String, Object> entry;
+			Map rowMap;
 			for (int i = 0, n = datas.size(); i < n; i++) {
 				rowObject = datas.get(i);
 				if (null != rowObject) {
-					// 第一行数据
-					if (!inited) {
-						realMethods = matchGetMethods(rowObject.getClass(), properties);
-						inited = true;
-					}
 					List dataList = new ArrayList();
-					for (int j = 0; j < methodLength; j++) {
-						if (realMethods[j] != null) {
-							dataList.add(realMethods[j].invoke(rowObject, params));
+					// 2021-10-09 支持map类型
+					if (isMap) {
+						if (rowObject instanceof IgnoreKeyCaseMap) {
+							rowMap = (IgnoreKeyCaseMap) rowObject;
+							for (int j = 0; j < methodLength; j++) {
+								dataList.add(rowMap.get(properties[j]));
+							}
 						} else {
-							dataList.add(null);
+							rowMap = (Map) rowObject;
+							// 考虑key大小写兼容
+							for (int j = 0; j < methodLength; j++) {
+								fieldLow = properties[j].toLowerCase();
+								iter = rowMap.entrySet().iterator();
+								while (iter.hasNext()) {
+									entry = (Map.Entry<String, Object>) iter.next();
+									if (entry.getKey().toLowerCase().equals(fieldLow)) {
+										dataList.add(entry.getValue());
+										break;
+									}
+								}
+							}
+						}
+					} else {
+						// 第一行数据
+						if (!inited) {
+							realMethods = matchGetMethods(rowObject.getClass(), properties);
+							inited = true;
+						}
+						for (int j = 0; j < methodLength; j++) {
+							if (realMethods[j] != null) {
+								dataList.add(realMethods[j].invoke(rowObject, params));
+							} else {
+								dataList.add(null);
+							}
 						}
 					}
 					// 反调对数据值进行加工处理
@@ -819,7 +887,7 @@ public class BeanUtil {
 		// 判断是否存在属性值处理反调
 		boolean hasHandler = (reflectPropsHandler != null) ? true : false;
 		// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
-		if (hasHandler) {
+		if (hasHandler && !reflectPropsHandler.initPropsIndexMap()) {
 			HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 			for (int i = 0; i < methodLength; i++) {
 				propertyIndexMap.put(properties[i].toLowerCase(), i);
@@ -829,7 +897,7 @@ public class BeanUtil {
 		String[] fields;
 		Iterator<?> iter;
 		Map.Entry<String, Object> entry;
-		boolean isMap = false;
+		boolean isMapped = false;
 		String fieldLow;
 		Object fieldValue;
 		boolean hasKey = false;
@@ -843,9 +911,15 @@ public class BeanUtil {
 					hasKey = false;
 					// map 类型且key本身就是xxxx.xxxx格式
 					if (fieldValue instanceof Map) {
-						hasKey = ((Map) fieldValue).containsKey(properties[i].trim());
-						if (hasKey) {
-							fieldValue = ((Map) fieldValue).get(properties[i].trim());
+						iter = ((Map) fieldValue).entrySet().iterator();
+						fieldLow = properties[i].trim().toLowerCase();
+						while (iter.hasNext()) {
+							entry = (Map.Entry<String, Object>) iter.next();
+							if (entry.getKey().toLowerCase().equals(fieldLow)) {
+								fieldValue = entry.getValue();
+								hasKey = true;
+								break;
+							}
 						}
 					}
 					if (!hasKey) {
@@ -856,17 +930,17 @@ public class BeanUtil {
 									fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
-									isMap = false;
+									isMapped = false;
 									fieldLow = field.trim().toLowerCase();
 									while (iter.hasNext()) {
 										entry = (Map.Entry<String, Object>) iter.next();
 										if (entry.getKey().toLowerCase().equals(fieldLow)) {
 											fieldValue = entry.getValue();
-											isMap = true;
+											isMapped = true;
 											break;
 										}
 									}
-									if (!isMap) {
+									if (!isMapped) {
 										fieldValue = null;
 									}
 								}

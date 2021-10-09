@@ -2,7 +2,9 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -54,9 +56,62 @@ public class BeanUtilTest {
 		map.put("staff", staff);
 		Object[] result = BeanUtil
 				.reflectBeanToAry(map,
-						new String[] { "staff.staffId", "staff.email", "staff.dataRange.beginDate",
+						new String[] { "staff.staffid", "staff.email", "staff.dataRange.beginDate",
 								"staff.dataRange.enddate", "staff.params.companyId", "staff.params.companyName" },
 						null, null);
+		for (Object tmp : result) {
+			System.err.println(tmp);
+		}
+	}
+
+	@Test
+	public void testMultLevelMapListReflect() {
+		StaffInfoVO staff = new StaffInfoVO();
+		staff.setEmail("zhongxuchen@gmail.com");
+		staff.setStaffId("S001");
+		DataRange dataRange = new DataRange();
+		dataRange.setBeginDate(DateUtil.getDate("2020-10-01"));
+		dataRange.setEndDate(LocalDate.now());
+		staff.setDataRange(dataRange);
+
+		HashMap params = new HashMap();
+		params.put("companyId", "C0001");
+		params.put("companyName", "xxx企业集团");
+		staff.setParams(params);
+		Map map = new HashMap();
+		map.put("staff", staff);
+		List<Map> listMap = new ArrayList<Map>();
+		listMap.add(map);
+		List result = null;
+		try {
+			result = BeanUtil
+					.reflectBeansToList(listMap,
+							new String[] { "staff.staffid", "staff.email", "staff.dataRange.beginDate",
+									"staff.dataRange.enddate", "staff.params.companyId", "staff.params.companyName" },
+							null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		for (Object tmp : result) {
+			System.err.println(tmp);
+		}
+	}
+
+	@Test
+	public void testMapListReflect() {
+		HashMap params = new HashMap();
+		params.put("staff.companyId", "C0001");
+		params.put("companyName", "xxx企业集团");
+		List<Map> listMap = new ArrayList<Map>();
+		listMap.add(params);
+		List result = null;
+		try {
+			result = BeanUtil.reflectBeansToList(listMap, new String[] { "staff.companyid", "companyName" }, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		for (Object tmp : result) {
 			System.err.println(tmp);
 		}
