@@ -346,10 +346,10 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 单表分页查询
 	 *       <p>
-	 *       1、对象传参: findPageEntity(new
-	 *       Page(),StaffInfo.class,EntityQuery.create().where("status=:status").values(staffInfo))
-	 *       2、数组传参: findPageEntity(new Page(),
-	 *       StaffInfo.class,EntityQuery.create().where("status=?").values(1))
+	 *       1、对象传参: 
+	 *       findPageEntity(new Page(),StaffInfo.class,EntityQuery.create().where("status=:status").values(staffInfo))
+	 *       2、数组传参: 
+	 *       findPageEntity(new Page(),StaffInfo.class,EntityQuery.create().where("status=?").values(1))
 	 *       <p>
 	 * @param <T>
 	 * @param page
@@ -649,7 +649,7 @@ public interface SqlToyLazyDao {
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
 	 * @param sqlOrNamedSql
-	 * @param dataSet
+	 * @param dataSet 支持List<List>  List<VO>、List<Map> 
 	 * @param autoCommit    (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);
