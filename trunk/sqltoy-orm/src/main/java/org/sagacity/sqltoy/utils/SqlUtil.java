@@ -1718,7 +1718,7 @@ public class SqlUtil {
 			return null;
 		}
 		// 回车换行前后的空白也剔除
-		return source.replaceAll("\\s*[\r|\n]\\s*", target).replaceAll("\t", target);
+		return source.replaceAll("\\s*(\r|\n)\\s*", target).replaceAll("\t", target);
 	}
 
 }
