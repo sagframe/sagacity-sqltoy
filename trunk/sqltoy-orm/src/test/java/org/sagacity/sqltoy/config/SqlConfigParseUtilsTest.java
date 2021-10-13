@@ -116,12 +116,52 @@ public class SqlConfigParseUtilsTest {
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
 	}
-	
+
 	@Test
 	public void testAtValue() throws Exception {
 		String sql = "select * from table where 1=1 #[and id=:id] and name like @value(:name) #[and status=:status]";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
 				new Object[] { "1", null, "1" });
 		System.err.println(JSON.toJSONString(result));
+	}
+	
+	@Test
+	public void testAtValueChina() throws Exception {
+		String sql = "select * from table where 1=1 #[and id=:id] and name like @value(:name) #[@if(:订单_id==中文)and status=:status]";
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status","订单_id" },
+				new Object[] { "1", null, null,"中文" });
+		System.err.println(JSON.toJSONString(result));
+	}
+
+	@Test
+	public void testIF() throws Exception {
+		String sqlFile = "classpath:scripts/showcase-sql.sql.xml";
+		List<SqlToyConfig> result = new ArrayList<SqlToyConfig>();
+		InputStream fileIS = FileUtil.getFileInputStream(sqlFile);
+		domFactory.setFeature(SqlToyConstants.XML_FETURE, false);
+		DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+		Document doc = domBuilder.parse(fileIS);
+		NodeList sqlElts = doc.getDocumentElement().getChildNodes();
+		if (sqlElts == null || sqlElts.getLength() == 0)
+			return;
+		// 解析单个sql
+		Element sqlElt;
+		Node obj;
+		for (int i = 0; i < sqlElts.getLength(); i++) {
+			obj = sqlElts.item(i);
+			if (obj.getNodeType() == Node.ELEMENT_NODE) {
+				sqlElt = (Element) obj;
+				result.add(SqlXMLConfigParse.parseSingleSql(sqlElt, "mysql"));
+			}
+		}
+		for (SqlToyConfig config : result) {
+			if (config.getId().equals("fundLedgerUpdate_queryContractSignSendFinishTranFlow")) {
+				System.err.println(config.getSql());
+				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(config.getSql(), new String[] { "bizType" },
+						new Object[] { "OD_P_SETTLE_PRICE_CONFIRM" });
+				System.err.println(sqlToyResult.getSql());
+			}
+		}
+
 	}
 }

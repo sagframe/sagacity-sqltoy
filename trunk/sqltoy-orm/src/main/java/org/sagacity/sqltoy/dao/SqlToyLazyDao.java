@@ -669,7 +669,7 @@ public interface SqlToyLazyDao {
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
 	 * @param sqlOrNamedSql
-	 * @param dataSet 支持List<List>、List<VO>、List<Map> 集中模式
+	 * @param dataSet 支持List<List>、List<Object[]>、List<VO>、List<Map> 集中模式
 	 * @param insertCallhandler (一般为null)
 	 * @param autoCommit        (一般为null)
 	 */

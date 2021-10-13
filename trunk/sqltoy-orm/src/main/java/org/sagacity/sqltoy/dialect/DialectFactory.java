@@ -64,6 +64,7 @@ import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.ParallelUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
@@ -226,7 +227,7 @@ public class DialectFactory {
 	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
-	 * @param dataSet
+	 * @param dataSet 支持List<List>、List<Object[]>、List<VO>、List<Map> 集中模式
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param insertCallhandler
@@ -374,7 +375,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -596,7 +597,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -658,7 +659,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -925,7 +926,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1001,7 +1002,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1062,7 +1063,7 @@ public class DialectFactory {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
 		try {
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1710,7 +1711,7 @@ public class DialectFactory {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1753,7 +1754,7 @@ public class DialectFactory {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
@@ -1796,7 +1797,7 @@ public class DialectFactory {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
 			Long startTime = System.currentTimeMillis();
-			extend.optimizeArgs(sqlToyConfig);
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),

@@ -9,15 +9,17 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description hash取模形式的分库策略
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月1日
  */
 public class HashShardingStrategy implements ShardingStrategy {
-
+	private final static Logger logger = LoggerFactory.getLogger(HashShardingStrategy.class);
 	private HashMap<String, String> dataSourceMap = new HashMap<String, String>();
 
 	private HashMap<String, String> tableMap = new HashMap<String, String>();
@@ -36,9 +38,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingTable(org.sagacity.
-	 * sqltoy.SqlToyContext, java.lang.Class, java.lang.String, java.lang.String,
-	 * java.util.HashMap)
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingTable(org.
+	 * sagacity. sqltoy.SqlToyContext, java.lang.Class, java.lang.String,
+	 * java.lang.String, java.util.HashMap)
 	 */
 	@Override
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
@@ -49,15 +51,18 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		return tableMap.get(Integer.toString(hashCode % tableMode));
+		String modeKey = Integer.toString(hashCode % tableMode);
+		logger.debug("分表取得modeKey:{},tableName:{}", modeKey, tableMap.get(modeKey));
+		return tableMap.get(modeKey);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingModel(org.sagacity.
-	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.
+	 * sagacity. sqltoy.SqlToyContext, java.lang.String, java.lang.String,
+	 * java.util.HashMap)
 	 */
 	@Override
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,
@@ -69,14 +74,16 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		shardingModel.setDataSourceName(dataSourceMap.get(Integer.toString(hashCode % dataSourceMode)));
+		String modeKey = Integer.toString(hashCode % dataSourceMode);
+		shardingModel.setDataSourceName(dataSourceMap.get(modeKey));
+		logger.debug("分库取得modeKey:{},dataSourceName:{}", modeKey, shardingModel.getDataSourceName());
 		return shardingModel;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#initialize()
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#initialize()
 	 */
 	@Override
 	public void initialize() {

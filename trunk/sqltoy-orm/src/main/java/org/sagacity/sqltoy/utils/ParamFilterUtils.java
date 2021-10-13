@@ -376,7 +376,7 @@ public class ParamFilterUtils {
 		String filterType = paramFilterModel.getFilterType();
 		if (filterType.equals("blank")) {
 			result = paramValue;
-			if (paramValue instanceof String) {
+			if (paramValue instanceof CharSequence) {
 				if (paramValue.toString().trim().equals("")) {
 					result = null;
 				}

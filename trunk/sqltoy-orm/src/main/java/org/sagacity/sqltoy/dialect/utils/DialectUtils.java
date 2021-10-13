@@ -422,19 +422,20 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param dialect
-	 * @param wrapNamed     一般在分页、取随机记录需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
+	 * @param wrapNamed     一般在分页需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
 	 * @return
 	 * @throws Exception
 	 */
 	public static SqlToyConfig getUnifyParamsNamedConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String dialect, boolean wrapNamed) throws Exception {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 本身就是:named参数形式或sql中没有任何参数
-		boolean isNamed = (sqlToyConfig.isNamedParam()
+		boolean isNamed = ((extend.paramsName != null && extend.paramsName.length > 0)
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		SqlToyConfig result;
 		// 判断是否xml文件中定义的sql
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+
 		// update 2020-08-14
 		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
 		if (!isNamed && (extend.paramsValue == null || extend.paramsValue.length == 0)) {
@@ -2477,7 +2478,7 @@ public class DialectUtils {
 		}
 		return StringUtil.matchCnt(queryStr, "\\?");
 	}
-	
+
 	/**
 	 * @TODO 判断主键值是否为空，用于saveOrUpdate判断是否save
 	 * @param sqlToyContext

@@ -23,4 +23,49 @@
 			]]>
     </value>
     </sql>
+        <!-- 查询订单收发货完成单据流水【采销合同】（订单收发货完成） -->
+    <sql id="fundLedgerUpdate_queryContractSignSendFinishTranFlow">
+        <value><![CDATA[
+            select flow.order_id, -- 订单ID
+                   flow.order_batch_no, -- 订单批次号
+                   flow.ledger_type, -- 台账类型【MAIN：主项，ITEM：子项】
+                   flow.item_id, -- 订单子项ID
+                   min(flow.order_type) order_type, -- 订单类别【采购-P 销售-S】
+                   min(flow.organ_id) organ_id, -- 所属部门
+                   min(flow.in_stock_batch_no) in_stock_batch_no, -- 入库批次号
+                   min(flow.stock_sheet_item_id) stock_sheet_item_id, -- 收发货子项ID
+                   min(flow.notice_item_id) notice_item_id, -- 通知单子项ID
+                   min(flow.goods_id) goods_id, -- 商品ID
+                   min(flow.goods_name) goods_name, -- 商品名称
+                   min(flow.company_id) company_id, -- 客商ID
+                   min(flow.company_name) company_name, -- 客商名称
+                   min(flow.company_type) company_type, -- 客商类型 1.供应商 2.客户
+                   min(flow.biz_staff_id) biz_staff_id, -- 业务员
+                   min(flow.uom) uom, -- 单位默认公吨（T）
+                   min(flow.currency) currency, -- 币种
+
+                   sum(flow.od_can_quantity) od_can_quantity, -- 订单可收(出)货量
+                   sum(flow.od_complete_release_quantity) od_complete_release_quantity, -- 收发货完成释放量
+
+                   #[@if(:bizType=='OD_P_UPDATE'||:bizType=='OD_P_SETTLE_PRICE_CONFIRM'||:bizType=='OD_P_SETTLE_PRICE_CONFIRM_WITHDRAW') 'OD_P_SIGN_FINISH' biz_type,]
+                   #[@if(:bizType=='OD_S_UPDATE'||:bizType=='OD_S_SETTLE_PRICE_CONFIRM'||:bizType=='OD_S_SETTLE_PRICE_CONFIRM_WITHDRAW') 'OD_S_SEND_FINISH' biz_type,]
+                   min(flow.is_fee) is_fee, -- 是否费用【是.Y 否.N】
+                   min(flow.source_type) source_type, -- 依据凭单类别【采购订单】
+                   min(flow.bus_time) bus_time, -- 凭单业务日期
+                   min(flow.source_code) source_code, -- 依据凭单号
+                   min(flow.source_line_code) source_line_code, -- 依据凭单子项号
+                   min(flow.remark) remark, -- 备注
+                   min(flow.corp_id) corp_id, -- 区分业务主体
+                   min(flow.settle_corp_id) settle_corp_id, -- 财务结算(预留)
+                   min(flow.accounting_corp_id) accounting_corp_id, -- SAP分配的组织机构代码
+                   min(flow.biz_line_id) biz_line_id, -- 业务员产品线
+                   min(flow.biz_team_id) biz_team_id -- 业务员产品组
+              from od_order_tran_flow flow
+             where flow.order_id = :orderId
+               and flow.source_code = :orderId
+               #[@if(:bizType=='OD_P_UPDATE'||:bizType=='OD_P_SETTLE_PRICE_CONFIRM'||:bizType=='OD_P_SETTLE_PRICE_CONFIRM_WITHDRAW') and (flow.biz_type = 'OD_P_SIGN_FINISH' or (flow.biz_type = 'OD_P_UPDATE' and flow.src_biz_type = 'OD_P_SIGN_FINISH') or (flow.biz_type in ('OD_P_SETTLE_PRICE_CONFIRM', 'OD_P_SETTLE_PRICE_CONFIRM_WITHDRAW') and flow.src_biz_type = 'OD_P_SIGN_FINISH'))]
+               #[@if(:bizType=='OD_S_UPDATE'||:bizType=='OD_S_SETTLE_PRICE_CONFIRM'||:bizType=='OD_S_SETTLE_PRICE_CONFIRM_WITHDRAW') and (flow.biz_type = 'OD_S_SEND_FINISH' or (flow.biz_type = 'OD_S_UPDATE' and flow.src_biz_type = 'OD_S_SEND_FINISH') or (flow.biz_type in ('OD_S_SETTLE_PRICE_CONFIRM', 'OD_S_SETTLE_PRICE_CONFIRM_WITHDRAW') and flow.src_biz_type = 'OD_S_SEND_FINISH'))]
+             group by flow.order_id, flow.order_batch_no, flow.ledger_type, flow.item_id
+        ]]></value>
+    </sql>
 </sqltoy>

@@ -24,7 +24,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供默认的数据库sharding策略
  * @author zhongxuchen
  * @version v1.0,Date: 2017年1月3日
@@ -70,7 +70,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#initialize()
+	 * @see org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#initialize()
 	 */
 	@Override
 	public void initialize() {
@@ -104,13 +104,14 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.sagacity.sqltoy.plugin.ShardingStrategy#getTargetTableName(org.
+	 * @see
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getTargetTableName(org.
 	 * sagacity.sqltoy.SqlToyContext, java.lang.String, java.lang.String,
 	 * java.util.HashMap)
 	 */
 	public String getShardingTable(SqlToyContext sqlToyContext, Class entityClass, String baseTableName,
 			String decisionType, IgnoreCaseLinkedMap<String, Object> paramsMap) {
-		if (paramsMap == null || baseTableName == null || dateParams == null || tableNamesMap == null) {
+		if (paramsMap == null || baseTableName == null || tableNamesMap == null) {
 			return null;
 		}
 		if (tableNamesMap.get(baseTableName.toUpperCase()) == null) {
@@ -121,7 +122,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		// 单一参数，表示直接传递参数值
 		if (paramsMap.size() == 1) {
 			bizDate = paramsMap.values().iterator().next();
-		} else {
+		} else if (dateParams != null) {
 			for (int i = 0; i < dateParams.length; i++) {
 				// 业务时间条件值
 				bizDate = paramsMap.get(dateParams[i]);
@@ -145,20 +146,26 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		}
 		// 返回null,表示使用原表
 		if (index == -1) {
+			logger.debug("日期间隔:{} 天,小于最小分表区间则使用当前sql中的表!", intervalDays);
 			return null;
 		}
+		String tableName;
 		if (index > shardingTable.length - 1) {
-			return shardingTable[shardingTable.length - 1].trim();
+			tableName = shardingTable[shardingTable.length - 1].trim();
+		} else {
+			tableName = shardingTable[index].trim();
 		}
-		return shardingTable[index].trim();
+		logger.debug("分表实际取得表名:{}", tableName);
+		return tableName;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.sagacity.sqltoy.plugin.ShardingStrategy#getShardingModel(org.sagacity.
-	 * sqltoy.SqlToyContext, java.lang.String, java.lang.String, java.util.HashMap)
+	 * org.sagacity.sqltoy.plugins.sharding.ShardingStrategy#getShardingModel(org.
+	 * sagacity. sqltoy.SqlToyContext, java.lang.String, java.lang.String,
+	 * java.util.HashMap)
 	 */
 	@Override
 	public ShardingDBModel getShardingDB(SqlToyContext sqlToyContext, Class entityClass, String tableOrSql,
@@ -182,11 +189,7 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 			index = NumberUtil.getProbabilityIndex(weights);
 		}
 		chooseDataSource = dataSourceWeightConfig[index][0].toString();
-		if (logger.isDebugEnabled()) {
-			logger.debug("本次sharding使用的数据库为:{},index={}", chooseDataSource, index);
-		} else {
-			System.out.println("本次sharding使用的数据库为:" + chooseDataSource + ",index=" + index);
-		}
+		logger.debug("分库取得的数据库为:{},index={}", chooseDataSource, index);
 		ShardingDBModel shardingModel = new ShardingDBModel();
 		shardingModel.setDataSourceName(chooseDataSource);
 		shardingModel.setDataSource((DataSource) applicationContext.getBean(chooseDataSource));
