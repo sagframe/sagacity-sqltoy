@@ -29,10 +29,12 @@ public class MacroUtils {
 	private static Pattern macroPattern = Pattern.compile("@[a-zA-Z]+[0-9]*[\\-]?[a-zA-Z]*\\([\\w\\W]*\\)");
 
 	/**
-	 * 字符串中内嵌参数的匹配模式 update by chenrenfei 2016-8-24 完善表达式
+	 * 字符串中内嵌参数的匹配模式 
+	 * update by 2016-8-24 完善表达式
+	 * update 2021-10-13 支持中文
 	 */
-	private final static Pattern paramPattern = Pattern
-			.compile("(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+	private final static Pattern paramPattern = Pattern.compile(
+			"(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	private static final HashMap<String, String> filters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 2445408357544337801L;

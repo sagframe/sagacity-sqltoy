@@ -136,10 +136,10 @@ public class SqlToyConstants {
 	public static int FETCH_SIZE = -1;
 
 	/**
-	 * 字符串中内嵌参数的匹配模式
+	 * 字符串中内嵌参数的匹配模式(update 2021-10-13 支持中文)
 	 */
 	public final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 支持参数名称含中文场景
