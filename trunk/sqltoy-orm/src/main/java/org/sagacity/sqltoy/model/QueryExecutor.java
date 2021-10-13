@@ -152,7 +152,6 @@ public class QueryExecutor implements Serializable {
 			}
 		} else {
 			innerModel.paramsValue = paramsValue;
-			innerModel.shardingParamsValue = paramsValue;
 		}
 	}
 

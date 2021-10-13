@@ -425,19 +425,20 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param dialect
-	 * @param wrapNamed     一般在分页、取随机记录需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
+	 * @param wrapNamed     一般在分页需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
 	 * @return
 	 * @throws Exception
 	 */
 	public static SqlToyConfig getUnifyParamsNamedConfig(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, String dialect, boolean wrapNamed) throws Exception {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 本身就是:named参数形式或sql中没有任何参数
-		boolean isNamed = (sqlToyConfig.isNamedParam()
+		boolean isNamed = ((extend.paramsName != null && extend.paramsName.length > 0)
 				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
 		SqlToyConfig result;
 		// 判断是否xml文件中定义的sql
 		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		
 		// update 2020-08-14
 		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
 		if (!isNamed && (extend.paramsValue == null || extend.paramsValue.length == 0)) {
@@ -455,8 +456,7 @@ public class DialectUtils {
 			result.getTranslateMap().putAll(extend.translates);
 			return result;
 		}
-		// 代码中的sql对应的sqlToyConfig也是内存存放的，所以都需要clone
-		// clone一个,然后替换sql中的?并进行必要的参数加工
+		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
 		result = sqlToyConfig.clone();
 		// 存在自定义缓存翻译
 		if (!extend.translates.isEmpty()) {
@@ -496,7 +496,7 @@ public class DialectUtils {
 		if (!extend.tableShardings.isEmpty()) {
 			tableShardings = extend.tableShardings;
 		}
-		// 替换sharding table
+		// sharding table 替换sql中的表名称
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
 				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
 		return result;

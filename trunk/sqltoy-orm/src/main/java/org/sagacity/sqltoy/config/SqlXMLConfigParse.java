@@ -615,6 +615,8 @@ public class SqlXMLConfigParse {
 		} else if (shardingDataSource.hasAttribute("decision-type")) {
 			shardingConfig.setDecisionType(shardingDataSource.getAttribute("decision-type"));
 		}
+		// 全部参数
+		List<String> params = new ArrayList<String>();
 		if (shardingDataSource.hasAttribute("params")) {
 			String[] fields = shardingDataSource.getAttribute("params").replace(";", ",").toLowerCase().split("\\,");
 			int size = fields.length;
@@ -623,10 +625,18 @@ public class SqlXMLConfigParse {
 			for (int i = 0; i < size; i++) {
 				paramName = fields[i].split("\\:");
 				fields[i] = paramName[0].trim();
+				if (!params.contains(fields[i])) {
+					params.add(fields[i]);
+				}
 				paramsAlias[i] = paramName[paramName.length - 1].trim();
 			}
 			shardingConfig.setFields(fields);
 			shardingConfig.setAliasNames(paramsAlias);
+		}
+		if (!params.isEmpty()) {
+			String[] paramAry = new String[params.size()];
+			params.toArray(paramAry);
+			sqlToyConfig.setDbShardingParams(paramAry);
 		}
 		shardingConfig.setStrategy(shardingDataSource.getAttribute("strategy"));
 		sqlToyConfig.setDataSourceSharding(shardingConfig);
