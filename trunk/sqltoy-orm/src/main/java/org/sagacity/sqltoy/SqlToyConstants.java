@@ -143,9 +143,9 @@ public class SqlToyConstants {
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
 	// update 2021-10-13 支持参数名称含中文场景
-	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:]\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]+\\w*(\\.\\w+)*\\s*");
+	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:]\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]*\\w*(\\.\\w+)*\\s*");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]+\\w*(\\.\\w+)*\\s*\\)");
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]*\\w*(\\.\\w+)*\\s*\\)");
 
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
