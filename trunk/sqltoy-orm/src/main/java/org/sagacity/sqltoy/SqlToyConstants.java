@@ -180,7 +180,7 @@ public class SqlToyConstants {
 		while (m.find()) {
 			group = m.group();
 			// key as ${name} value:name
-			paramsMap.put(group, group.substring(2, group.length() - 1));
+			paramsMap.put(group, group.substring(2, group.length() - 1).trim());
 		}
 		return paramsMap;
 	}
