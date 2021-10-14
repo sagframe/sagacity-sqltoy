@@ -9,10 +9,15 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
 
@@ -22,9 +27,15 @@ import org.sagacity.sqltoy.utils.DateUtil;
  *              函数来循环组织sql(借用主键里面的宏工具来完成@loop处理)
  * @author zhongxuchen
  * @version v1.0, Date:2020-9-23
- * @modify 2020-9-23,修改说明
+ * @modify 2021-10-14 支持@loop(:args,and args[i].xxx,linkSign,start,end)
+ *         args[i].xxx对象属性模式
  */
 public class SqlLoop extends AbstractMacro {
+	/**
+	 * 匹配sql片段中的参数名称,包含:xxxx.xxx对象属性形式
+	 */
+	private final static Pattern paramPattern = Pattern
+			.compile("\\:sqlToyLoopAsKey_\\d+A(\\.[a-zA-Z\u4e00-\u9fa5][0-9a-zA-Z\u4e00-\u9fa5_]*)?\\W");
 
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
@@ -79,24 +90,28 @@ public class SqlLoop extends AbstractMacro {
 		String lowContent = loopContent.toLowerCase();
 		String key;
 		Enumeration<String> keyEnums = keyValues.keys();
+		int index = 0;
 		while (keyEnums.hasMoreElements()) {
 			key = keyEnums.nextElement().toLowerCase();
 			// 统一标准为paramName[i]模式
 			if (lowContent.contains(":" + key + "[i]") || lowContent.contains(":" + key + "[index]")) {
 				keys.add(key);
-				// 统一转为key.lowCase[i]模式
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]", ":" + key + "[i]");
-				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", ":" + key + "[i]");
+				// 统一转为:sqlToyLoopAsKey_1_模式,简化后续匹配
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[index\\]",
+						":sqlToyLoopAsKey_" + index + "A");
+				loopContent = loopContent.replaceAll("(?i)\\:" + key + "\\[i\\]", ":sqlToyLoopAsKey_" + index + "A");
 				regParamValues.add(CollectionUtil.convertArray(keyValues.get(key)));
+				index++;
 			}
 		}
 
 		StringBuilder result = new StringBuilder();
 		result.append(" @blank(:" + loopParam + ") ");
 		String loopStr;
-		Object paramValue;
-		String valueStr;
-		int index = 0;
+		index = 0;
+		String[] loopParamNames;
+		Object[] loopParamValues;
+		Map<String, String[]> loopParamNamesMap = parseParams(loopContent);
 		for (int i = start; i < end; i++) {
 			loopStr = loopContent;
 			if (index > 0) {
@@ -104,20 +119,21 @@ public class SqlLoop extends AbstractMacro {
 				result.append(linkSign);
 			}
 			result.append(" ");
-			// 替换paramName[i]
+			// 替换paramName[i]或paramName[i].xxxx
 			for (int j = 0; j < keys.size(); j++) {
-				key = "\\:" + keys.get(j) + "\\[i\\]";
-				paramValue = regParamValues.get(j)[i];
-				if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
-					valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
-				} else if (paramValue instanceof LocalDate) {
-					valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd");
-				} else if (paramValue instanceof LocalTime) {
-					valueStr = "" + DateUtil.formatDate(paramValue, "HH:mm:ss");
+				key = ":sqlToyLoopAsKey_" + j + "A";
+				loopParamNames = loopParamNamesMap.get(key);
+				// paramName[i] 模式
+				if (loopParamNames.length == 0) {
+					loopStr = loopStr.replaceAll(key, toString(regParamValues.get(j)[i]));
 				} else {
-					valueStr = "" + paramValue;
+					// paramName[i].xxxx 模式
+					loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
+					for (int k = 0; k < loopParamNames.length; k++) {
+						loopStr = loopStr.replaceAll(key.concat(".").concat(loopParamNames[k]),
+								toString(loopParamValues[k]));
+					}
 				}
-				loopStr = loopStr.replaceAll(key, valueStr);
 			}
 			result.append(loopStr);
 			index++;
@@ -126,4 +142,55 @@ public class SqlLoop extends AbstractMacro {
 		return result.toString();
 	}
 
+	/**
+	 * @TODO 将参数值转成字符传
+	 * @param paramValue
+	 * @return
+	 */
+	private static String toString(Object paramValue) {
+		String valueStr;
+		if (paramValue instanceof Date || paramValue instanceof LocalDateTime) {
+			valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss");
+		} else if (paramValue instanceof LocalDate) {
+			valueStr = "" + DateUtil.formatDate(paramValue, "yyyy-MM-dd");
+		} else if (paramValue instanceof LocalTime) {
+			valueStr = "" + DateUtil.formatDate(paramValue, "HH:mm:ss");
+		} else {
+			valueStr = "" + paramValue;
+		}
+		return valueStr;
+	}
+
+	/**
+	 * @todo 解析模板中的参数
+	 * @param template
+	 * @return
+	 */
+	public static Map<String, String[]> parseParams(String template) {
+		Map<String, String[]> paramsMap = new HashMap<String, String[]>();
+		Matcher m = paramPattern.matcher(template.concat(" "));
+		String group;
+		String key;
+		int dotIndex;
+		while (m.find()) {
+			group = m.group();
+			group = group.substring(0, group.length() - 1);
+			dotIndex = group.indexOf(".");
+			if (dotIndex != -1) {
+				key = group.substring(0, dotIndex);
+				String[] items = paramsMap.get(key);
+				if (items == null) {
+					paramsMap.put(key, new String[] { group.substring(dotIndex + 1) });
+				} else {
+					String[] newItems = new String[items.length + 1];
+					newItems[items.length] = group.substring(dotIndex + 1);
+					System.arraycopy(items, 0, newItems, 0, items.length);
+					paramsMap.put(key, newItems);
+				}
+			} else {
+				paramsMap.put(group, new String[] {});
+			}
+		}
+		return paramsMap;
+	}
 }

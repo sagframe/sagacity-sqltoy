@@ -55,7 +55,7 @@ public class DialectExecutor implements Callable<ShardingResult> {
 		String dataSourceName = shardingGroupModel.getShardingModel().getDataSourceName();
 		String tableName = shardingGroupModel.getShardingModel().getTableName();
 		ShardingResult result = new ShardingResult();
-		// 异常捕获掉,确保其他节点可以正常执行
+		// 异常捕获掉,确保其他线程可以正常执行
 		try {
 			logger.debug("执行分库分表,DataSource节点:{},table={}", dataSourceName, tableName);
 			result.setRows(handler.execute(sqltoyContext, shardingGroupModel));

@@ -2,7 +2,6 @@ package org.sagacity.sqltoy.config;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
