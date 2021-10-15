@@ -380,7 +380,8 @@ public class ResultUtils {
 						linkStr = linkValue.toString();
 					}
 				}
-				identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
+				identity = (linkModel.getIdColumns() == null) ? "default"
+						: getLinkColumnsId(rs, linkModel.getIdColumns());
 				// 不相等
 				if (!identity.equals(preIdentity)) {
 					if (index != 0) {
@@ -496,6 +497,31 @@ public class ResultUtils {
 	}
 
 	/**
+	 * @TODO 组合link 多列值作为对比值
+	 * @param rs
+	 * @param columns
+	 * @return
+	 * @throws Exception
+	 */
+	private static Object getLinkColumnsId(ResultSet rs, String[] columns) throws Exception {
+		if (columns.length == 1) {
+			return rs.getObject(columns[0]);
+		}
+		StringBuilder result = new StringBuilder();
+		Object colValue;
+		int index = 0;
+		for (String column : columns) {
+			if (index > 0) {
+				result.append("_");
+			}
+			colValue = rs.getObject(column);
+			result.append(colValue == null ? "null" : colValue.toString());
+			index++;
+		}
+		return result.toString();
+	}
+
+	/**
 	 * @TODO 实现多列link
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
@@ -606,7 +632,7 @@ public class ResultUtils {
 				}
 			}
 			// 取分组列的值
-			identity = (linkModel.getIdColumn() == null) ? "default" : rs.getObject(linkModel.getIdColumn());
+			identity = (linkModel.getIdColumns() == null) ? "default" : getLinkColumnsId(rs, linkModel.getIdColumns());
 			// 不相等
 			if (!identity.equals(preIdentity)) {
 				// 不相等时先对最后一条记录修改，写入拼接后的字符串
@@ -1273,7 +1299,7 @@ public class ResultUtils {
 	 */
 	private static Set<String> getStringColumns(SqlToyConfig sqlToyConfig) {
 		Set<String> strSet = new HashSet<String>();
-		//key本身是小写
+		// key本身是小写
 		if (sqlToyConfig.getTranslateMap() != null && !sqlToyConfig.getTranslateMap().isEmpty()) {
 			strSet.addAll(sqlToyConfig.getTranslateMap().keySet());
 		}
@@ -1282,7 +1308,7 @@ public class ResultUtils {
 				strSet.add(col.toLowerCase());
 			}
 		}
-		//format 的column解析时已经转小写
+		// format 的column解析时已经转小写
 		if (sqlToyConfig.getFormatModels() != null && !sqlToyConfig.getFormatModels().isEmpty()) {
 			for (FormatModel fmt : sqlToyConfig.getFormatModels()) {
 				strSet.add(fmt.getColumn());

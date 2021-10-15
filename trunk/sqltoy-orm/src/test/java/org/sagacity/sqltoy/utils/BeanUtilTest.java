@@ -154,4 +154,8 @@ public class BeanUtilTest {
 		System.err.println(realDataMap.get("chend1"));
 	}
 
+	@Test
+	public void testBaseType() {
+		//System.err.println(BeanUtil.isBaseDataType(new HashMap()));
+	}
 }
