@@ -11,6 +11,7 @@ import java.util.Set;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.QueryExecutorExtend;
@@ -35,11 +36,22 @@ public class QueryExecutorBuilder {
 		if (fullParamNames == null || fullParamNames.length == 0) {
 			return;
 		}
+		// 校验条件参数合法性
+		int paramsNameSize = (extend.paramsName == null) ? -1 : extend.paramsName.length;
+		int paramsValueSize = (extend.paramsValue == null) ? -1 : extend.paramsValue.length;
 		Object[] fullParamValues;
 		// 对象传参统一将传参模式为:paramNames和paramValues
 		if (extend.entity != null) {
 			fullParamValues = BeanUtil.reflectBeanToAry(extend.entity, fullParamNames);
+		} // 通过setValues()传递了单个非基础类型的数据对象，而未设置setNames表示vo对象传参
+		else if (paramsNameSize == -1 && paramsValueSize == 1 && extend.paramsValue[0] != null
+				&& !BeanUtil.isBaseDataType(extend.paramsValue[0].getClass())) {
+			fullParamValues = BeanUtil.reflectBeanToAry(extend.paramsValue[0], fullParamNames);
 		} else {
+			if (paramsNameSize != paramsValueSize) {
+				throw new IllegalArgumentException(
+						"查询条件参数名称数组和参数值数组长度不一致(友情提示:QueryExecutor对象传参是new QueryExecutor(sql,vo)模式),请检查!");
+			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
 			// 将传递的paramValues填充到扩展后数组的对应位置
@@ -105,7 +117,7 @@ public class QueryExecutorBuilder {
 							// 校验实际传递的权限值是否在授权范围内
 							for (Object paramValue : pointValues) {
 								if (paramValue != null && !authSet.contains(paramValue)) {
-									throw new IllegalArgumentException("参数:[" + paramName + "]参数对应的值:[" + paramValue
+									throw new DataAccessException("参数:[" + paramName + "]参数对应的值:[" + paramValue
 											+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
 								}
 							}

@@ -138,10 +138,12 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
+	 * @see 直接使用values(map)传参,逐步减少过多的方法
 	 * @TODO 用map形式传参
 	 * @param paramsMap
 	 * @return
 	 */
+	@Deprecated
 	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
 		innerModel.values = new Object[] { new IgnoreKeyCaseMap(paramsMap) };
 		return this;

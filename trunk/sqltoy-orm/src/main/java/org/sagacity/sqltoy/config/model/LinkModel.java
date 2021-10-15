@@ -32,7 +32,7 @@ public class LinkModel implements Serializable {
 	/**
 	 * 分组字段(即以哪个字段为参照)
 	 */
-	private String idColumn;
+	private String[] idColumns;
 
 	/**
 	 * 修饰符位置(补长修饰，如：link的字符长度为5,link后要统一成8位的长度)
@@ -83,17 +83,17 @@ public class LinkModel implements Serializable {
 	}
 
 	/**
-	 * @return the idColumn
+	 * @return the idColumns
 	 */
-	public String getIdColumn() {
-		return idColumn;
+	public String[] getIdColumns() {
+		return idColumns;
 	}
 
 	/**
-	 * @param idColumn the idColumn to set
+	 * @param idColumns the idColumns to set
 	 */
-	public void setIdColumn(String idColumn) {
-		this.idColumn = idColumn;
+	public void setIdColumns(String[] idColumns) {
+		this.idColumns = idColumns;
 	}
 
 	/**

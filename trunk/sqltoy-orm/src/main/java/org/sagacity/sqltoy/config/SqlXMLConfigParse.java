@@ -1106,8 +1106,11 @@ public class SqlXMLConfigParse {
 		} else if (link.hasAttribute("columns")) {
 			linkModel.setColumns(trimParams(link.getAttribute("columns").split("\\,")));
 		}
-		if (link.hasAttribute("id-column")) {
-			linkModel.setIdColumn(link.getAttribute("id-column"));
+		// update 2021-10-15 支持多列
+		if (link.hasAttribute("id-columns")) {
+			linkModel.setIdColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
+		} else if (link.hasAttribute("id-column")) {
+			linkModel.setIdColumns(trimParams(link.getAttribute("id-column").split("\\,")));
 		}
 		if (link.hasAttribute("sign")) {
 			linkModel.setSign(link.getAttribute("sign"));

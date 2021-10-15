@@ -1420,12 +1420,13 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean isBaseDataType(Class clazz) throws Exception {
+	public static boolean isBaseDataType(Class clazz) {
 		return (clazz.equals(String.class) || clazz.equals(Integer.class) || clazz.equals(Byte.class)
 				|| clazz.equals(Long.class) || clazz.equals(Double.class) || clazz.equals(Float.class)
 				|| clazz.equals(Character.class) || clazz.equals(Short.class) || clazz.equals(BigDecimal.class)
 				|| clazz.equals(BigInteger.class) || clazz.equals(Boolean.class) || clazz.equals(Date.class)
-				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
+				|| clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class) || clazz.equals(LocalTime.class)
+				|| clazz.equals(Timestamp.class) || clazz.equals(Enum.class) || clazz.isPrimitive());
 	}
 
 	/**
