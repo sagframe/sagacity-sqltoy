@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.DataRange;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
+import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 
 public class BeanUtilTest {
@@ -144,5 +145,17 @@ public class BeanUtilTest {
 				System.err.println(method.getParameterTypes()[0].getTypeName());
 			}
 		}
+	}
+
+	@Test
+	public void testLinkedMap() {
+		IgnoreCaseLinkedMap<String, Object> realDataMap = new IgnoreCaseLinkedMap<String, Object>();
+		realDataMap.put("chen", null);
+		System.err.println(realDataMap.get("chend1"));
+	}
+
+	@Test
+	public void testBaseType() {
+		//System.err.println(BeanUtil.isBaseDataType(new HashMap()));
 	}
 }

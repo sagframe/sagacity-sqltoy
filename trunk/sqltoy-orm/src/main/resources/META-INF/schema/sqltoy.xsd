@@ -141,10 +141,10 @@
 					</xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
-					<xsd:attribute name="id-column" type="xsd:string">
+					<xsd:attribute name="id-columns" type="xsd:string">
 						<xsd:annotation>
 							<xsd:documentation>
-							<![CDATA[分组列,sql编写时需要注意做好排序]]>
+							<![CDATA[分组列,可以多列sql编写时需要注意做好排序]]>
 							</xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>

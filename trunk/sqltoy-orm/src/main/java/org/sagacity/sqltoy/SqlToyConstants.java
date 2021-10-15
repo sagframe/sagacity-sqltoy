@@ -139,13 +139,13 @@ public class SqlToyConstants {
 	 * 字符串中内嵌参数的匹配模式
 	 */
 	public final static Pattern paramPattern = Pattern
-			.compile("\\$\\{\\s*[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+			.compile("\\$\\{\\s*[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	// update 2020-9-16 将\\W 替换为[^A-Za-z0-9_:] 增加排除: 适应::jsonb 这种模式场景
-	// Pattern.compile("\\W\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
-	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:]\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*");
+	// update 2021-10-13 增加参数名称为中文场景
+	public final static Pattern SQL_NAMED_PATTERN = Pattern.compile("[^A-Za-z0-9_:]\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]*\\w*(\\.\\w+)*\\s*");
 	public final static Pattern NOSQL_NAMED_PATTERN = Pattern
-			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z]+\\w*(\\.\\w+)*\\s*\\)");
+			.compile("(?i)\\@(param|blank|value)?\\(\\s*\\:\\s*[a-zA-Z\u4e00-\u9fa5]+[a-zA-Z\u4e00-\u9fa5_]*\\w*(\\.\\w+)*\\s*\\)");
 
 	// mysql8 支持 with recursive cte as
 	// postgresql12 支持materialized 物化
@@ -180,7 +180,7 @@ public class SqlToyConstants {
 		while (m.find()) {
 			group = m.group();
 			// key as ${name} value:name
-			paramsMap.put(group, group.substring(2, group.length() - 1));
+			paramsMap.put(group, group.substring(2, group.length() - 1).trim());
 		}
 		return paramsMap;
 	}

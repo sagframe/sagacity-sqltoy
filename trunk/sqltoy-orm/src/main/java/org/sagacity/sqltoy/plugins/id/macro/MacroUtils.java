@@ -32,7 +32,7 @@ public class MacroUtils {
 	 * 字符串中内嵌参数的匹配模式 update by chenrenfei 2016-8-24 完善表达式
 	 */
 	private final static Pattern paramPattern = Pattern
-			.compile("(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z]+((\\.|\\_)[0-9a-zA-Z]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
+			.compile("(\\$|\\#)\\{\\s*\\_?[0-9a-zA-Z\u4e00-\u9fa5]+((\\.|\\_)[0-9a-zA-Z\u4e00-\u9fa5]+)*(\\[\\d*(\\,)?\\d*\\])?\\s*\\}");
 
 	private static final HashMap<String, String> filters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 2445408357544337801L;
@@ -200,7 +200,7 @@ public class MacroUtils {
 		while (m.find()) {
 			group = m.group();
 			// key as ${name} value:name
-			paramsMap.put(group, group.substring(2, group.length() - 1).toLowerCase());
+			paramsMap.put(group, group.substring(2, group.length() - 1).trim().toLowerCase());
 		}
 		return paramsMap;
 	}

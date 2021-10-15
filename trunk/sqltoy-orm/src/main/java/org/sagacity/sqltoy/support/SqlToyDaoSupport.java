@@ -651,7 +651,8 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 通过jdbc方式批量插入数据，一般提供给数据采集时或插入临时表使用
 	 * @param sqlOrNamedSql
-	 * @param dataSet
+	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                      形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param autoCommit    自动提交，默认可以填null
 	 * @return
@@ -664,7 +665,8 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlOrNamedSql
-	 * @param dataSet
+	 * @param dataSet       支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map>
+	 *                      形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param autoCommit
 	 * @param dataSource

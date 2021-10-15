@@ -170,10 +170,12 @@ public class EntityQuery implements Serializable {
 	}
 
 	/**
+	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式
 	 * @TODO 用map形式传参，EntityQuery.create().values(map) 模式也可以兼容
 	 * @param paramsMap
 	 * @return
 	 */
+	@Deprecated
 	public EntityQuery paramsMap(Map<String, Object> paramsMap) {
 		innerModel.values = new Object[] { new IgnoreKeyCaseMap(paramsMap) };
 		return this;

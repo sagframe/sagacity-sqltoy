@@ -55,7 +55,7 @@ public class QueryExecutor implements Serializable {
 	/**
 	 * @TODO sql和以entity对象实体传参模式
 	 * @param sql
-	 * @param entity
+	 * @param entity 对象传参(可以是任意VO对象)
 	 * @throws Exception
 	 */
 	public QueryExecutor(String sql, Serializable entity) {
@@ -152,7 +152,6 @@ public class QueryExecutor implements Serializable {
 			}
 		} else {
 			innerModel.paramsValue = paramsValue;
-			innerModel.shardingParamsValue = paramsValue;
 		}
 	}
 
@@ -345,10 +344,12 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * @see 5.1.9 启动 EntityQuery.create().values(map)模式传参模式
 	 * @TODO 用map形式传参
 	 * @param paramsMap
 	 * @return
 	 */
+	@Deprecated
 	public QueryExecutor paramsMap(Map<String, Object> paramsMap) {
 		innerModel.entity = new IgnoreKeyCaseMap(paramsMap);
 		return this;

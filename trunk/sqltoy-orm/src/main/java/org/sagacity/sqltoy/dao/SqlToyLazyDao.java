@@ -637,7 +637,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 批量集合通过sql进行修改操作,调用:batchUpdate(sqlId,List)
 	 * @param sqlOrNamedSql
-	 * @param dataSet
+	 * @param dataSet 支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map> 形式(sql中:paramName传参)
 	 * @return
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet);
@@ -649,7 +649,7 @@ public interface SqlToyLazyDao {
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
 	 * @param sqlOrNamedSql
-	 * @param dataSet 支持List<List>  List<VO>、List<Map> 
+	 * @param dataSet 支持List<List>、List<Object[]>(sql中?传参) ;List<VO>、List<Map> 形式(sql中:paramName传参)
 	 * @param autoCommit    (一般为null)
 	 */
 	public Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final Boolean autoCommit);

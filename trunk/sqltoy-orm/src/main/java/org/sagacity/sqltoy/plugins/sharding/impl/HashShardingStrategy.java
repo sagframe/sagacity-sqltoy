@@ -9,6 +9,8 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -17,7 +19,7 @@ import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
  * @version v1.0,Date:2017年11月1日
  */
 public class HashShardingStrategy implements ShardingStrategy {
-
+	private final static Logger logger = LoggerFactory.getLogger(HashShardingStrategy.class);
 	private HashMap<String, String> dataSourceMap = new HashMap<String, String>();
 
 	private HashMap<String, String> tableMap = new HashMap<String, String>();
@@ -49,7 +51,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		return tableMap.get(Integer.toString(hashCode % tableMode));
+		String modeKey = Integer.toString(hashCode % tableMode);
+		logger.debug("分表取得modeKey:{},tableName:{}", modeKey, tableMap.get(modeKey));
+		return tableMap.get(modeKey);
 	}
 
 	/*
@@ -70,7 +74,9 @@ public class HashShardingStrategy implements ShardingStrategy {
 		// 单值hash取模
 		Object shardingValue = paramsMap.values().iterator().next();
 		int hashCode = shardingValue.hashCode();
-		shardingModel.setDataSourceName(dataSourceMap.get(Integer.toString(hashCode % dataSourceMode)));
+		String modeKey = Integer.toString(hashCode % dataSourceMode);
+		shardingModel.setDataSourceName(dataSourceMap.get(modeKey));
+		logger.debug("分库取得modeKey:{},dataSourceName:{}", modeKey, shardingModel.getDataSourceName());
 		return shardingModel;
 	}
 
