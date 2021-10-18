@@ -135,7 +135,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testGetParamNames() throws Exception {
-		String sql = "select * from table where status=:s #[and id=:单据_编号_id] and name like @value(:name.id[i]) #[and status=:status]@loop(:group.staffIds,:group.staffIds[i].id)";
+		String sql = "select * from table where a=:a1_a and status=:staff.工号_id #[and id=:单据_编号_id] and name like @value(:name.id[i]) #[and status=:status]@loop(:group.staffIds,:group.staffIds[i].id)";
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}
