@@ -21,9 +21,19 @@ public class DataAuthFilterConfig implements Serializable {
 	private Object values;
 
 	/**
+	 * 全选值标记(比如页面选择产品线,其中包含一个全选项(比如值标记为-1)),如空白或null则无需设置
+	 */
+	private Object choiceAllValue;
+
+	/**
 	 * 是否强制约束数据授权范围，比如:授权机构是A、B、C,而前端传递过滤的参数是C、D,当强制约束时就抛出数据越权异常
 	 */
 	private boolean isForcelimit = true;
+
+	/**
+	 * 是否忽视类型进行越权值对比(如传递的是string,实际授权数据是BigInteger)
+	 */
+	private boolean ignoreType = false;
 
 	public Object getValues() {
 		return values;
@@ -40,6 +50,24 @@ public class DataAuthFilterConfig implements Serializable {
 
 	public DataAuthFilterConfig setForcelimit(boolean isForcelimit) {
 		this.isForcelimit = isForcelimit;
+		return this;
+	}
+
+	public Object getChoiceAllValue() {
+		return choiceAllValue;
+	}
+
+	public DataAuthFilterConfig setChoiceAllValue(Object choiceAllValue) {
+		this.choiceAllValue = choiceAllValue;
+		return this;
+	}
+
+	public boolean isIgnoreType() {
+		return ignoreType;
+	}
+
+	public DataAuthFilterConfig setIgnoreType(boolean ignoreType) {
+		this.ignoreType = ignoreType;
 		return this;
 	}
 

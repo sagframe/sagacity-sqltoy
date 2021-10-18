@@ -15,6 +15,8 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -23,6 +25,11 @@ import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
  * @version v1.0,Date:2021年10月11日
  */
 public class QueryExecutorBuilder {
+	/**
+	 * 定义日志
+	 */
+	protected final static Logger logger = LoggerFactory.getLogger(QueryExecutorBuilder.class);
+
 	/**
 	 * @TODO 统一对QueryExecutor中的设置进行处理，整理最终使用的参数和参数值，便于QueryExecutor直接获取
 	 * @param sqlToyContext
@@ -36,7 +43,7 @@ public class QueryExecutorBuilder {
 		if (fullParamNames == null || fullParamNames.length == 0) {
 			return;
 		}
-		// 校验条件参数合法性
+
 		int paramsNameSize = (extend.paramsName == null) ? -1 : extend.paramsName.length;
 		int paramsValueSize = (extend.paramsValue == null) ? -1 : extend.paramsValue.length;
 		Object[] fullParamValues;
@@ -48,9 +55,9 @@ public class QueryExecutorBuilder {
 				&& !BeanUtil.isBaseDataType(extend.paramsValue[0].getClass())) {
 			fullParamValues = BeanUtil.reflectBeanToAry(extend.paramsValue[0], fullParamNames);
 		} else {
+			// 校验条件参数合法性
 			if (paramsNameSize != paramsValueSize) {
-				throw new IllegalArgumentException(
-						"查询条件参数名称数组和参数值数组长度不一致(友情提示:QueryExecutor对象传参是new QueryExecutor(sql,vo)模式),请检查!");
+				throw new IllegalArgumentException("查询条件参数名称数组和参数值数组长度不一致,请检查!");
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
@@ -78,12 +85,14 @@ public class QueryExecutorBuilder {
 				paramName = fullParamNames[i];
 				if (authFilterMap.containsKey(paramName)) {
 					dataAuthFilter = authFilterMap.get(paramName);
-					// 实际传参值为空，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
-					if (StringUtil.isBlank(fullParamValues[i])) {
+					// 实际传参值为空(或等于全新标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
+					if (StringUtil.isBlank(fullParamValues[i])
+							|| equalChoiceAllValue(fullParamValues[i], dataAuthFilter.getChoiceAllValue())) {
 						// 实现统一传参
 						// if (dataAuthFilter.isForcelimit()) {
 						if (dataAuthFilter.getValues() != null) {
 							fullParamValues[i] = dataAuthFilter.getValues();
+							logger.debug("sqlId={} 参数:{} 前端未传值，由平台统一带入授权值!", sqlToyConfig.getId(), paramName);
 						}
 						// }
 					} else if (dataAuthFilter.getValues() != null) {
@@ -101,7 +110,11 @@ public class QueryExecutorBuilder {
 							Set<Object> authSet = new HashSet<Object>();
 							for (Object item : dataAuthed) {
 								if (item != null) {
-									authSet.add(item);
+									if (dataAuthFilter.isIgnoreType()) {
+										authSet.add(item.toString());
+									} else {
+										authSet.add(item);
+									}
 								}
 							}
 
@@ -114,9 +127,11 @@ public class QueryExecutorBuilder {
 							} else {
 								pointValues = new Object[] { fullParamValues[i] };
 							}
+
 							// 校验实际传递的权限值是否在授权范围内
 							for (Object paramValue : pointValues) {
-								if (paramValue != null && !authSet.contains(paramValue)) {
+								if (paramValue != null && !authSet
+										.contains(dataAuthFilter.isIgnoreType() ? paramValue.toString() : paramValue)) {
 									throw new DataAccessException("参数:[" + paramName + "]参数对应的值:[" + paramValue
 											+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
 								}
@@ -286,5 +301,30 @@ public class QueryExecutorBuilder {
 			result[i] = keyValues.get(wrapParaNames[i]);
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 判断是否等于全选标记值
+	 * @param paramValue
+	 * @param choiceAllValue
+	 * @return
+	 */
+	private static boolean equalChoiceAllValue(Object paramValue, Object choiceAllValue) {
+		if (choiceAllValue == null || paramValue == null) {
+			return false;
+		}
+		Object[] pointValues;
+		if (paramValue.getClass().isArray()) {
+			pointValues = (Object[]) paramValue;
+		} else if (paramValue instanceof Collection) {
+			pointValues = ((Collection) paramValue).toArray();
+		} else {
+			pointValues = new Object[] { paramValue };
+		}
+		if (pointValues.length == 1 && (choiceAllValue.equals(pointValues[0])
+				|| choiceAllValue.toString().equals(pointValues[0].toString()))) {
+			return true;
+		}
+		return false;
 	}
 }

@@ -109,7 +109,7 @@ public class QueryExecutor implements Serializable {
 	public QueryExecutor(String sql, String[] paramsName, Object[] paramsValue) {
 		innerModel.sql = sql;
 		innerModel.paramsName = paramsName;
-		setValues(paramsValue);
+		innerModel.paramsValue = paramsValue;
 	}
 
 	/**
@@ -138,21 +138,8 @@ public class QueryExecutor implements Serializable {
 	 * @return
 	 */
 	public QueryExecutor values(Object... paramsValue) {
-		setValues(paramsValue);
+		innerModel.paramsValue = paramsValue;
 		return this;
-	}
-
-	private void setValues(Object... paramsValue) {
-		// 兼容map
-		if (paramsValue != null && paramsValue.length == 1 && paramsValue[0] != null && paramsValue[0] instanceof Map) {
-			if (paramsValue[0] instanceof IgnoreKeyCaseMap) {
-				innerModel.entity = (IgnoreKeyCaseMap) paramsValue[0];
-			} else {
-				innerModel.entity = new IgnoreKeyCaseMap((Map) paramsValue[0]);
-			}
-		} else {
-			innerModel.paramsValue = paramsValue;
-		}
 	}
 
 	/**
