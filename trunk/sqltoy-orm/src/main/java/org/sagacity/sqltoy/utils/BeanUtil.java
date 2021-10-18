@@ -1426,7 +1426,7 @@ public class BeanUtil {
 				|| clazz.equals(Character.class) || clazz.equals(Short.class) || clazz.equals(BigDecimal.class)
 				|| clazz.equals(BigInteger.class) || clazz.equals(Boolean.class) || clazz.equals(Date.class)
 				|| clazz.equals(LocalDate.class) || clazz.equals(LocalDateTime.class) || clazz.equals(LocalTime.class)
-				|| clazz.equals(Timestamp.class) || clazz.equals(Enum.class) || clazz.isPrimitive());
+				|| clazz.equals(Timestamp.class) || clazz.isPrimitive());
 	}
 
 	/**

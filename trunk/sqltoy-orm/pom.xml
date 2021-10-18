@@ -3,21 +3,21 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sagframe</groupId>
-	<version>4.18.49.RC5</version>
+	<version>4.19.0</version>
 	<name>sagacity-sqltoy</name>
 	<description>sagacity-sqltoy</description>
 	<artifactId>sagacity-sqltoy</artifactId>
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.10</spring-framework.version>
+		<spring-framework.version>5.3.11</spring-framework.version>
 		<spring-data-redis.version>2.5.5</spring-data-redis.version>
 		<spring-data-mongo.version>3.2.5</spring-data-mongo.version>
 		<ojdbc.version>19.12.0.0</ojdbc.version>
-		<ehcache.version>3.9.6</ehcache.version>
+		<ehcache.version>3.9.7</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.14</httpclient-core.version>
-		<elastic-rest-client.version>7.15.0</elastic-rest-client.version>
+		<elastic-rest-client.version>7.15.1</elastic-rest-client.version>
 		<fastjson.version>1.2.78</fastjson.version>
 		<mongo.version>3.12.10</mongo.version>
 		<junit-jupiter.version>5.8.1</junit-jupiter.version>
@@ -68,6 +68,7 @@
 		</repository>
 	</distributionManagement>
 	<dependencies>
+		
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
