@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及 #[@value(:named)
  *         sql] 形式,使得增强sql组织拼装能力}
  * @modify {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
- * @modify {Date:2017-12-7,优化where和and 或or的拼接处理,剔除@if() 基于freemarker的复杂逻辑判断代码}
+ * @modify {Date:2017-12-7,优化where和and 或or的拼接处理}
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
  * @modify {Date:2019-06-26,修复条件参数中有问号的bug，并放开条件参数名称不能是单个字母的限制}
  * @modify {Date:2019-10-11 修复@if(:name==null) 不参与逻辑判断bug }
@@ -121,6 +121,8 @@ public class SqlConfigParseUtils {
 
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+
+	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
 
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
@@ -202,7 +204,6 @@ public class SqlConfigParseUtils {
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
-		String questionDblMark = "#sqltoy_dblqsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
 			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
@@ -210,7 +211,7 @@ public class SqlConfigParseUtils {
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
-			String sql = queryStr.replaceAll(ARG_DBL_REGEX, questionDblMark);
+			String sql = queryStr.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
 			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
@@ -235,9 +236,46 @@ public class SqlConfigParseUtils {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
 		} else {
 			// 将代表json中的?? 符号换回
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionDblMark, ARG_DBL_NAME));
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(DBL_QUESTMARK, ARG_DBL_NAME));
 		}
 		return sqlToyResult;
+	}
+
+	/**
+	 * @TODO 剔除掉sql中的??特殊转义符号，避免对?传参的干扰
+	 * @param sql
+	 * @return
+	 */
+	public static String clearDblQuestMark(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		return sql.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
+	}
+
+	/**
+	 * @TODO 恢复??特殊转义符号
+	 * @param sql
+	 * @return
+	 */
+	public static String recoverDblQuestMark(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		return sql.replaceAll(DBL_QUESTMARK, ARG_DBL_NAME);
+	}
+
+	/**
+	 * @TODO 判断sql中是否有?条件参数
+	 * @param sql
+	 * @return
+	 */
+	public static boolean hasQuestMarkArgs(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return false;
+		}
+		String lastSql = clearDblQuestMark(sql);
+		return lastSql.indexOf(ARG_NAME) != -1;
 	}
 
 	/**
@@ -637,7 +675,6 @@ public class SqlConfigParseUtils {
 		// 通过 in (?) 扩展成 in (?,?,,,)多出来的参数量
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
-
 		String partSql = null;
 		Object[] inParamArray;
 		String argValue;

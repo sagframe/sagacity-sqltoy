@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -101,6 +102,7 @@ public class SqlServerDialect implements Dialect {
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
 			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String realSql = sqlToyConfig.getSql(dialect);
@@ -116,13 +118,20 @@ public class SqlServerDialect implements Dialect {
 		} else {
 			sql.append(realSql);
 		}
+		// update 2021-10-20 提前试算一下实际sql,便于判断最终sql中是否包含order by
+		String judgeOrderSql = sqlToyConfig.isHasFast() ? fastSql : realSql;
+		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
+		if (isNamed) {
+			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
+					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+			judgeOrderSql = tmpResult.getSql();
+		}
 		// order by位置
-		int orderByIndex = StringUtil.matchIndex(sqlToyConfig.isHasFast() ? fastSql : realSql, ORDER_BY);
+		int orderByIndex = StringUtil.matchIndex(judgeOrderSql, ORDER_BY);
 		// 存在order by，继续判断order by 是否在子查询内
 		if (orderByIndex > 0) {
 			// 剔除select 和from 之间内容，剔除sql中所有()之间的内容,即剔除所有子查询，再判断是否有order by
-			orderByIndex = StringUtil
-					.matchIndex(DialectUtils.clearDisturbSql(sqlToyConfig.isHasFast() ? fastSql : realSql), ORDER_BY);
+			orderByIndex = StringUtil.matchIndex(DialectUtils.clearDisturbSql(judgeOrderSql), ORDER_BY);
 		}
 		// 不存在order by或order by存在于子查询中
 		if (orderByIndex < 0) {
@@ -142,7 +151,7 @@ public class SqlServerDialect implements Dialect {
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
 				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
-		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -390,7 +399,7 @@ public class SqlServerDialect implements Dialect {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
 				dialect, tableName);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

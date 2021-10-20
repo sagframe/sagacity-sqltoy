@@ -136,6 +136,11 @@ public class QueryExecutorExtend implements Serializable {
 	 * 锁表
 	 */
 	public LockMode lockMode = null;
+	
+	/**
+	 * 是否构造过条件参数名称
+	 */
+	public boolean wrappedParamNames = false;
 
 	/**
 	 * 自定义countSql
