@@ -472,6 +472,9 @@ public class StringUtil {
 	}
 
 	public static int matchLastIndex(String source, Pattern pattern) {
+		if (source == null) {
+			return -1;
+		}
 		Matcher m = pattern.matcher(source);
 		int matchIndex = -1;
 		while (m.find()) {
@@ -497,6 +500,9 @@ public class StringUtil {
 	 * @return
 	 */
 	public static int matchCnt(String source, Pattern pattern) {
+		if (source == null) {
+			return 0;
+		}
 		Matcher matcher = pattern.matcher(source);
 		int count = 0;
 		while (matcher.find()) {

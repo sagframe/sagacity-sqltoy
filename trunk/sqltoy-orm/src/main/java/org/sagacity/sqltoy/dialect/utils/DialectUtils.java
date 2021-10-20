@@ -425,7 +425,7 @@ public class DialectUtils {
 	 * @param sqlToyConfig
 	 * @param queryExecutor
 	 * @param dialect
-	 * @param wrapNamed     一般在分页需要额外附加参数(参数位置并非最后,无明确顺序)，因此需要重新组织参数名称数组
+	 * @param wrapNamed     只在分页场景下需要将?模式传参统一成:name模式，便于跟后面分页startIndex和endIndex参数结合，从而利用sql预编译功能
 	 * @return
 	 * @throws Exception
 	 */
@@ -433,62 +433,77 @@ public class DialectUtils {
 			QueryExecutor queryExecutor, String dialect, boolean wrapNamed) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 本身就是:named参数形式或sql中没有任何参数
-		boolean isNamed = ((extend.paramsName != null && extend.paramsName.length > 0)
-				|| sqlToyConfig.getSql(dialect).indexOf(SqlConfigParseUtils.ARG_NAME) == -1);
-		SqlToyConfig result;
-		// 判断是否xml文件中定义的sql
-		boolean sameDialect = BeanUtil.equalsIgnoreType(sqlToyContext.getDialect(), dialect, true);
-		
-		// update 2020-08-14
-		// sql中无:paramName,但前端也没有传递条件参数,说明是一个无条件查询
-		if (!isNamed && (extend.paramsValue == null || extend.paramsValue.length == 0)) {
-			isNamed = true;
+		boolean isNamed = false;
+		// sql中是否存在? 形式参数
+		boolean hasQuestArg = SqlConfigParseUtils.hasQuestMarkArgs(sqlToyConfig.getSql());
+		// 在QueryExecutorBuilder中已经对wrappedParamNames做了判断赋值
+		if (!extend.wrappedParamNames) {
+			isNamed = ((extend.paramsName != null && extend.paramsName.length > 0) || !hasQuestArg);
 		}
+		SqlToyConfig result;
+		// 是否有分表
+		boolean hasShardingTable = true;
+		if (sqlToyConfig.getTableShardings().isEmpty() && extend.tableShardings.isEmpty()) {
+			hasShardingTable = false;
+		}
+		// 扩展的缓存翻译
+		boolean hasExtTranslate = (extend.translates.isEmpty()) ? false : true;
 		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
-		if ((isNamed || !wrapNamed) && sameDialect
-				&& (sqlToyConfig.getTableShardings().isEmpty() && extend.tableShardings.isEmpty())) {
-			// 没有自定义缓存翻译直接返回
-			if (extend.translates.isEmpty()) {
-				return sqlToyConfig;
-			}
-			// 存在自定义缓存翻译则需要clone便于后面修改
-			result = sqlToyConfig.clone();
-			result.getTranslateMap().putAll(extend.translates);
-			return result;
+		if ((isNamed || !wrapNamed) && !hasShardingTable && !hasExtTranslate) {
+			return sqlToyConfig;
 		}
 		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
 		result = sqlToyConfig.clone();
-		// 存在自定义缓存翻译
-		if (!extend.translates.isEmpty()) {
+		// 存在扩展的缓存翻译
+		if (hasExtTranslate) {
 			result.getTranslateMap().putAll(extend.translates);
 		}
+		// 备注:后期再考虑分页的startIndex和endIndex是否直接将数字带入sql而不用考虑prepared预编译模式，
+		// 导致封装成本极高，逻辑也非常复杂
+		// ?传参且分页模式
 		if (!isNamed && wrapNamed) {
 			SqlParamsModel sqlParams;
 			// 将?形式的参数替换成:named形式参数
 			// 存在fast查询
 			if (result.isHasFast()) {
-				sqlParams = convertParamsToNamed(result.getFastPreSql(dialect), 0);
-				result.setFastPreSql(sqlParams.getSql());
+				// @fast 前部分
+				String fastPreSql = SqlConfigParseUtils.clearDblQuestMark(result.getFastPreSql(null));
+				sqlParams = convertParamsToNamed(fastPreSql, 0);
+				fastPreSql = SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql());
+				result.setFastPreSql(fastPreSql);
 				int index = sqlParams.getParamCnt();
-				sqlParams = convertParamsToNamed(result.getFastSql(dialect), index);
-				result.setFastSql(sqlParams.getSql());
+				// @fas() 中间部分
+				String fastSql = SqlConfigParseUtils.clearDblQuestMark(result.getFastSql(null));
+				sqlParams = convertParamsToNamed(fastSql, index);
+				fastSql = SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql());
+				result.setFastSql(fastSql);
 				index = index + sqlParams.getParamCnt();
-				sqlParams = convertParamsToNamed(result.getFastTailSql(dialect), index);
-				result.setFastTailSql(sqlParams.getSql());
-				result.setSql(result.getFastPreSql(dialect).concat(" (").concat(result.getFastSql(dialect)).concat(") ")
-						.concat(result.getFastTailSql(dialect)));
+				// 尾部
+				String tailSql = SqlConfigParseUtils.clearDblQuestMark(result.getFastTailSql(null));
+				sqlParams = convertParamsToNamed(tailSql, index);
+				tailSql = SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql());
+				result.setFastTailSql(tailSql);
+
+				// 完整sql
+				result.setSql(fastPreSql.concat(" (").concat(fastSql).concat(") ").concat(tailSql));
+
+				// 构造对应?参数个数的:named模式参数名数组
 				String[] paramsName = new String[index];
 				for (int i = 0; i < index; i++) {
 					paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
 				}
 				result.setParamsName(paramsName);
 			} else {
-				sqlParams = convertParamsToNamed(result.getSql(dialect), 0);
-				result.setSql(sqlParams.getSql());
+				sqlParams = convertParamsToNamed(SqlConfigParseUtils.clearDblQuestMark(result.getSql(null)), 0);
+				result.setSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
 				result.setParamsName(sqlParams.getParamsName());
 			}
-			sqlParams = convertParamsToNamed(result.getCountSql(dialect), 0);
-			result.setCountSql(sqlParams.getSql());
+			
+			//自定义分页的count sql，一般无需定义
+			sqlParams = convertParamsToNamed(SqlConfigParseUtils.clearDblQuestMark(result.getCountSql(null)), 0);
+			result.setCountSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
+			// 清空方言缓存
+			result.clearDialectSql();
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
 		// 以queryExecutor自定义的分表策略覆盖sql xml中定义的
@@ -516,7 +531,7 @@ public class DialectUtils {
 			return sqlParam;
 		}
 		// 以?号对字符串进行切割，并忽视'' 和"" 之间的
-		String[] strs = StringUtil.splitExcludeSymMark(sql, "?", QuesFilters);
+		String[] strs = StringUtil.splitExcludeSymMark(sql, SqlConfigParseUtils.ARG_NAME, QuesFilters);
 		int size = strs.length;
 		if (size == 1) {
 			sqlParam.setSql(sql);

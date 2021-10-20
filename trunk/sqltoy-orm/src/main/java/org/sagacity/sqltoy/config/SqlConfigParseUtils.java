@@ -122,6 +122,8 @@ public class SqlConfigParseUtils {
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
 			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
 
+	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
+
 	// 利用宏模式来完成@loop循环处理
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
@@ -202,7 +204,6 @@ public class SqlConfigParseUtils {
 		SqlParamsModel sqlParam;
 		// 将sql中的问号临时先替换成特殊字符
 		String questionMark = "#sqltoy_qsmark_placeholder#";
-		String questionDblMark = "#sqltoy_dblqsmark_placeholder#";
 		if (isNamedArgs) {
 			String sql = queryStr.replaceAll(ARG_REGEX, questionMark);
 			// update 2020-09-23 处理sql中的循环(提前处理循环，避免循环中存在其它条件参数)
@@ -210,7 +211,7 @@ public class SqlConfigParseUtils {
 			sqlParam = processNamedParamsQuery(sql);
 		} else {
 			// 将sql中的??符号替换成特殊字符,?? 符号在json场景下有特殊含义
-			String sql = queryStr.replaceAll(ARG_DBL_REGEX, questionDblMark);
+			String sql = queryStr.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
 			sqlParam = processNamedParamsQuery(sql);
 		}
 		sqlToyResult.setSql(sqlParam.getSql());
@@ -235,9 +236,46 @@ public class SqlConfigParseUtils {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
 		} else {
 			// 将代表json中的?? 符号换回
-			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionDblMark, ARG_DBL_NAME));
+			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(DBL_QUESTMARK, ARG_DBL_NAME));
 		}
 		return sqlToyResult;
+	}
+
+	/**
+	 * @TODO 剔除掉sql中的??特殊转义符号，避免对?传参的干扰
+	 * @param sql
+	 * @return
+	 */
+	public static String clearDblQuestMark(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		return sql.replaceAll(ARG_DBL_REGEX, DBL_QUESTMARK);
+	}
+
+	/**
+	 * @TODO 恢复??特殊转义符号
+	 * @param sql
+	 * @return
+	 */
+	public static String recoverDblQuestMark(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		return sql.replaceAll(DBL_QUESTMARK, ARG_DBL_NAME);
+	}
+
+	/**
+	 * @TODO 判断sql中是否有?条件参数
+	 * @param sql
+	 * @return
+	 */
+	public static boolean hasQuestMarkArgs(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return false;
+		}
+		String lastSql = clearDblQuestMark(sql);
+		return lastSql.indexOf(ARG_NAME) != -1;
 	}
 
 	/**
