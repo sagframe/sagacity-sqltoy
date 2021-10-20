@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -35,15 +37,19 @@ public class QueryExecutorBuilder {
 	 * @param sqlToyContext
 	 * @param extend
 	 * @param sqlToyConfig
+	 * @param wrapNamedArgs
 	 */
 	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
-			SqlToyConfig sqlToyConfig) {
+			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs) {
+		// 在分页场景下，sql以?模式传参，因分页后续要构造startIndex和endIndex参数，需将?模式全部转成:paramName模式
+		if (wrapParamNames(extend, sqlToyConfig, wrapNamedArgs)) {
+			return;
+		}
 		// 构造实际参数名称，包含sql中的参数名、cacheArgs的参数名、分库、分表的参数名称
 		String[] fullParamNames = wrapFullParamNames(sqlToyConfig.getFullParamNames(), extend, sqlToyConfig);
 		if (fullParamNames == null || fullParamNames.length == 0) {
 			return;
 		}
-
 		int paramsNameSize = (extend.paramsName == null) ? -1 : extend.paramsName.length;
 		int paramsValueSize = (extend.paramsValue == null) ? -1 : extend.paramsValue.length;
 		Object[] fullParamValues;
@@ -324,6 +330,28 @@ public class QueryExecutorBuilder {
 		}
 		if (pointValues.length == 1 && (choiceAllValue.equals(pointValues[0])
 				|| choiceAllValue.toString().equals(pointValues[0].toString()))) {
+			return true;
+		}
+		return false;
+	}
+
+	private static boolean wrapParamNames(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig,
+			boolean wrapNamedArgs) {
+		if (!wrapNamedArgs || sqlToyConfig.isNamedParam()
+				|| (extend.paramsName != null && extend.paramsName.length > 0)) {
+			return false;
+		}
+		// ?参数个数
+		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
+				SqlConfigParseUtils.ARG_REGEX);
+		// 存在?传参
+		if (argCount > 0) {
+			String[] paramsName = new String[argCount];
+			for (int i = 0; i < argCount; i++) {
+				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
+			}
+			extend.paramsName = paramsName;
+			extend.wrappedParamNames = true;
 			return true;
 		}
 		return false;
