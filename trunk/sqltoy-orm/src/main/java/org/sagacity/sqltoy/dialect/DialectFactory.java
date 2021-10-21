@@ -295,8 +295,19 @@ public class DialectFactory {
 					new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sqlToyConfig.getSql(dialect),
-									paramsNamed, paramsValue);
+							String sql = sqlToyConfig.getSql(dialect);
+							//?模式sql 验证参数合法性
+							if (!sqlToyConfig.isNamedParam()) {
+								int paramCnt = (paramsValue == null) ? 0 : paramsValue.length;
+								// sql中?参数数量
+								int argsCnt = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sql),
+										SqlConfigParseUtils.ARG_REGEX);
+								if (argsCnt != paramCnt) {
+									throw new IllegalArgumentException(
+											"executeSql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
+								}
+							}
+							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, paramsNamed, paramsValue);
 							// 替换sharding table
 							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
 									sqlToyConfig.getTableShardings(), paramsNamed, paramsValue);
