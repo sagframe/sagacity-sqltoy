@@ -63,7 +63,8 @@ public class QueryExecutorBuilder {
 		} else {
 			// 校验条件参数合法性
 			if (paramsNameSize != paramsValueSize) {
-				throw new IllegalArgumentException("查询条件参数名称数组和参数值数组长度不一致,请检查!");
+				throw new IllegalArgumentException(
+						"查询条件参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
@@ -337,21 +338,29 @@ public class QueryExecutorBuilder {
 
 	private static boolean wrapParamNames(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig,
 			boolean wrapNamedArgs) {
-		if (!wrapNamedArgs || sqlToyConfig.isNamedParam()
-				|| (extend.paramsName != null && extend.paramsName.length > 0)) {
+		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
 			return false;
 		}
+
 		// ?参数个数
 		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
 				SqlConfigParseUtils.ARG_REGEX);
 		// 存在?传参
 		if (argCount > 0) {
-			String[] paramsName = new String[argCount];
-			for (int i = 0; i < argCount; i++) {
-				paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
+			//验证传参数量合法性
+			int valuesSize = (extend.paramsValue == null) ? 0 : extend.paramsValue.length;
+			if (argCount != valuesSize) {
+				throw new IllegalArgumentException("查询条件参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
 			}
-			extend.paramsName = paramsName;
-			extend.wrappedParamNames = true;
+			//分页需要将?转参数名称模式
+			if (wrapNamedArgs) {
+				String[] paramsName = new String[argCount];
+				for (int i = 0; i < argCount; i++) {
+					paramsName[i] = SqlToyConstants.DEFAULT_PARAM_NAME + (i + 1);
+				}
+				extend.paramsName = paramsName;
+				extend.wrappedParamNames = true;
+			}
 			return true;
 		}
 		return false;

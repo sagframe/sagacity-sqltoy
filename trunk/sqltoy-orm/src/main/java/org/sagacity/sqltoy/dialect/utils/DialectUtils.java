@@ -157,6 +157,10 @@ public class DialectUtils {
 		int extendSize = (endIndex == null) ? 1 : 2;
 		if (sqlToyConfig.isNamedParam()) {
 			paramLength = paramsNamed.length;
+			// 防止传null
+			if (paramsValue == null) {
+				paramsValue = new Object[paramLength];
+			}
 			realParamValue = new Object[paramLength + extendSize];
 			// 设置开始记录和截止记录参数名称和对应的值
 			realParamNamed = new String[paramLength + extendSize];
@@ -171,6 +175,10 @@ public class DialectUtils {
 				realParamValue[paramLength + 1] = endIndex;
 			}
 		} else {
+			int totalParamCnt = getParamsCount(sqlToyConfig.getSql(null));
+			if (paramsValue == null && totalParamCnt > 0) {
+				paramsValue = new Object[totalParamCnt];
+			}
 			int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql(null));
 			int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql(null));
 			paramLength = (paramsValue == null) ? 0 : paramsValue.length;
@@ -498,8 +506,8 @@ public class DialectUtils {
 				result.setSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
 				result.setParamsName(sqlParams.getParamsName());
 			}
-			
-			//自定义分页的count sql，一般无需定义
+
+			// 自定义分页的count sql，一般无需定义
 			sqlParams = convertParamsToNamed(SqlConfigParseUtils.clearDblQuestMark(result.getCountSql(null)), 0);
 			result.setCountSql(SqlConfigParseUtils.recoverDblQuestMark(sqlParams.getSql()));
 			// 清空方言缓存
@@ -2494,11 +2502,12 @@ public class DialectUtils {
 		if (StringUtil.isBlank(queryStr)) {
 			return 0;
 		}
+		String sql = SqlConfigParseUtils.clearDblQuestMark(queryStr);
 		// 判断sql中参数模式，?或:named 模式，两种模式不可以混合使用
-		if (queryStr.indexOf("?") == -1) {
-			return StringUtil.matchCnt(queryStr, SqlToyConstants.SQL_NAMED_PATTERN);
+		if (sql.indexOf(SqlConfigParseUtils.ARG_NAME) == -1) {
+			return StringUtil.matchCnt(sql, SqlToyConstants.SQL_NAMED_PATTERN);
 		}
-		return StringUtil.matchCnt(queryStr, "\\?");
+		return StringUtil.matchCnt(sql, SqlConfigParseUtils.ARG_REGEX);
 	}
 
 	/**
