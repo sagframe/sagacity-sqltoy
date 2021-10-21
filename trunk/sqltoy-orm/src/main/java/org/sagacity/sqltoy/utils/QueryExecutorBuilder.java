@@ -63,7 +63,8 @@ public class QueryExecutorBuilder {
 		} else {
 			// 校验条件参数合法性
 			if (paramsNameSize != paramsValueSize) {
-				throw new IllegalArgumentException("查询条件参数名称数组和参数值数组长度不一致,请检查!");
+				throw new IllegalArgumentException(
+						"查询条件参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
@@ -352,6 +353,10 @@ public class QueryExecutorBuilder {
 			}
 			extend.paramsName = paramsName;
 			extend.wrappedParamNames = true;
+			int valuesSize = (extend.paramsValue == null) ? 0 : extend.paramsValue.length;
+			if (argCount != valuesSize) {
+				throw new IllegalArgumentException("查询条件参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
+			}
 			return true;
 		}
 		return false;
