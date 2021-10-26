@@ -37,7 +37,7 @@ public class QueryExecutorBuilder {
 	 * @param sqlToyContext
 	 * @param extend
 	 * @param sqlToyConfig
-	 * @param wrapNamedArgs
+	 * @param wrapNamedArgs 分页场景需要额外将?模式传参转换成:named模式
 	 */
 	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
 			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs) {

@@ -296,7 +296,7 @@ public class DialectFactory {
 						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String sql = sqlToyConfig.getSql(dialect);
-							//?模式sql 验证参数合法性
+							// ?模式sql 验证参数合法性
 							if (!sqlToyConfig.isNamedParam()) {
 								int paramCnt = (paramsValue == null) ? 0 : paramsValue.length;
 								// sql中?参数数量
@@ -380,6 +380,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -588,6 +589,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -651,6 +653,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -919,6 +922,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -996,6 +1000,7 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
@@ -1058,6 +1063,7 @@ public class DialectFactory {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
 		try {
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
