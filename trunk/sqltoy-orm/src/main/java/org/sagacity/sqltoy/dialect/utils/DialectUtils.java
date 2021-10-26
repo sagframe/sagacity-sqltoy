@@ -442,13 +442,12 @@ public class DialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 本身就是:named参数形式或sql中没有任何参数
 		boolean isNamed = false;
-		// sql中是否存在? 形式参数
-		boolean hasQuestArg = SqlConfigParseUtils.hasQuestMarkArgs(sqlToyConfig.getSql());
 		// 在QueryExecutorBuilder中已经对wrappedParamNames做了判断赋值
 		if (!extend.wrappedParamNames) {
+			// sql中是否存在? 形式参数
+			boolean hasQuestArg = SqlConfigParseUtils.hasQuestMarkArgs(sqlToyConfig.getSql());
 			isNamed = ((extend.paramsName != null && extend.paramsName.length > 0) || !hasQuestArg);
 		}
-		SqlToyConfig result;
 		// 是否有分表
 		boolean hasShardingTable = true;
 		if (sqlToyConfig.getTableShardings().isEmpty() && extend.tableShardings.isEmpty()) {
@@ -456,12 +455,12 @@ public class DialectUtils {
 		}
 		// 扩展的缓存翻译
 		boolean hasExtTranslate = (extend.translates.isEmpty()) ? false : true;
-		// sql条件以:named形式并且当前数据库类型跟sqltoyContext配置的数据库类型一致
+		// sql条件以:named形式、无分表、无扩展缓存翻译则不存在对SqlToyConfig 内容的修改，直接返回
 		if ((isNamed || !wrapNamed) && !hasShardingTable && !hasExtTranslate) {
 			return sqlToyConfig;
 		}
 		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
-		result = sqlToyConfig.clone();
+		SqlToyConfig result = sqlToyConfig.clone();
 		// 存在扩展的缓存翻译
 		if (hasExtTranslate) {
 			result.getTranslateMap().putAll(extend.translates);
@@ -1016,6 +1015,8 @@ public class DialectUtils {
 	 * @param dbType
 	 * @param tableName
 	 * @param lockSqlHandler
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
@@ -1258,6 +1259,7 @@ public class DialectUtils {
 	 * @param generateSqlHandler
 	 * @param generateSavePKStrategy
 	 * @param conn
+	 * @param dbType
 	 * @return
 	 * @throws Exception
 	 */

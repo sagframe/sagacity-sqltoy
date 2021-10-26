@@ -37,7 +37,7 @@ public class QueryExecutorBuilder {
 	 * @param sqlToyContext
 	 * @param extend
 	 * @param sqlToyConfig
-	 * @param wrapNamedArgs
+	 * @param wrapNamedArgs 分页场景需要额外将?模式传参转换成:named模式
 	 */
 	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
 			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs) {
@@ -336,12 +336,19 @@ public class QueryExecutorBuilder {
 		return false;
 	}
 
+	/**
+	 * @TODO 组织在分页查询时，sql中以?模式传参，统一成:named 模式，便于后面插入分页开始行截止行参数，并使用pst预编译功能
+	 * @param extend
+	 * @param sqlToyConfig
+	 * @param wrapNamedArgs
+	 * @return
+	 */
 	private static boolean wrapParamNames(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig,
 			boolean wrapNamedArgs) {
+		//:named 模式传参
 		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
 			return false;
 		}
-
 		// ?参数个数
 		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
 				SqlConfigParseUtils.ARG_REGEX);

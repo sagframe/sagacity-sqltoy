@@ -924,6 +924,9 @@ public class SqlUtil {
 			logger.error("执行batchUpdateByJdbc 数据为空，sql={}", updateSql);
 			return 0L;
 		}
+		// sql中?参数数量
+		int argsCnt = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(updateSql),
+				SqlConfigParseUtils.ARG_REGEX);
 		PreparedStatement pst = null;
 		long updateCount = 0;
 		try {
@@ -945,6 +948,7 @@ public class SqlUtil {
 			int index = 0;
 			// 批处理计数器
 			int meter = 0;
+			int paramCnt;
 			for (Iterator iter = rowDatas.iterator(); iter.hasNext();) {
 				rowData = iter.next();
 				index++;
@@ -956,12 +960,24 @@ public class SqlUtil {
 						// 使用对象properties方式传值
 						if (rowData.getClass().isArray()) {
 							Object[] tmp = CollectionUtil.convertArray(rowData);
-							for (int i = 0; i < tmp.length; i++) {
+							paramCnt = tmp.length;
+							// 第一次做长度校验
+							if (meter == 0 && argsCnt != paramCnt) {
+								throw new IllegalArgumentException(
+										"batchUpdate sql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
+							}
+							for (int i = 0; i < paramCnt; i++) {
 								setParamValue(typeHandler, conn, dbType, pst, tmp[i],
 										updateTypes == null ? -1 : updateTypes[i], i + 1);
 							}
 						} else if (rowData instanceof Collection) {
 							Collection tmp = (Collection) rowData;
+							paramCnt = tmp.size();
+							// 第一次做长度校验
+							if (meter == 0 && argsCnt != paramCnt) {
+								throw new IllegalArgumentException(
+										"batchUpdate sql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
+							}
 							int tmpIndex = 0;
 							for (Iterator tmpIter = tmp.iterator(); tmpIter.hasNext();) {
 								setParamValue(typeHandler, conn, dbType, pst, tmpIter.next(),
