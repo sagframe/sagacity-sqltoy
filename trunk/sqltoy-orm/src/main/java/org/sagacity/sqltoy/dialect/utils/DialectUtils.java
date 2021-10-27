@@ -139,14 +139,7 @@ public class DialectUtils {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
 		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
-		// update 2020-09-11
-		// 避免无:name模式的sql,通过参数名称和values传参,当paramNames不为空将参数设置为null
-		if (sqlToyConfig.getParamsName() == null || sqlToyConfig.getParamsName().length == 0) {
-			if (paramsNamed != null && paramsNamed.length > 0) {
-				paramsNamed = new String[] {};
-				paramsValue = new Object[] {};
-			}
-		}
+		//目前只在取top记录时使用(传null)
 		if (startIndex == null && endIndex == null) {
 			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
 		}
@@ -175,34 +168,42 @@ public class DialectUtils {
 				realParamValue[paramLength + 1] = endIndex;
 			}
 		} else {
-			// 防止paramsValue传null
 			int totalParamCnt = getParamsCount(sqlToyConfig.getSql(null));
-			if (paramsValue == null && totalParamCnt > 0) {
-				paramsValue = new Object[totalParamCnt];
-			}
-			int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql(null));
-			int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql(null));
-			paramLength = (paramsValue == null) ? 0 : paramsValue.length;
-			realParamValue = new Object[paramLength + extendSize];
-			if (sqlToyConfig.isHasFast()) {
-				if (preSqlParamCnt > 0) {
-					System.arraycopy(paramsValue, 0, realParamValue, 0, preSqlParamCnt);
-				}
-				realParamValue[preSqlParamCnt] = startIndex;
+			// sql中没有?条件参数
+			if (totalParamCnt == 0) {
+				realParamValue = new Object[extendSize];
+				realParamValue[0] = startIndex;
 				if (extendSize == 2) {
-					realParamValue[preSqlParamCnt + 1] = endIndex;
-				}
-				if (tailSqlParamCnt > 0) {
-					System.arraycopy(paramsValue, preSqlParamCnt, realParamValue, preSqlParamCnt + extendSize,
-							tailSqlParamCnt);
+					realParamValue[1] = endIndex;
 				}
 			} else {
-				if (paramLength > 0) {
-					System.arraycopy(paramsValue, 0, realParamValue, 0, paramLength);
+				if (paramsValue == null && totalParamCnt > 0) {
+					paramsValue = new Object[totalParamCnt];
 				}
-				realParamValue[paramLength] = startIndex;
-				if (extendSize == 2) {
-					realParamValue[paramLength + 1] = endIndex;
+				int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql(null));
+				int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql(null));
+				paramLength = (paramsValue == null) ? 0 : paramsValue.length;
+				realParamValue = new Object[paramLength + extendSize];
+				if (sqlToyConfig.isHasFast()) {
+					if (preSqlParamCnt > 0) {
+						System.arraycopy(paramsValue, 0, realParamValue, 0, preSqlParamCnt);
+					}
+					realParamValue[preSqlParamCnt] = startIndex;
+					if (extendSize == 2) {
+						realParamValue[preSqlParamCnt + 1] = endIndex;
+					}
+					if (tailSqlParamCnt > 0) {
+						System.arraycopy(paramsValue, preSqlParamCnt, realParamValue, preSqlParamCnt + extendSize,
+								tailSqlParamCnt);
+					}
+				} else {
+					if (paramLength > 0) {
+						System.arraycopy(paramsValue, 0, realParamValue, 0, paramLength);
+					}
+					realParamValue[paramLength] = startIndex;
+					if (extendSize == 2) {
+						realParamValue[paramLength + 1] = endIndex;
+					}
 				}
 			}
 		}
