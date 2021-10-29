@@ -313,7 +313,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(sqlToyConfig),
-									extend.getParamsValue(sqlToyContext, sqlToyConfig));
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
@@ -418,15 +418,18 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
-							// 总记录数为零(主要针对sybase & informix 数据库)
+							QueryResult queryResult;
+							// 总记录数为零
 							if (totalCount != null && totalCount == 0) {
-								this.setResult(new QueryResult());
+								queryResult = new QueryResult();
+								queryResult.setRows(new ArrayList());
+								this.setResult(queryResult);
 								logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
 										sqlToyConfig.getIdOrSql());
 								return;
 							}
-							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
-									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
+							queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext, realSqlToyConfig,
+									queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
 									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
