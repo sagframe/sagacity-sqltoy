@@ -409,8 +409,18 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
-							QueryResult queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext,
-									realSqlToyConfig, queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
+							QueryResult queryResult;
+							// 总记录数为零
+							if (totalCount != null && totalCount == 0) {
+								queryResult = new QueryResult();
+								queryResult.setRows(new ArrayList());
+								this.setResult(queryResult);
+								logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
+										sqlToyConfig.getIdOrSql());
+								return;
+							}
+							queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext, realSqlToyConfig,
+									queryExecutor, totalCount, randomCnt, conn, dbType, dialect,
 									getFetchSize(extend.fetchSize), extend.maxRows);
 							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
 								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
