@@ -445,7 +445,7 @@ public class DefaultDialectUtils {
 	private static Object[] processFieldValues(final SqlToyContext sqlToyContext, EntityMeta entityMeta,
 			Serializable entity) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
 		// 主键采用assign方式赋予，则调用generator产生id并赋予其值

@@ -50,6 +50,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -116,7 +117,6 @@ public class DialectUtils {
 
 	private static final HashMap<String, String> QuesFilters = new HashMap<String, String>() {
 		private static final long serialVersionUID = 7135705054559913831L;
-
 		{
 			put("'", "'");
 			put("\"", "\"");
@@ -179,20 +179,19 @@ public class DialectUtils {
 				if (paramsValue == null && totalParamCnt > 0) {
 					paramsValue = new Object[totalParamCnt];
 				}
-				int preSqlParamCnt = getParamsCount(sqlToyConfig.getFastPreSql(null));
-				int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql(null));
 				paramLength = (paramsValue == null) ? 0 : paramsValue.length;
 				realParamValue = new Object[paramLength + extendSize];
 				if (sqlToyConfig.isHasFast()) {
-					if (preSqlParamCnt > 0) {
-						System.arraycopy(paramsValue, 0, realParamValue, 0, preSqlParamCnt);
-					}
-					realParamValue[preSqlParamCnt] = startIndex;
+					int tailSqlParamCnt = getParamsCount(sqlToyConfig.getFastTailSql(null));
+					// @fast() tail 前面部分参数数量
+					int tailPreParamCnt = totalParamCnt - tailSqlParamCnt;
+					System.arraycopy(paramsValue, 0, realParamValue, 0, tailPreParamCnt);
+					realParamValue[tailPreParamCnt] = startIndex;
 					if (extendSize == 2) {
-						realParamValue[preSqlParamCnt + 1] = endIndex;
+						realParamValue[tailPreParamCnt + 1] = endIndex;
 					}
 					if (tailSqlParamCnt > 0) {
-						System.arraycopy(paramsValue, preSqlParamCnt, realParamValue, preSqlParamCnt + extendSize,
+						System.arraycopy(paramsValue, tailPreParamCnt, realParamValue, tailPreParamCnt + extendSize,
 								tailSqlParamCnt);
 					}
 				} else {
@@ -449,26 +448,22 @@ public class DialectUtils {
 			boolean hasQuestArg = SqlConfigParseUtils.hasQuestMarkArgs(sqlToyConfig.getSql());
 			isNamed = ((extend.paramsName != null && extend.paramsName.length > 0) || !hasQuestArg);
 		}
-		// 是否有分表
-		boolean hasShardingTable = true;
-		if (sqlToyConfig.getTableShardings().isEmpty() && extend.tableShardings.isEmpty()) {
-			hasShardingTable = false;
+		// 以queryExecutor自定义的分表策略覆盖sql xml中定义的
+		List<ShardingStrategyConfig> tableShardings = sqlToyConfig.getTableShardings();
+		if (!extend.tableShardings.isEmpty()) {
+			tableShardings = extend.tableShardings;
 		}
-		// 扩展的缓存翻译
-		boolean hasExtTranslate = (extend.translates.isEmpty()) ? false : true;
 		// sql条件以:named形式、无分表、无扩展缓存翻译则不存在对SqlToyConfig 内容的修改，直接返回
-		if ((isNamed || !wrapNamed) && !hasShardingTable && !hasExtTranslate) {
+		if ((isNamed || !wrapNamed) && tableShardings.isEmpty() && extend.translates.isEmpty()) {
 			return sqlToyConfig;
 		}
 		// clone sqltoyConfig避免直接修改原始的sql配置对后续执行产生影响
 		SqlToyConfig result = sqlToyConfig.clone();
 		// 存在扩展的缓存翻译
-		if (hasExtTranslate) {
+		if (!extend.translates.isEmpty()) {
 			result.getTranslateMap().putAll(extend.translates);
 		}
-		// 备注:后期再考虑分页的startIndex和endIndex是否直接将数字带入sql而不用考虑prepared预编译模式，
-		// 导致封装成本极高，逻辑也非常复杂
-		// ?传参且分页模式
+		// ?传参且分页模式,原因是分页存在取count场景，在@fast()情况下无法断定paramValues的值跟?的参数对应关系
 		if (!isNamed && wrapNamed) {
 			SqlParamsModel sqlParams;
 			// 将?形式的参数替换成:named形式参数
@@ -514,11 +509,7 @@ public class DialectUtils {
 			result.clearDialectSql();
 			SqlConfigParseUtils.processFastWith(result, dialect);
 		}
-		// 以queryExecutor自定义的分表策略覆盖sql xml中定义的
-		List<ShardingStrategyConfig> tableShardings = sqlToyConfig.getTableShardings();
-		if (!extend.tableShardings.isEmpty()) {
-			tableShardings = extend.tableShardings;
-		}
+
 		// sharding table 替换sql中的表名称
 		ShardingUtils.replaceShardingSqlToyConfig(sqlToyContext, result, tableShardings, dialect,
 				extend.getTableShardingParamsName(sqlToyConfig), extend.getTableShardingParamsValue(sqlToyConfig));
@@ -581,8 +572,8 @@ public class DialectUtils {
 			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, Boolean autoCommit)
 			throws Exception {
 		// 重新构造修改或保存的属性赋值反调
-		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(sqlToyContext, entityMeta.getIdArray(),
-				reflectPropsHandler, forceUpdateFields);
+		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropsHandler,
+				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -651,7 +642,7 @@ public class DialectUtils {
 			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropsHandler);
+		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -1278,7 +1269,7 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, null);
+		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		// 这里不体现defaultValue 值，产生的insert sql语句中已经处理了default值问题
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
 		boolean needUpdatePk = false;
@@ -1447,7 +1438,7 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(sqlToyContext, reflectPropsHandler);
+		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1541,7 +1532,8 @@ public class DialectUtils {
 		}
 
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, null, forceUpdateFields);
+		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
+				sqlToyContext.getUnifyFieldsHandler());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
@@ -1877,7 +1869,8 @@ public class DialectUtils {
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getUpdateReflectHandler(sqlToyContext, reflectPropsHandler, forceUpdateFields);
+		ReflectPropsHandler handler = getUpdateReflectHandler(reflectPropsHandler, forceUpdateFields,
+				sqlToyContext.getUnifyFieldsHandler());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		// 判断主键是否为空
@@ -2283,6 +2276,7 @@ public class DialectUtils {
 	 * @param outParamTypes
 	 * @param conn
 	 * @param dbType
+	 * @param fetchSize
 	 * @return
 	 * @throws Exception
 	 */
@@ -2347,21 +2341,21 @@ public class DialectUtils {
 
 	/**
 	 * @todo 构造新增记录参数反射赋值处理器
-	 * @param sqlToyContext
 	 * @param preHandler
+	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	public static ReflectPropsHandler getAddReflectHandler(SqlToyContext sqlToyContext,
-			final ReflectPropsHandler preHandler) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null) {
+	public static ReflectPropsHandler getAddReflectHandler(final ReflectPropsHandler preHandler,
+			IUnifyFieldsHandler unifyFieldsHandler) {
+		if (unifyFieldsHandler == null) {
 			return preHandler;
 		}
-		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().createUnifyFields();
+		final Map<String, Object> keyValues = unifyFieldsHandler.createUnifyFields();
 		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
 		}
 		// 强制修改字段赋值
-		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
+		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		ReflectPropsHandler handler = new ReflectPropsHandler() {
 			@Override
@@ -2385,17 +2379,17 @@ public class DialectUtils {
 
 	/**
 	 * @todo 构造修改记录参数反射赋值处理器
-	 * @param sqlToyContext
 	 * @param preHandler
 	 * @param forceUpdateProps
+	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	public static ReflectPropsHandler getUpdateReflectHandler(SqlToyContext sqlToyContext,
-			final ReflectPropsHandler preHandler, String[] forceUpdateProps) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null) {
+	public static ReflectPropsHandler getUpdateReflectHandler(final ReflectPropsHandler preHandler,
+			String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
+		if (unifyFieldsHandler == null) {
 			return preHandler;
 		}
-		final Map<String, Object> keyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
+		final Map<String, Object> keyValues = unifyFieldsHandler.updateUnifyFields();
 		if (keyValues == null || keyValues.isEmpty()) {
 			return preHandler;
 		}
@@ -2407,7 +2401,7 @@ public class DialectUtils {
 			}
 		}
 		// 强制修改字段赋值
-		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
+		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		ReflectPropsHandler handler = new ReflectPropsHandler() {
 			@Override
@@ -2435,19 +2429,19 @@ public class DialectUtils {
 
 	/**
 	 * @todo 构造创建和修改记录时的反射
-	 * @param sqlToyContext
 	 * @param idFields
 	 * @param prepHandler
 	 * @param forceUpdateProps
+	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	public static ReflectPropsHandler getSaveOrUpdateReflectHandler(SqlToyContext sqlToyContext,
-			final String[] idFields, final ReflectPropsHandler prepHandler, String[] forceUpdateProps) {
-		if (sqlToyContext.getUnifyFieldsHandler() == null) {
+	public static ReflectPropsHandler getSaveOrUpdateReflectHandler(final String[] idFields,
+			final ReflectPropsHandler prepHandler, String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
+		if (unifyFieldsHandler == null) {
 			return prepHandler;
 		}
-		final Map<String, Object> addKeyValues = sqlToyContext.getUnifyFieldsHandler().createUnifyFields();
-		final Map<String, Object> updateKeyValues = sqlToyContext.getUnifyFieldsHandler().updateUnifyFields();
+		final Map<String, Object> addKeyValues = unifyFieldsHandler.createUnifyFields();
+		final Map<String, Object> updateKeyValues = unifyFieldsHandler.updateUnifyFields();
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
 			return prepHandler;
@@ -2460,7 +2454,7 @@ public class DialectUtils {
 			}
 		}
 		// 强制修改字段赋值
-		IgnoreCaseSet tmpSet = sqlToyContext.getUnifyFieldsHandler().forceUpdateFields();
+		IgnoreCaseSet tmpSet = unifyFieldsHandler.forceUpdateFields();
 		final IgnoreCaseSet forceUpdateFields = (tmpSet == null) ? new IgnoreCaseSet() : tmpSet;
 		final int idLength = (idFields == null) ? 0 : idFields.length;
 		// 构造一个新的包含update和save 的字段处理
@@ -2501,7 +2495,7 @@ public class DialectUtils {
 	 * @param queryStr
 	 * @return
 	 */
-	private static int getParamsCount(String queryStr) {
+	public static int getParamsCount(String queryStr) {
 		if (StringUtil.isBlank(queryStr)) {
 			return 0;
 		}
@@ -2531,4 +2525,121 @@ public class DialectUtils {
 		}
 		return false;
 	}
+
+	/**
+	 * @TODO 针对批量sql执行，判断是新增还是修改，并统一填充公共字段信息
+	 * @param sql
+	 * @param reflectPropsHandler
+	 * @param unifyFieldsHandler
+	 * @return
+	 */
+	public static ReflectPropsHandler wrapReflectWithUnifyFields(String sql, ReflectPropsHandler reflectPropsHandler,
+			IUnifyFieldsHandler unifyFieldsHandler) {
+		if ((reflectPropsHandler == null && unifyFieldsHandler == null) || StringUtil.isBlank(sql)) {
+			return null;
+		}
+		ReflectPropsHandler result = null;
+		// insert 语句
+		if (StringUtil.matches(sql.trim(), "(?i)^insert\\s+into\\W")) {
+			result = getAddReflectHandler(reflectPropsHandler, unifyFieldsHandler);
+		} // update
+		else if (StringUtil.matches(sql.trim(), "(?i)^update\\s+")
+				|| StringUtil.matches(sql.trim(), "(?i)^merge\\s+into\\W")
+				|| StringUtil.matches(sql.trim(), "(?i)^replace\\s+into\\W")) {
+			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
+		}
+		return result;
+		// return getDataAuthReflectHandler(result,
+		// unifyFieldsHandler.dataAuthFilters());
+	}
+
+	/**
+	 * @TODO 构造统一授权数据传参和越权校验反射
+	 * @param preHandler
+	 * @param dataAuthFilters
+	 * @return
+	 */
+//	private static ReflectPropsHandler getDataAuthReflectHandler(final ReflectPropsHandler preHandler,
+//			final IgnoreKeyCaseMap<String, DataAuthFilterConfig> dataAuthFilters) {
+//		if (dataAuthFilters == null || dataAuthFilters.isEmpty()) {
+//			return preHandler;
+//		}
+//		ReflectPropsHandler handler = new ReflectPropsHandler() {
+//			@Override
+//			public void process() {
+//				if (preHandler != null) {
+//					preHandler.setPropertyIndexMap(this.getPropertyIndexMap());
+//					preHandler.setRowIndex(this.getRowIndex());
+//					preHandler.setRowData(this.getRowData());
+//					preHandler.process();
+//				}
+//				Object obj;
+//				String key;
+//				DataAuthFilterConfig dataAuthFilter;
+//				Map<String, Set> switchData = null;
+//				Object[] pointValues;
+//				for (Map.Entry<String, DataAuthFilterConfig> entry : dataAuthFilters.entrySet()) {
+//					key = entry.getKey();
+//					obj = this.getValue(key);
+//					dataAuthFilter = entry.getValue();
+//					// 公共权限数据为空
+//					if (StringUtil.isBlank(obj)) {
+//						if (dataAuthFilter.getValues() != null) {
+//							this.setValue(key, dataAuthFilter.getValues());
+//						}
+//					} // 校验越权
+//					else if (dataAuthFilter.getValues() != null && dataAuthFilter.isForcelimit()) {
+//						if (this.getSwitchValue() == null) {
+//							switchData = new HashMap<String, Set>();
+//							this.setSwitchValue(switchData);
+//						} else {
+//							switchData = (Map<String, Set>) this.getSwitchValue();
+//						}
+//						Set<Object> authSet = switchData.get(key);
+//						if (authSet == null) {
+//							// 允许访问的值
+//							Object[] dataAuthed;
+//							if (dataAuthFilter.getValues().getClass().isArray()) {
+//								dataAuthed = (Object[]) dataAuthFilter.getValues();
+//							} else if (dataAuthFilter.getValues() instanceof Collection) {
+//								dataAuthed = ((Collection) dataAuthFilter.getValues()).toArray();
+//							} else {
+//								dataAuthed = new Object[] { dataAuthFilter.getValues() };
+//							}
+//							authSet = new HashSet<Object>();
+//							for (Object item : dataAuthed) {
+//								if (item != null) {
+//									if (dataAuthFilter.isIgnoreType()) {
+//										authSet.add(item.toString());
+//									} else {
+//										authSet.add(item);
+//									}
+//								}
+//							}
+//							switchData.put(key, authSet);
+//						}
+//
+//						// 参数直接传递的值
+//						if (obj.getClass().isArray()) {
+//							pointValues = (Object[]) obj;
+//						} else if (obj instanceof Collection) {
+//							pointValues = ((Collection) obj).toArray();
+//						} else {
+//							pointValues = new Object[] { obj };
+//						}
+//
+//						// 校验实际传递的权限值是否在授权范围内
+//						for (Object paramValue : pointValues) {
+//							if (paramValue != null && !authSet
+//									.contains(dataAuthFilter.isIgnoreType() ? paramValue.toString() : paramValue)) {
+//								throw new DataAccessException("属性:[" + key + "]对应的值:[" + paramValue
+//										+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
+//							}
+//						}
+//					}
+//				}
+//			}
+//		};
+//		return handler;
+//	}
 }

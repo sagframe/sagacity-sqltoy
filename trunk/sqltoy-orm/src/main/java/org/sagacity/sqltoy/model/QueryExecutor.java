@@ -56,7 +56,6 @@ public class QueryExecutor implements Serializable {
 	 * @TODO sql和以entity对象实体传参模式
 	 * @param sql
 	 * @param entity 对象传参(可以是任意VO对象)
-	 * @throws Exception
 	 */
 	public QueryExecutor(String sql, Serializable entity) {
 		innerModel.sql = sql;

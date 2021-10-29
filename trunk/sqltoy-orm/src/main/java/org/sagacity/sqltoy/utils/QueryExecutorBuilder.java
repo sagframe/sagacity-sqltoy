@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.DataAuthFilterConfig;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +33,21 @@ public class QueryExecutorBuilder {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(QueryExecutorBuilder.class);
 
+	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
+			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs) {
+		initQueryExecutor(sqlToyContext, extend, sqlToyConfig, wrapNamedArgs, true);
+	}
+
 	/**
 	 * @TODO 统一对QueryExecutor中的设置进行处理，整理最终使用的参数和参数值，便于QueryExecutor直接获取
 	 * @param sqlToyContext
 	 * @param extend
 	 * @param sqlToyConfig
-	 * @param wrapNamedArgs 分页场景需要额外将?模式传参转换成:named模式
+	 * @param wrapNamedArgs  分页场景需要额外将?模式传参转换成:named模式
+	 * @param filterAuthData
 	 */
 	public static void initQueryExecutor(SqlToyContext sqlToyContext, QueryExecutorExtend extend,
-			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs) {
+			SqlToyConfig sqlToyConfig, boolean wrapNamedArgs, boolean filterAuthData) {
 		// 在分页场景下，sql以?模式传参，因分页后续要构造startIndex和endIndex参数，需将?模式全部转成:paramName模式
 		if (wrapParamNames(extend, sqlToyConfig, wrapNamedArgs)) {
 			return;
@@ -64,7 +71,7 @@ public class QueryExecutorBuilder {
 			// 校验条件参数合法性
 			if (paramsNameSize != paramsValueSize) {
 				throw new IllegalArgumentException(
-						"查询条件参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
+						"参数名称数组长度:" + paramsNameSize + " 和参数值数组长度:" + paramsValueSize + "不一致,请检查!");
 			}
 			fullParamValues = new Object[fullParamNames.length];
 			String[] paramNames = extend.paramsName;
@@ -82,72 +89,9 @@ public class QueryExecutorBuilder {
 				}
 			}
 		}
-		// 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验
-		IgnoreKeyCaseMap<String, DataAuthFilterConfig> authFilterMap = (sqlToyContext.getUnifyFieldsHandler() == null)
-				? null
-				: sqlToyContext.getUnifyFieldsHandler().dataAuthFilters();
-		if (authFilterMap != null && !authFilterMap.isEmpty()) {
-			String paramName;
-			DataAuthFilterConfig dataAuthFilter;
-			for (int i = 0; i < fullParamNames.length; i++) {
-				paramName = fullParamNames[i];
-				if (authFilterMap.containsKey(paramName)) {
-					dataAuthFilter = authFilterMap.get(paramName);
-					// 实际传参值为空(或等于全新标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
-					if (StringUtil.isBlank(fullParamValues[i])
-							|| equalChoiceAllValue(fullParamValues[i], dataAuthFilter.getChoiceAllValue())) {
-						// 实现统一传参
-						// if (dataAuthFilter.isForcelimit()) {
-						if (dataAuthFilter.getValues() != null) {
-							fullParamValues[i] = dataAuthFilter.getValues();
-							logger.debug("sqlId={} 参数:{} 前端未传值，由平台统一带入授权值!", sqlToyConfig.getId(), paramName);
-						}
-						// }
-					} else if (dataAuthFilter.getValues() != null) {
-						// 数据权限指定了值，则进行值越权校验，超出范围抛出异常
-						if (dataAuthFilter.isForcelimit()) {
-							// 允许访问的值
-							Object[] dataAuthed;
-							if (dataAuthFilter.getValues().getClass().isArray()) {
-								dataAuthed = (Object[]) dataAuthFilter.getValues();
-							} else if (dataAuthFilter.getValues() instanceof Collection) {
-								dataAuthed = ((Collection) dataAuthFilter.getValues()).toArray();
-							} else {
-								dataAuthed = new Object[] { dataAuthFilter.getValues() };
-							}
-							Set<Object> authSet = new HashSet<Object>();
-							for (Object item : dataAuthed) {
-								if (item != null) {
-									if (dataAuthFilter.isIgnoreType()) {
-										authSet.add(item.toString());
-									} else {
-										authSet.add(item);
-									}
-								}
-							}
-
-							// 参数直接传递的值
-							Object[] pointValues;
-							if (fullParamValues[i].getClass().isArray()) {
-								pointValues = (Object[]) fullParamValues[i];
-							} else if (fullParamValues[i] instanceof Collection) {
-								pointValues = ((Collection) fullParamValues[i]).toArray();
-							} else {
-								pointValues = new Object[] { fullParamValues[i] };
-							}
-
-							// 校验实际传递的权限值是否在授权范围内
-							for (Object paramValue : pointValues) {
-								if (paramValue != null && !authSet
-										.contains(dataAuthFilter.isIgnoreType() ? paramValue.toString() : paramValue)) {
-									throw new DataAccessException("参数:[" + paramName + "]参数对应的值:[" + paramValue
-											+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
-								}
-							}
-						}
-					}
-				}
-			}
+		// 统一数据权限传参
+		if (filterAuthData) {
+			dataAuthFilter(sqlToyContext.getUnifyFieldsHandler(), sqlToyConfig, fullParamNames, fullParamValues);
 		}
 
 		// 回写QueryExecutor中的参数值
@@ -167,6 +111,77 @@ public class QueryExecutorBuilder {
 		// 分库参数名称和对应值
 		extend.dbShardingParams = getDbShardingParams(extend, sqlToyConfig);
 		extend.dbShardingValues = wrapParamsValue(keyValueMap, extend.dbShardingParams);
+	}
+
+	/**
+	 * @TODO 统一数据权限条件参数:1、前端没有传则自动填充；2、前端传值，对所传值进行是否超出授权数据范围校验
+	 * @param unifyFieldsHandler
+	 * @param sqlToyConfig
+	 * @param fullParamNames
+	 * @param fullParamValues
+	 */
+	private static void dataAuthFilter(IUnifyFieldsHandler unifyFieldsHandler, SqlToyConfig sqlToyConfig,
+			String[] fullParamNames, Object[] fullParamValues) {
+		IgnoreKeyCaseMap<String, DataAuthFilterConfig> authFilterMap = (unifyFieldsHandler == null) ? null
+				: unifyFieldsHandler.dataAuthFilters();
+		if (authFilterMap == null || authFilterMap.isEmpty()) {
+			return;
+		}
+		String paramName;
+		DataAuthFilterConfig dataAuthFilter;
+		for (int i = 0; i < fullParamNames.length; i++) {
+			paramName = fullParamNames[i];
+			if (authFilterMap.containsKey(paramName)) {
+				dataAuthFilter = authFilterMap.get(paramName);
+				// 实际传参值为空(或等于全新标记值)，权限过滤配置了限制范围，则将实际权限数据值填充到条件参数中
+				if (StringUtil.isBlank(fullParamValues[i])
+						|| equalChoiceAllValue(fullParamValues[i], dataAuthFilter.getChoiceAllValue())) {
+					// 实现统一传参
+					if (dataAuthFilter.getValues() != null) {
+						fullParamValues[i] = dataAuthFilter.getValues();
+						logger.debug("sqlId={} 参数:{} 前端未传值，由平台统一带入授权值!", sqlToyConfig.getId(), paramName);
+					}
+				} // 数据权限指定了值，则进行值越权校验，超出范围抛出异常
+				else if (dataAuthFilter.getValues() != null && dataAuthFilter.isForcelimit()) {
+					// 允许访问的值
+					Object[] dataAuthed;
+					if (dataAuthFilter.getValues().getClass().isArray()) {
+						dataAuthed = (Object[]) dataAuthFilter.getValues();
+					} else if (dataAuthFilter.getValues() instanceof Collection) {
+						dataAuthed = ((Collection) dataAuthFilter.getValues()).toArray();
+					} else {
+						dataAuthed = new Object[] { dataAuthFilter.getValues() };
+					}
+					Set<Object> authSet = new HashSet<Object>();
+					for (Object item : dataAuthed) {
+						if (item != null) {
+							if (dataAuthFilter.isIgnoreType()) {
+								authSet.add(item.toString());
+							} else {
+								authSet.add(item);
+							}
+						}
+					}
+					// 参数直接传递的值
+					Object[] pointValues;
+					if (fullParamValues[i].getClass().isArray()) {
+						pointValues = (Object[]) fullParamValues[i];
+					} else if (fullParamValues[i] instanceof Collection) {
+						pointValues = ((Collection) fullParamValues[i]).toArray();
+					} else {
+						pointValues = new Object[] { fullParamValues[i] };
+					}
+					// 校验实际传递的权限值是否在授权范围内
+					for (Object paramValue : pointValues) {
+						if (paramValue != null && !authSet
+								.contains(dataAuthFilter.isIgnoreType() ? paramValue.toString() : paramValue)) {
+							throw new DataAccessException("参数:[" + paramName + "]参数对应的值:[" + paramValue
+									+ "] 超出授权范围(数据来源参见spring.sqltoy.unifyFieldsHandler配置的实现),请检查!");
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -345,21 +360,22 @@ public class QueryExecutorBuilder {
 	 */
 	private static boolean wrapParamNames(QueryExecutorExtend extend, SqlToyConfig sqlToyConfig,
 			boolean wrapNamedArgs) {
-		//:named 模式传参
+		// :named 模式传参
 		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
 			return false;
 		}
+
 		// ?参数个数
 		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
 				SqlConfigParseUtils.ARG_REGEX);
 		// 存在?传参
 		if (argCount > 0) {
-			//验证传参数量合法性
+			// 验证传参数量合法性
 			int valuesSize = (extend.paramsValue == null) ? 0 : extend.paramsValue.length;
 			if (argCount != valuesSize) {
-				throw new IllegalArgumentException("查询条件参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
+				throw new IllegalArgumentException("参数值数量:" + valuesSize + " 跟sql中的?条件数量" + argCount + "不匹配,请检查!");
 			}
-			//分页需要将?转参数名称模式
+			// 分页需要将?转参数名称模式
 			if (wrapNamedArgs) {
 				String[] paramsName = new String[argCount];
 				for (int i = 0; i < argCount; i++) {

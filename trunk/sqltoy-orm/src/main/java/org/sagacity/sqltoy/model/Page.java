@@ -82,8 +82,9 @@ public class Page<T> implements Serializable {
 		return this.rows;
 	}
 
-	public void setRows(List<T> rows) {
+	public Page setRows(List<T> rows) {
 		this.rows = rows;
+		return this;
 	}
 
 	public int getPageSize() {
@@ -93,16 +94,18 @@ public class Page<T> implements Serializable {
 		return pageSize;
 	}
 
-	public void setPageSize(int pageSize) {
+	public Page setPageSize(int pageSize) {
 		this.pageSize = pageSize;
+		return this;
 	}
 
 	public long getRecordCount() {
 		return recordCount;
 	}
 
-	public void setRecordCount(long recordCount) {
+	public Page setRecordCount(long recordCount) {
 		this.recordCount = recordCount < 0 ? 0 : recordCount;
+		return this;
 	}
 
 	/**
@@ -127,8 +130,9 @@ public class Page<T> implements Serializable {
 	 * @param aPageNo the new value of the pageNo property where pageNo==-1 then
 	 *                show all page
 	 */
-	public void setPageNo(long pageNo) {
+	public Page setPageNo(long pageNo) {
 		this.pageNo = pageNo;
+		return this;
 	}
 
 	public long getStartIndex() {
@@ -202,8 +206,9 @@ public class Page<T> implements Serializable {
 		return skipQueryCount;
 	}
 
-	public void setSkipQueryCount(Boolean skipQueryCount) {
+	public Page setSkipQueryCount(Boolean skipQueryCount) {
 		this.skipQueryCount = skipQueryCount;
+		return this;
 	}
 
 }
