@@ -669,7 +669,7 @@ public interface SqlToyLazyDao {
 	 *       <li>2、List<List>模式，sql中直接用? 形式传参,弊端就是严格顺序</li>
 	 *       </p>
 	 * @param sqlOrNamedSql
-	 * @param dataSet 支持List<List>、List<Object[]>、List<VO>、List<Map> 集中模式
+	 * @param dataSet           支持List<List>、List<Object[]>、List<VO>、List<Map> 集中模式
 	 * @param insertCallhandler (一般为null)
 	 * @param autoCommit        (一般为null)
 	 */
@@ -685,21 +685,6 @@ public interface SqlToyLazyDao {
 	 */
 	public List updateFetch(final QueryExecutor queryExecutor, final UpdateRowHandler updateRowHandler);
 
-	@Deprecated
-	public List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler);
-
-	/**
-	 * @todo 随机提取符合条件的记录,锁定并进行修改
-	 * @param queryExecutor
-	 * @param random
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	public List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler);
-
 	/**
 	 * @todo 执行sql,并返回被修改的记录数量
 	 * @param sqlOrNamedSql
@@ -707,17 +692,6 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long executeSql(final String sqlOrNamedSql, final Serializable entity);
-
-	/**
-	 * @todo 执行sql,并返回被修改的记录数量
-	 * @param sqlOrNamedSql
-	 * @param entity
-	 * @param reflectPropertyHandler (一般传null)
-	 * @return Long updateCount
-	 */
-	@Deprecated
-	public Long executeSql(final String sqlOrNamedSql, final Serializable entity,
-			final ReflectPropertyHandler reflectPropertyHandler);
 
 	/**
 	 * @TODO 通过数组传参执行sql,并返回更新记录量

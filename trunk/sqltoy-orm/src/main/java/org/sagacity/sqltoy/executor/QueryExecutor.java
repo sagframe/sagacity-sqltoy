@@ -62,7 +62,6 @@ public class QueryExecutor implements Serializable {
 	 * 
 	 * @param sql
 	 * @param entity
-	 * @throws Exception
 	 */
 	public QueryExecutor(String sql, Serializable entity) {
 		innerModel.sql = sql;

@@ -67,7 +67,7 @@ public class SapIQDialectUtils {
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null,
 				handler);
@@ -245,7 +245,8 @@ public class SapIQDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
+				sqlToyContext.getUnifyFieldsHandler());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID

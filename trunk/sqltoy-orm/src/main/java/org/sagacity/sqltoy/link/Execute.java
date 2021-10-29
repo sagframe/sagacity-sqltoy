@@ -9,11 +9,10 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
-import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -37,11 +36,6 @@ public class Execute extends BaseLink {
 	 * 作为参数传递的实体对象(属性跟sql中的参数名称对应)
 	 */
 	private Serializable entity;
-
-	/**
-	 * 参数反调设置器(特殊情况下使用)
-	 */
-	private ReflectPropertyHandler reflectPropertyHandler;
 
 	/**
 	 * 是否自动提交
@@ -100,11 +94,6 @@ public class Execute extends BaseLink {
 		return this;
 	}
 
-	public Execute reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		this.reflectPropertyHandler = reflectPropertyHandler;
-		return this;
-	}
-
 	public Execute sql(String sql) {
 		this.sql = sql;
 		return this;
@@ -119,14 +108,18 @@ public class Execute extends BaseLink {
 			throw new IllegalArgumentException("execute operate sql is null!");
 		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql, SqlType.update, super.getDialect());
-		// 根据sql中的变量从entity对象中提取参数值
-		Object[] values = paramsValue;
-		String[] names = paramsNamed;
-		if (entity != null) {
-			names = sqlToyConfig.getParamsName();
-			values = BeanUtil.reflectBeanToAry(entity, names, null, reflectPropertyHandler);
-		}
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, names, values, null, autoCommit,
+		QueryExecutor queryExecute = build();
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecute, null, autoCommit,
 				getDataSource(sqlToyConfig));
+	}
+
+	private QueryExecutor build() {
+		QueryExecutor queryExecutor = null;
+		if (entity != null) {
+			queryExecutor = new QueryExecutor(sql, entity);
+		} else {
+			queryExecutor = new QueryExecutor(sql).names(paramsNamed).values(paramsValue);
+		}
+		return queryExecutor;
 	}
 }

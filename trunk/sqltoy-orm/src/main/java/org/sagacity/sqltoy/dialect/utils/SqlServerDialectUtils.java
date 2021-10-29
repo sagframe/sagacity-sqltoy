@@ -548,7 +548,7 @@ public class SqlServerDialectUtils {
 					+ entityMeta.getSequence() + " " + insertSql + " select @mySeqVariable ";
 		}
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, null);
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null, handler);
 		boolean needUpdatePk = false;
@@ -730,7 +730,8 @@ public class SqlServerDialectUtils {
 		} else {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(sqlToyContext, reflectPropertyHandler);
+		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
+				sqlToyContext.getUnifyFieldsHandler());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1092,7 +1093,7 @@ public class SqlServerDialectUtils {
 		}
 		return tableColumns;
 	}
-	
+
 	private static boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

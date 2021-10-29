@@ -139,7 +139,7 @@ public class DialectFactory {
 			dialectSqlWrapper = new OracleDialect();
 			break;
 		}
-		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不同在一个查询中多次引用)
+		// 5.6+(mysql 的缺陷主要集中在不支持with as以及临时表不能在一个查询中多次引用)
 		// 8.x+(支持with as语法)
 		// MariaDB 在检测的时候归并到mysql,采用跟mysql一样的语法
 		case DBType.MYSQL:
@@ -183,6 +183,10 @@ public class DialectFactory {
 			dialectSqlWrapper = new GuassDBDialect();
 			break;
 		}
+		case DBType.IMPALA: {
+			dialectSqlWrapper = new ImpalaDialect();
+			break;
+		}
 		// dm数据库支持(以oracle为蓝本)
 		case DBType.DM: {
 			dialectSqlWrapper = new DMDialect();
@@ -202,10 +206,6 @@ public class DialectFactory {
 			dialectSqlWrapper = new KingbaseDialect();
 			break;
 		}
-		case DBType.IMPALA: {
-			dialectSqlWrapper = new ImpalaDialect();
-			break;
-		}
 		// sybase iq基本淘汰
 		// 15.4+(必须采用15.4,最好采用16.0 并打上最新的补丁),15.4 之后的分页支持limit模式
 		case DBType.SYBASE_IQ: {
@@ -215,9 +215,6 @@ public class DialectFactory {
 		// 如果匹配不上使用默认dialect
 		default:
 			dialectSqlWrapper = new DefaultDialect();
-			// 不支持
-			// throw new
-			// UnsupportedOperationException(SqlToyConstants.UN_MATCH_DIALECT_MESSAGE);
 		}
 		dialects.put(dbType, dialectSqlWrapper);
 		return dialectSqlWrapper;
@@ -227,11 +224,11 @@ public class DialectFactory {
 	 * @todo 批量执行sql修改或删除操作
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
-	 * @param dataSet             支持List<List>、List<Object[]>、List<VO>、List<Map>
-	 *                            集中模式
+	 * @param dataSet             支持List<List>、List<Object[]>(sql中?传参)
+	 *                            ;List<VO>、List<Map> 形式(sql中:paramName传参)
 	 * @param batchSize
 	 * @param reflectPropsHandler
-	 * @param insertCallhandler
+	 * @param insertCallhandler   使用反调方式自己对rs进行处理
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
@@ -250,6 +247,7 @@ public class DialectFactory {
 					sqlToyConfig.isShowSql());
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String realSql = sqlToyConfig.getSql(dialect);
 							Integer[] fieldTypes = null;
@@ -258,11 +256,14 @@ public class DialectFactory {
 							if (sqlToyConfig.getParamsName() != null) {
 								// 替换sql中:name为?并提取参数名称归集成数组
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
+								realSql = sqlParamsModel.getSql();
+								// update 2021-10-28 增加统一授权传参、根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
+								ReflectPropertyHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
+										realSql, reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
-										reflectPropsHandler);
+										realPropsHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
 										sqlParamsModel.getParamsName());
-								realSql = sqlParamsModel.getSql();
 							}
 							// 做sql签名
 							realSql = SqlUtilsExt.signSql(realSql, dbType, sqlToyConfig);
@@ -287,40 +288,34 @@ public class DialectFactory {
 	 * @todo 执行sql修改性质的操作语句
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
-	 * @param paramsNamed
-	 * @param paramsValue
+	 * @param queryExecutor
+	 * @param paramsTypes
 	 * @param autoCommit
 	 * @param dataSource
 	 * @return
 	 */
 	public Long executeSql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final String[] paramsNamed, final Object[] paramsValue, final Integer[] paramsTypes,
-			final Boolean autoCommit, final DataSource dataSource) {
+			final QueryExecutor queryExecutor, final Integer[] paramsTypes, final Boolean autoCommit,
+			final DataSource dataSource) {
 		try {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeSql", sqlToyConfig.isShowSql());
+			// 将修改语句当做特殊的查询，其处理过程在交jdbc执行前完全一致
+			final QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
-					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
-							new QueryExecutor(sqlToyConfig.getSql(), paramsNamed, paramsValue), dataSource),
+					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							String sql = sqlToyConfig.getSql(dialect);
-							// ?模式sql 验证参数合法性
-							if (!sqlToyConfig.isNamedParam()) {
-								int paramCnt = (paramsValue == null) ? 0 : paramsValue.length;
-								// sql中?参数数量
-								int argsCnt = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sql),
-										SqlConfigParseUtils.ARG_REGEX);
-								if (argsCnt != paramCnt) {
-									throw new IllegalArgumentException(
-											"executeSql中的?参数数量:" + argsCnt + " 跟实际传参数量:" + paramCnt + " 不等,请检查!");
-								}
-							}
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, paramsNamed, paramsValue);
-							// 替换sharding table
-							String executeSql = ShardingUtils.replaceShardingTables(sqlToyContext, queryParam.getSql(),
-									sqlToyConfig.getTableShardings(), paramsNamed, paramsValue);
+							// 进行sharding table替换
+							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+									sqlToyConfig, queryExecutor, dialect, false);
+							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
+									extend.getParamsName(sqlToyConfig),
+									extend.getParamsValue(sqlToyContext, sqlToyConfig));
 							// 做sql签名
-							executeSql = SqlUtilsExt.signSql(executeSql, dbType, sqlToyConfig);
+							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
 									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit, false));
 						}
@@ -348,12 +343,13 @@ public class DialectFactory {
 			throw new IllegalArgumentException("unique judge entity object is null,please check!");
 		}
 		try {
-			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
-					false, dataSource);
 			SqlExecuteStat.start(BeanUtil.getEntityClass(uniqueExecutor.getEntity().getClass()).getName(), "isUnique",
 					null);
+			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, uniqueExecutor.getEntity(),
+					false, dataSource);
 			Boolean isUnique = (Boolean) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).isUnique(sqlToyContext,
 									uniqueExecutor.getEntity(), uniqueExecutor.getUniqueFields(), conn, dbType,
@@ -387,21 +383,18 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			// 规整查询参数名称和参数名称对应的值
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig,
+					(randomCount < 1) ? true : false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getRandomResult", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 当参数都是?形式时是否转为:paramName模式,主要是取随机和分页时需重新构造条件
-							boolean rewrapParams = false;
-							// sybaseIq取随机记录未采用将随机数字直接拼入sql，因此需要重新组织参数(sybaseIq已经很少在用)
-							if (dbType.intValue() == DBType.SYBASE_IQ) {
-								rewrapParams = true;
-							}
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, rewrapParams);
+									sqlToyConfig, queryExecutor, dialect, (randomCount < 1) ? true : false);
 							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
 							Long totalCount = SqlToyConstants.randomWithDialect(dbType) ? null
 									: getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, dbType,
@@ -418,7 +411,6 @@ public class DialectFactory {
 									totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
 											dbType, dialect);
 								}
-
 								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
 								SqlExecuteStat.debug("过程提示", "按比例提取总记录数:{}条,需取随机记录:{}条!", totalCount, randomCnt);
 								// 如果总记录数不为零，randomCnt最小为1
@@ -566,6 +558,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(treeModel.getTableName(), "wrapTreeTableRoute", true);
 			return (Boolean) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(SqlUtil.wrapTreeTableRoute(sqlToyContext.getTypeHandler(), treeModel, conn,
 									dbType));
@@ -609,15 +602,17 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
+			// 规整查询参数名称和参数名称对应的值
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findSkipTotalCountPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, true);
+									sqlToyConfig, queryExecutor, dialect, false);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
 									realSqlToyConfig, queryExecutor, pageNo, pageSize, conn, dbType, dialect,
 									getFetchSize(extend.fetchSize), extend.maxRows);
@@ -671,11 +666,13 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, true);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findPage", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -938,15 +935,17 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
+			// 规整查询参数名称和参数名称对应的值
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, (topSize < 1) ? true : false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findTop", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
+									sqlToyConfig, queryExecutor, dialect, (topSize < 1) ? true : false);
 							Integer realTopSize;
 							// 小于1表示按比例提取
 							if (topSize < 1) {
@@ -1014,11 +1013,13 @@ public class DialectFactory {
 		}
 		try {
 			Long startTime = System.currentTimeMillis();
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "findByQuery", sqlToyConfig.isShowSql());
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1075,11 +1076,13 @@ public class DialectFactory {
 			throw new IllegalArgumentException("getCountBySql operate sql is null!");
 		}
 		try {
+			// 规整查询参数名称和参数名称对应的值
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "getCountBySql", sqlToyConfig.isShowSql());
 			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式，并进行sharding table替换
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1197,6 +1200,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(entity.getClass().getName(), "saveOrUpdate", null);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).saveOrUpdate(sqlToyContext, entity,
 									forceUpdateProps, conn, dbType, dialect, null, shardingModel.getTableName()));
@@ -1218,12 +1222,12 @@ public class DialectFactory {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateProps
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropertyHandler,
+			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
@@ -1239,10 +1243,11 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveOrUpdateAll(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler,
+												batchModel.getEntities(), batchSize, reflectPropsHandler,
 												forceUpdateProps, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
 									}
@@ -1274,13 +1279,12 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
-			final Boolean autoCommit) {
+			final ReflectPropertyHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
@@ -1293,11 +1297,12 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAllIgnoreExist(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
-												dbType, dialect, autoCommit, shardingModel.getTableName()));
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
+												dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
 						List<Long> tmp = new ArrayList();
@@ -1341,6 +1346,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "load", null);
 			return (T) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).load(sqlToyContext, entity,
 									(cascadeTypes == null) ? null : CollectionUtil.arrayToList(cascadeTypes), lockMode,
@@ -1392,6 +1398,7 @@ public class DialectFactory {
 							ShardingModel shardingModel = batchModel.getShardingModel();
 							return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
 									new DataSourceCallbackHandler() {
+										@Override
 										public void doConnection(Connection conn, Integer dbType, String dialect)
 												throws Exception {
 											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
@@ -1432,6 +1439,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, true, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).save(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
@@ -1452,13 +1460,12 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource,
-			final Boolean autoCommit) {
+			final ReflectPropertyHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
@@ -1472,11 +1479,12 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).saveAll(context,
-												batchModel.getEntities(), batchSize, reflectPropertyHandler, conn,
-												dbType, dialect, autoCommit, shardingModel.getTableName()));
+												batchModel.getEntities(), batchSize, reflectPropsHandler, conn, dbType,
+												dialect, autoCommit, shardingModel.getTableName()));
 									}
 								});
 						List<Long> tmp = new ArrayList();
@@ -1521,6 +1529,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).update(sqlToyContext, entity, forceUpdateFields,
 									cascade, forceCascadeClass, subTableForceUpdateProps, conn, dbType, dialect,
@@ -1538,7 +1547,7 @@ public class DialectFactory {
 	}
 
 	/**
-	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
+	 * @TODO 适用于库存台账、客户资金账强事务高并发场景，一次数据库交互实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param updateRowHandler
@@ -1579,12 +1588,12 @@ public class DialectFactory {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateFields
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
+			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");
@@ -1599,11 +1608,12 @@ public class DialectFactory {
 						ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
 												batchModel.getEntities(), batchSize, forceUpdateFields,
-												reflectPropertyHandler, conn, dbType, dialect, autoCommit,
+												reflectPropsHandler, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
 									}
 								});
@@ -1632,6 +1642,7 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param dataSource
+	 * @return
 	 */
 	public Long delete(final SqlToyContext sqlToyContext, final Serializable entity, final DataSource dataSource) {
 		if (entity == null) {
@@ -1644,6 +1655,7 @@ public class DialectFactory {
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							this.setResult(getDialectSqlWrapper(dbType).delete(sqlToyContext, entity, conn, dbType,
 									dialect, shardingModel.getTableName()));
@@ -1661,11 +1673,13 @@ public class DialectFactory {
 
 	/**
 	 * @todo 批量删除对象
+	 * @param <T>
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
 	 * @param dataSource
 	 * @param autoCommit
+	 * @return
 	 */
 	public <T extends Serializable> Long deleteAll(final SqlToyContext sqlToyContext, final List<T> entities,
 			final int batchSize, final DataSource dataSource, final Boolean autoCommit) {
@@ -1682,6 +1696,7 @@ public class DialectFactory {
 						final ShardingModel shardingModel = batchModel.getShardingModel();
 						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
 								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
+									@Override
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).deleteAll(context,
@@ -1723,11 +1738,13 @@ public class DialectFactory {
 		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		try {
 			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetch", sqlToyConfig.isShowSql());
+			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							// 处理sql中的?为统一的:named形式
 							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
@@ -1740,91 +1757,6 @@ public class DialectFactory {
 									updateRowHandler, conn, dbType, dialect,
 									(extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode,
 									getFetchSize(extend.fetchSize), extend.maxRows);
-							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false,
-										extend.humpMapLabel));
-							}
-							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
-							this.setResult(queryResult);
-						}
-					});
-			result.setExecuteTime(System.currentTimeMillis() - startTime);
-			return result;
-		} catch (Exception e) {
-			SqlExecuteStat.error(e);
-			throw new DataAccessException(e);
-		} finally {
-			SqlExecuteStat.destroy();
-		}
-	}
-
-	@Deprecated
-	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final SqlToyConfig sqlToyConfig, final Integer topSize, final UpdateRowHandler updateRowHandler,
-			final DataSource dataSource) {
-		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		try {
-			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchTop", sqlToyConfig.isShowSql());
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
-					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
-
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
-							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchTop(sqlToyContext,
-									sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), topSize,
-									updateRowHandler, conn, dbType, dialect);
-
-							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), (Class) extend.resultType, false,
-										extend.humpMapLabel));
-							}
-							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
-							this.setResult(queryResult);
-						}
-					});
-			result.setExecuteTime(System.currentTimeMillis() - startTime);
-			return result;
-		} catch (Exception e) {
-			SqlExecuteStat.error(e);
-			throw new DataAccessException(e);
-		} finally {
-			SqlExecuteStat.destroy();
-		}
-	}
-
-	@Deprecated
-	public QueryResult updateFetchRandom(final SqlToyContext sqlToyContext, final QueryExecutor queryExecutor,
-			final SqlToyConfig sqlToyConfig, final Integer random, final UpdateRowHandler updateRowHandler,
-			final DataSource dataSource) {
-		final QueryExecutorExtend extend = queryExecutor.getInnerModel();
-		try {
-			Long startTime = System.currentTimeMillis();
-			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			SqlExecuteStat.start(sqlToyConfig.getId(), "updateFetchRandom", sqlToyConfig.isShowSql());
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
-					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							// 处理sql中的?为统一的:named形式
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, dialect, false);
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
-
-							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetchRandom(sqlToyContext,
-									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), random,
-									updateRowHandler, conn, dbType, dialect);
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,
@@ -1862,6 +1794,7 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), "executeStore", sqlToyConfig.isShowSql());
 			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
 					new DataSourceCallbackHandler() {
+						@Override
 						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
 							String dialectSql = sqlToyConfig.getSql(dialect);
 							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
@@ -1964,4 +1897,5 @@ public class DialectFactory {
 		}
 		return SqlToyConstants.FETCH_SIZE;
 	}
+
 }

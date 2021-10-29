@@ -30,10 +30,10 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.executor.QueryExecutor;
@@ -477,27 +477,23 @@ public class SqlToyDaoSupport {
 	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql) {
-		return executeSql(sqlOrNamedSql, null, null, false, null);
+		return executeSql(sqlOrNamedSql, null, null, null, null);
 	}
 
 	/**
 	 * @todo 解析sql中的参数名称，以此名称到entity中提取对应的值作为查询条件值执行sql
 	 * @param sqlOrNamedSql
 	 * @param entity
-	 * @param reflectPropertyHandler 用来批量设置某个属性的值,一般设置为null即可
 	 * @return
 	 */
-	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity,
-			final ReflectPropertyHandler reflectPropertyHandler) {
+	protected Long executeSql(final String sqlOrNamedSql, final Serializable entity) {
 		SqlToyConfig sqlToyConfig = getSqlToyConfig(sqlOrNamedSql, SqlType.update);
-		// 根据sql中的变量从entity对象中提取参数值
-		Object[] paramValues = BeanUtil.reflectBeanToAry(entity, sqlToyConfig.getParamsName(), null,
-				reflectPropertyHandler);
-		return executeSql(sqlOrNamedSql, sqlToyConfig.getParamsName(), paramValues, false, null);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, new QueryExecutor(sqlOrNamedSql, entity), null,
+				null, getDataSource(null, sqlToyConfig));
 	}
 
 	protected Long executeSql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return executeSql(sqlOrNamedSql, (Serializable) new IgnoreKeyCaseMap(paramsMap), null);
+		return executeSql(sqlOrNamedSql, (Serializable) new IgnoreKeyCaseMap(paramsMap));
 	}
 
 	/**
@@ -505,9 +501,10 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
+	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue) {
-		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, false, null);
+		return executeSql(sqlOrNamedSql, paramsNamed, paramsValue, null, null);
 	}
 
 	/**
@@ -515,15 +512,17 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param autoCommit    是否自动提交
+	 * @param autoCommit    自动提交，默认可以填null
 	 * @param dataSource
+	 * @return
 	 */
 	protected Long executeSql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
 			final Boolean autoCommit, final DataSource dataSource) {
-		final SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
 				getDialect(dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, paramsNamed, paramsValue, null, autoCommit,
-				this.getDataSource(dataSource, sqlToyConfig));
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig,
+				new QueryExecutor(sqlOrNamedSql).names(paramsNamed).values(paramsValue), null, autoCommit,
+				getDataSource(dataSource, sqlToyConfig));
 	}
 
 	/**
@@ -1075,16 +1074,18 @@ public class SqlToyDaoSupport {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		String where = SqlUtil.convertFieldsToColumns(entityMeta, innerModel.where);
 		String sql = "delete from ".concat(entityMeta.getSchemaTable(null, null)).concat(" where ").concat(where);
+		SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
+		QueryExecutor queryExecutor = null;
 		// :named 模式
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
-			SqlToyConfig sqlToyConfig = getSqlToyConfig(sql, SqlType.update);
-			// 根据sql中的变量从entity对象中提取参数值
-			Object[] paramValues = BeanUtil.reflectBeanToAry((Serializable) innerModel.values[0],
-					sqlToyConfig.getParamsName());
-			return executeSql(sql, sqlToyConfig.getParamsName(), paramValues, false,
-					getDataSource(innerModel.dataSource));
+			queryExecutor = new QueryExecutor(sql, (Serializable) innerModel.values[0]);
+		} else {
+			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values);
 		}
-		return executeSql(sql, innerModel.names, innerModel.values, false, getDataSource(innerModel.dataSource));
+		// 分库分表策略
+		setEntitySharding(queryExecutor, entityMeta);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
+				getDataSource(innerModel.dataSource));
 	}
 
 	protected <T extends Serializable> Long deleteAll(final List<T> entities) {
@@ -1111,38 +1112,6 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		return dialectFactory.updateFetch(sqlToyContext, queryExecutor, sqlToyConfig, updateRowHandler,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
-	}
-
-	/**
-	 * @todo 取符合条件的前固定数量的记录，锁定并进行修改
-	 * @param queryExecutor
-	 * @param topSize
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	protected List updateFetchTop(final QueryExecutor queryExecutor, final Integer topSize,
-			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.updateFetchTop(sqlToyContext, queryExecutor, sqlToyConfig, topSize, updateRowHandler,
-				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
-	}
-
-	/**
-	 * @todo 随机提取符合条件的记录,锁定并进行修改
-	 * @param queryExecutor
-	 * @param random
-	 * @param updateRowHandler
-	 * @return
-	 */
-	@Deprecated
-	protected List updateFetchRandom(final QueryExecutor queryExecutor, final Integer random,
-			final UpdateRowHandler updateRowHandler) {
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor.getInnerModel().sql, SqlType.search,
-				getDialect(queryExecutor.getInnerModel().dataSource));
-		return dialectFactory.updateFetchRandom(sqlToyContext, queryExecutor, sqlToyConfig, random, updateRowHandler,
 				this.getDataSource(queryExecutor.getInnerModel().dataSource, sqlToyConfig)).getRows();
 	}
 
@@ -1590,18 +1559,8 @@ public class SqlToyDaoSupport {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
 		// 分库分表策略
-		if (entityMeta.getShardingConfig() != null) {
-			// db sharding
-			if (entityMeta.getShardingConfig().getShardingDBStrategy() != null) {
-				queryExecutor.getInnerModel().dbSharding = entityMeta.getShardingConfig().getShardingDBStrategy();
-			}
-			// table sharding
-			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
-				List<ShardingStrategyConfig> shardingConfig = new ArrayList<ShardingStrategyConfig>();
-				shardingConfig.add(entityMeta.getShardingConfig().getShardingTableStrategy());
-				queryExecutor.getInnerModel().tableShardings = shardingConfig;
-			}
-		}
+		setEntitySharding(queryExecutor, entityMeta);
+
 		if (innerModel.dbSharding != null) {
 			queryExecutor.getInnerModel().dbSharding = innerModel.dbSharding;
 		}
@@ -1659,19 +1618,18 @@ public class SqlToyDaoSupport {
 		EntityUpdateExtend innerModel = entityUpdate.getInnerModel();
 		boolean isName = SqlConfigParseUtils.hasNamedParam(innerModel.where);
 		Object[] values = innerModel.values;
+		String[] paramNames = null;
 		String where = innerModel.where;
+		int valueSize = (values == null) ? 0 : values.length;
 		// 重新通过对象反射获取参数条件的值
 		if (isName) {
 			if (values.length > 1) {
-				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO对象!");
+				throw new IllegalArgumentException("updateByQuery: where条件采用:paramName形式传参,values只能传递单个VO或Map对象!");
 			}
-			String[] paramName = SqlConfigParseUtils.getSqlParamsName(where, false);
-			values = BeanUtil.reflectBeanToAry(values[0], paramName);
-			SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(where, paramName, values);
-			where = sqlToyResult.getSql();
-			values = sqlToyResult.getParamsValue();
+			paramNames = SqlConfigParseUtils.getSqlParamsName(where, false);
+			values = BeanUtil.reflectBeanToAry(values[0], paramNames);
 		} else {
-			if (StringUtil.matchCnt(where, "\\?") != values.length) {
+			if (DialectUtils.getParamsCount(where) != valueSize) {
 				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
 			}
 		}
@@ -1707,16 +1665,23 @@ public class SqlToyDaoSupport {
 			}
 		}
 
-		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
-		String columnName;
-		Object[] realValues = new Object[innerModel.updateValues.size() + values.length];
+		Object[] realValues = new Object[innerModel.updateValues.size() + valueSize];
+		if (valueSize > 0) {
+			System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), valueSize);
+		}
 		Integer[] paramsTypes = new Integer[realValues.length];
 		for (int i = 0; i < paramsTypes.length; i++) {
 			paramsTypes[i] = java.sql.Types.OTHER;
 		}
-		System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), values.length);
+		String[] realNames = null;
+		if (isName) {
+			realNames = new String[realValues.length];
+			System.arraycopy(paramNames, 0, realNames, innerModel.updateValues.size(), valueSize);
+		}
 		int index = 0;
+		String columnName;
 		FieldMeta fieldMeta;
+		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
 		while (iter.hasNext()) {
 			entry = iter.next();
 			fieldMeta = entityMeta.getFieldMeta(entry.getKey());
@@ -1733,18 +1698,23 @@ public class SqlToyDaoSupport {
 			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
-
+			if (isName) {
+				realNames[index] = fieldMeta.getFieldName();
+			}
 			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
 			}
-			sql.append(columnName).append("=?");
+			sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
 			index++;
 		}
 		sql.append(" where ").append(where);
-		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sql.toString(), SqlType.update,
+		String sqlStr = sql.toString();
+		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlStr, SqlType.update,
 				getDialect(innerModel.dataSource));
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, null, realValues, paramsTypes, false,
+		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
+		setEntitySharding(queryExecutor, entityMeta);
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, paramsTypes, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
 
@@ -1937,5 +1907,21 @@ public class SqlToyDaoSupport {
 			return sqlToyContext.getDialect();
 		}
 		return DataSourceUtils.getDialect(sqlToyContext, getDataSource(dataSource));
+	}
+
+	private void setEntitySharding(QueryExecutor queryExecutor, EntityMeta entityMeta) {
+		// 分库分表策略
+		if (entityMeta.getShardingConfig() != null) {
+			// db sharding
+			if (entityMeta.getShardingConfig().getShardingDBStrategy() != null) {
+				queryExecutor.getInnerModel().dbSharding = entityMeta.getShardingConfig().getShardingDBStrategy();
+			}
+			// table sharding
+			if (entityMeta.getShardingConfig().getShardingTableStrategy() != null) {
+				List<ShardingStrategyConfig> shardingConfig = new ArrayList<ShardingStrategyConfig>();
+				shardingConfig.add(entityMeta.getShardingConfig().getShardingTableStrategy());
+				queryExecutor.getInnerModel().tableShardings = shardingConfig;
+			}
+		}
 	}
 }

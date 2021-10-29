@@ -654,47 +654,9 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.updateFetch(queryExecutor, updateRowHandler);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFetchTop(org.sagacity.sqltoy
-	 * .executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler)
-	 */
-	@Override
-	@Deprecated
-	public List updateFetchTop(QueryExecutor queryExecutor, Integer topSize, UpdateRowHandler updateRowHandler) {
-		return super.updateFetchTop(queryExecutor, topSize, updateRowHandler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateFetchRandom(org.sagacity.
-	 * sqltoy.executor.QueryExecutor, java.lang.Integer,
-	 * org.sagacity.core.database.callback.UpdateRowHandler)
-	 */
-	@Override
-	@Deprecated
-	public List updateFetchRandom(QueryExecutor queryExecutor, Integer random, UpdateRowHandler updateRowHandler) {
-		return super.updateFetchRandom(queryExecutor, random, updateRowHandler);
-	}
-
 	@Override
 	public Long executeSql(String sqlOrNamedSql, Serializable entity) {
-		return super.executeSql(sqlOrNamedSql, entity, null);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#executeSql(java.lang.String,
-	 * java.io.Serializable,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
-	 */
-	@Override
-	public Long executeSql(String sqlOrNamedSql, Serializable entity, ReflectPropertyHandler reflectPropertyHandler) {
-		return super.executeSql(sqlOrNamedSql, entity, reflectPropertyHandler);
+		return super.executeSql(sqlOrNamedSql, entity);
 	}
 
 	@Override
