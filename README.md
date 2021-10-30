@@ -51,7 +51,7 @@
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
-   * dorisdb
+   * starRocks(原dorisdb)
    * oceanBase
    * guassdb
    * tidb
