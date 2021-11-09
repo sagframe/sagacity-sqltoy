@@ -18,14 +18,19 @@ import org.sagacity.sqltoy.config.annotation.Id;
 import org.sagacity.sqltoy.config.annotation.OneToMany;
 import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.PartitionKey;
+import org.sagacity.sqltoy.config.annotation.Secure;
+import org.sagacity.sqltoy.config.annotation.SecureConfig;
 import org.sagacity.sqltoy.config.annotation.Sharding;
 import org.sagacity.sqltoy.config.annotation.Strategy;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingConfig;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -312,7 +317,8 @@ public class EntityManager {
 
 				// 解析sharding策略
 				parseSharding(entityMeta, entityClass);
-
+				// 解析加解密配置
+				parseSecureConfig(entityMeta, entityClass);
 				// oneToMany和oneToOne解析
 				for (Field field : allFields) {
 					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
@@ -404,6 +410,46 @@ public class EntityManager {
 		// 必须有一个策略是存在的
 		if (shardingConfig.getShardingDBStrategy() != null || shardingConfig.getShardingTableStrategy() != null) {
 			entityMeta.setShardingConfig(shardingConfig);
+		}
+	}
+
+	/**
+	 * @todo 解析加解密配置
+	 * @param entityMeta
+	 * @param entityClass
+	 */
+	private void parseSecureConfig(EntityMeta entityMeta, Class entityClass) {
+		// 不存在加解密配置
+		if (!entityClass.isAnnotationPresent(SecureConfig.class)) {
+			return;
+		}
+		SecureConfig secureConfig = (SecureConfig) entityClass.getAnnotation(SecureConfig.class);
+		Secure[] secures = secureConfig.secures();
+		if (secures != null && secures.length > 0) {
+			IgnoreCaseSet secureColumns = new IgnoreCaseSet();
+			String field;
+			FieldMeta fieldMeta;
+			for (Secure secure : secures) {
+				field = secure.field();
+				fieldMeta = entityMeta.getFieldMeta(field);
+				if (fieldMeta != null) {
+					// 加密
+					if (secure.secureType().equals(SecureType.ENCRYPT)) {
+						secureColumns.add(fieldMeta.getColumnName());
+						entityMeta
+								.addSecureField(new FieldSecureConfig(field, SecureType.ENCRYPT, null, null, 0, 0, 0));
+					} else {
+						// 依据加密字段进行脱敏保存
+						entityMeta
+								.addSecureField(new FieldSecureConfig(field, secure.secureType(), secure.sourceField(),
+										secure.maskCode(), secure.headSize(), secure.tailSize(), secure.maskRate()));
+					}
+				}
+			}
+			// 加密字段
+			if (!secureColumns.isEmpty()) {
+				entityMeta.setSecureColumns(secureColumns);
+			}
 		}
 	}
 

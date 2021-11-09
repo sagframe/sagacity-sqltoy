@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
@@ -166,6 +167,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @fast场景下外围是否已经包含了()
 	 */
 	private boolean ignoreBracket = false;
+	
+	/**
+	 * 解密字段
+	 */
+	private IgnoreCaseSet decryptColumns;
 
 	/**
 	 * @return the hasUnion
@@ -719,6 +725,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 */
 	public void setIgnoreBracket(boolean ignoreBracket) {
 		this.ignoreBracket = ignoreBracket;
+	}
+
+	public IgnoreCaseSet getDecryptColumns() {
+		return decryptColumns;
+	}
+
+	public void setDecryptColumns(IgnoreCaseSet decryptColumns) {
+		this.decryptColumns = decryptColumns;
 	}
 
 }

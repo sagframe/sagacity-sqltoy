@@ -40,6 +40,13 @@
 				type="sqltoyFiltersType" />
 			<xsd:element name="translate" minOccurs="0"
 				maxOccurs="unbounded" type="sqltoyTranslateType" />
+			<xsd:element name="secure-decrypt" minOccurs="0"
+				maxOccurs="1">
+				<xsd:complexType>
+					<xsd:attribute name="columns" type="xsd:string"
+						use="required" />
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="secure-mask" minOccurs="0"
 				maxOccurs="unbounded" type="sqltoySecureMaskType" />
 			<xsd:element name="value" type="xsd:string" minOccurs="1"

@@ -1626,6 +1626,10 @@ public class SqlToyDaoSupport {
 
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecutor, SqlType.search,
 				getDialect(queryExecutor.getInnerModel().dataSource));
+		// 加密字段，查询时解密
+		if (entityMeta.getSecureColumns() != null) {
+			sqlToyConfig.setDecryptColumns(entityMeta.getSecureColumns());
+		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
 		if (innerModel.dbSharding != null) {

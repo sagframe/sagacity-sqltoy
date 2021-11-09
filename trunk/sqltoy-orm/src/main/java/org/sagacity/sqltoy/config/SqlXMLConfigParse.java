@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -401,7 +402,8 @@ public class SqlXMLConfigParse {
 		parseLink(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("link")), local);
 		// 解析对结果的运算
 		parseCalculator(sqlToyConfig, sqlElt, local);
-
+		// 解析解密字段
+		parseSecureDecrypt(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("secure-decrypt")));
 		// 解析安全脱敏配置
 		parseSecureMask(sqlToyConfig, sqlElt.getElementsByTagName(local.concat("secure-mask")));
 		// mongo/elastic查询语法
@@ -510,6 +512,26 @@ public class SqlXMLConfigParse {
 		// nosql参数解析模式不同于sql
 		if (!noSqlConfig.isSqlMode()) {
 			sqlToyConfig.setParamsName(SqlConfigParseUtils.getNoSqlParamsName(sqlToyConfig.getSql(null), true));
+		}
+	}
+
+	/**
+	 * @TODO 解析解密字段
+	 * @param sqlToyConfig
+	 * @param decryptElts
+	 */
+	public static void parseSecureDecrypt(SqlToyConfig sqlToyConfig, NodeList decryptElts) {
+		if (decryptElts == null || decryptElts.getLength() == 0) {
+			return;
+		}
+		Element decryptElt = (Element) decryptElts.item(0);
+		if (decryptElt.hasAttribute("columns")) {
+			String[] columns = trimParams(decryptElt.getAttribute("columns").toLowerCase().split("\\,"));
+			IgnoreCaseSet decryptColumns = new IgnoreCaseSet();
+			for (String col : columns) {
+				decryptColumns.add(col);
+			}
+			sqlToyConfig.setDecryptColumns(decryptColumns);
 		}
 	}
 
@@ -1116,7 +1138,7 @@ public class SqlXMLConfigParse {
 		} else if (link.hasAttribute("columns")) {
 			linkModel.setColumns(trimParams(link.getAttribute("columns").split("\\,")));
 		}
-		//update 2021-10-15 支持多列
+		// update 2021-10-15 支持多列
 		if (link.hasAttribute("id-columns")) {
 			linkModel.setIdColumns(trimParams(link.getAttribute("id-columns").split("\\,")));
 		} else if (link.hasAttribute("id-column")) {
