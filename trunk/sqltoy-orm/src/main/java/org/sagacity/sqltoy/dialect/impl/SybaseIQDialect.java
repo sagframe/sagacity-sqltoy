@@ -13,6 +13,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -33,10 +34,10 @@ import org.sagacity.sqltoy.dialect.utils.SapIQDialectUtils;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -84,8 +85,9 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
 		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect));
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		QueryResult queryResult = null;
@@ -165,7 +167,7 @@ public class SybaseIQDialect implements Dialect {
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
 					NumberUtil.randomArray(totalCount.intValue(), randomCount.intValue()), null);
 			queryResult = findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-					extend.rowCallbackHandler, conn, null, dbType, dialect, fetchSize, maxRows);
+					extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -190,8 +192,9 @@ public class SybaseIQDialect implements Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
 		StringBuilder sql = new StringBuilder();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		if (sqlToyConfig.isHasFast()) {
@@ -217,7 +220,7 @@ public class SybaseIQDialect implements Dialect {
 				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, fetchSize, maxRows);
+				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -229,8 +232,8 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
-			final int maxRows) throws Exception {
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		StringBuilder sql = new StringBuilder();
 		if (sqlToyConfig.isHasFast()) {
 			sql.append(sqlToyConfig.getFastPreSql(dialect));
@@ -267,7 +270,7 @@ public class SybaseIQDialect implements Dialect {
 				sql.toString(), null, null);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-				extend.rowCallbackHandler, conn, null, dbType, dialect, fetchSize, maxRows);
+				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -279,14 +282,14 @@ public class SybaseIQDialect implements Dialect {
 	 * java.sql.Connection)
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
+			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
 		if (null != lockMode) {
 			throw new UnsupportedOperationException("sybase iq lock search," + SqlToyConstants.UN_SUPPORT_MESSAGE);
 		}
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
-				0, fetchSize, maxRows);
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, decryptHandler,
+				conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -548,7 +551,7 @@ public class SybaseIQDialect implements Dialect {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -649,7 +652,7 @@ public class SybaseIQDialect implements Dialect {
 			String dialect) throws Exception {
 		return DefaultDialectUtils.getTables(catalog, schema, tableName, conn, dbType, dialect);
 	}
-	
+
 	private boolean isAssignPKValue(PKStrategy pkStrategy) {
 		if (pkStrategy == null) {
 			return true;

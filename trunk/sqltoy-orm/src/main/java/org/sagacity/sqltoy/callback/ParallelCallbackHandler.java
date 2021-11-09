@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.callback;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.model.ShardingGroupModel;
+import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 
 /**
  * @project sagacity-sqltoy4.0

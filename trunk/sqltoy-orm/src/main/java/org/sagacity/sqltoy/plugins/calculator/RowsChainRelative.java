@@ -5,8 +5,8 @@ import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
 
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
-import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;

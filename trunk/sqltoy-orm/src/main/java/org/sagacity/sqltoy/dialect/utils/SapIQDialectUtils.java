@@ -68,6 +68,8 @@ public class SapIQDialectUtils {
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity || isSequence) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null,
 				handler);
@@ -247,6 +249,8 @@ public class SapIQDialectUtils {
 
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID

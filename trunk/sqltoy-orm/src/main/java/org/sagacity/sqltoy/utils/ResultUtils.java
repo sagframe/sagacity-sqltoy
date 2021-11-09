@@ -19,11 +19,13 @@ import java.util.concurrent.ConcurrentMap;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.PivotModel;
 import org.sagacity.sqltoy.config.model.ReverseModel;
@@ -38,11 +40,11 @@ import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.executor.QueryExecutor;
-import org.sagacity.sqltoy.model.DataSetResult;
-import org.sagacity.sqltoy.model.LabelIndexModel;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.QueryResult;
-import org.sagacity.sqltoy.model.TranslateExtend;
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.calculator.ColsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
@@ -77,13 +79,14 @@ public class ResultUtils {
 	 * @param rs
 	 * @param rowCallbackHandler
 	 * @param updateRowHandler
+	 * @param decryptHandler
 	 * @param startColIndex
 	 * @return
 	 * @throws Exception
 	 */
 	public static QueryResult processResultSet(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			Connection conn, ResultSet rs, RowCallbackHandler rowCallbackHandler, UpdateRowHandler updateRowHandler,
-			int startColIndex) throws Exception {
+			DecryptHandler decryptHandler, int startColIndex) throws Exception {
 		QueryResult result = new QueryResult();
 		// 记录行记数器
 		int index = 0;
@@ -94,6 +97,19 @@ public class ResultUtils {
 			}
 			result.setRows(rowCallbackHandler.getResult());
 		} else {
+			// 解密字段整合(entityMeta中和sql中定义的)
+			IgnoreCaseSet decryptColumns = (decryptHandler == null) ? null : decryptHandler.getColumns();
+			if (sqlToyConfig.getDecryptColumns() != null) {
+				if (decryptColumns == null) {
+					decryptColumns = sqlToyConfig.getDecryptColumns();
+				} else {
+					decryptColumns.addAll(sqlToyConfig.getDecryptColumns());
+				}
+			}
+			DecryptHandler realDecryptHandler = null;
+			if (decryptColumns != null && !decryptColumns.isEmpty()) {
+				realDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), decryptColumns);
+			}
 			// 取得字段列数,在没有rowCallbackHandler時用数组返回
 			int rowCnt = rs.getMetaData().getColumnCount();
 			// 类型转成string的列
@@ -120,16 +136,14 @@ public class ResultUtils {
 			result.setLabelTypes(labelTypes);
 			// 返回结果为非VO class时才可以应用旋转和汇总合计功能
 			try {
-				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, rowCnt,
-						labelIndexMap, labelNames, startColIndex));
+				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, realDecryptHandler,
+						rowCnt, labelIndexMap, labelNames, startColIndex));
 			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
-			catch (ArrayIndexOutOfBoundsException oie) {
+			catch (Exception oie) {
 				oie.printStackTrace();
 				logger.error("sql={} 的缓存翻译数组越界:{},请检查其<translate cache-indexs 配置是否正确,index值必须跟缓存数据的列对应!",
 						sqlToyConfig.getId(), oie.getMessage());
 				throw oie;
-			} catch (Exception e) {
-				throw e;
 			}
 		}
 		// 填充记录数
@@ -206,7 +220,7 @@ public class ResultUtils {
 	 * @param value
 	 * @return
 	 */
-	private static String maskStr(SecureMask mask, Object value) {
+	public static String maskStr(SecureMask mask, Object value) {
 		String type = mask.getType();
 		String realStr = value.toString();
 		int size = realStr.length();
@@ -221,6 +235,25 @@ public class ResultUtils {
 		if (headSize > 0 || tailSize > 0) {
 			return StringUtil.secureMask(realStr, (headSize > 0) ? headSize : 0, (tailSize > 0) ? tailSize : 0,
 					maskCode);
+		}
+		// 按比例模糊(百分比)
+		if (mask.getMaskRate() > 0) {
+			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
+			if (maskSize < 1) {
+				maskSize = 1;
+			} else if (maskSize >= size) {
+				maskSize = size - 1;
+			}
+			tailSize = (size - maskSize) / 2;
+			headSize = size - maskSize - tailSize;
+			if (maskCode == null) {
+				maskCode = "*";
+				if (maskSize > 3) {
+					maskCode = "***";
+				} else if (maskSize == 2) {
+					maskCode = "**";
+				}
+			}
 		}
 		// 按类别处理
 		// 电话
@@ -253,7 +286,9 @@ public class ResultUtils {
 		}
 		// 地址
 		if ("address".equals(type)) {
-			if (size >= 12) {
+			if (size >= 30) {
+				return StringUtil.secureMask(realStr, 7, 0, maskCode);
+			} else if (size >= 12) {
 				return StringUtil.secureMask(realStr, 6, 0, maskCode);
 			} else if (size >= 8) {
 				return StringUtil.secureMask(realStr, 4, 0, maskCode);
@@ -265,38 +300,18 @@ public class ResultUtils {
 		if ("public-account".equals(type)) {
 			return StringUtil.secureMask(realStr, 2, 0, maskCode);
 		}
-
-		// 按比例模糊(百分比)
-		if (mask.getMaskRate() > 0) {
-			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
-			if (maskSize < 1) {
-				maskSize = 1;
-			} else if (maskSize >= size) {
-				maskSize = size - 1;
-			}
-			tailSize = (size - maskSize) / 2;
-			headSize = size - maskSize - tailSize;
-			if (maskCode == null) {
-				maskCode = "*";
-				if (maskSize > 3) {
-					maskCode = "***";
-				} else if (maskSize == 2) {
-					maskCode = "**";
-				}
-			}
-		}
 		return StringUtil.secureMask(realStr, headSize, tailSize, maskCode);
 	}
 
 	private static List getResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
-			ResultSet rs, UpdateRowHandler updateRowHandler, int rowCnt, HashMap<String, Integer> labelIndexMap,
-			String[] labelNames, int startColIndex) throws Exception {
+			ResultSet rs, UpdateRowHandler updateRowHandler, DecryptHandler decryptHandler, int rowCnt,
+			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		// update 2020-09-13 存在多列link(独立出去编写,避免对单列产生影响)
 		if (linkModel != null && linkModel.getColumns().length > 1) {
-			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, conn, rs, rowCnt, labelIndexMap, labelNames,
-					startColIndex);
+			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, rowCnt, labelIndexMap,
+					labelNames, startColIndex);
 		}
 
 		List<List> items = new ArrayList();
@@ -393,9 +408,9 @@ public class ResultUtils {
 					linkSet.add(linkStr);
 					if (hasTranslate) {
 						rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs,
-								columnSize, ignoreAllEmpty);
+								columnSize, decryptHandler, ignoreAllEmpty);
 					} else {
-						rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
+						rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
 					}
 					if (rowTemp != null) {
 						items.add(rowTemp);
@@ -446,7 +461,7 @@ public class ResultUtils {
 						rs.updateRow();
 					}
 					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
-							ignoreAllEmpty);
+							decryptHandler, ignoreAllEmpty);
 					if (rowTemp != null) {
 						items.add(rowTemp);
 					}
@@ -467,7 +482,7 @@ public class ResultUtils {
 						updateRowHandler.updateRow(rs, index);
 						rs.updateRow();
 					}
-					rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
+					rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
 					if (rowTemp != null) {
 						items.add(rowTemp);
 					}
@@ -525,6 +540,7 @@ public class ResultUtils {
 	 * @TODO 实现多列link
 	 * @param sqlToyConfig
 	 * @param sqlToyContext
+	 * @param decryptHandler
 	 * @param conn
 	 * @param rs
 	 * @param rowCnt
@@ -534,9 +550,9 @@ public class ResultUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
-			ResultSet rs, int rowCnt, HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex)
-			throws Exception {
+	private static List getMoreLinkResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext,
+			DecryptHandler decryptHandler, Connection conn, ResultSet rs, int rowCnt,
+			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
 		// 字段连接(多行数据拼接成一个数据,以一行显示)
 		LinkModel linkModel = sqlToyConfig.getLinkModel();
 		List<List> items = new ArrayList();
@@ -657,9 +673,9 @@ public class ResultUtils {
 				// 提取result中的数据(identity相等时不需要提取)
 				if (hasTranslate) {
 					rowTemp = processResultRowWithTranslate(translateMap, translateCache, labelNames, rs, columnSize,
-							ignoreAllEmpty);
+							decryptHandler, ignoreAllEmpty);
 				} else {
-					rowTemp = processResultRow(rs, startColIndex, rowCnt, ignoreAllEmpty);
+					rowTemp = processResultRow(rs, labelNames, columnSize, decryptHandler, ignoreAllEmpty);
 				}
 				if (rowTemp != null) {
 					items.add(rowTemp);
@@ -860,7 +876,6 @@ public class ResultUtils {
 				} else {
 					lessThen = (iData.toString()).compareTo(jData.toString()) < 0;
 				}
-
 				if ((ascend && !lessThen) || (!ascend && lessThen)) {
 					List tempList = sortList.get(i);
 					sortList.set(i, sortList.get(j));
@@ -904,6 +919,36 @@ public class ResultUtils {
 		return rowData;
 	}
 
+	public static List processResultRow(ResultSet rs, String[] labelNames, int size, DecryptHandler decryptHandler,
+			boolean ignoreAllEmptySet) throws Exception {
+		List rowData = new ArrayList();
+		Object fieldValue;
+		// 单行所有字段结果为null
+		boolean allNull = true;
+		String label;
+		for (int i = 0; i < size; i++) {
+			label = labelNames[i];
+			fieldValue = rs.getObject(label);
+			if (null != fieldValue) {
+				if (fieldValue instanceof java.sql.Clob) {
+					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				}
+				// 解密
+				if (decryptHandler != null) {
+					fieldValue = decryptHandler.decrypt(label, fieldValue);
+				}
+				// 有一个非null
+				allNull = false;
+			}
+			rowData.add(fieldValue);
+		}
+		// 全null返回null结果，外围判断结果为null则不加入结果集合
+		if (allNull && ignoreAllEmptySet) {
+			return null;
+		}
+		return rowData;
+	}
+
 	/**
 	 * @todo 存在缓存翻译的结果处理
 	 * @param translateMap
@@ -917,7 +962,7 @@ public class ResultUtils {
 	 */
 	private static List processResultRowWithTranslate(HashMap<String, Translate> translateMap,
 			HashMap<String, HashMap<String, Object[]>> translateCaches, String[] labelNames, ResultSet rs, int size,
-			boolean ignoreAllEmptySet) throws Exception {
+			DecryptHandler decryptHandler, boolean ignoreAllEmptySet) throws Exception {
 		List rowData = new ArrayList();
 		Object fieldValue;
 		TranslateExtend extend;
@@ -933,6 +978,10 @@ public class ResultUtils {
 				allNull = false;
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
+				}
+				// 解密
+				if (decryptHandler != null) {
+					fieldValue = decryptHandler.decrypt(label, fieldValue);
 				}
 				if (translateMap.containsKey(label) || translateMap.containsKey(keyIndex)) {
 					extend = translateMap.get(label).getExtend();
@@ -1060,8 +1109,8 @@ public class ResultUtils {
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
 							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig));
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
-							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, conn, dbType,
-							sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
+							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
+							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
 					// 行转列返回
 					return CollectionUtil.convertColToRow(pivotCategory, null);
 				}

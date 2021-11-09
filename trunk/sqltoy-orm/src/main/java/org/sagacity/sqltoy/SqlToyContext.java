@@ -24,6 +24,8 @@ import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
+import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -254,10 +256,28 @@ public class SqlToyContext implements ApplicationContextAware {
 	 */
 	private String reservedWords;
 
+	// 如果是文件存储则使用classpath:开头
+	/**
+	 * 安全私钥
+	 */
+	private String securePrivateKey;
+
+	/**
+	 * 安全公钥
+	 */
+	private String securePublicKey;
+
+	/**
+	 * 加解密算法实现
+	 */
+	private FieldsSecureProvider fieldsSecureProvider;
+
 	/**
 	 * 当发现有重复sqlId时是否抛出异常，终止程序执行
 	 */
 	private boolean breakWhenSqlRepeat = true;
+
+	private String encoding = "UTF-8";
 
 	/**
 	 * @todo 初始化
@@ -291,6 +311,19 @@ public class SqlToyContext implements ApplicationContextAware {
 		// 初始化sql执行统计的基本参数
 		SqlExecuteStat.setDebug(this.debug);
 		SqlExecuteStat.setPrintSqlTimeoutMillis(this.printSqlTimeoutMillis);
+
+		// 字段加解密实现类初始化
+		if (null != fieldsSecureProvider) {
+			fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
+		} else {
+			// 同时定义了私钥和公钥表示使用sqltoy自带的RSA算法
+			if (StringUtil.isNotBlank(securePrivateKey) && StringUtil.isNotBlank(securePublicKey)) {
+				if (fieldsSecureProvider == null) {
+					fieldsSecureProvider = new FieldsRSASecureProvider();
+				}
+				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
+			}
+		}
 		logger.debug("sqltoy init complete!");
 	}
 
@@ -617,6 +650,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	}
 
 	public void setEncoding(String encoding) {
+		this.encoding = encoding;
 		scriptLoader.setEncoding(encoding);
 	}
 
@@ -867,4 +901,21 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
 		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
 	}
+
+	public void setSecurePrivateKey(String securePrivateKey) {
+		this.securePrivateKey = securePrivateKey;
+	}
+
+	public void setSecurePublicKey(String securePublicKey) {
+		this.securePublicKey = securePublicKey;
+	}
+
+	public void setFieldsSecureProvider(FieldsSecureProvider fieldsSecureProvider) {
+		this.fieldsSecureProvider = fieldsSecureProvider;
+	}
+
+	public FieldsSecureProvider getFieldsSecureProvider() {
+		return fieldsSecureProvider;
+	}
+
 }

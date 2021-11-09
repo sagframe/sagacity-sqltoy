@@ -280,5 +280,4 @@ public class FieldMeta implements Serializable {
 	public void setPartitionKey(boolean partitionKey) {
 		this.partitionKey = partitionKey;
 	}
-
 }

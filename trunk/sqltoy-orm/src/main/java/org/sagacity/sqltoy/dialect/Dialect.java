@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -35,7 +36,7 @@ public interface Dialect {
 	 * @TODO 判断唯一性
 	 * @param sqlToyContext
 	 * @param entity
-	 * @param paramsNamed 对象属性名称(不是数据库表字段名称)
+	 * @param paramsNamed   对象属性名称(不是数据库表字段名称)
 	 * @param conn
 	 * @param dbType
 	 * @param tableName
@@ -58,8 +59,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult getRandomResult(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Long totalCount, final Long randomCount, final Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception;
+			final QueryExecutor queryExecutor, final DecryptHandler decryptHandler, final Long totalCount,
+			final Long randomCount, final Connection conn, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 分页查询
@@ -75,8 +77,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findPageBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Long pageNo, final Integer pageSize, final Connection conn,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception;
+			final QueryExecutor queryExecutor, final DecryptHandler decryptHandler, final Long pageNo,
+			final Integer pageSize, final Connection conn, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 取top记录数
@@ -91,8 +94,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findTopBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Integer topSize, final Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception;
+			final QueryExecutor queryExecutor, final DecryptHandler decryptHandler, final Integer topSize,
+			final Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception;
 
 	/**
 	 * @todo 普通sql查询
@@ -110,9 +114,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception;
+			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception;
 
 	/**
 	 * @todo 取记录数量
@@ -216,7 +220,7 @@ public interface Dialect {
 			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, final Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception;
-	
+
 	/**
 	 * @TODO 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息
 	 * @param sqlToyContext
@@ -355,7 +359,8 @@ public interface Dialect {
 	 */
 	public QueryResult updateFetch(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] paramValues, final UpdateRowHandler updateRowHandler, final Connection conn,
-			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows) throws Exception;
+			final Integer dbType, final String dialect, final LockMode lockMode, final int fetchSize, final int maxRows)
+			throws Exception;
 
 	@Deprecated
 	public QueryResult updateFetchTop(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, String sql,
@@ -382,8 +387,8 @@ public interface Dialect {
 	 */
 	public StoreResult executeStore(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] inParamsValue, final Integer[] outParamsType, final Connection conn,
-			final Integer dbType, final String dialect,final int fetchSize) throws Exception;
-	
+			final Integer dbType, final String dialect, final int fetchSize) throws Exception;
+
 	/**
 	 * @TODO 获得表的字段信息
 	 * @param catalog

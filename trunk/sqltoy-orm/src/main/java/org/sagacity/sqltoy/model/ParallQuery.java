@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
+
 /**
  * @project sagacity-sqltoy
  * @description 并行查询对象模型

@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -62,6 +64,11 @@ public class EntityMeta implements Serializable {
 	 * 所有字段的类别
 	 */
 	private Integer[] fieldsTypeArray;
+
+	/**
+	 * 加密字段
+	 */
+	private List<FieldSecureConfig> secureFields = new ArrayList<FieldSecureConfig>();
 
 	/**
 	 * 是否存在default值(仅用于sybaseiq,后期可废弃)
@@ -205,6 +212,8 @@ public class EntityMeta implements Serializable {
 	 * 全部字段信息,默认值*最终存放colName1,colName2这种格式
 	 */
 	private String allColumnNames = "*";
+
+	private IgnoreCaseSet secureColumns;
 
 	/**
 	 * @return the loadAllSql
@@ -818,4 +827,26 @@ public class EntityMeta implements Serializable {
 	public void setSchema(String schema) {
 		this.schema = schema;
 	}
+
+	public List<FieldSecureConfig> getSecureFields() {
+		return secureFields;
+	}
+
+	public void addSecureField(FieldSecureConfig fieldSecureConfig) {
+		// 非加密的脱敏处理优先确保基于未加密的明文脱敏
+		if (!fieldSecureConfig.getSecureType().equals(SecureType.ENCRYPT)) {
+			this.secureFields.add(0, fieldSecureConfig);
+		} else {
+			this.secureFields.add(fieldSecureConfig);
+		}
+	}
+
+	public IgnoreCaseSet getSecureColumns() {
+		return secureColumns;
+	}
+
+	public void setSecureColumns(IgnoreCaseSet secureColumns) {
+		this.secureColumns = secureColumns;
+	}
+
 }

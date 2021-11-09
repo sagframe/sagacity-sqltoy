@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
@@ -76,10 +77,11 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount,
-				randomCount, conn, dbType, dialect, fetchSize, maxRows);
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		return PostgreSqlDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
+				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -92,10 +94,11 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect, fetchSize, maxRows);
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, pageNo,
+				pageSize, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -107,10 +110,10 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
-			final int maxRows) throws Exception {
-		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect, fetchSize, maxRows);
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, topSize,
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	/*
@@ -123,11 +126,12 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public QueryResult findBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
-			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final Connection conn, final LockMode lockMode,
-			final Integer dbType, final String dialect, final int fetchSize, final int maxRows) throws Exception {
+			Object[] paramsValue, RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
+			final Connection conn, final LockMode lockMode, final Integer dbType, final String dialect,
+			final int fetchSize, final int maxRows) throws Exception {
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler, conn,
-				dbType, 0, fetchSize, maxRows);
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, rowCallbackHandler,
+				decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	/*
@@ -260,7 +264,7 @@ public class PostgreSqlDialect implements Dialect {
 		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, updateRowHandler, uniqueProps, conn, dbType,
 				dialect, tableName);
 	}
-	
+
 	// postgres的ON CONFLICT ON CONSTRAINT() DO UPDATE SET特性跟mysql一样存在bug
 	/*
 	 * (non-Javadoc)
@@ -446,7 +450,7 @@ public class PostgreSqlDialect implements Dialect {
 		return DialectUtils.executeStore(sqlToyConfig, sqlToyContext, sql, inParamsValue, outParamsType, conn, dbType,
 				fetchSize);
 	}
-	
+
 	@Override
 	public List<ColumnMeta> getTableColumns(String catalog, String schema, String tableName, Connection conn,
 			Integer dbType, String dialect) throws Exception {

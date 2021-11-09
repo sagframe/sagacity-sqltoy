@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.executor;
+package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
 
@@ -10,9 +10,10 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.DialectFactory;
+import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.ParallQuery;
-import org.sagacity.sqltoy.model.ParallQueryExtend;
 import org.sagacity.sqltoy.model.ParallQueryResult;
+import org.sagacity.sqltoy.model.inner.ParallQueryExtend;
 
 /**
  * @project sagacity-sqltoy

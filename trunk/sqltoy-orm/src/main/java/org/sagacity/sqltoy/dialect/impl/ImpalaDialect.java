@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -63,35 +64,37 @@ public class ImpalaDialect implements Dialect {
 
 	@Override
 	public QueryResult getRandomResult(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long totalCount, Long randomCount, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, totalCount, randomCount,
-				conn, dbType, dialect, fetchSize, maxRows);
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long totalCount, Long randomCount,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DefaultDialectUtils.getRandomResult(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler,
+				totalCount, randomCount, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	@Override
 	public QueryResult findPageBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, Long pageNo, Integer pageSize, Connection conn, final Integer dbType,
-			final String dialect, final int fetchSize, final int maxRows) throws Exception {
-		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, pageNo, pageSize, conn,
-				dbType, dialect, fetchSize, maxRows);
+			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Long pageNo, Integer pageSize,
+			Connection conn, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
+			throws Exception {
+		return DefaultDialectUtils.findPageBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, pageNo,
+				pageSize, conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	@Override
 	public QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
-			Integer topSize, Connection conn, final Integer dbType, final String dialect, final int fetchSize,
-			final int maxRows) throws Exception {
-		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, topSize, conn, dbType,
-				dialect, fetchSize, maxRows);
+			final DecryptHandler decryptHandler, Integer topSize, Connection conn, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		return DefaultDialectUtils.findTopBySql(sqlToyContext, sqlToyConfig, queryExecutor, decryptHandler, topSize,
+				conn, dbType, dialect, fetchSize, maxRows);
 	}
 
 	@Override
 	public QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
-			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final LockMode lockMode, final Integer dbType, final String dialect, final int fetchSize, final int maxRows)
-			throws Exception {
-		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, conn, dbType,
-				0, fetchSize, maxRows);
+			final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
+			final DecryptHandler decryptHandler, final Connection conn, final LockMode lockMode, final Integer dbType,
+			final String dialect, final int fetchSize, final int maxRows) throws Exception {
+		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, sql, paramsValue, rowCallbackHandler, decryptHandler,
+				conn, dbType, 0, fetchSize, maxRows);
 	}
 
 	@Override
@@ -201,7 +204,7 @@ public class ImpalaDialect implements Dialect {
 		return saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn, dbType,
 				dialect, autoCommit, tableName);
 	}
-	
+
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
 			UpdateRowHandler updateRowHandler, String[] uniqueProps, Connection conn, Integer dbType, String dialect,

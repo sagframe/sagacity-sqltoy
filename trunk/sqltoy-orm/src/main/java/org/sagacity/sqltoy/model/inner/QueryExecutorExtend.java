@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.model;
+package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -22,6 +22,8 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
 
 /**

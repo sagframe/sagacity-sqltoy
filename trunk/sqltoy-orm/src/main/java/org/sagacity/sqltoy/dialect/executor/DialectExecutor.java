@@ -1,14 +1,14 @@
 /**
  * 
  */
-package org.sagacity.sqltoy.executor;
+package org.sagacity.sqltoy.dialect.executor;
 
 import java.util.concurrent.Callable;
 
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.ParallelCallbackHandler;
-import org.sagacity.sqltoy.model.ShardingGroupModel;
+import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 import org.sagacity.sqltoy.model.ShardingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

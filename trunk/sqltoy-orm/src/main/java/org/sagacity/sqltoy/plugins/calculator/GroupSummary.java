@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sagacity.sqltoy.config.model.GroupMeta;
+import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.SummaryModel;
-import org.sagacity.sqltoy.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.ExpressionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;

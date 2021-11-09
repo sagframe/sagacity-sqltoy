@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -393,8 +394,8 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List reflectResultToValueObject(TypeHandler typeHandler, ResultSet rs, Class voClass,
-			boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
+	private static List reflectResultToValueObject(TypeHandler typeHandler, DecryptHandler decryptHandler, ResultSet rs,
+			Class voClass, boolean ignoreAllEmptySet, HashMap<String, String> columnFieldMap) throws Exception {
 		List resultList = new ArrayList();
 		// 提取数据预警阈值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
@@ -448,8 +449,8 @@ public class SqlUtil {
 		// 循环通过java reflection将rs中的值映射到VO中
 		Object rowData;
 		while (rs.next()) {
-			rowData = reflectResultRowToVOClass(typeHandler, rs, columnNames, setMethods, propTypes, genericTypes,
-					voClass, ignoreAllEmptySet);
+			rowData = reflectResultRowToVOClass(typeHandler, decryptHandler, rs, columnNames, setMethods, propTypes,
+					genericTypes, voClass, ignoreAllEmptySet);
 			if (rowData != null) {
 				resultList.add(rowData);
 			}
@@ -488,9 +489,9 @@ public class SqlUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, ResultSet rs, String[] columnLabels,
-			Method[] setMethods, String[] propTypes, Class[] genericTypes, Class voClass, boolean ignoreAllEmptySet)
-			throws Exception {
+	private static Object reflectResultRowToVOClass(TypeHandler typeHandler, DecryptHandler decryptHandler,
+			ResultSet rs, String[] columnLabels, Method[] setMethods, String[] propTypes, Class[] genericTypes,
+			Class voClass, boolean ignoreAllEmptySet) throws Exception {
 		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
 		Object bean = voClass.getDeclaredConstructor().newInstance();
 		Object fieldValue;
@@ -498,12 +499,17 @@ public class SqlUtil {
 		Method method;
 		// 已经小写
 		String typeName;
+		String label;
 		for (int i = 0, n = columnLabels.length; i < n; i++) {
+			label = columnLabels[i];
 			method = setMethods[i];
 			typeName = propTypes[i];
 			if (method != null) {
-				fieldValue = rs.getObject(columnLabels[i]);
+				fieldValue = rs.getObject(label);
 				if (null != fieldValue) {
+					if (decryptHandler != null) {
+						fieldValue = decryptHandler.decrypt(label, fieldValue);
+					}
 					allNull = false;
 					method.invoke(bean, BeanUtil.convertType(typeHandler, fieldValue, typeName, genericTypes[i]));
 				}
@@ -754,7 +760,7 @@ public class SqlUtil {
 			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
 			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap)
 			throws Exception {
-		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, conn, dbType,
+		List result = findByJdbcQuery(typeHandler, queryStr, params, voClass, rowCallbackHandler, null, conn, dbType,
 				ignoreAllEmptySet, colFieldMap, -1, -1);
 		if (result != null && !result.isEmpty()) {
 			if (result.size() > 1) {
@@ -772,17 +778,20 @@ public class SqlUtil {
 	 * @param params
 	 * @param voClass
 	 * @param rowCallbackHandler
+	 * @param decryptHandler
 	 * @param conn
 	 * @param dbType
 	 * @param ignoreAllEmptySet
 	 * @param colFieldMap
+	 * @param fetchSize
+	 * @param maxRows
 	 * @return
 	 * @throws Exception
 	 */
 	public static List findByJdbcQuery(TypeHandler typeHandler, final String queryStr, final Object[] params,
-			final Class voClass, final RowCallbackHandler rowCallbackHandler, final Connection conn,
-			final Integer dbType, final boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap,
-			final int fetchSize, final int maxRows) throws Exception {
+			final Class voClass, final RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler,
+			final Connection conn, final Integer dbType, final boolean ignoreAllEmptySet,
+			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows) throws Exception {
 		ResultSet rs = null;
 		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY);
@@ -796,8 +805,8 @@ public class SqlUtil {
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				setParamsValue(typeHandler, conn, dbType, pst, params, null, 0);
 				rs = pst.executeQuery();
-				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, 0, ignoreAllEmptySet,
-						colFieldMap));
+				this.setResult(processResultSet(typeHandler, rs, voClass, rowCallbackHandler, decryptHandler, 0,
+						ignoreAllEmptySet, colFieldMap));
 			}
 		});
 		// 为null返回一个空集合
@@ -813,6 +822,7 @@ public class SqlUtil {
 	 * @param rs
 	 * @param voClass
 	 * @param rowCallbackHandler
+	 * @param decryptHandler
 	 * @param startColIndex
 	 * @param ignoreAllEmptySet
 	 * @param colFieldMap
@@ -820,8 +830,8 @@ public class SqlUtil {
 	 * @throws Exception
 	 */
 	public static List processResultSet(TypeHandler typeHandler, ResultSet rs, Class voClass,
-			RowCallbackHandler rowCallbackHandler, int startColIndex, boolean ignoreAllEmptySet,
-			final HashMap<String, String> colFieldMap) throws Exception {
+			RowCallbackHandler rowCallbackHandler, final DecryptHandler decryptHandler, int startColIndex,
+			boolean ignoreAllEmptySet, final HashMap<String, String> colFieldMap) throws Exception {
 		// 记录行记数器
 		int index = 0;
 		// 提取数据预警阈值
@@ -837,7 +847,8 @@ public class SqlUtil {
 		}
 		List result;
 		if (voClass != null) {
-			result = reflectResultToValueObject(typeHandler, rs, voClass, ignoreAllEmptySet, colFieldMap);
+			result = reflectResultToValueObject(typeHandler, decryptHandler, rs, voClass, ignoreAllEmptySet,
+					colFieldMap);
 		} else if (rowCallbackHandler != null) {
 			while (rs.next()) {
 				rowCallbackHandler.processRow(rs, index);
@@ -1060,7 +1071,7 @@ public class SqlUtil {
 				idInfoSql = idInfoSql.concat(" and ").concat(conditions);
 			}
 			// 获取层次等级
-			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, conn, dbType, false, null,
+			List idInfo = findByJdbcQuery(typeHandler, idInfoSql, null, null, null, null, conn, dbType, false, null,
 					SqlToyConstants.FETCH_SIZE, -1);
 			// 设置第一层level
 			int nodeLevel = 0;
@@ -1091,13 +1102,13 @@ public class SqlUtil {
 					firstNextNodeQuery.append(" and ").append(conditions);
 				}
 				ids = findByJdbcQuery(typeHandler, firstNextNodeQuery.toString(),
-						new Object[] { treeTableModel.getIdValue() }, null, null, conn, dbType, false, null,
+						new Object[] { treeTableModel.getIdValue() }, null, null, null, conn, dbType, false, null,
 						SqlToyConstants.FETCH_SIZE, -1);
 			} else {
 				ids = findByJdbcQuery(typeHandler,
 						nextNodeQueryStr.toString().replaceFirst("\\$\\{inStr\\}",
 								flag + treeTableModel.getRootId() + flag),
-						null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+						null, null, null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			}
 			if (ids != null && !ids.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute.toString(), nextNodeQueryStr.toString(),
@@ -1251,7 +1262,7 @@ public class SqlUtil {
 			inStrs = combineQueryInStr(subIds, 0, null, treeTableModel.isChar());
 			// 获取下一层节点
 			nextIds = findByJdbcQuery(typeHandler, nextNodeQueryStr.replaceFirst("\\$\\{inStr\\}", inStrs), null, null,
-					null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
+					null, null, conn, dbType, false, null, SqlToyConstants.FETCH_SIZE, -1);
 			// 递归处理下一层
 			if (nextIds != null && !nextIds.isEmpty()) {
 				processNextLevel(typeHandler, updateLevelAndRoute, nextNodeQueryStr, treeTableModel,

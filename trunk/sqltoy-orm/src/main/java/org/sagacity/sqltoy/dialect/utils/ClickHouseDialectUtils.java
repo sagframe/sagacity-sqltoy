@@ -69,6 +69,8 @@ public class ClickHouseDialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
 		boolean needUpdatePk = false;
 
@@ -199,6 +201,8 @@ public class ClickHouseDialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -317,6 +321,8 @@ public class ClickHouseDialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = DialectUtils.getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		// 排除分区字段
 		String[] fields = entityMeta.getFieldsNotPartitionKey();
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, fields, null, handler);

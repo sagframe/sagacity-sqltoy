@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.model.inner.CacheMatchExtend;
+
 /**
  * @project sagacity-sqltoy
  * @description 缓存名称匹配取key集合

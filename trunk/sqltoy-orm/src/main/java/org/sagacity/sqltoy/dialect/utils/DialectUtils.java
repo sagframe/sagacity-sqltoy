@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.CallableStatementResultHandler;
+import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
 import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
@@ -32,6 +33,7 @@ import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
+import org.sagacity.sqltoy.config.model.FieldSecureConfig;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlParamsModel;
@@ -47,10 +49,12 @@ import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.LockMode;
-import org.sagacity.sqltoy.model.QueryExecutorExtend;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.model.StoreResult;
+import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
@@ -217,6 +221,7 @@ public class DialectUtils {
 	 * @param sql
 	 * @param paramsValue
 	 * @param rowCallbackHandler
+	 * @param decryptHandler
 	 * @param conn
 	 * @param dbType
 	 * @param startIndex
@@ -227,8 +232,8 @@ public class DialectUtils {
 	 */
 	public static QueryResult findBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
 			final String sql, final Object[] paramsValue, final RowCallbackHandler rowCallbackHandler,
-			final Connection conn, final Integer dbType, final int startIndex, final int fetchSize, final int maxRows)
-			throws Exception {
+			final DecryptHandler decryptHandler, final Connection conn, final Integer dbType, final int startIndex,
+			final int fetchSize, final int maxRows) throws Exception {
 		// 做sql签名
 		String lastSql = SqlUtilsExt.signSql(sql, dbType, sqlToyConfig);
 		// 打印sql
@@ -242,11 +247,12 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, rowCallbackHandler,
-						null, startIndex));
+						null, decryptHandler, startIndex));
 			}
 		});
 	}
@@ -288,11 +294,12 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
 				this.setResult(ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-						updateRowHandler, startIndex));
+						updateRowHandler, null, startIndex));
 			}
 		});
 	}
@@ -413,6 +420,7 @@ public class DialectUtils {
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
 				if (realParams != null) {
@@ -574,6 +582,8 @@ public class DialectUtils {
 		// 重新构造修改或保存的属性赋值反调
 		ReflectPropertyHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropertyHandler,
 				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -644,6 +654,8 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(reflectPropertyHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -952,8 +964,13 @@ public class DialectUtils {
 			}
 		}
 		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
+		// 加密字段解密
+		DecryptHandler decryptHandler = null;
+		if (entityMeta.getSecureColumns() != null) {
+			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
+		}
 		QueryResult queryResult = findBySql(sqlToyContext, sqlToyConfig, sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), null, conn, dbType, 0, -1, -1);
+				sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
 		List rows = queryResult.getRows();
 		Serializable result = null;
 		if (rows != null && rows.size() > 0) {
@@ -981,9 +998,15 @@ public class DialectUtils {
 							mainFieldValues);
 					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
+					// 子表加密字段解密
+					DecryptHandler subDecryptHandler = null;
+					if (mappedMeta.getSecureColumns() != null) {
+						subDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+								mappedMeta.getSecureColumns());
+					}
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
-							mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, -1);
+							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
+							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, -1);
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
 						// oneToMany
 						if (cascadeModel.getCascadeType() == 1) {
@@ -1026,6 +1049,10 @@ public class DialectUtils {
 			throw new IllegalArgumentException(
 					entityClass.getName() + " Entity Object hasn't primary key,cann't use loadAll method!");
 		}
+		DecryptHandler decryptHandler = null;
+		if (entityMeta.getSecureColumns() != null) {
+			decryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), entityMeta.getSecureColumns());
+		}
 		int idSize = entityMeta.getIdArray().length;
 		SqlToyResult sqlToyResult = null;
 		// 单主键
@@ -1067,8 +1094,8 @@ public class DialectUtils {
 
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
-				sqlToyResult.getParamsValue(), entityClass, null, conn, dbType, false, entityMeta.getColumnFieldMap(),
-				fetchSize, maxRows);
+				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
+				entityMeta.getColumnFieldMap(), fetchSize, maxRows);
 		if (entitySet == null || entitySet.isEmpty()) {
 			return entitySet;
 		}
@@ -1163,9 +1190,15 @@ public class DialectUtils {
 						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null, realValues);
 					}
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
+					// 加密字段解密
+					DecryptHandler subDecryptHandler = null;
+					if (mappedMeta.getSecureColumns() != null) {
+						subDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(),
+								mappedMeta.getSecureColumns());
+					}
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
-							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, conn, dbType, false,
-							mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, maxRows);
+							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
+							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, maxRows);
 					SqlExecuteStat.debug("子表加载结果", "子记录数:{} 条", items.size());
 					// 将item的值分配映射到main主表对象上
 					BeanUtil.loadAllMapping(entitySet, items, cascadeModel);
@@ -1271,6 +1304,8 @@ public class DialectUtils {
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
 		boolean needUpdatePk = false;
 
@@ -1319,6 +1354,7 @@ public class DialectUtils {
 		final Integer[] paramsType = entityMeta.getFieldsTypeArray();
 		PreparedStatement pst = null;
 		Object result = SqlUtil.preparedStatementProcess(null, pst, null, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
 					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
@@ -1441,6 +1477,8 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getAddReflectHandler(reflectPropertyHandler,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1538,6 +1576,8 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
@@ -1585,7 +1625,7 @@ public class DialectUtils {
 			return 0L;
 		}
 		Long updateCnt = update(sqlToyContext, entity, entityMeta, nullFunction, forceUpdateFields, conn, dbType,
-				realTable);
+				tableName);
 		// 不存在级联操作
 		if (!cascade || entityMeta.getCascadeModels().isEmpty()) {
 			return updateCnt;
@@ -1721,6 +1761,7 @@ public class DialectUtils {
 		}
 
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			@Override
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
@@ -1749,6 +1790,7 @@ public class DialectUtils {
 			return;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			@Override
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -1803,6 +1845,7 @@ public class DialectUtils {
 			return;
 		}
 		Long saveCnt = saveAllIgnoreExist(sqlToyContext, entities, batchSize, entityMeta, new GenerateSqlHandler() {
+			@Override
 			public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 				PKStrategy pkStrategy = entityMeta.getIdStrategy();
 				String sequence = entityMeta.getSequence() + ".nextval";
@@ -1872,6 +1915,8 @@ public class DialectUtils {
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropertyHandler handler = getUpdateReflectHandler(reflectPropertyHandler, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
+		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
+				entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		// 判断主键是否为空
@@ -2122,7 +2167,7 @@ public class DialectUtils {
 			String queryStr = uniqueSqlHandler.process(entityMeta, realParamNamed, tableName, 2);
 			SqlExecuteStat.showSql("唯一性验证", queryStr, paramValues);
 			List result = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), queryStr, paramValues, null, null,
-					conn, dbType, false, null, -1, -1);
+					null, conn, dbType, false, null, -1, -1);
 			if (result.size() == 0) {
 				return true;
 			}
@@ -2287,6 +2332,7 @@ public class DialectUtils {
 		CallableStatement callStat = null;
 		ResultSet rs = null;
 		return (StoreResult) SqlUtil.callableStatementProcess(null, callStat, rs, new CallableStatementResultHandler() {
+			@Override
 			public void execute(Object obj, CallableStatement callStat, ResultSet rs) throws Exception {
 				callStat = conn.prepareCall(storeSql);
 				if (fetchSize > 0) {
@@ -2317,7 +2363,7 @@ public class DialectUtils {
 				StoreResult storeResult = new StoreResult();
 				if (rs != null) {
 					QueryResult tempResult = ResultUtils.processResultSet(sqlToyContext, sqlToyConfig, conn, rs, null,
-							null, 0);
+							null, null, 0);
 					storeResult.setLabelNames(tempResult.getLabelNames());
 					storeResult.setLabelTypes(tempResult.getLabelTypes());
 					storeResult.setRows(tempResult.getRows());
@@ -2428,6 +2474,59 @@ public class DialectUtils {
 	}
 
 	/**
+	 * @TODO 对字段值进行加密
+	 * @param preHandler
+	 * @param fieldsSecureProvider
+	 * @param secureFields
+	 * @return
+	 */
+	public static ReflectPropertyHandler getSecureReflectHandler(final ReflectPropertyHandler preHandler,
+			FieldsSecureProvider fieldsSecureProvider, List<FieldSecureConfig> secureFields) {
+		if (fieldsSecureProvider == null || secureFields == null || secureFields.isEmpty()) {
+			return preHandler;
+		}
+		ReflectPropertyHandler handler = new ReflectPropertyHandler() {
+			@Override
+			public void process() {
+				if (preHandler != null) {
+					preHandler.setPropertyIndexMap(this.getPropertyIndexMap());
+					preHandler.setRowIndex(this.getRowIndex());
+					preHandler.setRowData(this.getRowData());
+					preHandler.process();
+				}
+				Object value;
+				String contents;
+				String field;
+				String sourceField;
+				// 加密操作
+				for (FieldSecureConfig config : secureFields) {
+					field = config.getField();
+					sourceField = config.getSourceField();
+					// 脱敏字段关联对应的加密字段
+					if (StringUtil.isNotBlank(sourceField)) {
+						value = this.getValue(sourceField);
+					} else {
+						value = this.getValue(field);
+					}
+					if (value != null) {
+						contents = value.toString();
+						if (!contents.equals("")) {
+							// 加密
+							if (config.getSecureType().equals(SecureType.ENCRYPT)) {
+								this.setValue(field, fieldsSecureProvider.encrypt(contents));
+							} // 脱敏
+							else {
+								this.setValue(field, ResultUtils.maskStr(config.getMask(), contents));
+							}
+						}
+					}
+				}
+			}
+		};
+		return handler;
+	}
+
+	/**
 	 * @todo 构造创建和修改记录时的反射
 	 * @param idFields
 	 * @param prepHandler
@@ -2436,16 +2535,16 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static ReflectPropertyHandler getSaveOrUpdateReflectHandler(final String[] idFields,
-			final ReflectPropertyHandler prepHandler, String[] forceUpdateProps,
+			final ReflectPropertyHandler preHandler, String[] forceUpdateProps,
 			IUnifyFieldsHandler unifyFieldsHandler) {
 		if (unifyFieldsHandler == null) {
-			return prepHandler;
+			return preHandler;
 		}
 		final Map<String, Object> addKeyValues = unifyFieldsHandler.createUnifyFields();
 		final Map<String, Object> updateKeyValues = unifyFieldsHandler.updateUnifyFields();
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
-			return prepHandler;
+			return preHandler;
 		}
 		// update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
@@ -2462,11 +2561,11 @@ public class DialectUtils {
 		ReflectPropertyHandler handler = new ReflectPropertyHandler() {
 			@Override
 			public void process() {
-				if (prepHandler != null) {
-					prepHandler.setPropertyIndexMap(this.getPropertyIndexMap());
-					prepHandler.setRowIndex(this.getRowIndex());
-					prepHandler.setRowData(this.getRowData());
-					prepHandler.process();
+				if (preHandler != null) {
+					preHandler.setPropertyIndexMap(this.getPropertyIndexMap());
+					preHandler.setRowIndex(this.getRowIndex());
+					preHandler.setRowData(this.getRowData());
+					preHandler.process();
 				}
 				// 主键为空表示save操作
 				if (idLength > 0 && this.getValue(idFields[0]) == null) {
@@ -2550,7 +2649,5 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
-		// return getDataAuthReflectHandler(result,
-		// unifyFieldsHandler.dataAuthFilters());
 	}
 }

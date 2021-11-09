@@ -1,8 +1,10 @@
-package org.sagacity.sqltoy.model;
+package org.sagacity.sqltoy.model.inner;
 
 import java.io.Serializable;
 
 import javax.sql.DataSource;
+
+import org.sagacity.sqltoy.model.PaginationModel;
 
 /**
  * @project sagacity-sqltoy

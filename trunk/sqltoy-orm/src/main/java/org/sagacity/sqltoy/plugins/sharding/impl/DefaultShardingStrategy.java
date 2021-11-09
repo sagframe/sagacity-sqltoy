@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.utils.DateUtil;

@@ -129,4 +129,5 @@ public class StringUtilsTest {
 		System.err.println(StringUtil.matches("innerAoin1", SQL_ID_PATTERN));
 		System.err.println(StringUtil.matches("inner_Aoin-10", SQL_ID_PATTERN));
 	}
+
 }

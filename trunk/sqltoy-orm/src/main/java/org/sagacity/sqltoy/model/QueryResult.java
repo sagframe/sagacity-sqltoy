@@ -5,6 +5,8 @@ package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
 
+import org.sagacity.sqltoy.model.inner.DataSetResult;
+
 /**
  * @project sagacity-sqltoy4.0
  * @description 所有查询的结果形态模型

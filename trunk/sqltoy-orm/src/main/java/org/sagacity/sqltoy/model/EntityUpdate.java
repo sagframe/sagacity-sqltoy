@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.sagacity.sqltoy.model.inner.EntityUpdateExtend;
+
 /**
  * @description 提供给代码中组织sql进行数据库update操作
  * @author zhongxuchen

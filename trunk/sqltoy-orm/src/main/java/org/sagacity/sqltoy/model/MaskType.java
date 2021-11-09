@@ -13,7 +13,7 @@ public enum MaskType {
 	// 修改处理
 	NAME("name"),
 	// 邮箱
-	EMAIL("name"),
+	EMAIL("email"),
 	// 地址
 	ADDRESS("address"),
 	// 银行账号

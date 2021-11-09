@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.annotation.SqlToyFieldAlias;
-import org.sagacity.sqltoy.model.DTOEntityMapModel;
+import org.sagacity.sqltoy.config.model.DTOEntityMapModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

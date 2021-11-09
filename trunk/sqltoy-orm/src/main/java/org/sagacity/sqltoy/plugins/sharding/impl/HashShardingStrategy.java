@@ -6,8 +6,8 @@ package org.sagacity.sqltoy.plugins.sharding.impl;
 import java.util.HashMap;
 
 import org.sagacity.sqltoy.SqlToyContext;
+import org.sagacity.sqltoy.config.model.ShardingDBModel;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
-import org.sagacity.sqltoy.model.ShardingDBModel;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
