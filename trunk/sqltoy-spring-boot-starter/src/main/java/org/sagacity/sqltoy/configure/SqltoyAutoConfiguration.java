@@ -13,6 +13,7 @@ import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
@@ -137,6 +138,9 @@ public class SqltoyAutoConfiguration {
 
 		// update 2021-01-18 设置缓存类别,默认ehcache
 		sqlToyContext.setCacheType(properties.getCacheType());
+
+		sqlToyContext.setSecurePrivateKey(properties.getSecurePrivateKey());
+		sqlToyContext.setSecurePublicKey(properties.getSecurePublicKey());
 		// 设置公共统一属性的处理器
 		String unfiyHandler = properties.getUnifyFieldsHandler();
 		if (StringUtil.isNotBlank(unfiyHandler)) {
@@ -251,6 +255,19 @@ public class SqltoyAutoConfiguration {
 			else if (connectionFactory.contains(".")) {
 				sqlToyContext.setConnectionFactory(
 						(ConnectionFactory) Class.forName(connectionFactory).getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义字段安全实现器
+		String fieldsSecureProvider = properties.getFieldsSecureProvider();
+		if (StringUtil.isNotBlank(fieldsSecureProvider)) {
+			if (applicationContext.containsBean(fieldsSecureProvider)) {
+				sqlToyContext.setFieldsSecureProvider(
+						(FieldsSecureProvider) applicationContext.getBean(fieldsSecureProvider));
+			} // 包名和类名称
+			else if (fieldsSecureProvider.contains(".")) {
+				sqlToyContext.setFieldsSecureProvider((FieldsSecureProvider) Class.forName(fieldsSecureProvider)
+						.getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;

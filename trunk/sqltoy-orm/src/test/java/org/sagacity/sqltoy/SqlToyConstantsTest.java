@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.model.MapKit;
 
 import com.alibaba.fastjson.JSON;
 
@@ -29,6 +30,7 @@ public class SqlToyConstantsTest {
 
 	@Test
 	public void testBigIntger() {
+		MapKit.startOf(null, "").get();
 		BigInteger a = new BigInteger("2993439899898779987777777777897777");
 		System.err.println(a.toString());
 		BigDecimal b = new BigDecimal("2993439899898779987777777777897777");

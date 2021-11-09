@@ -823,7 +823,7 @@ public class StringUtil {
 		if (tmp.length() <= preLength + tailLength) {
 			return tmp;
 		}
-		return tmp.substring(0, preLength).concat((maskStr == null||maskStr.equals("")) ? "***" : maskStr)
+		return tmp.substring(0, preLength).concat((maskStr == null || maskStr.equals("")) ? "***" : maskStr)
 				.concat(tmp.substring(tmp.length() - tailLength));
 	}
 

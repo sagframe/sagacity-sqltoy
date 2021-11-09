@@ -145,6 +145,18 @@ public class SqlToyContextProperties implements Serializable {
 	 * 连接管理的实现扩展定义
 	 */
 	private String connectionFactory;
+	
+	/**
+	 * 安全私钥
+	 */
+	private String securePrivateKey;
+
+	/**
+	 * 安全公钥
+	 */
+	private String securePublicKey;
+
+	private String fieldsSecureProvider;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -438,6 +450,29 @@ public class SqlToyContextProperties implements Serializable {
 	public void setBreakWhenSqlRepeat(boolean breakWhenSqlRepeat) {
 		this.breakWhenSqlRepeat = breakWhenSqlRepeat;
 	}
-	
-	
+
+	public String getSecurePrivateKey() {
+		return securePrivateKey;
+	}
+
+	public void setSecurePrivateKey(String securePrivateKey) {
+		this.securePrivateKey = securePrivateKey;
+	}
+
+	public String getSecurePublicKey() {
+		return securePublicKey;
+	}
+
+	public void setSecurePublicKey(String securePublicKey) {
+		this.securePublicKey = securePublicKey;
+	}
+
+	public String getFieldsSecureProvider() {
+		return fieldsSecureProvider;
+	}
+
+	public void setFieldsSecureProvider(String fieldsSecureProvider) {
+		this.fieldsSecureProvider = fieldsSecureProvider;
+	}
+
 }
