@@ -15,7 +15,7 @@ import java.util.Map;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
@@ -68,7 +68,7 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
@@ -178,7 +178,7 @@ public class ClickHouseDialectUtils {
 	 * @param insertSql
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param autoCommit
@@ -186,7 +186,7 @@ public class ClickHouseDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, String insertSql, List<?> entities,
-			final int batchSize, ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType,
+			final int batchSize, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
 			final Boolean autoCommit) throws Exception {
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
@@ -199,7 +199,7 @@ public class ClickHouseDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				entityMeta.getSecureFields());
@@ -319,7 +319,7 @@ public class ClickHouseDialectUtils {
 			return 0L;
 		}
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
-		ReflectPropertyHandler handler = DialectUtils.getUpdateReflectHandler(null, forceUpdateFields,
+		ReflectPropsHandler handler = DialectUtils.getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				entityMeta.getSecureFields());

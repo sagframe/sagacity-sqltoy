@@ -10,7 +10,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -256,8 +256,8 @@ public class QueryExecutor implements Serializable {
 
 	// jdk8 stream之后意义已经不大
 	@Deprecated
-	public QueryExecutor reflectPropertyHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		innerModel.reflectPropertyHandler = reflectPropertyHandler;
+	public QueryExecutor reflectPropsHandler(ReflectPropsHandler reflectPropsHandler) {
+		innerModel.reflectPropsHandler = reflectPropsHandler;
 		return this;
 	}
 

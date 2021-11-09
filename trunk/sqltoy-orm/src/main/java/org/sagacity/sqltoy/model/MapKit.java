@@ -76,4 +76,13 @@ public class MapKit implements Serializable {
 	public Map<String, Object> get() {
 		return map;
 	}
+	
+	/**
+	 * 创建一个空Map
+	 * 
+	 * @return
+	 */
+	public static Map<String, Object> map() {
+		return new HashMap<String, Object>();
+	}
 }

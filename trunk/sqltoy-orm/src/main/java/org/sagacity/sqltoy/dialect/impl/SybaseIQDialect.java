@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
@@ -329,7 +329,7 @@ public class SybaseIQDialect implements Dialect {
 	 */
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields, Connection conn,
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -349,7 +349,7 @@ public class SybaseIQDialect implements Dialect {
 								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
 			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
 					conn, dbType, true, false);
@@ -362,12 +362,12 @@ public class SybaseIQDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAllNotExist(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection,
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection,
 	 * java.lang.Boolean)
 	 */
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// sybase iq 只支持identity模式
@@ -386,7 +386,7 @@ public class SybaseIQDialect implements Dialect {
 								NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
 								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 					}
-				}, reflectPropertyHandler, conn, dbType, autoCommit);
+				}, reflectPropsHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
 			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), "SET TEMPORARY OPTION IDENTITY_INSERT=''", null, null,
 					conn, dbType, true, false);
@@ -445,13 +445,13 @@ public class SybaseIQDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#saveAll(org.sagacity.sqltoy.
 	 * SqlToyContext , java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType, final String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final String dialect,
 			final Boolean autoCommit, final String tableName) throws Exception {
-		return SapIQDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropertyHandler,
+		return SapIQDialectUtils.saveAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
 				SqlToyConstants.sybaseIQIdentityOpen(), conn, dbType, tableName);
 	}
 
@@ -513,7 +513,7 @@ public class SybaseIQDialect implements Dialect {
 					logger.info("执行update主表:{} 对应级联子表: {} 更新操作!", tableName, subEntityMeta.getTableName());
 					saveOrUpdateAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(),
 							// 设置关联外键字段的属性值(来自主表的主键)
-							new ReflectPropertyHandler() {
+							new ReflectPropsHandler() {
 								public void process() {
 									for (int i = 0; i < mappedFields.length; i++) {
 										this.setValue(mappedFields[i], mainFieldValues[i]);
@@ -533,14 +533,14 @@ public class SybaseIQDialect implements Dialect {
 	 * 
 	 * @see org.sagacity.sqltoy.dialect.Dialect#updateAll(org.sagacity.sqltoy.
 	 * SqlToyContext, java.util.List,
-	 * org.sagacity.sqltoy.callback.ReflectPropertyHandler, java.sql.Connection)
+	 * org.sagacity.sqltoy.callback.ReflectPropsHandler, java.sql.Connection)
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, ReflectPropertyHandler reflectPropertyHandler, Connection conn,
+			final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
-		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropertyHandler,
+		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
 

@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
@@ -735,7 +735,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List reflectBeansToList(List datas, String[] properties, ReflectPropertyHandler reflectPropsHandler)
+	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
 			throws Exception {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
@@ -881,7 +881,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropsHandler) {
+			ReflectPropsHandler reflectPropsHandler) {
 		if (null == serializable || null == properties || properties.length == 0) {
 			return null;
 		}
@@ -985,12 +985,12 @@ public class BeanUtil {
 	 * @param dataSet
 	 * @param properties
 	 * @param defaultValues
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @return
 	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
-			ReflectPropertyHandler reflectPropertyHandler) {
+			ReflectPropsHandler reflectPropsHandler) {
 		if (null == dataSet || dataSet.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
@@ -1003,14 +1003,14 @@ public class BeanUtil {
 			Object rowObject = null;
 			Object[] params = new Object[] {};
 			// 判断是否存在属性值处理反调
-			boolean hasHandler = (reflectPropertyHandler != null) ? true : false;
+			boolean hasHandler = (reflectPropsHandler != null) ? true : false;
 			// 存在反调，则将对象的属性和属性所在的顺序放入hashMap中，便于后面反调中通过属性调用
 			if (hasHandler) {
 				HashMap<String, Integer> propertyIndexMap = new HashMap<String, Integer>();
 				for (int i = 0; i < methodLength; i++) {
 					propertyIndexMap.put(properties[i].toLowerCase(), i);
 				}
-				reflectPropertyHandler.setPropertyIndexMap(propertyIndexMap);
+				reflectPropsHandler.setPropertyIndexMap(propertyIndexMap);
 			}
 			// 逐行提取属性数据
 			for (int i = 0, n = dataSet.size(); i < n; i++) {
@@ -1039,10 +1039,10 @@ public class BeanUtil {
 					}
 					// 反调对数据值进行加工处理
 					if (hasHandler) {
-						reflectPropertyHandler.setRowIndex(i);
-						reflectPropertyHandler.setRowData(dataAry);
-						reflectPropertyHandler.process();
-						resultList.add(reflectPropertyHandler.getRowData());
+						reflectPropsHandler.setRowIndex(i);
+						reflectPropsHandler.setRowData(dataAry);
+						reflectPropsHandler.process();
+						resultList.add(reflectPropsHandler.getRowData());
 					} else {
 						resultList.add(dataAry);
 					}

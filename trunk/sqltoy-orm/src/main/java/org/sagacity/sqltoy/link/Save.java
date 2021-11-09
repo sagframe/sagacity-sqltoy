@@ -9,7 +9,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.model.SaveMode;
 
 /**
@@ -44,7 +44,7 @@ public class Save extends BaseLink {
 	 * 针对个别属性强制统一赋值
 	 */
 	@Deprecated
-	private ReflectPropertyHandler reflectPropertyHandler;
+	private ReflectPropsHandler reflectPropsHandler;
 
 	/**
 	 * 批处理提交记录数量
@@ -59,8 +59,8 @@ public class Save extends BaseLink {
 		super(sqlToyContext, dataSource);
 	}
 
-	public Save reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		this.reflectPropertyHandler = reflectPropertyHandler;
+	public Save reflectHandler(ReflectPropsHandler reflectPropsHandler) {
+		this.reflectPropsHandler = reflectPropsHandler;
 		return this;
 	}
 
@@ -141,14 +141,14 @@ public class Save extends BaseLink {
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
 		if (saveMode == SaveMode.IGNORE) {
-			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, realBatchSize, reflectPropsHandler,
 					getDataSource(null), autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
-					reflectPropertyHandler, getDataSource(null), autoCommit);
+					reflectPropsHandler, getDataSource(null), autoCommit);
 		}
-		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropertyHandler,
-				getDataSource(null), autoCommit);
+		return dialectFactory.saveAll(sqlToyContext, entities, realBatchSize, reflectPropsHandler, getDataSource(null),
+				autoCommit);
 	}
 }

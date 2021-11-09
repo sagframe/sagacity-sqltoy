@@ -20,7 +20,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -237,7 +237,7 @@ public class DialectFactory {
 	 * @return
 	 */
 	public Long batchUpdate(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final List dataSet,
-			final int batchSize, final ReflectPropertyHandler reflectPropsHandler,
+			final int batchSize, final ReflectPropsHandler reflectPropsHandler,
 			final InsertRowCallbackHandler insertCallhandler, final Boolean autoCommit, final DataSource dataSource) {
 		// 首先合法性校验
 		if (dataSet == null || dataSet.isEmpty()) {
@@ -261,7 +261,7 @@ public class DialectFactory {
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								realSql = sqlParamsModel.getSql();
 								// update 2021-10-28 增加统一授权传参、根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
-								ReflectPropertyHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
+								ReflectPropsHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
 										realSql, reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
 										realPropsHandler);
@@ -1238,7 +1238,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropertyHandler reflectPropsHandler,
+			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
@@ -1295,7 +1295,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAllIgnoreExist entities is null or empty,please check!");
 			return 0L;
@@ -1476,7 +1476,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveAll entities is null or empty,please check!");
 			return 0L;
@@ -1604,7 +1604,7 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropsHandler,
+			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler,
 			final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");

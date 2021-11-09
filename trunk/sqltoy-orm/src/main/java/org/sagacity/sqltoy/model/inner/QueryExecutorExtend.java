@@ -13,7 +13,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -79,7 +79,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 查询属性值反射处理
 	 */
 	@Deprecated
-	public ReflectPropertyHandler reflectPropertyHandler;
+	public ReflectPropsHandler reflectPropsHandler;
 
 	/**
 	 * 查询结果类型

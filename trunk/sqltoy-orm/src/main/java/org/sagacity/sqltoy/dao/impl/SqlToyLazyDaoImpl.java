@@ -11,7 +11,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -379,11 +379,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler) {
-		return super.saveAll(entities, reflectPropertyHandler);
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropsHandler reflectPropsHandler) {
+		return super.saveAll(entities, reflectPropsHandler);
 	}
 
 	/*
@@ -441,12 +441,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#updateAll(java.util.List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
 			String... forceUpdateProps) {
-		return super.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
+		return super.updateAll(entities, reflectPropsHandler, forceUpdateProps);
 	}
 
 	@Override
@@ -458,12 +458,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.support.SqlToyDaoSupport#updateAllDeeply(java.util
-	 * .List, org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * .List, org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler) {
-		return super.updateAllDeeply(entities, reflectPropertyHandler);
+			ReflectPropsHandler reflectPropsHandler) {
+		return super.updateAllDeeply(entities, reflectPropsHandler);
 	}
 
 	/*
@@ -492,12 +492,12 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.dao.SqlToyLazyDao#saveOrUpdateAll(java.util.List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
-		return super.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
+			ReflectPropsHandler reflectPropsHandler, String... forceUpdateProps) {
+		return super.saveOrUpdateAll(entities, reflectPropsHandler, forceUpdateProps);
 	}
 
 	/*

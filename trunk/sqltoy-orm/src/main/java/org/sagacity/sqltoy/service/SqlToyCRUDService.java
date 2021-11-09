@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
@@ -34,9 +34,9 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 批量保存对象
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 */
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropsHandler reflectPropsHandler);
 
 	/**
 	 * @todo 批量保存对象
@@ -81,10 +81,10 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 批量修改对象
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateProps
 	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
 			String... forceUpdateProps);
 
 	/**
@@ -112,11 +112,11 @@ public interface SqlToyCRUDService {
 	/**
 	 * @todo 批量修改或保存(通过主键进行判断，对象对应数据库表必须存在主键)
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateProps
 	 */
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
+			String... forceUpdateProps);
 
 	/**
 	 * @todo 获取对象数据
@@ -181,7 +181,7 @@ public interface SqlToyCRUDService {
 	 * @return
 	 */
 	public <T extends Serializable> List<T> loadAll(List<T> entities);
-	
+
 	/**
 	 * @todo 选择性的加载子表信息
 	 * @param entities
@@ -208,7 +208,7 @@ public interface SqlToyCRUDService {
 	 */
 	public <T extends Serializable> List<T> findFrom(T entity);
 
-	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropsHandler reflectPropsHandler);
 
 	/**
 	 * @todo 通过实体对象中的@page/或@list 定义的sql查询分页结果集
@@ -219,7 +219,7 @@ public interface SqlToyCRUDService {
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity);
 
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
-			ReflectPropertyHandler reflectPropertyHandler);
+			ReflectPropsHandler reflectPropsHandler);
 
 	/**
 	 * @todo 通过实体对象中@page/@list 定义的sql 查询top记录
@@ -288,7 +288,8 @@ public interface SqlToyCRUDService {
 	/**
 	 * @TODO 通过缓存将名称进行模糊匹配取得key的集合
 	 * @param matchRegex
-	 * @param cacheMatchFilter 例如: CacheMatchFilter.create().cacheName("staffIdNameCache")
+	 * @param cacheMatchFilter 例如:
+	 *                         CacheMatchFilter.create().cacheName("staffIdNameCache")
 	 * @return
 	 */
 	public String[] cacheMatchKeys(String matchRegex, CacheMatchFilter cacheMatchFilter);

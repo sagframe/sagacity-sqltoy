@@ -23,7 +23,7 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DataSourceCallbackHandler;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -529,30 +529,30 @@ public class SqlToyDaoSupport {
 	 * @todo 批量执行sql修改或删除操作(返回updateCount)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param reflectPropertyHandler 反调函数(一般不需要)
+	 * @param reflectPropsHandler 反调函数(一般不需要)
 	 * @param autoCommit
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
-			final ReflectPropertyHandler reflectPropertyHandler, final Boolean autoCommit) {
+			final ReflectPropsHandler reflectPropsHandler, final Boolean autoCommit) {
 		// 例如sql 为:merge into table update set xxx=:param
 		// dataSet可以是VO List,可以根据属性自动映射到:param
-		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler, null,
-				autoCommit, null);
+		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropsHandler, null, autoCommit,
+				null);
 	}
 
 	/**
 	 * @TODO 批量执行sql修改或删除操作(返回updateCount)
 	 * @param sqlOrNamedSql
 	 * @param dataSet
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param insertCallhandler
 	 * @param autoCommit
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet,
-			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
+			final ReflectPropsHandler reflectPropsHandler, final InsertRowCallbackHandler insertCallhandler,
 			final Boolean autoCommit) {
-		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropertyHandler,
-				insertCallhandler, autoCommit, null);
+		return batchUpdate(sqlOrNamedSql, dataSet, sqlToyContext.getBatchSize(), reflectPropsHandler, insertCallhandler,
+				autoCommit, null);
 	}
 
 	/**
@@ -573,17 +573,17 @@ public class SqlToyDaoSupport {
 	 * @param sqlOrNamedSql
 	 * @param dataSet
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param insertCallhandler
 	 * @param autoCommit
 	 * @param dataSource
 	 */
 	protected Long batchUpdate(final String sqlOrNamedSql, final List dataSet, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final InsertRowCallbackHandler insertCallhandler,
+			final ReflectPropsHandler reflectPropsHandler, final InsertRowCallbackHandler insertCallhandler,
 			final Boolean autoCommit, final DataSource dataSource) {
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(sqlOrNamedSql, SqlType.update,
 				getDialect(dataSource));
-		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, reflectPropertyHandler,
+		return dialectFactory.batchUpdate(sqlToyContext, sqlToyConfig, dataSet, batchSize, reflectPropsHandler,
 				insertCallhandler, autoCommit, getDataSource(dataSource, sqlToyConfig));
 	}
 
@@ -824,22 +824,22 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 批量保存对象,并可以通过反调函数对插入值进行灵活干预修改
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 */
 	protected <T extends Serializable> Long saveAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler) {
-		return this.saveAll(entities, reflectPropertyHandler, null);
+			final ReflectPropsHandler reflectPropsHandler) {
+		return this.saveAll(entities, reflectPropsHandler, null);
 	}
 
 	/**
 	 * @todo <b>指定数据库进行批量插入</b>
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long saveAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
-		return dialectFactory.saveAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), reflectPropertyHandler,
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource) {
+		return dialectFactory.saveAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), reflectPropsHandler,
 				this.getDataSource(dataSource), null);
 	}
 
@@ -865,13 +865,13 @@ public class SqlToyDaoSupport {
 	/**
 	 * @todo 保存对象数据(返回插入的主键值),忽视已经存在的
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long saveAllIgnoreExist(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource) {
 		return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, sqlToyContext.getBatchSize(),
-				reflectPropertyHandler, this.getDataSource(dataSource), null);
+				reflectPropsHandler, this.getDataSource(dataSource), null);
 	}
 
 	/**
@@ -950,46 +950,46 @@ public class SqlToyDaoSupport {
 	}
 
 	protected <T extends Serializable> Long updateAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final String... forceUpdateProps) {
-		return this.updateAll(entities, reflectPropertyHandler, forceUpdateProps, null);
+			final ReflectPropsHandler reflectPropsHandler, final String... forceUpdateProps) {
+		return this.updateAll(entities, reflectPropsHandler, forceUpdateProps, null);
 	}
 
 	/**
 	 * @todo <b>指定数据库,通过集合批量修改数据库记录</b>
 	 * @param entities
 	 * @param forceUpdateProps
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long updateAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateProps,
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateProps,
 			final DataSource dataSource) {
 		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
-				reflectPropertyHandler, this.getDataSource(dataSource), null);
+				reflectPropsHandler, this.getDataSource(dataSource), null);
 	}
 
 	/**
 	 * @todo 批量深度修改(参见updateDeeply,直接将集合VO中的字段值修改到数据库中,未null则置null)
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler) {
-		return updateAllDeeply(entities, reflectPropertyHandler, null);
+			final ReflectPropsHandler reflectPropsHandler) {
+		return updateAllDeeply(entities, reflectPropsHandler, null);
 	}
 
 	/**
 	 * @todo 指定数据源进行批量深度修改(对象属性值为null则设置表对应的字段为null)
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long updateAllDeeply(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final DataSource dataSource) {
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource) {
 		if (entities == null || entities.isEmpty()) {
 			return 0L;
 		}
-		return updateAll(entities, reflectPropertyHandler,
+		return updateAll(entities, reflectPropsHandler,
 				this.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray(), null);
 	}
 
@@ -1021,26 +1021,26 @@ public class SqlToyDaoSupport {
 	 * @todo 批量保存或修改,自动根据主键来判断是修改还是保存，没有主键的直接插入记录，
 	 *       存在主键值的先通过数据库查询判断记录是否存在，不存在则插入记录，存在则修改
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateProps
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final String... forceUpdateProps) {
-		return this.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps, null);
+			final ReflectPropsHandler reflectPropsHandler, final String... forceUpdateProps) {
+		return this.saveOrUpdateAll(entities, reflectPropsHandler, forceUpdateProps, null);
 	}
 
 	/**
 	 * @todo <b>批量保存或修改</b>
 	 * @param entities
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateProps
 	 * @param dataSource
 	 */
 	protected <T extends Serializable> Long saveOrUpdateAll(final List<T> entities,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateProps,
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateProps,
 			final DataSource dataSource) {
 		return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
-				reflectPropertyHandler, this.getDataSource(dataSource), null);
+				reflectPropsHandler, this.getDataSource(dataSource), null);
 	}
 
 	/**

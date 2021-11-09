@@ -10,7 +10,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 
 /**
  * @project sagacity-sqltoy
@@ -58,7 +58,7 @@ public class Update extends BaseLink {
 	 * 针对个别属性强制统一赋值
 	 */
 	@Deprecated
-	private ReflectPropertyHandler reflectPropertyHandler;
+	private ReflectPropsHandler reflectPropsHandler;
 
 	/**
 	 * @param sqlToyContext
@@ -119,8 +119,8 @@ public class Update extends BaseLink {
 		return this;
 	}
 
-	public Update reflectHandler(ReflectPropertyHandler reflectPropertyHandler) {
-		this.reflectPropertyHandler = reflectPropertyHandler;
+	public Update reflectHandler(ReflectPropsHandler reflectPropsHandler) {
+		this.reflectPropsHandler = reflectPropsHandler;
 		return this;
 	}
 
@@ -177,7 +177,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropertyHandler,
+		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropsHandler,
 				getDataSource(null), autoCommit);
 	}
 }

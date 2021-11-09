@@ -15,7 +15,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
@@ -67,7 +67,7 @@ public class SapIQDialectUtils {
 		// 无主键,或多主键且非identity、sequence模式
 		boolean noPK = (entityMeta.getIdArray() == null);
 		int pkIndex = entityMeta.getIdIndex();
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
@@ -177,7 +177,7 @@ public class SapIQDialectUtils {
 				if (subTableData != null && !subTableData.isEmpty()) {
 					logger.info("执行save操作的级联子表{}批量保存!", subTableEntityMeta.getTableName());
 					SqlExecuteStat.debug("执行子表级联保存操作", null);
-					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropertyHandler() {
+					saveAll(sqlToyContext, subTableData, sqlToyContext.getBatchSize(), new ReflectPropsHandler() {
 						public void process() {
 							for (int i = 0; i < mappedFields.length; i++) {
 								this.setValue(mappedFields[i], mainFieldValues[i]);
@@ -197,7 +197,7 @@ public class SapIQDialectUtils {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param openIdentity
 	 * @param conn
 	 * @param dbType
@@ -206,7 +206,7 @@ public class SapIQDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, boolean openIdentity, Connection conn, final Integer dbType,
+			ReflectPropsHandler reflectPropsHandler, boolean openIdentity, Connection conn, final Integer dbType,
 			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		String insertSql = DialectExtUtils.generateInsertSql(DBType.SYBASE_IQ, entityMeta, entityMeta.getIdStrategy(),
@@ -217,7 +217,7 @@ public class SapIQDialectUtils {
 		}
 		SqlExecuteStat.showSql("IQ批量插入", insertSql, null);
 		return saveAll(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), false, insertSql, entities, batchSize,
-				reflectPropertyHandler, conn, dbType);
+				reflectPropsHandler, conn, dbType);
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class SapIQDialectUtils {
 	 * @param insertSql
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @return
@@ -237,7 +237,7 @@ public class SapIQDialectUtils {
 	 */
 	private static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, final Integer dbType) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType) throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -247,7 +247,7 @@ public class SapIQDialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 
-		ReflectPropertyHandler handler = DialectUtils.getAddReflectHandler(reflectPropertyHandler,
+		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
 				entityMeta.getSecureFields());

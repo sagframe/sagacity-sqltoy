@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -72,19 +72,19 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler) {
-		return sqlToyLazyDao.saveAll(entities, reflectPropertyHandler);
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropsHandler reflectPropsHandler) {
+		return sqlToyLazyDao.saveAll(entities, reflectPropsHandler);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveAll(java.util.List,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional
@@ -142,13 +142,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#updateAll(java.util .List,
-	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * java.lang.String[], org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
 			String... forceUpdateProps) {
-		return sqlToyLazyDao.updateAll(entities, reflectPropertyHandler, forceUpdateProps);
+		return sqlToyLazyDao.updateAll(entities, reflectPropsHandler, forceUpdateProps);
 	}
 
 	/*
@@ -207,13 +207,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#saveOrUpdateAll(java
 	 * .io.Serializable, java.lang.String[],
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps) {
-		return sqlToyLazyDao.saveOrUpdateAll(entities, reflectPropertyHandler, forceUpdateProps);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
+			String... forceUpdateProps) {
+		return sqlToyLazyDao.saveOrUpdateAll(entities, reflectPropsHandler, forceUpdateProps);
 	}
 
 	/*
@@ -250,13 +250,13 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	public <T extends Serializable> List<T> loadAll(List<T> entities) {
 		return sqlToyLazyDao.loadAll(entities);
 	}
-	
+
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadAllCascade(List<T> entities, final Class... cascadeTypes) {
 		return sqlToyLazyDao.loadAllCascade(entities, cascadeTypes);
 	}
-	
+
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> List<T> loadByIds(Class<T> voClass, Object... ids) {
@@ -355,18 +355,19 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findFrom(java.io.
-	 * Serializable , org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * Serializable , org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
-	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropertyHandler reflectPropertyHandler) {
+	public <T extends Serializable> List<T> findFrom(T entity, ReflectPropsHandler reflectPropertyHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getListSql())) {
 			throw new DataAccessException(
 					"findFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@ListSql()定义查询sql!");
 		}
-		return (List<T>) sqlToyLazyDao.findByQuery(
-				new QueryExecutor(entityMeta.getListSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
+		return (List<T>) sqlToyLazyDao
+				.findByQuery(
+						new QueryExecutor(entityMeta.getListSql(), entity).reflectPropsHandler(reflectPropertyHandler))
 				.getRows();
 	}
 
@@ -392,19 +393,20 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 	 * 
 	 * @see org.sagacity.sqltoy.service.SqlToyCRUDService#findPageFrom(org.sagacity
 	 * .core.database.model.PaginationModel, java.io.Serializable,
-	 * org.sagacity.core.utils.callback.ReflectPropertyHandler)
+	 * org.sagacity.core.utils.callback.ReflectPropsHandler)
 	 */
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS)
 	public <T extends Serializable> PaginationModel<T> findPageFrom(PaginationModel paginationModel, T entity,
-			ReflectPropertyHandler reflectPropertyHandler) {
+			ReflectPropsHandler reflectPropsHandler) {
 		EntityMeta entityMeta = sqlToyLazyDao.getEntityMeta(entity.getClass());
 		if (StringUtil.isBlank(entityMeta.getPageSql())) {
 			throw new DataAccessException(
 					"findPageFromByEntity[" + entity.getClass().getName() + "]沒有在类上用注解@PaginationSql() 定义分页sql!");
 		}
-		return (PaginationModel<T>) sqlToyLazyDao.findPageByQuery(paginationModel,
-				new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropertyHandler(reflectPropertyHandler))
+		return (PaginationModel<T>) sqlToyLazyDao
+				.findPageByQuery(paginationModel,
+						new QueryExecutor(entityMeta.getPageSql(), entity).reflectPropsHandler(reflectPropsHandler))
 				.getPageResult();
 	}
 

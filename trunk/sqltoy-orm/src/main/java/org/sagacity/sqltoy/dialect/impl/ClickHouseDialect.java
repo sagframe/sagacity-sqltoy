@@ -8,7 +8,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -132,7 +132,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		// clickhouse 不支持sequence，支持identity自增模式
@@ -140,7 +140,7 @@ public class ClickHouseDialect implements Dialect {
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
 				ClickHouseDialectUtils.isAssignPKValue(entityMeta.getIdStrategy()), tableName);
 		return ClickHouseDialectUtils.saveAll(sqlToyContext, entityMeta, insertSql, entities, batchSize,
-				reflectPropertyHandler, conn, dbType, autoCommit);
+				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
 	@Override
@@ -153,7 +153,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] forceUpdateFields,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
@@ -175,7 +175,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, Integer dbType,
 			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
@@ -183,7 +183,7 @@ public class ClickHouseDialect implements Dialect {
 
 	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
-			ReflectPropertyHandler reflectPropertyHandler, Connection conn, Integer dbType, String dialect,
+			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
 			Boolean autoCommit, String tableName) throws Exception {
 		// 不支持
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);

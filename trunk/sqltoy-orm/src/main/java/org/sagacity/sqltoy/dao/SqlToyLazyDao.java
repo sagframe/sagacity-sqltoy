@@ -11,7 +11,7 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.InsertRowCallbackHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -148,10 +148,10 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 批量保存数据,返回数据库记录变更数量
 	 * @param dataSet
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 */
 	@Deprecated
-	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler);
+	public <T extends Serializable> Long saveAll(List<T> entities, ReflectPropsHandler reflectPropsHandler);
 
 	// sqltoy的update内部处理是考虑属性为null情况的，一次交互完成，比jpa更加合理，可以深入了解
 	/**
@@ -211,11 +211,11 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 批量修改对象并返回数据库记录变更数量
 	 * @param entitys
-	 * @param reflectPropertyHandler 用于通过反射机制设置属性值
+	 * @param reflectPropsHandler 用于通过反射机制设置属性值
 	 * @param forceUpdateProps       强制修改的属性
 	 * @return
 	 */
-	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropertyHandler reflectPropertyHandler,
+	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
 			String... forceUpdateProps);
 
 	/**
@@ -230,12 +230,12 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler (常规情况下传null)
+	 * @param reflectPropsHandler (常规情况下传null)
 	 * @return
 	 */
 	@Deprecated
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler);
+			ReflectPropsHandler reflectPropsHandler);
 
 	/**
 	 * @todo 保存或修改数据并返回数据库记录变更数量
@@ -258,13 +258,13 @@ public interface SqlToyLazyDao {
 	 * @todo 批量修改或保存数据并返回数据库记录变更数量
 	 * @param <T>
 	 * @param entities
-	 * @param reflectPropertyHandler 常规传null
+	 * @param reflectPropsHandler 常规传null
 	 * @param forceUpdateProps       强制修改的字段
 	 * @return
 	 */
 	@Deprecated
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropertyHandler reflectPropertyHandler, String... forceUpdateProps);
+			ReflectPropsHandler reflectPropsHandler, String... forceUpdateProps);
 
 	/**
 	 * @todo 删除单条对象并返回数据库记录影响的数量

@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
-import org.sagacity.sqltoy.callback.ReflectPropertyHandler;
+import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
@@ -188,7 +188,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -198,7 +198,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Integer dbType,
+			final ReflectPropsHandler reflectPropsHandler, final Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
@@ -243,7 +243,7 @@ public interface Dialect {
 	 * @param entities
 	 * @param batchSize
 	 * @param forceUpdateFields
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -253,9 +253,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropertyHandler reflectPropertyHandler,
-			final Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler, final Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 保存或修改单条记录
@@ -279,7 +279,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param forceUpdateFields
 	 * @param conn
 	 * @param dbType
@@ -290,16 +290,16 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final String[] forceUpdateFields,
-			final Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
-			final String tableName) throws Exception;
+			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, final Connection conn,
+			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
+			throws Exception;
 
 	/**
 	 * @todo 批量保存,主键冲突的则忽视
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
-	 * @param reflectPropertyHandler
+	 * @param reflectPropsHandler
 	 * @param conn
 	 * @param dbType
 	 * @param dialect
@@ -309,7 +309,7 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long saveAllIgnoreExist(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final ReflectPropertyHandler reflectPropertyHandler, final Connection conn, final Integer dbType,
+			final ReflectPropsHandler reflectPropsHandler, final Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
