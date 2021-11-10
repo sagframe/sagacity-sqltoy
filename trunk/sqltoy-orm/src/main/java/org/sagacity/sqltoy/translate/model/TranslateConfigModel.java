@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @description 翻译配置模型
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-8
- * @modify Date:2020-3-8=10 修改heap\offheap\diskSize的默认策略
+ * @modify Date:2020-03-08 修改heap\offheap\diskSize的默认策略
  */
 public class TranslateConfigModel implements Serializable {
 	/**

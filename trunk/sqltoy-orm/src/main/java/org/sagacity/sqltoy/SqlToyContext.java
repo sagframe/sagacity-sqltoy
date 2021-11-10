@@ -24,7 +24,9 @@ import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultObtainDataSource;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
+import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -60,10 +62,10 @@ import org.springframework.context.ApplicationContextAware;
 //16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
 //------------------------------------------------------------------------------------------------------------------------------------*/
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy 工具的上下文容器，提供对应的sql获取以及相关参数设置
  * @author zhongxuchen
- * @version v1.0,Date:2009-12-11 下午09:48:15
+ * @version v1.0,Date:2009-12-11
  * @modify {Date:2018-1-5,增加对redis缓存翻译的支持}
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
@@ -280,6 +282,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String encoding = "UTF-8";
 
 	/**
+	 * 脱敏处理器
+	 */
+	private DesensitizeProvider desensitizeProvider;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -323,6 +330,10 @@ public class SqlToyContext implements ApplicationContextAware {
 				}
 				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 			}
+		}
+		// 默认的脱敏处理器
+		if (desensitizeProvider == null) {
+			desensitizeProvider = new DesensitizeDefaultProvider();
 		}
 		logger.debug("sqltoy init complete!");
 	}
@@ -918,4 +929,11 @@ public class SqlToyContext implements ApplicationContextAware {
 		return fieldsSecureProvider;
 	}
 
+	public DesensitizeProvider getDesensitizeProvider() {
+		return desensitizeProvider;
+	}
+
+	public void setDesensitizeProvider(DesensitizeProvider desensitizeProvider) {
+		this.desensitizeProvider = desensitizeProvider;
+	}
 }

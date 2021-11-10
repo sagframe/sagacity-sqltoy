@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 存储过程返回结果集
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-25

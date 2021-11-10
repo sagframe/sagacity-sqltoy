@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供sql执行超时统计和基本的sql输出功能
  * @author zhongxuchen
  * @version v1.0,Date:2015年6月12日

@@ -8,7 +8,7 @@ import java.io.Serializable;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 所有查询的结果形态模型
  * @author zhongxuchen
  * @version v1.0,Date:2014年12月14日

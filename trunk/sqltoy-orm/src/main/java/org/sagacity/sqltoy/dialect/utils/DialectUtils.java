@@ -54,6 +54,7 @@ import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -583,7 +584,7 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropsHandler,
 				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -652,10 +653,9 @@ public class DialectUtils {
 			EntityMeta entityMeta, GenerateSqlHandler generateSqlHandler, ReflectPropsHandler reflectPropsHandler,
 			Connection conn, final Integer dbType, Boolean autoCommit) throws Exception {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler,
-				sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -1305,7 +1305,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
 		boolean needUpdatePk = false;
 
@@ -1464,8 +1464,8 @@ public class DialectUtils {
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, EntityMeta entityMeta, PKStrategy pkStrategy,
 			boolean isAssignPK, String insertSql, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit)
+			throws Exception {
 		boolean isIdentity = pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY);
 		boolean isSequence = pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE);
 		String[] reflectColumns;
@@ -1475,10 +1475,9 @@ public class DialectUtils {
 			reflectColumns = entityMeta.getFieldsArray();
 		}
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
-		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler,
-				sqlToyContext.getUnifyFieldsHandler());
+		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1577,7 +1576,7 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
@@ -1727,8 +1726,8 @@ public class DialectUtils {
 			final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				"ifnull", conn, dbType, null, tableName, true);
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "ifnull",
+				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
@@ -1813,8 +1812,8 @@ public class DialectUtils {
 			Connection conn, final Integer dbType) throws Exception {
 		int batchSize = sqlToyContext.getBatchSize();
 		final String tableName = entityMeta.getSchemaTable(null, dbType);
-		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
-				"ifnull", conn, dbType, null, tableName, true);
+		Long updateCnt = updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler, "ifnull",
+				conn, dbType, null, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改
 		if (updateCnt >= entities.size()) {
 			logger.debug("级联子表{}修改记录数为:{}", tableName, updateCnt);
@@ -1916,7 +1915,7 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getUpdateReflectHandler(reflectPropsHandler, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		// 判断主键是否为空
@@ -2477,11 +2476,13 @@ public class DialectUtils {
 	 * @TODO 对字段值进行加密
 	 * @param preHandler
 	 * @param fieldsSecureProvider
+	 * @param desensitizeProvider
 	 * @param secureFields
 	 * @return
 	 */
 	public static ReflectPropsHandler getSecureReflectHandler(final ReflectPropsHandler preHandler,
-			FieldsSecureProvider fieldsSecureProvider, List<FieldSecureConfig> secureFields) {
+			final FieldsSecureProvider fieldsSecureProvider, final DesensitizeProvider desensitizeProvider,
+			List<FieldSecureConfig> secureFields) {
 		if (fieldsSecureProvider == null || secureFields == null || secureFields.isEmpty()) {
 			return preHandler;
 		}
@@ -2516,7 +2517,7 @@ public class DialectUtils {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));
 							} // 脱敏
 							else {
-								this.setValue(field, ResultUtils.maskStr(config.getMask(), contents));
+								this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
 							}
 						}
 					}
@@ -2535,8 +2536,7 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static ReflectPropsHandler getSaveOrUpdateReflectHandler(final String[] idFields,
-			final ReflectPropsHandler preHandler, String[] forceUpdateProps,
-			IUnifyFieldsHandler unifyFieldsHandler) {
+			final ReflectPropsHandler preHandler, String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
 		if (unifyFieldsHandler == null) {
 			return preHandler;
 		}
@@ -2633,8 +2633,8 @@ public class DialectUtils {
 	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	public static ReflectPropsHandler wrapReflectWithUnifyFields(String sql,
-			ReflectPropsHandler reflectPropsHandler, IUnifyFieldsHandler unifyFieldsHandler) {
+	public static ReflectPropsHandler wrapReflectWithUnifyFields(String sql, ReflectPropsHandler reflectPropsHandler,
+			IUnifyFieldsHandler unifyFieldsHandler) {
 		if ((reflectPropsHandler == null && unifyFieldsHandler == null) || StringUtil.isBlank(sql)) {
 			return null;
 		}

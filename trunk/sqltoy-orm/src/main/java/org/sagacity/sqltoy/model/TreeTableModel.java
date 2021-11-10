@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 树形表结构模型
  * @author zhongxuchen
  * @version v1.0,Date:2010-9-27

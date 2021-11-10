@@ -29,16 +29,6 @@ public class CacheMatchFilter implements Serializable {
 	}
 
 	/**
-	 * @TODO 指定参数名称(用于findEntity 和 findByQuery 对应的EntityQuery 以及QueryExecutor中)
-	 * @param param
-	 * @return
-	 */
-//	public CacheMatchFilter param(String param) {
-//		cacheFilterArgs.param = param;
-//		return this;
-//	}
-
-	/**
 	 * @TODO 设置缓存名称
 	 * @param cacheName
 	 * @return

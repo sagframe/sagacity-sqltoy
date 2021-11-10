@@ -14,6 +14,7 @@ import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.ObtainDataSource;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.service.impl.SqlToyCRUDServiceImpl;
@@ -279,6 +280,19 @@ public class SqltoyAutoConfiguration {
 			} // 包名和类名称
 			else if (fieldsSecureProvider.contains(".")) {
 				sqlToyContext.setFieldsSecureProvider((FieldsSecureProvider) Class.forName(fieldsSecureProvider)
+						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义字段字符脱敏处理器
+		String desensitizeProvider = properties.getDesensitizeProvider();
+		if (StringUtil.isNotBlank(desensitizeProvider)) {
+			if (applicationContext.containsBean(desensitizeProvider)) {
+				sqlToyContext
+						.setDesensitizeProvider((DesensitizeProvider) applicationContext.getBean(desensitizeProvider));
+			} // 包名和类名称
+			else if (desensitizeProvider.contains(".")) {
+				sqlToyContext.setDesensitizeProvider((DesensitizeProvider) Class.forName(desensitizeProvider)
 						.getDeclaredConstructor().newInstance());
 			}
 		}

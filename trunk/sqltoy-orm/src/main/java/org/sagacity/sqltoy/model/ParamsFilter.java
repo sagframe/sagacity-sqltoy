@@ -81,7 +81,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 不等于
-	 * 
 	 * @return
 	 */
 	public ParamsFilter neq(Object... values) {
@@ -92,7 +91,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 大于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -104,7 +102,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 大于等于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -116,7 +113,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 小于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -128,7 +124,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 小于等于
-	 * 
 	 * @param values
 	 * @return
 	 */
@@ -140,7 +135,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO left like
-	 * 
 	 * @return
 	 */
 	public ParamsFilter llike() {
@@ -150,7 +144,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO right like
-	 * 
 	 * @return
 	 */
 	public ParamsFilter rlike() {
@@ -160,7 +153,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 参数转日期
-	 * 
 	 * @return
 	 */
 	public ParamsFilter toDate(DateType dateType, int increase) {
@@ -203,7 +195,7 @@ public class ParamsFilter implements Serializable {
 		this.value = new Object[] { startValue, endValue };
 		return this;
 	}
-	
+
 	/**
 	 * @return the type
 	 */

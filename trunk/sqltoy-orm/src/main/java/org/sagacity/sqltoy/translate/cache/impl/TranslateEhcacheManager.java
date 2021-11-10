@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 基于ehcache缓存实现translate 提取缓存数据和存放缓存
  * @author zhongxuchen
  * @version v1.0,Date:2013-4-14

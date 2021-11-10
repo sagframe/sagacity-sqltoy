@@ -34,7 +34,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description elasticSearch的插件
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月3日
@@ -77,7 +77,8 @@ public class ElasticSearchPlugin {
 		PaginationModel page = new PaginationModel();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,extend.humpMapLabel);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
+				extend.humpMapLabel);
 		page.setRows(result.getRows());
 		page.setRecordCount(result.getRecordCount());
 		return page;
@@ -113,7 +114,8 @@ public class ElasticSearchPlugin {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
 		}
-		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,extend.humpMapLabel);
+		DataSetResult result = executeQuery(sqlToyContext, sqlToyConfig, jsonQuery, (Class) extend.resultType,
+				extend.humpMapLabel);
 		return result.getRows();
 	}
 
@@ -128,7 +130,7 @@ public class ElasticSearchPlugin {
 	 * @throws Exception
 	 */
 	private static DataSetResult executeQuery(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			JSONObject jsonQuery, Class resultClass,boolean humpMapLabel) throws Exception {
+			JSONObject jsonQuery, Class resultClass, boolean humpMapLabel) throws Exception {
 		NoSqlConfigModel noSqlModel = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlModel.getEndpoint());
 		String source = "_source";
@@ -191,7 +193,8 @@ public class ElasticSearchPlugin {
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet.getRows(), resultSet.getLabelNames());
 
 		// 不支持指定查询集合的行列转换
-		boolean changedCols = ResultUtils.calculate(sqlToyConfig, resultSet, null, null);
+		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, resultSet,
+				null, null);
 		// 将结果数据映射到具体对象类型中
 		resultSet.setRows(ResultUtils.wrapQueryResult(sqlToyContext, resultSet.getRows(),
 				StringUtil.humpFieldNames(resultSet.getLabelNames()), resultClass, changedCols, humpMapLabel));

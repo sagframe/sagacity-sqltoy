@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * @project sagacity-core
+ * @project sagacity-sqltoy
  * @description 输入输出IO工具类
  * @author zhongxuchen
  * @version v1.0,Date:2008-12-14

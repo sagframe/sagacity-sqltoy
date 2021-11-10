@@ -9,7 +9,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ShardingGroupModel;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 并行执行反调定义
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日

@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 日期处理支持类，提供日常工作中的所有日期的操作处理
  * @author zhongxuchen
  * @version v1.0,Date:2008-12-14

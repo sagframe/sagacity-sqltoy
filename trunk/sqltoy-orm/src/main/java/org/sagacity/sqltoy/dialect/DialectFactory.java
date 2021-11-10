@@ -261,8 +261,8 @@ public class DialectFactory {
 								SqlParamsModel sqlParamsModel = SqlConfigParseUtils.processNamedParamsQuery(realSql);
 								realSql = sqlParamsModel.getSql();
 								// update 2021-10-28 增加统一授权传参、根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
-								ReflectPropsHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
-										realSql, reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
+								ReflectPropsHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(realSql,
+										reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 								values = BeanUtil.reflectBeansToList(dataSet, sqlParamsModel.getParamsName(),
 										realPropsHandler);
 								fieldTypes = BeanUtil.matchMethodsType(dataSet.get(0).getClass(),
@@ -439,8 +439,8 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+										realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
@@ -630,8 +630,8 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+										realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
@@ -788,8 +788,8 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+										realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
@@ -982,8 +982,8 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+										realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
@@ -1048,8 +1048,8 @@ public class DialectFactory {
 								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
 										queryExecutor, conn, dbType, dialect);
 								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(realSqlToyConfig, queryResult,
-										pivotCategorySet, extend);
+								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+										realSqlToyConfig, queryResult, pivotCategorySet, extend);
 								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
 								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
 								if (extend.resultType != null) {
@@ -1238,8 +1238,8 @@ public class DialectFactory {
 	 * @param autoCommit
 	 */
 	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler,
-			final DataSource dataSource, final Boolean autoCommit) {
+			final String[] forceUpdateProps, final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource,
+			final Boolean autoCommit) {
 		// 前置输入合法校验
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("saveOrUpdateAll entities is null or empty,please check!");
@@ -1835,8 +1835,8 @@ public class DialectFactory {
 									inParamsValue);
 							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
 									queryExecutor, conn, dbType, dialect);
-							boolean changedCols = ResultUtils.calculate(sqlToyConfig, queryResult, pivotCategorySet,
-									null);
+							boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
+									sqlToyConfig, queryResult, pivotCategorySet, null);
 							// }
 							// 映射成对象
 							if (resultType != null) {

@@ -19,7 +19,9 @@ public enum MaskType {
 	// 银行账号
 	ACCOUNT_NO("bank-card"),
 	// 身份证
-	ID("id-card");
+	ID("id-card"),
+	// 银行对公账号
+	PUBLIC_ACCOUNT("public-account");
 
 	private final String type;
 

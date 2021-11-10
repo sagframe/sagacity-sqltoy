@@ -20,11 +20,6 @@ public class CacheMatchExtend implements Serializable {
 	private static final long serialVersionUID = 6232890514798490527L;
 
 	/**
-	 * 参数名称
-	 */
-	// public String param;
-
-	/**
 	 * 缓存名称
 	 */
 	public String cacheName;

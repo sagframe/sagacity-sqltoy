@@ -3,8 +3,7 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * 表字段信息
- * 
+ * @description 表字段信息
  * @author chenrenfei
  *
  */

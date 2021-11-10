@@ -161,6 +161,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String fieldsSecureProvider;
 
 	/**
+	 * 字段值显示脱敏处理器定义，默认为sqltoy自带的DesensitizeDefaultProvider实现
+	 */
+	private String desensitizeProvider;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -477,6 +482,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setFieldsSecureProvider(String fieldsSecureProvider) {
 		this.fieldsSecureProvider = fieldsSecureProvider;
+	}
+
+	public String getDesensitizeProvider() {
+		return desensitizeProvider;
+	}
+
+	public void setDesensitizeProvider(String desensitizeProvider) {
+		this.desensitizeProvider = desensitizeProvider;
 	}
 
 }

@@ -50,6 +50,7 @@ import org.sagacity.sqltoy.plugins.calculator.GroupSummary;
 import org.sagacity.sqltoy.plugins.calculator.ReverseList;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,11 +156,13 @@ public class ResultUtils {
 
 	/**
 	 * @todo 对字段进行安全脱敏
+	 * @param desensitizeProvider
 	 * @param rows
 	 * @param masks
 	 * @param labelIndexMap
 	 */
-	private static void secureMask(List<List> rows, Iterator<SecureMask> masks, LabelIndexModel labelIndexMap) {
+	private static void secureMask(DesensitizeProvider desensitizeProvider, List<List> rows, Iterator<SecureMask> masks,
+			LabelIndexModel labelIndexMap) {
 		Integer index;
 		Object value;
 		SecureMask mask;
@@ -172,7 +175,7 @@ public class ResultUtils {
 				for (List row : rows) {
 					value = row.get(columnIndex);
 					if (value != null) {
-						row.set(columnIndex, maskStr(mask, value));
+						row.set(columnIndex, desensitizeProvider.desensitize(value.toString(), mask));
 					}
 				}
 			}
@@ -214,95 +217,6 @@ public class ResultUtils {
 		}
 	}
 
-	/**
-	 * @todo 对字符串脱敏
-	 * @param mask
-	 * @param value
-	 * @return
-	 */
-	public static String maskStr(SecureMask mask, Object value) {
-		String type = mask.getType();
-		String realStr = value.toString();
-		int size = realStr.length();
-		// 单字符无需脱敏
-		if (size == 1) {
-			return realStr;
-		}
-		String maskCode = mask.getMaskCode();
-		int headSize = mask.getHeadSize();
-		int tailSize = mask.getTailSize();
-		// 自定义剪切长度
-		if (headSize > 0 || tailSize > 0) {
-			return StringUtil.secureMask(realStr, (headSize > 0) ? headSize : 0, (tailSize > 0) ? tailSize : 0,
-					maskCode);
-		}
-		// 按比例模糊(百分比)
-		if (mask.getMaskRate() > 0) {
-			int maskSize = Double.valueOf(size * mask.getMaskRate() * 1.00 / 100).intValue();
-			if (maskSize < 1) {
-				maskSize = 1;
-			} else if (maskSize >= size) {
-				maskSize = size - 1;
-			}
-			tailSize = (size - maskSize) / 2;
-			headSize = size - maskSize - tailSize;
-			if (maskCode == null) {
-				maskCode = "*";
-				if (maskSize > 3) {
-					maskCode = "***";
-				} else if (maskSize == 2) {
-					maskCode = "**";
-				}
-			}
-		}
-		// 按类别处理
-		// 电话
-		if ("tel".equals(type)) {
-			if (size >= 11) {
-				return StringUtil.secureMask(realStr, 3, 4, maskCode);
-			} else {
-				return StringUtil.secureMask(realStr, 4, 0, maskCode);
-			}
-		}
-		// 邮件
-		if ("email".equals(type)) {
-			return realStr.substring(0, 1).concat(maskCode).concat(realStr.substring(realStr.indexOf("@")));
-		}
-		// 身份证
-		if ("id-card".equals(type)) {
-			return StringUtil.secureMask(realStr, 0, 4, maskCode);
-		}
-		// 银行卡
-		if ("bank-card".equals(type)) {
-			return StringUtil.secureMask(realStr, 6, 4, maskCode);
-		}
-		// 姓名
-		if ("name".equals(type)) {
-			if (size >= 4) {
-				return StringUtil.secureMask(realStr, 2, 0, maskCode);
-			} else {
-				return StringUtil.secureMask(realStr, 1, 0, maskCode);
-			}
-		}
-		// 地址
-		if ("address".equals(type)) {
-			if (size >= 30) {
-				return StringUtil.secureMask(realStr, 7, 0, maskCode);
-			} else if (size >= 12) {
-				return StringUtil.secureMask(realStr, 6, 0, maskCode);
-			} else if (size >= 8) {
-				return StringUtil.secureMask(realStr, 4, 0, maskCode);
-			} else {
-				return StringUtil.secureMask(realStr, 2, 0, maskCode);
-			}
-		}
-		// 对公银行账号
-		if ("public-account".equals(type)) {
-			return StringUtil.secureMask(realStr, 2, 0, maskCode);
-		}
-		return StringUtil.secureMask(realStr, headSize, tailSize, maskCode);
-	}
-
 	private static List getResultSet(SqlToyConfig sqlToyConfig, SqlToyContext sqlToyContext, Connection conn,
 			ResultSet rs, UpdateRowHandler updateRowHandler, DecryptHandler decryptHandler, int rowCnt,
 			HashMap<String, Integer> labelIndexMap, String[] labelNames, int startColIndex) throws Exception {
@@ -313,7 +227,6 @@ public class ResultUtils {
 			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, rowCnt, labelIndexMap,
 					labelNames, startColIndex);
 		}
-
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
@@ -326,11 +239,9 @@ public class ResultUtils {
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
-
 		// link 目前只支持单个字段运算
 		int columnSize = labelNames.length;
 		int index = 0;
-
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -1120,15 +1031,17 @@ public class ResultUtils {
 	}
 
 	/**
-	 * @todo 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
+	 * 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
+	 * 
+	 * @param desensitizeProvider
 	 * @param sqlToyConfig
 	 * @param dataSetResult
 	 * @param pivotCategorySet
 	 * @param extend
 	 * @return
 	 */
-	public static boolean calculate(SqlToyConfig sqlToyConfig, DataSetResult dataSetResult, List pivotCategorySet,
-			QueryExecutorExtend extend) {
+	public static boolean calculate(DesensitizeProvider desensitizeProvider, SqlToyConfig sqlToyConfig,
+			DataSetResult dataSetResult, List pivotCategorySet, QueryExecutorExtend extend) {
 		List items = dataSetResult.getRows();
 		// 数据为空直接跳出处理
 		if (items == null || items.isEmpty()) {
@@ -1153,7 +1066,7 @@ public class ResultUtils {
 		}
 		// 字段脱敏
 		if (!secureMasks.isEmpty()) {
-			secureMask(items, secureMasks.iterator(), labelIndexMap);
+			secureMask(desensitizeProvider, items, secureMasks.iterator(), labelIndexMap);
 		}
 
 		// 自动格式化
@@ -1163,7 +1076,7 @@ public class ResultUtils {
 		// 扩展脱敏和格式化处理
 		if (extend != null) {
 			if (!extend.secureMask.isEmpty()) {
-				secureMask(items, extend.secureMask.values().iterator(), labelIndexMap);
+				secureMask(desensitizeProvider, items, extend.secureMask.values().iterator(), labelIndexMap);
 			}
 			if (!extend.colsFormat.isEmpty()) {
 				formatColumn(items, extend.colsFormat.values().iterator(), labelIndexMap);

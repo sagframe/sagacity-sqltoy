@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqlToy的基础常量参数定义
  * @author zhongxuchen
  * @version v1.0,Date:2014年12月26日

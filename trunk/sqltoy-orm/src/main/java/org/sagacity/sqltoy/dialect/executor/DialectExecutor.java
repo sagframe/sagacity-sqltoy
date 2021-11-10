@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 数据库方言并行执行器
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日

@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.dialect.handler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供一个参数sql的反调函数，方便抽象统一的方言处理
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月5日

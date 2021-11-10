@@ -10,7 +10,7 @@ import java.util.List;
 import org.sagacity.sqltoy.utils.IdUtil;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description sql执行日志
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月24日

@@ -33,7 +33,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 缓存刷新检测接口定义
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日

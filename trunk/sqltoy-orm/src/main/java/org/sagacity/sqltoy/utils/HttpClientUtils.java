@@ -34,7 +34,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description 提供基于http请求的工具类
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月7日

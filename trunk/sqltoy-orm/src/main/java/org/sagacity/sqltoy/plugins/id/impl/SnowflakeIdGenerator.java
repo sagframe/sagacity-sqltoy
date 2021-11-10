@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.utils.SnowflakeIdWorker;
 import org.sagacity.sqltoy.utils.SqlUtil;
 
 /**
- * @project sagacity-sqltoy3.2
+ * @project sagacity-sqltoy
  * @description 基于twitter的分布式自增ID生成策略
  * @author zhongxuchen
  * @version v1.0,Date:2017年3月21日
