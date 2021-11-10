@@ -3,9 +3,10 @@ package org.sagacity.sqltoy.model;
 import java.io.Serializable;
 
 /**
- * 
- * @author chenrenfei
- *
+ * @project sagacity-sqltoy
+ * @description 数据库表元信息
+ * @author zhongxuchen
+ * @version v1.0,Date:2021-09-25
  */
 public class TableMeta implements Serializable {
 	/**

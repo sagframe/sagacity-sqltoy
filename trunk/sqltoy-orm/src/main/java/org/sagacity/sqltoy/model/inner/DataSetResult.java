@@ -10,7 +10,7 @@ import java.util.List;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供一个基础的数据集对象模型
  * @author zhongxuchen
  * @version v1.0,Date:2016年3月8日

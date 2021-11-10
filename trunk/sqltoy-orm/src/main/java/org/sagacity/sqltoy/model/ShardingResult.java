@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.model;
 import java.util.List;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 分库分表批量对象操作的结果,为今后错误策略提供基础(如:单个节点错误判作整体错误)
  * @author zhongxuchen
  * @version v1.0,Date:2017年12月14日

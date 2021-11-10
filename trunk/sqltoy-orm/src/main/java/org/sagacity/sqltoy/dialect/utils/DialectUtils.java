@@ -54,6 +54,7 @@ import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -247,6 +248,7 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
@@ -293,6 +295,7 @@ public class DialectUtils {
 		}
 		ResultSet rs = null;
 		return (QueryResult) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramsValue, null, 0);
 				rs = pst.executeQuery();
@@ -418,6 +421,7 @@ public class DialectUtils {
 		PreparedStatement pst = conn.prepareStatement(lastCountSql);
 		ResultSet rs = null;
 		return (Long) SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				long resultCount = 0;
 				if (realParams != null) {
@@ -580,7 +584,7 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getSaveOrUpdateReflectHandler(entityMeta.getIdArray(), reflectPropsHandler,
 				forceUpdateFields, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -651,7 +655,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		int pkIndex = entityMeta.getIdIndex();
@@ -1301,7 +1305,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity, reflectColumns, null, handler);
 		boolean needUpdatePk = false;
 
@@ -1473,7 +1477,7 @@ public class DialectUtils {
 		// 构造全新的新增记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getAddReflectHandler(reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID
@@ -1567,12 +1571,11 @@ public class DialectUtils {
 			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
 			return 0L;
 		}
-
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fieldsValues = BeanUtil.reflectBeanToAry(entity, entityMeta.getFieldsArray(), null, handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
@@ -1911,14 +1914,13 @@ public class DialectUtils {
 		ReflectPropsHandler handler = getUpdateReflectHandler(reflectPropsHandler, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramsValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getFieldsArray(), null,
 				handler);
 		// 判断主键是否为空
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
-
 		// 累计多少行为空
 		int skipCount = 0;
 		Iterator<Object[]> iter = paramsValues.iterator();
@@ -1948,7 +1950,6 @@ public class DialectUtils {
 				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
 			}
 		}
-
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
 		if (updateSql == null) {
@@ -2472,11 +2473,13 @@ public class DialectUtils {
 	 * @TODO 对字段值进行加密
 	 * @param preHandler
 	 * @param fieldsSecureProvider
+	 * @param desensitizeProvider
 	 * @param secureFields
 	 * @return
 	 */
 	public static ReflectPropsHandler getSecureReflectHandler(final ReflectPropsHandler preHandler,
-			FieldsSecureProvider fieldsSecureProvider, List<FieldSecureConfig> secureFields) {
+			final FieldsSecureProvider fieldsSecureProvider, final DesensitizeProvider desensitizeProvider,
+			List<FieldSecureConfig> secureFields) {
 		if (fieldsSecureProvider == null || secureFields == null || secureFields.isEmpty()) {
 			return preHandler;
 		}
@@ -2511,7 +2514,7 @@ public class DialectUtils {
 								this.setValue(field, fieldsSecureProvider.encrypt(contents));
 							} // 脱敏
 							else {
-								this.setValue(field, ResultUtils.maskStr(config.getMask(), contents));
+								this.setValue(field, desensitizeProvider.desensitize(contents, config.getMask()));
 							}
 						}
 					}

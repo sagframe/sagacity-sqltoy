@@ -6,7 +6,7 @@ import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 用于主键生成策略，根据依赖的字段值进行切割提取部分字符参与主键生成,用法:@substr(${colName},startIndex,length)
  *              例如 @substr(${colName},0,2) 从第0位开始切去2位字符,startIndex<0
  *              时，表示从尾部截取指定长度字符

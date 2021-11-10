@@ -11,7 +11,7 @@ import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.utils.DateUtil;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 进行日期格式化,如果想不包含日期@df('')
  * @author zhongxuchen
  * @version v1.0,Date:2018年5月25日

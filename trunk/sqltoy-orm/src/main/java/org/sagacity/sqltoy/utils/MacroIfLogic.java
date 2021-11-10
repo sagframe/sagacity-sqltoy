@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 提供针对sql中 @if(:paramName1>=value1 && :paramName2!=value2)
  *              性质的逻辑判断,返回true或false,适用于sql和mongo等所有查询语句中使用
  * @author zhongxuchen

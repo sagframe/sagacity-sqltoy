@@ -76,6 +76,9 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 		byte[] keyBytes;
 		if (keyStr.toLowerCase().trim().startsWith("classpath:")) {
 			String contents = FileUtil.readFileAsStr(keyStr, CHARSET);
+			if (StringUtil.isBlank(contents)) {
+				throw new Exception("publicKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
+			}
 			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r\n", ""));
 		} else {
 			keyBytes = Base64.getDecoder().decode(keyStr.trim());
@@ -93,6 +96,9 @@ public class FieldsRSASecureProvider implements FieldsSecureProvider {
 		byte[] keyBytes;
 		if (keyStr.toLowerCase().trim().startsWith("classpath:")) {
 			String contents = FileUtil.readFileAsStr(keyStr, CHARSET);
+			if (StringUtil.isBlank(contents)) {
+				throw new Exception("privateKey文件内容读取失败,请检查配置文件是否编译到classes目录下!");
+			}
 			keyBytes = Base64.getDecoder().decode(contents.trim().replaceAll("\r\n", ""));
 		} else {
 			keyBytes = Base64.getDecoder().decode(keyStr.trim());

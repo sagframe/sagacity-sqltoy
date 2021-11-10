@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 分页数据模型
  * @author zhongxuchen
  * @version v1.0,Date:2011-2-25

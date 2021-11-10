@@ -555,7 +555,7 @@ public class SqlServerDialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(null, sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		Object[] fullParamValues = BeanUtil.reflectBeanToAry(entity,
 				(isIdentity) ? entityMeta.getRejectIdFieldArray() : entityMeta.getFieldsArray(), null, handler);
 		boolean needUpdatePk = false;
@@ -741,7 +741,7 @@ public class SqlServerDialectUtils {
 		ReflectPropsHandler handler = DialectUtils.getAddReflectHandler(reflectPropsHandler,
 				sqlToyContext.getUnifyFieldsHandler());
 		handler = DialectUtils.getSecureReflectHandler(handler, sqlToyContext.getFieldsSecureProvider(),
-				entityMeta.getSecureFields());
+				sqlToyContext.getDesensitizeProvider(), entityMeta.getSecureFields());
 		List<Object[]> paramValues = BeanUtil.reflectBeansToInnerAry(entities, reflectColumns, null, handler);
 		int pkIndex = entityMeta.getIdIndex();
 		// 是否存在业务ID

@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 自动检测任务配置模型
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日

@@ -44,8 +44,7 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * 设置Map的key value
-	 * 
+	 * @TODO 设置Map的key value
 	 * @param key
 	 * @param value
 	 * @return
@@ -57,8 +56,7 @@ public class MapKit implements Serializable {
 	}
 
 	/**
-	 * 设置Map的key value
-	 * 
+	 * @TODO 设置Map的key value
 	 * @param key
 	 * @param value
 	 * @return
@@ -75,5 +73,13 @@ public class MapKit implements Serializable {
 
 	public Map<String, Object> get() {
 		return map;
+	}
+
+	/**
+	 * @TODO 创建一个空Map
+	 * @return
+	 */
+	public static Map<String, Object> map() {
+		return new HashMap<String, Object>();
 	}
 }

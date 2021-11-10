@@ -30,7 +30,7 @@ import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description es配置
  * @author zhongxuchen
  * @version v1.0,Date:2018年2月5日

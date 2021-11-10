@@ -7,7 +7,7 @@ import java.sql.Connection;
 
 /**
  * @project sagacity-sqltoy
- * @description 数据库连接反调,通过反调传递Connection,并通过Result进行数据交互
+ * @description 数据库连接反调,通过反调传递connection,并通过Result进行数据交互
  * @author zhongxuchen
  * @version v1.0,Date:2012-6-10
  */

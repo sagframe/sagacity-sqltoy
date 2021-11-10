@@ -25,7 +25,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 用于解析缓存翻译的配置
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日

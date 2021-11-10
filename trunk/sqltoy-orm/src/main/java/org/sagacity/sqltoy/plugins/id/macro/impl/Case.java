@@ -8,7 +8,7 @@ import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 进行类似oracle decode 数据枚举判断
  * @author zhongxuchen
  * @version v1.0,Date:2018年5月25日

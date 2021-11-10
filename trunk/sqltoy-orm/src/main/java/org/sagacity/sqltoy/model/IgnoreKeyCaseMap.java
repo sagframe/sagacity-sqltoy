@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 重构HashMap让key值始终是小写
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月7日

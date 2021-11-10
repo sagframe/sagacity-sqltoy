@@ -22,7 +22,9 @@ import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultConnectionFactory;
 import org.sagacity.sqltoy.plugins.datasource.impl.DefaultDataSourceSelector;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
+import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
+import org.sagacity.sqltoy.plugins.secure.impl.DesensitizeDefaultProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
 import org.sagacity.sqltoy.translate.TranslateManager;
@@ -267,6 +269,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	private String encoding = "UTF-8";
 
 	/**
+	 * 脱敏处理器
+	 */
+	private DesensitizeProvider desensitizeProvider;
+
+	/**
 	 * @todo 初始化
 	 * @throws Exception
 	 */
@@ -308,6 +315,10 @@ public class SqlToyContext implements ApplicationContextAware {
 				}
 				fieldsSecureProvider.initialize(this.encoding, securePrivateKey, securePublicKey);
 			}
+		}
+		// 默认的脱敏处理器
+		if (desensitizeProvider == null) {
+			desensitizeProvider = new DesensitizeDefaultProvider();
 		}
 		logger.debug("sqltoy init complete!");
 	}
@@ -898,5 +909,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public FieldsSecureProvider getFieldsSecureProvider() {
 		return fieldsSecureProvider;
+	}
+
+	public DesensitizeProvider getDesensitizeProvider() {
+		return desensitizeProvider;
+	}
+
+	public void setDesensitizeProvider(DesensitizeProvider desensitizeProvider) {
+		this.desensitizeProvider = desensitizeProvider;
 	}
 }

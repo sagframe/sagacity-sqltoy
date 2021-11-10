@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 基于缓存条件筛选的配置模型
  * @author zhongxuchen
  * @version v1.0,Date:2019年1月13日
