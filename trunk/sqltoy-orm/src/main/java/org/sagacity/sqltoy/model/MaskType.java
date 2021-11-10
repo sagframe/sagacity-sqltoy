@@ -10,7 +10,7 @@ package org.sagacity.sqltoy.model;
 public enum MaskType {
 	// 电话
 	TEL("tel"),
-	// 修改处理
+	// 姓名
 	NAME("name"),
 	// 邮箱
 	EMAIL("email"),
@@ -19,7 +19,9 @@ public enum MaskType {
 	// 银行账号
 	ACCOUNT_NO("bank-card"),
 	// 身份证
-	ID("id-card");
+	ID("id-card"),
+	// 银行对公账号
+	PUBLIC_ACCOUNT("public-account");
 
 	private final String type;
 

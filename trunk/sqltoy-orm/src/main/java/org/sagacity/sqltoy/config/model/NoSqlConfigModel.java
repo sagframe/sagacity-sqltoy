@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description 基于mongo或elasticSearch的配置
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月3日

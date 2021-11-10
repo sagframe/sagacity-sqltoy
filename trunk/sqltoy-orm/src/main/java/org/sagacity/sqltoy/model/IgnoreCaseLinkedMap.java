@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 重构HashMap让key值始终是小写,存储和提取时key都是小写
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月7日

@@ -36,7 +36,7 @@ import org.springframework.data.mongodb.core.query.BasicQuery;
 import com.mongodb.client.AggregateIterable;
 
 /**
- * @project sagacity-sqltoy4.1
+ * @project sagacity-sqltoy
  * @description 提供基于mongodb的查询服务(利用sqltoy组织查询的语句机制的优势提供查询相关功能,增删改暂时不提供)
  * @author zhongxuchen
  * @version v1.0,Date:2018年1月1日
@@ -352,7 +352,6 @@ public class Mongo extends BaseLink {
 		if (realMql.startsWith("[") && realMql.endsWith("]")) {
 			realMql = realMql.substring(1, realMql.length() - 1);
 		}
-
 		if (sqlToyContext.isDebug()) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("aggregateByMongo script=" + realMql);
@@ -360,7 +359,6 @@ public class Mongo extends BaseLink {
 				System.out.println("aggregateByMongo script=" + realMql);
 			}
 		}
-
 		String[] aggregates = StringUtil.splitExcludeSymMark(realMql, ",", SqlToyConstants.filters);
 		List<Bson> dbObjects = new ArrayList<Bson>();
 		for (String json : aggregates) {
@@ -368,7 +366,6 @@ public class Mongo extends BaseLink {
 				dbObjects.add(Document.parse(json));
 			}
 		}
-
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
 		if (out == null) {
@@ -417,12 +414,12 @@ public class Mongo extends BaseLink {
 			resultSet.add(rowData);
 		}
 		MongoElasticUtils.processTranslate(sqlToyContext, sqlToyConfig, resultSet, translateFields);
-
 		DataSetResult dataSetResult = new DataSetResult();
 		dataSetResult.setRows(resultSet);
 		dataSetResult.setLabelNames(translateFields);
 		// 不支持指定查询集合的行列转换,对集合进行汇总、行列转换等
-		boolean changedCols = ResultUtils.calculate(sqlToyConfig, dataSetResult, null, null);
+		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, dataSetResult,
+				null, null);
 		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
 				resultClass, changedCols, humpMapLabel);
 	}

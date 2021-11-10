@@ -8,7 +8,7 @@ import java.io.Serializable;
 import javax.sql.DataSource;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description 分库模型
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日

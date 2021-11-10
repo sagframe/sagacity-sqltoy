@@ -6,7 +6,7 @@ package org.sagacity.sqltoy.translate.model;
 import java.io.Serializable;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 时间区间模型
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月12日

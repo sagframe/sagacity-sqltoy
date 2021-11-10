@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 定时检测缓存是否更新程序
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月11日

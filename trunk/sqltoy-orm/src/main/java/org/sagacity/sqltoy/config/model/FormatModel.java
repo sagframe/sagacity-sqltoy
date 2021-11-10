@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.math.RoundingMode;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 格式化参数模型
  * @author zhongxuchen
  * @version v1.0,Date:2018年6月26日

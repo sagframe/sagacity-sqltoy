@@ -8,9 +8,10 @@ import java.lang.annotation.Target;
 import org.sagacity.sqltoy.model.SecureType;
 
 /**
- * 
- * @author chenrenfei
- *
+ * @project sagacity-sqltoy
+ * @description 字段加解密具体字段、类型、脱敏方式配置
+ * @author zhongxuchen
+ * @version v1.0,Date:2021-11-05
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

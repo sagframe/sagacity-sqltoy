@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.plugins.id.macro.impl.SubString;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
- * @project sagacity-sqltoy4.2
+ * @project sagacity-sqltoy
  * @description 宏处理工具
  * @author zhongxuchen
  * @version v1.0,Date:2018年5月25日

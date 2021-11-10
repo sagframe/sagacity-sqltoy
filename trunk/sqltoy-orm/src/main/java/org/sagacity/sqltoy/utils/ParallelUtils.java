@@ -24,7 +24,7 @@ import org.sagacity.sqltoy.model.ShardingResult;
 import org.sagacity.sqltoy.plugins.sharding.ShardingUtils;
 
 /**
- * @project sagacity-sqltoy4.0
+ * @project sagacity-sqltoy
  * @description sqltoy对象集合相关操作、sharding策略分组以及并行提交相关数据库进行执行
  * @author zhongxuchen
  * @version v1.0,Date:2017年11月3日

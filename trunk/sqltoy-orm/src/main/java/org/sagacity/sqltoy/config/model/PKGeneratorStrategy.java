@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @project sqltoy-orm
  * @description 数据库主键生成策略
  * @author zhongxuchen
- * @version v1.0,Date:2012-6-7 下午2:43:26
+ * @version v1.0,Date:2012-6-7
  */
 public class PKGeneratorStrategy implements Serializable {
 	/**
