@@ -467,6 +467,16 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
+	
+	/**
+	 * @TODO 通过EntityQuery模式加载单条记录
+	 * @param <T>
+	 * @param entityClass
+	 * @param entityQuery 例如:EntityQuery.create().where("tenantId=? and
+	 *                    staffId=?).values("1","S0001")
+	 * @return
+	 */
+	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
 
 	/**
 	 * @TODO 根据QueryExecutor来链式操作灵活定义查询sql、条件、数据源等

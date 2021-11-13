@@ -1548,7 +1548,7 @@ public class SqlUtil {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
-		String key = entityMeta.getTableName() + sql;
+		String key = entityMeta.getTableName() + "_" + sql;
 		// 从缓存中直接获取,避免每次都处理提升效率
 		if (convertSqlMap.contains(key)) {
 			return convertSqlMap.get(key);
@@ -1567,8 +1567,9 @@ public class SqlUtil {
 		// 转换sql中的对应 vo属性为具体表字段
 		for (String field : fields) {
 			columnName = entityMeta.getColumnName(field);
-			// 对象属性和表字段一致,无需处理
-			if (columnName != null && !columnName.equalsIgnoreCase(field)) {
+			// 对象属性和(表字段一致且非关键词),无需处理
+			if (columnName != null
+					&& (!columnName.equalsIgnoreCase(field) || ReservedWordsUtil.isKeyWord(columnName))) {
 				start = 0;
 				// 定位匹配到field,判断匹配的前一位和后一位字符,前一位是:的属于条件,且都不能是字符和数字以及下划线
 				index = StringUtil.indexOfIgnoreCase(realSql, field, start);

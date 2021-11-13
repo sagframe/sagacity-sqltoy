@@ -130,6 +130,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.loadBySql(sqlOrNamedSql, paramsMap, resultType);
 	}
 
+	@Override
+	public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		return super.loadEntity(entityClass, entityQuery);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

@@ -77,6 +77,12 @@ public class Instr extends IFunction {
 			if (funLow.equals("instr")) {
 				return super.IGNORE;
 			}
+			// mysql也支持position函数 update 2021-11-11
+			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57) {
+				if (funLow.equals("position")) {
+					return super.IGNORE;
+				}
+			}
 			result.append("instr(").append(realArgs[1]).append(",").append(realArgs[0]);
 			if (realArgs.length > 2) {
 				result.append(",").append(realArgs[2]);

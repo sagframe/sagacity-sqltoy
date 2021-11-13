@@ -48,6 +48,7 @@ import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.SecureType;
@@ -141,12 +142,13 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static SqlToyResult wrapPageSqlParams(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
-			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex) throws Exception {
+			QueryExecutor queryExecutor, String pageSql, Object startIndex, Object endIndex, String dialect)
+			throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		String[] paramsNamed = extend.getParamsName(sqlToyConfig);
 		Object[] paramsValue = extend.getParamsValue(sqlToyContext, sqlToyConfig);
 		if (startIndex == null && endIndex == null) {
-			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue);
+			return SqlConfigParseUtils.processSql(pageSql, paramsNamed, paramsValue, dialect);
 		}
 		String[] realParamNamed = null;
 		Object[] realParamValue = null;
@@ -212,7 +214,7 @@ public class DialectUtils {
 			}
 		}
 		// 通过参数处理最终的sql和参数值
-		return SqlConfigParseUtils.processSql(pageSql, realParamNamed, realParamValue);
+		return SqlConfigParseUtils.processSql(pageSql, realParamNamed, realParamValue, dialect);
 	}
 
 	/**
@@ -222,7 +224,7 @@ public class DialectUtils {
 	 * @param sql
 	 * @param paramsValue
 	 * @param rowCallbackHandler
-	 * @param decryptHandler
+	 * @param decryptHandler     解密
 	 * @param conn
 	 * @param dbType
 	 * @param startIndex
@@ -712,7 +714,8 @@ public class DialectUtils {
 	}
 
 	/**
-	 * @todo 处理加工对象基于db2、oracle、informix、sybase数据库的saveOrUpdateSql
+	 * @todo 处理加工对象基于db2、oracle、sqlserver数据库的saveOrUpdateSql
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -724,14 +727,21 @@ public class DialectUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
-			String tableName) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
+			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
 					isAssignPK, realTable);
+		}
+		// 将新增记录统一赋值属性模拟成默认值模式
+		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
+		if (unifyFieldsHandler != null && unifyFieldsHandler.createUnifyFields() != null
+				&& !unifyFieldsHandler.createUnifyFields().isEmpty()) {
+			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
+			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
 		boolean isSupportNUL = StringUtil.isBlank(isNullFunction) ? false : true;
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -784,6 +794,7 @@ public class DialectUtils {
 				}
 			}
 			FieldMeta fieldMeta;
+			String defaultValue;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
@@ -804,12 +815,14 @@ public class DialectUtils {
 					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
+				// 将创建人、创建时间等模拟成默认值
+				defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
 				// 存在默认值
-				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
+				if (isSupportNUL && null != defaultValue) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
+							defaultValue);
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
@@ -963,7 +976,7 @@ public class DialectUtils {
 						+ " load method must assign value for pk,null pk field is:" + entityMeta.getIdArray()[i]);
 			}
 		}
-		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues);
+		SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(sql, entityMeta.getIdArray(), pkValues, null);
 		// 加密字段解密
 		DecryptHandler decryptHandler = null;
 		if (entityMeta.getSecureColumns() != null) {
@@ -995,7 +1008,7 @@ public class DialectUtils {
 					mainFieldValues = BeanUtil.reflectBeanToAry(result, cascadeModel.getFields());
 					loadSubTableSql = ReservedWordsUtil.convertSql(cascadeModel.getLoadSubTableSql(), dbType);
 					sqlToyResult = SqlConfigParseUtils.processSql(loadSubTableSql, cascadeModel.getMappedFields(),
-							mainFieldValues);
+							mainFieldValues, null);
 					SqlExecuteStat.showSql("级联子表加载查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
 					mappedMeta = sqlToyContext.getEntityMeta(cascadeModel.getMappedType());
 					// 子表加密字段解密
@@ -1065,7 +1078,7 @@ public class DialectUtils {
 			}
 			// 组织loadAll sql语句
 			String sql = wrapLoadAll(entityMeta, idValues.length, tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues });
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, new Object[] { idValues }, null);
 		} // 复合主键
 		else {
 			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
@@ -1089,7 +1102,7 @@ public class DialectUtils {
 			}
 			// 组织loadAll sql语句
 			String sql = wrapLoadAll(entityMeta, idValues.size(), tableName, lockSqlHandler, lockMode, dbType);
-			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues);
+			sqlToyResult = SqlConfigParseUtils.processSql(sql, null, realValues, null);
 		}
 
 		SqlExecuteStat.showSql("执行依据主键批量查询", sqlToyResult.getSql(), sqlToyResult.getParamsValue());
@@ -1174,7 +1187,7 @@ public class DialectUtils {
 					if (fieldSize == 1) {
 						Object[] pkValues = BeanUtil.sliceToArray(entitySet, cascadeModel.getFields()[0]);
 						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null,
-								new Object[] { pkValues });
+								new Object[] { pkValues }, null);
 					} else {
 						// 复合主键,将条件值构造成一个数组
 						Object[] realValues = new Object[idValues.size() * fieldSize];
@@ -1187,7 +1200,7 @@ public class DialectUtils {
 								index++;
 							}
 						}
-						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null, realValues);
+						subToyResult = SqlConfigParseUtils.processSql(subTableSql.toString(), null, realValues, null);
 					}
 					SqlExecuteStat.showSql("执行级联加载子表", subToyResult.getSql(), subToyResult.getParamsValue());
 					// 加密字段解密
@@ -1571,7 +1584,6 @@ public class DialectUtils {
 			logger.warn("表:" + realTable + " 字段全部是主键不存在更新字段,无需执行更新操作!");
 			return 0L;
 		}
-
 		// 构造全新的修改记录参数赋值反射(覆盖之前的)
 		ReflectPropsHandler handler = getUpdateReflectHandler(null, forceUpdateFields,
 				sqlToyContext.getUnifyFieldsHandler());
@@ -1665,7 +1677,7 @@ public class DialectUtils {
 				SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 				// 根据quickvo配置文件针对cascade中update-cascade配置组织具体操作sql
 				SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-						mappedFields, mainFieldValues);
+						mappedFields, mainFieldValues, null);
 				SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 						null, conn, dbType, null, true);
 			}
@@ -1922,7 +1934,6 @@ public class DialectUtils {
 		int pkIndex = entityMeta.getIdIndex();
 		int end = pkIndex + entityMeta.getIdArray().length;
 		int index = 0;
-
 		// 累计多少行为空
 		int skipCount = 0;
 		Iterator<Object[]> iter = paramsValues.iterator();
@@ -1952,7 +1963,6 @@ public class DialectUtils {
 				System.out.println("共有:" + skipCount + " 行记录因为主键值为空跳过修改操作!");
 			}
 		}
-
 		// 构建update语句
 		String updateSql = generateUpdateSql(dbType, entityMeta, nullFunction, forceUpdateFields, realTable);
 		if (updateSql == null) {
@@ -2503,7 +2513,7 @@ public class DialectUtils {
 				for (FieldSecureConfig config : secureFields) {
 					field = config.getField();
 					sourceField = config.getSourceField();
-					// 脱敏字段关联对应的加密字段
+					// 安全脱敏便于检索的字段，优先依据其来源加密字段
 					if (StringUtil.isNotBlank(sourceField)) {
 						value = this.getValue(sourceField);
 					} else {
@@ -2536,15 +2546,15 @@ public class DialectUtils {
 	 * @return
 	 */
 	public static ReflectPropsHandler getSaveOrUpdateReflectHandler(final String[] idFields,
-			final ReflectPropsHandler preHandler, String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
+			final ReflectPropsHandler prepHandler, String[] forceUpdateProps, IUnifyFieldsHandler unifyFieldsHandler) {
 		if (unifyFieldsHandler == null) {
-			return preHandler;
+			return prepHandler;
 		}
 		final Map<String, Object> addKeyValues = unifyFieldsHandler.createUnifyFields();
 		final Map<String, Object> updateKeyValues = unifyFieldsHandler.updateUnifyFields();
 		if ((addKeyValues == null || addKeyValues.isEmpty())
 				&& (updateKeyValues == null || updateKeyValues.isEmpty())) {
-			return preHandler;
+			return prepHandler;
 		}
 		// update操作强制更新字段优先
 		final Set<String> forceSet = new HashSet<String>();
@@ -2561,11 +2571,11 @@ public class DialectUtils {
 		ReflectPropsHandler handler = new ReflectPropsHandler() {
 			@Override
 			public void process() {
-				if (preHandler != null) {
-					preHandler.setPropertyIndexMap(this.getPropertyIndexMap());
-					preHandler.setRowIndex(this.getRowIndex());
-					preHandler.setRowData(this.getRowData());
-					preHandler.process();
+				if (prepHandler != null) {
+					prepHandler.setPropertyIndexMap(this.getPropertyIndexMap());
+					prepHandler.setRowIndex(this.getRowIndex());
+					prepHandler.setRowData(this.getRowData());
+					prepHandler.process();
 				}
 				// 主键为空表示save操作
 				if (idLength > 0 && this.getValue(idFields[0]) == null) {
@@ -2649,5 +2659,7 @@ public class DialectUtils {
 			result = getUpdateReflectHandler(reflectPropsHandler, null, unifyFieldsHandler);
 		}
 		return result;
+		// return getDataAuthReflectHandler(result,
+		// unifyFieldsHandler.dataAuthFilters());
 	}
 }

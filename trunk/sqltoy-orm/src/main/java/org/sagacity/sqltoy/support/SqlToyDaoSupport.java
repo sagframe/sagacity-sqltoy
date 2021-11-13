@@ -448,6 +448,17 @@ public class SqlToyDaoSupport {
 		return (T) loadByQuery(new QueryExecutor(sql, entity));
 	}
 
+	protected <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery) {
+		List<T> result = findEntity(entityClass, entityQuery);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
+			return result.get(0);
+		}
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+	}
+
 	/**
 	 * TODO 通过构造QueyExecutor 提供更加灵活的参数传递方式，包括DataSource 比如:
 	 * <li>1、new QueryExecutor(sql,entity).dataSource(dataSource)</li>
@@ -1459,15 +1470,25 @@ public class SqlToyDaoSupport {
 			int index = 0;
 			String colName;
 			HashSet<String> cols = new HashSet<String>();
+			boolean notAllPureField = false;
 			for (String field : selectFieldAry) {
 				// 去除重复字段
 				if (!cols.contains(field)) {
 					colName = entityMeta.getColumnName(field);
+					// 非表字段对应pojo的属性名称
 					if (colName == null) {
 						colName = field;
+						// 非字段名称
+						if (!entityMeta.getColumnFieldMap().containsKey(colName.toLowerCase())) {
+							notAllPureField = true;
+						} else {
+							// 保留字处理
+							colName = ReservedWordsUtil.convertWord(colName, null);
+						}
+					} else {
+						// 保留字处理
+						colName = ReservedWordsUtil.convertWord(colName, null);
 					}
-					// 保留字处理
-					colName = ReservedWordsUtil.convertWord(colName, null);
 					if (index > 0) {
 						fields = fields.concat(",");
 					}
@@ -1475,6 +1496,10 @@ public class SqlToyDaoSupport {
 					index++;
 					cols.add(field);
 				}
+			}
+			// select 字段中可能存在max(field)或field as xxx等非字段形式
+			if (notAllPureField) {
+				fields = SqlUtil.convertFieldsToColumns(entityMeta, fields);
 			}
 		} else {
 			fields = entityMeta.getAllColumnNames();

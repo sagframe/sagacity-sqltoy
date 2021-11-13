@@ -96,7 +96,7 @@ public class DefaultDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -142,7 +142,7 @@ public class DefaultDialectUtils {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
+				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -184,7 +184,7 @@ public class DefaultDialectUtils {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -238,7 +238,7 @@ public class DefaultDialectUtils {
 			colName = ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType);
 			deleteSql.append(colName);
 			deleteSql.append(" in (?) ");
-			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, new Object[] { idValues });
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, new Object[] { idValues }, null);
 		} else {
 			List<Object[]> idValues = BeanUtil.reflectBeansToInnerAry(entities, entityMeta.getIdArray(), null, null);
 			int dataSize = idValues.size();
@@ -278,7 +278,7 @@ public class DefaultDialectUtils {
 				}
 				deleteSql.append(condition);
 			}
-			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues);
+			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, null);
 		}
 		return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(), sqlToyResult.getParamsValue(),
 				null, conn, dbType, autoCommit, false);

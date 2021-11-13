@@ -316,7 +316,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(sqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
@@ -751,7 +751,7 @@ public class DialectFactory {
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
 												realSqlToyConfig.getSql(dialect),
 												extend.getParamsName(realSqlToyConfig),
-												extend.getParamsValue(sqlToyContext, realSqlToyConfig));
+												extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler,
@@ -1038,7 +1038,7 @@ public class DialectFactory {
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),
@@ -1179,7 +1179,7 @@ public class DialectFactory {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig));
+				extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}
@@ -1762,7 +1762,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig));
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,

@@ -125,7 +125,7 @@ public class SybaseIQDialect implements Dialect {
 		try {
 			// 通过参数处理最终的sql和参数值
 			SqlToyResult queryParam = SqlConfigParseUtils.processSql(insertTempSql.toString(),
-					extend.getParamsName(sqlToyConfig), extend.getParamsValue(sqlToyContext, sqlToyConfig));
+					extend.getParamsName(sqlToyConfig), extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 
 			// 执行sql将记录插入临时表
 			SqlUtil.executeSql(sqlToyContext.getTypeHandler(), queryParam.getSql(), queryParam.getParamsValue(), null,
@@ -165,7 +165,7 @@ public class SybaseIQDialect implements Dialect {
 				}
 			}
 			queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor, sql.toString(),
-					NumberUtil.randomArray(totalCount.intValue(), randomCount.intValue()), null);
+					NumberUtil.randomArray(totalCount.intValue(), randomCount.intValue()), null, dialect);
 			queryResult = findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 					extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 		} catch (Exception e) {
@@ -217,7 +217,7 @@ public class SybaseIQDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize);
+				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
@@ -267,7 +267,7 @@ public class SybaseIQDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
@@ -328,7 +328,7 @@ public class SybaseIQDialect implements Dialect {
 	 * .SqlToyContext, java.util.List, java.sql.Connection)
 	 */
 	@Override
-	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
@@ -345,9 +345,10 @@ public class SybaseIQDialect implements Dialect {
 		Long updateCount = DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta,
 				forceUpdateFields, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
-								forceUpdateFields, null, NVL_FUNCTION, entityMeta.getSequence() + ".NEXTVAL",
-								isAssignPKValue(entityMeta.getIdStrategy()), tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, null, NVL_FUNCTION,
+								entityMeta.getSequence() + ".NEXTVAL", isAssignPKValue(entityMeta.getIdStrategy()),
+								tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 		if (isOpenIdentity) {
@@ -502,7 +503,7 @@ public class SybaseIQDialect implements Dialect {
 				if (cascadeModel.getCascadeUpdateSql() != null && ((subTableData != null && !subTableData.isEmpty())
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues);
+							mappedFields, mainFieldValues, dialect);
 					SqlExecuteStat.debug("对存量数据进行级联修改", null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);

@@ -3,12 +3,19 @@
  */
 package org.sagacity.sqltoy.dialect.utils;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -49,9 +56,14 @@ public class DialectExtUtils {
 		boolean isStart = true;
 		boolean isSupportNULL = StringUtil.isBlank(isNullFunction) ? false : true;
 		String columnName;
+		boolean isString = false;
 		for (int i = 0; i < columnSize; i++) {
 			field = entityMeta.getFieldsArray()[i];
 			fieldMeta = entityMeta.getFieldMeta(field);
+			isString = false;
+			if (fieldMeta.getFieldType().equals("java.lang.string")) {
+				isString = true;
+			}
 			columnName = ReservedWordsUtil.convertWord(fieldMeta.getColumnName(), dbType);
 			if (fieldMeta.isPK()) {
 				// identity主键策略，且支持主键手工赋值
@@ -95,13 +107,19 @@ public class DialectExtUtils {
 					values.append(",");
 				}
 				sql.append(columnName);
+				// 默认值处理
 				if (isSupportNULL && null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction);
 					values.append("(?,");
 					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
-					values.append("?");
+					// kudu 中文会产生乱码
+					if (dbType == DBType.IMPALA && isString) {
+						values.append("cast(? as string)");
+					} else {
+						values.append("?");
+					}
 				}
 				isStart = false;
 			}
@@ -263,8 +281,7 @@ public class DialectExtUtils {
 				if (isSupportNUL && null != fieldMeta.getDefaultValue()) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
-					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
+					processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);
@@ -373,8 +390,7 @@ public class DialectExtUtils {
 				sql.append(columnName);
 				if (null != fieldMeta.getDefaultValue()) {
 					values.append(isNullFunction).append("(?,");
-					DialectExtUtils.processDefaultValue(values, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
+					processDefaultValue(values, dbType, fieldMeta.getType(), fieldMeta.getDefaultValue());
 					values.append(")");
 				} else {
 					values.append("?");
@@ -399,5 +415,60 @@ public class DialectExtUtils {
 			sql.append(" ) DO NOTHING ");
 		}
 		return sql.toString();
+	}
+
+	/**
+	 * @TODO 解决saveOrUpdate场景对一些记录无法判断是新增导致无法对创建人、创建时间等属性进行统一赋值，从而通过默认值模式来解决
+	 * @param createUnifyFields
+	 * @param dbType
+	 * @param fieldMeta
+	 * @return
+	 */
+	public static String getInsertDefaultValue(IgnoreKeyCaseMap<String, Object> createUnifyFields, Integer dbType,
+			FieldMeta fieldMeta) {
+		if (createUnifyFields == null || createUnifyFields.isEmpty()
+				|| !createUnifyFields.containsKey(fieldMeta.getFieldName())) {
+			return fieldMeta.getDefaultValue();
+		}
+		Object unifyFieldValue = createUnifyFields.get(fieldMeta.getFieldName());
+		if (unifyFieldValue != null) {
+			if (unifyFieldValue instanceof String) {
+				return (String) unifyFieldValue;
+			} else if (unifyFieldValue instanceof Number) {
+				return unifyFieldValue.toString();
+			} else {
+				// entityManager已经做了小写化处理
+				String fieldType = fieldMeta.getFieldType();
+				if (fieldType.equals("java.time.localdate")) {
+					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATE_HORIZONTAL);
+				} else if (fieldType.equals("java.time.localtime") || fieldType.equals("java.sql.time")) {
+					return DateUtil.formatDate(unifyFieldValue, "HH:mm:ss");
+				} else if (fieldType.equals("java.time.localdatetime") || fieldType.equals("java.sql.timestamp")
+						|| fieldType.equals("java.util.date") || fieldType.equals("java.sql.date")) {
+					return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
+				}
+				// 统一传参数值为日期类型，但数据库中是数字或字符串类型
+				if ((unifyFieldValue instanceof Date) || (unifyFieldValue instanceof Timestamp)
+						|| (unifyFieldValue instanceof LocalDate) || (unifyFieldValue instanceof LocalDateTime)) {
+					if (fieldType.equals("java.lang.integer") || fieldType.equals("int")) {
+						return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+					} else if (fieldType.equals("java.lang.long") || fieldType.equals("java.math.biginteger")
+							|| fieldType.equals("long")) {
+						return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
+					} else if (fieldType.equals("java.lang.string")) {
+						if (fieldMeta.getLength() >= 19) {
+							return DateUtil.formatDate(unifyFieldValue, DateUtil.FORMAT.DATETIME_HORIZONTAL);
+						}
+						if (fieldMeta.getLength() >= 14) {
+							return DateUtil.formatDate(unifyFieldValue, "yyyyMMddHHmmss");
+						}
+						if (fieldMeta.getLength() >= 8) {
+							return DateUtil.formatDate(unifyFieldValue, "yyyyMMdd");
+						}
+					}
+				}
+			}
+		}
+		return fieldMeta.getDefaultValue();
 	}
 }
