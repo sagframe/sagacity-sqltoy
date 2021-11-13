@@ -2,12 +2,15 @@ package org.sagacity.sqltoy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Time;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.model.MapKit;
+import org.sagacity.sqltoy.utils.DateUtil;
 
 import com.alibaba.fastjson.JSON;
 
@@ -35,5 +38,8 @@ public class SqlToyConstantsTest {
 		System.err.println(a.toString());
 		BigDecimal b = new BigDecimal("2993439899898779987777777777897777");
 		System.err.println(b.toString());
+		System.err.println(String.class.getTypeName());
+		System.err.println(int.class.getTypeName());
+		System.err.println(new Long("20211111102134").longValue());
 	}
 }

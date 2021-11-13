@@ -125,7 +125,7 @@ public class SqlServerDialect implements Dialect {
 		// 避免条件用?模式,导致实际参数位置不匹配,因此只针对:name模式进行处理
 		if (isNamed) {
 			SqlToyResult tmpResult = SqlConfigParseUtils.processSql(judgeOrderSql, extend.getParamsName(sqlToyConfig),
-					extend.getParamsValue(sqlToyContext, sqlToyConfig));
+					extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
 			judgeOrderSql = tmpResult.getSql();
 		}
 		// order by位置
@@ -152,7 +152,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize));
+				sql.toString(), (pageNo - 1) * pageSize, Long.valueOf(pageSize),dialect);
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);
 	}
@@ -201,7 +201,7 @@ public class SqlServerDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null,dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, null, dbType, dialect, fetchSize, maxRows);

@@ -1021,7 +1021,7 @@ public class ResultUtils {
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig));
+							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig),dialect);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
 							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);

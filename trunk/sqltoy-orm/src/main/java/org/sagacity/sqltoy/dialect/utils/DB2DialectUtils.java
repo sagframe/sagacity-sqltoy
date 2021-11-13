@@ -10,9 +10,11 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -72,7 +74,7 @@ public class DB2DialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null,dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -80,6 +82,7 @@ public class DB2DialectUtils {
 
 	/**
 	 * @todo 处理加工对象基于db2 的merge into 语句
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -91,14 +94,21 @@ public class DB2DialectUtils {
 	 * @param tableName
 	 * @return
 	 */
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String[] forceUpdateFields, String fromTable, String isNullFunction, String sequence, boolean isAssignPK,
-			String tableName) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String fromTable,
+			String isNullFunction, String sequence, boolean isAssignPK, String tableName) {
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, isNullFunction, sequence,
 					isAssignPK, realTable);
+		}
+		// 将新增记录统一赋值属性模拟成默认值模式
+		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
+		if (unifyFieldsHandler != null && unifyFieldsHandler.createUnifyFields() != null
+				&& !unifyFieldsHandler.createUnifyFields().isEmpty()) {
+			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
+			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
 		int columnSize = entityMeta.getFieldsArray().length;
 		FieldMeta fieldMeta;
@@ -150,7 +160,7 @@ public class DB2DialectUtils {
 					fupc.add(ReservedWordsUtil.convertWord(entityMeta.getColumnName(field), dbType));
 				}
 			}
-
+			String defaultValue;
 			// update 只针对非主键字段进行修改
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
@@ -172,12 +182,14 @@ public class DB2DialectUtils {
 					sql.append(")");
 				}
 				insertRejIdCols.append(columnName);
+				// 将创建人、创建时间等模拟成默认值
+				defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
 				// 存在默认值
-				if (null != fieldMeta.getDefaultValue()) {
+				if (null != defaultValue) {
 					insertRejIdColValues.append(isNullFunction);
 					insertRejIdColValues.append("(tv.").append(columnName).append(",");
 					DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-							fieldMeta.getDefaultValue());
+							defaultValue);
 					insertRejIdColValues.append(")");
 				} else {
 					insertRejIdColValues.append("tv.").append(columnName);

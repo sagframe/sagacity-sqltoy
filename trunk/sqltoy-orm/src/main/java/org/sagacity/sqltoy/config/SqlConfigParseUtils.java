@@ -179,15 +179,20 @@ public class SqlConfigParseUtils {
 		return StringUtil.matches(queryStr.trim(), SQL_ID_PATTERN);
 	}
 
+	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
+		return processSql(queryStr, paramsNamed, paramsArg, null);
+	}
+
 	/**
 	 * @todo 判断条件为null,过滤sql的组合查询条件example: queryStr= select t1.* from xx_table t1
 	 *       where #[t1.status=?] #[and t1.auditTime=?]
 	 * @param queryStr
 	 * @param paramsNamed
 	 * @param paramsArg
+	 * @param dialect
 	 * @return
 	 */
-	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg) {
+	public static SqlToyResult processSql(String queryStr, String[] paramsNamed, Object[] paramsArg, String dialect) {
 		Object[] paramsValue = paramsArg;
 		if (paramsNamed != null && paramsNamed.length > 0) {
 			// 构造全是null的条件值，将全部条件去除
@@ -230,7 +235,7 @@ public class SqlConfigParseUtils {
 		replaceNull(sqlToyResult, 0);
 		// update 2021-4-29 放在最后，避免参数值中存在?号
 		// 替换@value(?) 为参数对应的数值
-		processValue(sqlToyResult);
+		processValue(sqlToyResult, dialect);
 		// 将特殊字符替换回问号
 		if (isNamedArgs) {
 			sqlToyResult.setSql(sqlToyResult.getSql().replaceAll(questionMark, ARG_NAME));
@@ -561,8 +566,9 @@ public class SqlConfigParseUtils {
 	 * @update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
 	 * @TODO 处理直接显示参数值:#[@value(:paramNamed) sql]
 	 * @param sqlToyResult
+	 * @param dialect
 	 */
-	private static void processValue(SqlToyResult sqlToyResult) {
+	private static void processValue(SqlToyResult sqlToyResult, String dialect) {
 		if (null == sqlToyResult.getParamsValue() || sqlToyResult.getParamsValue().length == 0) {
 			return;
 		}
@@ -574,6 +580,7 @@ public class SqlConfigParseUtils {
 		int valueCnt = 0;
 		List paramValueList = null;
 		Object paramValue = null;
+		String valueStr;
 		while (m.find()) {
 			if (valueCnt == 0) {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
@@ -584,8 +591,12 @@ public class SqlConfigParseUtils {
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - valueCnt);
-				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX,
-						(paramValue == null) ? "null" : paramValue.toString()));
+				// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
+				valueStr = (paramValue == null) ? "null" : paramValue.toString();
+				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
+					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
+				}
+				sqlToyResult.setSql(sqlToyResult.getSql().replaceFirst(VALUE_REGEX, valueStr));
 				// 剔除参数@value(?) 对应的参数值
 				paramValueList.remove(paramCnt - valueCnt);
 				valueCnt++;

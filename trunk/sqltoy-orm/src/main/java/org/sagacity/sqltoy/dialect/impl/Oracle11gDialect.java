@@ -144,7 +144,7 @@ public class Oracle11gDialect implements Dialect {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize);
+				sql.toString(), pageNo * pageSize, (pageNo - 1) * pageSize,dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, startIndex, fetchSize, maxRows);
@@ -180,7 +180,7 @@ public class Oracle11gDialect implements Dialect {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null);
+				sql.toString(), null, null,dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -240,7 +240,7 @@ public class Oracle11gDialect implements Dialect {
 	 * .SqlToyContext, java.util.List, java.sql.Connection)
 	 */
 	@Override
-	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
@@ -255,8 +255,9 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}
@@ -410,8 +411,9 @@ public class Oracle11gDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								VIRTUAL_TABLE, NVL_FUNCTION, sequence, isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), null);
 					}
 				}, emptyCascadeClasses, subTableForceUpdateProps, conn, dbType, tableName);
 	}

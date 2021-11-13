@@ -316,7 +316,7 @@ public class OceanBaseDialect implements Dialect {
 	 * java.sql.Connection)
 	 */
 	@Override
-	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+	public Long update(final SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
@@ -330,8 +330,9 @@ public class OceanBaseDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								"dual", NVL_FUNCTION, sequence, OracleDialectUtils.isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
+								OracleDialectUtils.isAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}
