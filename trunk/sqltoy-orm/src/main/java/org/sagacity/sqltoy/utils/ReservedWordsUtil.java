@@ -156,4 +156,16 @@ public class ReservedWordsUtil {
 		}
 		return sql;
 	}
+
+	/**
+	 * @TODO 判断列是否是关键词
+	 * @param column
+	 * @return
+	 */
+	public static boolean isKeyWord(String column) {
+		if (column == null) {
+			return false;
+		}
+		return reservedWords.contains(column.toLowerCase());
+	}
 }

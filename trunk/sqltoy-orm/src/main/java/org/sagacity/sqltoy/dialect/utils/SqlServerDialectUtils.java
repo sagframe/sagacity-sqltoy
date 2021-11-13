@@ -30,11 +30,13 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
@@ -104,7 +106,7 @@ public class SqlServerDialectUtils {
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig));
+				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -123,7 +125,7 @@ public class SqlServerDialectUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+	public static Long saveOrUpdateAll(final SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
@@ -133,9 +135,9 @@ public class SqlServerDialectUtils {
 				new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(dbType, entityMeta,
-								entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull", "@mySeqVariable",
-								false);
+						String sql = SqlServerDialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(),
+								dbType, entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, tableName, "isnull",
+								"@mySeqVariable", false);
 						if (entityMeta.getIdStrategy() != null
 								&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) {
 							sql = "DECLARE @mySeqVariable as numeric(20)=NEXT VALUE FOR " + entityMeta.getSequence()
@@ -148,6 +150,7 @@ public class SqlServerDialectUtils {
 
 	/**
 	 * @todo sqlserver 相对特殊不支持timestamp类型的插入，所以单独提供sql生成功能
+	 * @param unifyFieldsHandler
 	 * @param dbType
 	 * @param entityMeta
 	 * @param pkStrategy
@@ -158,11 +161,19 @@ public class SqlServerDialectUtils {
 	 * @param isAssignPK
 	 * @return
 	 */
-	public static String getSaveOrUpdateSql(Integer dbType, EntityMeta entityMeta, PKStrategy pkStrategy,
-			String[] forceUpdateFields, String tableName, String isNullFunction, String sequence, boolean isAssignPK) {
+	public static String getSaveOrUpdateSql(IUnifyFieldsHandler unifyFieldsHandler, Integer dbType,
+			EntityMeta entityMeta, PKStrategy pkStrategy, String[] forceUpdateFields, String tableName,
+			String isNullFunction, String sequence, boolean isAssignPK) {
 		// 在无主键的情况下产生insert sql语句
 		if (entityMeta.getIdArray() == null) {
 			return generateInsertSql(dbType, entityMeta, tableName, pkStrategy, isNullFunction, sequence, isAssignPK);
+		}
+		// 将新增记录统一赋值属性模拟成默认值模式
+		IgnoreKeyCaseMap<String, Object> createUnifyFields = null;
+		if (unifyFieldsHandler != null && unifyFieldsHandler.createUnifyFields() != null
+				&& !unifyFieldsHandler.createUnifyFields().isEmpty()) {
+			createUnifyFields = new IgnoreKeyCaseMap<String, Object>();
+			createUnifyFields.putAll(unifyFieldsHandler.createUnifyFields());
 		}
 		String realTable = entityMeta.getSchemaTable(tableName, dbType);
 		int columnSize = entityMeta.getFieldsArray().length;
@@ -217,6 +228,7 @@ public class SqlServerDialectUtils {
 			// update 只针对非主键字段进行修改
 			boolean isStart = true;
 			int meter = 0;
+			String defaultValue;
 			for (int i = 0; i < rejectIdColumnSize; i++) {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getRejectIdFieldArray()[i]);
 				// sqlserver不支持timestamp类型的数据进行插入赋值和变更
@@ -243,13 +255,14 @@ public class SqlServerDialectUtils {
 					}
 					insertRejIdCols.append(columnName);
 					isStart = false;
-
+					// 将创建人、创建时间等模拟成默认值
+					defaultValue = DialectExtUtils.getInsertDefaultValue(createUnifyFields, dbType, fieldMeta);
 					// 存在默认值
-					if (null != fieldMeta.getDefaultValue()) {
+					if (null != defaultValue) {
 						insertRejIdColValues.append(isNullFunction);
 						insertRejIdColValues.append("(tv.").append(columnName).append(",");
 						DialectExtUtils.processDefaultValue(insertRejIdColValues, dbType, fieldMeta.getType(),
-								fieldMeta.getDefaultValue());
+								defaultValue);
 						insertRejIdColValues.append(")");
 					} else {
 						insertRejIdColValues.append("tv.").append(columnName);
@@ -936,7 +949,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues);
+							mappedFields, mainFieldValues, null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}

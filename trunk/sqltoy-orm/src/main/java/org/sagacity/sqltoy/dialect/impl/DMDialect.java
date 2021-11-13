@@ -333,8 +333,9 @@ public class DMDialect implements Dialect {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = entityMeta.getFieldsMeta().get(entityMeta.getIdArray()[0]).getDefaultValue();
 						}
-						return DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, forceUpdateFields,
-								"dual", NVL_FUNCTION, sequence, DMDialectUtils.isAssignPKValue(pkStrategy), null);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, "dual", NVL_FUNCTION, sequence,
+								DMDialectUtils.isAssignPKValue(pkStrategy), null);
 					}
 				}, forceCascadeClass, subTableForceUpdateProps, conn, dbType, tableName);
 	}

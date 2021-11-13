@@ -192,7 +192,7 @@ public class DB2Dialect implements Dialect {
 	 * java.lang.String)
 	 */
 	@Override
-	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
+	public Long update(final SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			final boolean cascade, final Class[] emptyCascadeClasses,
 			final HashMap<Class, String[]> subTableForceUpdateProps, Connection conn, final Integer dbType,
 			final String dialect, final String tableName) throws Exception {
@@ -200,7 +200,7 @@ public class DB2Dialect implements Dialect {
 				(cascade == false) ? null : new GenerateSqlHandler() {
 					@Override
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
-						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
+						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType, entityMeta, entityMeta.getIdStrategy(),
 								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
 								null);
@@ -351,7 +351,7 @@ public class DB2Dialect implements Dialect {
 	 * java.lang.String)
 	 */
 	@Override
-	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
+	public Long saveOrUpdateAll(final SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateFields, Connection conn,
 			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
 			throws Exception {
@@ -362,8 +362,8 @@ public class DB2Dialect implements Dialect {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateFields) {
 						// db2 为什么不跟oracle用同样的merge方法,因为db2 merge into 必须要增加cast(? as type) fieldName
 						// 将输入的数据进行类型转换
-						return DB2DialectUtils.getSaveOrUpdateSql(dbType, entityMeta, entityMeta.getIdStrategy(),
-								forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
+						return DB2DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, entityMeta.getIdStrategy(), forceUpdateFields, VIRTUAL_TABLE, NVL_FUNCTION,
 								"NEXTVAL FOR " + entityMeta.getSequence(), isAssignPKValue(entityMeta.getIdStrategy()),
 								tableName);
 					}

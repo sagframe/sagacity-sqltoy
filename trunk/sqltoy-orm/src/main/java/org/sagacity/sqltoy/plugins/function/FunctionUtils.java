@@ -113,6 +113,10 @@ public class FunctionUtils {
 				functionName = dialectSql.substring(matchedIndex, dialectSql.indexOf("(", matchedIndex));
 				endMarkIndex = StringUtil.getSymMarkIndex("(", ")", dialectSql, matchedIndex);
 				functionParams = dialectSql.substring(dialectSql.indexOf("(", matchedIndex) + 1, endMarkIndex);
+				// 参数中包含同样的函数，通过递归替换
+				if (StringUtil.matches(functionParams, function.regex())) {
+					functionParams = replaceFunction(functionParams, dbType, function);
+				}
 				args = StringUtil.splitExcludeSymMark(functionParams, ",", SqlToyConstants.filters);
 			} else {
 				args = null;
