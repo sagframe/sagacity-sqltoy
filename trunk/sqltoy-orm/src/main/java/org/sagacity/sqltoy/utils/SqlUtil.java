@@ -1589,11 +1589,11 @@ public class SqlUtil {
 						preChar = ' ';
 					}
 					tailChar = realSql.charAt(index + field.length());
-					// 非条件参数(58为冒号)
+					// 非条件参数(58为冒号),结尾符号不能是数字、字母和"(" 当作函数
 					if (((isBlank && preChar != 58) || (preChar > 58 && preChar < 65)
 							|| (preChar > 90 && preChar < 97 && preChar != 95) || preChar < 48 || preChar > 122)
 							&& ((tailChar > 58 && tailChar < 65) || (tailChar > 90 && tailChar < 97 && tailChar != 95)
-									|| tailChar < 48 || tailChar > 122)) {
+									|| (tailChar < 48 && tailChar != 40) || tailChar > 122)) {
 						// 含关键词处理
 						if (preSql.endsWith("[") || preSql.endsWith("`") || preSql.endsWith("\"")) {
 							sqlBuff.append(preSql).append(columnName);
