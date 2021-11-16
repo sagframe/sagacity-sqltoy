@@ -51,6 +51,7 @@ import org.sagacity.sqltoy.plugins.calculator.ReverseList;
 import org.sagacity.sqltoy.plugins.calculator.RowsChainRelative;
 import org.sagacity.sqltoy.plugins.calculator.UnpivotList;
 import org.sagacity.sqltoy.plugins.secure.DesensitizeProvider;
+import org.sagacity.sqltoy.translate.TranslateConfigParse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +99,7 @@ public class ResultUtils {
 			}
 			result.setRows(rowCallbackHandler.getResult());
 		} else {
-			// 解密字段整合(entityMeta中和sql中定义的)
+			// 重新组合解密字段(entityMeta中的和sql自定义的合并)
 			IgnoreCaseSet decryptColumns = (decryptHandler == null) ? null : decryptHandler.getColumns();
 			if (sqlToyConfig.getDecryptColumns() != null) {
 				if (decryptColumns == null) {
@@ -227,21 +228,24 @@ public class ResultUtils {
 			return getMoreLinkResultSet(sqlToyConfig, sqlToyContext, decryptHandler, conn, rs, rowCnt, labelIndexMap,
 					labelNames, startColIndex);
 		}
+
 		List<List> items = new ArrayList();
 		// 判断是否有缓存翻译器定义
 		Boolean hasTranslate = (sqlToyConfig.getTranslateMap().isEmpty()) ? false : true;
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
 			}
 		}
+
 		// link 目前只支持单个字段运算
 		int columnSize = labelNames.length;
 		int index = 0;
+
 		// 警告阀值
 		int warnThresholds = SqlToyConstants.getWarnThresholds();
 		boolean warnLimit = false;
@@ -472,7 +476,7 @@ public class ResultUtils {
 		HashMap<String, Translate> translateMap = sqlToyConfig.getTranslateMap();
 		HashMap<String, HashMap<String, Object[]>> translateCache = null;
 		if (hasTranslate) {
-			translateCache = sqlToyContext.getTranslateManager().getTranslates(conn, translateMap);
+			translateCache = sqlToyContext.getTranslateManager().getTranslates(translateMap);
 			if (translateCache == null || translateCache.isEmpty()) {
 				hasTranslate = false;
 				logger.debug("通过缓存配置未获取到缓存数据,请正确配置TranslateManager!");
@@ -1018,7 +1022,8 @@ public class ResultUtils {
 							sqlToyContext.getSqlToyConfig(pivotModel.getCategorySql(), SqlType.search, ""),
 							queryExecutor, dialect, false);
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(pivotSqlConfig.getSql(dialect),
-							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig),dialect);
+							extend.getParamsName(pivotSqlConfig), extend.getParamsValue(sqlToyContext, pivotSqlConfig),
+							dialect);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
 							pivotSqlToyResult.getSql(), pivotSqlToyResult.getParamsValue(), null, null, null, conn,
 							dbType, sqlToyConfig.isIgnoreEmpty(), null, SqlToyConstants.FETCH_SIZE, -1);
@@ -1031,8 +1036,7 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-	 * 
+	 * @todo 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
 	 * @param desensitizeProvider
 	 * @param sqlToyConfig
 	 * @param dataSetResult
@@ -1201,8 +1205,12 @@ public class ResultUtils {
 			columnFieldMap = sqlToyContext.getEntityMeta(resultType).getColumnFieldMap();
 		}
 		// 封装成VO对象形式
-		return BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
+		List result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
 				convertRealProps(labelNames, columnFieldMap), resultType);
+		// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
+		wrapResultTranslate(sqlToyContext, result, resultType);
+		return result;
+
 	}
 
 	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
@@ -1278,5 +1286,56 @@ public class ResultUtils {
 			}
 		}
 		return strSet;
+	}
+
+	/**
+	 * @TODO 对返回POJO(或DTO)含@Translate 配置的结果进行缓存翻译处理，通过key属性的值翻译成名称反射到当前名称属性上
+	 * @param sqlToyContext
+	 * @param result
+	 * @param resultType
+	 */
+	public static void wrapResultTranslate(SqlToyContext sqlToyContext, Object result, Class resultType) {
+		HashMap<String, Translate> translateConfig = TranslateConfigParse.getClassTranslates(resultType);
+		if (result == null || translateConfig == null || translateConfig.isEmpty()) {
+			return;
+		}
+		// 获取缓存数据
+		HashMap<String, HashMap<String, Object[]>> cacheDatas = sqlToyContext.getTranslateManager()
+				.getTranslates(translateConfig);
+		List voList;
+		if (result instanceof List) {
+			voList = (List) result;
+		} else {
+			voList = new ArrayList();
+			voList.add(result);
+		}
+		if (voList.isEmpty()) {
+			return;
+		}
+		Object item;
+		String field = null;
+		TranslateExtend trans;
+		Object srcFieldValue;
+		Object fieldValue;
+		HashMap<String, Object[]> cacheData;
+		try {
+			for (int i = 0; i < voList.size(); i++) {
+				item = voList.get(i);
+				for (Map.Entry<String, Translate> entry : translateConfig.entrySet()) {
+					field = entry.getKey();
+					trans = entry.getValue().getExtend();
+					// column是field小写后的值
+					cacheData = cacheDatas.get(trans.column);
+					srcFieldValue = BeanUtil.getProperty(item, trans.keyColumn);
+					fieldValue = BeanUtil.getProperty(item, field);
+					if (srcFieldValue != null && !srcFieldValue.toString().equals("") && fieldValue == null) {
+						BeanUtil.setProperty(item, field, translateKey(trans, cacheData, srcFieldValue));
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("针对类:{} 的属性:{} 进行缓存翻译发生异常!{}", resultType.getName(), field, e.getMessage());
+		}
 	}
 }

@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.translate.cache;
 
 import java.util.HashMap;
 
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 
 /**
@@ -11,7 +12,7 @@ import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
  * @version v1.0,Date:2013-4-14
  */
 public abstract class TranslateCacheManager {
-	protected HashMap<String, TranslateConfigModel> translateMap = new HashMap<String, TranslateConfigModel>();
+	protected IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap = new IgnoreKeyCaseMap<String, TranslateConfigModel>();
 
 	/**
 	 * 缓存管理器名称
@@ -67,7 +68,7 @@ public abstract class TranslateCacheManager {
 	 */
 	public abstract void destroy();
 
-	public void setTranslateMap(HashMap<String, TranslateConfigModel> translateMap) {
+	public void setTranslateMap(IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap) {
 		this.translateMap = translateMap;
 	}
 

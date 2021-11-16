@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sagacity.sqltoy.model.SqlExecuteLog;
-import org.sagacity.sqltoy.model.SqlExecuteTrace;
+import org.sagacity.sqltoy.config.model.SqlExecuteLog;
+import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;

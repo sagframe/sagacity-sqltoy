@@ -1,18 +1,24 @@
 package org.sagacity.sqltoy.translate;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.XMLCallbackHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
 import org.sagacity.sqltoy.translate.model.DefaultConfig;
 import org.sagacity.sqltoy.translate.model.TimeSection;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -42,16 +48,21 @@ public class TranslateConfigParse {
 	private final static String[] TRANSLATE_CHECKER_TYPES = new String[] { "sql-increment", "sql", "service-increment",
 			"service", "rest", "rest-increment" };
 
+	// 存放类包含缓存翻译注解配置
+	private final static HashMap<String, HashMap<String, Translate>> classTranslateConfigMap = new HashMap<String, HashMap<String, Translate>>();
+
 	/**
 	 * @todo 解析translate配置文件
-	 * @param translateMap
-	 * @param checker
-	 * @param translateConfig
+	 * @param sqlToyContext
+	 * @param translateMap    最终缓存配置，构建一个空map，在解析过程中填充
+	 * @param checker         更新检测配置
+	 * @param translateConfig 缓存配置文件
 	 * @param charset
+	 * @return
 	 * @throws Exception
 	 */
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
-			final HashMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
+			final IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
 			String translateConfig, String charset) throws Exception {
 		// 判断缓存翻译的配置文件是否存在
 		if (FileUtil.getFileInputStream(translateConfig) == null) {
@@ -116,7 +127,9 @@ public class TranslateConfigParse {
 								translateCacheModel.setKeepAlive(-1);
 							}
 							translateMap.put(translateCacheModel.getCache(), translateCacheModel);
-							logger.debug("已经加载缓存翻译:cache={},type={}", translateCacheModel.getCache(), translateType);
+							logger.debug("已经加载缓存翻译:cache={},type={}",
+									(translateCacheModel.getCache() == null) ? "[非增量]" : translateCacheModel.getCache(),
+									translateType);
 						}
 					}
 				}
@@ -222,15 +235,14 @@ public class TranslateConfigParse {
 							}
 							checherConfigModel.setTimeSections(timeSections);
 							checker.add(checherConfigModel);
-							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}",
-									(checherConfigModel.getCache() == null) ? "[非增量]" : checherConfigModel.getCache(),
-									translateType);
+							logger.debug("已经加载针对缓存:{} 更新的检测器,type={}", checherConfigModel.getCache(), translateType);
 						}
 					}
 				}
 				return defaultConfig;
 			}
 		});
+
 	}
 
 	/**
@@ -246,5 +258,55 @@ public class TranslateConfigParse {
 		String tmp = hourMinuteStr.replaceAll("\\.", ":");
 		String[] hourMin = tmp.split("\\:");
 		return Integer.parseInt(hourMin[0]) * 100 + ((hourMin.length > 1) ? Integer.parseInt(hourMin[1]) : 0);
+	}
+
+	/**
+	 * @TODO 获取DTO或POJO中的@translate注解
+	 * @param classType
+	 * @return
+	 */
+	public static HashMap<String, Translate> getClassTranslates(Class classType) {
+		if (classType == null || classType.equals(Map.class) || classType.equals(HashMap.class)
+				|| classType.equals(List.class) || classType.equals(ArrayList.class) || classType.equals(Array.class)
+				|| BeanUtil.isBaseDataType(classType)) {
+			return null;
+		}
+		String className = classType.getName();
+		// 利用Map对类中的缓存翻译配置进行缓存，规避每次都解析
+		if (classTranslateConfigMap.containsKey(className)) {
+			return classTranslateConfigMap.get(className);
+		}
+		HashMap<String, Translate> translateConfig = new HashMap<String, Translate>();
+		Field[] fields = classType.getDeclaredFields();
+		org.sagacity.sqltoy.config.annotation.Translate translate;
+		for (Field field : fields) {
+			translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
+			if (translate != null) {
+				Translate trans = new Translate(translate.cacheName());
+				trans.setIndex(translate.cacheIndex());
+				if (StringUtil.isNotBlank(translate.cacheType())) {
+					trans.setCacheType(translate.cacheType());
+				}
+				trans.setKeyColumn(translate.keyField());
+				trans.setColumn(field.getName());
+				trans.setAlias(field.getName());
+				if (StringUtil.isNotBlank(translate.split())) {
+					trans.setSplitRegex(translate.split());
+				}
+				// 默认是,逗号
+				if (StringUtil.isNotBlank(translate.join())) {
+					trans.setLinkSign(translate.join());
+				}
+				if (translate.uncached() != null && !translate.uncached().equals("")) {
+					trans.setUncached(translate.uncached().trim());
+				}
+				translateConfig.put(field.getName(), trans);
+			}
+		}
+		if (!translateConfig.isEmpty()) {
+			classTranslateConfigMap.put(className, translateConfig);
+			return translateConfig;
+		}
+		return null;
 	}
 }
