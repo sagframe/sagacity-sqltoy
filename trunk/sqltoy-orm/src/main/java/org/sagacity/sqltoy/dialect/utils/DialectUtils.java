@@ -365,7 +365,6 @@ public class DialectUtils {
 					}
 				}
 			}
-
 			int groupIndex = StringUtil.matchLastIndex(query_tmp, GROUP_BY_PATTERN);
 			// 判断group by 是否是内层，如select * from (select * from table group by)
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
@@ -986,11 +985,15 @@ public class DialectUtils {
 				sqlToyResult.getParamsValue(), null, decryptHandler, conn, dbType, 0, -1, -1);
 		List rows = queryResult.getRows();
 		Serializable result = null;
+		Class entityClass;
 		if (rows != null && rows.size() > 0) {
+			entityClass = BeanUtil.getEntityClass(entity.getClass());
 			rows = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), rows,
 					ResultUtils.humpFieldNames(queryResult.getLabelNames(), entityMeta.getColumnFieldMap()),
-					BeanUtil.getEntityClass(entity.getClass()));
+					entityClass);
 			result = (Serializable) rows.get(0);
+			// 处理类中的@Translate注解，进行缓存翻译
+			ResultUtils.wrapResultTranslate(sqlToyContext, result, entityClass);
 		}
 		if (result == null) {
 			return null;
@@ -1020,6 +1023,8 @@ public class DialectUtils {
 					pkRefDetails = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
 							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, -1);
+					// 处理子类中@Translate注解，进行缓存翻译
+					ResultUtils.wrapResultTranslate(sqlToyContext, pkRefDetails, cascadeModel.getMappedType());
 					if (null != pkRefDetails && !pkRefDetails.isEmpty()) {
 						// oneToMany
 						if (cascadeModel.getCascadeType() == 1) {
@@ -1109,6 +1114,8 @@ public class DialectUtils {
 		List<?> entitySet = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 				sqlToyResult.getParamsValue(), entityClass, null, decryptHandler, conn, dbType, false,
 				entityMeta.getColumnFieldMap(), fetchSize, maxRows);
+		// 处理类中的@Translate注解，进行缓存翻译
+		ResultUtils.wrapResultTranslate(sqlToyContext, entitySet, entityClass);
 		if (entitySet == null || entitySet.isEmpty()) {
 			return entitySet;
 		}
@@ -1175,7 +1182,6 @@ public class DialectUtils {
 							subTableSql.append(") ");
 						}
 					}
-
 					// 自定义扩展条件
 					if (hasExtCondtion) {
 						subTableSql.append(" and ").append(cascadeModel.getLoadExtCondition());
@@ -1212,6 +1218,8 @@ public class DialectUtils {
 					items = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(), subToyResult.getSql(),
 							subToyResult.getParamsValue(), cascadeModel.getMappedType(), null, subDecryptHandler, conn,
 							dbType, false, mappedMeta.getColumnFieldMap(), SqlToyConstants.FETCH_SIZE, maxRows);
+					// 处理子类中的@Translate注解，进行缓存翻译
+					ResultUtils.wrapResultTranslate(sqlToyContext, items, cascadeModel.getMappedType());
 					SqlExecuteStat.debug("子表加载结果", "子记录数:{} 条", items.size());
 					// 将item的值分配映射到main主表对象上
 					BeanUtil.loadAllMapping(entitySet, items, cascadeModel);
