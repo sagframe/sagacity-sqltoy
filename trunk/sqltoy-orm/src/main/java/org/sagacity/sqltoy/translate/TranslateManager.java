@@ -3,6 +3,8 @@ package org.sagacity.sqltoy.translate;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +13,7 @@ import org.sagacity.sqltoy.SqlExecuteStat;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.SqlExecuteTrace;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.translate.cache.TranslateCacheManager;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
@@ -46,9 +49,9 @@ public class TranslateManager {
 	private String charset = "UTF-8";
 
 	/**
-	 * 翻译配置解析后的模型
+	 * 翻译配置解析后的模型(update 2021-11-15 HashMap转为IgnoreKeyCaseMap)
 	 */
-	private HashMap<String, TranslateConfigModel> translateMap = new HashMap<String, TranslateConfigModel>();
+	private IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap = new IgnoreKeyCaseMap<String, TranslateConfigModel>();
 
 	/**
 	 * 更新检测器
@@ -116,7 +119,6 @@ public class TranslateManager {
 				// 设置装入具体缓存配置
 				translateCacheManager.setTranslateMap(translateMap);
 				boolean initSuccess = translateCacheManager.init();
-
 				// 每隔1秒执行一次检查(检查各个任务时间间隔是否到达设定的区间,并不意味着一秒执行数据库或调用接口) 正常情况下,
 				// 这种检查都是高效率的空转不影响性能
 				if (initSuccess && !updateCheckers.isEmpty()) {
@@ -138,12 +140,10 @@ public class TranslateManager {
 
 	/**
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存(多个translate对应的多个缓存结果)
-	 * @param conn
 	 * @param translates
 	 * @return
 	 */
-	public HashMap<String, HashMap<String, Object[]>> getTranslates(Connection conn,
-			HashMap<String, Translate> translates) {
+	public HashMap<String, HashMap<String, Object[]>> getTranslates(HashMap<String, Translate> translates) {
 		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
 		SqlExecuteTrace sqlTrace = SqlExecuteStat.get();
 		HashMap<String, HashMap<String, Object[]>> result = new HashMap<String, HashMap<String, Object[]>>();
@@ -233,7 +233,7 @@ public class TranslateManager {
 				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
 				return;
 			}
-			translateCacheManager.put(cacheModel, cacheName, cacheType, cacheValue);
+			translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, cacheValue);
 		}
 	}
 
@@ -244,7 +244,10 @@ public class TranslateManager {
 	 */
 	public void clear(String cacheName, String cacheType) {
 		if (translateCacheManager != null) {
-			translateCacheManager.clear(cacheName, cacheType);
+			TranslateConfigModel cacheModel = translateMap.get(cacheName);
+			if (cacheModel != null) {
+				translateCacheManager.clear(cacheModel.getCache(), cacheType);
+			}
 		}
 	}
 
@@ -254,11 +257,7 @@ public class TranslateManager {
 	 * @return
 	 */
 	public boolean existCache(String cacheName) {
-		TranslateConfigModel cacheModel = translateMap.get(cacheName);
-		if (cacheModel != null) {
-			return true;
-		}
-		return false;
+		return translateMap.containsKey(cacheName);
 	}
 
 	/**
@@ -266,7 +265,14 @@ public class TranslateManager {
 	 * @return
 	 */
 	public Set<String> getCacheNames() {
-		return translateMap.keySet();
+		Set<String> cacheNames = new HashSet<String>();
+		if (!translateMap.isEmpty()) {
+			Iterator<TranslateConfigModel> iter = translateMap.values().iterator();
+			while (iter.hasNext()) {
+				cacheNames.add(iter.next().getCache());
+			}
+		}
+		return cacheNames;
 	}
 
 	/**
