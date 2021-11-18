@@ -139,19 +139,6 @@ public class TranslateManager {
 	}
 
 	/**
-	 * 为保持兼容性(报表平台,connection参数已经无需传递)
-	 * 
-	 * @param conn
-	 * @param translates
-	 * @return
-	 */
-	@Deprecated
-	public HashMap<String, HashMap<String, Object[]>> getTranslates(Connection conn,
-			HashMap<String, Translate> translates) {
-		return getTranslates(translates);
-	}
-
-	/**
 	 * @todo 根据sqltoy sql.xml中的翻译设置获取对应的缓存(多个translate对应的多个缓存结果)
 	 * @param translates
 	 * @return
