@@ -280,7 +280,7 @@ public class TranslateConfigParse {
 		org.sagacity.sqltoy.config.annotation.Translate translate;
 		Class classVar = classType;
 		Field[] fields;
-		while (!classVar.equals(Object.class)) {
+		while (classVar != null && !classVar.equals(Object.class)) {
 			fields = classVar.getDeclaredFields();
 			for (Field field : fields) {
 				translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
