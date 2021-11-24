@@ -1,6 +1,5 @@
 package org.sagacity.sqltoy.translate;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

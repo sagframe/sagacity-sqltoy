@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -228,35 +229,29 @@ public class EntityManager {
 		EntityMeta entityMeta = null;
 		try {
 			Class realEntityClass = entityClass;
-			boolean hasAbstractVO = false;
-			boolean isEntity = true;
-			// 通过逐层递归来判断是否SqlToy annotation注解所规定的关联数据库的实体类
-			// 即@Entity 注解的抽象类
-			while (!realEntityClass.isAnnotationPresent(Entity.class)) {
-				if (realEntityClass.getSuperclass() == null) {
-					isEntity = false;
+			Entity entity = null;
+			while (realEntityClass != null && !realEntityClass.equals(Object.class)) {
+				entity = (Entity) realEntityClass.getAnnotation(Entity.class);
+				if (entity != null) {
 					break;
-				} else {
-					realEntityClass = realEntityClass.getSuperclass();
-					hasAbstractVO = true;
 				}
+				realEntityClass = realEntityClass.getSuperclass();
 			}
 			// 是实体类则开始解析类上的其它注解配置
-			if (isEntity) {
+			if (entity != null) {
 				entityMeta = new EntityMeta();
 				entityMeta.setEntityClass(realEntityClass);
-				Entity entity = (Entity) realEntityClass.getAnnotation(Entity.class);
 				// 表名
 				entityMeta.setTableName(entity.tableName());
 				if (StringUtil.isNotBlank(entity.schema())) {
 					entityMeta.setSchema(entity.schema());
 				}
-				// 主键约束(for postgresql)
+				// 主键约束(已经废弃)
 				if (StringUtil.isNotBlank(entity.pk_constraint())) {
 					entityMeta.setPkConstraint(entity.pk_constraint());
 				}
 				// 解析Entity包含的字段信息
-				Field[] allFields = parseFields(entityClass, realEntityClass, hasAbstractVO);
+				Field[] allFields = parseAllFields(entityClass);
 
 				// 排除主键的字段信息
 				List<String> rejectIdFieldList = new ArrayList<String>();
@@ -323,13 +318,6 @@ public class EntityManager {
 				for (Field field : allFields) {
 					parseCascade(sqlToyContext, entityMeta, entity, field, idList);
 				}
-				// 检测VO上自定义的级联注解
-				if (hasAbstractVO) {
-					for (Field field : entityClass.getDeclaredFields()) {
-						// oneToMany和oneToOne解析
-						parseCascade(sqlToyContext, entityMeta, entity, field, idList);
-					}
-				}
 				// 设置级联关联对象类型
 				if (!entityMeta.getCascadeModels().isEmpty()) {
 					Class[] cascadeTypes = new Class[entityMeta.getCascadeModels().size()];
@@ -359,13 +347,22 @@ public class EntityManager {
 	 * @param entityClass
 	 */
 	private void parseSharding(EntityMeta entityMeta, Class entityClass) {
+		Class classType = entityClass;
+		Sharding sharding = null;
+		// 增加递归对父类检测
+		while (classType != null && !classType.equals(Object.class)) {
+			sharding = (Sharding) classType.getAnnotation(Sharding.class);
+			if (sharding != null) {
+				break;
+			}
+			classType = classType.getSuperclass();
+		}
 		// 不存在分库策略
-		if (!entityClass.isAnnotationPresent(Sharding.class)) {
+		if (sharding == null) {
 			return;
 		}
 		// 分库策略
 		ShardingConfig shardingConfig = new ShardingConfig();
-		Sharding sharding = (Sharding) entityClass.getAnnotation(Sharding.class);
 		// 最大并行数量
 		shardingConfig.setMaxConcurrents(sharding.maxConcurrents());
 		// 最大执行时长(秒)
@@ -419,11 +416,20 @@ public class EntityManager {
 	 * @param entityClass
 	 */
 	private void parseSecureConfig(EntityMeta entityMeta, Class entityClass) {
+		Class classType = entityClass;
+		SecureConfig secureConfig = null;
+		// 增加递归对父类检测
+		while (classType != null && !classType.equals(Object.class)) {
+			secureConfig = (SecureConfig) classType.getAnnotation(SecureConfig.class);
+			if (secureConfig != null) {
+				break;
+			}
+			classType = classType.getSuperclass();
+		}
 		// 不存在加解密配置
-		if (!entityClass.isAnnotationPresent(SecureConfig.class)) {
+		if (secureConfig == null) {
 			return;
 		}
-		SecureConfig secureConfig = (SecureConfig) entityClass.getAnnotation(SecureConfig.class);
 		Secure[] secures = secureConfig.secures();
 		if (secures != null && secures.length > 0) {
 			IgnoreCaseSet secureColumns = new IgnoreCaseSet();
@@ -469,36 +475,29 @@ public class EntityManager {
 	}
 
 	/**
-	 * @todo 解析获取entity对象的属性
+	 * @TODO 解析获取entity对象的全部字段属性
 	 * @param entityClass
-	 * @param realEntityClass
-	 * @param hasAbstractVO
 	 * @return
 	 */
-	private Field[] parseFields(Class entityClass, Class realEntityClass, boolean hasAbstractVO) {
-		HashMap<String, String> fieldNameMap = new HashMap<String, String>();
+	private Field[] parseAllFields(Class entityClass) {
+		Set<String> fieldSet = new HashSet<String>();
 		List<Field> allFields = new ArrayList<Field>();
-		// 提取用户在vo上面自定义的属性,如子表级联保存等
-		Field[] voCustFields = entityClass.getDeclaredFields();
-		// 自定义VO属性优先处理
-		for (Field field : voCustFields) {
-			if ((field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null)
-					&& !fieldNameMap.containsKey(field.getName())) {
-				allFields.add(field);
-				fieldNameMap.put(field.getName(), "1");
-			}
-		}
-		// 存在抽象类(标准的sqltoy entity模式)
-		if (hasAbstractVO) {
-			// abstractVO中的属性
-			Field[] fields = realEntityClass.getDeclaredFields();
+		Class classType = entityClass;
+		Field[] fields;
+		String fieldName;
+		while (classType != null && !classType.equals(Object.class)) {
+			fields = classType.getDeclaredFields();
 			for (Field field : fields) {
-				if ((field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null)
-						&& !fieldNameMap.containsKey(field.getName())) {
+				fieldName = field.getName().toLowerCase();
+				if (!fieldSet.contains(fieldName)
+						&& (field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null
+								|| field.getAnnotation(OneToOne.class) != null)) {
 					allFields.add(field);
-					fieldNameMap.put(field.getName(), "1");
+					fieldSet.add(fieldName);
 				}
 			}
+			// 支持多级继承关系
+			classType = classType.getSuperclass();
 		}
 		return allFields.toArray(new Field[allFields.size()]);
 	}
