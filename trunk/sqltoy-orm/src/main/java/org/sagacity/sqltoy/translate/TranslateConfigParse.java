@@ -303,10 +303,7 @@ public class TranslateConfigParse {
 				translateConfig.put(field.getName(), trans);
 			}
 		}
-		if (!translateConfig.isEmpty()) {
-			classTranslateConfigMap.put(className, translateConfig);
-			return translateConfig;
-		}
-		return null;
+		classTranslateConfigMap.put(className, translateConfig);
+		return translateConfig;
 	}
 }
