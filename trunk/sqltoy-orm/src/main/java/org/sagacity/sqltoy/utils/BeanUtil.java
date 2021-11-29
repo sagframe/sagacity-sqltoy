@@ -1537,7 +1537,7 @@ public class BeanUtil {
 		boolean isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);
 		while (!isEntity) {
 			realEntityClass = realEntityClass.getSuperclass();
-			if (realEntityClass == null) {
+			if (realEntityClass == null || realEntityClass.equals(Object.class)) {
 				break;
 			}
 			isEntity = realEntityClass.isAnnotationPresent(SqlToyEntity.class);

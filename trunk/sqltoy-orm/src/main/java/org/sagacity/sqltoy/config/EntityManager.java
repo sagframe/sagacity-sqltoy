@@ -514,11 +514,9 @@ public class EntityManager {
 		Set<String> fieldSet = new HashSet<String>();
 		List<Field> allFields = new ArrayList<Field>();
 		Class classType = entityClass;
-		Field[] fields;
 		String fieldName;
 		while (classType != null && !classType.equals(Object.class)) {
-			fields = classType.getDeclaredFields();
-			for (Field field : fields) {
+			for (Field field : classType.getDeclaredFields()) {
 				fieldName = field.getName().toLowerCase();
 				if (!fieldSet.contains(fieldName)
 						&& (field.getAnnotation(Column.class) != null || field.getAnnotation(OneToMany.class) != null
