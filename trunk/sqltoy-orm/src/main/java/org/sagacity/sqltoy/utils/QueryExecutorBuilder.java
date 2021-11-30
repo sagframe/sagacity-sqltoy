@@ -364,6 +364,7 @@ public class QueryExecutorBuilder {
 		if (sqlToyConfig.isNamedParam() || (extend.paramsName != null && extend.paramsName.length > 0)) {
 			return false;
 		}
+
 		// ?参数个数
 		int argCount = StringUtil.matchCnt(SqlConfigParseUtils.clearDblQuestMark(sqlToyConfig.getSql()),
 				SqlConfigParseUtils.ARG_REGEX);

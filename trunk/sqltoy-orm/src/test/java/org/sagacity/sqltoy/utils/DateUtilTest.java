@@ -2,8 +2,11 @@ package org.sagacity.sqltoy.utils;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,5 +33,12 @@ public class DateUtilTest {
 		LocalTime date = DateUtil.asLocalTime(timestamp.timestampValue());
 
 		System.err.println(date);
+	}
+
+	@Test
+	public void testParseUsDate() throws ParseException {
+		String a = "March 8th,2004";
+		SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);// MMM dd hh:mm:ss Z yyyy
+		System.out.println(sdf.parse(a));
 	}
 }
