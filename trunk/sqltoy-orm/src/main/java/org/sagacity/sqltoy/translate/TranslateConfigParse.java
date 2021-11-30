@@ -279,10 +279,8 @@ public class TranslateConfigParse {
 		HashMap<String, Translate> translateConfig = new HashMap<String, Translate>();
 		org.sagacity.sqltoy.config.annotation.Translate translate;
 		Class classVar = classType;
-		Field[] fields;
 		while (classVar != null && !classVar.equals(Object.class)) {
-			fields = classVar.getDeclaredFields();
-			for (Field field : fields) {
+			for (Field field : classVar.getDeclaredFields()) {
 				translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
 				// 以子类注解为优先
 				if (translate != null && !translateConfig.containsKey(field.getName())) {
