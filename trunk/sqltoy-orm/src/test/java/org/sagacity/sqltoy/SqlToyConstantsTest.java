@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
+import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.utils.DateUtil;
 
@@ -41,5 +42,15 @@ public class SqlToyConstantsTest {
 		System.err.println(String.class.getTypeName());
 		System.err.println(int.class.getTypeName());
 		System.err.println(new Long("20211111102134").longValue());
+	}
+
+	@Test
+	public void testBeanInfo() {
+		Class classType = StaffInfoVO.class;
+		while (!classType.equals(Object.class)) {
+			System.err.println(classType.getName());
+			classType = classType.getSuperclass();
+		}
+
 	}
 }

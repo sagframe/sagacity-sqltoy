@@ -277,36 +277,38 @@ public class TranslateConfigParse {
 			return classTranslateConfigMap.get(className);
 		}
 		HashMap<String, Translate> translateConfig = new HashMap<String, Translate>();
-		Field[] fields = classType.getDeclaredFields();
 		org.sagacity.sqltoy.config.annotation.Translate translate;
-		for (Field field : fields) {
-			translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
-			if (translate != null) {
-				Translate trans = new Translate(translate.cacheName());
-				trans.setIndex(translate.cacheIndex());
-				if (StringUtil.isNotBlank(translate.cacheType())) {
-					trans.setCacheType(translate.cacheType());
+		Class classVar = classType;
+		while (classVar != null && !classVar.equals(Object.class)) {
+			for (Field field : classVar.getDeclaredFields()) {
+				translate = field.getAnnotation(org.sagacity.sqltoy.config.annotation.Translate.class);
+				// 以子类注解为优先
+				if (translate != null && !translateConfig.containsKey(field.getName())) {
+					Translate trans = new Translate(translate.cacheName());
+					trans.setIndex(translate.cacheIndex());
+					if (StringUtil.isNotBlank(translate.cacheType())) {
+						trans.setCacheType(translate.cacheType());
+					}
+					trans.setKeyColumn(translate.keyField());
+					trans.setColumn(field.getName());
+					trans.setAlias(field.getName());
+					if (StringUtil.isNotBlank(translate.split())) {
+						trans.setSplitRegex(translate.split());
+					}
+					// 默认是,逗号
+					if (StringUtil.isNotBlank(translate.join())) {
+						trans.setLinkSign(translate.join());
+					}
+					if (translate.uncached() != null && !translate.uncached().equals("")) {
+						trans.setUncached(translate.uncached().trim());
+					}
+					translateConfig.put(field.getName(), trans);
 				}
-				trans.setKeyColumn(translate.keyField());
-				trans.setColumn(field.getName());
-				trans.setAlias(field.getName());
-				if (StringUtil.isNotBlank(translate.split())) {
-					trans.setSplitRegex(translate.split());
-				}
-				// 默认是,逗号
-				if (StringUtil.isNotBlank(translate.join())) {
-					trans.setLinkSign(translate.join());
-				}
-				if (translate.uncached() != null && !translate.uncached().equals("")) {
-					trans.setUncached(translate.uncached().trim());
-				}
-				translateConfig.put(field.getName(), trans);
 			}
+			// 向父类递归
+			classVar = classVar.getSuperclass();
 		}
-		if (!translateConfig.isEmpty()) {
-			classTranslateConfigMap.put(className, translateConfig);
-			return translateConfig;
-		}
-		return null;
+		classTranslateConfigMap.put(className, translateConfig);
+		return translateConfig;
 	}
 }
