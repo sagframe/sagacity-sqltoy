@@ -20,6 +20,10 @@
 
 ## sharding分库分表演示
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-sharding
+
+## dynamic-datasource多数据源范例
+* https://gitee.com/sagacity/sqltoy-showcase/tree/master/trunk/sqltoy-dynamic-datasource
+
 ## nosql演示(mongo和elasticsearch)
 * https://github.com/sagframe/sqltoy-showcase/tree/master/trunk/sqltoy-nosql
 
