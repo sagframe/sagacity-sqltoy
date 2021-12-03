@@ -49,22 +49,22 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 ## 1.1 sqltoy-orm是什么
    sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
-   * oracle 11g+
-   * db2 9.5+,建议从10.5 开始
-   * mysql(mariadb/innosql) 支持5.6、5.7、8.0 版本
-   * postgresql(greenplum) 支持9.5 以及以上版本
-   * sqlserver 2012+
-   * sqlite
+   * Oracle 11g+
+   * DB2 9.5+,建议从10.5 开始
+   * MySQL(MariaDB/InnoSQL) 支持5.6、5.7、8.0 版本
+   * PostgreSQL(Greenplum) 支持9.5 以及以上版本
+   * SQL Server 2012+
+   * SQLite
    * DM达梦数据库
-   * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
-   * clickhouse 
-   * starRocks(原dorisdb)
-   * oceanBase
-   * guassdb
-   * tidb
-   * impala(kudu)
-   * kingbase
-   * mongodb (只支持查询)
+   * Elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
+   * ClickHouse 
+   * StarRocks(原DorisDB)
+   * OceanBase
+   * GuassDB
+   * Tidb
+   * Impala(kudu)
+   * KingBase
+   * Mongodb (只支持查询)
    * 其他数据库支持基于jdbc的sql执行(查询和自定义sql的执行)
 
 ## 1.2 jdk版本要求1.8+
