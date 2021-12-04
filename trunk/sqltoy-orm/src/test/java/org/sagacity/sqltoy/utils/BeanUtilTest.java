@@ -15,6 +15,8 @@ import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 
+import com.alibaba.fastjson.JSON;
+
 public class BeanUtilTest {
 
 	// 测试多级反射
@@ -156,6 +158,21 @@ public class BeanUtilTest {
 
 	@Test
 	public void testBaseType() {
-		//System.err.println(BeanUtil.isBaseDataType(new HashMap()));
+		// System.err.println(BeanUtil.isBaseDataType(new HashMap()));
+	}
+
+	@Test
+	public void testReflect() {
+		StaffInfoVO staff = new StaffInfoVO();
+		staff.setEmail("zhongxuchen@gmail.com");
+		staff.setStaffId("S001");
+		staff.setResType(1);
+		try {
+			System.err.println(
+					JSON.toJSONString(BeanUtil.reflectBeanToAry(staff, new String[] { "resType", "staffId" })));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
