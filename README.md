@@ -58,7 +58,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
    * DM达梦数据库
    * elasticsearch 只支持查询,版本支持5.7+版本，建议使用7.3以上版本 
    * clickhouse 
-   * starRocks(原dorisdb)
+   * StarRocks(原dorisdb)
    * oceanBase
    * guassdb
    * tidb
