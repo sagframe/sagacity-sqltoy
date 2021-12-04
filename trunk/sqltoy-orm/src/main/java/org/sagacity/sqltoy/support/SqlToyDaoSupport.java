@@ -1657,6 +1657,8 @@ public class SqlToyDaoSupport {
 			}
 			paramNames = SqlConfigParseUtils.getSqlParamsName(where, false);
 			values = BeanUtil.reflectBeanToAry(values[0], paramNames);
+			//重新设置条件参数值数组的长度
+			valueSize=values.length;
 		} else {
 			if (DialectUtils.getParamsCount(where) != valueSize) {
 				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
