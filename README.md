@@ -219,8 +219,7 @@ where #[t.ORGAN_ID in (:authedOrganIds)]
 ```
 * java调用过程
 ```java
-sqlToyLazyDao.findBySql(sql, new String[] { "authedOrganIds","beginDate", "endDate"},
-				new Object[] { authedOrganIdAry,beginDate,null}, DeviceOrderInfoVO.class);
+sqlToyLazyDao.findBySql(sql, MapKit.keys("authedOrganIds","beginDate", "endDate").values(authedOrganIdAry,beginDate,null), DeviceOrderInfoVO.class);
 ```
 * 最终执行的sql是这样的:
 ```xml
