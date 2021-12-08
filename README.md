@@ -47,7 +47,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
-   sqltoy-orm是比hibernate+myBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
+   sqltoy-orm是比JPA+MyBatis更加贴合项目的orm框架(依赖spring)，具有jpa式的对象CRUD的同时具有比myBatis(plus)更直观简洁性能强大的查询功能。
    支持以下数据库:
    * oracle 11g+
    * db2 9.5+,建议从10.5 开始
