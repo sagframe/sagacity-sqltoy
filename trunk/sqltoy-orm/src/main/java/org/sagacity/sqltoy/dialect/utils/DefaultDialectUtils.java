@@ -98,7 +98,7 @@ public class DefaultDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -146,7 +146,7 @@ public class DefaultDialectUtils {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize,dialect);
+				sql.toString(), Long.valueOf(pageSize), (pageNo - 1) * pageSize, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -190,7 +190,7 @@ public class DefaultDialectUtils {
 		}
 
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -329,6 +329,7 @@ public class DefaultDialectUtils {
 			}
 		}
 		final Object[] fieldValues = tempFieldValues;
+		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
 		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
 		SqlExecuteStat.showSql("执行锁记录查询", sql, whereParamValues);
@@ -349,11 +350,14 @@ public class DefaultDialectUtils {
 							if (index > 0) {
 								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
 							}
-							SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
-							// 执行update反调，实现锁定行记录值的修改
-							updateRowHandler.updateRow(rs, index);
-							// 执行update
-							rs.updateRow();
+							// 存在修改记录
+							if (hasUpdateRow) {
+								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
+								// 执行update反调，实现锁定行记录值的修改
+								updateRowHandler.updateRow(rs, index);
+								// 执行update
+								rs.updateRow();
+							}
 							index++;
 							// 重新获得修改后的值
 							result.add(ResultUtils.processResultRow(rs, 0, rowCnt, false));
