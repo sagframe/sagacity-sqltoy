@@ -1925,7 +1925,10 @@ public class DialectFactory {
 		if (fieldsSecureProvider == null) {
 			return null;
 		}
-		EntityMeta entityMeta = sqlToyContext.getEntityMeta((Class) resultType);
+		EntityMeta entityMeta = null;
+		if (sqlToyContext.isEntity((Class) resultType)) {
+			entityMeta = sqlToyContext.getEntityMeta((Class) resultType);
+		}
 		if (entityMeta == null || entityMeta.getSecureColumns() == null) {
 			return null;
 		}

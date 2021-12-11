@@ -323,6 +323,7 @@ public class DefaultDialectUtils {
 			}
 		}
 		final Object[] fieldValues = tempFieldValues;
+		final boolean hasUpdateRow = (updateRowHandler == null) ? false : true;
 		// 组织select * from table for update 语句
 		String sql = wrapFetchSql(entityMeta, dbType, whereFields, tableName);
 		SqlExecuteStat.showSql("执行锁记录查询", sql, whereParamValues);
@@ -343,11 +344,14 @@ public class DefaultDialectUtils {
 							if (index > 0) {
 								throw new DataAccessException("updateSaveFetch操作只能针对单条记录进行操作,请检查uniqueProps参数设置!");
 							}
-							SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
-							// 执行update反调，实现锁定行记录值的修改
-							updateRowHandler.updateRow(rs, index);
-							// 执行update
-							rs.updateRow();
+							//存在修改反调函数
+							if (hasUpdateRow) {
+								SqlExecuteStat.debug("执行updateRow", "记录存在调用updateRowHandler.updateRow!");
+								// 执行update反调，实现锁定行记录值的修改
+								updateRowHandler.updateRow(rs, index);
+								// 执行update
+								rs.updateRow();
+							}
 							index++;
 							// 重新获得修改后的值
 							result.add(ResultUtils.processResultRow(rs, 0, rowCnt, false));

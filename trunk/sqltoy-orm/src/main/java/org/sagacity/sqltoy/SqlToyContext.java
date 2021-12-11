@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.config.EntityManager;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlScriptLoader;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.EntityMeta;
@@ -428,8 +429,14 @@ public class SqlToyContext implements ApplicationContextAware {
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
 		String sqlKey = queryExecutor.getInnerModel().sql;
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
-		if (SqlType.search.equals(sqlType) && queryExecutor.getInnerModel().resultType != null) {
-			sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
+		if (SqlType.search.equals(sqlType)) {
+			if (queryExecutor.getInnerModel().resultType != null) {
+				sqlKey = SqlUtil.completionSql(this, (Class) queryExecutor.getInnerModel().resultType, sqlKey);
+			} // update 2021-12-7 sql 类似 from table where xxxx 形式，补全select *
+			else if (!SqlConfigParseUtils.isNamedQuery(sqlKey)
+					&& StringUtil.matches(sqlKey.toLowerCase().trim(), "^from\\W")) {
+				sqlKey = "select * ".concat(sqlKey);
+			}
 		}
 		SqlToyConfig result = scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
 		// 剔除空白转null的默认设置

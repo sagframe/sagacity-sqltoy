@@ -1652,6 +1652,10 @@ public class SqlUtil {
 		}
 		// 非entity实体类型
 		if (!sqlToyContext.isEntity(entityClass)) {
+			// from 开头补齐select *
+			if (StringUtil.matches(sqlLow, "^from\\W")) {
+				return "select * ".concat(sql);
+			}
 			return sql;
 		}
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
