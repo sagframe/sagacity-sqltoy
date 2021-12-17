@@ -408,11 +408,17 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * @return
 	 */
 	public SqlToyConfig getSqlToyConfig(String sqlKey, SqlType sqlType, String dialect) {
+		if (StringUtil.isBlank(sqlKey)) {
+			throw new IllegalArgumentException("sql or sqlId is null!");
+		}
 		return scriptLoader.getSqlConfig(sqlKey, sqlType, dialect);
 	}
 
 	public SqlToyConfig getSqlToyConfig(QueryExecutor queryExecutor, SqlType sqlType, String dialect) {
 		String sqlKey = queryExecutor.getInnerModel().sql;
+		if (StringUtil.isBlank(sqlKey)) {
+			throw new IllegalArgumentException("sql or sqlId is null!");
+		}
 		// 查询语句补全select * from table,避免一些sql直接从from 开始
 		if (SqlType.search.equals(sqlType)) {
 			if (queryExecutor.getInnerModel().resultType != null) {

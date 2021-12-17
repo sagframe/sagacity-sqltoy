@@ -695,7 +695,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static List reflectBeansToList(List datas, String[] props) throws Exception {
+	public static List reflectBeansToList(List datas, String[] props) throws RuntimeException {
 		return reflectBeansToList(datas, props, null);
 	}
 
@@ -706,7 +706,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object[] sliceToArray(List datas, String props) throws Exception {
+	public static Object[] sliceToArray(List datas, String props) throws RuntimeException {
 		List sliceList = reflectBeansToList(datas, new String[] { props }, null);
 		if (sliceList == null || sliceList.isEmpty()) {
 			return null;
@@ -736,7 +736,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
-			throws Exception {
+			throws RuntimeException {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
@@ -860,7 +860,7 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException("反射Java Bean获取数据组装List集合异常!" + e.getMessage());
 		}
 		return resultList;
 	}
@@ -1078,10 +1078,10 @@ public class BeanUtil {
 	 * @param properties
 	 * @param voClass
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
-			Class voClass) throws Exception {
+			Class voClass) throws RuntimeException {
 		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
@@ -1290,15 +1290,15 @@ public class BeanUtil {
 	 * @param values
 	 * @param index
 	 * @param autoConvertType
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType) throws Exception {
+			boolean autoConvertType) throws RuntimeException {
 		mappingSetProperties(voList, properties, values, index, autoConvertType, true);
 	}
 
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType, boolean forceUpdate) throws Exception {
+			boolean autoConvertType, boolean forceUpdate) throws RuntimeException {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1356,7 +1356,7 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException("将集合数据反射到Java Bean过程异常!" + e.getMessage());
 		}
 	}
 

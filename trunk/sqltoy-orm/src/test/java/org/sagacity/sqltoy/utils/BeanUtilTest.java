@@ -175,4 +175,26 @@ public class BeanUtilTest {
 			e.printStackTrace();
 		}
 	}
+
+	@Test
+	public void testBeanWrapper() {
+		List<StaffInfoVO> staffInfos = new ArrayList<StaffInfoVO>();
+
+		StaffInfoVO staff = new StaffInfoVO();
+		staff.setEmail("zhongxuchen@gmail.com");
+		staff.setStaffId("S001");
+		staff.setResType(1);
+
+		StaffInfoVO staff1 = new StaffInfoVO();
+		staff1.setEmail("zhongxuchen@gmail.com");
+		staff1.setStaffId("S001");
+		staff1.setResType(1);
+
+		staffInfos.add(staff);
+		staffInfos.add(staff1);
+		BeanWrapper.create().names("staffName").values("陈").mappingSet(staffInfos);
+
+		System.err.println(JSON.toJSONString(staffInfos));
+
+	}
 }
