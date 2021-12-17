@@ -230,8 +230,9 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * @param conditions the conditions to set
 	 */
-	public void setConditions(String conditions) {
+	public TreeTableModel setConditions(String conditions) {
 		this.conditions = conditions;
+		return this;
 	}
 
 	/**
@@ -258,8 +259,9 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * @param idValue the idValue to set
 	 */
-	public void setIdValue(Object idValue) {
+	public TreeTableModel setIdValue(Object idValue) {
 		this.idValue = idValue;
+		return this;
 	}
 
 	/**
@@ -272,8 +274,9 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * @param appendZero the appendZero to set
 	 */
-	public void setAppendZero(boolean appendZero) {
+	public TreeTableModel setAppendZero(boolean appendZero) {
 		this.appendZero = appendZero;
+		return this;
 	}
 
 	/**
@@ -286,8 +289,9 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * @param splitSign the splitSign to set
 	 */
-	public void setSplitSign(String splitSign) {
+	public TreeTableModel setSplitSign(String splitSign) {
 		this.splitSign = splitSign;
+		return this;
 	}
 
 }
