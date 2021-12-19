@@ -44,7 +44,7 @@ public class BeanWrapper {
 	 * @return
 	 * @throws Exception
 	 */
-	public Object[] mappingAry(List dataSet) throws Exception {
+	public Object[] mappingAry(List dataSet) throws RuntimeException {
 		if (null == names || names.length != 1 || null == dataSet || dataSet.isEmpty()) {
 			return null;
 		}
@@ -72,7 +72,7 @@ public class BeanWrapper {
 	 * @return
 	 * @throws Exception
 	 */
-	public Collection mappingSet(Collection dataSet) throws Exception {
+	public Collection mappingSet(Collection dataSet) throws RuntimeException {
 		if (dataSet != null && !dataSet.isEmpty()) {
 			BeanUtil.batchSetProperties(dataSet, names, values, false);
 		}
@@ -85,7 +85,7 @@ public class BeanWrapper {
 	 * @return
 	 * @throws Exception
 	 */
-	public Collection wrap(Type type) throws Exception {
+	public Collection wrap(Type type) throws RuntimeException {
 		if (null == names || names.length != 1 || null == values || values.length < 1 || null == type) {
 			return null;
 		}
@@ -104,13 +104,17 @@ public class BeanWrapper {
 	 * @return
 	 * @throws Exception
 	 */
-	public Serializable mapping(Serializable serializable) throws Exception {
-		Serializable bean = (serializable instanceof Type)
-				? (Serializable) ((Class) serializable).getDeclaredConstructor().newInstance()
-				: serializable;
-		List voList = new ArrayList();
-		voList.add(bean);
-		BeanUtil.batchSetProperties(voList, names, values, false);
-		return bean;
+	public Serializable mapping(Serializable serializable) throws RuntimeException {
+		try {
+			Serializable bean = (serializable instanceof Type)
+					? (Serializable) ((Class) serializable).getDeclaredConstructor().newInstance()
+					: serializable;
+			List voList = new ArrayList();
+			voList.add(bean);
+			BeanUtil.batchSetProperties(voList, names, values, false);
+			return bean;
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 }

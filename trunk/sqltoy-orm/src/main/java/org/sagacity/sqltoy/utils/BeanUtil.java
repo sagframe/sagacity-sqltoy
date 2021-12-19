@@ -695,7 +695,7 @@ public class BeanUtil {
 	 * @param props
 	 * @return
 	 */
-	public static List reflectBeansToList(List datas, String[] props) throws Exception {
+	public static List reflectBeansToList(List datas, String[] props) throws RuntimeException {
 		return reflectBeansToList(datas, props, null);
 	}
 
@@ -706,7 +706,7 @@ public class BeanUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object[] sliceToArray(List datas, String props) throws Exception {
+	public static Object[] sliceToArray(List datas, String props) throws RuntimeException {
 		List sliceList = reflectBeansToList(datas, new String[] { props }, null);
 		if (sliceList == null || sliceList.isEmpty()) {
 			return null;
@@ -736,7 +736,7 @@ public class BeanUtil {
 	 * @throws Exception
 	 */
 	public static List reflectBeansToList(List datas, String[] properties, ReflectPropsHandler reflectPropsHandler)
-			throws Exception {
+			throws RuntimeException {
 		if (null == datas || datas.isEmpty() || null == properties || properties.length < 1) {
 			return null;
 		}
@@ -860,7 +860,7 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("反射Java Bean获取数据组装List集合异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException("反射Java Bean获取数据组装List集合异常!" + e.getMessage());
 		}
 		return resultList;
 	}
@@ -870,15 +870,12 @@ public class BeanUtil {
 	}
 
 	/**
-	 * update 2020-12-2 支持多层对象反射取值
-	 * 
 	 * @todo 反射出单个对象中的属性并以对象数组返回
 	 * @param serializable
 	 * @param properties
 	 * @param defaultValues
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
 	 */
 	public static Object[] reflectBeanToAry(Object serializable, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -900,7 +897,7 @@ public class BeanUtil {
 		String[] fields;
 		Iterator<?> iter;
 		Map.Entry<String, Object> entry;
-		boolean mapped = false;
+		boolean isMapped = false;
 		String fieldLow;
 		Object fieldValue;
 		boolean hasKey = false;
@@ -933,17 +930,17 @@ public class BeanUtil {
 									fieldValue = ((IgnoreKeyCaseMap) fieldValue).get(field.trim());
 								} else {
 									iter = ((Map) fieldValue).entrySet().iterator();
-									mapped = false;
+									isMapped = false;
 									fieldLow = field.trim().toLowerCase();
 									while (iter.hasNext()) {
 										entry = (Map.Entry<String, Object>) iter.next();
 										if (entry.getKey().toLowerCase().equals(fieldLow)) {
 											fieldValue = entry.getValue();
-											mapped = true;
+											isMapped = true;
 											break;
 										}
 									}
-									if (!mapped) {
+									if (!isMapped) {
 										fieldValue = null;
 									}
 								}
@@ -987,7 +984,6 @@ public class BeanUtil {
 	 * @param defaultValues
 	 * @param reflectPropsHandler
 	 * @return
-	 * @throws Exception
 	 */
 	public static List<Object[]> reflectBeansToInnerAry(List dataSet, String[] properties, Object[] defaultValues,
 			ReflectPropsHandler reflectPropsHandler) {
@@ -1082,10 +1078,10 @@ public class BeanUtil {
 	 * @param properties
 	 * @param voClass
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static List reflectListToBean(TypeHandler typeHandler, List datas, int[] indexs, String[] properties,
-			Class voClass) throws Exception {
+			Class voClass) throws RuntimeException {
 		return reflectListToBean(typeHandler, datas, indexs, properties, voClass, true);
 	}
 
@@ -1208,8 +1204,12 @@ public class BeanUtil {
 				index++;
 			}
 		} catch (Exception e) {
-			logger.error("将集合单元格数据:{} 反射到Java Bean的属性:{}过程异常!{}", cellData, propertyName, e.getMessage());
-			e.printStackTrace();
+			if (propertyName == null) {
+				logger.error("将集合数据映射到类:{} 异常,请检查类是否正确!{}", voClass.getName(), e.getMessage());
+			} else {
+				logger.error("将集合数据:{} 映射到类:{} 的属性:{}过程异常!{}", cellData, voClass.getName(), propertyName,
+						e.getMessage());
+			}
 			throw new RuntimeException(e);
 		}
 		return resultList;
@@ -1226,8 +1226,7 @@ public class BeanUtil {
 	 * @param properties
 	 * @param values
 	 * @param autoConvertType
-	 * @param forceUpdate     强制更新
-	 * @throws Exception
+	 * @param forceUpdate
 	 */
 	public static void batchSetProperties(Collection voList, String[] properties, Object[] values,
 			boolean autoConvertType, boolean forceUpdate) {
@@ -1291,15 +1290,15 @@ public class BeanUtil {
 	 * @param values
 	 * @param index
 	 * @param autoConvertType
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType) throws Exception {
+			boolean autoConvertType) throws RuntimeException {
 		mappingSetProperties(voList, properties, values, index, autoConvertType, true);
 	}
 
 	public static void mappingSetProperties(Collection voList, String[] properties, List<Object[]> values, int[] index,
-			boolean autoConvertType, boolean forceUpdate) throws Exception {
+			boolean autoConvertType, boolean forceUpdate) throws RuntimeException {
 		if (null == voList || voList.isEmpty()) {
 			return;
 		}
@@ -1357,7 +1356,7 @@ public class BeanUtil {
 		} catch (Exception e) {
 			logger.error("将集合数据反射到Java Bean过程异常!{}", e.getMessage());
 			e.printStackTrace();
-			throw e;
+			throw new RuntimeException("将集合数据反射到Java Bean过程异常!" + e.getMessage());
 		}
 	}
 
@@ -1483,6 +1482,7 @@ public class BeanUtil {
 	/**
 	 * @TODO 为loadByIds提供Entity集合封装,便于将调用方式统一
 	 * @param <T>
+	 * @param typeHandler
 	 * @param entityMeta
 	 * @param voClass
 	 * @param ids
@@ -1636,8 +1636,8 @@ public class BeanUtil {
 	 * @TODO 针对loadAll级联加载场景,子表通过主表id集合批量一次性完成加载的，所以子表集合包含了主表集合的全部关联信息
 	 * @param mainEntities
 	 * @param itemEntities
-	 * @param idProps
 	 * @param cascadeModel
+	 * @throws Exception
 	 */
 	public static void loadAllMapping(List mainEntities, List itemEntities, TableCascadeModel cascadeModel)
 			throws Exception {

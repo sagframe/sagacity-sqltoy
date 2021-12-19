@@ -201,6 +201,9 @@ public class SqlScriptLoader {
 	 * @return
 	 */
 	public SqlToyConfig getSqlConfig(String sqlKey, SqlType sqlType, String dialect) {
+		if (StringUtil.isBlank(sqlKey)) {
+			throw new IllegalArgumentException("sql or sqlId is null!");
+		}
 		SqlToyConfig result = null;
 		String realDialect = (dialect == null) ? "" : dialect.toLowerCase();
 		// sqlId形式
