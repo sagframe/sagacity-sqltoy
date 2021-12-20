@@ -10,15 +10,15 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.13</spring-framework.version>
+		<spring-framework.version>5.3.14</spring-framework.version>
 		<spring-data-redis.version>2.6.0</spring-data-redis.version>
 		<spring-data-mongo.version>3.3.0</spring-data-mongo.version>
 		<ojdbc.version>19.12.0.0</ojdbc.version>
-		<ehcache.version>3.9.8</ehcache.version>
+		<ehcache.version>3.9.9</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.15</httpclient-core.version>
-		<elastic-rest-client.version>7.16.1</elastic-rest-client.version>
-		<fastjson.version>1.2.78</fastjson.version>
+		<elastic-rest-client.version>7.16.2</elastic-rest-client.version>
+		<fastjson.version>1.2.79</fastjson.version>
 		<mongo.version>3.12.10</mongo.version>
 		<junit-jupiter.version>5.8.2</junit-jupiter.version>
 		<junit-platform.version>1.8.2</junit-platform.version>
