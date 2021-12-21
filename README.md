@@ -1,12 +1,12 @@
-# 在线文档
-## [sqltoy-online-doc 网友海贝提供](https://www.kancloud.cn/hugoxue/sql_toy/2390352)
-
-# [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
-
 # WORD版详细文档(完整)
 ## 请见:docs/睿智平台SqlToy5.1 使用手册.doc
 ## xml中sql查询完整配置 
 https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
+
+# 在线文档
+## [sqltoy-online-doc 网友海贝提供](https://www.kancloud.cn/hugoxue/sql_toy/2390352)
+
+# [gitee地址](https://gitee.com/sagacity/sagacity-sqltoy) 
 
 # 范例演示项目
 ## 快速集成演示项目
