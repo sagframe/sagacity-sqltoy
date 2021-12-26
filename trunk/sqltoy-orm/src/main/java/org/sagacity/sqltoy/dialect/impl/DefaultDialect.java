@@ -181,9 +181,9 @@ public class DefaultDialect implements Dialect {
 	}
 
 	@Override
-	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] forceUpdateFields,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType, String dialect,
-			Boolean autoCommit, String tableName) throws Exception {
+	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, final String[] uniqueFields,
+			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, Integer dbType,
+			String dialect, Boolean autoCommit, String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}

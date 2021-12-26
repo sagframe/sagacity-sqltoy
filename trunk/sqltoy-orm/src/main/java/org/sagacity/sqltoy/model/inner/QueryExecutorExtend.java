@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -22,6 +23,7 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
@@ -74,7 +76,7 @@ public class QueryExecutorExtend implements Serializable {
 	 */
 	@Deprecated
 	public RowCallbackHandler rowCallbackHandler;
-	
+
 	/**
 	 * 查询属性值反射处理
 	 */
@@ -100,6 +102,18 @@ public class QueryExecutorExtend implements Serializable {
 	 * 是否已经提取过value值
 	 */
 	public boolean extracted = false;
+
+	/**
+	 * 将结果封装成父子对象级联模式，one ->many 或 one-one
+	 */
+	public boolean hiberarchy = false;
+
+	/**
+	 * 体现层次的类型
+	 */
+	public Class[] hiberarchyClasses;
+
+	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
 
 	/**
 	 * 动态增加缓存翻译配置
@@ -138,7 +152,7 @@ public class QueryExecutorExtend implements Serializable {
 	 * 锁表
 	 */
 	public LockMode lockMode = null;
-	
+
 	/**
 	 * 是否构造过条件参数名称
 	 */

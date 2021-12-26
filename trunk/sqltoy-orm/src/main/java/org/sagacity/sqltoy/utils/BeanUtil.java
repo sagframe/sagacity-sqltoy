@@ -5,6 +5,7 @@ import static java.lang.System.err;
 import java.io.BufferedReader;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -30,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.config.annotation.OneToMany;
+import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
@@ -64,6 +67,8 @@ public class BeanUtil {
 	 * 保存get方法
 	 */
 	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
+
+	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
 
 	// 静态方法避免实例化和继承
 	private BeanUtil() {
@@ -1686,5 +1691,64 @@ public class BeanUtil {
 				setProperty(mainEntity, property, itemList);
 			}
 		}
+	}
+
+	/**
+	 * @TODO 解析类中的@OneToOne 和@OneToMany注解，服务sql查询结果按对象层次结构进行封装
+	 * @param entityClass
+	 * @return
+	 */
+	private static Field[] parseCascadeFields(Class entityClass) {
+		Set<String> fieldSet = new HashSet<String>();
+		List<Field> cascadeFields = new ArrayList<Field>();
+		Class classType = entityClass;
+		String fieldName;
+		while (classType != null && !classType.equals(Object.class)) {
+			for (Field field : classType.getDeclaredFields()) {
+				fieldName = field.getName().toLowerCase();
+				if (!fieldSet.contains(fieldName) && (field.getAnnotation(OneToMany.class) != null
+						|| field.getAnnotation(OneToOne.class) != null)) {
+					cascadeFields.add(field);
+					fieldSet.add(fieldName);
+				}
+			}
+			// 支持多级继承关系
+			classType = classType.getSuperclass();
+		}
+		return cascadeFields.toArray(new Field[cascadeFields.size()]);
+	}
+
+	/**
+	 * @TODO 获取类的级联关系
+	 * @param entityClass
+	 * @return
+	 */
+	public static List<TableCascadeModel> getCascadeModels(Class entityClass) {
+		String className = entityClass.getName();
+		List<TableCascadeModel> result = cascadeModels.get(className);
+		if (result == null) {
+			result = new ArrayList<TableCascadeModel>();
+			Field[] cascadeFields = parseCascadeFields(entityClass);
+			for (Field field : cascadeFields) {
+				TableCascadeModel cascadeModel = new TableCascadeModel();
+				cascadeModel.setProperty(field.getName());
+				cascadeModel.setMappedType(
+						(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+				OneToMany oneToMany = field.getAnnotation(OneToMany.class);
+				OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+				if (oneToMany != null) {
+					cascadeModel.setCascadeType(1);
+					cascadeModel.setFields(oneToMany.fields());
+					cascadeModel.setMappedFields(oneToMany.mappedFields());
+				} else {
+					cascadeModel.setCascadeType(2);
+					cascadeModel.setFields(oneToOne.fields());
+					cascadeModel.setMappedFields(oneToOne.mappedFields());
+				}
+				result.add(cascadeModel);
+			}
+			cascadeModels.put(className, result);
+		}
+		return result;
 	}
 }

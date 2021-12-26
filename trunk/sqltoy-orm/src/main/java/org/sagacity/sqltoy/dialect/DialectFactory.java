@@ -316,7 +316,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(sqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
 							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
@@ -421,6 +421,7 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
+
 							QueryResult queryResult;
 							// 总记录数为零
 							if (totalCount != null && totalCount == 0) {
@@ -446,7 +447,8 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel,
+											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "取得随机记录数:{}条!", queryResult.getRecordCount());
@@ -637,7 +639,8 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel,
+											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							queryResult.setSkipQueryCount(true);
@@ -751,7 +754,7 @@ public class DialectFactory {
 										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
 												realSqlToyConfig.getSql(dialect),
 												extend.getParamsName(realSqlToyConfig),
-												extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
+												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 												extend.rowCallbackHandler,
@@ -795,7 +798,8 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel,
+											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "分页总记录数:{}条,取得本页记录数:{}条!",
@@ -989,7 +993,8 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel,
+											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "实际取得top记录数: {}条!", queryResult.getRecordCount());
@@ -1038,7 +1043,7 @@ public class DialectFactory {
 							// 通过参数处理最终的sql和参数值
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									extend.rowCallbackHandler, wrapDecryptHandler(sqlToyContext, extend.resultType),
@@ -1055,7 +1060,8 @@ public class DialectFactory {
 								if (extend.resultType != null) {
 									queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext,
 											queryResult.getRows(), queryResult.getLabelNames(),
-											(Class) extend.resultType, changedCols, extend.humpMapLabel));
+											(Class) extend.resultType, changedCols, extend.humpMapLabel,
+											extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
 								}
 							}
 							SqlExecuteStat.debug("查询结果", "共查询出记录数={}条!", queryResult.getRecordCount());
@@ -1179,7 +1185,7 @@ public class DialectFactory {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(sqlToyConfig),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
+				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
 				queryParam.getParamsValue(), isLastSql, conn, dbType, dialect);
 	}
@@ -1527,6 +1533,7 @@ public class DialectFactory {
 	 * @param forceCascadeClass
 	 * @param subTableForceUpdateProps
 	 * @param dataSource
+	 * @return
 	 */
 	public Long update(final SqlToyContext sqlToyContext, final Serializable entity, final String[] forceUpdateFields,
 			final boolean cascade, final Class[] forceCascadeClass,
@@ -1598,14 +1605,16 @@ public class DialectFactory {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
+	 * @param uniqueFields        唯一性索引字段
 	 * @param forceUpdateFields
 	 * @param reflectPropsHandler
 	 * @param dataSource
 	 * @param autoCommit
+	 * @return
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler,
-			final DataSource dataSource, final Boolean autoCommit) {
+			final String[] uniqueFields, final String[] forceUpdateFields,
+			final ReflectPropsHandler reflectPropsHandler, final DataSource dataSource, final Boolean autoCommit) {
 		if (entities == null || entities.isEmpty()) {
 			logger.warn("updateAll entities is null or empty,please check!");
 			return 0L;
@@ -1623,7 +1632,7 @@ public class DialectFactory {
 									public void doConnection(Connection conn, Integer dbType, String dialect)
 											throws Exception {
 										this.setResult(getDialectSqlWrapper(dbType).updateAll(context,
-												batchModel.getEntities(), batchSize, forceUpdateFields,
+												batchModel.getEntities(), batchSize, uniqueFields, forceUpdateFields,
 												reflectPropsHandler, conn, dbType, dialect, autoCommit,
 												shardingModel.getTableName()));
 									}
@@ -1762,7 +1771,7 @@ public class DialectFactory {
 									sqlToyConfig, queryExecutor, dialect, false);
 							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
 									extend.getParamsName(realSqlToyConfig),
-									extend.getParamsValue(sqlToyContext, realSqlToyConfig),dialect);
+									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
 									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 									updateRowHandler, conn, dbType, dialect,
@@ -1771,7 +1780,8 @@ public class DialectFactory {
 							if (extend.resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
 										queryResult.getLabelNames(), (Class) extend.resultType, false,
-										extend.humpMapLabel));
+										extend.humpMapLabel, extend.hiberarchy, extend.hiberarchyClasses,
+										extend.fieldsMap));
 							}
 							SqlExecuteStat.debug("执行结果", "修改并返回记录操作影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
@@ -1841,7 +1851,7 @@ public class DialectFactory {
 							// 映射成对象
 							if (resultType != null) {
 								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), resultType, changedCols, true));
+										queryResult.getLabelNames(), resultType, changedCols, true, false, null, null));
 							}
 							SqlExecuteStat.debug("执行结果", "存储过程影响记录:{} 条!", queryResult.getRecordCount());
 							this.setResult(queryResult);
