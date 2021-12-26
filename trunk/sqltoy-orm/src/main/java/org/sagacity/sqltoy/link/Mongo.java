@@ -421,7 +421,7 @@ public class Mongo extends BaseLink {
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, dataSetResult,
 				null, null);
 		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
-				resultClass, changedCols, humpMapLabel);
+				resultClass, changedCols, humpMapLabel, false, null,null);
 	}
 
 	/**

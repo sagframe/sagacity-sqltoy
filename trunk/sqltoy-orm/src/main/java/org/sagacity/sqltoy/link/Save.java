@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -43,6 +44,11 @@ public class Save extends BaseLink {
 	 * 批处理提交记录数量
 	 */
 	private int batchSize = 0;
+
+	/**
+	 * 实现基于唯一性索引字段进行数据修改(非主键)
+	 */
+	private String[] uniqueFields;
 
 	/**
 	 * @param sqlToyContext
@@ -98,6 +104,14 @@ public class Save extends BaseLink {
 		return this;
 	}
 
+	// 暂时不开放
+//	public Save uniqueFields(String... uniqueFields) {
+//		if (uniqueFields != null && uniqueFields.length > 0) {
+//			this.uniqueFields = uniqueFields;
+//		}
+//		return this;
+//	}
+
 	/**
 	 * @todo 保存单条记录
 	 * @param entity
@@ -114,7 +128,9 @@ public class Save extends BaseLink {
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, getDataSource(null));
 		}
 		if (saveMode == SaveMode.IGNORE) {
-			throw new IllegalArgumentException("单条对象记录保存不支持IGNORE 模式,请通过自身逻辑判断SaveMode是append(insert) 还是 update!");
+			List entities = new ArrayList();
+			entities.add(entity);
+			return dialectFactory.saveAllIgnoreExist(sqlToyContext, entities, 1, null, getDataSource(null), null);
 		}
 		return null;
 	}
