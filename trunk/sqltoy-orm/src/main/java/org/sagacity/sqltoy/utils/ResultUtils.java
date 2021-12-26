@@ -24,6 +24,7 @@ import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
+import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.FormatModel;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.config.model.LinkModel;
@@ -35,11 +36,13 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.config.model.SummaryModel;
+import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
@@ -1148,14 +1151,18 @@ public class ResultUtils {
 	 * @param resultType
 	 * @param changedCols
 	 * @param humpMapLabel
+	 * @param hiberarchy        返回结果是否按层次化对象封装
+	 * @param hiberarchyClasses
 	 * @return
 	 * @throws Exception
 	 */
 	public static List wrapQueryResult(SqlToyContext sqlToyContext, List queryResultRows, String[] labelNames,
-			Class resultType, boolean changedCols, boolean humpMapLabel) throws Exception {
+			Class resultType, boolean changedCols, boolean humpMapLabel, boolean hiberarchy, Class[] hiberarchyClasses,
+			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
 		// 类型为null就默认返回二维List
 		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
-				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)) {
+				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)
+				|| BeanUtil.isBaseDataType(resultType)) {
 			return queryResultRows;
 		}
 		// 返回数组类型
@@ -1201,16 +1208,36 @@ public class ResultUtils {
 			return result;
 		}
 		HashMap<String, String> columnFieldMap = null;
+		EntityMeta entityMeta = null;
 		if (sqlToyContext.isEntity(resultType)) {
-			columnFieldMap = sqlToyContext.getEntityMeta(resultType).getColumnFieldMap();
+			entityMeta = sqlToyContext.getEntityMeta(resultType);
+			columnFieldMap = entityMeta.getColumnFieldMap();
 		}
-		// 封装成VO对象形式
-		List result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
-				convertRealProps(labelNames, columnFieldMap), resultType);
-		// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
-		wrapResultTranslate(sqlToyContext, result, resultType);
+		boolean hasCascade = false;
+		List<TableCascadeModel> cascadeModel = null;
+		if (hiberarchy) {
+			if (entityMeta != null) {
+				cascadeModel = entityMeta.getCascadeModels();
+			} else {
+				cascadeModel = BeanUtil.getCascadeModels(resultType);
+			}
+			if (cascadeModel != null && !cascadeModel.isEmpty()) {
+				hasCascade = true;
+			}
+		}
+		List result = null;
+		// 非层次结构
+		if (!hasCascade) {
+			// 封装成VO对象形式
+			result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
+					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
+			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
+			wrapResultTranslate(sqlToyContext, result, resultType);
+		} else {
+			result = hiberarchySet(sqlToyContext, entityMeta, columnFieldMap, queryResultRows, labelNames, resultType,
+					cascadeModel, hiberarchyClasses, fieldsMap);
+		}
 		return result;
-
 	}
 
 	private static String[] convertRealProps(String[] labelNames, HashMap<String, String> colFieldMap) {
@@ -1224,6 +1251,228 @@ public class ResultUtils {
 			}
 		}
 		return labelNames;
+	}
+
+	/**
+	 * @TODO 将集合数据反射到java对象并建立层次关系
+	 * @param sqlToyContext
+	 * @param entityMeta
+	 * @param columnFieldMap
+	 * @param queryResultRows
+	 * @param labelNames
+	 * @param resultType
+	 * @param cascadeModel
+	 * @param hiberarchyClass
+	 * @return
+	 * @throws Exception
+	 */
+	private static List hiberarchySet(SqlToyContext sqlToyContext, EntityMeta entityMeta,
+			HashMap<String, String> columnFieldMap, List queryResultRows, String[] labelNames, Class resultType,
+			List<TableCascadeModel> cascadeModel, Class[] hiberarchyClasses,
+			Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap) throws Exception {
+		// 获得所有层次关系的分组字段
+		String[] groupFields = cascadeModel.get(0).getFields();
+		int[] colIndexs = new int[groupFields.length];
+		IgnoreKeyCaseMap<String, Integer> labelIndexs = new IgnoreKeyCaseMap<String, Integer>();
+		int index = 0;
+		for (String label : labelNames) {
+			labelIndexs.put(label.replace("_", ""), index);
+			index++;
+		}
+		for (int i = 0; i < colIndexs.length; i++) {
+			if (labelIndexs.containsKey(groupFields[i])) {
+				colIndexs[i] = labelIndexs.get(groupFields[i]);
+			} else {
+				throw new DataAccessException("查询结果中未包含属性:" + groupFields[i] + " 对应的值!");
+			}
+		}
+		// 判断是否存在oneToMany
+		boolean hasOneToMany = false;
+		for (TableCascadeModel cascade : cascadeModel) {
+			if (cascade.getCascadeType() == 1) {
+				hasOneToMany = true;
+				break;
+			}
+		}
+		// 分组的master数据
+		List masterData;
+		LinkedHashMap<String, List> groupListMap = null;
+		// 存在oneToMany 则将数据进行分组
+		if (hasOneToMany) {
+			groupListMap = hashGroupList(queryResultRows, colIndexs);
+			// 提取每组的第一条数据作为master数据
+			List groupList;
+			Iterator<List> iter = groupListMap.values().iterator();
+			masterData = new ArrayList();
+			while (iter.hasNext()) {
+				groupList = iter.next();
+				masterData.add(groupList.get(0));
+			}
+		} else {
+			masterData = queryResultRows;
+		}
+		// 构造主对象集合
+		List result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), masterData,
+				convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
+		List<List> oneToOnes = new ArrayList();
+		List<String> oneToOneProps = new ArrayList<String>();
+		TableCascadeModel oneToMany = null;
+		int oneToManySize = 0;
+		for (TableCascadeModel cascade : cascadeModel) {
+			// oneToOne模式
+			if (cascade.getCascadeType() == 2) {
+				boolean hasCascade = false;
+				if (hiberarchyClasses != null) {
+					for (Class hiberarchyClass : hiberarchyClasses) {
+						if (hiberarchyClass.equals(cascade.getMappedType())) {
+							hasCascade = true;
+							break;
+						}
+					}
+				} else {
+					hasCascade = true;
+				}
+				// 将多个oneToOne的数据批量构造
+				if (hasCascade) {
+					// 主对象字段属性转化为级联对象属性
+					for (int i = 0; i < colIndexs.length; i++) {
+						labelNames[colIndexs[i]] = cascade.getMappedFields()[i];
+					}
+					if (entityMeta != null) {
+						columnFieldMap = sqlToyContext.getEntityMeta(cascade.getMappedType()).getColumnFieldMap();
+					}
+					List oneToOneList = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), masterData,
+							convertRealProps(wrapMapFields(labelNames, fieldsMap, cascade.getMappedType()),
+									columnFieldMap),
+							cascade.getMappedType());
+					wrapResultTranslate(sqlToyContext, oneToOneList, cascade.getMappedType());
+					oneToOnes.add(oneToOneList);
+					oneToOneProps.add(cascade.getProperty());
+				}
+			} // 只支持一个oneToMany
+			else {
+				// 指定了级联对象
+				if (hiberarchyClasses != null) {
+					for (Class hiberarchyClass : hiberarchyClasses) {
+						if (hiberarchyClass.equals(cascade.getMappedType())) {
+							oneToMany = cascade;
+							break;
+						}
+					}
+				} else {
+					// 不指定则以第一个为准
+					if (oneToMany == null) {
+						oneToMany = cascade;
+					}
+					oneToManySize++;
+				}
+			}
+		}
+		if (oneToManySize > 1 && hiberarchyClasses == null) {
+			throw new IllegalArgumentException("返回依照层次结构结果时，存在多个oneToMany映射关系，必须要指明hiberarchyClasses!");
+		}
+		// 循环将oneToOne 的一一通过反射赋值到主对象属性上
+		if (!oneToOneProps.isEmpty()) {
+			int oneToOneSize = oneToOneProps.size();
+			Object masterBean;
+			for (int i = 0; i < result.size(); i++) {
+				masterBean = result.get(i);
+				for (int j = 0; j < oneToOneSize; j++) {
+					BeanUtil.setProperty(masterBean, oneToOneProps.get(j), oneToOnes.get(j).get(i));
+				}
+			}
+		}
+
+		// 处理oneToMany
+		if (oneToMany != null) {
+			// 变化级联子对象的属性
+			for (int i = 0; i < colIndexs.length; i++) {
+				labelNames[colIndexs[i]] = oneToMany.getMappedFields()[i];
+			}
+			if (entityMeta != null) {
+				columnFieldMap = sqlToyContext.getEntityMeta(oneToMany.getMappedType()).getColumnFieldMap();
+			}
+			Object masterBean;
+			List item;
+			Class oneToManyClass = oneToMany.getMappedType();
+			String property = oneToMany.getProperty();
+			// 循环分组Map
+			Iterator<List> iter = groupListMap.values().iterator();
+			index = 0;
+			while (iter.hasNext()) {
+				masterBean = result.get(index);
+				item = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), iter.next(),
+						convertRealProps(wrapMapFields(labelNames, fieldsMap, oneToManyClass), columnFieldMap),
+						oneToManyClass);
+				// 处理类上@Translate注解进行缓存翻译
+				wrapResultTranslate(sqlToyContext, item, oneToManyClass);
+				// 将子对象集合写到主对象属性上
+				BeanUtil.setProperty(masterBean, property, item);
+				index++;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * @TODO 针对具体映射对象设置sql查询的label对应的对象属性
+	 * @param labelNames
+	 * @param resultTypeFieldsMap
+	 * @param resultType
+	 * @return
+	 */
+	private static String[] wrapMapFields(String[] labelNames,
+			Map<Class, IgnoreKeyCaseMap<String, String>> resultTypeFieldsMap, Class resultType) {
+		if (resultTypeFieldsMap == null || resultTypeFieldsMap.isEmpty()) {
+			return labelNames;
+		}
+		IgnoreKeyCaseMap<String, String> fieldsMap = resultTypeFieldsMap.get(resultType);
+		if (fieldsMap == null || fieldsMap.isEmpty()) {
+			return labelNames;
+		}
+		String[] result = labelNames.clone();
+		String fieldName;
+		int size = result.length;
+		for (int i = 0; i < size; i++) {
+			fieldName = fieldsMap.get(result[i]);
+			if (fieldName != null) {
+				// 将其它label名称跟映射结果一致的全部改名，避免将映射到其他对象的属性当做当前对象
+				for (int j = 0; j < size; j++) {
+					if (result[j].replace("_", "").equalsIgnoreCase(fieldName)) {
+						result[j] = result[j] + "SqlToyIgnoreField";
+					}
+				}
+				result[i] = fieldName;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * @TODO 根据分组字段将集合分组
+	 * @param queryResultRows
+	 * @param groupIndexes
+	 * @return
+	 */
+	private static LinkedHashMap<String, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
+		LinkedHashMap<String, List> groupListMap = new LinkedHashMap<String, List>();
+		List row;
+		String key = "";
+		List groupList;
+		for (int i = 0; i < queryResultRows.size(); i++) {
+			row = (List) queryResultRows.get(i);
+			key = "";
+			for (int j = 0; j < groupIndexes.length; j++) {
+				key = key + "," + row.get(groupIndexes[j]);
+			}
+			groupList = groupListMap.get(key);
+			if (groupList == null) {
+				groupList = new ArrayList();
+			}
+			groupList.add(row);
+			groupListMap.put(key, groupList);
+		}
+		return groupListMap;
 	}
 
 	/**

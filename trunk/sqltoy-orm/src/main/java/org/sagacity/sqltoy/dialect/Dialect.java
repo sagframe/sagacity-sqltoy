@@ -252,6 +252,7 @@ public interface Dialect {
 	 * @param sqlToyContext
 	 * @param entities
 	 * @param batchSize
+	 * @param uniqueFields
 	 * @param forceUpdateFields
 	 * @param reflectPropsHandler 此参数已经无实际意义
 	 * @param conn
@@ -263,9 +264,9 @@ public interface Dialect {
 	 * @throws Exception
 	 */
 	public Long updateAll(final SqlToyContext sqlToyContext, final List<?> entities, final int batchSize,
-			final String[] forceUpdateFields, final ReflectPropsHandler reflectPropsHandler, final Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception;
+			final String[] uniqueFields, final String[] forceUpdateFields,
+			final ReflectPropsHandler reflectPropsHandler, final Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception;
 
 	/**
 	 * @todo 保存或修改单条记录

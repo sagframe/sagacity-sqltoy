@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -21,6 +22,7 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.Translate;
+import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.ParamFilterUtils;
@@ -95,6 +97,16 @@ public class QueryExecutorExtend implements Serializable {
 	public boolean extracted = false;
 
 	/**
+	 * 将结果封装成父子对象级联模式，one ->many 或 one-one
+	 */
+	public boolean hiberarchy = false;
+
+	/**
+	 * 体现层次的类型
+	 */
+	public Class[] hiberarchyClasses;
+
+	/**
 	 * 动态增加缓存翻译配置
 	 */
 	public HashMap<String, Translate> translates = new HashMap<String, Translate>();
@@ -103,6 +115,8 @@ public class QueryExecutorExtend implements Serializable {
 	 * 动态设置filters
 	 */
 	public List<ParamsFilter> paramFilters = new ArrayList<ParamsFilter>();
+
+	public Map<Class, IgnoreKeyCaseMap<String, String>> fieldsMap = new HashMap<Class, IgnoreKeyCaseMap<String, String>>();
 
 	/**
 	 * 对字段进行安全脱敏
