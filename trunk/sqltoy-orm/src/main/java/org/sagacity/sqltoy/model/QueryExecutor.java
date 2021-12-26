@@ -162,6 +162,7 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * 只针对父子对象存在共同属性场景
 	 * @TODO 设置将结果映射到不同类时查询结果的label跟属性名称的映射关系 此方法同时实现了:
 	 *       <li>hiberarchy(Boolean hiberarchy)</li>
 	 *       <li>hiberarchyClasses(Class... hiberarchyClasses)</li>
