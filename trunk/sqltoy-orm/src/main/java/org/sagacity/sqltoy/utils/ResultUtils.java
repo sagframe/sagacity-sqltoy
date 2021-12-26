@@ -1230,7 +1230,7 @@ public class ResultUtils {
 		if (!hasCascade) {
 			// 封装成VO对象形式
 			result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
-					convertRealProps(labelNames, columnFieldMap), resultType);
+					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), resultType);
 			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
 			wrapResultTranslate(sqlToyContext, result, resultType);
 		} else {
