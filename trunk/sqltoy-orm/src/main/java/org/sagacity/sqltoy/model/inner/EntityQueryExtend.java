@@ -31,12 +31,12 @@ public class EntityQueryExtend implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 5446320176141577000L;
-	
+
 	/**
 	 * jdbc 查询时默认加载到内存中的记录数量 -1表示不设置，采用数据库默认的值
 	 */
 	public int fetchSize = -1;
-	
+
 	/**
 	 * jdbc查询最大返回记录数量
 	 */
@@ -61,9 +61,13 @@ public class EntityQueryExtend implements Serializable {
 	 * 查询哪些字段
 	 */
 	public String[] fields;
-	
-	public boolean distinct=false;
-	
+
+	public String groupBy;
+
+	public String having;
+
+	public boolean distinct = false;
+
 	/**
 	 * 不参与查询的字段
 	 */
@@ -78,10 +82,6 @@ public class EntityQueryExtend implements Serializable {
 	 * 锁类型
 	 */
 	public LockMode lockMode;
-	
-	public String groupBy;
-	
-	public String having;
 
 	/**
 	 * 空白字符转为null，默认为true

@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,6 +44,11 @@ public class Update extends BaseLink {
 	 * 批处理提交记录数量
 	 */
 	private int batchSize = 0;
+
+	/**
+	 * 实现基于唯一性索引字段进行数据修改(非主键)
+	 */
+	private String[] uniqueFields;
 
 	/**
 	 * (强制需要修改的子对象,当子集合数据为null,则进行清空或置为无效处理,否则则忽视对存量数据的处理)
@@ -88,6 +94,14 @@ public class Update extends BaseLink {
 		this.deeply = deeply;
 		return this;
 	}
+
+	// 暂时不开放
+//	public Update uniqueFields(String... uniqueFields) {
+//		if (uniqueFields != null && uniqueFields.length > 0) {
+//			this.uniqueFields = uniqueFields;
+//		}
+//		return this;
+//	}
 
 	/**
 	 * @todo 设置每批记录量
@@ -152,6 +166,12 @@ public class Update extends BaseLink {
 		if (deeply) {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
+		if (uniqueFields != null && uniqueFields.length > 0) {
+			List entities = new ArrayList();
+			entities.add(entity);
+			return dialectFactory.updateAll(sqlToyContext, entities, 1, uniqueFields, forceUpdate, null,
+					getDataSource(null), null);
+		}
 		return dialectFactory.update(sqlToyContext, entity, forceUpdate, cascade, forceCascadeClasses,
 				subTableForceUpdateProps, getDataSource(null));
 	}
@@ -177,7 +197,7 @@ public class Update extends BaseLink {
 			forceUpdate = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
 		}
 		int realBatchSize = (batchSize > 0) ? batchSize : sqlToyContext.getBatchSize();
-		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, forceUpdate, reflectPropsHandler,
-				getDataSource(null), autoCommit);
+		return dialectFactory.updateAll(sqlToyContext, entities, realBatchSize, uniqueFields, forceUpdate,
+				reflectPropsHandler, getDataSource(null), autoCommit);
 	}
 }

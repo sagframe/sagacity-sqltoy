@@ -148,6 +148,55 @@ public class QueryExecutor implements Serializable {
 	}
 
 	/**
+	 * @TODO 是否将结果封装成父子对象级联模式
+	 * @param hiberarchy
+	 * @return
+	 */
+	public QueryExecutor hiberarchy(Boolean hiberarchy) {
+		innerModel.hiberarchy = hiberarchy;
+		return this;
+	}
+
+	/**
+	 * @TODO 设置将结果映射到不同类时查询结果的label跟属性名称的映射关系 此方法同时实现了:
+	 *       <li>hiberarchy(Boolean hiberarchy)</li>
+	 *       <li>hiberarchyClasses(Class... hiberarchyClasses)</li>
+	 * @param resultType
+	 * @param fieldsMap
+	 * @return
+	 */
+	public QueryExecutor hiberarchyFieldsMap(Class resultType, Map fieldsMap) {
+		if (resultType != null && fieldsMap != null) {
+			// 默认开启层次化封装
+			innerModel.hiberarchy = true;
+			// 默认构造层次化封装涉及的类
+			if (innerModel.hiberarchyClasses == null) {
+				innerModel.hiberarchyClasses = new Class[] { resultType };
+			} else {
+				int len = innerModel.hiberarchyClasses.length;
+				Class[] hiberarchyClasses = new Class[len + 1];
+				System.arraycopy(innerModel.hiberarchyClasses, 0, hiberarchyClasses, 0, len);
+				hiberarchyClasses[len] = resultType;
+				innerModel.hiberarchyClasses = hiberarchyClasses;
+			}
+			innerModel.fieldsMap.put(resultType, new IgnoreKeyCaseMap((Map<String, String>) fieldsMap));
+		}
+		return this;
+	}
+
+	/**
+	 * @TODO 指定需要层次化的级联类(一些表对象关系存在多个oneToMany,但一次查询结果只支持一个oneToMany对象关系)
+	 * @param hiberarchyClasses
+	 * @return
+	 */
+	public QueryExecutor hiberarchyClasses(Class... hiberarchyClasses) {
+		if (hiberarchyClasses != null && hiberarchyClasses.length > 0) {
+			innerModel.hiberarchyClasses = hiberarchyClasses;
+		}
+		return this;
+	}
+	
+	/**
 	 * @TODO 设置返回结果的类型
 	 * @param resultType
 	 * @return

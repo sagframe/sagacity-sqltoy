@@ -975,7 +975,7 @@ public class SqlToyDaoSupport {
 	protected <T extends Serializable> Long updateAll(final List<T> entities,
 			final ReflectPropsHandler reflectPropsHandler, final String[] forceUpdateProps,
 			final DataSource dataSource) {
-		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), forceUpdateProps,
+		return dialectFactory.updateAll(sqlToyContext, entities, sqlToyContext.getBatchSize(), null, forceUpdateProps,
 				reflectPropsHandler, this.getDataSource(dataSource), null);
 	}
 
@@ -1657,8 +1657,8 @@ public class SqlToyDaoSupport {
 			}
 			paramNames = SqlConfigParseUtils.getSqlParamsName(where, false);
 			values = BeanUtil.reflectBeanToAry(values[0], paramNames);
-			//重新设置条件参数值数组的长度
-			valueSize=values.length;
+			// 重新设置值数组的长度
+			valueSize = values.length;
 		} else {
 			if (DialectUtils.getParamsCount(where) != valueSize) {
 				throw new IllegalArgumentException("updateByQuery: where语句中的?数量跟对应values 数组长度不一致,请检查!");
@@ -1670,7 +1670,6 @@ public class SqlToyDaoSupport {
 		StringBuilder sql = new StringBuilder();
 		sql.append("update ").append(entityMeta.getSchemaTable(null, null)).append(" set ");
 		Entry<String, Object> entry;
-
 		// 对统一更新字段做处理
 		IUnifyFieldsHandler unifyHandler = getSqlToyContext().getUnifyFieldsHandler();
 		if (unifyHandler != null) {
@@ -1695,7 +1694,6 @@ public class SqlToyDaoSupport {
 				}
 			}
 		}
-
 		Object[] realValues = new Object[innerModel.updateValues.size() + valueSize];
 		if (valueSize > 0) {
 			System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), valueSize);
@@ -1713,30 +1711,56 @@ public class SqlToyDaoSupport {
 		String columnName;
 		FieldMeta fieldMeta;
 		Iterator<Entry<String, Object>> iter = innerModel.updateValues.entrySet().iterator();
+		String[] fields;
+		String fieldSetValue;
+		// 设置一个扩展标志，避免set field=field+? 场景构造成field=field+:fieldExtParam跟where
+		// field=:field名称冲突
+		final String extSign = "ExtParam";
 		while (iter.hasNext()) {
 			entry = iter.next();
-			fieldMeta = entityMeta.getFieldMeta(entry.getKey());
-			if (fieldMeta != null) {
-				columnName = fieldMeta.getColumnName();
-				paramsTypes[index] = fieldMeta.getType();
-			} else {
-				columnName = entry.getKey();
+			// 考虑 field=filed+? 模式，分割成2部分
+			fields = entry.getKey().split("=");
+			fieldMeta = entityMeta.getFieldMeta(fields[0].trim());
+			// entry.getKey() 直接是数据库字段名称
+			if (fieldMeta == null) {
+				// 先通过数据字段名称获得类的属性名称再获取fieldMeta
+				fieldMeta = entityMeta.getFieldMeta(entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase()));
 			}
-			// entry.getKey() is field
-			columnName = entityMeta.getColumnName(entry.getKey());
-			if (columnName == null) {
-				columnName = entry.getKey();
+			columnName = fieldMeta.getColumnName();
+			// 设置字段类型
+			if (fields.length == 1) {
+				paramsTypes[index] = fieldMeta.getType();
 			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
 			if (isName) {
-				realNames[index] = fieldMeta.getFieldName();
+				if (fields.length > 1) {
+					if (fields[1].contains("?")) {
+						// 拼接扩展字符，避免where后面有同样的参数名称
+						realNames[index] = fieldMeta.getFieldName().concat(extSign);
+					} else {
+						realNames[index] = SqlConfigParseUtils.getSqlParamsName(fields[1], true)[0];
+					}
+				} else {
+					realNames[index] = fieldMeta.getFieldName();
+				}
 			}
 			realValues[index] = entry.getValue();
 			if (index > 0) {
 				sql.append(",");
 			}
-			sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+			if (fields.length == 1) {
+				sql.append(columnName).append("=").append(isName ? (":" + fieldMeta.getFieldName()) : "?");
+			} else {
+				// field=filed+? 类似模式
+				fieldSetValue = fields[1];
+				sql.append(columnName).append("=");
+				if (isName && fieldSetValue.contains("?")) {
+					fieldSetValue = fieldSetValue.replace("?", ":" + fieldMeta.getFieldName().concat(extSign));
+				}
+				fieldSetValue = SqlUtil.convertFieldsToColumns(entityMeta, fieldSetValue);
+				sql.append(fieldSetValue);
+			}
 			index++;
 		}
 		sql.append(" where ").append(where);
