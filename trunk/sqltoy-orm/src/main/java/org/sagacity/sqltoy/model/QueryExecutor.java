@@ -163,6 +163,7 @@ public class QueryExecutor implements Serializable {
 
 	/**
 	 * 只针对父子对象存在共同属性场景
+	 * 
 	 * @TODO 设置将结果映射到不同类时查询结果的label跟属性名称的映射关系 此方法同时实现了:
 	 *       <li>hiberarchy(Boolean hiberarchy)</li>
 	 *       <li>hiberarchyClasses(Class... hiberarchyClasses)</li>
@@ -178,11 +179,20 @@ public class QueryExecutor implements Serializable {
 			if (innerModel.hiberarchyClasses == null) {
 				innerModel.hiberarchyClasses = new Class[] { resultType };
 			} else {
-				int len = innerModel.hiberarchyClasses.length;
-				Class[] hiberarchyClasses = new Class[len + 1];
-				System.arraycopy(innerModel.hiberarchyClasses, 0, hiberarchyClasses, 0, len);
-				hiberarchyClasses[len] = resultType;
-				innerModel.hiberarchyClasses = hiberarchyClasses;
+				boolean hasExist = false;
+				for (Class cls : innerModel.hiberarchyClasses) {
+					if (cls.equals(resultType)) {
+						hasExist = true;
+						break;
+					}
+				}
+				if (!hasExist) {
+					int len = innerModel.hiberarchyClasses.length;
+					Class[] hiberarchyClasses = new Class[len + 1];
+					System.arraycopy(innerModel.hiberarchyClasses, 0, hiberarchyClasses, 0, len);
+					hiberarchyClasses[len] = resultType;
+					innerModel.hiberarchyClasses = hiberarchyClasses;
+				}
 			}
 			innerModel.fieldsMap.put(resultType, new IgnoreKeyCaseMap((Map<String, String>) fieldsMap));
 		}

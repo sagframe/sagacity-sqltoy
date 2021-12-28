@@ -874,6 +874,7 @@ public class ResultUtils {
 	 * @param labelNames
 	 * @param rs
 	 * @param size
+	 * @param decryptHandler
 	 * @param ignoreAllEmptySet
 	 * @return
 	 * @throws Exception
