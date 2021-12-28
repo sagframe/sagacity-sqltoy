@@ -173,11 +173,20 @@ public class QueryExecutor implements Serializable {
 			if (innerModel.hiberarchyClasses == null) {
 				innerModel.hiberarchyClasses = new Class[] { resultType };
 			} else {
-				int len = innerModel.hiberarchyClasses.length;
-				Class[] hiberarchyClasses = new Class[len + 1];
-				System.arraycopy(innerModel.hiberarchyClasses, 0, hiberarchyClasses, 0, len);
-				hiberarchyClasses[len] = resultType;
-				innerModel.hiberarchyClasses = hiberarchyClasses;
+				boolean hasExist = false;
+				for (Class cls : innerModel.hiberarchyClasses) {
+					if (cls.equals(resultType)) {
+						hasExist = true;
+						break;
+					}
+				}
+				if (!hasExist) {
+					int len = innerModel.hiberarchyClasses.length;
+					Class[] hiberarchyClasses = new Class[len + 1];
+					System.arraycopy(innerModel.hiberarchyClasses, 0, hiberarchyClasses, 0, len);
+					hiberarchyClasses[len] = resultType;
+					innerModel.hiberarchyClasses = hiberarchyClasses;
+				}
 			}
 			innerModel.fieldsMap.put(resultType, new IgnoreKeyCaseMap((Map<String, String>) fieldsMap));
 		}

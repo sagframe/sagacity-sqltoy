@@ -421,7 +421,6 @@ public class DialectFactory {
 									randomCnt = 1L;
 								}
 							}
-
 							QueryResult queryResult;
 							// 总记录数为零
 							if (totalCount != null && totalCount == 0) {
