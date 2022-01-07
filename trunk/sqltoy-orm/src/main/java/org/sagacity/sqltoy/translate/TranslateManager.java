@@ -149,12 +149,22 @@ public class TranslateManager {
 		HashMap<String, Object[]> cache;
 		TranslateConfigModel cacheModel;
 		TranslateExtend extend;
+		int cacheEltLength;
 		for (Map.Entry<String, Translate> entry : translates.entrySet()) {
 			extend = entry.getValue().getExtend();
 			if (translateMap.containsKey(extend.cache)) {
 				cacheModel = translateMap.get(extend.cache);
 				cache = getCacheData(cacheModel, extend.cacheType);
 				if (cache != null) {
+					// update 2022-1-4 增加缓存使用时cache-index 合法性校验
+					if (cache.size() > 0) {
+						cacheEltLength = cache.values().iterator().next().length;
+						if (extend.index >= cacheEltLength) {
+							throw new IllegalArgumentException("缓存取值数组越界:cacheName:" + extend.cache + ", column:"
+									+ extend.column + ",cache-indexs:(" + extend.index + ">=" + cacheEltLength
+									+ ")[缓存内容数组长度],请检查cache-indexs值确保跟缓存数据具体列保持一致!");
+						}
+					}
 					result.put(extend.column, cache);
 				} else {
 					result.put(extend.column, new HashMap<String, Object[]>());
