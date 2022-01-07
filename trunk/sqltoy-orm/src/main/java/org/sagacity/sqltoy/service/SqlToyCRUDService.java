@@ -143,6 +143,8 @@ public interface SqlToyCRUDService {
 	 * @param entities
 	 */
 	public <T extends Serializable> Long deleteAll(List<T> entities);
+	
+	public Long deleteByIds(final Class entityClass, Object... ids);
 
 	/**
 	 * @todo 清除表的记录

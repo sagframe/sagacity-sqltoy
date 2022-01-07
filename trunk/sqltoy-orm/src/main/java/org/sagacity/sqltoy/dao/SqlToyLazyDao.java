@@ -212,7 +212,7 @@ public interface SqlToyLazyDao {
 	 * @todo 批量修改对象并返回数据库记录变更数量
 	 * @param entitys
 	 * @param reflectPropsHandler 用于通过反射机制设置属性值
-	 * @param forceUpdateProps       强制修改的属性
+	 * @param forceUpdateProps    强制修改的属性
 	 * @return
 	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
@@ -234,8 +234,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	@Deprecated
-	public <T extends Serializable> Long updateAllDeeply(List<T> entities,
-			ReflectPropsHandler reflectPropsHandler);
+	public <T extends Serializable> Long updateAllDeeply(List<T> entities, ReflectPropsHandler reflectPropsHandler);
 
 	/**
 	 * @todo 保存或修改数据并返回数据库记录变更数量
@@ -259,12 +258,12 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entities
 	 * @param reflectPropsHandler 常规传null
-	 * @param forceUpdateProps       强制修改的字段
+	 * @param forceUpdateProps    强制修改的字段
 	 * @return
 	 */
 	@Deprecated
-	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities,
-			ReflectPropsHandler reflectPropsHandler, String... forceUpdateProps);
+	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, ReflectPropsHandler reflectPropsHandler,
+			String... forceUpdateProps);
 
 	/**
 	 * @todo 删除单条对象并返回数据库记录影响的数量
@@ -288,6 +287,14 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public Long deleteByQuery(Class entityClass, EntityQuery entityQuery);
+
+	/**
+	 * @TODO 提供单主键对象批量删除操作
+	 * @param entityClass
+	 * @param ids
+	 * @return
+	 */
+	public Long deleteByIds(Class entityClass, Object... ids);
 
 	/**
 	 * @todo truncate表
@@ -467,7 +474,7 @@ public interface SqlToyLazyDao {
 	 * @return
 	 */
 	public <T extends Serializable> T loadBySql(final String sqlOrNamedSql, final T entity);
-	
+
 	/**
 	 * @TODO 通过EntityQuery模式加载单条记录
 	 * @param <T>
