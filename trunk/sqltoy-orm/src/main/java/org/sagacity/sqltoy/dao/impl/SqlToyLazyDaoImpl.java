@@ -458,6 +458,11 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 		return super.deleteAll(entities);
 	}
 
+	@Override
+	public Long deleteByIds(Class entityClass, Object... ids) {
+		return super.deleteByIds(entityClass, ids);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

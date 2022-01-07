@@ -242,6 +242,11 @@ public class SqlToyCRUDServiceImpl implements SqlToyCRUDService {
 		return sqlToyLazyDao.deleteAll(entities);
 	}
 
+	@Override
+	public Long deleteByIds(Class entityClass, Object... ids) {
+		return sqlToyLazyDao.deleteByIds(entityClass, ids);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
