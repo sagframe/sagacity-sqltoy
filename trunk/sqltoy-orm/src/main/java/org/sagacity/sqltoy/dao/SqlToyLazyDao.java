@@ -244,6 +244,14 @@ public interface SqlToyLazyDao {
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
 
 	/**
+	 * @TODO 根据id集合批量删除
+	 * @param entityClass
+	 * @param ids
+	 * @return
+	 */
+	public Long deleteByIds(Class entityClass, Object... ids);
+	
+	/**
 	 * @TODO 基于单表查询进行删除操作,提供在代码中进行快捷操作
 	 * @param entityClass
 	 * @param entityQuery 例如:EntityQuery.create().where("status=?").values(0)
@@ -311,6 +319,7 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 通过EntityQuery 组织查询条件对POJO进行单表查询,为代码中进行逻辑处理提供便捷
+	 *       <li>如果要查询整个表记录:findEntity(entityClass,null) 即可</li>
 	 * @param <T>
 	 * @param entityClass
 	 * @param entityQuery EntityQuery.create().where("status=:status #[and staffName

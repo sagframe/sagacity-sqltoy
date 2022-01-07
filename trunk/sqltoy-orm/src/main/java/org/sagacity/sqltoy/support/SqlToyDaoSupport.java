@@ -1137,6 +1137,9 @@ public class SqlToyDaoSupport {
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values);
 		}
+		if (innerModel.paramFilters != null && innerModel.paramFilters.size() > 0) {
+			queryExecutor.getInnerModel().paramFilters.addAll(innerModel.paramFilters);
+		}
 		// 分库分表策略
 		setEntitySharding(queryExecutor, entityMeta);
 		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
@@ -1157,6 +1160,25 @@ public class SqlToyDaoSupport {
 	protected <T extends Serializable> Long deleteAll(final List<T> entities, final DataSource dataSource) {
 		return dialectFactory.deleteAll(sqlToyContext, entities, sqlToyContext.getBatchSize(),
 				this.getDataSource(dataSource), null);
+	}
+
+	/**
+	 * @TODO 提供单一主键对象的批量快速删除调用方法
+	 * @param entityClass
+	 * @param ids
+	 * @return
+	 */
+	protected Long deleteByIds(Class entityClass, Object... ids) {
+		if (!sqlToyContext.isEntity(entityClass) || ids == null || ids.length == 0) {
+			throw new IllegalArgumentException("deleteByIds entityClass必须是实体bean、主键数据不能为空!");
+		}
+		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entityClass);
+		if (entityMeta.getIdArray() == null || entityMeta.getIdArray().length != 1) {
+			throw new IllegalArgumentException("deleteByIds实体bean对应表有且只能有一个主键!");
+		}
+		// 为什么统一转成对象集合?便于后面存在分库分表场景、ids超过1000条等场景
+		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, ids);
+		return this.deleteAll(entities, null);
 	}
 
 	/**
