@@ -262,7 +262,7 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String toCapitalMoney(BigDecimal money) {
-		//取绝对值
+		// 取绝对值
 		BigDecimal realMoney = money.setScale(5, RoundingMode.HALF_UP).abs();
 		if (realMoney.compareTo(new BigDecimal(0)) == 0) {
 			return "零元";
@@ -625,6 +625,11 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String convertToEnglishMoney(String value) {
+		boolean isMinus = false;
+		if (value.startsWith("-")) {
+			isMinus = true;
+			value = value.substring(1);
+		}
 		int z = value.indexOf("."); // 取小数点位置
 		String lstr, rstr = "";
 		if (z > -1) { // 看是否有小数，如果有，则分别取左边和右边
@@ -666,7 +671,9 @@ public class NumberUtil {
 		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
 			xs = "AND " + transTwo(rstr) + " CENTS"; // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
 		}
-		return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
+		// return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim()
+		// + " " + xs + "ONLY";
+		return (isMinus ? "MINUS " : "") + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
 	}
 
 	private static String parseFirst(String s) {

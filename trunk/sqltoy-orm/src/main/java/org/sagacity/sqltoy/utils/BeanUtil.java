@@ -1511,7 +1511,7 @@ public class BeanUtil {
 			T bean;
 			for (Object id : ids) {
 				// 去除重复
-				if (!repeat.contains(id)) {
+				if (id != null && !repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
 					method.invoke(bean, convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);
