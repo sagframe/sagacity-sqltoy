@@ -64,9 +64,7 @@ public class NumberUtil {
 	/**
 	 * @todo 根据给定的模式将数据对象转换成格式化的字符串
 	 * @param target
-	 * @param pattern :example: '整数�?.小数�?' as '####.#####'; '#.####' 表示整数位不限制
-	 *                '#,###.####' 整数部分采用三位分割，小数四�?,不足则不�? '#,###.0000'
-	 *                整数部分采用三位分割，小数四�?,不足则补�? #[groupsum_param?captialMoney]
+	 * @param pattern
 	 * @return
 	 */
 	public static String format(Object target, String pattern) {
@@ -453,7 +451,8 @@ public class NumberUtil {
 	/**
 	 * @todo 将多位阿拉伯数字转换成中文
 	 * @param sourceInt
-	 * @return String
+	 * @param isMoney
+	 * @return
 	 */
 	private static String numberToChina(String sourceInt, boolean isMoney) {
 		if (sourceInt.equals("0")) {
@@ -626,6 +625,11 @@ public class NumberUtil {
 	 * @return
 	 */
 	public static String convertToEnglishMoney(String value) {
+		boolean isMinus = false;
+		if (value.startsWith("-")) {
+			isMinus = true;
+			value = value.substring(1);
+		}
 		int z = value.indexOf("."); // 取小数点位置
 		String lstr, rstr = "";
 		if (z > -1) { // 看是否有小数，如果有，则分别取左边和右边
@@ -667,7 +671,9 @@ public class NumberUtil {
 		if ((z > -1) && (BigDecimal.ZERO.compareTo(new BigDecimal(rstr)) == -1)) {
 			xs = "AND " + transTwo(rstr) + " CENTS"; // 小数部分存在时转换小数 xs = "AND CENTS " + transTwo(rstr) + " ";
 		}
-		return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
+		// return "U.S.DOLLARS " + lm.toString().trim() + " DOLLARS " + xs; // lm.trim()
+		// + " " + xs + "ONLY";
+		return (isMinus ? "MINUS " : "") + lm.toString().trim() + " DOLLARS " + xs; // lm.trim() + " " + xs + "ONLY";
 	}
 
 	private static String parseFirst(String s) {

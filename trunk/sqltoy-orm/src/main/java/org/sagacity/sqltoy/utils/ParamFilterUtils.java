@@ -75,7 +75,6 @@ public class ParamFilterUtils {
 		String[] filterParams;
 		int index;
 		String filterParam;
-		boolean hasPrimary = false;
 		for (ParamFilterModel paramFilterModel : filters) {
 			filterParams = paramFilterModel.getParams();
 			// 通配符表示针对所有参数
@@ -90,9 +89,9 @@ public class ParamFilterUtils {
 				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
-			else if (paramFilterModel.getFilterType().equals("primary") && !hasPrimary) {
-				index = (paramIndexMap.get(paramFilterModel.getParam().toLowerCase()) == null) ? -1
-						: paramIndexMap.get(paramFilterModel.getParam().toLowerCase());
+			else if (paramFilterModel.getFilterType().equals("primary")) {
+				filterParam = paramFilterModel.getParam().toLowerCase();
+				index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 				// 决定性参数值不为null
 				if (index != -1 && paramValues[index] != null) {
 					for (int j = 0; j < paramSize; j++) {
@@ -101,7 +100,6 @@ public class ParamFilterUtils {
 							paramValues[j] = null;
 						}
 					}
-					hasPrimary = true;
 				}
 			} else {
 				for (int i = 0, n = filterParams.length; i < n; i++) {
@@ -128,9 +126,8 @@ public class ParamFilterUtils {
 	private static void filterCache(SqlToyContext sqlToyContext, HashMap<String, Integer> paramIndexMap,
 			ParamFilterModel paramFilterModel, Object[] paramValues) {
 		try {
-			// 注:param 和 aliasName等参数在SqlXMLConfigParse时已经转小写
-			int index = (paramIndexMap.get(paramFilterModel.getParam()) == null) ? -1
-					: paramIndexMap.get(paramFilterModel.getParam());
+			String paramName = paramFilterModel.getParam().toLowerCase();
+			int index = (paramIndexMap.get(paramName) == null) ? -1 : paramIndexMap.get(paramName);
 			// 需要转化的值
 			String paramValue = null;
 			if (index >= 0) {
@@ -144,7 +141,7 @@ public class ParamFilterUtils {
 			if (StringUtil.isBlank(aliasName)) {
 				aliasName = paramFilterModel.getParam();
 			}
-			if (!paramIndexMap.containsKey(aliasName)) {
+			if (!paramIndexMap.containsKey(aliasName.toLowerCase())) {
 				logger.warn("cache-arg 从缓存:{}取实际条件值别名:{}配置错误,其不在于实际sql语句中!", paramFilterModel.getCacheName(),
 						aliasName);
 				return;
@@ -161,7 +158,7 @@ public class ParamFilterUtils {
 			if (cacheDataMap.containsKey(paramValue)) {
 				// 存在别名,设置别名对应的值
 				if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
-					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+					int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
 					paramValues[aliasIndex] = paramValue;
 				}
 				return;
@@ -176,7 +173,7 @@ public class ParamFilterUtils {
 				Object compareValue;
 				for (int i = 0; i < cacheFilters.length; i++) {
 					cacheFilter = cacheFilters[i];
-					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam());
+					cacheValueIndex = paramIndexMap.get(cacheFilter.getCompareParam().toLowerCase());
 					compareValue = cacheFilter.getCompareParam();
 					if (cacheValueIndex != null) {
 						compareValue = paramValues[cacheValueIndex.intValue()];
@@ -273,7 +270,7 @@ public class ParamFilterUtils {
 			matchKeys.toArray(realMatched);
 			// 存在别名,设置别名对应的值
 			if (StringUtil.isNotBlank(paramFilterModel.getAliasName())) {
-				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName());
+				int aliasIndex = paramIndexMap.get(paramFilterModel.getAliasName().toLowerCase());
 				paramValues[aliasIndex] = realMatched;
 			} else {
 				paramValues[index] = realMatched;
@@ -293,7 +290,7 @@ public class ParamFilterUtils {
 	private static void filterExclusive(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
 			Object[] paramValues) {
 		boolean isExclusive = false;
-		String filterParam = paramFilterModel.getParam();
+		String filterParam = paramFilterModel.getParam().toLowerCase();
 		int index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 		// 排他性参数中有值为null则排他条件不成立
 		if (index != -1) {
@@ -338,7 +335,7 @@ public class ParamFilterUtils {
 			String updateParam;
 			String updateValue = paramFilterModel.getUpdateValue();
 			for (int i = 0, n = paramFilterModel.getUpdateParams().length; i < n; i++) {
-				updateParam = paramFilterModel.getUpdateParams()[i];
+				updateParam = paramFilterModel.getUpdateParams()[i].toLowerCase();
 				index = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
 				// 排他性参数中有值为null则排他条件不成立
 				if (index != -1) {
@@ -1001,7 +998,7 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤大于指定参照数据值,否则查询条件为null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
 	private static Object filterMore(Object param, Object contrastParam) {
@@ -1036,7 +1033,7 @@ public class ParamFilterUtils {
 	/**
 	 * @todo 过滤大于等于指定参照数据值,否则查询条件为null
 	 * @param param
-	 * @param contrast
+	 * @param contrastParam
 	 * @return
 	 */
 	private static Object filterMoreEquals(Object param, Object contrastParam) {
