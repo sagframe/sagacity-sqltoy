@@ -905,6 +905,17 @@
 					<xsd:attribute name="set-value" type="xsd:string" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="clone" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[复制一个参数的值保存为另外一个参数]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="param" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="as-param" type="xsd:string" use="required"/>
+				</xsd:complexType>
+			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
 

@@ -17,12 +17,12 @@
 		<ehcache.version>3.9.9</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.15</httpclient-core.version>
-		<elastic-rest-client.version>7.16.3</elastic-rest-client.version>
+		<elastic-rest-client.version>7.17.0</elastic-rest-client.version>
 		<fastjson.version>1.2.79</fastjson.version>
 		<mongo.version>3.12.10</mongo.version>
 		<junit-jupiter.version>5.8.2</junit-jupiter.version>
 		<junit-platform.version>1.8.2</junit-platform.version>
-		<slf4j.version>1.7.33</slf4j.version>
+		<slf4j.version>1.7.35</slf4j.version>
 		<caffeine.version>2.9.3</caffeine.version>
 	</properties>
 	<licenses>

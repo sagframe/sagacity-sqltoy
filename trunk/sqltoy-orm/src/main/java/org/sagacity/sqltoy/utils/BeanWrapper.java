@@ -42,7 +42,7 @@ public class BeanWrapper {
 	 * @todo 用于将集合中单个属性值提取出来以数组返回，一般用于sql in 查询提取条件
 	 * @param dataSet
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public Object[] mappingAry(List dataSet) throws RuntimeException {
 		if (null == names || names.length != 1 || null == dataSet || dataSet.isEmpty()) {
@@ -70,7 +70,7 @@ public class BeanWrapper {
 	 * @todo 批量修改集合中对象的属性值
 	 * @param dataSet
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public Collection mappingSet(Collection dataSet) throws RuntimeException {
 		if (dataSet != null && !dataSet.isEmpty()) {
@@ -83,7 +83,7 @@ public class BeanWrapper {
 	 * @todo 根据类型按照values长度构造全新的对象集合
 	 * @param type
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public Collection wrap(Type type) throws RuntimeException {
 		if (null == names || names.length != 1 || null == values || values.length < 1 || null == type) {
@@ -102,7 +102,7 @@ public class BeanWrapper {
 	 * @todo 设置单个对象属性值
 	 * @param serializable
 	 * @return
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
 	public Serializable mapping(Serializable serializable) throws RuntimeException {
 		try {

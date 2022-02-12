@@ -124,7 +124,7 @@ public class CollectionUtil {
 	 */
 	public static List arrayToDeepList(Object arySource) {
 		if (null == arySource) {
-			logger.error("arrayToDeepList:the Ary Source is Null");
+			logger.error("arrayToDeepList:the array is Null");
 			return null;
 		}
 		List resultList = new ArrayList();
@@ -382,10 +382,9 @@ public class CollectionUtil {
 	 * @param endCol
 	 * @param defaultValue
 	 * @return
-	 * @throws Exception
 	 */
 	public static List pivotList(List data, List categorys, int categCol, int pkColumn, int categCompareCol,
-			int startCol, int endCol, Object defaultValue) throws Exception {
+			int startCol, int endCol, Object defaultValue) {
 		return pivotList(data, categorys, new Integer[] { categCol }, new Integer[] { pkColumn },
 				new Integer[] { categCompareCol }, startCol, endCol, defaultValue);
 	}

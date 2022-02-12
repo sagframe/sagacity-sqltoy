@@ -29,6 +29,11 @@ public class SummaryModel implements Serializable {
 	private boolean globalReverse = false;
 
 	/**
+	 * 求平均是否忽视掉null，举例:{1,3,5,null,9} 结果(1+3+5+9)/4
+	 */
+	private boolean averageSkipNull = false;
+
+	/**
 	 * 定义所有需要计算的列
 	 */
 	private String summaryCols;
@@ -231,6 +236,14 @@ public class SummaryModel implements Serializable {
 	 */
 	public void setGroupColumn(String groupColumn) {
 		this.groupColumn = groupColumn;
+	}
+
+	public boolean isAverageSkipNull() {
+		return averageSkipNull;
+	}
+
+	public void setAverageSkipNull(boolean averageSkipNull) {
+		this.averageSkipNull = averageSkipNull;
 	}
 
 }
