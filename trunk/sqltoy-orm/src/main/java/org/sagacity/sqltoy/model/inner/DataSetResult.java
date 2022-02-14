@@ -115,11 +115,11 @@ public class DataSetResult<T> implements Serializable {
 	}
 
 	/**
-	 * @TODO 一般提供查询单列值场景下直接返回一维集合
+	 * @TODO 提供查询单列场景下直接返回一维集合
 	 * @param distinct 是否去重
 	 * @return
 	 */
-	public List getFirstColumnData(boolean distinct) {
+	public List getFirstColumn(boolean distinct) {
 		List result = new ArrayList();
 		if (this.rows == null || this.rows.isEmpty()) {
 			return result;

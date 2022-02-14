@@ -379,7 +379,7 @@ public class ParamFilterUtils {
 		String updateParam = paramFilterModel.getUpdateParams()[0].toLowerCase();
 		int paramIndex = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 		int updateIndex = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
-		// 排他性参数中有值为null则排他条件不成立
+		// 存在clone的参数属性
 		if (paramIndex != -1 && updateIndex != -1) {
 			Object paramValue = paramValues[paramIndex];
 			if (paramValue == null) {
