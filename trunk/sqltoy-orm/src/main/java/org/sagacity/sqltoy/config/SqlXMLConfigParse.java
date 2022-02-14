@@ -956,7 +956,10 @@ public class SqlXMLConfigParse {
 		if (filter.hasAttribute("set-value")) {
 			filterModel.setUpdateValue(filter.getAttribute("set-value"));
 		}
-
+		// add 2022-2-10 for clone filter
+		if (filter.hasAttribute("as-param")) {
+			filterModel.setUpdateParams(new String[] { filter.getAttribute("as-param") });
+		}
 		// exclusive 排他性filter 条件成立的对比方式
 		if (filter.hasAttribute("compare-type")) {
 			String compareType = filter.getAttribute("compare-type");
@@ -1307,6 +1310,10 @@ public class SqlXMLConfigParse {
 					// sum和average值左右拼接时的连接字符串
 					if (elt.hasAttribute("link-sign")) {
 						summaryModel.setLinkSign(elt.getAttribute("link-sign"));
+					}
+					// 求平均时是否过滤掉null的记录
+					if (elt.hasAttribute("average-skip-null")) {
+						summaryModel.setAverageSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
 					}
 					NodeList nodeList = elt.getElementsByTagName(local.concat("global"));
 					// 全局汇总

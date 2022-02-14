@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 
 /**
@@ -111,6 +112,46 @@ public class DataSetResult<T> implements Serializable {
 			result.addAll(this.getRows());
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 提供查询单列场景下直接返回一维集合
+	 * @param distinct 是否去重
+	 * @return
+	 */
+	public List getFirstColumn(boolean distinct) {
+		List result = new ArrayList();
+		if (this.rows == null || this.rows.isEmpty()) {
+			return result;
+		}
+		Object rowTmp = this.rows.get(0);
+		Object cell;
+		if (rowTmp instanceof List) {
+			for (Object row : this.rows) {
+				cell = ((List) row).get(0);
+				if (distinct) {
+					if (!result.contains(cell)) {
+						result.add(cell);
+					}
+				} else {
+					result.add(cell);
+				}
+			}
+			return result;
+		} else if (rowTmp.getClass().isArray()) {
+			for (Object row : this.rows) {
+				cell = ((Object[]) row)[0];
+				if (distinct) {
+					if (!result.contains(cell)) {
+						result.add(cell);
+					}
+				} else {
+					result.add(cell);
+				}
+			}
+			return result;
+		}
+		throw new DataAccessException("切取集合的单列值的前提是返回结果是List<List> 和List<Object[]>类型场景!");
 	}
 
 	/**

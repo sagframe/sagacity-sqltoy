@@ -46,11 +46,6 @@ public class Save extends BaseLink {
 	private int batchSize = 0;
 
 	/**
-	 * 实现基于唯一性索引字段进行数据修改(非主键)
-	 */
-	private String[] uniqueFields;
-
-	/**
 	 * @param sqlToyContext
 	 * @param dataSource
 	 */
@@ -103,14 +98,6 @@ public class Save extends BaseLink {
 		this.batchSize = batchSize;
 		return this;
 	}
-
-	// 暂时不开放
-//	public Save uniqueFields(String... uniqueFields) {
-//		if (uniqueFields != null && uniqueFields.length > 0) {
-//			this.uniqueFields = uniqueFields;
-//		}
-//		return this;
-//	}
 
 	/**
 	 * @todo 保存单条记录

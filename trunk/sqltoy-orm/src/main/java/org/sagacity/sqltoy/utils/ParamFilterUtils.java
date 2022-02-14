@@ -75,21 +75,25 @@ public class ParamFilterUtils {
 		String[] filterParams;
 		int index;
 		String filterParam;
+		String filterType;
 		for (ParamFilterModel paramFilterModel : filters) {
 			filterParams = paramFilterModel.getParams();
+			filterType = paramFilterModel.getFilterType();
 			// 通配符表示针对所有参数
 			if (filterParams.length == 1 && filterParams[0].equals("*")) {
 				filterParams = paramsName;
 			}
 			// 排他性参数(当某些参数值都不为null,则设置其他参数值为null)
-			if (paramFilterModel.getFilterType().equals("exclusive") && paramFilterModel.getUpdateParams() != null) {
+			if (filterType.equals("exclusive") && paramFilterModel.getUpdateParams() != null) {
 				filterExclusive(paramIndexMap, paramFilterModel, paramValues);
 			} // 缓存中提取精准查询参数作为sql查询条件值
-			else if (paramFilterModel.getFilterType().equals("cache-arg")) {
+			else if (filterType.equals("cache-arg")) {
 				filterCache(sqlToyContext, paramIndexMap, paramFilterModel, paramValues);
+			} else if (filterType.equals("clone")) {
+				filterClone(paramIndexMap, paramFilterModel, paramValues);
 			}
 			// 决定性参数不为null时即条件成立时，需要保留的参数(其他的参数全部设置为null)
-			else if (paramFilterModel.getFilterType().equals("primary")) {
+			else if (filterType.equals("primary")) {
 				filterParam = paramFilterModel.getParam().toLowerCase();
 				index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 				// 决定性参数值不为null
@@ -355,6 +359,54 @@ public class ParamFilterUtils {
 						}
 					}
 				}
+			}
+		}
+	}
+
+	/**
+	 * @TODO 将某个参数的值赋给另外一个参数,场景:前端传单日期条件参数，实际查询要组成beginDate,endDate场景
+	 * @param paramIndexMap
+	 * @param paramFilterModel
+	 * @param paramValues
+	 */
+	private static void filterClone(HashMap<String, Integer> paramIndexMap, ParamFilterModel paramFilterModel,
+			Object[] paramValues) {
+		if (paramFilterModel.getParam() == null || paramFilterModel.getUpdateParams() == null
+				|| paramFilterModel.getUpdateParams().length != 1) {
+			return;
+		}
+		String filterParam = paramFilterModel.getParam().toLowerCase();
+		String updateParam = paramFilterModel.getUpdateParams()[0].toLowerCase();
+		int paramIndex = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
+		int updateIndex = (paramIndexMap.get(updateParam) == null) ? -1 : paramIndexMap.get(updateParam);
+		// 存在clone的参数属性
+		if (paramIndex != -1 && updateIndex != -1) {
+			Object paramValue = paramValues[paramIndex];
+			if (paramValue == null) {
+				return;
+			}
+			Object cloneValue = null;
+			if (paramValue instanceof String) {
+				cloneValue = paramValue.toString();
+			} else if (paramValue instanceof Date) {
+				cloneValue = ((Date) paramValue).clone();
+			} else if (paramValue instanceof LocalDate) {
+				LocalDate date = (LocalDate) paramValue;
+				cloneValue = LocalDate.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+			} else if (paramValue instanceof LocalDateTime) {
+				LocalDateTime date = (LocalDateTime) paramValue;
+				cloneValue = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(),
+						date.getHour(), date.getMinute(), date.getSecond());
+			} else if (paramValue instanceof LocalTime) {
+				LocalTime date = (LocalTime) paramValue;
+				cloneValue = LocalTime.of(date.getHour(), date.getMinute(), date.getSecond());
+			} else if (paramValue.getClass().isArray()) {
+				cloneValue = ((Object[]) paramValue).clone();
+			} else {
+				cloneValue = paramValue;
+			}
+			if (cloneValue != null) {
+				paramValues[updateIndex] = cloneValue;
 			}
 		}
 	}
