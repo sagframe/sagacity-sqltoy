@@ -693,8 +693,8 @@ public class CrudCaseServiceTest {
 
 ## 4.1 sqltoy-orm 主要分以下几个部分：
   - SqlToyDaoSupport:提供给开发者Dao继承的基本Dao,集成了所有对数据库操作的方法。
-  - SqlToyLazyDao:提供给开发者快捷使用的Dao,等同于开发者自己写的Dao，用于在简单场景下开发者可以不用写Dao，而直接写Service。
-  - SqltoyCRUDService:简单Service的封装，一些简单的对象增删改开发者写Service也是简单的调用Dao,针对这种场景提供一个简单功能的Service调用，开发者自己的Service用于封装相对复杂的业务逻辑。
+  - SqlToyLazyDao:提供给开发者快捷使用的Dao,让开发者只关注写Service业务逻辑代码，在service中直接调用lazyDao
+  - SqltoyCRUDService:简单Service的封装，面向controller层提供基于对象的快捷service调用，比如save(pojo)这种极为简单的就无需再写service代码
   - DialectFactory:数据库方言工厂类，sqltoy根据当前连接的方言调用不同数据库的实现封装。
   - SqlToyContext:sqltoy上下文配置,是整个框架的核心配置和交换区，spring配置主要是配置sqltoyContext。
   - EntityManager:封装于SqlToyContext，用于托管POJO对象，建立对象跟数据库表的关系。sqltoy通过SqlToyEntity注解扫描加载对象。
