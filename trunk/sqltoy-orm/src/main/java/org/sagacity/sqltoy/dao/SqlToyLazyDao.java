@@ -431,7 +431,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @TODO 通过map传参模式获取单条对象记录
 	 * @param <T>
-	 * @param sqlOrNamedSql
+	 * @param sqlOrNamedSql 可以直接传sql语句，也可以是xml中定义的sql id
 	 * @param paramsMap
 	 * @param voClass
 	 * @return

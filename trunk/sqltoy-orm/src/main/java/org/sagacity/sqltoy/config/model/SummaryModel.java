@@ -4,6 +4,7 @@
 package org.sagacity.sqltoy.config.model;
 
 import java.io.Serializable;
+import java.math.RoundingMode;
 
 /**
  * @project sqltoy-orm
@@ -24,11 +25,6 @@ public class SummaryModel implements Serializable {
 	private boolean reverse = false;
 
 	/**
-	 * 全局汇总是否逆向
-	 */
-	private boolean globalReverse = false;
-
-	/**
 	 * 求平均是否忽视掉null，举例:{1,3,5,null,9} 结果(1+3+5+9)/4
 	 */
 	private boolean averageSkipNull = false;
@@ -39,9 +35,9 @@ public class SummaryModel implements Serializable {
 	private String summaryCols;
 
 	/**
-	 * 汇总和平均的联合输出模板，将汇总和平均的数值联合显示
+	 * 计算平均值的列
 	 */
-	private String combineTemplate = "sum/aver";
+	private String averageCols;
 
 	/**
 	 * 汇总和平均两个值拼接输出时拼接的字符
@@ -51,16 +47,11 @@ public class SummaryModel implements Serializable {
 	/**
 	 * 小数位长度
 	 */
-	private int radixSize = 2;
+	private Integer[] radixSize = { 3 };
 
 	// 多重分组汇总定义
 	// {group-columns,sumTitle,averageTitle,sumSite}
-	private GroupMeta[] groupMeta;
-
-	/**
-	 * 全局汇总合计标题存放的列
-	 */
-	private String globalLabelColumn;
+	private SummaryGroupMeta[] groupMeta;
 
 	/**
 	 * 全局统计的分组列
@@ -68,19 +59,11 @@ public class SummaryModel implements Serializable {
 	private String groupColumn;
 
 	/**
-	 * 全局总计的标题
-	 */
-	private String globalSumTitle;
-
-	/**
-	 * 全局平均的标题
-	 */
-	private String globalAverageTitle;
-
-	/**
 	 * 平均值所在位置:top/buttom/left/right 四种模式
 	 */
 	private String sumSite = "bottom";
+
+	private RoundingMode[] roudingModes;
 
 	/**
 	 * @return the reverse
@@ -110,76 +93,26 @@ public class SummaryModel implements Serializable {
 		this.summaryCols = summaryCols;
 	}
 
-	/**
-	 * @return the combineTemplate
-	 */
-	public String getCombineTemplate() {
-		return combineTemplate;
-	}
-
-	/**
-	 * @param combineTemplate the combineTemplate to set
-	 */
-	public void setCombineTemplate(String combineTemplate) {
-		this.combineTemplate = combineTemplate;
-	}
-
-	public int getRadixSize() {
+	public Integer[] getRadixSize() {
 		return radixSize;
 	}
 
-	public void setRadixSize(int radixSize) {
+	public void setRadixSize(Integer[] radixSize) {
 		this.radixSize = radixSize;
 	}
 
 	/**
 	 * @return the groupMeta
 	 */
-	public GroupMeta[] getGroupMeta() {
+	public SummaryGroupMeta[] getGroupMeta() {
 		return groupMeta;
 	}
 
 	/**
 	 * @param groupMeta the groupMeta to set
 	 */
-	public void setGroupMeta(GroupMeta[] groupMeta) {
+	public void setGroupMeta(SummaryGroupMeta[] groupMeta) {
 		this.groupMeta = groupMeta;
-	}
-
-	public String getGlobalLabelColumn() {
-		return globalLabelColumn;
-	}
-
-	public void setGlobalLabelColumn(String globalLabelColumn) {
-		this.globalLabelColumn = globalLabelColumn;
-	}
-
-	/**
-	 * @return the globalSumTitle
-	 */
-	public String getGlobalSumTitle() {
-		return globalSumTitle;
-	}
-
-	/**
-	 * @param globalSumTitle the globalSumTitle to set
-	 */
-	public void setGlobalSumTitle(String globalSumTitle) {
-		this.globalSumTitle = globalSumTitle;
-	}
-
-	/**
-	 * @return the globalAverageTitle
-	 */
-	public String getGlobalAverageTitle() {
-		return globalAverageTitle;
-	}
-
-	/**
-	 * @param globalAverageTitle the globalAverageTitle to set
-	 */
-	public void setGlobalAverageTitle(String globalAverageTitle) {
-		this.globalAverageTitle = globalAverageTitle;
 	}
 
 	/**
@@ -211,20 +144,6 @@ public class SummaryModel implements Serializable {
 	}
 
 	/**
-	 * @return the globalReverse
-	 */
-	public boolean isGlobalReverse() {
-		return globalReverse;
-	}
-
-	/**
-	 * @param globalReverse the globalReverse to set
-	 */
-	public void setGlobalReverse(boolean globalReverse) {
-		this.globalReverse = globalReverse;
-	}
-
-	/**
 	 * @return the groupColumn
 	 */
 	public String getGroupColumn() {
@@ -244,6 +163,22 @@ public class SummaryModel implements Serializable {
 
 	public void setAverageSkipNull(boolean averageSkipNull) {
 		this.averageSkipNull = averageSkipNull;
+	}
+
+	public String getAverageCols() {
+		return averageCols;
+	}
+
+	public void setAverageCols(String averageCols) {
+		this.averageCols = averageCols;
+	}
+
+	public RoundingMode[] getRoudingModes() {
+		return roudingModes;
+	}
+
+	public void setRoudingModes(RoundingMode[] roudingModes) {
+		this.roudingModes = roudingModes;
 	}
 
 }

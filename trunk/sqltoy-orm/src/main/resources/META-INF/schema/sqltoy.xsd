@@ -1090,10 +1090,24 @@
 				</xsd:complexType>
 			</xsd:element>
 		</xsd:sequence>
-		<xsd:attribute name="columns" type="xsd:string" />
-		<xsd:attribute name="radix-size" type="xsd:integer" />
-		<xsd:attribute name="reverse" type="xsd:boolean"
-			default="false" />
+		<xsd:attribute name="reverse" type="xsd:boolean" default="false" />
+		<xsd:attribute name="sum-columns" type="xsd:string" use="required"/>
+		<xsd:attribute name="average-columns" type="xsd:string"/>
+		<xsd:attribute name="average-radix-sizes" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[1,3,2 用逗号分割为每个平均计算设置保留小数位，如果单个值表示为全部平均计算设置]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="average-rounding-modes" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[HALF_UP,HALF_DOWN,ROUND_DOWN,ROUND_UP]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="average-skip-null" type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[计算平均值时是否排除掉值为null的数字]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 		<xsd:attribute name="sum-site">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">

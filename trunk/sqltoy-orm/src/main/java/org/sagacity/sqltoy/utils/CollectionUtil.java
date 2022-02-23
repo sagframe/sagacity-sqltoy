@@ -1,17 +1,21 @@
 package org.sagacity.sqltoy.utils;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.sagacity.sqltoy.callback.TreeIdAndPidGet;
+import org.sagacity.sqltoy.config.model.SummaryColMeta;
+import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -705,397 +709,264 @@ public class CollectionUtil {
 		return result;
 	}
 
-	public static void groupSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns, int totalColumn,
-			String totalLabel, boolean hasAverage, String averageLabel, String sumRecordSite) {
-		groupSummary(sumData, groupIndexs, sumColumns, totalColumn, totalLabel, hasAverage, averageLabel, 2,
-				sumRecordSite == null ? "bottom" : sumRecordSite, false);
-	}
-
-	public static void groupSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns, int totalColumn,
-			String totalLabel, boolean hasAverage, String averageLabel, String sumRecordSite,
-			boolean globalSumReverse) {
-		groupSummary(sumData, groupIndexs, sumColumns, totalColumn, totalLabel, hasAverage, averageLabel, 2,
-				sumRecordSite == null ? "bottom" : sumRecordSite, globalSumReverse);
-	}
-
-	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns, int totalColumn,
-			String totalLabel, boolean hasAverage, String averageLabel, String sumRecordSite) {
-		groupReverseSummary(sumData, groupIndexs, sumColumns, totalColumn, totalLabel, hasAverage, averageLabel, 2,
-				sumRecordSite == null ? "top" : sumRecordSite);
-	}
-
 	/**
-	 * @todo 分组合计
+	 * @TODO 分组汇总计算
 	 * @param sumData
-	 * @param groupIndexs     {汇总列，汇总标题，平均标题，汇总相对平均的位置(left/right/top/bottom)}
-	 * @param sumColumns
-	 * @param globalSumSite   存在全局汇总时，总计标题存放的列
-	 * @param totalLabel
-	 * @param hasAverage
-	 * @param averageLabel
-	 * @param radixSize
-	 * @param sumRecordSite
-	 * @param totalSumReverse
+	 * @param groupMetas
+	 * @param isReverse
+	 * @param linkSign
 	 */
-	public static void groupSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns, int globalSumSite,
-			String totalLabel, boolean hasAverage, String averageLabel, int radixSize, String sumRecordSite,
-			boolean totalSumReverse) {
-		boolean hasTotalSum = false;
-		if (globalSumSite >= 0 || hasAverage) {
-			hasTotalSum = true;
+	public static void groupSummary(List sumData, SummaryGroupMeta[] groupMetas, boolean isReverse, String linkSign) {
+		// 分组计算，数据集合少于2条没有必要计算
+		if (sumData == null || sumData.size() < 2) {
+			return;
 		}
-		List rowList;
-		int groupTotal = (groupIndexs == null) ? 0 : groupIndexs.length;
-		int columns = ((List) sumData.get(0)).size();
-		int dataSize = sumData.size();
-		// 总数
-		Object[] totalSum = new Object[columns];
-		// 记录各个分组的汇总小计
-		HashMap groupSumMap = new HashMap();
-		HashMap groupPreIndexMap = new HashMap();
-		for (int i = 0; i < groupTotal; i++) {
-			groupSumMap.put(groupIndexs[i][0], new Object[columns]);
-			groupPreIndexMap.put(groupIndexs[i][0], 0);
-		}
-		groupSumMap.put(-1, totalSum);
-		groupPreIndexMap.put(-1, 0);
-		boolean isEqual = true;
-		int preIndex = 0;
-		int dymSize = 0;
-		boolean isLast = false;
-		// 分组对比值
-		HashMap preGroupCompareIndexs = new HashMap();
-		HashMap nowGroupCompareIndexs = new HashMap();
-		String preGroupIndexs = "";
-		String nowGroupIndexs = "";
-		for (int i = 0; i < sumData.size(); i++) {
-			nowGroupIndexs = "";
-			dymSize = sumData.size();
-			isLast = (i == dymSize - 1);
-			isEqual = false;
-			rowList = (List) sumData.get(i);
-			// 构造同质比较条件
-			// 第一个
-			if (i == 0) {
-				for (int k = 0; k < groupTotal; k++) {
-					preGroupIndexs = preGroupIndexs + rowList.get((Integer) groupIndexs[k][0]).toString();
-					preGroupCompareIndexs.put((Integer) groupIndexs[k][0], preGroupIndexs);
+		// 内部子分组自动加上父级分组的列,规避重复
+		Set<Integer> groupCols = new LinkedHashSet<Integer>();
+		for (SummaryGroupMeta groupMeta : groupMetas) {
+			if (groupMeta.getGroupCols() != null && groupMeta.getGroupCols().length > 0) {
+				for (int index : groupMeta.getGroupCols()) {
+					groupCols.add(index);
 				}
 			}
-
-			for (int k = 0; k < groupTotal; k++) {
-				nowGroupIndexs += rowList.get((Integer) groupIndexs[k][0]).toString();
-				nowGroupCompareIndexs.put((Integer) groupIndexs[k][0], nowGroupIndexs);
+			// 子分组合并父分组的列
+			if (groupCols.size() > 0) {
+				Integer[] cols = new Integer[groupCols.size()];
+				groupCols.toArray(cols);
+				groupMeta.setGroupCols(cols);
 			}
-
-			for (int j = groupTotal - 1; j >= 0; j--) {
-				// 不相等
-				if (!BeanUtil.equals(nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]),
-						preGroupCompareIndexs.get((Integer) groupIndexs[j][0]))) {
-					// 最后一条
-					if (j == groupTotal - 1) {
-						isEqual = true;
-					}
-					sumData.addAll(i,
-							createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
-									(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],
-									(Integer) groupPreIndexMap.get(groupIndexs[j][0]), radixSize));
-					groupPreIndexMap.put(groupIndexs[j][0], 0);
-					preGroupCompareIndexs.put((Integer) groupIndexs[j][0],
-							nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]));
-					// 汇总之后重新置值
-					groupSumMap.put((Integer) groupIndexs[j][0], new Object[columns]);
-					// 同时存在汇总和平均
-					if (groupIndexs[j][1] != null && groupIndexs[j][2] != null
-							&& (groupIndexs[j][3].equals("top") || groupIndexs[j][3].equals("bottom"))) {
-						i = i + 2;
-					}
-					// (必须要有一个汇总或平均)
-					else {
-						i++;
-					}
-				} else {
-					break;
-				}
-			}
-			// 汇总计算（含求平均）
-			calculateTotal(groupSumMap, rowList, sumColumns, radixSize);
-			for (int m = 0; m < groupTotal; m++) {
-				groupPreIndexMap.put(groupIndexs[m][0], (Integer) groupPreIndexMap.get(groupIndexs[m][0]) + 1);
-			}
-			// 相等
-			if (isEqual) {
-				preIndex = i;
-			}
-			// 最后一条记录
-			if (isLast) {
-				for (int j = groupTotal - 1; j >= 0; j--) {
-					sumData.addAll(createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
-							(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],
-							(Integer) groupPreIndexMap.get(groupIndexs[j][0]), radixSize));
-				}
-				break;
-			}
-		}
-		// 存在总的求和或平均
-		if (hasTotalSum) {
-			if (totalSumReverse) {
-				sumData.addAll(0, createSummaryRow((Object[]) groupSumMap.get(-1), (List) sumData.get(preIndex),
-						globalSumSite,
-						new Object[] { -1, totalLabel, averageLabel, sumRecordSite == null ? "bottom" : sumRecordSite },
-						dataSize, radixSize));
+			// 转小写
+			if (groupMeta.getSumSite() != null) {
+				groupMeta.setSumSite(groupMeta.getSumSite().toLowerCase());
 			} else {
-				sumData.addAll(createSummaryRow((Object[]) groupSumMap.get(-1), (List) sumData.get(preIndex),
-						globalSumSite,
-						new Object[] { -1, totalLabel, averageLabel, sumRecordSite == null ? "bottom" : sumRecordSite },
-						dataSize, radixSize));
+				groupMeta.setSumSite("");
 			}
 		}
-	}
 
-	/**
-	 * @todo 逆向分组合计
-	 * @param sumData
-	 * @param groupIndexs
-	 * @param sumColumns
-	 * @param globalSumSite
-	 * @param totalLabel
-	 * @param hasAverage
-	 * @param averageLabel
-	 * @param radixSize     小数位长度
-	 * @param sumRecordSite
-	 */
-	public static void groupReverseSummary(List sumData, Object[][] groupIndexs, Integer[] sumColumns,
-			int globalSumSite, String totalLabel, boolean hasAverage, String averageLabel, int radixSize,
-			String sumRecordSite) {
-		boolean hasTotalSum = false;
-		if (globalSumSite >= 0 || hasAverage) {
-			hasTotalSum = true;
-		}
-		int groupTotal = (groupIndexs == null) ? 0 : groupIndexs.length;
-		int columns = ((List) sumData.get(0)).size();
-		if (sumRecordSite == null) {
-			sumRecordSite = "bottom";
-		}
-		// 总数
-		Object[] totalSum = new Object[columns];
-		int dataSize = sumData.size();
-		// 记录各个分组的汇总小计
-		HashMap groupSumMap = new HashMap();
-		HashMap groupPreIndexMap = new HashMap();
-		for (int i = 0; i < groupTotal; i++) {
-			groupSumMap.put(groupIndexs[i][0], new Object[columns]);
-			groupPreIndexMap.put(groupIndexs[i][0], dataSize - 1);
-		}
-		groupSumMap.put(-1, totalSum);
-		groupPreIndexMap.put(-1, dataSize - 1);
-		String preGroupIndexs = "";
-		String nowGroupIndexs = "";
-		boolean isEqual = true;
-		int preIndex = dataSize - 1;
-		List rowList;
-		// 分组对比值
-		HashMap preGroupCompareIndexs = new HashMap();
-		HashMap nowGroupCompareIndexs = new HashMap();
-		for (int i = dataSize - 1; i >= 0; i--) {
-			nowGroupIndexs = "";
-			isEqual = false;
-			rowList = (List) sumData.get(i);
-			// 制造同质比较条件
-			// 第一个
-			if (i == dataSize - 1) {
-				for (int k = 0; k < groupTotal; k++) {
-					preGroupIndexs = preGroupIndexs + rowList.get((Integer) groupIndexs[k][0]).toString();
-					preGroupCompareIndexs.put((Integer) groupIndexs[k][0], preGroupIndexs);
-				}
-			}
-			for (int k = 0; k < groupTotal; k++) {
-				nowGroupIndexs += rowList.get((Integer) groupIndexs[k][0]).toString();
-				nowGroupCompareIndexs.put((Integer) groupIndexs[k][0], nowGroupIndexs);
-			}
-
-			for (int j = groupTotal - 1; j >= 0; j--) {
-				// 不相等
-				if (!BeanUtil.equals(nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]),
-						preGroupCompareIndexs.get((Integer) groupIndexs[j][0]))) {
-					if (j == groupTotal - 1) {
-						isEqual = true;
+		// 进行数据逆转，然后统一按照顺序计算，结果再进行逆向处理
+		if (isReverse) {
+			Collections.reverse(sumData);
+			for (SummaryGroupMeta groupMeta : groupMetas) {
+				if (groupMeta.getSumSite() != null) {
+					// sum和ave 是两行上下模式，逆序
+					if ("top".equals(groupMeta.getSumSite())) {
+						groupMeta.setSumSite("bottom");
+					} else if ("bottom".equals(groupMeta.getSumSite())) {
+						groupMeta.setSumSite("top");
 					}
-					sumData.addAll(i + 1,
-							createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
-									(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],
-									(Integer) groupPreIndexMap.get(groupIndexs[j][0]) - i, radixSize));
-					preGroupCompareIndexs.put((Integer) groupIndexs[j][0],
-							nowGroupCompareIndexs.get((Integer) groupIndexs[j][0]));
-					groupPreIndexMap.put(groupIndexs[j][0], i);
-					// 汇总之后重新置值
-					groupSumMap.put((Integer) groupIndexs[j][0], new Object[columns]);
-				} else {
-					break;
-				}
-			}
-			calculateTotal(groupSumMap, rowList, sumColumns, radixSize);
-			if (isEqual) {
-				preIndex = i;
-			}
-			if (i == 0) {
-				for (int j = groupTotal - 1; j >= 0; j--) {
-					sumData.addAll(0,
-							createSummaryRow((Object[]) groupSumMap.get((Integer) groupIndexs[j][0]),
-									(List) sumData.get(preIndex), (Integer) groupIndexs[j][0], groupIndexs[j],
-									(Integer) groupPreIndexMap.get(groupIndexs[j][0]) + 1, radixSize));
 				}
 			}
 		}
-
-		// 存在总的求和或平均
-		if (hasTotalSum) {
-			sumData.addAll(0, createSummaryRow((Object[]) groupSumMap.get(-1), (List) sumData.get(preIndex),
-					globalSumSite, new Object[] { -1, totalLabel, averageLabel, sumRecordSite }, dataSize, radixSize));
+		summaryList(sumData, groupMetas, StringUtil.isBlank(linkSign) ? " / " : linkSign);
+		// 将结果反转
+		if (isReverse) {
+			Collections.reverse(sumData);
 		}
 	}
 
 	/**
-	 * @todo 创建汇总行
-	 * @param rowSummaryData
-	 * @param rowList
-	 * @param groupIndex
-	 * @param title
-	 * @param rowCount
-	 * @param radixSize      小数位长度
+	 * @TODO 进行汇总计算
+	 * @param dataSet
+	 * @param groupMetas
+	 * @param linkSign
+	 */
+	private static void summaryList(List<List> dataSet, SummaryGroupMeta[] groupMetas, String linkSign) {
+		List<List> iterList = new ArrayList();
+		for (List item : dataSet) {
+			iterList.add(item);
+		}
+		int groupSize = groupMetas.length;
+		SummaryGroupMeta groupMeta;
+		List row;
+		List preRow = iterList.get(0);
+		int dataSize = iterList.size();
+		int addRows = 0;
+		List sumRows;
+		for (int i = 0; i < dataSize; i++) {
+			row = iterList.get(i);
+			// 从最明细分组开始(从里而外)
+			for (int j = groupSize; j > 0; j--) {
+				groupMeta = groupMetas[j - 1];
+				// 判断分组字段值是否相同
+				if (isEquals(row, preRow, i, groupMeta.getGroupCols())) {
+					// 汇总计算
+					calculateTotal(row, groupMeta);
+				} else {
+					sumRows = createSummaryRow(preRow, groupMeta, linkSign);
+					// 插入汇总行(可能存在sum、ave 两行数据)
+					dataSet.addAll(i + addRows, sumRows);
+					// 累加增加的记录行数
+					addRows = addRows + sumRows.size();
+					// 重置分组的列计算的汇总相关的值(sum、rowCount、nullRowCount)
+					for (SummaryColMeta colMeta : groupMeta.getSummaryCols()) {
+						colMeta.setNullCount(0);
+						colMeta.setSumValue(BigDecimal.ZERO);
+						colMeta.setRowCount(0);
+					}
+					calculateTotal(row, groupMeta);
+				}
+				// 最后一行
+				if (i == dataSize - 1) {
+					// 全局汇总的置顶
+					if (groupMeta.isGlobalReverse()) {
+						dataSet.add(0, createSummaryRow(row, groupMeta, linkSign));
+					} else {
+						dataSet.addAll(createSummaryRow(row, groupMeta, linkSign));
+					}
+				}
+			}
+			preRow = row;
+		}
+	}
+
+	/**
+	 * @TODO 比较分组字段的值是否相等
+	 * @param currentRow
+	 * @param preRow
+	 * @param index
+	 * @param columns
 	 * @return
 	 */
-	private static List createSummaryRow(Object[] rowSummaryData, List rowList, int groupIndex, Object[] title,
-			int rowCount, int radixSize) {
-		List result = new ArrayList();
-		List summary = null;
-		List average = null;
-		int titleIndex = groupIndex;
-		if (title.length == 5 && title[4] != null) {
-			titleIndex = (Integer) title[4];
+	private static boolean isEquals(List currentRow, List preRow, int index, Integer[] columns) {
+		// 全局分组、第一行数据
+		if (columns == null || columns.length == 0 || index == 0) {
+			return true;
 		}
-		// 汇总
-		if (title[1] != null || (title[3].equals("left") || title[3].equals("right"))) {
-			summary = new ArrayList();
-			// 汇总数据加入新的数据行中
-			for (int i = 0, n = rowSummaryData.length; i < n; i++) {
-				summary.add(i, rowSummaryData[i]);
+		int cellIndex;
+		for (int i = 0; i < columns.length; i++) {
+			cellIndex = columns[i];
+			if (!BeanUtil.equals(currentRow.get(cellIndex), preRow.get(cellIndex))) {
+				return false;
 			}
-			// 设置分组列前面的数据
-			for (int i = 0; i <= titleIndex; i++) {
-				summary.set(i, rowList.get(i));
-			}
+		}
+		return true;
+	}
 
-			// 设置标题
-			if (title[1] != null && !title[1].toString().trim().equals("")) {
-				summary.set(titleIndex, title[1]);
+	/**
+	 * @TODO 计算汇总
+	 * @param row
+	 * @param groupMeta
+	 */
+	private static void calculateTotal(List row, SummaryGroupMeta groupMeta) {
+		Object cellValue;
+		for (SummaryColMeta colMeta : groupMeta.getSummaryCols()) {
+			cellValue = row.get(colMeta.getColIndex());
+			colMeta.setRowCount(colMeta.getRowCount() + 1);
+			// 空值
+			if (cellValue == null || "".equals(cellValue.toString().trim())) {
+				colMeta.setNullCount(colMeta.getNullCount() + 1);
+			} else {
+				colMeta.setSumValue(colMeta.getSumValue().add(new BigDecimal(cellValue.toString().replace(",", ""))));
 			}
 		}
-		// 平均
-		if (title[2] != null || (title[3].equals("left") || title[3].equals("right"))) {
-			average = new ArrayList();
-			// 平均数据加入新的数据行中
-			Double averageValue;
-			for (int i = 0, n = rowSummaryData.length; i < n; i++) {
-				if (rowSummaryData[i] == null) {
-					average.add(i, null);
-				} else {
-					averageValue = Double.valueOf(rowSummaryData[i].toString().replace(",", "")) / rowCount;
-					if (radixSize >= 0) {
-						average.add(i, BigDecimal.valueOf(averageValue).setScale(radixSize, RoundingMode.FLOOR));
-					} else {
-						average.add(i, BigDecimal.valueOf(averageValue));
-					}
+	}
+
+	/**
+	 * @TODO 构造分组汇总行数据
+	 * @param row
+	 * @param groupMeta
+	 * @param linkSign
+	 * @return
+	 */
+	private static List createSummaryRow(List row, SummaryGroupMeta groupMeta, String linkSign) {
+		List<List> result = new ArrayList();
+		// 汇总类别
+		int rowSize = groupMeta.getRowSize();
+		int labelIndex = groupMeta.getLabelIndex();
+		// 构造sum、ave数据行
+		for (int i = 0; i < rowSize; i++) {
+			List rowData = new ArrayList();
+			// 填充空值构造等长集合
+			for (int j = 0; j < row.size(); j++) {
+				rowData.add(null);
+			}
+			// 补充分组列前面的上层分组的数据
+			if (labelIndex > 0) {
+				for (int k = 0; k < labelIndex; k++) {
+					rowData.set(k, row.get(k));
 				}
 			}
-			// 设置分组列前面的数据
-			for (int i = 0; i <= titleIndex; i++) {
-				average.set(i, rowList.get(i));
-			}
-
-			// 设置标题
-			if (title[2] != null && !title[2].toString().trim().equals("")) {
-				average.set(titleIndex, title[2]);
-			}
+			result.add(rowData);
 		}
-		// 汇总或求平均
-		if (summary == null || average == null) {
-			if (summary != null) {
-				result.add(summary);
+		List sumList = null;
+		List aveList = null;
+		// 平均和汇总分两行展示
+		if (rowSize == 2) {
+			if (groupMeta.getSumSite().equals("top")) {
+				sumList = result.get(0);
+				aveList = result.get(1);
+			} else {
+				sumList = result.get(1);
+				aveList = result.get(0);
 			}
-			if (average != null) {
-				result.add(average);
-			}
+			// 设置标题
+			sumList.set(labelIndex, groupMeta.getSumTitle());
+			aveList.set(labelIndex, groupMeta.getAveTitle());
 		} else {
-			if (title[3].equals("top") || title[3].equals("bottom")) {
-				result.add(summary);
-				// 平均数据优先显示
-				if (title[3].equals("bottom")) {
-					result.add(0, average);
+			// 单行，平均和汇总共一行数据
+			sumList = result.get(0);
+			// 设置标题
+			sumList.set(labelIndex,
+					(groupMeta.getSumTitle() == null) ? groupMeta.getAveTitle() : groupMeta.getSumTitle());
+		}
+		// 汇总值、平均值
+		BigDecimal sumValue;
+		BigDecimal aveValue;
+		String sumStr = "--";
+		String aveStr = "--";
+		for (SummaryColMeta colMeta : groupMeta.getSummaryCols()) {
+			sumValue = colMeta.getSumValue();
+			// 计算平均值
+			if (sumValue.equals(BigDecimal.ZERO)) {
+				aveValue = BigDecimal.ZERO;
+			} else {
+				if (colMeta.isAveSkipNull()) {
+					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount() - colMeta.getNullCount()),
+							colMeta.getRadixSize(), colMeta.getRoudingMode());
 				} else {
-					result.add(average);
+					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount()), colMeta.getRadixSize(),
+							colMeta.getRoudingMode());
+				}
+			}
+			// 汇总和平均为2行记录
+			if (rowSize == 2) {
+				// 汇总
+				if (colMeta.getSummaryType() == 1 || colMeta.getSummaryType() == 3) {
+					sumList.set(colMeta.getColIndex(), sumValue);
+				}
+				// 求平均
+				if (colMeta.getSummaryType() == 2 || colMeta.getSummaryType() == 3) {
+					aveList.set(colMeta.getColIndex(), aveValue);
 				}
 			} else {
-				// 汇总数据是否左边显示
-				boolean isLeft = title[3].equals("left");
-				String sumCellValue;
-				String averageValue;
-				String linkSign = " / ";
-				if (title.length == 6 && title[5] != null) {
-					linkSign = title[5].toString();
-				}
-				summary.set(titleIndex, isLeft ? (summary.get(titleIndex) + linkSign + average.get(titleIndex))
-						: (average.get(titleIndex) + linkSign + summary.get(titleIndex)));
-				for (int i = 0, n = rowSummaryData.length; i < n; i++) {
-					if (rowSummaryData[i] != null) {
-						sumCellValue = (summary.get(i) == null) ? ""
-								: ((BigDecimal) summary.get(i)).stripTrailingZeros().toPlainString();
-						averageValue = (average.get(i) == null) ? ""
-								: ((BigDecimal) average.get(i)).stripTrailingZeros().toPlainString();
-						summary.set(i, isLeft ? (sumCellValue + linkSign + averageValue)
-								: (averageValue + linkSign + sumCellValue));
+				// 单行数据同时存在平均和汇总
+				if (groupMeta.isBothSumAverage()) {
+					if (colMeta.getSummaryType() == 1) {
+						sumStr = sumValue.toPlainString();
+						aveStr = "--";
+					} else if (colMeta.getSummaryType() == 2) {
+						aveStr = aveValue.toPlainString();
+						sumStr = "--";
+					} else if (colMeta.getSummaryType() == 3) {
+						sumStr = sumValue.toPlainString();
+						aveStr = aveValue.toPlainString();
+					}
+					if (groupMeta.getSumSite().equals("left")) {
+						// {总计 / 平均 } 或 { -- / 平均 } 风格
+						sumList.set(colMeta.getColIndex(), sumStr + linkSign + aveStr);
+					} else {
+						sumList.set(colMeta.getColIndex(), aveStr + linkSign + sumStr);
+					}
+				} else {
+					if (colMeta.getSummaryType() == 1) {
+						sumList.set(colMeta.getColIndex(), sumValue);
+					} else if (colMeta.getSummaryType() == 2) {
+						sumList.set(colMeta.getColIndex(), aveValue);
 					}
 				}
-				result.add(summary);
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * @todo 汇总计算
-	 * @param groupSumMap
-	 * @param rowList
-	 * @param summaryColumns
-	 * @param radixSize
-	 */
-	private static void calculateTotal(HashMap groupSumMap, List rowList, Integer[] summaryColumns, int radixSize) {
-		Object[] groupSums;
-		int size = summaryColumns.length;
-		Object cellValue;
-		Object sumCellValue;
-		int columnIndex;
-		// new BigDecimal()
-		for (Iterator iter = groupSumMap.values().iterator(); iter.hasNext();) {
-			groupSums = (Object[]) iter.next();
-			for (int i = 0; i < size; i++) {
-				columnIndex = summaryColumns[i];
-				sumCellValue = groupSums[columnIndex];
-				cellValue = rowList.get(columnIndex);
-				if (radixSize >= 0) {
-					groupSums[columnIndex] = new BigDecimal(
-							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
-									.add(new BigDecimal(StringUtil.isBlank(cellValue) ? "0"
-											: cellValue.toString().replace(",", "")))
-									.setScale(radixSize, RoundingMode.FLOOR);
-				} else {
-					groupSums[columnIndex] = new BigDecimal(
-							StringUtil.isBlank(sumCellValue) ? "0" : sumCellValue.toString().replace(",", ""))
-									.add(new BigDecimal(StringUtil.isBlank(cellValue) ? "0"
-											: cellValue.toString().replace(",", "")));
-				}
-			}
-		}
 	}
 
 	/**
@@ -1137,13 +1008,6 @@ public class CollectionUtil {
 			}
 		}
 		return arrayToDeepList(resultAry);
-	}
-
-	public static class SummarySite {
-		public static String top = "top";
-		public static String bottom = "bottom";
-		public static String left = "left";
-		public static String right = "right";
 	}
 
 	/**
@@ -1235,7 +1099,7 @@ public class CollectionUtil {
 
 	/**
 	 * @todo 判断字符串或对象数据是否在给定的数组中
-	 * @param compareStr
+	 * @param value
 	 * @param ignoreCase
 	 * @param compareAry
 	 * @return

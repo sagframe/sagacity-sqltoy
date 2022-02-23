@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.FormatModel;
-import org.sagacity.sqltoy.config.model.GroupMeta;
 import org.sagacity.sqltoy.config.model.LinkModel;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.config.model.PageOptimize;
@@ -33,6 +32,7 @@ import org.sagacity.sqltoy.config.model.SecureMask;
 import org.sagacity.sqltoy.config.model.ShardingStrategyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SummaryGroupMeta;
 import org.sagacity.sqltoy.config.model.SummaryModel;
 import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
@@ -1291,17 +1291,46 @@ public class SqlXMLConfigParse {
 					// 是否逆向汇总
 					if (elt.hasAttribute("reverse")) {
 						summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
-						summaryModel.setGlobalReverse(summaryModel.isReverse());
 					}
 					// 汇总合计涉及的列
 					if (elt.hasAttribute("columns")) {
 						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
+					} else if (elt.hasAttribute("sum-columns")) {
+						summaryModel.setSummaryCols(elt.getAttribute("sum-columns").toLowerCase());
 					}
-					// 保留小数点位数
+					// 计算平均值的列
+					if (elt.hasAttribute("average-columns")) {
+						summaryModel.setAverageCols(elt.getAttribute("average-columns").toLowerCase());
+					}
+					// 保留小数点位数(2022-2-23 扩展成数组，便于给不同平均值列设置不同的小数位)
 					if (elt.hasAttribute("radix-size")) {
-						summaryModel.setRadixSize(Integer.parseInt(elt.getAttribute("radix-size")));
-					} else {
-						summaryModel.setRadixSize(-1);
+						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
+					} else if (elt.hasAttribute("average-radix-sizes")) {
+						summaryModel
+								.setRadixSize(trimParamsToInt(elt.getAttribute("average-radix-sizes").split("\\,")));
+					}
+					if (elt.hasAttribute("average-rounding-modes")) {
+						String[] roundingModeAry = trimParams(
+								elt.getAttribute("average-rounding-modes").toUpperCase().split("\\,"));
+						RoundingMode[] roudingModes = new RoundingMode[roundingModeAry.length];
+						String roundingMode;
+						RoundingMode roundMode = null;
+						for (int k = 0; k < roundingModeAry.length; k++) {
+							roundingMode = roundingModeAry[k];
+							if (roundingMode.equals("HALF_UP")) {
+								roundMode = RoundingMode.HALF_UP;
+							} else if (roundingMode.equals("HALF_DOWN")) {
+								roundMode = RoundingMode.HALF_DOWN;
+							} else if (roundingMode.equals("ROUND_DOWN")) {
+								roundMode = RoundingMode.DOWN;
+							} else if (roundingMode.equals("ROUND_UP")) {
+								roundMode = RoundingMode.UP;
+							} else {
+								roundMode = RoundingMode.HALF_UP;
+							}
+							roudingModes[k] = roundMode;
+						}
+						summaryModel.setRoudingModes(roudingModes);
 					}
 					// 汇总所在位置
 					if (elt.hasAttribute("sum-site")) {
@@ -1316,35 +1345,39 @@ public class SqlXMLConfigParse {
 						summaryModel.setAverageSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
 					}
 					NodeList nodeList = elt.getElementsByTagName(local.concat("global"));
+					List<SummaryGroupMeta> groupMetaList = new ArrayList<SummaryGroupMeta>();
 					// 全局汇总
 					if (nodeList.getLength() > 0) {
+						SummaryGroupMeta globalMeta = new SummaryGroupMeta();
 						Element globalSummary = (Element) nodeList.item(0);
 						if (globalSummary.hasAttribute("label-column")) {
-							summaryModel.setGlobalLabelColumn(globalSummary.getAttribute("label-column").toLowerCase());
+							globalMeta.setLabelColumn(globalSummary.getAttribute("label-column").toLowerCase());
 						}
 						if (globalSummary.hasAttribute("average-label")) {
-							summaryModel.setGlobalAverageTitle(globalSummary.getAttribute("average-label"));
+							globalMeta.setAverageTitle(globalSummary.getAttribute("average-label"));
 						}
 						// 汇总分组列
 						if (globalSummary.hasAttribute("group-column")) {
-							summaryModel.setGroupColumn(globalSummary.getAttribute("group-column").toLowerCase());
-						}
-						// 全局汇总合计是否逆向
-						if (globalSummary.hasAttribute("reverse")) {
-							summaryModel.setGlobalReverse(Boolean.parseBoolean(globalSummary.getAttribute("reverse")));
+							globalMeta.setGroupColumn(globalSummary.getAttribute("group-column").toLowerCase());
 						}
 						if (globalSummary.hasAttribute("sum-label")) {
-							summaryModel.setGlobalSumTitle(globalSummary.getAttribute("sum-label"));
+							globalMeta.setSumTitle(globalSummary.getAttribute("sum-label"));
 						}
+						if (globalSummary.hasAttribute("reverse")) {
+							globalMeta.setGlobalReverse(Boolean.parseBoolean(globalSummary.getAttribute("reverse")));
+						}
+						if (summaryModel.isReverse()) {
+							globalMeta.setGlobalReverse(false);
+						}
+						groupMetaList.add(globalMeta);
 					}
 					// 分组汇总
 					nodeList = elt.getElementsByTagName(local.concat("group"));
 					if (nodeList.getLength() > 0) {
-						GroupMeta[] groupMetas = new GroupMeta[nodeList.getLength()];
 						Element groupElt;
 						for (int j = 0; j < nodeList.getLength(); j++) {
 							groupElt = (Element) nodeList.item(j);
-							GroupMeta groupMeta = new GroupMeta();
+							SummaryGroupMeta groupMeta = new SummaryGroupMeta();
 							groupMeta.setGroupColumn(groupElt.getAttribute("group-column").toLowerCase());
 							if (groupElt.hasAttribute("average-label")) {
 								groupMeta.setAverageTitle(groupElt.getAttribute("average-label"));
@@ -1355,8 +1388,12 @@ public class SqlXMLConfigParse {
 							if (groupElt.hasAttribute("label-column")) {
 								groupMeta.setLabelColumn(groupElt.getAttribute("label-column"));
 							}
-							groupMetas[j] = groupMeta;
+							groupMetaList.add(groupMeta);
 						}
+					}
+					if (!groupMetaList.isEmpty()) {
+						SummaryGroupMeta[] groupMetas = new SummaryGroupMeta[groupMetaList.size()];
+						groupMetaList.toArray(groupMetas);
 						summaryModel.setGroupMeta(groupMetas);
 					}
 					resultProcessor.add(summaryModel);
@@ -1404,6 +1441,18 @@ public class SqlXMLConfigParse {
 		String[] realParamNames = new String[paramNames.length];
 		for (int i = 0; i < paramNames.length; i++) {
 			realParamNames[i] = (paramNames[i] == null) ? null : paramNames[i].trim();
+		}
+		return realParamNames;
+	}
+
+	private static Integer[] trimParamsToInt(String[] paramNames) {
+		if (paramNames == null || paramNames.length == 0) {
+			return null;
+		}
+		Integer[] realParamNames = new Integer[paramNames.length];
+		for (int i = 0; i < paramNames.length; i++) {
+			realParamNames[i] = (paramNames[i] == null || paramNames[i].trim().equals("")) ? null
+					: Integer.parseInt(paramNames[i].trim());
 		}
 		return realParamNames;
 	}
