@@ -7,7 +7,9 @@ import java.util.List;
 import org.sagacity.sqltoy.config.model.ColsChainRelativeModel;
 import org.sagacity.sqltoy.config.model.LabelIndexModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
+import org.sagacity.sqltoy.utils.ExpressionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sqltoy-orm
@@ -52,8 +54,23 @@ public class ColsChainRelative {
 		List rowList;
 		// 开始列
 		int start = relativeModel.getStartColumn() == null ? 0 : relativeModel.getStartColumn();
-		// 截止列
-		int end = relativeModel.getEndColumn() == null ? dataWidth - 1 : relativeModel.getEndColumn();
+		// 截止列(支持:${dataWidth}-x 模式)
+		String endCol = relativeModel.getEndColumn();
+		int end;
+		if (StringUtil.isBlank(endCol)) {
+			end = dataWidth - 1;
+		} else if (NumberUtil.isInteger(endCol)) {
+			end = Integer.parseInt(endCol);
+		} else {
+			endCol = endCol.replaceAll("result\\.width\\(\\)", Integer.toString(dataWidth))
+					.replaceAll("(?i)\\$\\{dataWidth\\}", Integer.toString(dataWidth));
+			if (NumberUtil.isInteger(endCol)) {
+				end = Integer.parseInt(endCol);
+			} else {
+				end = new BigDecimal(ExpressionUtil.calculate(endCol).toString()).intValue();
+			}
+		}
+		// 负数等同于${dataWidth}-x 模式
 		if (end < 0) {
 			end = dataWidth - 1 + end;
 		}

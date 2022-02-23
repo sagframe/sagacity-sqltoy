@@ -49,9 +49,9 @@ public class ColsChainRelativeModel implements Serializable {
 	private Integer startColumn;
 
 	/**
-	 * 截止列
+	 * 截止列(支持负数等同于${dataWidth}-x)
 	 */
-	private Integer endColumn;
+	private String endColumn;
 
 	/**
 	 * 分组后跳过多少列
@@ -145,11 +145,11 @@ public class ColsChainRelativeModel implements Serializable {
 		this.format = format;
 	}
 
-	public Integer getEndColumn() {
+	public String getEndColumn() {
 		return endColumn;
 	}
 
-	public void setEndColumn(Integer endColumn) {
+	public void setEndColumn(String endColumn) {
 		this.endColumn = endColumn;
 	}
 
