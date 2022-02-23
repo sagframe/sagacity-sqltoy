@@ -55,7 +55,7 @@ public class Save extends BaseLink {
 	/**
 	 * 实现基于唯一性索引字段进行数据修改(非主键)
 	 */
-	private String[] uniqueFields;
+	//private String[] uniqueFields;
 
 	/**
 	 * @param sqlToyContext

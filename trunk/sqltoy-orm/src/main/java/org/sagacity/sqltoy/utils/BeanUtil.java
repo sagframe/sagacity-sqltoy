@@ -94,7 +94,7 @@ public class BeanUtil {
 		// 先过滤出全是set且只有一个参数的方法
 		List<Method> realMeth = new ArrayList<Method>();
 		for (Method mt : methods) {
-			// 剔除void 判断条件
+			// 剔除void 判断条件，存在: this setxxxx(){this.xxx=xxx;return this;}场景
 			// if (mt.getParameterTypes().length == 1 &&
 			// void.class.equals(mt.getReturnType())) {
 			if (mt.getParameterTypes().length == 1) {
@@ -707,12 +707,12 @@ public class BeanUtil {
 	/**
 	 * @TODO 切取单列值并以数组返回,服务于loadAll方法
 	 * @param datas
-	 * @param props
+	 * @param propertyName
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object[] sliceToArray(List datas, String props) throws RuntimeException {
-		List sliceList = reflectBeansToList(datas, new String[] { props }, null);
+	public static Object[] sliceToArray(List datas, String propertyName) throws RuntimeException {
+		List sliceList = reflectBeansToList(datas, new String[] { propertyName }, null);
 		if (sliceList == null || sliceList.isEmpty()) {
 			return null;
 		}
@@ -1511,7 +1511,7 @@ public class BeanUtil {
 			T bean;
 			for (Object id : ids) {
 				// 去除重复
-				if (!repeat.contains(id)) {
+				if (id != null && !repeat.contains(id)) {
 					bean = voClass.getDeclaredConstructor().newInstance();
 					method.invoke(bean, convertType(typeHandler, id, typeName, genericType));
 					entities.add(bean);

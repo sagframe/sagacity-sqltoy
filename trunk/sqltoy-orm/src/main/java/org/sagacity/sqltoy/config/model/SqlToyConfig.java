@@ -79,6 +79,11 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	private String[] tableShardingParams = null;
 
 	/**
+	 * 分库对应参数合集
+	 */
+	private String[] dbShardingParams = null;
+
+	/**
 	 * 对列进行拼接方式定义
 	 */
 	private LinkModel linkModel = null;
@@ -162,7 +167,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @fast场景下外围是否已经包含了()
 	 */
 	private boolean ignoreBracket = false;
-
+	
 	/**
 	 * 解密字段
 	 */
@@ -700,6 +705,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 		this.tableShardingParams = tableShardingParams;
 	}
 
+	public String[] getDbShardingParams() {
+		return dbShardingParams;
+	}
+
+	public void setDbShardingParams(String[] dbShardingParams) {
+		this.dbShardingParams = dbShardingParams;
+	}
+
 	/**
 	 * @return the ignoreBracket
 	 */
@@ -721,4 +734,5 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	public void setDecryptColumns(IgnoreCaseSet decryptColumns) {
 		this.decryptColumns = decryptColumns;
 	}
+
 }
