@@ -64,8 +64,6 @@ public class GroupSummary {
 			groupColsList.toArray(groupCols);
 			// 分组列
 			groupMeta.setGroupCols(groupCols);
-			groupMeta.setAveTitle(groupMeta.getAverageTitle());
-			groupMeta.setSumTitle(groupMeta.getSumTitle());
 			groupMeta.setBothSumAverage(bothSumAverage);
 			groupMeta.setSumSite(sumSite);
 			// 分组的标题列
