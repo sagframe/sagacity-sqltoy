@@ -702,7 +702,7 @@ public class CollectionUtil {
 			} else if (sonList.getClass().isArray()) {
 				result.add(sonList);
 			} else {
-				System.err.println("数据类型必须为Collection");
+				logger.error("数据类型必须为Collection");
 				break;
 			}
 		}
