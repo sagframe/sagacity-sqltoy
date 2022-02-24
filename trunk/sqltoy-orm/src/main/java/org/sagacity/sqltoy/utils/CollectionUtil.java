@@ -718,7 +718,7 @@ public class CollectionUtil {
 	 */
 	public static void groupSummary(List sumData, SummaryGroupMeta[] groupMetas, boolean isReverse, String linkSign) {
 		// 分组计算，数据集合少于2条没有必要计算
-		if (sumData == null || sumData.size() < 2) {
+		if (sumData == null || sumData.size() < 2 || groupMetas == null || groupMetas.length == 0) {
 			return;
 		}
 		// 内部子分组自动加上父级分组的列,规避重复
