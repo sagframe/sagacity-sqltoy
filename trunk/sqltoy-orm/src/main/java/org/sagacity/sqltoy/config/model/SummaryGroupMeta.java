@@ -18,9 +18,14 @@ public class SummaryGroupMeta implements Serializable {
 	private static final long serialVersionUID = -1682139154905127196L;
 
 	/**
-	 * 分组列
+	 * 分组列(xml配置解析后的列字符)
 	 */
 	private String groupColumn;
+	
+	/**
+	 * 分组列(groupColumn拆解后的分组列)
+	 */
+	private Integer[] groupCols;
 
 	/**
 	 * 汇总标题
@@ -37,16 +42,24 @@ public class SummaryGroupMeta implements Serializable {
 	 */
 	private String labelColumn;
 
-	private Integer[] groupCols;
-
-	private String aveTitle;
-
+	/**
+	 * 具体标题存放的列
+	 */
 	private int labelIndex;
 
+	/**
+	 * 汇总值排列位置
+	 */
 	private String sumSite = "left";
 
+	/**
+	 * 分组下面的每个计算列的设置配置
+	 */
 	private SummaryColMeta[] summaryCols;
 
+	/**
+	 * 全局汇总是否反转放于开始行
+	 */
 	private boolean globalReverse = false;
 
 	// 存在求和、求平均，且排列方式为上下模式rowSize=2
@@ -95,14 +108,6 @@ public class SummaryGroupMeta implements Serializable {
 
 	public void setGroupCols(Integer[] groupCols) {
 		this.groupCols = groupCols;
-	}
-
-	public String getAveTitle() {
-		return aveTitle;
-	}
-
-	public void setAveTitle(String aveTitle) {
-		this.aveTitle = aveTitle;
 	}
 
 	public int getLabelIndex() {

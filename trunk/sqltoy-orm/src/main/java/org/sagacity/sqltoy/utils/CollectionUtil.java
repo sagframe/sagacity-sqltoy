@@ -901,13 +901,13 @@ public class CollectionUtil {
 			}
 			// 设置标题
 			sumList.set(labelIndex, groupMeta.getSumTitle());
-			aveList.set(labelIndex, groupMeta.getAveTitle());
+			aveList.set(labelIndex, groupMeta.getAverageTitle());
 		} else {
 			// 单行，平均和汇总共一行数据
 			sumList = result.get(0);
 			// 设置标题
 			sumList.set(labelIndex,
-					(groupMeta.getSumTitle() == null) ? groupMeta.getAveTitle() : groupMeta.getSumTitle());
+					(groupMeta.getSumTitle() == null) ? groupMeta.getAverageTitle() : groupMeta.getSumTitle());
 		}
 		// 汇总值、平均值
 		BigDecimal sumValue;
