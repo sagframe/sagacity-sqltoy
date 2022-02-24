@@ -1330,7 +1330,7 @@ public class SqlXMLConfigParse {
 							}
 							roudingModes[k] = roundMode;
 						}
-						summaryModel.setRoudingModes(roudingModes);
+						summaryModel.setRoundingModes(roudingModes);
 					}
 					// 汇总所在位置
 					if (elt.hasAttribute("sum-site")) {

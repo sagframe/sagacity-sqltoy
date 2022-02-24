@@ -35,7 +35,7 @@ public class SummaryColMeta implements Serializable {
 	/**
 	 * 求平均进位方式
 	 */
-	private RoundingMode roudingMode = RoundingMode.HALF_UP;
+	private RoundingMode roundingMode = RoundingMode.HALF_UP;
 
 	/**
 	 * 汇总值
@@ -81,12 +81,12 @@ public class SummaryColMeta implements Serializable {
 		this.radixSize = radixSize;
 	}
 
-	public RoundingMode getRoudingMode() {
-		return roudingMode;
+	public RoundingMode getRoundingMode() {
+		return roundingMode;
 	}
 
-	public void setRoudingMode(RoundingMode roudingMode) {
-		this.roudingMode = roudingMode;
+	public void setRoundingMode(RoundingMode roundingMode) {
+		this.roundingMode = roundingMode;
 	}
 
 	public BigDecimal getSumValue() {

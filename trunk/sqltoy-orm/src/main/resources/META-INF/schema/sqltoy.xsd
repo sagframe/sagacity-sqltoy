@@ -1091,7 +1091,7 @@
 			</xsd:element>
 		</xsd:sequence>
 		<xsd:attribute name="reverse" type="xsd:boolean" default="false" />
-		<xsd:attribute name="sum-columns" type="xsd:string" use="required"/>
+		<xsd:attribute name="sum-columns" type="xsd:string"/>
 		<xsd:attribute name="average-columns" type="xsd:string"/>
 		<xsd:attribute name="average-radix-sizes" type="xsd:string">
 			<xsd:annotation>
