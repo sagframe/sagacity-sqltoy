@@ -47,18 +47,11 @@ public class GroupSummary {
 		// 全部计算列
 		Integer[] summaryCols = new Integer[summaryColsSet.size()];
 		summaryColsSet.toArray(summaryCols);
-		boolean bothSumAverage = false;
-		for (int i = 0; i < summaryCols.length; i++) {
-			// 同时存在汇总和求平均
-			if (sumColList.contains(summaryCols[i]) && aveColList.contains(summaryCols[i])) {
-				bothSumAverage = true;
-				break;
-			}
-		}
+		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
 		for (SummaryGroupMeta groupMeta : summaryModel.getGroupMeta()) {
-			sumSite = (summaryModel.getSumSite() == null) ? "" : summaryModel.getSumSite().toLowerCase();
+			sumSite = (summaryModel.getSumSite() == null) ? "bottom" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = parseColumns(labelIndexMap, groupMeta.getGroupColumn(), dataWidth);
 			Integer[] groupCols = new Integer[groupColsList.size()];
 			groupColsList.toArray(groupCols);
@@ -91,7 +84,7 @@ public class GroupSummary {
 	private static SummaryColMeta[] createColMeta(Integer[] summaryCols, SummaryModel summaryModel,
 			List<Integer> sumColList, List<Integer> aveColList) {
 		SummaryColMeta[] colMetas = new SummaryColMeta[summaryCols.length];
-		RoundingMode[] roundingModes = summaryModel.getRoudingModes();
+		RoundingMode[] roundingModes = summaryModel.getRoundingModes();
 		int roundingSize = (roundingModes == null) ? 0 : roundingModes.length;
 		int aveIndex = 0;
 		Integer[] radixSizes = summaryModel.getRadixSize();
@@ -104,18 +97,20 @@ public class GroupSummary {
 			if (radixSizeLen == 1) {
 				colMeta.setRadixSize(radixSizes[0]);
 			}
+			if (roundingSize == 1) {
+				colMeta.setRoundingMode(roundingModes[0]);
+			}
 			// 存在汇总:1
 			if (sumColList.contains(summaryCols[i])) {
 				colMeta.setSummaryType(colMeta.getSummaryType() + 1);
 			}
+			
 			// 存在求平均:2
 			if (aveColList.contains(summaryCols[i])) {
 				colMeta.setSummaryType(colMeta.getSummaryType() + 2);
-				if (roundingSize == 1) {
-					colMeta.setRoudingMode(roundingModes[0]);
-				} else if (roundingSize > 1 && aveIndex < roundingSize) {
+				if (roundingSize > 1 && aveIndex < roundingSize) {
 					if (roundingModes[aveIndex] != null) {
-						colMeta.setRoudingMode(roundingModes[aveIndex]);
+						colMeta.setRoundingMode(roundingModes[aveIndex]);
 					}
 				}
 				if (radixSizeLen > 1 && aveIndex < radixSizeLen) {

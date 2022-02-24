@@ -922,10 +922,10 @@ public class CollectionUtil {
 			} else {
 				if (colMeta.isAveSkipNull()) {
 					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount() - colMeta.getNullCount()),
-							colMeta.getRadixSize(), colMeta.getRoudingMode());
+							colMeta.getRadixSize(), colMeta.getRoundingMode());
 				} else {
 					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount()), colMeta.getRadixSize(),
-							colMeta.getRoudingMode());
+							colMeta.getRoundingMode());
 				}
 			}
 			// 汇总和平均为2行记录
@@ -972,19 +972,19 @@ public class CollectionUtil {
 	/**
 	 * @todo <b>列转行</b>
 	 * @param data
-	 * @param colIndex 保留哪些列进行旋转(其它的列数据忽略)
+	 * @param colIndexs 保留哪些列进行旋转(其它的列数据忽略)
 	 * @return
 	 */
-	public static List convertColToRow(List data, Integer[] colIndex) {
+	public static List convertColToRow(List data, Integer[] colIndexs) {
 		if (data == null || data.isEmpty()) {
 			return data;
 		}
 		boolean innerAry = data.get(0).getClass().isArray();
 		int newResultRowCnt = 0;
-		if (colIndex == null) {
+		if (colIndexs == null) {
 			newResultRowCnt = innerAry ? convertArray(data.get(0)).length : ((List) data.get(0)).size();
 		} else {
-			newResultRowCnt = colIndex.length;
+			newResultRowCnt = colIndexs.length;
 		}
 
 		// 构造结果集
@@ -997,9 +997,9 @@ public class CollectionUtil {
 			} else {
 				rowList = (List) data.get(i);
 			}
-			if (colIndex != null) {
-				for (int j = 0, k = colIndex.length; j < k; j++) {
-					resultAry[j][i] = innerAry ? rowAry[colIndex[j]] : rowList.get(colIndex[j]);
+			if (colIndexs != null) {
+				for (int j = 0, k = colIndexs.length; j < k; j++) {
+					resultAry[j][i] = innerAry ? rowAry[colIndexs[j]] : rowList.get(colIndexs[j]);
 				}
 			} else {
 				for (int j = 0; j < newResultRowCnt; j++) {

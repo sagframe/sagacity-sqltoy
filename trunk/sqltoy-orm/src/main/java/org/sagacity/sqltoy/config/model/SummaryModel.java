@@ -11,7 +11,7 @@ import java.math.RoundingMode;
  * @description 定义sqltoy查询结果的处理模式,目前仅提供合计和求平均
  * @author zhongxuchen
  * @version v1.0,Date:2013-5-17
- * @modify Date:2013-5-17 {填写修改说明}
+ * @modify Date:2022-2-23 重构了summary算法,使得逻辑更加清晰同时可以适应未来更加灵活的诉求
  */
 public class SummaryModel implements Serializable {
 	/**
@@ -63,7 +63,7 @@ public class SummaryModel implements Serializable {
 	 */
 	private String sumSite = "bottom";
 
-	private RoundingMode[] roudingModes;
+	private RoundingMode[] roundingModes;
 
 	/**
 	 * @return the reverse
@@ -173,12 +173,11 @@ public class SummaryModel implements Serializable {
 		this.averageCols = averageCols;
 	}
 
-	public RoundingMode[] getRoudingModes() {
-		return roudingModes;
+	public RoundingMode[] getRoundingModes() {
+		return roundingModes;
 	}
 
-	public void setRoudingModes(RoundingMode[] roudingModes) {
-		this.roudingModes = roudingModes;
+	public void setRoundingModes(RoundingMode[] roundingModes) {
+		this.roundingModes = roundingModes;
 	}
-
 }
