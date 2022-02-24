@@ -24,8 +24,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, LabelIndexModel labelIndexMap, List result) {
-		if (result == null || result.size() < 2 || summaryModel.getGroupMeta() == null
-				|| summaryModel.getGroupMeta().length == 0) {
+		// 记录小于2条无需汇总计算
+		if (result == null || result.size() < 2) {
 			return;
 		}
 		// 计算的列，columns="1..result.width()-1"
@@ -38,6 +38,11 @@ public class GroupSummary {
 		}
 		for (Integer index : aveColList) {
 			summaryColsSet.add(index);
+		}
+		// 未设置分组和汇总计算列信息
+		if (summaryModel.getGroupMeta() == null || summaryModel.getGroupMeta().length == 0
+				|| summaryColsSet.size() == 0) {
+			throw new IllegalArgumentException("summary计算未正确配置sum-columns或average-columns或group分组信息!");
 		}
 		// 全部计算列
 		Integer[] summaryCols = new Integer[summaryColsSet.size()];
