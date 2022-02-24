@@ -63,7 +63,7 @@ public class SummaryModel implements Serializable {
 	 */
 	private String sumSite = "bottom";
 
-	private RoundingMode[] roudingModes;
+	private RoundingMode[] roundingModes;
 
 	/**
 	 * @return the reverse
@@ -173,12 +173,11 @@ public class SummaryModel implements Serializable {
 		this.averageCols = averageCols;
 	}
 
-	public RoundingMode[] getRoudingModes() {
-		return roudingModes;
+	public RoundingMode[] getRoundingModes() {
+		return roundingModes;
 	}
 
-	public void setRoudingModes(RoundingMode[] roudingModes) {
-		this.roudingModes = roudingModes;
+	public void setRoundingModes(RoundingMode[] roundingModes) {
+		this.roundingModes = roundingModes;
 	}
-
 }

@@ -702,7 +702,7 @@ public class CollectionUtil {
 			} else if (sonList.getClass().isArray()) {
 				result.add(sonList);
 			} else {
-				logger.error("数据类型必须为Collection");
+				System.err.println("数据类型必须为Collection");
 				break;
 			}
 		}
@@ -922,10 +922,10 @@ public class CollectionUtil {
 			} else {
 				if (colMeta.isAveSkipNull()) {
 					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount() - colMeta.getNullCount()),
-							colMeta.getRadixSize(), colMeta.getRoudingMode());
+							colMeta.getRadixSize(), colMeta.getRoundingMode());
 				} else {
 					aveValue = sumValue.divide(BigDecimal.valueOf(colMeta.getRowCount()), colMeta.getRadixSize(),
-							colMeta.getRoudingMode());
+							colMeta.getRoundingMode());
 				}
 			}
 			// 汇总和平均为2行记录
