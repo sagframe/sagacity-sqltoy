@@ -56,10 +56,10 @@ public class ColsChainRelative {
 		int start = 0;
 		if (StringUtil.isBlank(relativeModel.getStartColumn())) {
 			start = 0;
+		} else if (NumberUtil.isInteger(relativeModel.getStartColumn())) {
+			start = Integer.parseInt(relativeModel.getStartColumn());
 		} else if (labelIndexMap.containsKey(relativeModel.getStartColumn())) {
 			start = labelIndexMap.get(relativeModel.getStartColumn());
-		} else {
-			start = Integer.parseInt(relativeModel.getStartColumn());
 		}
 
 		// 截止列(支持:${dataWidth}-x 模式)

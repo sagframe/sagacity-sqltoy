@@ -47,7 +47,7 @@ public class GroupSummary {
 		// 全部计算列
 		Integer[] summaryCols = new Integer[summaryColsSet.size()];
 		summaryColsSet.toArray(summaryCols);
-		//同时存在求和、求平均
+		// 同时存在求和、求平均
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
@@ -172,7 +172,9 @@ public class GroupSummary {
 						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
 						endColumnStr = endColumnStr.substring(0, stepIndex);
 					}
-					if (labelIndexMap.containsKey(endColumnStr)) {
+					if (NumberUtil.isInteger(endColumnStr)) {
+						end = Integer.parseInt(endColumnStr);
+					} else if (labelIndexMap.containsKey(endColumnStr)) {
 						end = labelIndexMap.get(endColumnStr);
 					} else {
 						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
