@@ -494,14 +494,26 @@ public interface SqlToyLazyDao {
 
 	/**
 	 * @TODO 获取查询结果的第一条、第一列的值，一般用select max(x) from 等
+	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
 	 * @return
 	 */
+	@Deprecated
 	public Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue);
 
 	public Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap);
+	
+	/**
+	 * @TODO 执行类似select field from table 单个字段值
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param resultType 只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
+	 * @return
+	 */
+	public <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,final Class<T> resultType);
 
 	/**
 	 * @todo 通过Query构造查询条件进行数据查询

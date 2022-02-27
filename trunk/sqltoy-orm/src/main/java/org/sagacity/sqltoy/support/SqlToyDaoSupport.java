@@ -268,6 +268,19 @@ public class SqlToyDaoSupport {
 				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
+	/**
+	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap)
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
+	@Deprecated
+	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramsValue) {
+		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	}
+	
 	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
 		Object queryResult = loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
 		if (null != queryResult) {
@@ -276,9 +289,28 @@ public class SqlToyDaoSupport {
 		return null;
 	}
 
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue) {
-		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	/**
+	 * @TODO 执行类似select field from table 单个字段值
+	 * @param <T>
+	 * @param sqlOrNamedSql
+	 * @param paramsMap
+	 * @param resultType 只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
+	 * @return
+	 */
+	protected <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
+		if (resultType == null) {
+			throw new IllegalArgumentException("getSingleValue resultType 不能为null!");
+		}
+		Object value = getSingleValue(sqlOrNamedSql, paramsMap);
+		if (value == null) {
+			return null;
+		}
+		try {
+			return (T) BeanUtil.convertType(value, resultType.getTypeName());
+		} catch (Exception e) {
+			throw new DataAccessException("执行getSingleValue方法获取单个值失败:" + e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -1120,7 +1152,7 @@ public class SqlToyDaoSupport {
 		List entities = BeanUtil.wrapEntities(sqlToyContext.getTypeHandler(), entityMeta, entityClass, ids);
 		return this.deleteAll(entities, null);
 	}
-	
+
 	protected <T extends Serializable> Long deleteAll(final List<T> entities) {
 		return this.deleteAll(entities, null);
 	}

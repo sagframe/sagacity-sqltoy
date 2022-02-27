@@ -103,6 +103,11 @@ public class SqlToyLazyDaoImpl extends BaseDaoSupport implements SqlToyLazyDao {
 		return super.getSingleValue(sqlOrNamedSql, paramsMap);
 	}
 
+	@Override
+	public <T> T getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
+		return super.getSingleValue(sqlOrNamedSql, paramsMap, resultType);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

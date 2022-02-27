@@ -47,11 +47,12 @@ public class GroupSummary {
 		// 全部计算列
 		Integer[] summaryCols = new Integer[summaryColsSet.size()];
 		summaryColsSet.toArray(summaryCols);
+		// 同时存在求和、求平均
 		boolean bothSumAverage = !sumColList.isEmpty() && !aveColList.isEmpty();
 		// 组织分组配置
 		String sumSite;
 		for (SummaryGroupMeta groupMeta : summaryModel.getGroupMeta()) {
-			sumSite = (summaryModel.getSumSite() == null) ? "bottom" : summaryModel.getSumSite().toLowerCase();
+			sumSite = (summaryModel.getSumSite() == null) ? "top" : summaryModel.getSumSite().toLowerCase();
 			List<Integer> groupColsList = parseColumns(labelIndexMap, groupMeta.getGroupColumn(), dataWidth);
 			Integer[] groupCols = new Integer[groupColsList.size()];
 			groupColsList.toArray(groupCols);
@@ -153,6 +154,8 @@ public class GroupSummary {
 				int end = 0;
 				if (NumberUtil.isInteger(beginToEnd[0])) {
 					begin = Integer.parseInt(beginToEnd[0]);
+				} else if (labelIndexMap.containsKey(beginToEnd[0])) {
+					begin = labelIndexMap.get(beginToEnd[0]);
 				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
 				}
@@ -169,7 +172,13 @@ public class GroupSummary {
 						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
 						endColumnStr = endColumnStr.substring(0, stepIndex);
 					}
-					end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
+					if (NumberUtil.isInteger(endColumnStr)) {
+						end = Integer.parseInt(endColumnStr);
+					} else if (labelIndexMap.containsKey(endColumnStr)) {
+						end = labelIndexMap.get(endColumnStr);
+					} else {
+						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
+					}
 				}
 				for (int j = begin; j <= end; j += step) {
 					if (!result.contains(j)) {

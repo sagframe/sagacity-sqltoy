@@ -61,7 +61,7 @@ public class SummaryModel implements Serializable {
 	/**
 	 * 平均值所在位置:top/buttom/left/right 四种模式
 	 */
-	private String sumSite = "bottom";
+	private String sumSite = "top";
 
 	private RoundingMode[] roundingModes;
 
