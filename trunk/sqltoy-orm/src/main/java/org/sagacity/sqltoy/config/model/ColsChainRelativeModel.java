@@ -46,7 +46,7 @@ public class ColsChainRelativeModel implements Serializable {
 	/**
 	 * 从第几列开始
 	 */
-	private Integer startColumn;
+	private String startColumn;
 
 	/**
 	 * 截止列(支持负数等同于${dataWidth}-x)
@@ -113,11 +113,11 @@ public class ColsChainRelativeModel implements Serializable {
 		this.relativeIndexs = relativeIndexs;
 	}
 
-	public Integer getStartColumn() {
+	public String getStartColumn() {
 		return startColumn;
 	}
 
-	public void setStartColumn(Integer startColumn) {
+	public void setStartColumn(String startColumn) {
 		this.startColumn = startColumn;
 	}
 

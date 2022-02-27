@@ -1293,21 +1293,21 @@ public class SqlXMLConfigParse {
 						summaryModel.setReverse(Boolean.parseBoolean(elt.getAttribute("reverse")));
 					}
 					// 汇总合计涉及的列
-					if (elt.hasAttribute("columns")) {
-						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
-					} else if (elt.hasAttribute("sum-columns")) {
+					if (elt.hasAttribute("sum-columns")) {
 						summaryModel.setSummaryCols(elt.getAttribute("sum-columns").toLowerCase());
+					} else if (elt.hasAttribute("columns")) {
+						summaryModel.setSummaryCols(elt.getAttribute("columns").toLowerCase());
 					}
 					// 计算平均值的列
 					if (elt.hasAttribute("average-columns")) {
 						summaryModel.setAverageCols(elt.getAttribute("average-columns").toLowerCase());
 					}
 					// 保留小数点位数(2022-2-23 扩展成数组，便于给不同平均值列设置不同的小数位)
-					if (elt.hasAttribute("radix-size")) {
-						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
-					} else if (elt.hasAttribute("average-radix-sizes")) {
+					if (elt.hasAttribute("average-radix-sizes")) {
 						summaryModel
 								.setRadixSize(trimParamsToInt(elt.getAttribute("average-radix-sizes").split("\\,")));
+					} else if (elt.hasAttribute("radix-size")) {
+						summaryModel.setRadixSize(trimParamsToInt(elt.getAttribute("radix-size").split("\\,")));
 					}
 					if (elt.hasAttribute("average-rounding-modes")) {
 						String[] roundingModeAry = trimParams(

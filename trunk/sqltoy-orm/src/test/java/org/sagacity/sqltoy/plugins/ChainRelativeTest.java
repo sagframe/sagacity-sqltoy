@@ -34,7 +34,7 @@ public class ChainRelativeTest {
 		colsRelative.setReduceOne(false);
 		colsRelative.setRelativeIndexs(new Integer[] { 1, 2 });
 		colsRelative.setFormat("#.00%");
-		colsRelative.setStartColumn(1);
+		colsRelative.setStartColumn("1");
 		LabelIndexModel labelIndexMap = new LabelIndexModel();
 		ColsChainRelative.process(colsRelative, labelIndexMap, result);
 		System.out.println(JSON.toJSONString(result));
