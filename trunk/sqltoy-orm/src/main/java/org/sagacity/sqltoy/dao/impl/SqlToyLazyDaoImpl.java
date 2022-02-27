@@ -101,6 +101,11 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 		return super.getSingleValue(sqlOrNamedSql, paramsMap);
 	}
 
+	@Override
+	public <T> T getSingleValue(String sqlOrNamedSql, Map<String, Object> paramsMap, Class<T> resultType) {
+		return super.getSingleValue(sqlOrNamedSql, paramsMap, resultType);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -462,7 +467,7 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	public Long deleteByIds(Class entityClass, Object... ids) {
 		return super.deleteByIds(entityClass, ids);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

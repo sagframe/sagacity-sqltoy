@@ -376,6 +376,20 @@ public class SqlToyDaoSupport {
 				this.getDataSource(dataSource, sqlToyConfig));
 	}
 
+	/**
+	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object>
+	 *      paramsMap)
+	 * @param sqlOrNamedSql
+	 * @param paramsNamed
+	 * @param paramsValue
+	 * @return
+	 */
+	@Deprecated
+	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
+			final Object[] paramsValue) {
+		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	}
+
 	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
 		Object queryResult = loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
 		if (null != queryResult) {
@@ -384,9 +398,21 @@ public class SqlToyDaoSupport {
 		return null;
 	}
 
-	protected Object getSingleValue(final String sqlOrNamedSql, final String[] paramsNamed,
-			final Object[] paramsValue) {
-		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
+	//add 2022-2-25
+	protected <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
+			final Class<T> resultType) {
+		if (resultType == null) {
+			throw new IllegalArgumentException("getSingleValue resultType 不能为null!");
+		}
+		Object value = getSingleValue(sqlOrNamedSql, paramsMap);
+		if (value == null) {
+			return null;
+		}
+		try {
+			return (T) BeanUtil.convertType(value, resultType.getTypeName());
+		} catch (Exception e) {
+			throw new DataAccessException("getSingleValue方法获取单个值失败:" + e.getMessage(), e);
+		}
 	}
 
 	/**

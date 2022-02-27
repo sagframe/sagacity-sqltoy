@@ -53,7 +53,15 @@ public class ColsChainRelative {
 		String format = relativeModel.getFormat();
 		List rowList;
 		// 开始列
-		int start = relativeModel.getStartColumn() == null ? 0 : relativeModel.getStartColumn();
+		int start = 0;
+		if (StringUtil.isBlank(relativeModel.getStartColumn())) {
+			start = 0;
+		} else if (labelIndexMap.containsKey(relativeModel.getStartColumn())) {
+			start = labelIndexMap.get(relativeModel.getStartColumn());
+		} else {
+			start = Integer.parseInt(relativeModel.getStartColumn());
+		}
+
 		// 截止列(支持:${dataWidth}-x 模式)
 		String endCol = relativeModel.getEndColumn();
 		int end;
@@ -61,6 +69,8 @@ public class ColsChainRelative {
 			end = dataWidth - 1;
 		} else if (NumberUtil.isInteger(endCol)) {
 			end = Integer.parseInt(endCol);
+		} else if (labelIndexMap.containsKey(endCol)) {
+			end = labelIndexMap.get(endCol);
 		} else {
 			endCol = endCol.replaceAll("result\\.width\\(\\)", Integer.toString(dataWidth))
 					.replaceAll("(?i)\\$\\{dataWidth\\}", Integer.toString(dataWidth));

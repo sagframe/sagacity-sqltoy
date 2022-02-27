@@ -50,7 +50,7 @@ public class SummaryGroupMeta implements Serializable {
 	/**
 	 * 汇总值排列位置
 	 */
-	private String sumSite = "bottom";
+	private String sumSite = "top";
 
 	/**
 	 * 分组下面的每个计算列的设置配置
