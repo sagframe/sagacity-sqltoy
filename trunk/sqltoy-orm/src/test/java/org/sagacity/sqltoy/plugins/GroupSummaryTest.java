@@ -103,6 +103,8 @@ public class GroupSummaryTest {
 				int end = 0;
 				if (NumberUtil.isInteger(beginToEnd[0])) {
 					begin = Integer.parseInt(beginToEnd[0]);
+				} else if (labelIndexMap.containsKey(beginToEnd[0])) {
+					begin = labelIndexMap.get(beginToEnd[0]);
 				} else {
 					begin = (new BigDecimal(ExpressionUtil.calculate(beginToEnd[0]).toString())).intValue();
 				}
@@ -119,7 +121,9 @@ public class GroupSummaryTest {
 						step = Integer.parseInt(endColumnStr.substring(stepIndex + 1).trim());
 						endColumnStr = endColumnStr.substring(0, stepIndex);
 					}
-					if (labelIndexMap.containsKey(endColumnStr)) {
+					if (NumberUtil.isInteger(endColumnStr)) {
+						end = Integer.parseInt(endColumnStr);
+					} else if (labelIndexMap.containsKey(endColumnStr)) {
 						end = labelIndexMap.get(endColumnStr);
 					} else {
 						end = (new BigDecimal(ExpressionUtil.calculate(endColumnStr).toString())).intValue();
