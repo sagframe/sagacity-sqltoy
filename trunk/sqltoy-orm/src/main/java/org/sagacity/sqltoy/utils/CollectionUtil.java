@@ -905,9 +905,17 @@ public class CollectionUtil {
 		} else {
 			// 单行，平均和汇总共一行数据
 			sumList = result.get(0);
-			// 设置标题
-			sumList.set(labelIndex,
-					(groupMeta.getSumTitle() == null) ? groupMeta.getAverageTitle() : groupMeta.getSumTitle());
+			if (groupMeta.getSummaryType() == 3) {
+				if (groupMeta.getSumSite().equals("left")) {
+					sumList.set(labelIndex, groupMeta.getSumTitle() + linkSign + groupMeta.getAverageTitle());
+				} else {
+					sumList.set(labelIndex, groupMeta.getAverageTitle() + linkSign + groupMeta.getSumTitle());
+				}
+			} else if (groupMeta.getSummaryType() == 1) {
+				sumList.set(labelIndex, groupMeta.getSumTitle());
+			} else if (groupMeta.getSummaryType() == 2) {
+				sumList.set(labelIndex, groupMeta.getAverageTitle());
+			}
 		}
 		// 汇总值、平均值
 		BigDecimal sumValue;
@@ -940,7 +948,7 @@ public class CollectionUtil {
 				}
 			} else {
 				// 单行数据同时存在平均和汇总
-				if (groupMeta.isBothSumAverage()) {
+				if (groupMeta.getSummaryType() == 3) {
 					if (colMeta.getSummaryType() == 1) {
 						sumStr = sumValue.toPlainString();
 						aveStr = "--";

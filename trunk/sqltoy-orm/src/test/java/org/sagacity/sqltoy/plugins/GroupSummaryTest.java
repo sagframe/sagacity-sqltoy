@@ -56,20 +56,20 @@ public class GroupSummaryTest {
 		SummaryGroupMeta[] groupMetas = new SummaryGroupMeta[2];
 		SummaryGroupMeta globalMeta = new SummaryGroupMeta();
 		globalMeta.setLabelIndex(0);
-		// globalMeta.setAveTitle("平均值");
-		globalMeta.setSumTitle("总计/平均值");
-		globalMeta.setSumSite("left");
-		globalMeta.setRowSize(1);
-		globalMeta.setBothSumAverage(true);
+		globalMeta.setAverageTitle("平均值");
+		globalMeta.setSumTitle("总计");
+		globalMeta.setSumSite("top");
+		globalMeta.setRowSize(2);
+		globalMeta.setSummaryType(3);
 		globalMeta.setSummaryCols(colMetas);
 		groupMetas[0] = globalMeta;
 
 		SummaryGroupMeta groupMeta = new SummaryGroupMeta();
 		groupMeta.setGroupCols(new Integer[] { 0 });
-		// groupMeta.setAveTitle("平均值");
-		groupMeta.setSumTitle("小计/平均值");
+		// groupMeta.setAverageTitle("平均值");
+		groupMeta.setSumTitle("小计");
 		groupMeta.setLabelIndex(0);
-		groupMeta.setBothSumAverage(true);
+		globalMeta.setSummaryType(1);
 		groupMeta.setRowSize(1);
 		groupMeta.setSummaryCols(colMetas1);
 		groupMeta.setSumSite("left");
