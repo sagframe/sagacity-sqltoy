@@ -1108,15 +1108,20 @@
 				<xsd:documentation><![CDATA[计算平均值时是否排除掉值为null的数字]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="sum-site">
+		<xsd:attribute name="sum-site" default="top">
 			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="left" />
-					<xsd:enumeration value="right" />
 					<xsd:enumeration value="top" />
 					<xsd:enumeration value="bottom" />
+					<xsd:enumeration value="left" />
+					<xsd:enumeration value="right" />
 				</xsd:restriction>
 			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="link-sign" default=" / ">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[sum和average同一行展示时拼接字符]]></xsd:documentation>
+			</xsd:annotation>
 		</xsd:attribute>
 	</xsd:complexType>
 	<xsd:simpleType name="numberFormatType">

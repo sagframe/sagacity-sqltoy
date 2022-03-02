@@ -21,7 +21,7 @@ public class SummaryGroupMeta implements Serializable {
 	 * 分组列(xml配置解析后的列字符)
 	 */
 	private String groupColumn;
-	
+
 	/**
 	 * 分组列(groupColumn拆解后的分组列)
 	 */
@@ -66,9 +66,9 @@ public class SummaryGroupMeta implements Serializable {
 	private int rowSize = 1;
 
 	/**
-	 * 同时存在汇总和求平均
+	 * 默认sum计算
 	 */
-	private boolean bothSumAverage = false;
+	private int summaryType = 1;
 
 	public String getGroupColumn() {
 		return groupColumn;
@@ -142,20 +142,20 @@ public class SummaryGroupMeta implements Serializable {
 		this.rowSize = rowSize;
 	}
 
-	public boolean isBothSumAverage() {
-		return bothSumAverage;
-	}
-
-	public void setBothSumAverage(boolean bothSumAverage) {
-		this.bothSumAverage = bothSumAverage;
-	}
-
 	public boolean isGlobalReverse() {
 		return globalReverse;
 	}
 
 	public void setGlobalReverse(boolean globalReverse) {
 		this.globalReverse = globalReverse;
+	}
+
+	public int getSummaryType() {
+		return summaryType;
+	}
+
+	public void setSummaryType(int summaryType) {
+		this.summaryType = summaryType;
 	}
 
 }
