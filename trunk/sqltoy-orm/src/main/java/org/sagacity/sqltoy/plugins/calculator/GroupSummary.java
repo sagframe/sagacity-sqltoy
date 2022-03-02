@@ -58,14 +58,29 @@ public class GroupSummary {
 			groupColsList.toArray(groupCols);
 			// 分组列
 			groupMeta.setGroupCols(groupCols);
-			groupMeta.setBothSumAverage(bothSumAverage);
+			if (bothSumAverage) {
+				if (StringUtil.isNotBlank(groupMeta.getSumTitle())
+						&& StringUtil.isNotBlank(groupMeta.getAverageTitle())) {
+					groupMeta.setSummaryType(3);
+				} else if (StringUtil.isNotBlank(groupMeta.getAverageTitle())) {
+					groupMeta.setSummaryType(2);
+				} // summaryType默认为1即sum计算
+				else {
+					groupMeta.setSummaryType(1);
+				}
+			} else if (!sumColList.isEmpty()) {
+				groupMeta.setSummaryType(1);
+			} else if (!aveColList.isEmpty()) {
+				groupMeta.setSummaryType(2);
+			}
+
 			groupMeta.setSumSite(sumSite);
 			// 分组的标题列
 			groupMeta.setLabelIndex(
 					NumberUtil.isInteger(groupMeta.getLabelColumn()) ? Integer.parseInt(groupMeta.getLabelColumn())
 							: labelIndexMap.get(groupMeta.getLabelColumn().toLowerCase()));
-			// 汇总和求平均分两行组装
-			if (bothSumAverage && (sumSite.equals("top") || sumSite.equals("bottom"))) {
+			// 汇总和求平均分两行组装,update 2022-2-28 增加每个分组是否同时有汇总标题和求平均标题，允许不同分组只有汇总或求平均
+			if (groupMeta.getSummaryType() == 3 && (sumSite.equals("top") || sumSite.equals("bottom"))) {
 				groupMeta.setRowSize(2);
 			}
 			groupMeta.setSummaryCols(createColMeta(summaryCols, summaryModel, sumColList, aveColList));
