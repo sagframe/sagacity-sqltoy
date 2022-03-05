@@ -44,6 +44,7 @@ import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
+import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallQueryResult;
@@ -200,7 +201,7 @@ public class SqlToyDaoSupport {
 	}
 
 	protected Long getCountBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
+		return getCountByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
 	}
 
 	/**
@@ -269,7 +270,8 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap)
+	 * @see getSingleValue(final String sqlOrNamedSql, final Map<String, Object>
+	 *      paramsMap)
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -280,9 +282,10 @@ public class SqlToyDaoSupport {
 			final Object[] paramsValue) {
 		return getSingleValue(sqlOrNamedSql, paramsNamed, paramsValue, null);
 	}
-	
+
 	protected Object getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap) {
-		Object queryResult = loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap));
+		Object queryResult = loadByQuery(
+				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap));
 		if (null != queryResult) {
 			return ((List) queryResult).get(0);
 		}
@@ -294,7 +297,7 @@ public class SqlToyDaoSupport {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param resultType 只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
+	 * @param resultType    只支持基本类型，如BigDecimal、Double、String、Date、LocalDate等而非Map、VO复杂类型
 	 * @return
 	 */
 	protected <T> T getSingleValue(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -450,7 +453,8 @@ public class SqlToyDaoSupport {
 
 	protected <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> resultType) {
-		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(resultType));
+		return (T) loadByQuery(new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap)
+				.resultType(resultType));
 	}
 
 	/**
@@ -667,7 +671,9 @@ public class SqlToyDaoSupport {
 
 	protected <T> List<T> findBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> voClass) {
-		return (List<T>) findByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getRows();
+		return (List<T>) findByQuery(
+				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
+						.getRows();
 	}
 
 	/**
@@ -746,13 +752,15 @@ public class SqlToyDaoSupport {
 	protected <T> PaginationModel<T> findPageBySql(final PaginationModel page, final String sqlOrNamedSql,
 			final Map<String, Object> paramsMap, Class<T> voClass) {
 		return (PaginationModel<T>) findPageByQuery(page,
-				new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass)).getPageResult();
+				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
+						.getPageResult();
 	}
 
 	protected <T> List<T> findTopBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap,
 			final Class<T> voClass, final double topSize) {
-		return (List<T>) findTopByQuery(new QueryExecutor(sqlOrNamedSql, paramsMap).resultType(voClass), topSize)
-				.getRows();
+		return (List<T>) findTopByQuery(
+				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass),
+				topSize).getRows();
 	}
 
 	/**
