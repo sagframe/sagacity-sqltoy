@@ -11,7 +11,7 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>2.6.3</spring-boot.version>
+		<spring-boot.version>2.6.4</spring-boot.version>
 	</properties>
 	<licenses>
 		<license>
