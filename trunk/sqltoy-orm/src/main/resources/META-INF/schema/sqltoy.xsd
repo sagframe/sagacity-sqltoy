@@ -747,6 +747,8 @@
 								<xsd:enumeration value="minutes" />
 								<xsd:enumeration value="seconds" />
 								<xsd:enumeration value="milliseconds" />
+								<xsd:enumeration value="months" />
+								<xsd:enumeration value="years" />
 							</xsd:restriction>
 						</xsd:simpleType>
 					</xsd:attribute>

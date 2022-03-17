@@ -81,7 +81,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedQuery
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @return Long
+	 * @return Long 查询符合条件的记录数量
 	 */
 	public Long getCount(String sqlOrNamedQuery, String[] paramsNamed, Object[] paramsValue);
 
@@ -89,7 +89,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过map传参获取记录数量
 	 * @param sqlOrNamedQuery
 	 * @param paramsMap
-	 * @return Long
+	 * @return Long 查询符合条件的记录数量
 	 */
 	public Long getCount(String sqlOrNamedQuery, Map<String, Object> paramsMap);
 
@@ -97,7 +97,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 通过POJO产生count语句
 	 * @param entityClass
 	 * @param entityQuery 例如:EntityQuery.create().where("status=:status").names("status").values(1)
-	 * @return Long
+	 * @return Long 查询符合条件的记录数量
 	 */
 	public Long getCount(Class entityClass, EntityQuery entityQuery);
 
@@ -131,7 +131,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量保存对象，并返回数据更新记录量
 	 * @param <T>
 	 * @param entities
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public <T extends Serializable> Long saveAll(List<T> entities);
 
@@ -139,7 +139,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量保存对象并忽视已经存在的记录
 	 * @param <T>
 	 * @param entities
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public <T extends Serializable> Long saveAllIgnoreExist(List<T> entities);
 
@@ -147,7 +147,7 @@ public interface SqlToyLazyDao {
 	 * @todo 修改数据并返回数据库记录变更数量(非强制修改属性，当属性值为null不参与修改)
 	 * @param entity
 	 * @param forceUpdateProps 强制修改的字段属性
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long update(Serializable entity, String... forceUpdateProps);
 
@@ -171,7 +171,7 @@ public interface SqlToyLazyDao {
 	/**
 	 * @todo 深度修改,不管是否为null全部字段强制修改
 	 * @param serializableVO
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long updateDeeply(Serializable serializableVO);
 
@@ -179,8 +179,8 @@ public interface SqlToyLazyDao {
 	 * @TODO 基于对象单表对象查询进行数据更新
 	 * @param entityClass
 	 * @param entityUpdate 例如:EntityUpdate.create().set("createBy",
-	 *                     "chenrenfei").where("staffName like ?").values("张")
-	 * @return Long 数据库记录变更量(插入数据量)
+	 *                     "S0001").where("staffName like ?").values("张")
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
@@ -190,7 +190,7 @@ public interface SqlToyLazyDao {
 	 * @param forceUpdateProps
 	 * @param emptyUpdateClass
 	 * @param subTableForceUpdateProps
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] emptyUpdateClass,
 			HashMap<Class, String[]> subTableForceUpdateProps);
@@ -200,7 +200,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entities
 	 * @param forceUpdateProps
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public <T extends Serializable> Long updateAll(List<T> entities, String... forceUpdateProps);
 
@@ -208,7 +208,7 @@ public interface SqlToyLazyDao {
 	 * @TODO 批量深度修改，即全部字段参与修改(包括为null的属性)
 	 * @param <T>
 	 * @param entities
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public <T extends Serializable> Long updateAllDeeply(List<T> entities);
 
@@ -216,7 +216,7 @@ public interface SqlToyLazyDao {
 	 * @todo 保存或修改数据并返回数据库记录变更数量
 	 * @param entity
 	 * @param forceUpdateProps 强制修改的字段
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public Long saveOrUpdate(Serializable entity, String... forceUpdateProps);
 
@@ -225,21 +225,21 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param entities
 	 * @param forceUpdateProps 强制修改的字段
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量
 	 */
 	public <T extends Serializable> Long saveOrUpdateAll(List<T> entities, String... forceUpdateProps);
 
 	/**
 	 * @todo 删除单条对象并返回数据库记录影响的数量
 	 * @param entity
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库发生变更的记录量(删除数据量)
 	 */
 	public Long delete(final Serializable entity);
 
 	/**
 	 * @todo 批量删除对象并返回数据库记录影响的数量
 	 * @param entities
-	 * @return Long 数据库记录变更量(插入数据量)
+	 * @return Long 数据库记录变更量(删除数据量)
 	 */
 	public <T extends Serializable> Long deleteAll(final List<T> entities);
 

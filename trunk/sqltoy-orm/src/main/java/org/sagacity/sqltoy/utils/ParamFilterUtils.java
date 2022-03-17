@@ -825,6 +825,14 @@ public class ParamFilterUtils {
 				result = DateUtil.addSecond(result, 3600 * paramFilterModel.getIncrementTime());
 				break;
 			}
+			case MONTHS: {
+				result = DateUtil.addMonth(result, paramFilterModel.getIncrementTime().intValue());
+				break;
+			}
+			case YEARS: {
+				result = DateUtil.addYear(result, paramFilterModel.getIncrementTime().intValue());
+				break;
+			}
 			default: {
 				result = DateUtil.addDay(result, paramFilterModel.getIncrementTime());
 				break;

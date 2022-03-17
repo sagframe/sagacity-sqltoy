@@ -41,4 +41,11 @@ public class DateUtilTest {
 		SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);// MMM dd hh:mm:ss Z yyyy
 		System.out.println(sdf.parse(a));
 	}
+	
+	@Test
+	public void testDateAdd() throws ParseException {
+		System.err.println(DateUtil.addMonth("2021-12-11", 2));
+		System.err.println(DateUtil.addYear("2018-12-11", 2));
+		
+	}
 }

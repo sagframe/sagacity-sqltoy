@@ -242,7 +242,6 @@ public class TranslateConfigParse {
 				return defaultConfig;
 			}
 		});
-
 	}
 
 	/**
