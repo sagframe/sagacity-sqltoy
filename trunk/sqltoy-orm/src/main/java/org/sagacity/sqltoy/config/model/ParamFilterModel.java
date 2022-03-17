@@ -6,7 +6,8 @@ package org.sagacity.sqltoy.config.model;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+
+import org.sagacity.sqltoy.model.TimeUnit;
 
 /**
  * @project sqltoy-orm
