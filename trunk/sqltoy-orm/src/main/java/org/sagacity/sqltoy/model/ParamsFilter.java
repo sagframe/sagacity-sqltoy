@@ -4,7 +4,6 @@
 package org.sagacity.sqltoy.model;
 
 import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @project sagacity-sqltoy
@@ -60,7 +59,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO blank
-	 * 
 	 * @return
 	 */
 	public ParamsFilter blank() {
@@ -70,7 +68,6 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 等于
-	 * 
 	 * @return
 	 */
 	public ParamsFilter eq(Object... values) {
@@ -153,6 +150,8 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO 参数转日期
+	 * @param dateType
+	 * @param increase
 	 * @return
 	 */
 	public ParamsFilter toDate(DateType dateType, int increase) {
@@ -188,6 +187,8 @@ public class ParamsFilter implements Serializable {
 
 	/**
 	 * @TODO between
+	 * @param startValue
+	 * @param endValue
 	 * @return
 	 */
 	public ParamsFilter between(Object startValue, Object endValue) {

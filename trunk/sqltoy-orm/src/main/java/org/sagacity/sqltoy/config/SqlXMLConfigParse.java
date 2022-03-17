@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -38,6 +37,7 @@ import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.config.model.UnpivotModel;
 import org.sagacity.sqltoy.dialect.utils.PageOptimizeUtils;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
+import org.sagacity.sqltoy.model.TimeUnit;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
@@ -835,6 +835,10 @@ public class SqlXMLConfigParse {
 				filterModel.setTimeUnit(TimeUnit.SECONDS);
 			} else if (timeUnit.equals("MILLISECONDS") || timeUnit.equals("MILLISECOND")) {
 				filterModel.setTimeUnit(TimeUnit.MILLISECONDS);
+			} else if (timeUnit.equals("MONTHS") || timeUnit.equals("MONTH")) {
+				filterModel.setTimeUnit(TimeUnit.MONTHS);
+			} else if (timeUnit.equals("YEARS") || timeUnit.equals("YEAR")) {
+				filterModel.setTimeUnit(TimeUnit.YEARS);
 			}
 		}
 

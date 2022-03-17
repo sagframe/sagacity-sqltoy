@@ -460,7 +460,14 @@ public class DateUtil {
 	public static Date addMonth(Object dt, int month) {
 		GregorianCalendar gc = new GregorianCalendar();
 		gc.setTime(convertDateObject(dt));
-		gc.add(2, month);
+		gc.add(Calendar.MONTH, month);
+		return gc.getTime();
+	}
+
+	public static Date addYear(Object dt, int year) {
+		GregorianCalendar gc = new GregorianCalendar();
+		gc.setTime(convertDateObject(dt));
+		gc.add(Calendar.YEAR, year);
 		return gc.getTime();
 	}
 
