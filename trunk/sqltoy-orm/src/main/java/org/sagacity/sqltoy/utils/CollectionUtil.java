@@ -809,7 +809,7 @@ public class CollectionUtil {
 				if (i == dataSize - 1) {
 					// 全局汇总的置顶
 					if (groupMeta.isGlobalReverse()) {
-						dataSet.add(0, createSummaryRow(row, groupMeta, linkSign));
+						dataSet.addAll(0, createSummaryRow(row, groupMeta, linkSign));
 					} else {
 						dataSet.addAll(createSummaryRow(row, groupMeta, linkSign));
 					}
