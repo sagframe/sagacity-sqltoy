@@ -738,7 +738,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-						.getRows();
+				.getRows();
 	}
 
 	/**
@@ -1667,9 +1667,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0]).resultType(resultType)
-									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
-									.maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0])
+					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
+					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
@@ -1811,10 +1811,6 @@ public class SqlToyDaoSupport {
 		if (valueSize > 0) {
 			System.arraycopy(values, 0, realValues, innerModel.updateValues.size(), valueSize);
 		}
-		Integer[] paramsTypes = new Integer[realValues.length];
-		for (int i = 0; i < paramsTypes.length; i++) {
-			paramsTypes[i] = java.sql.Types.OTHER;
-		}
 		String[] realNames = null;
 		if (isName) {
 			realNames = new String[realValues.length];
@@ -1840,10 +1836,6 @@ public class SqlToyDaoSupport {
 				fieldMeta = entityMeta.getFieldMeta(entityMeta.getColumnFieldMap().get(fields[0].trim().toLowerCase()));
 			}
 			columnName = fieldMeta.getColumnName();
-			// 设置字段类型
-			if (fields.length == 1) {
-				paramsTypes[index] = fieldMeta.getType();
-			}
 			// 保留字处理
 			columnName = ReservedWordsUtil.convertWord(columnName, null);
 			if (isName) {
@@ -1882,7 +1874,7 @@ public class SqlToyDaoSupport {
 				getDialect(innerModel.dataSource));
 		QueryExecutor queryExecutor = new QueryExecutor(sqlStr).names(realNames).values(realValues);
 		setEntitySharding(queryExecutor, entityMeta);
-		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, paramsTypes, null,
+		return dialectFactory.executeSql(sqlToyContext, sqlToyConfig, queryExecutor, null, null,
 				getDataSource(innerModel.dataSource, sqlToyConfig));
 	}
 
