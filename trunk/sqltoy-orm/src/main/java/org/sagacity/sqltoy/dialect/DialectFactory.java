@@ -319,8 +319,15 @@ public class DialectFactory {
 									extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
 							// 做sql签名
 							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
-							this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
-									queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit, false));
+							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
+							if (paramsTypes != null && queryParam.getParamsValue() != null
+									&& queryParam.getParamsValue().length != paramsTypes.length) {
+								this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
+										queryParam.getParamsValue(), null, conn, dbType, autoCommit, false));
+							} else {
+								this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
+										queryParam.getParamsValue(), paramsTypes, conn, dbType, autoCommit, false));
+							}
 						}
 					});
 			SqlExecuteStat.debug("执行结果", "受影响记录数量:{} 条!", updateTotalCnt);
