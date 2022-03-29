@@ -167,7 +167,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	 * @fast场景下外围是否已经包含了()
 	 */
 	private boolean ignoreBracket = false;
-	
+
 	/**
 	 * 解密字段
 	 */
@@ -201,7 +201,7 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * debug模式下是否打印，通过sql注释中增加#not_print#或 #not_debug#进行关闭
 	 */
-	private boolean showSql = true;
+	private Boolean showSql;
 
 	/**
 	 * 忽视空集合
@@ -541,14 +541,14 @@ public class SqlToyConfig implements Serializable, java.lang.Cloneable {
 	/**
 	 * @return the showSql
 	 */
-	public boolean isShowSql() {
+	public Boolean isShowSql() {
 		return showSql;
 	}
 
 	/**
 	 * @param showSql the showSql to set
 	 */
-	public void setShowSql(boolean showSql) {
+	public void setShowSql(Boolean showSql) {
 		this.showSql = showSql;
 	}
 

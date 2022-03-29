@@ -48,7 +48,7 @@ public class SqlXMLConfigParseTest {
 	@Test
 	public void testChinaParamName() throws Exception {
 		String sql = "select * from table where 1=1 #[and id=:单据_编号_id] and name like @value(:name) #[and status=:status]";
-		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search, true);
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sql, "mysql", SqlType.search);
 		System.err.println(JSON.toJSONString(sqlToyConfig));
 	}
 }

@@ -838,18 +838,13 @@ public class SqlConfigParseUtils {
 	 * @param sqlType
 	 * @return
 	 */
-	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType, boolean showSql) {
+	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType) {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(dialect);
-		sqlToyConfig.setShowSql(showSql);
-		if (showSql) {
-			// debug模式下面关闭sql打印
-			if (StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX)) {
-				sqlToyConfig.setShowSql(false);
-			}
-		} else {
-			if (StringUtil.matches(querySql, SqlToyConstants.DO_PRINT_REGEX)) {
-				sqlToyConfig.setShowSql(true);
-			}
+		// debug模式下面关闭sql打印
+		if (StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX)) {
+			sqlToyConfig.setShowSql(false);
+		} else if (StringUtil.matches(querySql, SqlToyConstants.DO_PRINT_REGEX)) {
+			sqlToyConfig.setShowSql(true);
 		}
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));

@@ -384,20 +384,7 @@
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
-		<xsd:attribute name="dialect">
-			<xsd:simpleType>
-				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="db2" />
-					<xsd:enumeration value="oracle" />
-					<xsd:enumeration value="sqlserver" />
-					<xsd:enumeration value="mysql" />
-					<xsd:enumeration value="postgresql" />
-					<xsd:enumeration value="clickhouse" />
-					<xsd:enumeration value="sybase_iq" />
-					<xsd:enumeration value="sqlite" />
-				</xsd:restriction>
-			</xsd:simpleType>
-		</xsd:attribute>
+		<xsd:attribute name="debug" type="xsd:boolean"/>
 	</xsd:complexType>
 	<xsd:complexType name="sqlToyMqlType" mixed="true">
 		<xsd:annotation>
