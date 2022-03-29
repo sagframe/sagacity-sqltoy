@@ -55,7 +55,7 @@ public class SqlExecuteStat {
 	 * @param debugPrint
 	 */
 	public static void start(String sqlId, String type, Boolean debugPrint) {
-		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? true : debugPrint.booleanValue()));
+		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
 	/**
@@ -147,9 +147,9 @@ public class SqlExecuteStat {
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
-			if (!debug) {
-				return;
-			}
+			// if (!debug) {
+			//    return;
+			// }
 		}
 
 		String uid = sqlTrace.getUid();

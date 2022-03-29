@@ -71,6 +71,8 @@ public class SqlScriptLoader {
 	 */
 	private boolean initialized = false;
 
+	private boolean debug = false;
+
 	/**
 	 * sql文件变更监测器
 	 */
@@ -110,8 +112,10 @@ public class SqlScriptLoader {
 			return;
 		}
 		initialized = true;
+		this.debug = debug;
 		boolean enabledDebug = logger.isDebugEnabled();
 		try {
+			SqlXMLConfigParse.debug = debug;
 			// 检索所有匹配的sql.xml文件
 			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
@@ -242,7 +246,7 @@ public class SqlScriptLoader {
 		} else {
 			result = codeSqlCache.get(sqlKey);
 			if (result == null) {
-				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
+				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType, this.debug);
 				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
 				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加

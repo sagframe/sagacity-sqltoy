@@ -41,9 +41,19 @@ public class Save extends BaseLink {
 	private String[] forceUpdateProps;
 
 	/**
+	 * 是否深度修改(update 2022-3-23 支持更新全部字段)
+	 */
+	private boolean deeply = false;
+
+	/**
 	 * 批处理提交记录数量
 	 */
 	private int batchSize = 0;
+
+	public Save deeply(boolean deeply) {
+		this.deeply = deeply;
+		return this;
+	}
 
 	/**
 	 * @param sqlToyContext
@@ -112,6 +122,9 @@ public class Save extends BaseLink {
 			return dialectFactory.save(sqlToyContext, entity, getDataSource(null));
 		}
 		if (saveMode == SaveMode.UPDATE) {
+			if (deeply) {
+				forceUpdateProps = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+			}
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, getDataSource(null));
 		}
 		if (saveMode == SaveMode.IGNORE) {
@@ -136,6 +149,10 @@ public class Save extends BaseLink {
 					autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
+			// 深度修改获取全部字段属性
+			if (deeply) {
+				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray();
+			}
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps, null,
 					getDataSource(null), autoCommit);
 		}
