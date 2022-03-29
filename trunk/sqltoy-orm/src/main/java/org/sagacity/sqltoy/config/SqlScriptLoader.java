@@ -71,6 +71,8 @@ public class SqlScriptLoader {
 	 */
 	private boolean initialized = false;
 
+	private boolean debug = false;
+
 	/**
 	 * sql文件变更监测器
 	 */
@@ -91,7 +93,7 @@ public class SqlScriptLoader {
 	 * @param debug
 	 * @param delayCheckSeconds
 	 * @param scriptCheckIntervalSeconds
-	 * @param repeatBreak
+	 * @param breakWhenSqlRepeat
 	 * @throws Exception
 	 */
 	public void initialize(boolean debug, int delayCheckSeconds, Integer scriptCheckIntervalSeconds,
@@ -110,12 +112,14 @@ public class SqlScriptLoader {
 			return;
 		}
 		initialized = true;
+		this.debug = debug;
 		boolean enabledDebug = logger.isDebugEnabled();
 		try {
+			SqlXMLConfigParse.debug = debug;
 			// 检索所有匹配的sql.xml文件
-			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources, dialect);
+			realSqlList = ScanEntityAndSqlResource.getSqlResources(sqlResourcesDir, sqlResources);
 			if (realSqlList != null && !realSqlList.isEmpty()) {
-				// 此处提供大量提示信息,避免开发者配置错误或未成功将资源文件编译到bin或classes下
+				// 此处提供大量提示信息,避免开发者配置错误或未将资源文件编译到bin或classes下
 				if (enabledDebug) {
 					logger.debug("总计将加载.sql.xml文件数量为:{}", realSqlList.size());
 					logger.debug("如果.sql.xml文件不在下列清单中,很可能是文件没有在编译路径下(bin、classes等),请仔细检查!");
@@ -128,11 +132,10 @@ public class SqlScriptLoader {
 					repeatSql.addAll(SqlXMLConfigParse.parseSingleFile(realSqlList.get(i), filesLastModifyMap, sqlCache,
 							encoding, dialect, false, i));
 				}
-				// 存在重复sqlId
 				int repeatSqlSize = repeatSql.size();
 				if (repeatSqlSize > 0) {
 					StringBuilder repeatSqlIds = new StringBuilder();
-					repeatSqlIds.append("\n/*-------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理-------------*/\n");
+					repeatSqlIds.append("\n/*----------- 总计发现:" + repeatSqlSize + " 个重复的sqlId,请检查处理---------------\n");
 					if (breakWhenSqlRepeat) {
 						repeatSqlIds.append("/*--提示:设置 spring.sqltoy.breakWhenSqlRepeat=false 可允许sqlId重复并覆盖!-------\n");
 					}
@@ -144,7 +147,6 @@ public class SqlScriptLoader {
 					} else {
 						logger.warn(repeatSqlIds.toString());
 					}
-					// 重复sqlId时终止后续执行
 					if (breakWhenSqlRepeat) {
 						throw new Exception(repeatSqlIds.toString());
 					}
@@ -156,12 +158,12 @@ public class SqlScriptLoader {
 					logger.debug("请检查配置项sqlResourcesDir={}是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!", sqlResourcesDir);
 				} else {
 					out.println("总计加载*.sql.xml文件数量为:0 !");
-					out.println("请检查配置项sqlResourcesDir=" + sqlResourcesDir + "是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!");
+					out.println(
+							"请检查配置项sqlResourcesDir=[" + sqlResourcesDir + "]是否正确(如:字母拼写),或文件没有在编译路径下(bin、classes等)!");
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("加载和解析sql.xml为结尾的文件过程发生异常!" + e.getMessage(), e);
+			logger.error("加载和解析以sql.xml结尾的文件过程发生异常!" + e.getMessage(), e);
 			throw e;
 		}
 		// 存在sql文件，启动文件变更检测便于重新加载sql
@@ -244,7 +246,7 @@ public class SqlScriptLoader {
 		} else {
 			result = codeSqlCache.get(sqlKey);
 			if (result == null) {
-				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType);
+				result = SqlConfigParseUtils.parseSqlToyConfig(sqlKey, realDialect, sqlType, this.debug);
 				// 设置默认空白查询条件过滤filter,便于直接传递sql语句情况下查询条件的处理
 				result.addFilter(new ParamFilterModel("blank", new String[] { "*" }));
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加

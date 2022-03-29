@@ -162,6 +162,7 @@ public class SqlToyConstants {
 	 * 不输出sql的表达式
 	 */
 	public final static Pattern NOT_PRINT_REGEX = Pattern.compile("(?i)\\#not\\_(print|debug)\\#");
+	public final static Pattern DO_PRINT_REGEX = Pattern.compile("(?i)\\#(print|debug)\\#");
 
 	/**
 	 * 忽视空记录

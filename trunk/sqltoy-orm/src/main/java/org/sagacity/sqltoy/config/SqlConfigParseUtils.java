@@ -591,7 +591,7 @@ public class SqlConfigParseUtils {
 				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - valueCnt);
-				// update 2021-11-13 加强@value中是sql片段，做一次函数跨数据库适配
+				// update 2021-11-13 加强@value对应值中存在函数，进行跨数据库适配
 				valueStr = (paramValue == null) ? "null" : paramValue.toString();
 				if (dialect != null && valueStr.contains("(") && valueStr.contains(")")) {
 					valueStr = FunctionUtils.getDialectSql(valueStr, dialect);
@@ -838,10 +838,19 @@ public class SqlConfigParseUtils {
 	 * @param sqlType
 	 * @return
 	 */
-	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType) {
+	public static SqlToyConfig parseSqlToyConfig(String querySql, String dialect, SqlType sqlType, boolean showSql) {
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(dialect);
-		// debug模式下面关闭sql打印
-		sqlToyConfig.setShowSql(!StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX));
+		sqlToyConfig.setShowSql(showSql);
+		if (showSql) {
+			// debug模式下面关闭sql打印
+			if (StringUtil.matches(querySql, SqlToyConstants.NOT_PRINT_REGEX)) {
+				sqlToyConfig.setShowSql(false);
+			}
+		} else {
+			if (StringUtil.matches(querySql, SqlToyConstants.DO_PRINT_REGEX)) {
+				sqlToyConfig.setShowSql(true);
+			}
+		}
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 清理sql中的一些注释、以及特殊的符号

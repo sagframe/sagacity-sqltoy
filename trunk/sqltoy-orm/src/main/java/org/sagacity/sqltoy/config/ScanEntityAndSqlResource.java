@@ -194,11 +194,10 @@ public class ScanEntityAndSqlResource {
 	 * @todo 获取sqltoy配置的sql文件
 	 * @param resourceDir
 	 * @param mappingResources
-	 * @param dialect          方言过滤(目前已经废弃)
 	 * @return
 	 * @throws Exception
 	 */
-	public static List getSqlResources(String resourceDir, List<String> mappingResources, String dialect)
+	public static List getSqlResources(String resourceDir, List<String> mappingResources)
 			throws Exception {
 		List result = new ArrayList();
 		String realRes;

@@ -83,6 +83,7 @@ public class SqlXMLConfigParse {
 	private final static Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
 
 	private static DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
+	public static boolean debug = false;
 
 	public static HashMap<String, String> filters = new HashMap<String, String>() {
 		/**
@@ -327,7 +328,7 @@ public class SqlXMLConfigParse {
 			}
 			isNoSql = true;
 		}
-		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type);
+		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type,debug);
 		sqlToyConfig.setId(id);
 		sqlToyConfig.setSqlType(type);
 		// 为sql提供特定数据库的扩展

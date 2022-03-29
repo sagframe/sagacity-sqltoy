@@ -512,10 +512,13 @@ public class SqlToyDaoSupport {
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecutor, sqlToyConfig, null,
 				this.getDataSource(extend.dataSource, sqlToyConfig));
 		List rows = result.getRows();
-		if (rows != null && rows.size() > 0) {
+		if (rows == null || rows.isEmpty()) {
+			return null;
+		}
+		if (rows.size() == 1) {
 			return rows.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("loadByQuery查询出:" + rows.size() + " 条记录,不符合load查询预期!");
 	}
 
 	/**

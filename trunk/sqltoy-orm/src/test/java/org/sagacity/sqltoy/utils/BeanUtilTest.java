@@ -39,4 +39,10 @@ public class BeanUtilTest {
 		System.err.println(byte[].class.getName());
 		System.err.println(byte[].class.getTypeName());
 	}
+	
+	@Test
+	public void testTypeName1() {
+		double a=0;
+		System.err.println(a);
+	}
 }

@@ -55,16 +55,16 @@ public class SqlExecuteStat {
 	 * @param debugPrint
 	 */
 	public static void start(String sqlId, String type, Boolean debugPrint) {
-		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? true : debugPrint.booleanValue()));
+		threadLocal.set(new SqlExecuteTrace(sqlId, type, (debugPrint == null) ? debug : debugPrint.booleanValue()));
 	}
 
 	/**
 	 * @todo 向线程中登记发生了异常,便于在finally里面明确是错误并打印相关sql
-	 * @param e
+	 * @param exception
 	 */
-	public static void error(Exception e) {
+	public static void error(Exception exception) {
 		if (threadLocal.get() != null) {
-			threadLocal.get().setError(e.getMessage());
+			threadLocal.get().setError(exception.getMessage());
 		}
 	}
 
@@ -147,9 +147,9 @@ public class SqlExecuteStat {
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
-			if (!debug) {
-				return;
-			}
+			// if (!debug) {
+			//    return;
+			// }
 		}
 
 		String uid = sqlTrace.getUid();
@@ -336,7 +336,6 @@ public class SqlExecuteStat {
 	 */
 	public static String getFirstTrace() {
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-		// StackTraceElement[] stackTraceElements=new Throwable().getStackTrace();
 		String className = null;
 		int lineNumber = 0;
 		String method = null;

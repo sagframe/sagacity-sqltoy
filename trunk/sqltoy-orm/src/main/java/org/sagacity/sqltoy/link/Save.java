@@ -53,9 +53,14 @@ public class Save extends BaseLink {
 	private int batchSize = 0;
 
 	/**
+	 * 是否深度修改
+	 */
+	private boolean deeply = false;
+
+	/**
 	 * 实现基于唯一性索引字段进行数据修改(非主键)
 	 */
-	//private String[] uniqueFields;
+	// private String[] uniqueFields;
 
 	/**
 	 * @param sqlToyContext
@@ -77,6 +82,11 @@ public class Save extends BaseLink {
 	 */
 	public Save forceUpdateProps(String... forceUpdateProps) {
 		this.forceUpdateProps = forceUpdateProps;
+		return this;
+	}
+
+	public Save deeply(boolean deeply) {
+		this.deeply = deeply;
 		return this;
 	}
 
@@ -137,6 +147,9 @@ public class Save extends BaseLink {
 			return dialectFactory.save(sqlToyContext, entity, getDataSource(null));
 		}
 		if (saveMode == SaveMode.UPDATE) {
+			if (deeply) {
+				forceUpdateProps = sqlToyContext.getEntityMeta(entity.getClass()).getRejectIdFieldArray();
+			}
 			return dialectFactory.saveOrUpdate(sqlToyContext, entity, forceUpdateProps, getDataSource(null));
 		}
 		if (saveMode == SaveMode.IGNORE) {
@@ -161,6 +174,9 @@ public class Save extends BaseLink {
 					getDataSource(null), autoCommit);
 		}
 		if (saveMode == SaveMode.UPDATE) {
+			if (deeply) {
+				forceUpdateProps = sqlToyContext.getEntityMeta(entities.get(0).getClass()).getRejectIdFieldArray();
+			}
 			return dialectFactory.saveOrUpdateAll(sqlToyContext, entities, realBatchSize, forceUpdateProps,
 					reflectPropsHandler, getDataSource(null), autoCommit);
 		}

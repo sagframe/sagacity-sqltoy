@@ -487,8 +487,12 @@ public class BeanUtil {
 			}
 			return valueStr;
 		}
+		boolean isBlank = valueStr.trim().equals("");
 		// 第二优先
 		if (typeName.equals("java.math.bigdecimal") || typeName.equals("decimal") || typeName.equals("bigdecimal")) {
+			if (isBlank) {
+				return null;
+			}
 			return new BigDecimal(convertBoolean(valueStr));
 		}
 		// 第三优先
@@ -514,6 +518,9 @@ public class BeanUtil {
 		}
 		// 第五
 		if (typeName.equals("java.lang.integer") || typeName.equals("integer")) {
+			if (isBlank) {
+				return null;
+			}
 			return Integer.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		// 第六
@@ -527,9 +534,15 @@ public class BeanUtil {
 			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 				return oracleTimeStampConvert(paramValue);
 			}
+			if (isBlank) {
+				return null;
+			}
 			return new Timestamp(DateUtil.parseString(valueStr).getTime());
 		}
 		if (typeName.equals("java.lang.double")) {
+			if (isBlank) {
+				return null;
+			}
 			return Double.valueOf(valueStr);
 		}
 		if (typeName.equals("java.util.date") || typeName.equals("date")) {
@@ -545,10 +558,16 @@ public class BeanUtil {
 			return DateUtil.parseString(valueStr);
 		}
 		if (typeName.equals("java.lang.long")) {
+			if (isBlank) {
+				return null;
+			}
 			// 考虑数据库中存在默认值为0.00 的问题，导致new Long() 报错
 			return Long.valueOf(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("int")) {
+			if (isBlank) {
+				return 0;
+			}
 			return Double.valueOf(convertBoolean(valueStr)).intValue();
 		}
 		// clob 类型比较特殊,对外转类型全部转为字符串
@@ -577,12 +596,21 @@ public class BeanUtil {
 		}
 		// add 2020-4-9
 		if (typeName.equals("java.math.biginteger") || typeName.equals("biginteger")) {
+			if (isBlank) {
+				return null;
+			}
 			return new BigInteger(convertBoolean(valueStr).split("\\.")[0]);
 		}
 		if (typeName.equals("long")) {
+			if (isBlank) {
+				return 0;
+			}
 			return Double.valueOf(convertBoolean(valueStr)).longValue();
 		}
 		if (typeName.equals("double")) {
+			if (isBlank) {
+				return 0;
+			}
 			return Double.valueOf(valueStr).doubleValue();
 		}
 		// update by 2020-4-13增加Byte类型的处理
@@ -612,15 +640,27 @@ public class BeanUtil {
 			return Boolean.FALSE;
 		}
 		if (typeName.equals("java.lang.short")) {
+			if (isBlank) {
+				return null;
+			}
 			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
 		}
 		if (typeName.equals("short")) {
+			if (isBlank) {
+				return 0;
+			}
 			return Double.valueOf(convertBoolean(valueStr)).shortValue();
 		}
 		if (typeName.equals("java.lang.float")) {
+			if (isBlank) {
+				return null;
+			}
 			return Float.valueOf(valueStr);
 		}
 		if (typeName.equals("float")) {
+			if (isBlank) {
+				return 0;
+			}
 			return Float.valueOf(valueStr).floatValue();
 		}
 		if (typeName.equals("java.sql.date")) {
@@ -630,13 +670,18 @@ public class BeanUtil {
 			if (paramValue instanceof java.util.Date) {
 				return new java.sql.Date(((java.util.Date) paramValue).getTime());
 			}
-
 			if (paramValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 				return new java.sql.Date(oracleDateConvert(paramValue).getTime());
+			}
+			if (isBlank) {
+				return null;
 			}
 			return new java.sql.Date(DateUtil.parseString(valueStr).getTime());
 		}
 		if (typeName.equals("char")) {
+			if (isBlank) {
+				return " ".charAt(0);
+			}
 			return valueStr.charAt(0);
 		}
 		if (typeName.equals("java.sql.time") || typeName.equals("time")) {
