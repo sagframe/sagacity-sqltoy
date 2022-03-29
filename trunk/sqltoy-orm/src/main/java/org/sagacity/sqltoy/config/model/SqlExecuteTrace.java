@@ -152,7 +152,7 @@ public class SqlExecuteTrace implements Serializable {
 	 */
 	public void setError(String errorMsg) {
 		this.error = true;
-		executeLogs.add(0, new SqlExecuteLog(1, "错误信息", errorMsg, null));
+		executeLogs.add(new SqlExecuteLog(1, "错误信息", errorMsg, null));
 	}
 
 	/**
