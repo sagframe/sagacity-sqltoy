@@ -132,7 +132,7 @@ public class StringUtilsTest {
 
 	@Test
 	public void testWhereMatch2() {
-		String packageName = "/com/sinochem/xdata/";
+		String packageName = "/com/sagframe/xdata/";
 		if (packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
 		}
