@@ -10,14 +10,14 @@
 	<url>https://github.com/sagframe/sagacity-sqltoy</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-framework.version>5.3.18</spring-framework.version>
+		<spring-framework.version>5.3.19</spring-framework.version>
 		<spring-data-redis.version>2.6.3</spring-data-redis.version>
 		<spring-data-mongo.version>3.3.3</spring-data-mongo.version>
 		<ojdbc.version>19.14.0.0</ojdbc.version>
 		<ehcache.version>3.10.0</ehcache.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<httpclient-core.version>4.4.15</httpclient-core.version>
-		<elastic-rest-client.version>8.1.1</elastic-rest-client.version>
+		<elastic-rest-client.version>8.1.2</elastic-rest-client.version>
 		<fastjson.version>1.2.80</fastjson.version>
 		<mongo.version>3.12.10</mongo.version>
 		<junit-jupiter.version>5.8.2</junit-jupiter.version>
@@ -275,7 +275,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.10.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -305,7 +305,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.4</version>
+				<version>3.3.2</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -313,7 +313,7 @@
 							<goal>jar</goal>
 						</goals>
 						<configuration>
-							<additionalparam>-Xdoclint:none</additionalparam>
+							<additionalJOption>-Xdoclint:none</additionalJOption>
 						</configuration>
 					</execution>
 				</executions>
@@ -322,7 +322,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
+				<version>3.0.1</version>
 				<executions>
 					<execution>
 						<phase>verify</phase>
@@ -335,7 +335,7 @@
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.8</version>
+				<version>1.6.12</version>
 				<extensions>true</extensions>
 				<configuration>
 					<serverId>sonatype-nexus-staging</serverId>

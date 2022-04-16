@@ -1,4 +1,166 @@
-﻿
+﻿# v5.1.31 2022-03-29
+* 1、兼容查询结果是空字符映射到数字等类型的处理
+* 2、通过链式操作中deeply实现saveOrUpdateAllDeeply想要的功能:lazyDao.save().deeply(true).saveMode(SaveMode.UPDATE).many(entities)
+* 3、优化sql日志输出，可以通过debug="true" 属性来控制日志是否输出
+
+# v5.1.30 2022-03-21
+* 1、修复updateByQuery因where参数为in (?) 模式导致参数长度和参数类型长度不一致缺陷
+
+# v5.1.29 2022-03-19
+* 1、修复summary算法，修复逆向汇总时add(0,createSummaryRows)改为addAll(0,createSummaryRows)
+* 2、filters中的to-date 日期加减操作单位支持months、years
+
+# v5.1.25 2022-02-13 
+* 1、sql文件filters中增加clone方法
+* 2、findByQuery(QueryExecutor query) 结果QueryResult增加List getFirstColumn(boolean distinct) 方法，便于提取结果集单列值形成一维数组
+
+# v5.1.24 2022-01-18 
+* 1、修复NumberUtil 数字转英文大写金额负数问题
+* 2、优化ParamFilterUtils类，支持多个primary 参数过滤处理器场景
+* 3、升级部分pom依赖版本
+
+# v5.1.23 2022-01-04 
+* 1、增加deleteByIds快捷删除方法
+* 2、修复deleteByQuery中的ParamsFilter使其生效
+* 3、优化缓存翻译cache-indexs配置错误引起的数组越界提示，提供完整的错误提示
+
+# v5.1.22 2021-12-26
+* 1、updateByQuery支持set field=field+1 模式的自依赖更新
+* 2、findByQuery或findPageByQuery等QueryExecutor中可设置hiberarchy=true并通过对象中@OneToOne和@OneToMany将结果封装成对象层次结构返回
+
+# 5.1.21 2021-12-19
+* 1、去除多余的log4j2的依赖,sqltoy本身一直都不依赖log4j2(演示功能剥离时漏删除)
+* 2、优化一些校验和错误提示
+
+# 5.1.20 2021-12-11
+* 1、升级log4j2依赖版本为2.15.0(实际sqltoy并不依赖log4j2,log4j2为多余的依赖，下版去除)
+* 2、sql补全优化，如from table where xxx 情况下自动补全select *
+* 3、增加一些容错校验判断
+
+# 5.1.19 2021-12-04
+* 1、修复updateByQuery功能对象或Map传where条件参数值的一个bug
+
+# 5.1.18 2021-11-29
+* 1、优化POJO注解解析，支持多级父类，适度优化代码书写
+
+# 5.1.17 2021-11-18
+* 1、增加 @ Translate 缓存翻译注解
+
+# 5.1.16 2021-11-13
+* 1、优化sql在跨数据库函数适配转换时支持函数嵌套
+* 2、完善sqltoy中统一字段赋值，在oracle、db2、sqlserver场景下调用saveOrUpdate/All 时因无法判断是新增还是修
+改，导致统一赋值中关于新增记录的诸如：创建人、创建时间等属性无法赋值，现通过组织merge into 语句时伪造成默认值形式实现
+* 3、增强findEntity中select(fields) pojo属性名转表字段名称能力
+* 4、增强sql中在特殊场景下使用@value(:sqlPart)引入sql片段时，做跨数据库函数适配
+
+# 5.1.15 2021-11-10
+* 1、增加数据库表字段值加密存储、查询解密，默认采用RSA算法实现
+* 2、将脱敏变成接口化，框架提供默认实现，便于开发者扩展
+* 3、增加MapKit便于快速构造Map进行传参
+
+# 5.1.14 2021-10-29
+* 1、优化executeSql增加存在分库分表场景
+* 2、batchUpdate增加公共属性赋值(创建人、创建日期、修改人、修改日期等)
+* 3、updateByQuery、deleteByQuery、updateFetch完善分库分表场景
+* 4、优化sql中以？(问号)传参且有@fast()场景下按比例取Top记录和取随机记录时参数位置处理缺陷
+
+# 5.1.13 2021-10-26
+* 1、完善查询传参数合法性验证
+* 2、升级依赖包版本
+
+# 5.1.11 2021-10-20
+* 1、修复5.1.9版本引起的分页查询sql语句中以？模式传参场景下的bug(:paramName模式不受影响)
+* 2、优化sqlserver分页查询order by 语句在#[@if(:xxx==xxx1) order by field] 场景下@if 不成立时去除了order by 导致判断是否存在order by 缺陷
+
+# 5.1.10 2021-10-18
+* 1、增加统一数据权限传参和越权检查，参照文档统一字段处理章节配置
+* 2、兼容sql中参数名称含中文的特殊场景
+* 3、@loop(:paramName,sql片段)支持类似:staffInfos[i].birthday 对象子属性模式，为应对极端场景提供策略
+* 4、代替group_concat的link对应的id-column改为id-columns支持多列分组(依旧兼容id-column)
+
+# 5.1.8 2021-10-09
+* 1、batchUpdate方法支持List传参数模式，同时支持子类属性
+* 2、修复sql去除回车换行导致@if()中或(||)符号被替换的bug
+
+# 5.1.6 2021-09-28
+* 1、排查修复db2 updateSaveFetch锁语句为for update with rs
+* 2、优化queryResult中labelTypes类型处理(针对存在缓存翻译、格式化场景改变了结果类型)
+* 3、升级依赖库版本
+
+# 5.1.4 2021-09-17
+* 1、findEntity可以用entity查询但返回结果类型是dto
+* 2、优化IdUtil产生主键依赖的通过ip获取serverId场景，规避无网卡情况下无法获取ip的特殊情况
+* 3、优化sql日志输出，减少过多的空白影响sql阅读
+* 4、增强部分跨数据库sql函数自适应
+
+# 5.1.3 2021-09-15
+* 1、增加获取数据库表信息和表字段信息功能
+
+# 5.1.2 2021-09-07
+* 1、修复updateSaveFetch复合主键场景下的bug，遗漏了条件中的and
+* 2、修复sqlite数据库identity主键策略insert的缺陷
+* 3、优化saveOrUpdate，增加当主键值为null时直接走save操作
+
+# 5.1.0 2021-09-01
+* 1、针对类似库存台账、客户资金帐等强事务、高并发场景，提供updateSaveFetch新的一次数据库交互完成锁查询、更新、记录不存在则插入、返回的全过程的方法
+
+# 5.0.13 2021-08-26
+* 1、支持数据库表字段默认值为空白的场景(配合quickvo-4.18.18版本)
+* 2、delete级联删除时增加了级联字段值是否为null的验证(针对级联字段非主键场景)，当为null抛出非法异常
+
+# 5.0.12 2021-08-21
+* 1、修复NumberUtil类数字转中文金额过亿元万位数全为零的一个缺陷
+* 2、elastic sql http模式执行下增加@blank(:name)和@value(:name)
+
+# 5.0.11 2021-08-17
+* 1、优化重复sqlId处理，进行集中提示并做异常退出处理
+* 2、依赖的jar包版本升级
+
+# 5.0.9 2021-08-5
+* 1、支持impalajdbc，主要针对kudu进行了集成，进一步增强大数据体系下的应用
+* 2、findEntity的EntityQuery增加了groupBy()和having() 参数设置
+* 3、优化支持elasticsearch原生sql取top记录的sql组织方式
+* 4、优化sql文件加载日志提示
+
+# 5.0.7 2021-07-14
+* 1、修复oracle数据库oracle.sql.TIMESTAMP 转LocalDateTime的支持
+
+# 5.0.6 2021-07-13
+* 1、优化查询过程中首次调用缓存无法打印查询自身sql日志，因sql日志在当前线程中，调用缓存时会冲掉当前线程中的日志
+
+# 5.0.5 2021-07-11
+* 1、修复分页并行查询时，用到缓存翻译，且缓存正好是第一次被加载导致当前线程日志被置空产生的异常
+
+# 5.0.3 2021-07-7
+* 1、查询参数findBySql(String sql,Map paramsMap,Class resultType) map支持多层子对象属性
+* 2、SqlToyDaoSupport中增加findPageBySql(final Page page, final String sqlOrNamedSql,
+final Map<String, Object> paramsMap, Class voClass) 方法
+
+# 5.0.1 2021-07-01
+* 1、修复生成POJO含schema时生成update语句时2次拼接schema的错误
+
+# 5.0.0 2021-06-23
+* 1、规整4.x版本的代码目录，使其更加科学
+* 2、去除executor目录，将QueryExecutor 对外的模型统一移入model目录下面
+* 3、将非对外的内部模型移入到model.inner 包下面，将一些配置化的模型移入到config.model下面
+* 4、将PaginationModel 改为Page，并将PageNo 由Long改为long，避免需要写1L，简化书写
+* 5、优化support下面的LinkSupport，BaseSupport
+* 6、剔除掉LinkSupport和BaseSupport，合并到SqlToyDaoSupport
+* 7、去除一些根本用不到的方法，避免产生疑问和混淆，使得SqlToyDao更加清晰
+* 8、去除updateFetchTop、updateFetchRandom
+* 9、去除：public Long executeSql(String sqlOrNamedSql, Serializable entity, ReflectPropsHandler reflectPropertyHandler)带有reflectPropertyHandler 的开放方法
+* 10、去除@ListSql @PageSql @LoadSql 这些注解，尽量让使用方法归一
+* 11、去除ObtainDataSource，避免跟DataSourceSelector产生功能重叠
+* 12、将ConnectonFactory移入org.sagacity.sqltoy.plugins.datasource包下
+* 13、剔除findAll方法，用findEntity(Class voClass,null) 代替findAll方法属于极小众方法
+* 14、并行查询设置分页模型方法：pageMode(Pagination pageModel)改为page(Page page)
+* 15、增加loadEntity方法，通过EntityQuery获得单条记录：
+ public <T extends Serializable> T loadEntity(Class<T> entityClass, EntityQuery entityQuery);
+* 16、增加numFmt（numberFormat) 对英文金额转大写的支持
+   <number-format columns="total_amt" format="capital-en"/>
+* 17、删除对SybaseIQ数据库的支持
+* 18、优化部分不使用的代码和注释
+
 # v4.18.25 2021-06-08
 * 1、修复oracle无主键表保存操作一个NPP错误
 * 2、优化defaultDataSource获取模式，适应dynamic-datasource插件场景
