@@ -139,4 +139,32 @@ public class SqlConfigParseUtilsTest {
 		String[] result = SqlConfigParseUtils.getSqlParamsName(sql, true);
 		System.err.println(JSON.toJSONString(result));
 	}
+
+	@Test
+	public void testOverSizeIn() throws Exception {
+		String sql = "select * from table t where status=:status and t.order_id in (:oderId)";
+		String[] orderIds = new String[2000];
+		for (int i = 1; i <= 2000; i++) {
+			orderIds[i - 1] = "" + i;
+		}
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "status", "oderId" },
+				new Object[] { "1", orderIds });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+	
+//	@Test
+//	public void testOverSizeIn() throws Exception {
+//		String sql = " and t.order_id not ";
+//		String result = SqlConfigParseUtils.wrapOverSizeInSql(sql, 2001);
+//		System.err.println(result);
+//		
+//		sql = " and )order_id not ";
+//		result = SqlConfigParseUtils.wrapOverSizeInSql(sql, 2001);
+//		System.err.println(result);
+//		
+//		sql = "	[ order_id not ";
+//		result = SqlConfigParseUtils.wrapOverSizeInSql(sql, 2000);
+//		System.err.println(result);
+//	}
 }

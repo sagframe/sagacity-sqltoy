@@ -40,6 +40,9 @@ public @interface Column {
 	// 是否是关键词(目前没有使用)
 	boolean keyword() default false;
 
+	//字段注释
+	String comment() default "";
+
 	// 默认值
 	String defaultValue() default SqlToyConstants.DEFAULT_NULL;
 
