@@ -1265,7 +1265,7 @@ public class ResultUtils {
 			}
 			return result;
 		} catch (Exception e) {
-			throw new DataAccessException("切区单列查询语句结果进行类型转换时发生异常!" + e.getMessage());
+			throw new DataAccessException("切取单列查询结果进行类型转换时发生异常!" + e.getMessage());
 		}
 	}
 
