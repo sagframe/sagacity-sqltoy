@@ -17,25 +17,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Entity {
-	/**
-	 * 表名
-	 * 
-	 * @return
-	 */
+	// 表名
 	String tableName();
 
-	/**
-	 * 表对应schema
-	 * 
-	 * @return
-	 */
+	// 表对应schema
 	String schema() default "";
+	
+	//表注释
+	String comment() default "";
 
-	/**
-	 * 主键约束名称(postgresql有用)
-	 * 
-	 * @return
-	 */
+	// 主键约束名称
 	@Deprecated
 	String pk_constraint() default "";
 }

@@ -143,7 +143,8 @@ public class ResultUtils {
 			try {
 				result.setRows(getResultSet(sqlToyConfig, sqlToyContext, conn, rs, updateRowHandler, realDecryptHandler,
 						rowCnt, labelIndexMap, labelNames, startColIndex));
-			} catch (Exception oie) {
+			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
+			catch (Exception oie) {
 				logger.error("sql={} 提取结果发生异常:{}!", sqlToyConfig.getId(), oie.getMessage());
 				throw oie;
 			}
@@ -1151,7 +1152,6 @@ public class ResultUtils {
 	 * @param humpMapLabel
 	 * @param hiberarchy        返回结果是否按层次化对象封装
 	 * @param hiberarchyClasses
-	 * @param fieldsMap
 	 * @return
 	 * @throws Exception
 	 */
@@ -1162,6 +1162,11 @@ public class ResultUtils {
 		if (queryResultRows == null || queryResultRows.isEmpty() || resultType == null || resultType.equals(List.class)
 				|| resultType.equals(ArrayList.class) || resultType.equals(Collection.class)
 				|| BeanUtil.isBaseDataType(resultType)) {
+			// update 2022-4-22
+			// 如果查询单列数据，且返回结果类型为原始类型，则切取单列数据
+			if (resultType != null && labelNames.length == 1 && BeanUtil.isBaseDataType(resultType)) {
+				return getFirstColumn(queryResultRows, resultType);
+			}
 			return queryResultRows;
 		}
 		// 返回数组类型
@@ -1237,6 +1242,31 @@ public class ResultUtils {
 					cascadeModel, hiberarchyClasses, fieldsMap);
 		}
 		return result;
+	}
+
+	/**
+	 * @TODO 提取二维集合第一列数据转换类型变成一维List返回
+	 * @param <T>
+	 * @param rows
+	 * @param classType
+	 * @return
+	 */
+	public static <T> List<T> getFirstColumn(List rows, Class<T> classType) {
+		List<T> result = new ArrayList<T>();
+		if (rows == null || rows.isEmpty()) {
+			return result;
+		}
+		Object cell;
+		String typeName = classType.getTypeName();
+		try {
+			for (Object row : rows) {
+				cell = ((List) row).get(0);
+				result.add((T) BeanUtil.convertType(cell, typeName));
+			}
+			return result;
+		} catch (Exception e) {
+			throw new DataAccessException("切区单列查询语句结果进行类型转换时发生异常!" + e.getMessage());
+		}
 	}
 
 	/**
