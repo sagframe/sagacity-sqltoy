@@ -707,7 +707,7 @@ public class SqlConfigParseUtils {
 					} else {
 						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
 					}
-					
+
 					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
 					if (inParamArray.length > 1000) {
 						overSize = true;
@@ -757,11 +757,13 @@ public class SqlConfigParseUtils {
 	 * @return
 	 */
 	private static String wrapOverSizeInSql(String sqlPart, int paramsSize) {
-		boolean isNotIn = false;
 		String sql = sqlPart.trim();
+		// 判断是否 t.field not in (?) 模式
 		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), "\\s*not$");
+		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
+			//剔除掉not和not前面的空白
 			sql = sql.substring(0, notIndex);
 		}
 		sql = " ".concat(sql);
@@ -772,7 +774,7 @@ public class SqlConfigParseUtils {
 		StringBuilder result = new StringBuilder(sql);
 		result.append(" (");
 		int index = 0;
-		//组织条件，not in 为 t.field not in () and t.field not in ()
+		// 组织条件，not in 为 t.field not in () and t.field not in ()
 		// in 为t.field in () or t.field in ()
 		while (paramsSize > 0) {
 			result.append(" ");
@@ -790,7 +792,7 @@ public class SqlConfigParseUtils {
 				result.append(" in (");
 			}
 			result.append(StringUtil.loopAppendWithSign(ARG_NAME, ",", (paramsSize > 1000) ? 1000 : paramsSize));
-			result.append(") \n");
+			result.append(") ");
 			paramsSize = paramsSize - 1000;
 			index++;
 		}
