@@ -124,6 +124,20 @@ public class DataSetResult<T> implements Serializable {
 		if (this.rows == null || this.rows.isEmpty()) {
 			return result;
 		}
+		//一维(findByQuery中查询单列值，且resultType为原生类型，rows变成了一维)
+		int dimen = CollectionUtil.judgeObjectDimen(this.rows);
+		if (dimen == 1) {
+			for (Object cell : this.rows) {
+				if (distinct) {
+					if (!result.contains(cell)) {
+						result.add(cell);
+					}
+				} else {
+					result.add(cell);
+				}
+			}
+			return result;
+		}
 		Object rowTmp = this.rows.get(0);
 		Object cell;
 		if (rowTmp instanceof List) {

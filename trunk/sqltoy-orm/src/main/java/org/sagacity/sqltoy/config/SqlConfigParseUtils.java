@@ -690,10 +690,12 @@ public class SqlConfigParseUtils {
 		Object[] inParamArray;
 		String argValue;
 		Collection inParamList;
+		boolean overSize = false;
 		while (matched) {
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
+			overSize = false;
 			if (null != paramsValue[parameterMarkCnt - 1]) {
 				// 数组或集合数据类型
 				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
@@ -705,8 +707,16 @@ public class SqlConfigParseUtils {
 					} else {
 						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
 					}
-					// 循环组合成in(?,?*)
-					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", (inParamArray).length);
+
+					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+					if (inParamArray.length > 1000) {
+						overSize = true;
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), inParamArray.length);
+						lastSql.append(" ").append(partSql).append(" ");
+					} else {
+						// 循环组合成in(?,?*)
+						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
+					}
 					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
 					paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
 							CollectionUtil.arrayToList(inParamArray));
@@ -726,7 +736,9 @@ public class SqlConfigParseUtils {
 			}
 
 			// 用新的?,?,,, 代替原本单? 号
-			lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
+			if (!overSize) {
+				lastSql.append(queryStr.substring(start, m.start())).append(" in (").append(partSql).append(") ");
+			}
 			start = end;
 			matched = m.find(end);
 		}
@@ -736,6 +748,56 @@ public class SqlConfigParseUtils {
 			sqlToyResult.setSql(lastSql.toString());
 			sqlToyResult.setParamsValue(paramValueList.toArray());
 		}
+	}
+
+	/**
+	 * @todo 构造条件参数数组长度超过1000情况下的in 语句
+	 * @param sqlPart
+	 * @param paramsSize
+	 * @return
+	 */
+	private static String wrapOverSizeInSql(String sqlPart, int paramsSize) {
+		String sql = sqlPart.trim();
+		// 判断是否 t.field not in (?) 模式
+		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), "\\s*not$");
+		boolean isNotIn = false;
+		if (notIndex > 0) {
+			isNotIn = true;
+			//剔除掉not和not前面的空白
+			sql = sql.substring(0, notIndex);
+		}
+		sql = " ".concat(sql);
+		// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
+		int paramIndex = StringUtil.matchLastIndex(sql, "[\\s\\(\\)\\}\\{\\]\\[]") + 1;
+		String paramName = sql.substring(paramIndex);
+		sql = sql.substring(0, paramIndex);
+		StringBuilder result = new StringBuilder(sql);
+		result.append(" (");
+		int index = 0;
+		// 组织条件，not in 为 t.field not in () and t.field not in ()
+		// in 为t.field in () or t.field in ()
+		while (paramsSize > 0) {
+			result.append(" ");
+			if (index > 0) {
+				if (isNotIn) {
+					result.append(" and ");
+				} else {
+					result.append(" or ");
+				}
+			}
+			result.append(paramName);
+			if (isNotIn) {
+				result.append(" not in (");
+			} else {
+				result.append(" in (");
+			}
+			result.append(StringUtil.loopAppendWithSign(ARG_NAME, ",", (paramsSize > 1000) ? 1000 : paramsSize));
+			result.append(") ");
+			paramsSize = paramsSize - 1000;
+			index++;
+		}
+		result.append(") ");
+		return result.toString();
 	}
 
 	/**
