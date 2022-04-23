@@ -98,7 +98,8 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 分页页号超出总页时转第一页，否则返回空集合
 	 */
-	private boolean pageOverToFirst = true;
+	//update 2022-4-23 默认改为false
+	private boolean pageOverToFirst = false;
 
 	/**
 	 * 默认查询数据库端提取记录量

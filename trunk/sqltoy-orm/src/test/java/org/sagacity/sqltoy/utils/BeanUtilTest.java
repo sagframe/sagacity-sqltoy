@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.utils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -196,5 +197,13 @@ public class BeanUtilTest {
 
 		System.err.println(JSON.toJSONString(staffInfos));
 
+	}
+
+	@Test
+	public void testType() {
+		System.err.println(BeanUtil.isBaseDataType(Array.class));
+		System.err.println(BeanUtil.isBaseDataType(int.class));
+		System.err.println(BeanUtil.isBaseDataType(Map.class));
+		System.err.println(BeanUtil.isBaseDataType(List.class));
 	}
 }

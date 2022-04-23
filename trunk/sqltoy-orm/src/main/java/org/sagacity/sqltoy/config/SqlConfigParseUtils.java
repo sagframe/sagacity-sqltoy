@@ -832,6 +832,7 @@ public class SqlConfigParseUtils {
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
+					//update 2022-04-23
 					//return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					return preSql.concat(" ").concat(tailSql).concat(" ");
 				}
