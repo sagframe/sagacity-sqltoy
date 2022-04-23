@@ -763,7 +763,7 @@ public class SqlConfigParseUtils {
 		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
-			//剔除掉not和not前面的空白
+			// 剔除掉not和not前面的空白
 			sql = sql.substring(0, notIndex);
 		}
 		sql = " ".concat(sql);
@@ -832,7 +832,9 @@ public class SqlConfigParseUtils {
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					//return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					// update 2022-4-23 此处没有必要增加1=1 问题场景:where #[id=:id] #[name like :name]
+					// 第二个条件中没有加and
+					// return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					return preSql.concat(" ").concat(tailSql).concat(" ");
 				}
 			}
