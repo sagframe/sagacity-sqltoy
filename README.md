@@ -37,9 +37,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 
 # 最新版本号: 
 * 5.1.32       发版日期: 2022-4-22
-* 4.19.25       发版日期: 2022-4-22
 * 5.1.32.jre11 发版日期: 2022-4-22
 * 5.1.32.jre17 发版日期: 2022-4-22
+* 4.19.26      发版日期: 2022-4-23
 
 # 4.x 升级5.x 项目影响点
 * 分页查询PaginationModel 类改为Page
