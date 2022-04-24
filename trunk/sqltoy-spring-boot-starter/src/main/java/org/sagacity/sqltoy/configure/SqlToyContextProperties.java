@@ -67,6 +67,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer batchSize;
 
+	/**
+	 * 默认查询数据库端提取记录量,一般无需设置
+	 */
 	private int fetchSize = -1;
 
 	/**
@@ -94,7 +97,8 @@ public class SqlToyContextProperties implements Serializable {
 	/**
 	 * 分页页号超出总页时转第一页，否则返回空集合
 	 */
-	private boolean pageOverToFirst = true;
+	//update 2022-4-23 默认改为false
+	private boolean pageOverToFirst = false;
 
 	/**
 	 * 统一字段处理器

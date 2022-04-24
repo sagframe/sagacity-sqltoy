@@ -422,7 +422,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql 直接代码中写的sql或者xml中定义的sql id
 	 * @param paramsNamed
 	 * @param paramsValue
-	 * @param voClass
+	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final String[] paramsNamed, final Object[] paramsValue,
@@ -433,7 +433,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql 可以直接传sql语句，也可以是xml中定义的sql id
 	 * @param paramsMap
-	 * @param voClass
+	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> T loadBySql(final String sqlOrNamedSql, final Map<String, Object> paramsMap, final Class<T> voClass);
@@ -504,7 +504,7 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed 如果sql是select * from table where xxx=?
 	 *                    问号传参模式，paramNamed设置为null
 	 * @param paramsValue 对应Named参数的值
-	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class,Array.class
+	 * @param voClass     返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class(驼峰命名),Array.class
 	 *                    返回List<Object[])
 	 * @return
 	 */
@@ -516,7 +516,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrSqlId
 	 * @param paramsMap
-	 * @param voClass
+	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> List<T> findBySql(final String sqlOrSqlId, final Map<String, Object> paramsMap, final Class<T> voClass);
@@ -546,7 +546,7 @@ public interface SqlToyLazyDao {
 	 * @param sqlOrNamedSql
 	 * @param paramsNamed
 	 * @param paramValues
-	 * @param voClass       返回结果类型(VO.class,null表示返回二维List,Map.class,LinkedHashMap.class,Array.class)
+	 * @param voClass       返回结果类型(VO.class,null表示返回二维List,Map.class(驼峰命名),LinkedHashMap.class,Array.class)
 	 * @return
 	 */
 	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final String[] paramsNamed,
@@ -558,7 +558,7 @@ public interface SqlToyLazyDao {
 	 * @param page
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass
+	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
 	 * @return
 	 */
 	public <T> Page<T> findPageBySql(final Page page, final String sqlOrNamedSql, final Map<String, Object> paramsMap,
@@ -591,7 +591,7 @@ public interface SqlToyLazyDao {
 	 * @param paramsNamed   如果sql是select * from table where xxx=?
 	 *                      问号传参模式，paramNamed设置为null
 	 * @param paramValues
-	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class)
+	 * @param voClass       返回结果List中的对象类型(可以是VO、null:表示返回List<List>;HashMap.class (默认驼峰命名))
 	 * @param topSize       (大于1则取固定数量的记录，小于1，则表示按比例提取)
 	 * @return
 	 */
@@ -603,7 +603,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass
+	 * @param voClass  可以是vo、dto、Map(默认驼峰命名)
 	 * @param topSize
 	 * @return
 	 */
@@ -649,7 +649,7 @@ public interface SqlToyLazyDao {
 	 * @param <T>
 	 * @param sqlOrNamedSql
 	 * @param paramsMap
-	 * @param voClass
+	 * @param voClass 可以是vo、dto、Map(默认驼峰命名)
 	 * @param randomCount
 	 * @return
 	 */
