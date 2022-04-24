@@ -150,7 +150,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testOverSizeIn() throws Exception {
-		String sql = "select * from table t where status=:status and t.order_id in (:oderId)";
+		String sql = "select * from table t where status=:status and (t.order_id not in (:oderId))";
 		String[] orderIds = new String[2000];
 		for (int i = 1; i <= 2000; i++) {
 			orderIds[i - 1] = "" + i;

@@ -67,6 +67,9 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	private Integer batchSize;
 
+	/**
+	 * 默认查询数据库端提取记录量,一般无需设置
+	 */
 	private int fetchSize = -1;
 
 	/**

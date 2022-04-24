@@ -1,4 +1,15 @@
-﻿# v5.1.31 2022-03-29
+﻿# v5.1.33 2022-04-24
+* 1、处理in条件查询语句参数数组长度超过1000场景的处理
+```
+ t.order_id (not) in (:orderIds) 转变成
+( t.order_id in (?,?..) or t.order_id in (?,?..)) 或 
+( t.order_id not in (?,?..) and t.order_id not in (?,?..))
+```
+* 2、findBySql(sql,map,resultType) 支持当查询单列时、resultType为原生类型，返回一维 List<T> 模式
+* 3、分页页数超出范围处理策略参数:spring.sqltoy.pageOverToFirst默认值改为false(原本跳到第一页变为返回空集合)
+* 4、升级spring等pom依赖版本
+
+# v5.1.31 2022-03-29
 * 1、兼容查询结果是空字符映射到数字等类型的处理
 * 2、通过链式操作中deeply实现saveOrUpdateAllDeeply想要的功能:lazyDao.save().deeply(true).saveMode(SaveMode.UPDATE).many(entities)
 * 3、优化sql日志输出，可以通过debug="true" 属性来控制日志是否输出
