@@ -167,6 +167,11 @@ public class SqlToyContextProperties implements Serializable {
 	private String desensitizeProvider;
 
 	/**
+	 * add 2022-4-26 自定义filter处理器
+	 */
+	private String customFilterHandler;
+	
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -491,6 +496,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDesensitizeProvider(String desensitizeProvider) {
 		this.desensitizeProvider = desensitizeProvider;
+	}
+
+	public String getCustomFilterHandler() {
+		return customFilterHandler;
+	}
+
+	public void setCustomFilterHandler(String customFilterHandler) {
+		this.customFilterHandler = customFilterHandler;
 	}
 
 }

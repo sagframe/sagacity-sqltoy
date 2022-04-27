@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.executor.QueryExecutor;
+import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.connection.ConnectionFactory;
@@ -287,6 +288,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 脱敏处理器
 	 */
 	private DesensitizeProvider desensitizeProvider;
+	
+	/**
+	 * 自定义参数过滤处理器
+	 */
+	private FilterHandler customFilterHandler;
 
 	/**
 	 * @todo 初始化
@@ -949,5 +955,13 @@ public class SqlToyContext implements ApplicationContextAware {
 
 	public void setDesensitizeProvider(DesensitizeProvider desensitizeProvider) {
 		this.desensitizeProvider = desensitizeProvider;
+	}
+
+	public FilterHandler getCustomFilterHandler() {
+		return customFilterHandler;
+	}
+
+	public void setCustomFilterHandler(FilterHandler customFilterHandler) {
+		this.customFilterHandler = customFilterHandler;
 	}
 }
