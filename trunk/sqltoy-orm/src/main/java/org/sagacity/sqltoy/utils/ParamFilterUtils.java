@@ -18,6 +18,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
+import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +112,7 @@ public class ParamFilterUtils {
 					index = (paramIndexMap.get(filterParam) == null) ? -1 : paramIndexMap.get(filterParam);
 					if (index != -1 && paramValues[index] != null) {
 						if (!paramFilterModel.getExcludes().contains(filterParam)) {
-							paramValues[index] = filterSingleParam(paramValues[index], paramFilterModel);
+							paramValues[index] = filterSingleParam(sqlToyContext, paramValues[index], paramFilterModel);
 						}
 					}
 				}
@@ -413,11 +414,13 @@ public class ParamFilterUtils {
 
 	/**
 	 * @todo 过滤加工单个参数的值
+	 * @param sqlToyContext
 	 * @param paramValue
 	 * @param paramFilterModel
 	 * @return
 	 */
-	private static Object filterSingleParam(Object paramValue, ParamFilterModel paramFilterModel) {
+	private static Object filterSingleParam(SqlToyContext sqlToyContext, Object paramValue,
+			ParamFilterModel paramFilterModel) {
 		if (null == paramValue) {
 			return null;
 		}
@@ -540,6 +543,11 @@ public class ParamFilterUtils {
 					logger.error("sql 参数过滤转换过程:将数组转成in (:params) 形式的条件值过程错误:{}", e.getMessage());
 				}
 			}
+		} else if (filterType.equals("custom-handler")) {
+			if (sqlToyContext.getCustomFilterHandler() == null) {
+				throw new RuntimeException("sql中filter使用了custom-handler类型,但spring.sqltoy.customFilterHandler未定义具体实现类!");
+			}
+			result = sqlToyContext.getCustomFilterHandler().process(paramValue, paramFilterModel.getType());
 		} else {
 			logger.warn("sql中filters定义的filterType={} 目前没有对应的实现!", filterType);
 		}

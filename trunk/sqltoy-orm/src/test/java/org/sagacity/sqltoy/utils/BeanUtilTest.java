@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.demo.vo.TypeShowCase;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
+import org.sagacity.sqltoy.model.SaveMode;
 
 import com.alibaba.fastjson.JSON;
 
@@ -126,6 +127,7 @@ public class BeanUtilTest {
 		System.err.println(DateUtil.formatDate(LocalDate.now(), "MMM dd,yyyy", Locale.US));
 		System.err.println(byte[].class.getName());
 		System.err.println(byte[].class.getTypeName());
+		System.err.println(SaveMode.class.getTypeName());
 	}
 
 	@Test

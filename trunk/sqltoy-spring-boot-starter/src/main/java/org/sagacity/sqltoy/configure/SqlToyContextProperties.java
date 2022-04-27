@@ -97,7 +97,7 @@ public class SqlToyContextProperties implements Serializable {
 	/**
 	 * 分页页号超出总页时转第一页，否则返回空集合
 	 */
-	//update 2022-4-23 默认改为false
+	// update 2022-4-23 默认改为false
 	private boolean pageOverToFirst = false;
 
 	/**
@@ -169,6 +169,11 @@ public class SqlToyContextProperties implements Serializable {
 	 * 字段展示安全脱敏处理器(sqltoy默认提供了实现，此处提供不满足的情况下的自行扩展)
 	 */
 	private String desensitizeProvider;
+
+	/**
+	 * add 2022-4-26 自定义filter处理器(预留备用)
+	 */
+	private String customFilterHandler;
 
 	/**
 	 * @return the sqlResourcesDir
@@ -493,6 +498,14 @@ public class SqlToyContextProperties implements Serializable {
 
 	public void setDesensitizeProvider(String desensitizeProvider) {
 		this.desensitizeProvider = desensitizeProvider;
+	}
+
+	public String getCustomFilterHandler() {
+		return customFilterHandler;
+	}
+
+	public void setCustomFilterHandler(String customFilterHandler) {
+		this.customFilterHandler = customFilterHandler;
 	}
 
 }

@@ -171,7 +171,8 @@
 							</xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
-					<xsd:attribute name="distinct" type="xsd:boolean" default="false"/>
+					<xsd:attribute name="distinct" type="xsd:boolean"
+						default="false" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="sharding-datasource" minOccurs="0"
@@ -384,7 +385,7 @@
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
-		<xsd:attribute name="debug" type="xsd:boolean"/>
+		<xsd:attribute name="debug" type="xsd:boolean" />
 	</xsd:complexType>
 	<xsd:complexType name="sqlToyMqlType" mixed="true">
 		<xsd:annotation>
@@ -807,6 +808,21 @@
 						default="true" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="custom-handler" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[自定义数据处理器]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string"
+						use="required" />
+					<xsd:attribute name="type" type="xsd:string">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[自定义处理逻辑辨识符号]]></xsd:documentation>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="cache-arg" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
@@ -836,8 +852,9 @@
 						use="required" />
 					<xsd:attribute name="cache-name" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="cache-key-index" type="xsd:integer" default="0">
-					<xsd:annotation>
+					<xsd:attribute name="cache-key-index"
+						type="xsd:integer" default="0">
+						<xsd:annotation>
 							<xsd:documentation><![CDATA[取缓存中第几列作为key,默认为0]]></xsd:documentation>
 						</xsd:annotation>
 					</xsd:attribute>
@@ -902,7 +919,8 @@
 				<xsd:complexType>
 					<xsd:attribute name="param" type="xsd:string"
 						use="required" />
-					<xsd:attribute name="as-param" type="xsd:string" use="required"/>
+					<xsd:attribute name="as-param" type="xsd:string"
+						use="required" />
 				</xsd:complexType>
 			</xsd:element>
 		</xsd:choice>
@@ -1079,20 +1097,24 @@
 				</xsd:complexType>
 			</xsd:element>
 		</xsd:sequence>
-		<xsd:attribute name="reverse" type="xsd:boolean" default="false" />
-		<xsd:attribute name="sum-columns" type="xsd:string"/>
-		<xsd:attribute name="average-columns" type="xsd:string"/>
-		<xsd:attribute name="average-radix-sizes" type="xsd:string">
+		<xsd:attribute name="reverse" type="xsd:boolean"
+			default="false" />
+		<xsd:attribute name="sum-columns" type="xsd:string" />
+		<xsd:attribute name="average-columns" type="xsd:string" />
+		<xsd:attribute name="average-radix-sizes"
+			type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[1,3,2 用逗号分割为每个平均计算设置保留小数位，如果单个值表示为全部平均计算设置]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="average-rounding-modes" type="xsd:string">
+		<xsd:attribute name="average-rounding-modes"
+			type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[HALF_UP,HALF_DOWN,ROUND_DOWN,ROUND_UP]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="average-skip-null" type="xsd:boolean" default="false">
+		<xsd:attribute name="average-skip-null"
+			type="xsd:boolean" default="false">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[计算平均值时是否排除掉值为null的数字]]></xsd:documentation>
 			</xsd:annotation>
