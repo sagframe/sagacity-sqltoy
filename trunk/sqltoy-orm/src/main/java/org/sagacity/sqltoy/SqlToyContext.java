@@ -16,6 +16,7 @@ import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
@@ -99,7 +100,7 @@ public class SqlToyContext implements ApplicationContextAware {
 	/**
 	 * 分页页号超出总页时转第一页，否则返回空集合
 	 */
-	//update 2022-4-23 默认改为false
+	// update 2022-4-23 默认改为false
 	private boolean pageOverToFirst = false;
 
 	/**
@@ -116,6 +117,11 @@ public class SqlToyContext implements ApplicationContextAware {
 	 * 具体缓存实现(默认ehcache,可以根据自己喜好来自行扩展实现,sqltoy习惯将有争议的提供默认实现但用户可自行选择)
 	 */
 	private TranslateCacheManager translateCacheManager;
+
+	/**
+	 * 自定义参数过滤处理器(防范性预留)
+	 */
+	private FilterHandler customFilterHandler;
 
 	/**
 	 * @param unifyFieldsHandler the unifyFieldsHandler to set
@@ -933,4 +939,13 @@ public class SqlToyContext implements ApplicationContextAware {
 	public void setDesensitizeProvider(DesensitizeProvider desensitizeProvider) {
 		this.desensitizeProvider = desensitizeProvider;
 	}
+
+	public FilterHandler getCustomFilterHandler() {
+		return customFilterHandler;
+	}
+
+	public void setCustomFilterHandler(FilterHandler customFilterHandler) {
+		this.customFilterHandler = customFilterHandler;
+	}
+
 }

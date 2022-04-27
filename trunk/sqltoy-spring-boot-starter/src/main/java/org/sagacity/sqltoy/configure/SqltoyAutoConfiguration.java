@@ -9,6 +9,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
+import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
@@ -282,6 +283,18 @@ public class SqltoyAutoConfiguration {
 			else if (desensitizeProvider.contains(".")) {
 				sqlToyContext.setDesensitizeProvider((DesensitizeProvider) Class.forName(desensitizeProvider)
 						.getDeclaredConstructor().newInstance());
+			}
+		}
+
+		// 自定义sql中filter处理器
+		String customFilterHandler = properties.getCustomFilterHandler();
+		if (StringUtil.isNotBlank(customFilterHandler)) {
+			if (applicationContext.containsBean(customFilterHandler)) {
+				sqlToyContext.setCustomFilterHandler((FilterHandler) applicationContext.getBean(customFilterHandler));
+			} // 包名和类名称
+			else if (customFilterHandler.contains(".")) {
+				sqlToyContext.setCustomFilterHandler(
+						(FilterHandler) Class.forName(customFilterHandler).getDeclaredConstructor().newInstance());
 			}
 		}
 		return sqlToyContext;
