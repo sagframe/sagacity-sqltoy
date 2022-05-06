@@ -549,15 +549,23 @@ public class DialectFactory {
 						treeModel.setIdValue(idValue);
 					}
 				}
-				// 类型,默认值为false
-				if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
-						|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
-						|| idMeta.getType() == java.sql.Types.NUMERIC) {
-					treeModel.idTypeIsChar(false);
-					// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
-					// treeModel.setAppendZero(true);
-				} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
-					treeModel.idTypeIsChar(true);
+				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
+				if (treeModel.isChar() == null) {
+					// id字段非主键
+					if (!treeModel.getIdField().equalsIgnoreCase(idMeta.getColumnName())) {
+						idMeta = (FieldMeta) entityMeta
+								.getFieldMeta(entityMeta.getColumnFieldMap().get(treeModel.getIdField().toLowerCase()));
+					}
+					// 类型,默认值为false
+					if (idMeta.getType() == java.sql.Types.INTEGER || idMeta.getType() == java.sql.Types.DECIMAL
+							|| idMeta.getType() == java.sql.Types.DOUBLE || idMeta.getType() == java.sql.Types.FLOAT
+							|| idMeta.getType() == java.sql.Types.NUMERIC) {
+						treeModel.idTypeIsChar(false);
+						// update 2016-12-05 节点路径默认采取主键值直接拼接,更加直观科学
+						// treeModel.setAppendZero(true);
+					} else if (idMeta.getType() == java.sql.Types.VARCHAR || idMeta.getType() == java.sql.Types.CHAR) {
+						treeModel.idTypeIsChar(true);
+					}
 				}
 			}
 			SqlExecuteStat.start(treeModel.getTableName(), "wrapTreeTableRoute", sqlToyContext.isDebug());
@@ -1541,7 +1549,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "update", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "update",
+					sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
 					new DataSourceCallbackHandler() {
@@ -1578,7 +1587,8 @@ public class DialectFactory {
 			return null;
 		}
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "updateSaveFetch",
+					sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Serializable result = (Serializable) DataSourceUtils.processDataSource(sqlToyContext,
 					shardingModel.getDataSource(), new DataSourceCallbackHandler() {
@@ -1668,7 +1678,8 @@ public class DialectFactory {
 			return 0L;
 		}
 		try {
-			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "delete", sqlToyContext.isDebug());
+			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(), "delete",
+					sqlToyContext.isDebug());
 			// 获取分库分表策略结果
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext, shardingModel.getDataSource(),
