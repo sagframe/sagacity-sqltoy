@@ -77,9 +77,15 @@ public class QueryResult<T> extends DataSetResult<T> implements Serializable {
 	 */
 	public PaginationModel getPageResult() {
 		PaginationModel result = new PaginationModel();
-		result.setPageNo(this.getPageNo());
-		result.setPageSize(this.getPageSize());
-		result.setRecordCount(this.getRecordCount());
+		if (this.getPageNo() != null) {
+			result.setPageNo(this.getPageNo());
+		}
+		if (this.getPageSize() != null) {
+			result.setPageSize(this.getPageSize());
+		}
+		if (this.getRecordCount() != null) {
+			result.setRecordCount(this.getRecordCount());
+		}
 		result.setRows(this.getRows());
 		if (skipQueryCount != null) {
 			result.setSkipQueryCount(skipQueryCount);

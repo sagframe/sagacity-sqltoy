@@ -18,7 +18,6 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.CacheFilterModel;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.model.ParamsFilter;
-import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -70,7 +70,7 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * id值的数据类型，字符还是数字
 	 */
-	private boolean isChar = false;
+	private Boolean isChar = null;
 
 	/**
 	 * 补零
@@ -103,7 +103,7 @@ public class TreeTableModel implements Serializable {
 	 * @param idLength
 	 */
 	public TreeTableModel(String tableName, Object rootId, String idField, String pidField, String nodeRouteField,
-			String nodeLevelField, String leafField, boolean isChar, int idLength) {
+			String nodeLevelField, String leafField, Boolean isChar, int idLength) {
 		this.tableName = tableName;
 		this.rootId = rootId;
 		this.idField = idField;
@@ -144,7 +144,7 @@ public class TreeTableModel implements Serializable {
 		return this;
 	}
 
-	public TreeTableModel idTypeIsChar(boolean isChar) {
+	public TreeTableModel idTypeIsChar(Boolean isChar) {
 		this.isChar = isChar;
 		return this;
 	}
@@ -202,7 +202,7 @@ public class TreeTableModel implements Serializable {
 	/**
 	 * @return the isChar
 	 */
-	public boolean isChar() {
+	public Boolean isChar() {
 		return isChar;
 	}
 
