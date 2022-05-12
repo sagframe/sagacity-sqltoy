@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2020-04-14 修复三个以上 in(?) 查询，在中间的in 参数值为null时 processIn方法处理错误}
  * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
  * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
+ * @modify {Date:2022-04-23 兼容in (:values) 参数数组长度超过1000的场景 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -468,6 +469,7 @@ public class SqlConfigParseUtils {
 					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
 					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
+					// update 2022-5-10 支持@if(1==1) 无参数场景
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {
@@ -763,7 +765,7 @@ public class SqlConfigParseUtils {
 		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
-			// 剔除掉not和not前面的空白
+			//剔除掉not和not前面的空白
 			sql = sql.substring(0, notIndex);
 		}
 		sql = " ".concat(sql);
@@ -832,9 +834,8 @@ public class SqlConfigParseUtils {
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					// update 2022-4-23 此处没有必要增加1=1 问题场景:where #[id=:id] #[name like :name]
-					// 第二个条件中没有加and
-					// return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					//update 2022-04-23
+					//return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					return preSql.concat(" ").concat(tailSql).concat(" ");
 				}
 			}
