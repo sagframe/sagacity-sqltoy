@@ -28,6 +28,11 @@ public class UnpivotModel implements Serializable {
 	 */
 	private String[] newColumnsLabels;
 
+	/**
+	 * 多组,指有多组列{1,3,5},{2,4,6} 6列作为2组旋转成新的2列
+	 */
+	private int groupSize = 1;
+
 	public String[] getColumnsToRows() {
 		return columnsToRows;
 	}
@@ -56,6 +61,14 @@ public class UnpivotModel implements Serializable {
 			}
 		}
 		return this;
+	}
+
+	public int getGroupSize() {
+		return groupSize;
+	}
+
+	public void setGroupSize(int groupSize) {
+		this.groupSize = groupSize;
 	}
 
 }
