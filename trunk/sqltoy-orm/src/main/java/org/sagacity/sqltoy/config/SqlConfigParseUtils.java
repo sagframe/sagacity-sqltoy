@@ -469,6 +469,7 @@ public class SqlConfigParseUtils {
 					evalStr = markContentSql.substring(markContentSql.indexOf("(", ifStart) + 1, ifEnd);
 					logicParamCnt = StringUtil.matchCnt(evalStr, ARG_NAME_PATTERN);
 					// update 2019-10-11 修复@if(:name==null) 不参与逻辑判断bug
+					// update 2022-5-10 支持@if(1==1) 无参数场景
 					logicValue = MacroIfLogic.evalLogic(evalStr, paramValuesList, preParamCnt, logicParamCnt);
 					// 逻辑不成立,剔除sql和对应参数
 					if (!logicValue) {

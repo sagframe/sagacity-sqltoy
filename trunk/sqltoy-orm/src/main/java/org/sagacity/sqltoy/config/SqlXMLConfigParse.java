@@ -91,6 +91,7 @@ public class SqlXMLConfigParse {
 		private static final long serialVersionUID = 1636155921862321269L;
 		{
 			put("[", "]");
+			put("{", "}");
 		}
 	};
 
@@ -328,7 +329,7 @@ public class SqlXMLConfigParse {
 			isNoSql = true;
 		}
 		SqlToyConfig sqlToyConfig = SqlConfigParseUtils.parseSqlToyConfig(sqlContent, realDialect, type);
-		//debug 控制台输出sql执行日志
+		// debug 控制台输出sql执行日志
 		if (sqlElt.hasAttribute("debug")) {
 			sqlToyConfig.setShowSql(Boolean.valueOf(sqlElt.getAttribute("debug")));
 		}
@@ -1290,6 +1291,18 @@ public class SqlXMLConfigParse {
 					UnpivotModel unpivotModel = new UnpivotModel();
 					XMLUtil.setAttributes(elt, unpivotModel);
 					if (unpivotModel.getColumnsToRows().length > 1) {
+						// 2022-5-9 支持多组旋转(统一分组符号)
+						String cols = elt.getAttribute("columns-to-rows").trim().replace("[", "{").replace("]", "}");
+						unpivotModel.setColumnsToRows(StringUtil.splitExcludeSymMark(cols, ",", filters));
+						if (cols.startsWith("{") && cols.endsWith("}")) {
+							unpivotModel.setGroupSize(unpivotModel.getColumnsToRows().length);
+							//替换掉分组符号
+							String[] colsToRows = unpivotModel.getColumnsToRows();
+							for (int t = 0; t < unpivotModel.getGroupSize(); t++) {
+								colsToRows[t] = colsToRows[t].replace("{", "").replace("}", "").trim();
+							}
+							unpivotModel.setColumnsToRows(colsToRows);
+						}
 						resultProcessor.add(unpivotModel);
 					}
 				}

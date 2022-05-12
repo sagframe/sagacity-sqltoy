@@ -512,7 +512,7 @@ public interface SqlToyLazyDao {
 			final Class<T> voClass);
 
 	/**
-	 * @TODO 提供基于Map传参的查询
+	 * @TODO 提供基于Map传参的查询5.1.34+ 开始支持 findBySql("select 单列 from table",map,Integer.class) 返回单列值的一维数组
 	 * @param <T>
 	 * @param sqlOrSqlId
 	 * @param paramsMap

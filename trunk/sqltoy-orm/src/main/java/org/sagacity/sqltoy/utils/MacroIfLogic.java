@@ -14,6 +14,7 @@ import java.util.List;
  * @modify {Date:2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性}
  * @modify {Date:2020-08-25 增加include场景,数组类型或字符串类型包含某个特定值 }
  * @modify {Date:2020-09-24 增加数组长度的提取 length(:paramName)>10 模式}
+ * @modify {Date:2022-05-10 支持@if(1==1)无参数模式}
  */
 public class MacroIfLogic {
 
@@ -22,16 +23,13 @@ public class MacroIfLogic {
 
 	/**
 	 * @todo 简单逻辑判断,只支持2个逻辑,update 2017-12-4 剔除freemarker复杂逻辑判断,减少框架依赖性
-	 * @param sql
+	 * @param evalExpression 表达式
 	 * @param paramValues
 	 * @param preCount
 	 * @param logicParamCnt
 	 * @return
 	 */
-	public static boolean evalLogic(String sql, List paramValues, int preCount, int logicParamCnt) {
-		if (logicParamCnt == 0) {
-			return true;
-		}
+	public static boolean evalLogic(String evalExpression, List paramValues, int preCount, int logicParamCnt) {
 		Object value;
 		for (int i = 0; i < logicParamCnt; i++) {
 			value = paramValues.get(preCount + i);
@@ -44,9 +42,9 @@ public class MacroIfLogic {
 			}
 		}
 		// 规范判断符号标准(<>转为!=)
-		sql = sql.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
+		evalExpression = evalExpression.replaceAll("\\<\\>", "!=").replaceAll("\r|\t|\n", " ").trim();
 		// 先通过简单表达式进行计算,格式如:@if(:name>=xxx || :name<=xxx)
-		String simpleResult = evalSimpleExpress(sql, paramValues, preCount);
+		String simpleResult = evalSimpleExpress(evalExpression, (logicParamCnt == 0) ? null : paramValues, preCount);
 		if (!simpleResult.equals("undefine")) {
 			return Boolean.parseBoolean(simpleResult);
 		}
@@ -56,14 +54,14 @@ public class MacroIfLogic {
 
 	/**
 	 * @todo 简单表达式(单独列出来便于做容错性处理)
-	 * @param sql
+	 * @param evalExpression
 	 * @param paramValues
 	 * @param preCount
 	 * @return
 	 */
-	private static String evalSimpleExpress(String sql, List paramValues, int preCount) {
+	private static String evalSimpleExpress(String evalExpression, List paramValues, int preCount) {
 		// 不能超过两个运算符
-		if (sql.indexOf("||") != -1 && sql.indexOf("&&") != -1) {
+		if (evalExpression.indexOf("||") != -1 && evalExpression.indexOf("&&") != -1) {
 			return "undefine";
 		}
 		// 2020-08-25 增加include场景
@@ -76,10 +74,10 @@ public class MacroIfLogic {
 		String logicStr = "\\&\\&";
 		String[] expressions;
 		try {
-			if (sql.indexOf("||") != -1) {
+			if (evalExpression.indexOf("||") != -1) {
 				logicStr = "\\|\\|";
 			}
-			expressions = sql.split(logicStr);
+			expressions = evalExpression.split(logicStr);
 			boolean[] expressResult = new boolean[expressions.length];
 			String express;
 			Object value;
@@ -89,7 +87,7 @@ public class MacroIfLogic {
 			String compareParam;
 			String compareType = "==";
 			for (int i = 0; i < expressions.length; i++) {
-				value = paramValues.get(preCount + i);
+				value = (paramValues == null) ? null : paramValues.get(preCount + i);
 				express = expressions[i].trim();
 				expressLow = express.toLowerCase();
 				for (int j = 0; j < compareStr.length; j++) {
@@ -109,7 +107,8 @@ public class MacroIfLogic {
 					expressResult[i] = compare(value == null ? 0 : CollectionUtil.convertArray(value).length,
 							compareType, compareValue);
 				} else {
-					expressResult[i] = compare(value, compareType, compareValue);
+					expressResult[i] = compare((paramValues == null) ? params[0].trim() : value, compareType,
+							compareValue);
 				}
 			}
 

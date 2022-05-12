@@ -32,7 +32,7 @@ public class SqlConfigParseUtilsTest {
 	public void testProcessSql() {
 		String sql = FileUtil.readFileAsStr("classpath:scripts/ifScriptSql.sql", "UTF-8");
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
-				new Object[] { null, "chen", "1" });
+				new Object[] { 1, "chen", "1" });
 		System.err.println("id==null:" + JSON.toJSONString(result));
 
 		SqlToyResult result1 = SqlConfigParseUtils.processSql(sql, new String[] { "id", "name", "status" },
