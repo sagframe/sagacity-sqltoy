@@ -229,7 +229,7 @@ public class DefaultDialectUtils {
 		} else {
 			deleteSql.append("delete from ");
 			deleteSql.append(realTable);
-			deleteSql.append("  where ");
+			deleteSql.append(" where ");
 		}
 		String field;
 		SqlToyResult sqlToyResult = null;

@@ -142,6 +142,7 @@ public abstract class ReflectPropsHandler {
 	 * @param value
 	 * @param properties
 	 */
+	@Deprecated
 	public void setEqualNull(Object value, String... properties) {
 		if (properties == null || properties.length == 0) {
 			return;

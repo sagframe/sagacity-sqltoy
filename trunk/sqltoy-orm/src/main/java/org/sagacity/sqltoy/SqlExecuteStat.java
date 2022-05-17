@@ -147,9 +147,6 @@ public class SqlExecuteStat {
 			if (!sqlTrace.isPrint()) {
 				return;
 			}
-			// if (!debug) {
-			//    return;
-			// }
 		}
 
 		String uid = sqlTrace.getUid();

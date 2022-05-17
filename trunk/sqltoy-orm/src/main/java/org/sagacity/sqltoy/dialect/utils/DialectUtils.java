@@ -153,7 +153,7 @@ public class DialectUtils {
 		String[] realParamNamed = null;
 		Object[] realParamValue = null;
 		int paramLength;
-		// 针对sqlserver2008以及2005版本分页只需扩展一个参数
+		//分页2个参数，top一个参数
 		int extendSize = (endIndex == null) ? 1 : 2;
 		if (sqlToyConfig.isNamedParam()) {
 			paramLength = paramsNamed.length;

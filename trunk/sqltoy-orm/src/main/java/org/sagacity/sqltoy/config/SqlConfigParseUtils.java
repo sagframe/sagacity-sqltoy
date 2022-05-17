@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *         named对应的值因使用combineInStr数组长度为1自动添加了'value', 单引号而导致查询错误问题}
  * @modify {Date:2015-12-09,修改#[sql],sql中如果没有参数剔除#[sql]}
  * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及 #[@value(:named)
- *         sql] 形式,使得增强sql组织拼装能力}
+ *         sql] 形式,增强sql组织拼装能力}
  * @modify {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
  * @modify {Date:2017-12-7,优化where和and 或or的拼接处理}
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}

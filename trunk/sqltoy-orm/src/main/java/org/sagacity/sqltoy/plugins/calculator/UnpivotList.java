@@ -17,6 +17,7 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @description 对集合进行列转行处理
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
+ * @modify {Date:2022-05-11 支持多组列转行 }
  */
 public class UnpivotList {
 	public static List process(UnpivotModel unpivotModel, DataSetResult resultModel, LabelIndexModel labelIndexMap,

@@ -158,7 +158,7 @@ public class ReservedWordsUtil {
 	}
 
 	/**
-	 * @TODO 判断列是否是关键词
+	 * @TODO 判断列名称是否是关键词
 	 * @param column
 	 * @return
 	 */
