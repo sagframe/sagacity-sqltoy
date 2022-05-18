@@ -8,7 +8,7 @@ import org.w3c.dom.Element;
 
 /**
  * @project sagacity-sqltoy
- * @description xml编辑反调抽象类
+ * @description xml编辑反调接口
  * @author zhongxuchen
  * @version v1.0,Date:2009-12-30
  */

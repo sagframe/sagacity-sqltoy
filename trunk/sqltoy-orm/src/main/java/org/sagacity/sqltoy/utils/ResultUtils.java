@@ -1053,6 +1053,7 @@ public class ResultUtils {
 		if (items == null || items.isEmpty()) {
 			return false;
 		}
+		//是否会导致列名称和数据完全不对应,导致无法映射到pojo或map
 		boolean changedCols = false;
 		List<SecureMask> secureMasks = sqlToyConfig.getSecureMasks();
 		List<FormatModel> formatModels = sqlToyConfig.getFormatModels();

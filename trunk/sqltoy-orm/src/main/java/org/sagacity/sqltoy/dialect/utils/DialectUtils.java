@@ -46,6 +46,7 @@ import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.LockMode;
@@ -153,7 +154,7 @@ public class DialectUtils {
 		String[] realParamNamed = null;
 		Object[] realParamValue = null;
 		int paramLength;
-		// 针对sqlserver2008以及2005版本分页只需扩展一个参数
+		// 分页2个参数，top一个参数
 		int extendSize = (endIndex == null) ? 1 : 2;
 		if (sqlToyConfig.isNamedParam()) {
 			paramLength = paramsNamed.length;
@@ -1030,6 +1031,11 @@ public class DialectUtils {
 						if (cascadeModel.getCascadeType() == 1) {
 							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails);
 						} else {
+							//update 2022-5-18 增加oneToOne 级联数据校验
+							if (pkRefDetails.size() > 1) {
+								throw new DataAccessException("请检查对象:" + entityMeta.getEntityClass().getName()
+										+ "中的@OneToOne级联配置,级联查出的数据size=" + pkRefDetails.size() + ">1,不符合预期!");
+							}
 							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails.get(0));
 						}
 					}

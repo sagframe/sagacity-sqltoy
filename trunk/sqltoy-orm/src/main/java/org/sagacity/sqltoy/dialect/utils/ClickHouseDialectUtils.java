@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sqltoy-orm
- * @description 提供click数据库通用的操作功能实现,为不同版本提供支持
+ * @description 提供clickhouse数据库通用的操作功能实现,为不同版本提供支持
  * @author zhongxuchen
  * @version v1.0,Date:2020年1月20日
  */

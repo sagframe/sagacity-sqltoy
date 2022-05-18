@@ -58,8 +58,8 @@ import org.springframework.context.ApplicationContextAware;
 //12、提供了统一数据权限传参和数据越权校验
 //13、提供了取top、取random记录、树形表结构构造和递归查询支持、updateSaveFetch/updateFetch单次交互完成修改和查询等实用的功能
 //14、sqltoy的update、save、saveAll、load 等crud操作规避了jpa的缺陷,参见update(entity,String...forceUpdateProps)和updateFetch、updateSaveFetch
-//15、提供了极为人性化的条件处理：排它性条件、日期条件加减和提取月末月初处理等
-//16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql或结果的二次处理工作
+//15、提供了极为人性化的条件处理:排它性条件、日期条件加减和提取月末月初处理等
+//16、提供了查询结果日期、数字格式化、安全脱敏处理，让复杂的事情变得简单，大幅简化sql和结果的二次处理工作
 //------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  * @project sagacity-sqltoy
