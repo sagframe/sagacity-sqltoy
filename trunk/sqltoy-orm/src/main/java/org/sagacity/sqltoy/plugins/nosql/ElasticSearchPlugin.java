@@ -63,12 +63,12 @@ public class ElasticSearchPlugin {
 			realMql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
-			jsonQuery.fluentRemove("from");
-			jsonQuery.fluentRemove("FROM");
-			jsonQuery.fluentRemove("size");
-			jsonQuery.fluentRemove("SIZE");
-			jsonQuery.fluentPut("from", (pageModel.getPageNo() - 1) * pageModel.getPageSize());
-			jsonQuery.fluentPut("size", pageModel.getPageSize());
+			jsonQuery.remove("from");
+			jsonQuery.remove("FROM");
+			jsonQuery.remove("size");
+			jsonQuery.remove("SIZE");
+			jsonQuery.put("from", (pageModel.getPageNo() - 1) * pageModel.getPageSize());
+			jsonQuery.put("size", pageModel.getPageSize());
 		} catch (Exception e) {
 			logger.error("分页解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);
 			throw e;
@@ -103,12 +103,12 @@ public class ElasticSearchPlugin {
 					extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 			jsonQuery = JSON.parseObject(realMql);
 			if (topSize != null) {
-				jsonQuery.fluentRemove("from");
-				jsonQuery.fluentRemove("FROM");
-				jsonQuery.fluentRemove("size");
-				jsonQuery.fluentRemove("SIZE");
-				jsonQuery.fluentPut("from", 0);
-				jsonQuery.fluentPut("size", topSize);
+				jsonQuery.remove("from");
+				jsonQuery.remove("FROM");
+				jsonQuery.remove("size");
+				jsonQuery.remove("SIZE");
+				jsonQuery.remove("from", 0);
+				jsonQuery.remove("size", topSize);
 			}
 		} catch (Exception e) {
 			logger.error("解析es原生json错误,请检查json串格式是否正确!错误信息:{},json={}", e.getMessage(), realMql);

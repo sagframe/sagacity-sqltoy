@@ -36,6 +36,7 @@ import org.sagacity.sqltoy.config.annotation.OneToOne;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
+import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.TypeHandler;
 import org.slf4j.Logger;
@@ -1705,12 +1706,14 @@ public class BeanUtil {
 		List itemList = null;
 		int fieldLength = mainProps.length;
 		boolean isEqual = true;
+		int itemSize = 0;
 		for (int i = 0; i < mainEntities.size(); i++) {
 			mainEntity = mainEntities.get(i);
 			mainValues = reflectBeanToAry(mainEntity, mainProps, null, null);
 			if (isOneToMany) {
 				itemList = new ArrayList();
 			}
+			itemSize = 0;
 			for (int j = 0; j < itemEntities.size(); j++) {
 				itemEntity = itemEntities.get(j);
 				mappedFieldValues = reflectBeanToAry(itemEntity, mappedFields, null, null);
@@ -1726,10 +1729,17 @@ public class BeanUtil {
 						itemList.add(itemEntity);
 					} // oneToOne 直接赋值
 					else {
+						//update 2022-5-18 增加oneToOne 级联数据校验
+						if (itemSize > 0) {
+							throw new DataAccessException(
+									"请检查对象:" + mainEntity.getClass().getName() + "中的@OneToOne级联配置,级联查出的数据为>1条,不符合预期!");
+						}
 						setProperty(mainEntity, property, itemEntity);
 					}
-					itemEntities.remove(j);
-					j--;
+					//屏蔽掉，兼容ManyToOne、ManyToMany 场景
+					//itemEntities.remove(j);
+					//j--;
+					itemSize++;
 				}
 			}
 			if (isOneToMany && (itemList != null && !itemList.isEmpty())) {
