@@ -20,6 +20,14 @@ import org.sagacity.sqltoy.utils.NumberUtil;
  * @modify {Date:2022-05-11 支持多组列转行 }
  */
 public class UnpivotList {
+	/**
+	 * @TODO 对集合进行单组、多组列转行处理
+	 * @param unpivotModel
+	 * @param resultModel 提供label、labelType 进行重写
+	 * @param labelIndexMap sql查询出来的集合:标题 对应 列的map,通过label定义第几列
+	 * @param result
+	 * @return
+	 */
 	public static List process(UnpivotModel unpivotModel, DataSetResult resultModel, LabelIndexModel labelIndexMap,
 			List result) {
 		if (result == null || result.isEmpty()) {
