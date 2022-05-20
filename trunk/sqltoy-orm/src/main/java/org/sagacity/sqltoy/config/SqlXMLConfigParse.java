@@ -1365,6 +1365,10 @@ public class SqlXMLConfigParse {
 					if (elt.hasAttribute("average-skip-null")) {
 						summaryModel.setAverageSkipNull(Boolean.parseBoolean(elt.getAttribute("average-skip-null")));
 					}
+					// 单行数据是否需要进行分组汇总计算
+					if (elt.hasAttribute("skip-single-row")) {
+						summaryModel.setSkipSingleRow(Boolean.parseBoolean(elt.getAttribute("skip-single-row")));
+					}
 					NodeList nodeList = elt.getElementsByTagName(local.concat("global"));
 					List<SummaryGroupMeta> groupMetaList = new ArrayList<SummaryGroupMeta>();
 					// 全局汇总

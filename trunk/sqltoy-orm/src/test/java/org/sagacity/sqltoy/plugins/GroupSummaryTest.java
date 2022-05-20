@@ -19,7 +19,7 @@ public class GroupSummaryTest {
 	@Test
 	public void testSummary() {
 		Object[][] values = new Object[][] { { "202101", "手机", 100, 2000 }, { "202101", "电脑", 90, null },
-				{ "202102", "手机", 80, 1700 }, { "202102", "电脑", 60, 7900 } };
+				{ "202102", "手机", 80, 1700 }, { "202102", "电脑", 60, 7900 } ,{ "202103", "电脑", 60, 7900 }};
 		List dataSet = new ArrayList();
 		for (int i = 0; i < values.length; i++) {
 			List row = new ArrayList();
@@ -75,7 +75,7 @@ public class GroupSummaryTest {
 		groupMeta.setSumSite("left");
 		groupMetas[1] = groupMeta;
 
-		CollectionUtil.groupSummary(dataSet, groupMetas, false, null);
+		CollectionUtil.groupSummary(dataSet, groupMetas, false, null,true);
 		for (int i = 0; i < dataSet.size(); i++) {
 			System.err.println(JSON.toJSONString(dataSet.get(i)));
 		}

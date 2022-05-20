@@ -63,6 +63,11 @@ public class SummaryModel implements Serializable {
 	 */
 	private String sumSite = "top";
 
+	/**
+	 * 跳过单行数据的分组计算
+	 */
+	private boolean skipSingleRow = false;
+
 	private RoundingMode[] roundingModes;
 
 	/**
@@ -179,5 +184,13 @@ public class SummaryModel implements Serializable {
 
 	public void setRoundingModes(RoundingMode[] roundingModes) {
 		this.roundingModes = roundingModes;
+	}
+
+	public boolean isSkipSingleRow() {
+		return skipSingleRow;
+	}
+
+	public void setSkipSingleRow(boolean skipSingleRow) {
+		this.skipSingleRow = skipSingleRow;
 	}
 }

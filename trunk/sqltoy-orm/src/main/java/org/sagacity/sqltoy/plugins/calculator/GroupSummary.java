@@ -87,7 +87,7 @@ public class GroupSummary {
 			groupMeta.setSummaryCols(createColMeta(summaryCols, summaryModel, sumColList, aveColList));
 		}
 		CollectionUtil.groupSummary(result, summaryModel.getGroupMeta(), summaryModel.isReverse(),
-				summaryModel.getLinkSign());
+				summaryModel.getLinkSign(), summaryModel.isSkipSingleRow());
 	}
 
 	/**
