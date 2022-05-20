@@ -715,8 +715,10 @@ public class CollectionUtil {
 	 * @param groupMetas
 	 * @param isReverse
 	 * @param linkSign
+	 * @param skipSingleRowSummary 分组数据是单行是否忽略汇总求平均计算
 	 */
-	public static void groupSummary(List sumData, SummaryGroupMeta[] groupMetas, boolean isReverse, String linkSign) {
+	public static void groupSummary(List sumData, SummaryGroupMeta[] groupMetas, boolean isReverse, String linkSign,
+			boolean skipSingleRowSummary) {
 		// 分组计算，数据集合少于2条没有必要计算
 		if (sumData == null || sumData.size() < 2 || groupMetas == null || groupMetas.length == 0) {
 			return;
@@ -757,7 +759,7 @@ public class CollectionUtil {
 				}
 			}
 		}
-		summaryList(sumData, groupMetas, StringUtil.isBlank(linkSign) ? " / " : linkSign);
+		summaryList(sumData, groupMetas, StringUtil.isBlank(linkSign) ? " / " : linkSign, skipSingleRowSummary);
 		// 将结果反转
 		if (isReverse) {
 			Collections.reverse(sumData);
@@ -769,8 +771,10 @@ public class CollectionUtil {
 	 * @param dataSet
 	 * @param groupMetas
 	 * @param linkSign
+	 * @param skipSingleRowSummary
 	 */
-	private static void summaryList(List<List> dataSet, SummaryGroupMeta[] groupMetas, String linkSign) {
+	private static void summaryList(List<List> dataSet, SummaryGroupMeta[] groupMetas, String linkSign,
+			boolean skipSingleRowSummary) {
 		List<List> iterList = new ArrayList();
 		for (List item : dataSet) {
 			iterList.add(item);
@@ -792,11 +796,14 @@ public class CollectionUtil {
 					// 汇总计算
 					calculateTotal(row, groupMeta);
 				} else {
-					sumRows = createSummaryRow(preRow, groupMeta, linkSign);
-					// 插入汇总行(可能存在sum、ave 两行数据)
-					dataSet.addAll(i + addRows, sumRows);
-					// 累加增加的记录行数
-					addRows = addRows + sumRows.size();
+					//参与计算的行>1 或 单行也计算
+					if (groupMeta.getSummaryCols()[0].getRowCount() > 1 || !skipSingleRowSummary) {
+						sumRows = createSummaryRow(preRow, groupMeta, linkSign);
+						// 插入汇总行(可能存在sum、ave 两行数据)
+						dataSet.addAll(i + addRows, sumRows);
+						// 累加增加的记录行数
+						addRows = addRows + sumRows.size();
+					}
 					// 重置分组的列计算的汇总相关的值(sum、rowCount、nullRowCount)
 					for (SummaryColMeta colMeta : groupMeta.getSummaryCols()) {
 						colMeta.setNullCount(0);
@@ -807,11 +814,13 @@ public class CollectionUtil {
 				}
 				// 最后一行
 				if (i == dataSize - 1) {
-					// 全局汇总的置顶
-					if (groupMeta.isGlobalReverse()) {
-						dataSet.addAll(0, createSummaryRow(row, groupMeta, linkSign));
-					} else {
-						dataSet.addAll(createSummaryRow(row, groupMeta, linkSign));
+					if (groupMeta.getSummaryCols()[0].getRowCount() > 1 || !skipSingleRowSummary) {
+						// 全局汇总的置顶
+						if (groupMeta.isGlobalReverse()) {
+							dataSet.addAll(0, createSummaryRow(row, groupMeta, linkSign));
+						} else {
+							dataSet.addAll(createSummaryRow(row, groupMeta, linkSign));
+						}
 					}
 				}
 			}

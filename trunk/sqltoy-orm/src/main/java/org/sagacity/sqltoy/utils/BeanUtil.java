@@ -69,6 +69,7 @@ public class BeanUtil {
 	 */
 	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
 
+	//保存pojo的级联关系
 	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
 
 	// 静态方法避免实例化和继承

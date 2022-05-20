@@ -1134,6 +1134,12 @@
 				<xsd:documentation><![CDATA[sum和average同一行展示时拼接字符]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="skip-single-row"
+			type="xsd:boolean" default="false">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[单行数据是否进行分组汇总和求平均,默认为false]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 	<xsd:simpleType name="numberFormatType">
 		<xsd:restriction base="xsd:string">
