@@ -22,6 +22,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @author zhongxuchen
  * @version v1.0,Date:2020-3-25
  * @modify 2022-3-3,完成算法重构，支持分别指定求和、求平均的列，不同分组可以根据averageLabel、sumLabel来判断是否只求和或求平均
+ * @modify 2022-5-19,增加skipSingleRow特性，针对单行数据可配置不进行汇总、求平均
  */
 public class GroupSummary {
 	public static void process(SummaryModel summaryModel, LabelIndexModel labelIndexMap, List result) {

@@ -251,8 +251,9 @@ public class PostgreSqlDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
+			final String[] uniqueFields, String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}
@@ -295,9 +296,11 @@ public class PostgreSqlDialect implements Dialect {
 	public Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
-		// PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize,
-		// reflectPropsHandler, forceUpdateFields, conn, dbType, dialect, autoCommit,
-		// tableName);
+		//postgresql15 支持merge into
+		//if (dbType.equals(DBType.POSTGRESQL15)) {
+		//	return PostgreSqlDialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler,
+		//	forceUpdateFields, conn, dbType, dialect, autoCommit, tableName);
+		//}
 		Long updateCnt = DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields,
 				reflectPropsHandler, NVL_FUNCTION, conn, dbType, autoCommit, tableName, true);
 		// 如果修改的记录数量跟总记录数量一致,表示全部是修改

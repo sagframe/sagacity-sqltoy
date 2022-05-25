@@ -35,7 +35,8 @@ public class SubStr extends IFunction {
 	 * 针对不同数据库对如：substr(arg1,arg2,arg3)进行转换，框架自动将arg1和arg2等参数作为数组传进来
 	 */
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
-		if (dialect == DBType.POSTGRESQL || dialect == DBType.GAUSSDB || dialect == DBType.SQLSERVER) {
+		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL15 || dialect == DBType.GAUSSDB
+				|| dialect == DBType.SQLSERVER) {
 			if (dialect == DBType.SQLSERVER && args != null && args.length == 2) {
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
