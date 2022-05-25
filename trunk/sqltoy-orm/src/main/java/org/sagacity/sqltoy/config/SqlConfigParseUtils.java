@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *         named对应的值因使用combineInStr数组长度为1自动添加了'value', 单引号而导致查询错误问题}
  * @modify {Date:2015-12-09,修改#[sql],sql中如果没有参数剔除#[sql]}
  * @modify {Date:2016-5-27,在sql语句中提供#[@blank(:named) sql] 以及 #[@value(:named)
- *         sql] 形式,使得增强sql组织拼装能力}
+ *         sql] 形式,增强sql组织拼装能力}
  * @modify {Date:2016-6-7,增加sql中的全角字符替换功能,增强sql的解析能力}
  * @modify {Date:2017-12-7,优化where和and 或or的拼接处理}
  * @modify {Date:2019-02-21,增强:named 参数匹配正则表达式,参数中必须要有字母}
@@ -86,7 +86,10 @@ public class SqlConfigParseUtils {
 	public final static Pattern FAST_PATTERN = Pattern.compile("(?i)\\@fast(Page)?\\([\\w\\W]+\\)");
 
 	// sql中 in (?)条件
-	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
+	// public final static Pattern IN_PATTERN =
+	// Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
+	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 模式
+	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\)");
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
@@ -689,50 +692,103 @@ public class SqlConfigParseUtils {
 		int incrementIndex = 0;
 		StringBuilder lastSql = new StringBuilder();
 		String partSql = null;
-		Object[] inParamArray;
+		Object[] inParamArray = null;
 		String argValue;
 		Collection inParamList;
 		boolean overSize = false;
+		int paramCnt = 0;
 		while (matched) {
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
+			// (t.field1,t.feild2) in (:param1,:param2) 模式
+			paramCnt = StringUtil.matchCnt(m.group(), ARG_REGEX);
 			overSize = false;
-			if (null != paramsValue[parameterMarkCnt - 1]) {
-				// 数组或集合数据类型
-				if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
-						|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-					// update 2012-12-5 增加了对Collection数据类型的处理
-					if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
-						inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
+			if (paramCnt > 1) {
+				int nullCnt = 0;
+				int startIndex = parameterMarkCnt - paramCnt;
+				String loopArgs = "(";
+				for (int i = 0; i < paramCnt; i++) {
+					if (paramsValue[startIndex + i] == null) {
+						nullCnt++;
+					}
+					if (i > 0) {
+						loopArgs = loopArgs.concat(",");
+					}
+					loopArgs = loopArgs.concat("?");
+				}
+				loopArgs = loopArgs.concat(")");
+				if (nullCnt > 0 && nullCnt < paramCnt) {
+					throw new IllegalArgumentException(
+							"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，不能部分为null!");
+				}
+				List<Object[]> inParamsList = new ArrayList<Object[]>();
+				for (int i = 0; i < paramCnt; i++) {
+					if (paramsValue[startIndex + i] instanceof Collection) {
+						inParamList = (Collection) paramsValue[startIndex + i];
 						inParamArray = inParamList.toArray();
 					} else {
-						inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
+						inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
 					}
-
-					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-					if (inParamArray.length > 1000) {
-						overSize = true;
-						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), inParamArray.length);
-						lastSql.append(" ").append(partSql).append(" ");
-					} else {
-						// 循环组合成in(?,?*)
-						partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
-					}
-					paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-					paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
-							CollectionUtil.arrayToList(inParamArray));
-					incrementIndex += inParamArray.length - 1;
+					inParamsList.add(inParamArray);
 				}
-				// 逗号分隔的条件参数
-				else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
-					argValue = (String) paramsValue[parameterMarkCnt - 1];
-					// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
-					// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
-					if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
-						partSql = (String) paramsValue[parameterMarkCnt - 1];
+				// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+				if (inParamArray.length > 1000) {
+					overSize = true;
+					partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs, inParamArray.length);
+					lastSql.append(" ").append(partSql).append(" ");
+				} else {
+					// 循环组合成in(?,?*)
+					partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
+				}
+				for (int i = 0; i < paramCnt; i++) {
+					paramValueList.remove(startIndex + incrementIndex);
+				}
+				int addIndex = startIndex + incrementIndex;
+				for (int i = 0; i < inParamArray.length; i++) {
+					for (int j = 0; j < paramCnt; j++) {
+						paramValueList.add(addIndex, inParamsList.get(j)[i]);
+						addIndex++;
+					}
+				}
+				incrementIndex += inParamArray.length * paramCnt - paramCnt;
+			} else {
+				if (null != paramsValue[parameterMarkCnt - 1]) {
+					// 数组或集合数据类型
+					if (paramsValue[parameterMarkCnt - 1].getClass().isArray()
+							|| paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+						// update 2012-12-5 增加了对Collection数据类型的处理
+						if (paramsValue[parameterMarkCnt - 1] instanceof Collection) {
+							inParamList = (Collection) paramsValue[parameterMarkCnt - 1];
+							inParamArray = inParamList.toArray();
+						} else {
+							inParamArray = CollectionUtil.convertArray(paramsValue[parameterMarkCnt - 1]);
+						}
+						// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+						if (inParamArray.length > 1000) {
+							overSize = true;
+							partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), ARG_NAME,
+									inParamArray.length);
+							lastSql.append(" ").append(partSql).append(" ");
+						} else {
+							// 循环组合成in(?,?*)
+							partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", inParamArray.length);
+						}
 						paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
-						incrementIndex--;
+						paramValueList.addAll(parameterMarkCnt - 1 + incrementIndex,
+								CollectionUtil.arrayToList(inParamArray));
+						incrementIndex += inParamArray.length - 1;
+					}
+					// 逗号分隔的条件参数
+					else if (paramsValue[parameterMarkCnt - 1] instanceof String) {
+						argValue = (String) paramsValue[parameterMarkCnt - 1];
+						// update 2012-11-15 将'xxx'(单引号) 形式的字符串纳入直接替换模式，解决因为使用combineInStr
+						// 数组长度为1,构造出来的in 条件存在''(空白)符合直接用?参数导致的问题
+						if (argValue.indexOf(",") != -1 || (argValue.startsWith("'") && argValue.endsWith("'"))) {
+							partSql = (String) paramsValue[parameterMarkCnt - 1];
+							paramValueList.remove(parameterMarkCnt - 1 + incrementIndex);
+							incrementIndex--;
+						}
 					}
 				}
 			}
@@ -758,20 +814,33 @@ public class SqlConfigParseUtils {
 	 * @param paramsSize
 	 * @return
 	 */
-	private static String wrapOverSizeInSql(String sqlPart, int paramsSize) {
+	private static String wrapOverSizeInSql(String sqlPart, String loopArgs, int paramsSize) {
 		String sql = sqlPart.trim();
 		// 判断是否 t.field not in (?) 模式
 		int notIndex = StringUtil.matchIndex(sql.toLowerCase(), "\\s*not$");
 		boolean isNotIn = false;
 		if (notIndex > 0) {
 			isNotIn = true;
-			//剔除掉not和not前面的空白
+			// 剔除掉not和not前面的空白
 			sql = sql.substring(0, notIndex);
 		}
 		sql = " ".concat(sql);
-		// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
-		int paramIndex = StringUtil.matchLastIndex(sql, "[\\s\\(\\)\\}\\{\\]\\[]") + 1;
-		String paramName = sql.substring(paramIndex);
+		int paramIndex;
+		String paramName;
+		String regex = "[\\s\\(\\)\\}\\{\\]\\[]";
+		// in 前面的参数可能是(t.field||'') 或concat(t.field1,t.field2),确保精准的切取到参数
+		if (sql.trim().endsWith(")")) {
+			String reverseSql = new StringBuilder(sql).reverse().toString();
+			// "concat(a,b)" 反转后 ")b,a(tacnoc" 找到对称的(符号位置
+			int symIndex = StringUtil.getSymMarkIndex(")", "(", reverseSql, 0);
+			int start = sql.length() - symIndex - 1;
+			paramIndex = StringUtil.matchLastIndex(sql.substring(0, start), regex) + 1;
+			paramName = sql.substring(paramIndex);
+		} else {
+			// 提取出sql in 前面的实际字段名称(空白、括号等),如: and t.order_id 结果:t.order_id
+			paramIndex = StringUtil.matchLastIndex(sql, regex) + 1;
+			paramName = sql.substring(paramIndex);
+		}
 		sql = sql.substring(0, paramIndex);
 		StringBuilder result = new StringBuilder(sql);
 		result.append(" (");
@@ -793,7 +862,7 @@ public class SqlConfigParseUtils {
 			} else {
 				result.append(" in (");
 			}
-			result.append(StringUtil.loopAppendWithSign(ARG_NAME, ",", (paramsSize > 1000) ? 1000 : paramsSize));
+			result.append(StringUtil.loopAppendWithSign(loopArgs, ",", (paramsSize > 1000) ? 1000 : paramsSize));
 			result.append(") ");
 			paramsSize = paramsSize - 1000;
 			index++;
@@ -834,8 +903,8 @@ public class SqlConfigParseUtils {
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					//update 2022-04-23
-					//return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
+					// update 2022-04-23
+					// return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					return preSql.concat(" ").concat(tailSql).concat(" ");
 				}
 			}
