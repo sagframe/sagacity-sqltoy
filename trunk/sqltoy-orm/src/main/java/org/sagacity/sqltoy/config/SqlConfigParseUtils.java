@@ -89,8 +89,10 @@ public class SqlConfigParseUtils {
 	// sql中 in (?)条件
 	// public final static Pattern IN_PATTERN =
 	// Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?\\s*\\)");
-	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 模式
-	public final static Pattern IN_PATTERN = Pattern.compile("(?i)\\s+in\\s*\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\)");
+	// update 2022-5-24 开始支持(id,type) in (:idValues,:typeValues) 或 (id,type) in
+	// ((:idValues,:typeValues)) 模式
+	public final static Pattern IN_PATTERN = Pattern.compile(
+			"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
 	public final static Pattern LIKE_PATTERN = Pattern.compile("(?i)\\s+like\\s+\\?");
 
 	// add 2016-5-27 by chenrenfei
@@ -702,13 +704,13 @@ public class SqlConfigParseUtils {
 			end = m.end();
 			partSql = ARG_NAME;
 			parameterMarkCnt = StringUtil.matchCnt(queryStr, ARG_REGEX, 0, end);
-			// (t.field1,t.feild2) in (:param1,:param2) 模式
+			// (t.field1,t.feild2) in (:param1,:param2) 或 (t.field1,t.feild2) in
+			// ((:param1,:param2))模式
 			paramCnt = StringUtil.matchCnt(m.group(), ARG_REGEX);
 			overSize = false;
 			if (paramCnt > 1) {
 				int nullCnt = 0;
 				int startIndex = parameterMarkCnt - paramCnt;
-				String loopArgs = "(";
 				// 普通非数组类型数量
 				int commTypeCnt = 0;
 				for (int i = 0; i < paramCnt; i++) {
@@ -719,20 +721,19 @@ public class SqlConfigParseUtils {
 							&& !(paramsValue[startIndex + i] instanceof Collection)) {
 						commTypeCnt++;
 					}
-					if (i > 0) {
-						loopArgs = loopArgs.concat(",");
-					}
-					loopArgs = loopArgs.concat("?");
 				}
-				loopArgs = loopArgs.concat(")");
 				// 直接组织好的(?,?,?) 语句
 				if (commTypeCnt == paramCnt) {
 					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt);
-				} else {
-					if (nullCnt > 0 && nullCnt < paramCnt) {
-						throw new IllegalArgumentException(
-								"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，不能部分为null!");
+					if (StringUtil.matches(m.group().trim(), "(\\s*\\)){2}$")) {
+						partSql = "(".concat(partSql).concat(")");
 					}
+				} else {
+					if ((nullCnt > 0 && nullCnt < paramCnt) || commTypeCnt > 0) {
+						throw new IllegalArgumentException(
+								"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，要求是数组类型且不能为null!");
+					}
+					String loopArgs = "(".concat(StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt)).concat(")");
 					List<Object[]> inParamsList = new ArrayList<Object[]>();
 					for (int i = 0; i < paramCnt; i++) {
 						if (paramsValue[startIndex + i] instanceof Collection) {
@@ -742,6 +743,11 @@ public class SqlConfigParseUtils {
 							inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
 						}
 						inParamsList.add(inParamArray);
+						if (i > 0 && (inParamArray.length != inParamsList.get(i - 1).length)) {
+							throw new IllegalArgumentException(
+									"多字段in的:(field1,field2) in (:field1Set,:field2Set) 数组参数的长度:" + inParamArray.length
+											+ "<>" + inParamsList.get(i - 1).length + "!");
+						}
 					}
 					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
 					if (inParamArray.length > 1000) {

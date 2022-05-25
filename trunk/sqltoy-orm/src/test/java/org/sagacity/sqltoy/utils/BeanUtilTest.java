@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.utils;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.DataRange;
@@ -42,7 +43,22 @@ public class BeanUtilTest {
 	
 	@Test
 	public void testTypeName1() {
-		double a=0;
-		System.err.println(a);
+		Pattern IN_PATTERN = Pattern.compile(
+				"(?i)\\s+in\\s*((\\(\\s*\\?(\\s*\\,\\s*\\?)*\\s*\\))|((\\(\\s*){2}\\?(\\s*\\,\\s*\\?)+(\\s*\\)){2}))");
+		String sql=" t.id in (( ? , ?))";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in ( ( ? , ?   )   )";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in ((?))";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in (   ?)";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in ((   ? ))";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in (?,?,?)";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
+		sql=" t.id in (    ?, ? , ?)";
+		System.err.println(StringUtil.matches(sql,IN_PATTERN));
 	}
+	
 }
