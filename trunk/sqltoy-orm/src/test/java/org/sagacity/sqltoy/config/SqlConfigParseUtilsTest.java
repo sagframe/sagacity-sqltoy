@@ -164,13 +164,17 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testMultiFieldOverSizeIn() throws Exception {
-		String sql = "select * from table t where staff_name like :staffName and (id,type) in (:ids,:types)  "
+		String sql = "select * from table t where staff_name like :staffName and (id,type) in ((:ids,:types))  "
 				+ "and create_time>:beginDate and status in(:status)";
-		int size = 2054;
+		int size = 49;
 		String[] orderIds = new String[size];
 		String[] types = new String[size];
 		for (int i = 1; i <= size; i++) {
 			orderIds[i - 1] = "" + i;
+		}
+
+		for (int i = 1; i <= size; i++) {
+			// orderIds[i - 1] = "" + i;
 			types[i - 1] = "T" + i;
 		}
 
@@ -202,16 +206,24 @@ public class SqlConfigParseUtilsTest {
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
-	
+
 	@Test
 	public void testOverSizeIn4() throws Exception {
 		String sql = "select * from table t where concat(t.order_id,t.type) in (?)";
 
-		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001"});
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001" });
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
 
+	@Test
+	public void testOverSizeIn5() throws Exception {
+		String sql = "select * from table t where (t.order_id,t.type) in (?,?)";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001","S0002" });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
 	@Test
 	public void testOverSizeIn2() throws Exception {
 		String sql = "select * from table t where 1=1 and (t.order_id||'\\('||'\\)') not in (:oderId))";
