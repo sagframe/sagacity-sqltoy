@@ -35,7 +35,7 @@ public class SqlLoop extends AbstractMacro {
 	 * 匹配sql片段中的参数名称,包含:xxxx.xxx对象属性形式
 	 */
 	private final static Pattern paramPattern = Pattern
-			.compile("\\:sqlToyLoopAsKey_\\d+A(\\.[a-zA-Z\u4e00-\u9fa5][0-9a-zA-Z\u4e00-\u9fa5_]*)?\\W");
+			.compile("\\:sqlToyLoopAsKey_\\d+A(\\.[a-zA-Z\u4e00-\u9fa5][0-9a-zA-Z\u4e00-\u9fa5_]*)*\\W");
 
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
