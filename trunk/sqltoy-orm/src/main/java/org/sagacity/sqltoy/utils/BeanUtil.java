@@ -69,7 +69,7 @@ public class BeanUtil {
 	 */
 	private static ConcurrentHashMap<String, Method> getMethods = new ConcurrentHashMap<String, Method>();
 
-	//保存pojo的级联关系
+	// 保存pojo的级联关系
 	private static ConcurrentHashMap<String, List> cascadeModels = new ConcurrentHashMap<String, List>();
 
 	// 静态方法避免实例化和继承
@@ -975,6 +975,8 @@ public class BeanUtil {
 						}
 					}
 					if (!hasKey) {
+						int index = 0;
+						int fieldLen = fields.length;
 						for (String field : fields) {
 							// 支持map类型 update 2021-01-31
 							if (fieldValue instanceof Map) {
@@ -996,12 +998,28 @@ public class BeanUtil {
 										fieldValue = null;
 									}
 								}
+							} // update 2022-5-25 支持将集合的属性直接映射成数组
+							else if (fieldValue instanceof List) {
+								List tmp = (List) fieldValue;
+								if (index < fieldLen - 1) {
+									fieldValue = sliceToArray(tmp, field.trim());
+								} else {
+									for (int j = 0; j < tmp.size(); j++) {
+										tmp.set(j, getProperty(tmp.get(j), field.trim()));
+									}
+								}
+							} else if (fieldValue instanceof Object[]) {
+								Object[] tmp = (Object[]) fieldValue;
+								for (int j = 0; j < tmp.length; j++) {
+									tmp[j]=getProperty(tmp[j], field.trim());
+								}
 							} else {
 								fieldValue = getProperty(fieldValue, field.trim());
 							}
 							if (fieldValue == null) {
 								break;
 							}
+							index++;
 						}
 					}
 					result[i] = fieldValue;
@@ -1730,16 +1748,16 @@ public class BeanUtil {
 						itemList.add(itemEntity);
 					} // oneToOne 直接赋值
 					else {
-						//update 2022-5-18 增加oneToOne 级联数据校验
+						// update 2022-5-18 增加oneToOne 级联数据校验
 						if (itemSize > 0) {
 							throw new DataAccessException(
 									"请检查对象:" + mainEntity.getClass().getName() + "中的@OneToOne级联配置,级联查出的数据为>1条,不符合预期!");
 						}
 						setProperty(mainEntity, property, itemEntity);
 					}
-					//屏蔽掉，兼容ManyToOne、ManyToMany 场景
-					//itemEntities.remove(j);
-					//j--;
+					// 屏蔽掉，兼容ManyToOne、ManyToMany 场景
+					// itemEntities.remove(j);
+					// j--;
 					itemSize++;
 				}
 			}
