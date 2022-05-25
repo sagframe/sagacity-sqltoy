@@ -52,6 +52,7 @@ public class DataSourceUtils {
 
 		// 9.5+ 开始
 		public final static String POSTGRESQL = "postgresql";
+		public final static String POSTGRESQL15 = "postgresql15";
 		public final static String GREENPLUM = "greenplum";
 
 		// 华为gaussdb(源于postgresql)未验证
@@ -105,6 +106,7 @@ public class DataSourceUtils {
 
 		// 默认9.5+版本
 		public final static int POSTGRESQL = 50;
+		public final static int POSTGRESQL15 = 51;
 
 		// clickhouse
 		public final static int CLICKHOUSE = 60;
@@ -141,6 +143,7 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.INNOSQL, DBType.MYSQL);
 
 		DBNameTypeMap.put(Dialect.POSTGRESQL, DBType.POSTGRESQL);
+		DBNameTypeMap.put(Dialect.POSTGRESQL15, DBType.POSTGRESQL15);
 		DBNameTypeMap.put(Dialect.GREENPLUM, DBType.POSTGRESQL);
 		DBNameTypeMap.put(Dialect.GAUSSDB, DBType.GAUSSDB);
 
@@ -178,6 +181,9 @@ public class DataSourceUtils {
 		}
 		case DBType.POSTGRESQL: {
 			return Dialect.POSTGRESQL;
+		}
+		case DBType.POSTGRESQL15: {
+			return Dialect.POSTGRESQL15;
 		}
 		case DBType.SQLSERVER: {
 			return Dialect.SQLSERVER;
@@ -367,6 +373,9 @@ public class DataSourceUtils {
 			// 9.5以上为标准支持模式
 			else if (dbDialect.equals(Dialect.POSTGRESQL)) {
 				dbType = DBType.POSTGRESQL;
+				if (majorVersion >= 15) {
+					dbType = DBType.POSTGRESQL15;
+				}
 			} else if (dbDialect.equals(Dialect.GREENPLUM)) {
 				dbType = DBType.POSTGRESQL;
 			}
@@ -445,6 +454,7 @@ public class DataSourceUtils {
 			return "select 1 from dual";
 		}
 		case DBType.POSTGRESQL:
+		case DBType.POSTGRESQL15:
 		case DBType.GAUSSDB: {
 			return "select version()";
 		}
@@ -540,6 +550,7 @@ public class DataSourceUtils {
 			case DBType.ORACLE11:
 				return Dialect.ORACLE;
 			case DBType.POSTGRESQL:
+			case DBType.POSTGRESQL15:
 				return Dialect.POSTGRESQL;
 			case DBType.MYSQL:
 			case DBType.MYSQL57:

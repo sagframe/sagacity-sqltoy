@@ -282,7 +282,8 @@ public class SqlUtil {
 					}
 				}
 				// postgresql bytea类型需要统一处理成BINARY
-				if (jdbcType == java.sql.Types.BLOB && (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB)) {
+				if (jdbcType == java.sql.Types.BLOB
+						&& (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB)) {
 					pst.setNull(paramIndex, java.sql.Types.BINARY);
 				} else {
 					pst.setNull(paramIndex, jdbcType);

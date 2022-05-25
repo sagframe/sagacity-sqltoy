@@ -2,8 +2,6 @@ package org.sagacity.sqltoy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Time;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,7 +9,6 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.demo.vo.StaffInfoVO;
 import org.sagacity.sqltoy.model.MapKit;
-import org.sagacity.sqltoy.utils.DateUtil;
 
 import com.alibaba.fastjson.JSON;
 

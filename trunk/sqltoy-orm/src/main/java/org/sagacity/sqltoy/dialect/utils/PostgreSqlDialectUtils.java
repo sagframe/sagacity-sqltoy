@@ -86,7 +86,7 @@ public class PostgreSqlDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -173,7 +173,21 @@ public class PostgreSqlDialectUtils {
 				reflectPropsHandler, conn, dbType, autoCommit);
 	}
 
-	@Deprecated
+	/**
+	 * @TODO postgresql15 开始支持merge into 语法
+	 * @param sqlToyContext
+	 * @param entities
+	 * @param batchSize
+	 * @param reflectPropsHandler
+	 * @param forceUpdateFields
+	 * @param conn
+	 * @param dbType
+	 * @param dialect
+	 * @param autoCommit
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
 			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
 			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
@@ -189,8 +203,9 @@ public class PostgreSqlDialectUtils {
 							pkStrategy = PKStrategy.SEQUENCE;
 							sequence = "DEFAULT";
 						}
-						return getSaveOrUpdateSql(dbType, entityMeta, pkStrategy, isAssignPKValue(pkStrategy), sequence,
-								forceUpdateFields, tableName);
+						return DialectUtils.getSaveOrUpdateSql(sqlToyContext.getUnifyFieldsHandler(), dbType,
+								entityMeta, pkStrategy, forceUpdateFields, null, NVL_FUNCTION, sequence,
+								isAssignPKValue(pkStrategy), tableName);
 					}
 				}, reflectPropsHandler, conn, dbType, autoCommit);
 	}

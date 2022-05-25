@@ -906,7 +906,8 @@ public class DialectUtils {
 			}
 		}
 		FieldMeta fieldMeta;
-		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE);
+		boolean convertBlob = (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.KINGBASE);
 		boolean isMSsql = (dbType == DBType.SQLSERVER);
 		int meter = 0;
 		for (int i = 0, n = entityMeta.getRejectIdFieldArray().length; i < n; i++) {
@@ -1031,7 +1032,7 @@ public class DialectUtils {
 						if (cascadeModel.getCascadeType() == 1) {
 							BeanUtil.setProperty(result, cascadeModel.getProperty(), pkRefDetails);
 						} else {
-							//update 2022-5-18 增加oneToOne 级联数据校验
+							// update 2022-5-18 增加oneToOne 级联数据校验
 							if (pkRefDetails.size() > 1) {
 								throw new DataAccessException("请检查对象:" + entityMeta.getEntityClass().getName()
 										+ "中的@OneToOne级联配置,级联查出的数据size=" + pkRefDetails.size() + ">1,不符合预期!");
@@ -1712,7 +1713,7 @@ public class DialectUtils {
 				if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB) {
 					mysqlSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
-				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.GAUSSDB) {
+				} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL15 || dbType == DBType.GAUSSDB) {
 					postgreSaveOrUpdateAll(sqlToyContext, subTableEntityMeta, subTableData, reflectPropsHandler,
 							forceUpdateProps, conn, dbType);
 				} else if (dbType == DBType.OCEANBASE) {
