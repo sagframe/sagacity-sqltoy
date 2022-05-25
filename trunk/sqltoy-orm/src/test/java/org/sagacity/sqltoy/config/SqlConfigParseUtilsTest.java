@@ -166,14 +166,14 @@ public class SqlConfigParseUtilsTest {
 	public void testMultiFieldOverSizeIn() throws Exception {
 		String sql = "select * from table t where staff_name like :staffName and (id,type) in (:ids,:types)  "
 				+ "and create_time>:beginDate and status in(:status)";
-		int size=2054;
+		int size = 2054;
 		String[] orderIds = new String[size];
 		String[] types = new String[size];
 		for (int i = 1; i <= size; i++) {
 			orderIds[i - 1] = "" + i;
 			types[i - 1] = "T" + i;
 		}
-		
+
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
 				new String[] { "types", "ids", "status", "beginDate", "staffName" },
 				new Object[] { types, orderIds, new String[] { "1", "2" }, "2022-05-01", "张" });
@@ -190,6 +190,24 @@ public class SqlConfigParseUtilsTest {
 			orderIds[i - 1] = "" + i;
 		}
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "oderId" }, new Object[] { orderIds });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+
+	@Test
+	public void testOverSizeIn3() throws Exception {
+		String sql = "select * from table t where concat(t.order_id,t.type) in (?,?,?)";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001", "S0002", "S0003" });
+		System.err.println(result.getSql());
+		System.err.println(result.getParamsValue().length);
+	}
+	
+	@Test
+	public void testOverSizeIn4() throws Exception {
+		String sql = "select * from table t where concat(t.order_id,t.type) in (?)";
+
+		SqlToyResult result = SqlConfigParseUtils.processSql(sql, null, new Object[] { "S0001"});
 		System.err.println(result.getSql());
 		System.err.println(result.getParamsValue().length);
 	}
