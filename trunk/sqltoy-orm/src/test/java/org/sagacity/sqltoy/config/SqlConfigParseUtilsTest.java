@@ -164,17 +164,16 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testMultiFieldOverSizeIn() throws Exception {
-		String sql = "select * from table t where 1=1 and staff_name like :staffName and (id,type) in (:ids,:types)  "
+		String sql = "select * from table t where staff_name like :staffName and (id,type) in (:ids,:types)  "
 				+ "and create_time>:beginDate and status in(:status)";
 		int size=2054;
 		String[] orderIds = new String[size];
-		for (int i = 1; i <= size; i++) {
-			orderIds[i - 1] = "" + i;
-		}
 		String[] types = new String[size];
 		for (int i = 1; i <= size; i++) {
+			orderIds[i - 1] = "" + i;
 			types[i - 1] = "T" + i;
 		}
+		
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql,
 				new String[] { "types", "ids", "status", "beginDate", "staffName" },
 				new Object[] { types, orderIds, new String[] { "1", "2" }, "2022-05-01", "张" });
