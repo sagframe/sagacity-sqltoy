@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
  * @modify {Date:2020-09-23 增加@loop()组织sql功能,完善极端场景下动态组织sql的能力}
  * @modify {Date:2021-04-29 调整@value(?)处理顺序到末尾，规避参数值中存在? }
  * @modify {Date:2022-04-23 兼容in (:values) 参数数组长度超过1000的场景 }
+ * @modify {Date:2022-05-25 支持(id,type) in (:ids,:types) 多字段in模式,并强化参数超1000的处理 }
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -708,9 +709,15 @@ public class SqlConfigParseUtils {
 				int nullCnt = 0;
 				int startIndex = parameterMarkCnt - paramCnt;
 				String loopArgs = "(";
+				// 普通非数组类型数量
+				int commTypeCnt = 0;
 				for (int i = 0; i < paramCnt; i++) {
 					if (paramsValue[startIndex + i] == null) {
 						nullCnt++;
+						commTypeCnt++;
+					} else if (!paramsValue[startIndex + i].getClass().isArray()
+							&& !(paramsValue[startIndex + i] instanceof Collection)) {
+						commTypeCnt++;
 					}
 					if (i > 0) {
 						loopArgs = loopArgs.concat(",");
@@ -718,40 +725,46 @@ public class SqlConfigParseUtils {
 					loopArgs = loopArgs.concat("?");
 				}
 				loopArgs = loopArgs.concat(")");
-				if (nullCnt > 0 && nullCnt < paramCnt) {
-					throw new IllegalArgumentException(
-							"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，不能部分为null!");
-				}
-				List<Object[]> inParamsList = new ArrayList<Object[]>();
-				for (int i = 0; i < paramCnt; i++) {
-					if (paramsValue[startIndex + i] instanceof Collection) {
-						inParamList = (Collection) paramsValue[startIndex + i];
-						inParamArray = inParamList.toArray();
-					} else {
-						inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
-					}
-					inParamsList.add(inParamArray);
-				}
-				// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
-				if (inParamArray.length > 1000) {
-					overSize = true;
-					partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs, inParamArray.length);
-					lastSql.append(" ").append(partSql).append(" ");
+				// 直接组织好的(?,?,?) 语句
+				if (commTypeCnt == paramCnt) {
+					partSql = StringUtil.loopAppendWithSign(ARG_NAME, ",", paramCnt);
 				} else {
-					// 循环组合成in(?,?*)
-					partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
-				}
-				for (int i = 0; i < paramCnt; i++) {
-					paramValueList.remove(startIndex + incrementIndex);
-				}
-				int addIndex = startIndex + incrementIndex;
-				for (int i = 0; i < inParamArray.length; i++) {
-					for (int j = 0; j < paramCnt; j++) {
-						paramValueList.add(addIndex, inParamsList.get(j)[i]);
-						addIndex++;
+					if (nullCnt > 0 && nullCnt < paramCnt) {
+						throw new IllegalArgumentException(
+								"多字段in的:(field1,field2) in (:field1Set,:field2Set) 对应参数值非法，不能部分为null!");
 					}
+					List<Object[]> inParamsList = new ArrayList<Object[]>();
+					for (int i = 0; i < paramCnt; i++) {
+						if (paramsValue[startIndex + i] instanceof Collection) {
+							inParamList = (Collection) paramsValue[startIndex + i];
+							inParamArray = inParamList.toArray();
+						} else {
+							inParamArray = CollectionUtil.convertArray(paramsValue[startIndex + i]);
+						}
+						inParamsList.add(inParamArray);
+					}
+					// 超过1000长度，进行(name in (?,?) or name in (?,?)) 分割
+					if (inParamArray.length > 1000) {
+						overSize = true;
+						partSql = wrapOverSizeInSql(queryStr.substring(start, m.start()), loopArgs,
+								inParamArray.length);
+						lastSql.append(" ").append(partSql).append(" ");
+					} else {
+						// 循环组合成in(?,?*)
+						partSql = StringUtil.loopAppendWithSign(loopArgs, ",", inParamArray.length);
+					}
+					for (int i = 0; i < paramCnt; i++) {
+						paramValueList.remove(startIndex + incrementIndex);
+					}
+					int addIndex = startIndex + incrementIndex;
+					for (int i = 0; i < inParamArray.length; i++) {
+						for (int j = 0; j < paramCnt; j++) {
+							paramValueList.add(addIndex, inParamsList.get(j)[i]);
+							addIndex++;
+						}
+					}
+					incrementIndex += inParamArray.length * paramCnt - paramCnt;
 				}
-				incrementIndex += inParamArray.length * paramCnt - paramCnt;
 			} else {
 				if (null != paramsValue[parameterMarkCnt - 1]) {
 					// 数组或集合数据类型
@@ -903,8 +916,6 @@ public class SqlConfigParseUtils {
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					// update 2022-04-23
-					// return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 					return preSql.concat(" ").concat(tailSql).concat(" ");
 				}
 			}
