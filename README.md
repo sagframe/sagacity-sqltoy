@@ -36,10 +36,10 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 
-* 5.1.39       发版日期: 2022-5-25
-* 5.1.39.jre11 发版日期: 2022-5-25
-* 5.1.39.jre17 发版日期: 2022-5-25
-* 4.19.32      发版日期: 2022-5-25
+* 5.1.42       发版日期: 2022-5-26
+* 5.1.42.jre11 发版日期: 2022-5-26
+* 5.1.42.jre17 发版日期: 2022-5-26
+* 4.19.36      发版日期: 2022-5-26
 
 # 4.x 升级5.x 项目影响点
 * 分页查询PaginationModel 类改为Page
