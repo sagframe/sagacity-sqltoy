@@ -1004,15 +1004,19 @@ public class BeanUtil {
 								if (index < fieldLen - 1) {
 									fieldValue = sliceToArray(tmp, field.trim());
 								} else {
+									Object[] fieldValueAry = new Object[tmp.size()];
 									for (int j = 0; j < tmp.size(); j++) {
-										tmp.set(j, getProperty(tmp.get(j), field.trim()));
+										fieldValueAry[j] = getProperty(tmp.get(j), field.trim());
 									}
+									fieldValue = fieldValueAry;
 								}
 							} else if (fieldValue instanceof Object[]) {
 								Object[] tmp = (Object[]) fieldValue;
+								Object[] fieldValueAry = new Object[tmp.length];
 								for (int j = 0; j < tmp.length; j++) {
-									tmp[j]=getProperty(tmp[j], field.trim());
+									fieldValueAry[j] = getProperty(tmp[j], field.trim());
 								}
+								fieldValue = fieldValueAry;
 							} else {
 								fieldValue = getProperty(fieldValue, field.trim());
 							}
