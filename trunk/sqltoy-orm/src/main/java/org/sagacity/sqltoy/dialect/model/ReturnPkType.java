@@ -8,15 +8,17 @@ package org.sagacity.sqltoy.dialect.model;
  * @description 主键返回策略
  * @author zhongxuchen
  * @version v1.0,Date:2015年3月19日
+ * @modify 2022-5-27 优化之前容易误导的注释，并标记RESULT_GET类型为过时
  */
 public enum ReturnPkType {
-	// 手工赋值
+	// 数据库identity自增模式,oracle,db2中对应always identity
 	GENERATED_KEYS(1),
 
 	// 数据库sequence
 	PREPARD_ID(2),
 
-	// 数据库identity自增模式,oracle,db2中对应always identity
+	//执行insert 过程中含return,sqlserver2008、postgresql9.4 等需要，高级版本已经废弃
+	@Deprecated
 	RESULT_GET(3);
 
 	private final Integer returnPkType;
