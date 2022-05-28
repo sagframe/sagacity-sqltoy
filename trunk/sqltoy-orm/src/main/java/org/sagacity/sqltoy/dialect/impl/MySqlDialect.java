@@ -16,13 +16,11 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.RowCallbackHandler;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.EntityMeta;
-import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
@@ -265,11 +263,8 @@ public class MySqlDialect implements Dialect {
 		boolean isAssignPK = MySqlDialectUtils.isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.GENERATED_KEYS
-						: ReturnPkType.PREPARD_ID;
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
-				insertSql, entity, new GenerateSqlHandler() {
+		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
+				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),

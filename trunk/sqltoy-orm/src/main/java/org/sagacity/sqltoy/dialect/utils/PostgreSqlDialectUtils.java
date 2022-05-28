@@ -18,7 +18,6 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.executor.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
@@ -84,7 +83,7 @@ public class PostgreSqlDialectUtils {
 			sql.append(sqlToyConfig.getFastTailSql(dialect));
 		}
 		SqlToyResult queryParam = DialectUtils.wrapPageSqlParams(sqlToyContext, sqlToyConfig, queryExecutor,
-				sql.toString(), null, null,dialect);
+				sql.toString(), null, null, dialect);
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
@@ -116,8 +115,8 @@ public class PostgreSqlDialectUtils {
 		boolean isAssignPK = isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPK, tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, ReturnPkType.GENERATED_KEYS,
-				insertSql, entity, new GenerateSqlHandler() {
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
+				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -151,8 +150,8 @@ public class PostgreSqlDialectUtils {
 	 * @throws Exception
 	 */
 	public static Long saveAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType,
-			final Boolean autoCommit, String tableName) throws Exception {
+			ReflectPropsHandler reflectPropsHandler, Connection conn, final Integer dbType, final Boolean autoCommit,
+			String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
 		String sequence = "nextval('" + entityMeta.getSequence() + "')";
@@ -170,9 +169,8 @@ public class PostgreSqlDialectUtils {
 	}
 
 	public static Long saveOrUpdateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			ReflectPropsHandler reflectPropsHandler, String[] forceUpdateFields, Connection conn, final Integer dbType,
+			final String dialect, final Boolean autoCommit, final String tableName) throws Exception {
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		return DialectUtils.saveOrUpdateAll(sqlToyContext, entities, batchSize, entityMeta, forceUpdateFields,
 				new GenerateSqlHandler() {

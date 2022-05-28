@@ -106,7 +106,7 @@ public class SqlServerDialectUtils {
 		}
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql.toString(), extend.getParamsName(sqlToyConfig),
-				extend.getParamsValue(sqlToyContext, sqlToyConfig),dialect);
+				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
 				extend.rowCallbackHandler, decryptHandler, conn, dbType, 0, fetchSize, maxRows);
 	}
@@ -645,8 +645,10 @@ public class SqlServerDialectUtils {
 					keyResult = pst.getGeneratedKeys();
 				}
 				if (isSequence || isIdentity) {
-					while (keyResult.next()) {
-						this.setResult(keyResult.getObject(1));
+					if (keyResult != null) {
+						while (keyResult.next()) {
+							this.setResult(keyResult.getObject(1));
+						}
 					}
 				}
 			}
@@ -949,7 +951,7 @@ public class SqlServerDialectUtils {
 						|| typeMap.containsKey(cascadeModel.getMappedType()))) {
 					SqlExecuteStat.debug("执行子表级联更新前的存量数据更新", null);
 					SqlToyResult sqlToyResult = SqlConfigParseUtils.processSql(cascadeModel.getCascadeUpdateSql(),
-							mappedFields, mainFieldValues,null);
+							mappedFields, mainFieldValues, null);
 					SqlUtil.executeSql(sqlToyContext.getTypeHandler(), sqlToyResult.getSql(),
 							sqlToyResult.getParamsValue(), null, conn, dbType, null, true);
 				}

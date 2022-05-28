@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
@@ -268,8 +267,8 @@ public class OracleDialect implements Dialect {
 		boolean isAssignPK = OracleDialectUtils.isAssignPKValue(pkStrategy);
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, pkStrategy, NVL_FUNCTION, sequence,
 				isAssignPK, tableName);
-		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, ReturnPkType.PREPARD_ID, insertSql,
-				entity, new GenerateSqlHandler() {
+		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
+				new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						PKStrategy pkStrategy = entityMeta.getIdStrategy();
 						String sequence = entityMeta.getSequence().concat(".nextval");
@@ -355,9 +354,9 @@ public class OracleDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return DialectUtils.updateAll(sqlToyContext, entities, batchSize, forceUpdateFields, reflectPropsHandler,
 				NVL_FUNCTION, conn, dbType, autoCommit, tableName, false);
 	}

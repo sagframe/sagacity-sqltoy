@@ -23,7 +23,6 @@ import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
 import org.sagacity.sqltoy.dialect.handler.GenerateSavePKStrategy;
 import org.sagacity.sqltoy.dialect.handler.GenerateSqlHandler;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.dialect.utils.DB2DialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
@@ -143,11 +142,8 @@ public class DB2Dialect implements Dialect {
 		// db2 identity 和sequence 都支持手工赋值
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.PREPARD_ID
-						: ReturnPkType.PREPARD_ID;
 		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(),
-				isAssignPKValue(entityMeta.getIdStrategy()), returnPkType, insertSql, entity, new GenerateSqlHandler() {
+				isAssignPKValue(entityMeta.getIdStrategy()), insertSql, entity, new GenerateSqlHandler() {
 					public String generateSql(EntityMeta entityMeta, String[] forceUpdateField) {
 						return DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 								NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(),
