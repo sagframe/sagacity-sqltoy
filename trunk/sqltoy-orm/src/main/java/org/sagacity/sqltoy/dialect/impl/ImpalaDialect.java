@@ -21,7 +21,6 @@ import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.dialect.Dialect;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectExtUtils;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
@@ -245,11 +244,8 @@ public class ImpalaDialect implements Dialect {
 		boolean isAssignPK = isAssignPKValue(entityMeta.getIdStrategy());
 		String insertSql = DialectExtUtils.generateInsertSql(dbType, entityMeta, entityMeta.getIdStrategy(),
 				NVL_FUNCTION, "NEXTVAL FOR " + entityMeta.getSequence(), isAssignPK, tableName);
-		ReturnPkType returnPkType = (entityMeta.getIdStrategy() != null
-				&& entityMeta.getIdStrategy().equals(PKStrategy.SEQUENCE)) ? ReturnPkType.GENERATED_KEYS
-						: ReturnPkType.PREPARD_ID;
-		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, returnPkType,
-				insertSql, entity, null, null, conn, dbType);
+		return DialectUtils.save(sqlToyContext, entityMeta, entityMeta.getIdStrategy(), isAssignPK, insertSql, entity,
+				null, null, conn, dbType);
 	}
 
 	/*
@@ -295,9 +291,9 @@ public class ImpalaDialect implements Dialect {
 	 */
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, final int batchSize,
-			final String[] uniqueFields,final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn,
-			final Integer dbType, final String dialect, final Boolean autoCommit, final String tableName)
-			throws Exception {
+			final String[] uniqueFields, final String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler,
+			Connection conn, final Integer dbType, final String dialect, final Boolean autoCommit,
+			final String tableName) throws Exception {
 		return this.saveOrUpdateAll(sqlToyContext, entities, batchSize, reflectPropsHandler, forceUpdateFields, conn,
 				dbType, dialect, autoCommit, tableName);
 	}
