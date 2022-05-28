@@ -377,10 +377,8 @@ public class FileUtil {
 			if (path.indexOf("/") == 0) {
 				return true;
 			}
-		} else {
-			if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
-				return true;
-			}
+		} else if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
+			return true;
 		}
 		return false;
 	}
@@ -745,17 +743,15 @@ public class FileUtil {
 		if (firstPath.concat(secondPath).trim().equals("")) {
 			return "";
 		}
-		String separator = File.separator;
-
 		if (!firstPath.equals("")) {
 			if (firstPath.substring(firstPath.length() - 1).equals("/")
 					|| firstPath.substring(firstPath.length() - 1).equals("\\")) {
-				firstPath = firstPath.substring(0, firstPath.length() - 1) + separator;
+				firstPath = firstPath.substring(0, firstPath.length() - 1) + File.separator;
 			} else {
-				firstPath += separator;
+				firstPath += File.separator;
 			}
 		} else {
-			firstPath += separator;
+			firstPath += File.separator;
 		}
 		if (!secondPath.equals("")
 				&& (secondPath.substring(0, 1).equals("/") || secondPath.substring(0, 1).equals("\\"))) {
