@@ -620,7 +620,8 @@ public class SqlServerDialectUtils {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity) {
-					pst = conn.prepareStatement(realInsertSql, PreparedStatement.RETURN_GENERATED_KEYS);
+					pst = conn.prepareStatement(realInsertSql,
+							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
 				} else {
 					pst = conn.prepareStatement(realInsertSql);
 				}
@@ -645,8 +646,10 @@ public class SqlServerDialectUtils {
 					keyResult = pst.getGeneratedKeys();
 				}
 				if (isSequence || isIdentity) {
-					while (keyResult.next()) {
-						this.setResult(keyResult.getObject(1));
+					if (keyResult != null) {
+						while (keyResult.next()) {
+							this.setResult(keyResult.getObject(1));
+						}
 					}
 				}
 			}

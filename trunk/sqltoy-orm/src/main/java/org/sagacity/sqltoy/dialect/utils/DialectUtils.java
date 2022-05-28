@@ -44,7 +44,6 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.TableCascadeModel;
-import org.sagacity.sqltoy.dialect.model.ReturnPkType;
 import org.sagacity.sqltoy.dialect.model.SavePKStrategy;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
@@ -1307,7 +1306,6 @@ public class DialectUtils {
 	 * @param entityMeta
 	 * @param pkStrategy
 	 * @param isAssignPK
-	 * @param returnPkType
 	 * @param insertSql
 	 * @param entity
 	 * @param generateSqlHandler
@@ -1318,10 +1316,9 @@ public class DialectUtils {
 	 * @throws Exception
 	 */
 	public static Object save(final SqlToyContext sqlToyContext, final EntityMeta entityMeta,
-			final PKStrategy pkStrategy, final boolean isAssignPK, final ReturnPkType returnPkType,
-			final String insertSql, Serializable entity, final GenerateSqlHandler generateSqlHandler,
-			final GenerateSavePKStrategy generateSavePKStrategy, final Connection conn, final Integer dbType)
-			throws Exception {
+			final PKStrategy pkStrategy, final boolean isAssignPK, final String insertSql, Serializable entity,
+			final GenerateSqlHandler generateSqlHandler, final GenerateSavePKStrategy generateSavePKStrategy,
+			final Connection conn, final Integer dbType) throws Exception {
 		final boolean isIdentity = (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY));
 		final boolean isSequence = (pkStrategy != null && pkStrategy.equals(PKStrategy.SEQUENCE));
 		String[] reflectColumns;
@@ -1385,37 +1382,18 @@ public class DialectUtils {
 			@Override
 			public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws SQLException, IOException {
 				if (isIdentity || isSequence) {
-					if (returnPkType.equals(ReturnPkType.GENERATED_KEYS)) {
-						pst = conn.prepareStatement(insertSql, PreparedStatement.RETURN_GENERATED_KEYS);
-					} else if (returnPkType.equals(ReturnPkType.PREPARD_ID)) {
-						pst = conn.prepareStatement(insertSql,
-								new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
-					} else {
-						pst = conn.prepareStatement(insertSql);
-					}
+					pst = conn.prepareStatement(insertSql,
+							new String[] { entityMeta.getColumnName(entityMeta.getIdArray()[0]) });
 				} else {
 					pst = conn.prepareStatement(insertSql);
 				}
 				SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, dbType, pst, paramValues, paramsType, 0);
-				ResultSet keyResult = null;
-				if ((isIdentity || isSequence) && returnPkType.equals(ReturnPkType.RESULT_GET)) {
-					keyResult = pst.executeQuery();
-				} else {
-					pst.execute();
-				}
+				pst.execute();
 				if (isIdentity || isSequence) {
-					if (!returnPkType.equals(ReturnPkType.RESULT_GET)) {
-						keyResult = pst.getGeneratedKeys();
-					}
+					ResultSet keyResult = pst.getGeneratedKeys();
 					if (keyResult != null) {
-						List result = new ArrayList();
 						while (keyResult.next()) {
-							result.add(keyResult.getObject(1));
-						}
-						if (result.size() == 1) {
-							this.setResult(result.get(0));
-						} else {
-							this.setResult(result.toArray());
+							this.setResult(keyResult.getObject(1));
 						}
 					}
 				}
