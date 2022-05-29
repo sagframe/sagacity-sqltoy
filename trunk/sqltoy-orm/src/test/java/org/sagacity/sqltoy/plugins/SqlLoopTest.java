@@ -22,8 +22,9 @@ public class SqlLoopTest {
 			staff.setBirthday(LocalDate.now());
 			staffInfos.add(staff);
 		}
-		SqlLoop sqlLoop = new SqlLoop();
-		String[] params = { "staffInfos", "(staffId=':staffInfos[i].staffId' and birthDay=':staffInfos[i].birthday')","or" };
+		SqlLoop sqlLoop = new SqlLoop(false);
+		String[] params = { "staffInfos", "(staffId=':staffInfos[i].staffId' and birthDay=':staffInfos[i].birthday')",
+				"or" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
 		String result = sqlLoop.execute(params, keyValues);
@@ -34,16 +35,20 @@ public class SqlLoopTest {
 	public void testSqlLoopStr() {
 		List<String> staffInfos = new ArrayList<String>();
 		for (int i = 0; i < 5; i++) {
-			staffInfos.add("S000" + (i + 1));
+			if (i == 3 || i == 4) {
+				staffInfos.add(null);
+			}else {
+				staffInfos.add("S000" + (i + 1));
+			}
 		}
-		SqlLoop sqlLoop = new SqlLoop();
+		SqlLoop sqlLoop = new SqlLoop(true);
 		String[] params = { "staffInfos", " and staffId=':staffInfos[i]'" };
 		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
 		keyValues.put("staffInfos", staffInfos);
 		String result = sqlLoop.execute(params, keyValues);
 		System.err.print(result);
 	}
-	
+
 	@Test
 	public void testSqlLoopLike() {
 		List<String> staffInfos = new ArrayList<String>();
