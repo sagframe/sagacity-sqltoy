@@ -126,7 +126,9 @@ public class SqlLoop extends AbstractMacro {
 		Map<String, String[]> loopParamNamesMap = parseParams(loopContent);
 		Object loopVar;
 		for (int i = start; i < end; i++) {
+			//当前循环的值
 			loopVar = loopValues[i];
+			//循环值为null或空白默认被跳过
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
 				loopStr = loopContent;
 				if (index > 0) {
