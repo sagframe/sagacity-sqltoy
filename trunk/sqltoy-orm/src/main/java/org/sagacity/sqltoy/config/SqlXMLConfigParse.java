@@ -120,7 +120,7 @@ public class SqlXMLConfigParse {
 			if (resource instanceof File) {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
-				synchronized (fileName) {
+				synchronized (fileName.intern()) {
 					lastModified = Long.valueOf(sqlFile.lastModified());
 					// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
 					preModified = filesLastModifyMap.get(fileName);

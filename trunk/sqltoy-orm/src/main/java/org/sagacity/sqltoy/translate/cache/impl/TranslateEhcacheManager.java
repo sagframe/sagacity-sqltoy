@@ -67,7 +67,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName) {
+		synchronized (cacheName.intern()) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
@@ -116,7 +116,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName) {
+		synchronized (cacheName.intern()) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {
