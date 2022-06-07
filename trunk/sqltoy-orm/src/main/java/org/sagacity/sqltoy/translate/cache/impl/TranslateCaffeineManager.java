@@ -54,7 +54,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName) {
+		synchronized (cacheName.intern()) {
 			// 判断是否创建过缓存，没有创建过统一创建再取出
 			if (!cacheNameSet.contains(cacheName)) {
 				Caffeine caffeine = Caffeine.newBuilder();
@@ -92,7 +92,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName) {
+		synchronized (cacheName.intern()) {
 			Cache cache = cacheManager.getCache(cacheName);
 			// 缓存没有配置,自动创建缓存不建议使用
 			if (cache != null) {

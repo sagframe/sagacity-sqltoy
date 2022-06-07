@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DateUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -36,6 +37,18 @@ public class SqlLoop extends AbstractMacro {
 	 */
 	private final static Pattern paramPattern = Pattern
 			.compile("\\:sqlToyLoopAsKey_\\d+A(\\.[a-zA-Z\u4e00-\u9fa5][0-9a-zA-Z\u4e00-\u9fa5_]*)*\\W");
+
+	/**
+	 * 是否跳过null和blank
+	 */
+	private boolean skipBlank = true;
+
+	public SqlLoop() {
+	}
+
+	public SqlLoop(boolean skipBlank) {
+		this.skipBlank = skipBlank;
+	}
 
 	@Override
 	public String execute(String[] params, IgnoreKeyCaseMap<String, Object> keyValues) {
@@ -104,7 +117,6 @@ public class SqlLoop extends AbstractMacro {
 				index++;
 			}
 		}
-
 		StringBuilder result = new StringBuilder();
 		result.append(" @blank(:" + loopParam + ") ");
 		String loopStr;
@@ -112,31 +124,37 @@ public class SqlLoop extends AbstractMacro {
 		String[] loopParamNames;
 		Object[] loopParamValues;
 		Map<String, String[]> loopParamNamesMap = parseParams(loopContent);
+		Object loopVar;
 		for (int i = start; i < end; i++) {
-			loopStr = loopContent;
-			if (index > 0) {
+			//当前循环的值
+			loopVar = loopValues[i];
+			//循环值为null或空白默认被跳过
+			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
+				loopStr = loopContent;
+				if (index > 0) {
+					result.append(" ");
+					result.append(linkSign);
+				}
 				result.append(" ");
-				result.append(linkSign);
-			}
-			result.append(" ");
-			// 替换paramName[i]或paramName[i].xxxx
-			for (int j = 0; j < keys.size(); j++) {
-				key = ":sqlToyLoopAsKey_" + j + "A";
-				loopParamNames = loopParamNamesMap.get(key);
-				// paramName[i] 模式
-				if (loopParamNames.length == 0) {
-					loopStr = loopStr.replaceAll(key, toString(regParamValues.get(j)[i]));
-				} else {
-					// paramName[i].xxxx 模式
-					loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
-					for (int k = 0; k < loopParamNames.length; k++) {
-						loopStr = loopStr.replaceAll(key.concat(".").concat(loopParamNames[k]),
-								toString(loopParamValues[k]));
+				// 替换paramName[i]或paramName[i].xxxx
+				for (int j = 0; j < keys.size(); j++) {
+					key = ":sqlToyLoopAsKey_" + j + "A";
+					loopParamNames = loopParamNamesMap.get(key);
+					// paramName[i] 模式
+					if (loopParamNames.length == 0) {
+						loopStr = loopStr.replaceAll(key, toString(regParamValues.get(j)[i]));
+					} else {
+						// paramName[i].xxxx 模式
+						loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
+						for (int k = 0; k < loopParamNames.length; k++) {
+							loopStr = loopStr.replaceAll(key.concat(".").concat(loopParamNames[k]),
+									toString(loopParamValues[k]));
+						}
 					}
 				}
+				result.append(loopStr);
+				index++;
 			}
-			result.append(loopStr);
-			index++;
 		}
 		result.append(" ");
 		return result.toString();

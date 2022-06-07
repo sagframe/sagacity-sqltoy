@@ -58,6 +58,26 @@ public class MacroUtilsTest {
 	}
 
 	@Test
+	public void testReplaceMacros2() {
+		Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
+
+		macros.put("@loop", new SqlLoop(true));
+		macros.put("@loop-full", new SqlLoop(false));
+		String sql = "select * from table where 1=1 @loop(:startDates,' (bizDate between str_to_date(':startDates[i]','%Y-%m-%d') and str_to_date(':endDates[i]','%Y-%m-%d'))',or)"
+				+ " (@loop-full(:startDates,' (bizDate between str_to_date(':startDates[i]','%Y-%m-%d') and str_to_date(':endDates[i]','%Y-%m-%d'))',or))";
+		String[] paramsNamed = { "startDates", "endDates" };
+		String[][] paramsValue = { { "2020-10-01", null },
+				{ "2020-10-30", null } };
+		IgnoreKeyCaseMap<String, Object> keyValues = new IgnoreKeyCaseMap<String, Object>();
+		for (int i = 0; i < paramsNamed.length; i++) {
+			keyValues.put(paramsNamed[i], paramsValue[i]);
+		}
+
+		String result = MacroUtils.replaceMacros(sql, keyValues, false, macros);
+		System.err.println(result);
+	}
+	
+	@Test
 	public void testGetNames() {
 		String sql = "select * from table where 1=1 @loop(:startDates,'or (bizDate between :startDates[i] and :endDates[i])')";
 		String[] args = SqlConfigParseUtils.getSqlParamsName(sql, false);

@@ -135,7 +135,10 @@ public class SqlConfigParseUtils {
 	private static Map<String, AbstractMacro> macros = new HashMap<String, AbstractMacro>();
 
 	static {
-		macros.put("@loop", new SqlLoop());
+		//默认跳过blank loopValue[i]==null或为"" 时的忽略当前i行的循环内容
+		macros.put("@loop", new SqlLoop(true));
+		// 全量循环
+		macros.put("@loop-full", new SqlLoop(false));
 	}
 
 	// 避免实例化

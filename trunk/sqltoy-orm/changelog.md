@@ -1,4 +1,15 @@
-﻿# v5.1.36 2022-05-12
+﻿# v5.1.43 2022-05-28
+1、修复postgresql identity主键策略保存返回id跟建表字段顺序有关的缺陷(identity 主键不在第一列)
+
+# v5.1.42 2022-05-25
+1、支持多字段in，例如:(id,type) in ((:ids,:types)) 或 (id,type) in (:ids,:types)
+
+# v5.1.38 2022-05-18
+1、优化级联加载OneToOne 关联多条的验证,当为多条抛出异常
+2、针对loadAll 场景，优化逻辑兼容ManyToMany、ManyToOne
+3、summary汇总求平均计算增加skip-single-row属性(默认false)，可设置单行分组记录不进行汇总求平均计算
+
+# v5.1.36 2022-05-12
 * 1、在sql xml的filters中扩展一个自定义条件参数处理器
 * 2、优化wrapTreeTable组织树结构过程中idField数据类型判断，减少手工设置
 * 3、unpivot列转行支持多组列转行(参见word文档)

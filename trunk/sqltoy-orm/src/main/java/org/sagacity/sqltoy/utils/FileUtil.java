@@ -377,10 +377,8 @@ public class FileUtil {
 			if (path.indexOf("/") == 0) {
 				return true;
 			}
-		} else {
-			if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
-				return true;
-			}
+		} else if (StringUtil.matches(path, "^[a-zA-Z]+:\\w*")) {
+			return true;
 		}
 		return false;
 	}
@@ -669,25 +667,23 @@ public class FileUtil {
 	 * @param distFile
 	 * @return:1 修改成功,0:修改失败,-1:文件不存??
 	 */
-	public static int rename(Object fileName, String distFile) {
-		synchronized (fileName) {
-			File oldFile;
-			if (fileName instanceof String) {
-				oldFile = new File((String) fileName);
-			} else {
-				oldFile = (File) fileName;
+	public static synchronized int rename(Object fileName, String distFile) {
+		File oldFile;
+		if (fileName instanceof String) {
+			oldFile = new File((String) fileName);
+		} else {
+			oldFile = (File) fileName;
+		}
+		if (oldFile.exists()) {
+			try {
+				oldFile.renameTo(new File(distFile));
+				return 1;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return 0;
 			}
-			if (oldFile.exists()) {
-				try {
-					oldFile.renameTo(new File(distFile));
-					return 1;
-				} catch (Exception e) {
-					e.printStackTrace();
-					return 0;
-				}
-			} else {
-				return -1;
-			}
+		} else {
+			return -1;
 		}
 	}
 
@@ -745,17 +741,15 @@ public class FileUtil {
 		if (firstPath.concat(secondPath).trim().equals("")) {
 			return "";
 		}
-		String separator = File.separator;
-
 		if (!firstPath.equals("")) {
 			if (firstPath.substring(firstPath.length() - 1).equals("/")
 					|| firstPath.substring(firstPath.length() - 1).equals("\\")) {
-				firstPath = firstPath.substring(0, firstPath.length() - 1) + separator;
+				firstPath = firstPath.substring(0, firstPath.length() - 1) + File.separator;
 			} else {
-				firstPath += separator;
+				firstPath += File.separator;
 			}
 		} else {
-			firstPath += separator;
+			firstPath += File.separator;
 		}
 		if (!secondPath.equals("")
 				&& (secondPath.substring(0, 1).equals("/") || secondPath.substring(0, 1).equals("\\"))) {
