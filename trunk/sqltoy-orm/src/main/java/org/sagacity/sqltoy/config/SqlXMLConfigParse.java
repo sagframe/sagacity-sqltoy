@@ -120,20 +120,18 @@ public class SqlXMLConfigParse {
 			if (resource instanceof File) {
 				sqlFile = (File) resource;
 				fileName = sqlFile.getName();
-				synchronized (fileName.intern()) {
-					lastModified = Long.valueOf(sqlFile.lastModified());
-					// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
-					preModified = filesLastModifyMap.get(fileName);
-					// 最后修改时间比上次修改时间大，重新加载sql文件
-					if (preModified == null || lastModified.longValue() > preModified.longValue()) {
-						filesLastModifyMap.put(fileName, lastModified);
-						if (isDebug) {
-							logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
-						} else {
-							out.println("sql文件:" + fileName + " 已经被修改,进行重新解析!");
-						}
-						parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true, -1);
+				lastModified = Long.valueOf(sqlFile.lastModified());
+				// 调试模式，判断文件的最后修改时间，决定是否重新加载sql
+				preModified = filesLastModifyMap.get(fileName);
+				// 最后修改时间比上次修改时间大，重新加载sql文件
+				if (preModified == null || lastModified.longValue() > preModified.longValue()) {
+					filesLastModifyMap.put(fileName, lastModified);
+					if (isDebug) {
+						logger.debug("sql文件:{}已经被修改,进行重新解析!", fileName);
+					} else {
+						out.println("sql文件:" + fileName + " 已经被修改,进行重新解析!");
 					}
+					parseSingleFile(sqlFile, filesLastModifyMap, cache, encoding, dialect, true, -1);
 				}
 			}
 		}
@@ -1296,7 +1294,7 @@ public class SqlXMLConfigParse {
 						unpivotModel.setColumnsToRows(StringUtil.splitExcludeSymMark(cols, ",", filters));
 						if (cols.startsWith("{") && cols.endsWith("}")) {
 							unpivotModel.setGroupSize(unpivotModel.getColumnsToRows().length);
-							//替换掉分组符号
+							// 替换掉分组符号
 							String[] colsToRows = unpivotModel.getColumnsToRows();
 							for (int t = 0; t < unpivotModel.getGroupSize(); t++) {
 								colsToRows[t] = colsToRows[t].replace("{", "").replace("}", "").trim();
