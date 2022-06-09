@@ -922,11 +922,11 @@ public class SqlConfigParseUtils {
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailSql.trim().startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
+				} // where 后面跟order by、group by、left join、right join、full join、having、union
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					//注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit 
+					//注意这里1=1 必须要保留，避免where #[将被剔除部分] limit ，执行后变成了where limit
 					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 				}
 			}
