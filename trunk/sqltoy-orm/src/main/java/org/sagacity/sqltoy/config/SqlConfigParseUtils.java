@@ -127,7 +127,7 @@ public class SqlConfigParseUtils {
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("^[A-Za-z_0-9\\-]+$");
 
 	public final static Pattern WHERE_CLOSE_PATTERN = Pattern
-			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union)\\W");
+			.compile("^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
 
 	public final static String DBL_QUESTMARK = "#sqltoy_dblqsmark_placeholder#";
 
@@ -922,11 +922,12 @@ public class SqlConfigParseUtils {
 				// 以where拼接")" 开头字符串,剔除where
 				if (tailSql.trim().startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
-				} // where 后面跟order by、group by、left join、right join、full join、having、union
+				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
 				else if (StringUtil.matches(tailSql.trim().toLowerCase(), WHERE_CLOSE_PATTERN)) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} else {
-					return preSql.concat(" ").concat(tailSql).concat(" ");
+					//注意这里1=1 要保留，where #[被剔除内容] limit 10，就会出现where limit 
+					return preSql.concat(" 1=1 ").concat(tailSql).concat(" ");
 				}
 			}
 		}
