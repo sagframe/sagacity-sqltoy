@@ -452,10 +452,6 @@ public class BeanUtil {
 		Object paramValue = value;
 		// 转换为小写
 		String typeName = typeOriginName.toLowerCase();
-		// 非数组类型,但传递的参数值是数组类型,提取第一个参数
-		if (!typeName.contains("[]") && paramValue != null && paramValue.getClass().isArray()) {
-			paramValue = CollectionUtil.convertArray(paramValue)[0];
-		}
 		if (paramValue == null) {
 			if (typeName.equals("int") || typeName.equals("long") || typeName.equals("double")
 					|| typeName.equals("float") || typeName.equals("short")) {
@@ -475,6 +471,19 @@ public class BeanUtil {
 			Object result = typeHandler.toJavaType(typeOriginName, genericType, paramValue);
 			if (result != null) {
 				return result;
+			}
+		}
+		// 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
+		if (!typeName.contains("[]") && paramValue.getClass().isArray()) {
+			if ((paramValue instanceof byte[]) && (typeName.equals("java.lang.string") || typeName.equals("string"))) {
+				paramValue = new String(((byte[]) paramValue));
+			} else {
+				Object[] paramAry = CollectionUtil.convertArray(paramValue);
+				if (paramAry.length > 1) {
+					throw new DataAccessException("不能将长度大于1,类型为:" + paramValue.getClass().getTypeName() + " 的数组转化为:"
+							+ typeOriginName + " 类型的值,请检查!");
+				}
+				paramValue = paramAry[0];
 			}
 		}
 		String valueStr = paramValue.toString();
