@@ -475,8 +475,11 @@ public class BeanUtil {
 		}
 		// 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
 		if (!typeName.contains("[]") && paramValue.getClass().isArray()) {
-			if ((paramValue instanceof byte[]) && (typeName.equals("java.lang.string") || typeName.equals("string"))) {
+			boolean isStr = (typeName.equals("java.lang.string") || typeName.equals("string"));
+			if ((paramValue instanceof byte[]) && isStr) {
 				paramValue = new String((byte[]) paramValue);
+			} else if ((paramValue instanceof char[]) && isStr) {
+				paramValue = new String((char[]) paramValue);
 			} else {
 				Object[] paramAry = CollectionUtil.convertArray(paramValue);
 				if (paramAry.length > 1) {
