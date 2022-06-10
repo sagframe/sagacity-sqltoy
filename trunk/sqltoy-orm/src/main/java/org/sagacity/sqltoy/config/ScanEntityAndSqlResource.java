@@ -197,8 +197,7 @@ public class ScanEntityAndSqlResource {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List getSqlResources(String resourceDir, List<String> mappingResources)
-			throws Exception {
+	public static List getSqlResources(String resourceDir, List<String> mappingResources) throws Exception {
 		List result = new ArrayList();
 		String realRes;
 		Enumeration<URL> urls;
@@ -294,7 +293,7 @@ public class ScanEntityAndSqlResource {
 	 * @throws Exception
 	 * @modify update 2017-10-28 从单URL变成URL枚举数组
 	 */
-	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
+	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
 		if (StringUtil.isBlank(resource)) {
 			return urls;
@@ -330,6 +329,7 @@ public class ScanEntityAndSqlResource {
 			return;
 		}
 		String fileName = parentFile.getName();
+		// 路径，取路径下文件
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
 			File file;
@@ -342,7 +342,8 @@ public class ScanEntityAndSqlResource {
 					getPathFiles(files[loop], fileList);
 				}
 			}
-		} else if (!parentFile.isDirectory() && fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+		} // 文件
+		else if (fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 			fileList.add(parentFile);
 		}
 	}
