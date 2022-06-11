@@ -66,7 +66,9 @@ public class TranslateManager {
 	/**
 	 * 翻译器配置文件,默认配置文件放于classpath下面，名称为sqltoy-translate.xml
 	 */
-	private String translateConfig = "classpath:sqltoy-translate.xml";
+	private String translateConfig = null;
+
+	private String defaultTranslateConfig = "classpath:sqltoy-translate.xml;classpath:translates";
 
 	/**
 	 * 缓存更新检测程序(后台线程)
@@ -98,10 +100,11 @@ public class TranslateManager {
 		try {
 			this.sqlToyContext = sqlToyContext;
 			initialized = true;
-			logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", translateConfig);
+			String realTranslateConfig = (translateConfig == null) ? defaultTranslateConfig : translateConfig;
+			logger.debug("开始加载sqltoy的translate缓存翻译配置文件:{}", realTranslateConfig);
 			// 加载和解析缓存翻译的配置
 			DefaultConfig defaultConfig = TranslateConfigParse.parseTranslateConfig(sqlToyContext, translateMap,
-					updateCheckers, translateConfig, charset);
+					updateCheckers, realTranslateConfig, (translateConfig == null), charset);
 			// 配置了缓存翻译
 			if (!translateMap.isEmpty()) {
 				// 可以自定义缓存管理器,默认为ehcache实现
@@ -130,7 +133,7 @@ public class TranslateManager {
 					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!");
 				}
 			} else {
-				logger.warn("translateConfig={} 中未定义缓存,请正确定义,如不使用缓存翻译可忽视此提示!", translateConfig);
+				logger.warn("translateConfig={} 中未定义缓存,请正确定义,如不使用缓存翻译可忽视此提示!", realTranslateConfig);
 			}
 		} catch (Exception e) {
 			logger.error("加载sqltoy的translate缓存翻译过程发生异常!{}", e.getMessage(), e);
