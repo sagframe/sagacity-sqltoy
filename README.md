@@ -35,7 +35,7 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # QQ 交流群:531812227
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
-# 最新版本号: 
+# 最新版本号: 缓存翻译配置支持多文件或路径
 * 5.1.46       发版日期: 2022-6-11
 * 5.1.46.jre11 发版日期: 2022-6-11
 * 5.1.46.jre17 发版日期: 2022-6-11
