@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -43,6 +44,7 @@ import org.w3c.dom.NodeList;
  * @description 用于解析缓存翻译的配置
  * @author zhongxuchen
  * @version v1.0,Date:2018年3月8日
+ * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
  */
 public class TranslateConfigParse {
 	/**
@@ -71,46 +73,64 @@ public class TranslateConfigParse {
 	 * @param translateMap    最终缓存配置，构建一个空map，在解析过程中填充
 	 * @param checker         更新检测配置
 	 * @param translateConfig 缓存配置文件
+	 * @param isDefault       是否使用了默认配置,默认配置可跳过不存在的文件
 	 * @param charset
 	 * @return
 	 * @throws Exception
 	 */
 	public static DefaultConfig parseTranslateConfig(final SqlToyContext sqlToyContext,
 			final IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap, final List<CheckerConfigModel> checker,
-			String translateConfig, String charset) throws Exception {
+			String translateConfig, boolean isDefault, String charset) throws Exception {
 		// 获取全部缓存翻译定义文件
 		List translateFiles = getTranslateFiles(translateConfig);
 		Object translateFile;
-		DefaultConfig result = null;
+		DefaultConfig result = new DefaultConfig();
 		DefaultConfig defaultConfig = null;
 		String translateFlieStr;
+		boolean fileExist;
+		Set<String> fileSet = new HashSet<String>();
+		int index = 0;
 		for (int i = 0; i < translateFiles.size(); i++) {
 			translateFile = translateFiles.get(i);
 			if (translateFile instanceof File) {
-				translateFlieStr = ((File) translateFile).getName();
+				translateFlieStr = ((File) translateFile).getPath();
 			} else {
 				translateFlieStr = translateFile.toString();
 			}
-			// 判断缓存翻译的配置文件是否存在
-			if (FileUtil.getFileInputStream(translateFile) == null) {
-				logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性,如不使用缓存翻译可忽略此提示!", translateFlieStr);
-				return null;
-			}
-			// 解析单个缓存翻译定义文件
-			defaultConfig = parseTranslate(sqlToyContext, translateMap, checker, i + 1, translateFile, charset);
-			// 第一个作为默认全局配置
-			if (i == 0) {
-				result = defaultConfig;
-			} else {
-				// 集群各个节点检测时间容差,一般在1~60秒内，默认1秒
-				if (result.getDeviationSeconds() == -1 && defaultConfig.getDeviationSeconds() != -1) {
-					result.setDeviationSeconds(defaultConfig.getDeviationSeconds());
+			// 避免重复解析
+			if (!fileSet.contains(translateFlieStr)) {
+				fileExist = true;
+				if (FileUtil.getFileInputStream(translateFile) == null) {
+					fileExist = false;
 				}
-				// 针对ehcache 额外的缓存磁盘存储路径(一般不需要定义)
-				if (StringUtil.isBlank(result.getDiskStorePath())
-						&& StringUtil.isNotBlank(defaultConfig.getDiskStorePath())) {
-					result.setDiskStorePath(defaultConfig.getDiskStorePath());
+				// 判断缓存翻译的配置文件是否存在
+				if (!isDefault && !fileExist) {
+					logger.warn("缓存翻译配置文件:{}无法加载,请检查配路径正确性,如不使用缓存翻译可忽略此提示!", translateFlieStr);
+					translateMap.clear();
+					return result;
 				}
+				// 文件存在
+				if (fileExist) {
+					// 解析单个缓存翻译定义文件
+					defaultConfig = parseTranslate(sqlToyContext, translateMap, checker, index + 1, translateFile,
+							charset);
+					// 第一个作为默认全局配置
+					if (index == 0) {
+						result = defaultConfig;
+					} else {
+						// 集群各个节点检测时间容差,一般在1~60秒内，默认1秒
+						if (result.getDeviationSeconds() == -1 && defaultConfig.getDeviationSeconds() != -1) {
+							result.setDeviationSeconds(defaultConfig.getDeviationSeconds());
+						}
+						// 针对ehcache 额外的缓存磁盘存储路径(一般不需要定义)
+						if (StringUtil.isBlank(result.getDiskStorePath())
+								&& StringUtil.isNotBlank(defaultConfig.getDiskStorePath())) {
+							result.setDiskStorePath(defaultConfig.getDiskStorePath());
+						}
+					}
+					index++;
+				}
+				fileSet.add(translateFlieStr);
 			}
 		}
 		return result;
@@ -121,7 +141,7 @@ public class TranslateConfigParse {
 	 * @param sqlToyContext
 	 * @param translateMap
 	 * @param checker
-	 * @param fileIndex
+	 * @param fileIndex       第几个缓存翻译配置文件,避免sqlId重复
 	 * @param translateConfig
 	 * @param charset
 	 * @return
@@ -413,53 +433,47 @@ public class TranslateConfigParse {
 		String transConfigFile;
 		File transFile;
 		for (String translate : translateCfgs) {
-			// 具体配置文件
-			if (translate.toLowerCase().endsWith(".xml")) {
-				result.add(translate);
-			} // 路径，只在路径下查找
-			else {
-				realRes = translate.trim();
-				startClasspath = false;
-				if (realRes.toLowerCase().startsWith(CLASSPATH)) {
-					realRes = realRes.substring(10).trim();
-					startClasspath = true;
-				}
-				urls = ScanEntityAndSqlResource.getResourceUrls(realRes, startClasspath);
-				if (urls != null) {
-					while (urls.hasMoreElements()) {
-						url = urls.nextElement();
-						if (url.getProtocol().equals(JAR)) {
-							if (realRes.charAt(0) == '/') {
-								realRes = realRes.substring(1);
+			realRes = translate.trim();
+			startClasspath = false;
+			if (realRes.toLowerCase().startsWith(CLASSPATH)) {
+				realRes = realRes.substring(10).trim();
+				startClasspath = true;
+			}
+			urls = ScanEntityAndSqlResource.getResourceUrls(realRes, startClasspath);
+			if (urls != null) {
+				while (urls.hasMoreElements()) {
+					url = urls.nextElement();
+					if (url.getProtocol().equals(JAR)) {
+						if (realRes.charAt(0) == '/') {
+							realRes = realRes.substring(1);
+						}
+						jar = ((JarURLConnection) url.openConnection()).getJarFile();
+						entries = jar.entries();
+						while (entries.hasMoreElements()) {
+							// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+							entry = entries.nextElement();
+							transConfigFile = entry.getName();
+							if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
+									&& !entry.isDirectory()) {
+								result.add(transConfigFile);
 							}
-							jar = ((JarURLConnection) url.openConnection()).getJarFile();
-							entries = jar.entries();
-							while (entries.hasMoreElements()) {
-								// 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-								entry = entries.nextElement();
-								transConfigFile = entry.getName();
-								if (transConfigFile.startsWith(realRes) && isTranslateConfig(transConfigFile)
-										&& !entry.isDirectory()) {
-									result.add(transConfigFile);
+						}
+					} else {
+						transFile = new File(url.toURI());
+						String fileName = transFile.getName();
+						// 取路径下的文件
+						if (transFile.isDirectory()) {
+							File[] files = transFile.listFiles();
+							File file;
+							for (int loop = 0; loop < files.length; loop++) {
+								file = files[loop];
+								fileName = file.getName();
+								if (!file.isDirectory() && isTranslateConfig(fileName)) {
+									result.add(file);
 								}
 							}
-						} else {
-							transFile = new File(url.toURI());
-							String fileName = transFile.getName();
-							// 取路径下的文件
-							if (transFile.isDirectory()) {
-								File[] files = transFile.listFiles();
-								File file;
-								for (int loop = 0; loop < files.length; loop++) {
-									file = files[loop];
-									fileName = file.getName();
-									if (!file.isDirectory() && isTranslateConfig(fileName)) {
-										result.add(file);
-									}
-								}
-							} else if (isTranslateConfig(fileName)) {
-								result.add(transFile);
-							}
+						} else if (isTranslateConfig(fileName)) {
+							result.add(transFile);
 						}
 					}
 				}
