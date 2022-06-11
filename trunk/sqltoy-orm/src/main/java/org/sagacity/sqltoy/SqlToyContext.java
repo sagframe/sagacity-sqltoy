@@ -70,6 +70,7 @@ import org.springframework.context.ApplicationContextAware;
  * @modify {Date:2019-09-15,将跨数据库函数FunctionConverts统一提取到FunctionUtils中,实现不同数据库函数替换后的语句放入缓存,避免每次执行函数替换}
  * @modify {Date:2020-05-29,调整mongo的注入方式,剔除之前MongoDbFactory模式,直接使用MongoTemplate}
  * @modify {Date:2022-04-23,pageOverToFirst默认值改为false}
+ * @modify {Date:2022-06-11,支持多个缓存翻译定义文件}
  */
 public class SqlToyContext implements ApplicationContextAware {
 	/**

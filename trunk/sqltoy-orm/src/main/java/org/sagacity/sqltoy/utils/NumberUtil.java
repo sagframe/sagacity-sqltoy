@@ -719,7 +719,7 @@ public class NumberUtil {
 	}
 
 	private static String parseMore(String s) {
-		String[] a = new String[] { "", "THOUSAND", "MILLION", "BILLION" };
+		String[] a = new String[] { "", "THOUSAND", "MILLION", "BILLION", "TRILLION", "QUADRILLION" };
 		return a[Integer.parseInt(s)];
 	}
 

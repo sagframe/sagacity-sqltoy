@@ -292,7 +292,7 @@ public class ScanEntityAndSqlResource {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
+	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
 		if (StringUtil.isBlank(resource)) {
 			return urls;
@@ -328,6 +328,7 @@ public class ScanEntityAndSqlResource {
 			return;
 		}
 		String fileName = parentFile.getName();
+		// 路径，取路径下的文件
 		if (parentFile.isDirectory()) {
 			File[] files = parentFile.listFiles();
 			File file;
@@ -340,7 +341,8 @@ public class ScanEntityAndSqlResource {
 					getPathFiles(files[loop], fileList);
 				}
 			}
-		} else if (!parentFile.isDirectory() && fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
+		} // 文件，则判断是否以.sql.xml 结尾的文件
+		else if (fileName.toLowerCase().endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 			fileList.add(parentFile);
 		}
 	}
