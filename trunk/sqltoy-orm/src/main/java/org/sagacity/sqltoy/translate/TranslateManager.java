@@ -133,7 +133,9 @@ public class TranslateManager {
 					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!");
 				}
 			} else {
-				logger.warn("translateConfig={} 中未定义缓存,请正确定义,如不使用缓存翻译可忽视此提示!", realTranslateConfig);
+				logger.warn(
+						"translateConfig={} 中未定义缓存,请正确定义[以.trans.xml|-translate.xml|-translates.xml结尾],如不使用缓存翻译可忽视此提示!",
+						realTranslateConfig);
 			}
 		} catch (Exception e) {
 			logger.error("加载sqltoy的translate缓存翻译过程发生异常!{}", e.getMessage(), e);
@@ -181,7 +183,7 @@ public class TranslateManager {
 					}
 				}
 			} else {
-				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", extend.cache);
+				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", extend.cache);
 			}
 		}
 		// 将调用获取缓存之前的日志放回线程中
@@ -220,7 +222,7 @@ public class TranslateManager {
 	public HashMap<String, Object[]> getCacheData(String cacheName, String cacheType) {
 		TranslateConfigModel cacheModel = translateMap.get(cacheName);
 		if (cacheModel == null) {
-			logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
+			logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
 			return null;
 		}
 		// 获得当前线程中的sql执行日志，后续缓存获取会覆盖掉日志
@@ -243,7 +245,7 @@ public class TranslateManager {
 		if (translateCacheManager != null) {
 			TranslateConfigModel cacheModel = translateMap.get(cacheName);
 			if (cacheModel == null) {
-				logger.error("cacheName:{} 没有配置,请检查sqltoy-translate.xml文件!", cacheName);
+				logger.error("cacheName:{} 没有配置,请检查缓存配置文件!", cacheName);
 				return;
 			}
 			translateCacheManager.put(cacheModel, cacheModel.getCache(), cacheType, cacheValue);
