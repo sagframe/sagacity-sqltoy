@@ -241,7 +241,7 @@ public class FileUtil {
 			if (StringUtil.indexOfIgnoreCase(realFile.trim(), "classpath:") == 0) {
 				realFile = realFile.trim().substring(10).trim();
 			}
-			if (realFile.charAt(0) == '/') {
+			if (realFile.length() > 0 && realFile.charAt(0) == '/') {
 				realFile = realFile.substring(1);
 			}
 			InputStream result = Thread.currentThread().getContextClassLoader().getResourceAsStream(realFile);
@@ -782,7 +782,7 @@ public class FileUtil {
 		File result = null;
 		if (fileName.trim().toLowerCase().startsWith("classpath:")) {
 			String realPath = fileName.trim().substring(10).trim();
-			if (realPath.charAt(0) == '/') {
+			if (realPath.length() > 0 && realPath.charAt(0) == '/') {
 				realPath = realPath.substring(1);
 			}
 			URL url = Thread.currentThread().getContextClassLoader().getResource(realPath);

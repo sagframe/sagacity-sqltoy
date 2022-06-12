@@ -415,7 +415,7 @@ public class TranslateConfigParse {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List getTranslateFiles(String translateConfig) throws Exception {
+	public static List getTranslateFiles(String translateConfig) throws Exception {
 		List result = new ArrayList();
 		if (StringUtil.isBlank(translateConfig)) {
 			return result;
@@ -444,7 +444,7 @@ public class TranslateConfigParse {
 				while (urls.hasMoreElements()) {
 					url = urls.nextElement();
 					if (url.getProtocol().equals(JAR)) {
-						if (realRes.charAt(0) == '/') {
+						if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 							realRes = realRes.substring(1);
 						}
 						jar = ((JarURLConnection) url.openConnection()).getJarFile();
