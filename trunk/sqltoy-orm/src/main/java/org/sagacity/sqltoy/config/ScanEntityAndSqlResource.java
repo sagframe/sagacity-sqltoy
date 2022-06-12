@@ -58,7 +58,7 @@ public class ScanEntityAndSqlResource {
 		// 获取包的名字 并进行替换
 		String packageName = pack.trim();
 		// 剔除第一个字符为目录的符合,并统一packName为xxx.xxx 格式
-		if (packageName.charAt(0) == '/') {
+		if (packageName.length() > 0 && packageName.charAt(0) == '/') {
 			packageName = packageName.substring(1);
 		}
 		if (packageName.endsWith("/")) {
@@ -224,7 +224,7 @@ public class ScanEntityAndSqlResource {
 					while (urls.hasMoreElements()) {
 						url = urls.nextElement();
 						if (url.getProtocol().equals(JAR)) {
-							if (realRes.charAt(0) == '/') {
+							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
 							jar = ((JarURLConnection) url.openConnection()).getJarFile();
@@ -262,7 +262,7 @@ public class ScanEntityAndSqlResource {
 					if (null != urls) {
 						while (urls.hasMoreElements()) {
 							url = urls.nextElement();
-							if (realRes.charAt(0) == '/') {
+							if (realRes.length() > 0 && realRes.charAt(0) == '/') {
 								realRes = realRes.substring(1);
 							}
 
@@ -294,7 +294,7 @@ public class ScanEntityAndSqlResource {
 	 */
 	public static Enumeration<URL> getResourceUrls(String resource, boolean startClasspath) throws Exception {
 		Enumeration<URL> urls = null;
-		if (StringUtil.isBlank(resource)) {
+		if (null == resource) {
 			return urls;
 		}
 		if (!startClasspath) {
@@ -304,13 +304,13 @@ public class ScanEntityAndSqlResource {
 				v.add(file.toURI().toURL());
 				urls = v.elements();
 			} else {
-				if (resource.charAt(0) == '/') {
+				if (resource.length() > 0 && resource.charAt(0) == '/') {
 					resource = resource.substring(1);
 				}
 				urls = Thread.currentThread().getContextClassLoader().getResources(resource);
 			}
 		} else {
-			if (resource.charAt(0) == '/') {
+			if (resource.length() > 0 && resource.charAt(0) == '/') {
 				resource = resource.substring(1);
 			}
 			urls = Thread.currentThread().getContextClassLoader().getResources(resource);
