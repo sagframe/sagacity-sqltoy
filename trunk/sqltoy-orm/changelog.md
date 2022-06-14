@@ -1,4 +1,7 @@
-﻿# v5.1.46 2022-06-11
+﻿# v5.2.0  2022-6-18
+1、实现跟spring强耦合剥离，单独出org.sagacity.sqltoy.integration包，供其他框架集成扩展
+
+# v5.1.46 2022-06-11
 1、缓存翻译配置支持多个配置文件,默认配置为:classpath:sqltoy-translate.xml;classpath:translates
 2、select concat(id,'/',amt) from 查询出byte[] 数组,并映射到对象字符类型属性上的场景优化
 3、where #[条件] limit 条件不成立变成了where limit ，增加了limit 关键词处理，同时补全where 1=1避免特殊情况
