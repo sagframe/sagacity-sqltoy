@@ -589,7 +589,7 @@ public class SqlToyDaoSupport {
 		if (result.size() == 1) {
 			return result.get(0);
 		}
-		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询预期!");
+		throw new IllegalArgumentException("loadEntity查询出:" + result.size() + " 条记录,不符合load查询单条预期!");
 	}
 
 	/**
