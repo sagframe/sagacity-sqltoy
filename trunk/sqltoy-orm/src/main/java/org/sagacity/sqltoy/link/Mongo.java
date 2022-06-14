@@ -137,12 +137,15 @@ public class Mongo extends BaseLink {
 	 * @todo 获取单条记录
 	 * @return
 	 */
-	public Object getOne() throws Exception {
+	public Object getOne() {
 		List<?> result = find();
-		if (result != null && !result.isEmpty()) {
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
 			return result.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("getOne查询出:" + result.size() + " 条记录,不符合getOne查询单条预期!");
 	}
 
 	/**
@@ -328,7 +331,7 @@ public class Mongo extends BaseLink {
 		List<Document> rs = mongoTemplate.find(query, Document.class,
 				sqlToyConfig.getNoSqlConfigModel().getCollection());
 		if (rs == null || rs.isEmpty()) {
-			return null;
+			return new ArrayList();
 		}
 		return extractFieldValues(sqlToyConfig, rs.iterator(), resultClass, humpMapLabel);
 	}
@@ -369,7 +372,7 @@ public class Mongo extends BaseLink {
 		AggregateIterable<Document> out = mongoTemplate
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
 		if (out == null) {
-			return null;
+			return new ArrayList();
 		}
 		return extractFieldValues(sqlToyConfig, out.iterator(), resultClass, humpMapLabel);
 	}

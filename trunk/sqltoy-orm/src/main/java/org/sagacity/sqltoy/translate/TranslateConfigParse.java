@@ -111,6 +111,7 @@ public class TranslateConfigParse {
 				}
 				// 文件存在
 				if (fileExist) {
+					logger.debug("开始解析缓存配置文件:{}", translateFlieStr);
 					// 解析单个缓存翻译定义文件
 					defaultConfig = parseTranslate(sqlToyContext, translateMap, checker, index + 1, translateFile,
 							charset);
@@ -415,7 +416,7 @@ public class TranslateConfigParse {
 	 * @return
 	 * @throws Exception
 	 */
-	private static List getTranslateFiles(String translateConfig) throws Exception {
+	public static List getTranslateFiles(String translateConfig) throws Exception {
 		List result = new ArrayList();
 		if (StringUtil.isBlank(translateConfig)) {
 			return result;
