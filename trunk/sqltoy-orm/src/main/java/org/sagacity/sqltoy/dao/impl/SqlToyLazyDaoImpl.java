@@ -40,10 +40,8 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
-import org.sagacity.sqltoy.support.SqlToyDaoSupport;
+import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -54,14 +52,7 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")
-public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao {
-
-	@Autowired
-	@Qualifier(value = "sqlToyContext")
-	public void setSqlToyContext(SqlToyContext sqlToyContext) {
-		super.setSqlToyContext(sqlToyContext);
-	}
-
+public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
