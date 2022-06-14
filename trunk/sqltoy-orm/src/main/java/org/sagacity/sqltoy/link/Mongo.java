@@ -21,7 +21,7 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
-import org.sagacity.sqltoy.integration.MongoApi;
+import org.sagacity.sqltoy.integration.MongoQuery;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
@@ -58,7 +58,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 基于spring-data的mongo工厂类
 	 */
-	private MongoApi mongoApi;
+	private MongoQuery mongoQuery;
 
 	/**
 	 * 查询语句
@@ -249,7 +249,7 @@ public class Mongo extends BaseLink {
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
 
-		result.setRecordCount(getMongoApi().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection()));
+		result.setRecordCount(getMongoQuery().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection()));
 		if (result.getRecordCount() == 0) {
 			return result;
 		}
@@ -271,8 +271,8 @@ public class Mongo extends BaseLink {
 			limit = pageModel.getPageSize();
 		}
 
-		List<Document> rs = getMongoApi().find(mql, Document.class, sqlToyConfig.getNoSqlConfigModel().getCollection(),
-				skip, limit);
+		List<Document> rs = getMongoQuery().find(mql, Document.class,
+				sqlToyConfig.getNoSqlConfigModel().getCollection(), skip, limit);
 		if (rs == null || rs.isEmpty()) {
 			return result;
 		}
@@ -298,12 +298,12 @@ public class Mongo extends BaseLink {
 				limit = topSize.intValue();
 			} else {
 				// 按比例提取
-				long count = getMongoApi().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection());
+				long count = getMongoQuery().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection());
 				limit = Double.valueOf(count * topSize.floatValue()).intValue();
 			}
 		}
-		List<Document> rs = getMongoApi().find(mql, Document.class, sqlToyConfig.getNoSqlConfigModel().getCollection(),
-				null, limit);
+		List<Document> rs = getMongoQuery().find(mql, Document.class,
+				sqlToyConfig.getNoSqlConfigModel().getCollection(), null, limit);
 		if (rs == null || rs.isEmpty()) {
 			return null;
 		}
@@ -343,7 +343,7 @@ public class Mongo extends BaseLink {
 				dbObjects.add(Document.parse(json));
 			}
 		}
-		AggregateIterable<Document> out = getMongoApi()
+		AggregateIterable<Document> out = getMongoQuery()
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
 		if (out == null) {
 			return null;
@@ -402,17 +402,14 @@ public class Mongo extends BaseLink {
 	}
 
 	/**
-	 * @param mongoFactory
 	 * @return
-	 * @throws ClassNotFoundException
-	 * @throws IllegalAccessException
-	 * @throws InstantiationException
+	 * @throws Exception
 	 */
-	private MongoApi getMongoApi() throws Exception {
-		if (this.mongoApi == null) {
-			mongoApi = (MongoApi) Class.forName(sqlToyContext.getMongoApiClass()).newInstance();
-			mongoApi.initialize(sqlToyContext);
+	private MongoQuery getMongoQuery() throws Exception {
+		if (this.mongoQuery == null) {
+			mongoQuery = (MongoQuery) Class.forName(sqlToyContext.getMongoQueryClass()).newInstance();
+			mongoQuery.initialize(sqlToyContext);
 		}
-		return mongoApi;
+		return mongoQuery;
 	}
 }

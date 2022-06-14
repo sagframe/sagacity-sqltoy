@@ -13,7 +13,7 @@ import org.springframework.context.ApplicationContext;
  * @version v1.0, Date:2022年6月14日
  * @modify 2022年6月14日,修改说明
  */
-public class AppSpringContext implements AppContext {
+public class SpringAppContext implements AppContext {
 	private ApplicationContext context;
 
 	@Override

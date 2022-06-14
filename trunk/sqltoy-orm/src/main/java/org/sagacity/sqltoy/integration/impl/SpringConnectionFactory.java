@@ -15,7 +15,7 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
  * @version v1.0, Date:2022年6月14日
  * @modify 2022年6月14日,修改说明
  */
-public class DefaultConnectionFactory implements ConnectionFactory {
+public class SpringConnectionFactory implements ConnectionFactory {
 	/**
 	 * 此处是sqltoy跟数据源唯一有关联的地方，其他地方只负责将dataSource传递过来
 	 */

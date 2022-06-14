@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.bson.Document;
 import org.sagacity.sqltoy.SqlToyContext;
-import org.sagacity.sqltoy.integration.MongoApi;
+import org.sagacity.sqltoy.integration.MongoQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -19,11 +19,11 @@ import com.mongodb.client.MongoCollection;
  * @version v1.0, Date:2022年6月14日
  * @modify 2022年6月14日,修改说明
  */
-public class MongoSpringApi implements MongoApi {
+public class SpringMongoQuery implements MongoQuery {
 	/**
 	 * 定义日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(MongoSpringApi.class);
+	protected final Logger logger = LoggerFactory.getLogger(SpringMongoQuery.class);
 	/**
 	 * 基于spring-data的mongo工厂类
 	 */

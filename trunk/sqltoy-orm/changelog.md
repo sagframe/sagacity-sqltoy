@@ -1,4 +1,10 @@
-﻿# v5.1.43 2022-05-28
+﻿# v5.1.46 2022-06-11
+1、缓存翻译配置支持多个配置文件,默认配置为:classpath:sqltoy-translate.xml;classpath:translates
+2、select concat(id,'/',amt) from 查询出byte[] 数组,并映射到对象字符类型属性上的场景优化
+3、where #[条件] limit 条件不成立变成了where limit ，增加了limit 关键词处理，同时补全where 1=1避免特殊情况
+4、NumberUtil中数字转英文金额支持万亿以上单位
+
+# v5.1.43 2022-05-28
 1、修复postgresql identity主键策略保存返回id跟建表字段顺序有关的缺陷(identity 主键不在第一列)
 
 # v5.1.42 2022-05-25

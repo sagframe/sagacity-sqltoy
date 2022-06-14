@@ -10,8 +10,8 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
-import org.sagacity.sqltoy.integration.impl.AppSpringContext;
-import org.sagacity.sqltoy.integration.impl.DefaultConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringAppContext;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -62,12 +62,12 @@ public class SqltoyAutoConfiguration {
 
 		// --------5.2 变化的地方----------------------------------
 		// 注意appContext注入非常关键
-		AppSpringContext appContext = new AppSpringContext();
+		SpringAppContext appContext = new SpringAppContext();
 		appContext.setContext(applicationContext);
 		sqlToyContext.setAppContext(appContext);
 
 		// 设置默认spring的connectFactory
-		sqlToyContext.setConnectionFactory(new DefaultConnectionFactory());
+		sqlToyContext.setConnectionFactory(new SpringConnectionFactory());
 
 		// 分布式id产生器实现类
 		sqlToyContext.setDistributeIdGeneratorClass("org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator");
@@ -75,8 +75,8 @@ public class SqltoyAutoConfiguration {
 		// 针对Caffeine缓存指定实现类型
 		sqlToyContext
 				.setTranslateCaffeineManagerClass("org.sagacity.sqltoy.translate.cache.impl.TranslateCaffeineManager");
-		// 注入spring的默认mongoApi实现类
-		sqlToyContext.setMongoApiClass("org.sagacity.sqltoy.integration.impl.MongoSpringApi");
+		// 注入spring的默认mongoQuery实现类
+		sqlToyContext.setMongoQueryClass("org.sagacity.sqltoy.integration.impl.SpringMongoQuery");
 		// --------end 5.2 -----------------------------------------
 
 		// 当发现有重复sqlId时是否抛出异常，终止程序执行
@@ -153,7 +153,7 @@ public class SqltoyAutoConfiguration {
 		if (properties.getReservedWords() != null) {
 			sqlToyContext.setReservedWords(properties.getReservedWords());
 		}
-	
+
 		// 数据库方言
 		sqlToyContext.setDialect(properties.getDialect());
 		// sqltoy内置参数默认值修改

@@ -17,7 +17,7 @@ import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
-import org.sagacity.sqltoy.integration.impl.DefaultConnectionFactory;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.plugins.FilterHandler;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
@@ -237,7 +237,7 @@ public class SqlToyContext {
 	/**
 	 * 定义mongo查询的实现类,默认基于spring实现，其他框架修改成对应实现类
 	 */
-	private String mongoApiClass = "org.sagacity.sqltoy.integration.impl.MongoSpringApi";
+	private String mongoQueryClass = "org.sagacity.sqltoy.integration.impl.SpringMongoQuery";
 
 	/**
 	 * 分布式id产生器实现类
@@ -301,7 +301,7 @@ public class SqlToyContext {
 		SqlToyConstants.loadProperties(dialectConfig);
 		// 默认使用基于spring的连接管理
 		if (connectionFactory == null) {
-			connectionFactory = new DefaultConnectionFactory();
+			connectionFactory = new SpringConnectionFactory();
 		}
 		// 初始化默认dataSource
 		initDefaultDataSource();
@@ -962,12 +962,11 @@ public class SqlToyContext {
 		this.distributeIdGeneratorClass = distributeIdGeneratorClass;
 	}
 
-	public String getMongoApiClass() {
-		return mongoApiClass;
+	public String getMongoQueryClass() {
+		return mongoQueryClass;
 	}
 
-	public void setMongoApiClass(String mongoApiClass) {
-		this.mongoApiClass = mongoApiClass;
+	public void setMongoQueryClass(String mongoQueryClass) {
+		this.mongoQueryClass = mongoQueryClass;
 	}
-
 }

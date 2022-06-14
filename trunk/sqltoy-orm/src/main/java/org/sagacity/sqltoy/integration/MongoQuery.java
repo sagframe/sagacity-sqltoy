@@ -14,7 +14,7 @@ import com.mongodb.client.MongoCollection;
  * @version v1.0, Date:2022年6月14日
  * @modify 2022年6月14日,修改说明
  */
-public interface MongoApi {
+public interface MongoQuery {
 	/**
 	 * @TODO 获取mongo collection (类似表)
 	 * @param collectionName
