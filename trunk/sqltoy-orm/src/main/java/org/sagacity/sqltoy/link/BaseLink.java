@@ -56,7 +56,7 @@ public abstract class BaseLink implements Serializable {
 		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
 		// 数据源选择扩展
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(),
+		return dataSourceSelector.getDataSource(sqlToyContext.getAppContext(),
 				defaultDataSource ? null : dataSource, sqlDataSource, (defaultDataSource == false) ? null : dataSource,
 				sqlToyContext.getDefaultDataSource());
 	}

@@ -33,7 +33,6 @@ import org.sagacity.sqltoy.config.model.TableCascadeModel;
 import org.sagacity.sqltoy.model.IgnoreCaseSet;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
@@ -607,19 +606,10 @@ public class EntityManager {
 		} else {
 			String generator = IdGenerators.get(idGenerator.toLowerCase());
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-			// redis 情况特殊,依赖redisTemplate,小心修改
-			if (generator.endsWith("RedisIdGenerator")) {
-				RedisIdGenerator redis = (RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext);
-				if (redis == null || !redis.hasRedisTemplate()) {
-					logger.error("POJO Class={} 的redisIdGenerator 未能被正确实例化,可能的原因是未定义RedisTemplate!",
-							entityMeta.getEntityClass().getName());
-				}
-				idGenerators.put(idGenerator, redis);
-			} else {
-				// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
-				idGenerators.put(idGenerator,
-						(IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance());
-			}
+			// 自定义(不依赖spring模式),用法在quickvo中配置例如:com.xxxx..CustomIdGenerator
+			IdGenerator idGeneratorBean = (IdGenerator) Class.forName(generator).getDeclaredConstructor().newInstance();
+			idGeneratorBean.initialize(sqlToyContext);
+			idGenerators.put(idGenerator, idGeneratorBean);
 		}
 	}
 

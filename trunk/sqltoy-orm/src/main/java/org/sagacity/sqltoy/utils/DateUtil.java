@@ -310,7 +310,7 @@ public class DateUtil {
 	 */
 	public static Date convertDateObject(Object dt, String format, Locale locale) {
 		if (dt == null) {
-			System.err.println("日期不能为空,请正确输入!");
+			logger.warn("日期不能为空,请正确输入!");
 			return null;
 		}
 		Date result = null;

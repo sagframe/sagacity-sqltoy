@@ -1,16 +1,19 @@
-package org.sagacity.sqltoy.plugins.datasource.impl;
+package org.sagacity.sqltoy.integration.impl;
 
 import java.sql.Connection;
 
 import javax.sql.DataSource;
 
-import org.sagacity.sqltoy.plugins.datasource.ConnectionFactory;
+import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 /**
+ * 
  * @project sagacity-sqltoy
- * @description 提供Connection获取和释放的扩展接口默认实现
+ * @description 提供基于spring的connection获取和释放实现
  * @author zhongxuchen
+ * @version v1.0, Date:2022年6月14日
+ * @modify 2022年6月14日,修改说明
  */
 public class DefaultConnectionFactory implements ConnectionFactory {
 	/**

@@ -68,6 +68,9 @@ public class TranslateManager {
 	 */
 	private String translateConfig = null;
 
+	/**
+	 * 默认配置支持单个文件和具体路径下的多个文件
+	 */
 	private String defaultTranslateConfig = "classpath:sqltoy-translate.xml;classpath:translates";
 
 	/**
@@ -128,9 +131,10 @@ public class TranslateManager {
 					cacheCheck = new CacheUpdateWatcher(sqlToyContext, translateCacheManager, updateCheckers,
 							delayCheckCacheSeconds, defaultConfig.getDeviationSeconds());
 					cacheCheck.start();
-					logger.debug("sqltoy的translate缓存配置加载完成,已经启动:{} 个缓存更新检测!", updateCheckers.size());
+					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,并且启动:{} 个缓存更新检测!", translateMap.size(),
+							updateCheckers.size());
 				} else {
-					logger.debug("sqltoy的translate缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!");
+					logger.debug("sqltoy的translate共:{} 个缓存配置加载完成,您没有配置缓存更新检测机制或没有配置缓存,将不做缓存更新检测!", translateMap.size());
 				}
 			} else {
 				logger.warn(

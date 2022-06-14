@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.config.model.NoSqlFieldsModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.integration.MongoApi;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
@@ -30,8 +31,6 @@ import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.BasicQuery;
 
 import com.mongodb.client.AggregateIterable;
 
@@ -59,7 +58,7 @@ public class Mongo extends BaseLink {
 	/**
 	 * 基于spring-data的mongo工厂类
 	 */
-	private MongoTemplate mongoTemplate;
+	private MongoApi mongoApi;
 
 	/**
 	 * 查询语句
@@ -97,10 +96,6 @@ public class Mongo extends BaseLink {
 	 */
 	public Mongo(SqlToyContext sqlToyContext, DataSource dataSource) {
 		super(sqlToyContext, dataSource);
-	}
-
-	public void mongoTemplate(MongoTemplate mongoTemplate) {
-		this.mongoTemplate = mongoTemplate;
 	}
 
 	public Mongo sql(String sql) {
@@ -163,11 +158,9 @@ public class Mongo extends BaseLink {
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
 			// 聚合查询
 			if (noSqlModel.isHasAggs()) {
-				return aggregate(getMongoTemplate(), sqlToyConfig, realMql, (Class) extend.resultType,
-						extend.humpMapLabel);
+				return aggregate(sqlToyConfig, realMql, (Class) extend.resultType, extend.humpMapLabel);
 			}
-			return findTop(getMongoTemplate(), sqlToyConfig, null, realMql, (Class) extend.resultType,
-					extend.humpMapLabel);
+			return findTop(sqlToyConfig, null, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -191,8 +184,7 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findTop(getMongoTemplate(), sqlToyConfig, topSize, realMql, (Class) extend.resultType,
-					extend.humpMapLabel);
+			return findTop(sqlToyConfig, topSize, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -216,8 +208,7 @@ public class Mongo extends BaseLink {
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
-			return findPage(getMongoTemplate(), sqlToyConfig, page, realMql, (Class) extend.resultType,
-					extend.humpMapLabel);
+			return findPage(sqlToyConfig, page, realMql, (Class) extend.resultType, extend.humpMapLabel);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DataAccessException(e);
@@ -244,7 +235,6 @@ public class Mongo extends BaseLink {
 
 	/**
 	 * @todo 分页查询
-	 * @param mongoTemplate
 	 * @param sqlToyConfig
 	 * @param pageModel
 	 * @param mql
@@ -253,41 +243,36 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private Page findPage(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Page pageModel, String mql,
-			Class resultClass, boolean humpMapLabel) throws Exception {
+	private Page findPage(SqlToyConfig sqlToyConfig, Page pageModel, String mql, Class resultClass,
+			boolean humpMapLabel) throws Exception {
 		Page result = new Page();
 		result.setPageNo(pageModel.getPageNo());
 		result.setPageSize(pageModel.getPageSize());
-		BasicQuery query = new BasicQuery(mql);
-		result.setRecordCount(mongoTemplate.count(query, sqlToyConfig.getNoSqlConfigModel().getCollection()));
+
+		result.setRecordCount(getMongoApi().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection()));
 		if (result.getRecordCount() == 0) {
-			if (sqlToyContext.isPageOverToFirst()) {
-				result.setPageNo(1L);
-			}
 			return result;
 		}
+		Long skip;
+		Integer limit;
 		// 设置分页
 		if (result.getPageNo() == -1) {
-			query.skip(0).limit(Long.valueOf(result.getRecordCount()).intValue());
+			skip = 0L;
+			limit = Long.valueOf(result.getRecordCount()).intValue();
 		} else {
 			boolean isOverPage = (pageModel.getPageNo()
 					* pageModel.getPageSize() >= (result.getRecordCount() + pageModel.getPageSize()));
-			if (isOverPage && !sqlToyContext.isPageOverToFirst()) {
+			if (isOverPage) {
 				return result;
 			}
-			long realStartPage = isOverPage ? 1 : pageModel.getPageNo();
+			long realStartPage = pageModel.getPageNo();
 			result.setPageNo(realStartPage);
-			query.skip((realStartPage - 1) * pageModel.getPageSize()).limit(pageModel.getPageSize());
+			skip = (realStartPage - 1) * pageModel.getPageSize();
+			limit = pageModel.getPageSize();
 		}
-		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("findPageByMongo script=" + query.getQueryObject());
-			} else {
-				System.out.println("findPageByMongo script=" + query.getQueryObject());
-			}
-		}
-		List<Document> rs = mongoTemplate.find(query, Document.class,
-				sqlToyConfig.getNoSqlConfigModel().getCollection());
+
+		List<Document> rs = getMongoApi().find(mql, Document.class, sqlToyConfig.getNoSqlConfigModel().getCollection(),
+				skip, limit);
 		if (rs == null || rs.isEmpty()) {
 			return result;
 		}
@@ -297,7 +282,6 @@ public class Mongo extends BaseLink {
 
 	/**
 	 * @todo 取top记录
-	 * @param mongoTemplate
 	 * @param sqlToyConfig
 	 * @param topSize
 	 * @param mql
@@ -306,27 +290,20 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private List<?> findTop(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, Float topSize, String mql,
-			Class resultClass, boolean humpMapLabel) throws Exception {
-		BasicQuery query = new BasicQuery(mql);
+	private List<?> findTop(SqlToyConfig sqlToyConfig, Float topSize, String mql, Class resultClass,
+			boolean humpMapLabel) throws Exception {
+		Integer limit = null;
 		if (topSize != null) {
 			if (topSize > 1) {
-				query.limit(topSize.intValue());
+				limit = topSize.intValue();
 			} else {
 				// 按比例提取
-				long count = mongoTemplate.count(query, sqlToyConfig.getNoSqlConfigModel().getCollection());
-				query.limit(Double.valueOf(count * topSize.floatValue()).intValue());
+				long count = getMongoApi().count(mql, sqlToyConfig.getNoSqlConfigModel().getCollection());
+				limit = Double.valueOf(count * topSize.floatValue()).intValue();
 			}
 		}
-		if (sqlToyContext.isDebug()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("findTopByMongo script=" + query.getQueryObject());
-			} else {
-				System.out.println("findTopByMongo script=" + query.getQueryObject());
-			}
-		}
-		List<Document> rs = mongoTemplate.find(query, Document.class,
-				sqlToyConfig.getNoSqlConfigModel().getCollection());
+		List<Document> rs = getMongoApi().find(mql, Document.class, sqlToyConfig.getNoSqlConfigModel().getCollection(),
+				null, limit);
 		if (rs == null || rs.isEmpty()) {
 			return null;
 		}
@@ -343,8 +320,8 @@ public class Mongo extends BaseLink {
 	 * @return
 	 * @throws Exception
 	 */
-	private List<?> aggregate(MongoTemplate mongoTemplate, SqlToyConfig sqlToyConfig, String mql, Class resultClass,
-			boolean humpMapLabel) throws Exception {
+	private List<?> aggregate(SqlToyConfig sqlToyConfig, String mql, Class resultClass, boolean humpMapLabel)
+			throws Exception {
 		String realMql = mql.trim();
 		if (realMql.startsWith("{") && realMql.endsWith("}")) {
 			realMql = realMql.substring(1, realMql.length() - 1).trim();
@@ -366,7 +343,7 @@ public class Mongo extends BaseLink {
 				dbObjects.add(Document.parse(json));
 			}
 		}
-		AggregateIterable<Document> out = mongoTemplate
+		AggregateIterable<Document> out = getMongoApi()
 				.getCollection(sqlToyConfig.getNoSqlConfigModel().getCollection()).aggregate(dbObjects);
 		if (out == null) {
 			return null;
@@ -421,17 +398,21 @@ public class Mongo extends BaseLink {
 		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig, dataSetResult,
 				null, null);
 		return ResultUtils.wrapQueryResult(sqlToyContext, resultSet, StringUtil.humpFieldNames(translateFields),
-				resultClass, changedCols, humpMapLabel, false, null,null);
+				resultClass, changedCols, humpMapLabel, false, null, null);
 	}
 
 	/**
 	 * @param mongoFactory
 	 * @return
+	 * @throws ClassNotFoundException
+	 * @throws IllegalAccessException
+	 * @throws InstantiationException
 	 */
-	private MongoTemplate getMongoTemplate() {
-		if (this.mongoTemplate != null) {
-			return mongoTemplate;
+	private MongoApi getMongoApi() throws Exception {
+		if (this.mongoApi == null) {
+			mongoApi = (MongoApi) Class.forName(sqlToyContext.getMongoApiClass()).newInstance();
+			mongoApi.initialize(sqlToyContext);
 		}
-		return (MongoTemplate) sqlToyContext.getBean(MongoTemplate.class);
+		return mongoApi;
 	}
 }
