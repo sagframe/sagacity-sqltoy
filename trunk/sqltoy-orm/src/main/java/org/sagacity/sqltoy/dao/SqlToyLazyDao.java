@@ -340,18 +340,6 @@ public interface SqlToyLazyDao {
 	 */
 	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType);
 
-	// 命名不符合统一的风格
-	/**
-	 * @see findPageEntity
-	 * @param <T>
-	 * @param entityClass
-	 * @param page
-	 * @param entityQuery
-	 * @return
-	 */
-	@Deprecated 
-	public <T> Page<T> findEntity(Class<T> entityClass, final Page page, EntityQuery entityQuery);
-
 	/**
 	 * @TODO 单表分页查询
 	 *       <p>

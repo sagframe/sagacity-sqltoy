@@ -12,6 +12,8 @@ import javax.sql.DataSource;
 
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ShardingDBModel;
+import org.sagacity.sqltoy.integration.impl.SpringAppContext;
+import org.sagacity.sqltoy.integration.impl.SpringConnectionFactory;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
 import org.sagacity.sqltoy.plugins.sharding.IdleConnectionMonitor;
 import org.sagacity.sqltoy.plugins.sharding.ShardingStrategy;
@@ -96,9 +98,10 @@ public class DefaultShardingStrategy implements ShardingStrategy, ApplicationCon
 		if (checkSeconds < 60) {
 			checkSeconds = 60;
 		}
-
-		IdleConnectionMonitor monitor = new IdleConnectionMonitor(applicationContext, dataSourceWeightConfig, weights,
-				60, checkSeconds);
+		SpringAppContext appContext = new SpringAppContext();
+		appContext.setContext(applicationContext);
+		IdleConnectionMonitor monitor = new IdleConnectionMonitor(appContext, new SpringConnectionFactory(),
+				dataSourceWeightConfig, weights, 60, checkSeconds);
 		monitor.start();
 	}
 

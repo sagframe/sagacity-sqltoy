@@ -34,6 +34,7 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.dialect.executor.ParallQueryExecutor;
 import org.sagacity.sqltoy.dialect.utils.DialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.integration.DistributeIdGenerator;
 import org.sagacity.sqltoy.link.Batch;
 import org.sagacity.sqltoy.link.Delete;
 import org.sagacity.sqltoy.link.Elastic;
@@ -72,7 +73,6 @@ import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
-import org.sagacity.sqltoy.plugins.id.impl.RedisIdGenerator;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.BeanWrapper;
@@ -83,8 +83,6 @@ import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @project sagacity-sqltoy
@@ -133,6 +131,11 @@ public class SqlToyDaoSupport {
 	protected SqlToyContext sqlToyContext;
 
 	/**
+	 * 分布式id产生器
+	 */
+	private DistributeIdGenerator distributeIdGenerator = null;
+
+	/**
 	 * 各种数据库方言实现
 	 */
 	private DialectFactory dialectFactory = DialectFactory.getInstance();
@@ -161,7 +164,7 @@ public class SqlToyDaoSupport {
 		String sqlDataSource = (null == sqltoyConfig) ? null : sqltoyConfig.getDataSource();
 		// 提供一个扩展，让开发者在特殊场景下可以自行定义dataSourceSelector实现数据源的选择和获取
 		DataSourceSelector dataSourceSelector = sqlToyContext.getDataSourceSelector();
-		return dataSourceSelector.getDataSource(sqlToyContext.getApplicationContext(), pointDataSource, sqlDataSource,
+		return dataSourceSelector.getDataSource(sqlToyContext.getAppContext(), pointDataSource, sqlDataSource,
 				this.dataSource, sqlToyContext.getDefaultDataSource());
 	}
 
@@ -264,8 +267,6 @@ public class SqlToyDaoSupport {
 	/**
 	 * @param sqlToyContext the sqlToyContext to set
 	 */
-	@Autowired
-	@Qualifier(value = "sqlToyContext")
 	public void setSqlToyContext(SqlToyContext sqlToyContext) {
 		this.sqlToyContext = sqlToyContext;
 	}
@@ -738,7 +739,7 @@ public class SqlToyDaoSupport {
 			final Class<T> voClass) {
 		return (List<T>) findByQuery(
 				new QueryExecutor(sqlOrNamedSql, (paramsMap == null) ? MapKit.map() : paramsMap).resultType(voClass))
-				.getRows();
+						.getRows();
 	}
 
 	/**
@@ -1286,7 +1287,17 @@ public class SqlToyDaoSupport {
 		if (StringUtil.isBlank(signature)) {
 			throw new IllegalArgumentException("signature 必须不能为空,请正确指定业务标志符号!");
 		}
-		return ((RedisIdGenerator) RedisIdGenerator.getInstance(sqlToyContext)).generateId(signature, increment);
+		if (distributeIdGenerator == null) {
+			try {
+				distributeIdGenerator = (DistributeIdGenerator) Class
+						.forName(sqlToyContext.getDistributeIdGeneratorClass()).newInstance();
+				distributeIdGenerator.initialize(sqlToyContext.getAppContext());
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new DataAccessException("实例化分布式id产生器失败:" + e.getMessage());
+			}
+		}
+		return distributeIdGenerator.generateId(signature, increment, null);
 	}
 
 	/**
@@ -1667,9 +1678,9 @@ public class SqlToyDaoSupport {
 		if (SqlConfigParseUtils.hasNamedParam(where) && StringUtil.isBlank(innerModel.names)) {
 			queryExecutor = new QueryExecutor(sql,
 					(innerModel.values == null || innerModel.values.length == 0) ? null
-							: (Serializable) innerModel.values[0])
-					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))
-					.fetchSize(innerModel.fetchSize).maxRows(innerModel.maxRows);
+							: (Serializable) innerModel.values[0]).resultType(resultType)
+									.dataSource(getDataSource(innerModel.dataSource)).fetchSize(innerModel.fetchSize)
+									.maxRows(innerModel.maxRows);
 		} else {
 			queryExecutor = new QueryExecutor(sql).names(innerModel.names).values(innerModel.values)
 					.resultType(resultType).dataSource(getDataSource(innerModel.dataSource))

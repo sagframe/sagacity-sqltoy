@@ -108,10 +108,13 @@ public class Elastic extends BaseLink {
 	 */
 	public Object getOne() {
 		List<?> result = find();
-		if (result != null && !result.isEmpty()) {
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		if (result.size() == 1) {
 			return result.get(0);
 		}
-		return null;
+		throw new IllegalArgumentException("getOne查询出:" + result.size() + " 条记录,不符合getOne查询预期!");
 	}
 
 	/**
@@ -179,9 +182,6 @@ public class Elastic extends BaseLink {
 				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, sqlToyConfig, pageModel, queryExecutor);
-			}
-			if (pageResult.getRecordCount() == 0 && sqlToyContext.isPageOverToFirst()) {
-				pageResult.setPageNo(1L);
 			}
 			return pageResult;
 		} catch (Exception e) {

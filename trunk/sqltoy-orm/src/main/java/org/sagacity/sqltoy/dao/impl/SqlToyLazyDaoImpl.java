@@ -40,7 +40,7 @@ import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.TreeTableModel;
-import org.sagacity.sqltoy.support.SqlToyDaoSupport;
+import org.sagacity.sqltoy.support.SpringDaoSupport;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 import org.springframework.stereotype.Repository;
 
@@ -52,8 +52,7 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings({ "rawtypes" })
 @Repository("sqlToyLazyDao")
-public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao {
-
+public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao {
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -868,12 +867,6 @@ public class SqlToyLazyDaoImpl extends SqlToyDaoSupport implements SqlToyLazyDao
 	@Override
 	public <T> List<T> findEntity(Class entityClass, EntityQuery entityQuery, Class<T> resultType) {
 		return (List<T>) super.findEntity(entityClass, entityQuery, resultType);
-	}
-
-	@Deprecated
-	@Override
-	public <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
 
 	public <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
