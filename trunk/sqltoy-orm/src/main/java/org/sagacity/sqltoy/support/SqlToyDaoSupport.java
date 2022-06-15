@@ -1503,19 +1503,6 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * @see findPageEntity
-	 * @param <T>
-	 * @param entityClass
-	 * @param page
-	 * @param entityQuery
-	 * @return
-	 */
-	@Deprecated
-	protected <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return (Page<T>) findPageEntity(page, entityClass, entityQuery, entityClass);
-	}
-
-	/**
 	 * @TODO 提供针对单表简易快捷分页查询 EntityQuery.where("#[name like ?]#[and status in
 	 *       (?)]").values(new Object[]{xxx,xxx})
 	 * @param <T>
