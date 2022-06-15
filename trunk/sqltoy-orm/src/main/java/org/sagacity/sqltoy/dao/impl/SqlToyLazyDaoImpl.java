@@ -869,12 +869,6 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return (List<T>) super.findEntity(entityClass, entityQuery, resultType);
 	}
 
-	@Deprecated
-	@Override
-	public <T> Page<T> findEntity(Class<T> entityClass, Page page, EntityQuery entityQuery) {
-		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
-	}
-
 	public <T> Page<T> findPageEntity(Page page, Class<T> entityClass, EntityQuery entityQuery) {
 		return super.findPageEntity(page, entityClass, entityQuery, entityClass);
 	}
