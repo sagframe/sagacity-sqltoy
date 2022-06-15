@@ -36,15 +36,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 缓存翻译配置支持多文件或路径
-* 5.1.46       发版日期: 2022-6-11
-* 5.1.46.jre11 发版日期: 2022-6-11
-* 5.1.46.jre17 发版日期: 2022-6-11
-* 4.19.41      发版日期: 2022-6-11
-
-# 4.x 升级5.x 项目影响点
-* 分页查询PaginationModel 类改为Page
-* org.sagacity.sqltoy.executor.QueryExecutor 改为 org.sagacity.sqltoy.model.QueryExecutor
-* findAll(pojo.class) 改为findEntity(pojo.class,null)
+* 5.2.0       发版日期: 2022-6-15
+* 5.2.0.jre11 发版日期: 2022-6-15
+* 5.2.0.jre17 发版日期: 2022-6-15
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
