@@ -12,6 +12,7 @@ import org.sagacity.sqltoy.model.PaginationModel;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,8 @@ public class ElasticSqlPlugin {
 	public static PaginationModel findPage(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			PaginationModel pageModel, QueryExecutor queryExecutor) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		//update 2022-6-16 补全参数统一构造处理
+		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
@@ -73,6 +76,8 @@ public class ElasticSqlPlugin {
 	public static List<?> findTop(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, QueryExecutor queryExecutor,
 			Integer topSize) throws Exception {
 		QueryExecutorExtend extend = queryExecutor.getInnerModel();
+		//update 2022-6-16 补全参数统一构造处理
+		QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 		String realSql = MongoElasticUtils.wrapES(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig)).trim();
 		// sql模式
