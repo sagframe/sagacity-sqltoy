@@ -26,6 +26,7 @@ import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.MongoElasticUtils;
+import org.sagacity.sqltoy.utils.QueryExecutorBuilder;
 import org.sagacity.sqltoy.utils.ResultUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -161,6 +162,8 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			//update 2022-6-16 补全参数统一构造处理
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
@@ -191,6 +194,8 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			//update 2022-6-16 补全参数统一构造处理
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
@@ -216,6 +221,8 @@ public class Mongo extends BaseLink {
 		}
 		try {
 			QueryExecutorExtend extend = queryExecutor.getInnerModel();
+			//update 2022-6-16 补全参数统一构造处理
+			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
 			// 最后的执行语句
 			String realMql = MongoElasticUtils.wrapMql(sqlToyConfig, extend.getParamsName(sqlToyConfig),
 					extend.getParamsValue(sqlToyContext, sqlToyConfig));
