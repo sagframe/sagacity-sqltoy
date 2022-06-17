@@ -36,9 +36,9 @@ https://github.com/sagframe/sqltoy-online-doc/blob/master/docs/sqltoy/search.md
 # 码云地址: https://gitee.com/sagacity/sagacity-sqltoy
 
 # 最新版本号: 缓存翻译配置支持多文件或路径
-* 5.2.0       发版日期: 2022-6-15
-* 5.2.0.jre11 发版日期: 2022-6-15
-* 5.2.0.jre17 发版日期: 2022-6-15
+* 5.2.1       发版日期: 2022-6-18
+* 5.2.1.jre11 发版日期: 2022-6-18
+* 5.2.1.jre17 发版日期: 2022-6-18
 
 # 1. 前言
 ## 1.1 sqltoy-orm是什么
