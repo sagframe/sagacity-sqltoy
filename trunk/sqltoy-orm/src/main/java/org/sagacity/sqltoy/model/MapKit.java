@@ -35,7 +35,7 @@ public class MapKit implements Serializable {
 				throw new IllegalArgumentException("构造Map对应的keys长度:" + keys.length + "不等于values长度:" + values.length);
 			}
 			for (int i = 0; i < keys.length; i++) {
-				if (values[i] != null) {
+				if (keys[i] != null && values[i] != null) {
 					map.put(keys[i], values[i]);
 				}
 			}
@@ -51,7 +51,9 @@ public class MapKit implements Serializable {
 	 */
 	public static MapKit startOf(String key, Object value) {
 		MapKit mapkit = new MapKit();
-		mapkit.map.put(key, value);
+		if (key != null && value != null) {
+			mapkit.map.put(key, value);
+		}
 		return mapkit;
 	}
 
@@ -62,15 +64,24 @@ public class MapKit implements Serializable {
 	 * @return
 	 */
 	public MapKit of(String key, Object value) {
-		map.put(key, value);
+		if (key != null && value != null) {
+			map.put(key, value);
+		}
 		return this;
 	}
 
 	public Map<String, Object> endOf(String key, Object value) {
-		map.put(key, value);
+		if (key != null && value != null) {
+			map.put(key, value);
+		}
 		return map;
 	}
 
+	/**
+	 * @see map(String key, Object value)
+	 * @return
+	 */
+	@Deprecated
 	public Map<String, Object> get() {
 		return map;
 	}
@@ -81,5 +92,19 @@ public class MapKit implements Serializable {
 	 */
 	public static Map<String, Object> map() {
 		return new HashMap<String, Object>();
+	}
+
+	/**
+	 * @TODO 单个key和value场景
+	 * @param key
+	 * @param value
+	 * @return
+	 */
+	public static Map<String, Object> map(String key, Object value) {
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		if (key != null && value != null) {
+			result.put(key, value);
+		}
+		return result;
 	}
 }
